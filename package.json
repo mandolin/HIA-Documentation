@@ -14,7 +14,7 @@
     "dev:cli": "pnpm --filter @hia-doc/cli dev",
     "hia": "node apps/cli/dist/index.js",
     "test": "pnpm run check",
-    "test:e2e": "vitest run tests/cli-renderer.e2e.test.ts",
+    "test:e2e": "vitest run tests",
     "test:unit": "vitest run --exclude tests/**/*.test.ts"
   },
   "devDependencies": {

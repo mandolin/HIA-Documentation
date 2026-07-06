@@ -1,0 +1,530 @@
+{
+  "contract": "hia-jsdoc-integration",
+  "contractVersion": "0.1.0",
+  "pluginVersion": "0.1.0",
+  "mode": "standalone",
+  "parserBoundary": {
+    "adapter": "parser-jsdoc",
+    "owns": [
+      "JSDoc doclet normalization",
+      "JSDoc tag to HIA metadata mapping",
+      "source fragment reference extraction",
+      "doc-i18n metadata extraction"
+    ],
+    "handsOff": [
+      "language-neutral HIA IR evolution",
+      "non-JavaScript parser implementations",
+      "IDE protocol and LSP transport"
+    ]
+  },
+  "ir": {
+    "version": "0.1.0",
+    "source": "jsdoc",
+    "nodes": [
+      {
+        "id": "jsdoc:function:greet",
+        "kind": "function",
+        "name": "greet",
+        "longname": "greet",
+        "title": "greet",
+        "summary": "Greets a <lang key=\"greet.target\"><zh-CN>用户</zh-CN><en>user</en></lang>.",
+        "jsdoc": {
+          "docletId": "greet",
+          "kind": "function",
+          "name": "greet",
+          "longname": "greet",
+          "memberof": "",
+          "scope": "global",
+          "params": [
+            {
+              "name": "name",
+              "type": {
+                "names": ["string"]
+              },
+              "description": "User <lang key=\"greet.param.name\"><zh-CN>名称</zh-CN><en>name</en></lang>."
+            }
+          ],
+          "returns": [
+            {
+              "type": {
+                "names": ["string"]
+              },
+              "description": "Greeting <lang key=\"greet.return.text\"><zh-CN>文本</zh-CN><en>text</en></lang>."
+            }
+          ],
+          "properties": [],
+          "examples": [
+            "  const message = `Hello, ${name}`;\n  return message;"
+          ]
+        },
+        "hia": {
+          "metadataKey": "hia",
+          "microPlugins": [
+            "code-fragment",
+            "source-link",
+            "source-preview",
+            "doc-i18n",
+            "doclet-normalizer",
+            "diagnostics"
+          ]
+        },
+        "source": {
+          "model": "hia-jsdoc-source",
+          "modelVersion": "0.2.0",
+          "mode": "all",
+          "definedIn": {
+            "kind": "defined-in",
+            "relativePath": "examples/basic/src/greet.js",
+            "language": "javascript",
+            "position": {
+              "line": 3,
+              "column": 1
+            },
+            "range": {
+              "start": {
+                "line": 3,
+                "column": 1
+              },
+              "end": {
+                "line": 3,
+                "column": 1
+              }
+            },
+            "link": {
+              "enabled": true,
+              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
+              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L3",
+              "openMode": "currentPage"
+            }
+          },
+          "primaryBlock": {
+            "kind": "primary-block",
+            "id": "doclet:function:greet",
+            "relativePath": "examples/basic/src/greet.js",
+            "language": "javascript",
+            "range": {
+              "start": {
+                "line": 17,
+                "column": 1
+              },
+              "end": {
+                "line": 22,
+                "column": 2
+              }
+            },
+            "content": "function greet(name) {\n  /* @codeblock GREET_BODY */\n  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
+            "rangeSource": "parser-js",
+            "confidence": "high",
+            "diagnostics": [],
+            "link": {
+              "enabled": true,
+              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
+              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L17-L22",
+              "openMode": "currentPage"
+            },
+            "preview": {
+              "enabled": true,
+              "defaultExpanded": false,
+              "language": "javascript",
+              "content": "function greet(name) {\n  /* @codeblock GREET_BODY */\n  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
+              "range": {
+                "start": {
+                  "line": 17,
+                  "column": 1
+                },
+                "end": {
+                  "line": 22,
+                  "column": 2
+                }
+              }
+            }
+          },
+          "fragments": [
+            {
+              "kind": "source-fragment",
+              "id": "GREET_BODY",
+              "relativePath": "examples/basic/src/greet.js",
+              "language": "javascript",
+              "range": {
+                "start": {
+                  "line": 19,
+                  "column": 1
+                },
+                "end": {
+                  "line": 20,
+                  "column": 1
+                }
+              },
+              "content": "  const message = `Hello, ${name}`;\n  return message;",
+              "link": {
+                "enabled": true,
+                "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
+                "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
+                "openMode": "currentPage"
+              },
+              "preview": {
+                "enabled": true,
+                "defaultExpanded": false,
+                "language": "javascript",
+                "content": "  const message = `Hello, ${name}`;\n  return message;"
+              }
+            }
+          ],
+          "references": [
+            {
+              "kind": "source-reference",
+              "referenceKind": "coderef",
+              "targetId": "GREET_BODY",
+              "sourceNodeId": "greet",
+              "fieldPath": "examples.0",
+              "resolved": true,
+              "fragment": {
+                "kind": "source-fragment",
+                "id": "GREET_BODY",
+                "relativePath": "examples/basic/src/greet.js",
+                "language": "javascript",
+                "range": {
+                  "start": {
+                    "line": 19,
+                    "column": 1
+                  },
+                  "end": {
+                    "line": 20,
+                    "column": 1
+                  }
+                },
+                "content": "  const message = `Hello, ${name}`;\n  return message;",
+                "link": {
+                  "enabled": true,
+                  "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
+                  "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
+                  "openMode": "currentPage"
+                },
+                "preview": {
+                  "enabled": true,
+                  "defaultExpanded": false,
+                  "language": "javascript",
+                  "content": "  const message = `Hello, ${name}`;\n  return message;"
+                }
+              },
+              "diagnostics": []
+            }
+          ],
+          "diagnostics": []
+        },
+        "i18n": {
+          "enabled": true,
+          "model": "hia-jsdoc-text-i18n",
+          "modelVersion": "0.2.0",
+          "defaultLocale": "zh-CN",
+          "fallbackLocale": "en",
+          "locales": ["zh-CN", "en"],
+          "mode": "runtimeSwitch",
+          "key": "greet.description",
+          "path": "api.greet",
+          "fields": {
+            "description": {
+              "fieldPath": "description",
+              "kind": "description",
+              "defaultLocale": "zh-CN",
+              "defaultText": "Greets a <lang key=\"greet.target\"><zh-CN>用户</zh-CN><en>user</en></lang>.",
+              "source": "doclet.description",
+              "blocks": [
+                {
+                  "kind": "lang-block",
+                  "locale": "zh-CN",
+                  "fieldPath": "description",
+                  "text": "问候一个用户。",
+                  "source": "tag",
+                  "rangeInComment": null
+                },
+                {
+                  "kind": "lang-block",
+                  "locale": "en",
+                  "fieldPath": "description",
+                  "text": "Greets a user.",
+                  "source": "tag",
+                  "rangeInComment": null
+                }
+              ],
+              "segments": [
+                {
+                  "kind": "lang-inline",
+                  "id": "description.0",
+                  "key": "greet.target",
+                  "path": "",
+                  "fieldPath": "description",
+                  "raw": "<lang key=\"greet.target\"><zh-CN>用户</zh-CN><en>user</en></lang>",
+                  "localized": {
+                    "zh-CN": "用户",
+                    "en": "user"
+                  },
+                  "rangeInField": {
+                    "start": 9,
+                    "end": 71
+                  }
+                }
+              ],
+              "localizedText": {
+                "zh-CN": "问候一个用户。",
+                "en": "Greets a user."
+              },
+              "resolutions": {
+                "zh-CN": {
+                  "requestedLocale": "zh-CN",
+                  "resolvedLocale": "zh-CN",
+                  "fallbackChain": ["zh-CN", "zh", "en"],
+                  "usedFallback": false,
+                  "missing": false
+                },
+                "en": {
+                  "requestedLocale": "en",
+                  "resolvedLocale": "en",
+                  "fallbackChain": ["en", "zh-CN"],
+                  "usedFallback": false,
+                  "missing": false
+                }
+              },
+              "missingLocales": []
+            },
+            "params.name.description": {
+              "fieldPath": "params.name.description",
+              "kind": "param.description",
+              "defaultLocale": "zh-CN",
+              "defaultText": "User <lang key=\"greet.param.name\"><zh-CN>名称</zh-CN><en>name</en></lang>.",
+              "source": "doclet.params.0.description",
+              "blocks": [],
+              "segments": [
+                {
+                  "kind": "lang-inline",
+                  "id": "params.name.description.0",
+                  "key": "greet.param.name",
+                  "path": "",
+                  "fieldPath": "params.name.description",
+                  "raw": "<lang key=\"greet.param.name\"><zh-CN>名称</zh-CN><en>name</en></lang>",
+                  "localized": {
+                    "zh-CN": "名称",
+                    "en": "name"
+                  },
+                  "rangeInField": {
+                    "start": 5,
+                    "end": 71
+                  }
+                }
+              ],
+              "localizedText": {
+                "zh-CN": "User 名称.",
+                "en": "User name."
+              },
+              "resolutions": {},
+              "missingLocales": []
+            },
+            "returns.0.description": {
+              "fieldPath": "returns.0.description",
+              "kind": "return.description",
+              "defaultLocale": "zh-CN",
+              "defaultText": "Greeting <lang key=\"greet.return.text\"><zh-CN>文本</zh-CN><en>text</en></lang>.",
+              "source": "doclet.returns.0.description",
+              "blocks": [],
+              "segments": [
+                {
+                  "kind": "lang-inline",
+                  "id": "returns.0.description.0",
+                  "key": "greet.return.text",
+                  "path": "",
+                  "fieldPath": "returns.0.description",
+                  "raw": "<lang key=\"greet.return.text\"><zh-CN>文本</zh-CN><en>text</en></lang>",
+                  "localized": {
+                    "zh-CN": "文本",
+                    "en": "text"
+                  },
+                  "rangeInField": {
+                    "start": 9,
+                    "end": 76
+                  }
+                }
+              ],
+              "localizedText": {
+                "zh-CN": "Greeting 文本.",
+                "en": "Greeting text."
+              },
+              "resolutions": {},
+              "missingLocales": []
+            }
+          },
+          "diagnostics": []
+        },
+        "diagnostics": []
+      },
+      {
+        "id": "jsdoc:function:normalizeName",
+        "kind": "function",
+        "name": "normalizeName",
+        "longname": "normalizeName",
+        "title": "normalizeName",
+        "summary": "Shared helper.",
+        "jsdoc": {
+          "docletId": "normalizeName",
+          "kind": "function",
+          "name": "normalizeName",
+          "longname": "normalizeName",
+          "memberof": "",
+          "scope": "global",
+          "params": [],
+          "returns": [],
+          "properties": [],
+          "examples": []
+        },
+        "hia": {
+          "metadataKey": "hia",
+          "microPlugins": [
+            "code-fragment",
+            "source-link",
+            "source-preview",
+            "doc-i18n",
+            "doclet-normalizer",
+            "diagnostics"
+          ]
+        },
+        "source": {
+          "model": "hia-jsdoc-source",
+          "modelVersion": "0.2.0",
+          "mode": "all",
+          "definedIn": {
+            "kind": "defined-in",
+            "relativePath": "examples/basic/src/shared.js",
+            "language": "javascript",
+            "position": {
+              "line": 13,
+              "column": 1
+            },
+            "range": {
+              "start": {
+                "line": 13,
+                "column": 1
+              },
+              "end": {
+                "line": 13,
+                "column": 1
+              }
+            },
+            "link": {
+              "enabled": true,
+              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
+              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13",
+              "openMode": "currentPage"
+            }
+          },
+          "primaryBlock": {
+            "kind": "primary-block",
+            "id": "doclet:function:normalizeName",
+            "relativePath": "examples/basic/src/shared.js",
+            "language": "javascript",
+            "range": {
+              "start": {
+                "line": 13,
+                "column": 1
+              },
+              "end": {
+                "line": 15,
+                "column": 2
+              }
+            },
+            "content": "function normalizeName(name) {\n  return String(name).trim();\n}",
+            "rangeSource": "parser-js",
+            "confidence": "high",
+            "diagnostics": [],
+            "link": {
+              "enabled": true,
+              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
+              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13-L15",
+              "openMode": "currentPage"
+            },
+            "preview": {
+              "enabled": true,
+              "defaultExpanded": false,
+              "language": "javascript",
+              "content": "function normalizeName(name) {\n  return String(name).trim();\n}"
+            }
+          },
+          "fragments": [],
+          "references": [],
+          "diagnostics": []
+        },
+        "i18n": {
+          "enabled": true,
+          "model": "hia-jsdoc-text-i18n",
+          "modelVersion": "0.2.0",
+          "defaultLocale": "zh-CN",
+          "fallbackLocale": "en",
+          "locales": ["zh-CN", "en"],
+          "mode": "runtimeSwitch",
+          "key": "shared.helper",
+          "path": "api.shared",
+          "fields": {
+            "description": {
+              "fieldPath": "description",
+              "kind": "description",
+              "defaultLocale": "zh-CN",
+              "defaultText": "Shared helper.",
+              "source": "resource",
+              "blocks": [],
+              "segments": [],
+              "localizedText": {
+                "zh-CN": "标准化用户名称。",
+                "en": "Normalizes a user name."
+              },
+              "resolutions": {},
+              "missingLocales": []
+            }
+          },
+          "diagnostics": []
+        },
+        "diagnostics": []
+      }
+    ]
+  },
+  "sourceFragments": [
+    {
+      "kind": "source-fragment",
+      "id": "GREET_BODY",
+      "relativePath": "examples/basic/src/greet.js",
+      "language": "javascript",
+      "range": {
+        "start": {
+          "line": 19,
+          "column": 1
+        },
+        "end": {
+          "line": 20,
+          "column": 1
+        }
+      },
+      "content": "  const message = `Hello, ${name}`;\n  return message;"
+    }
+  ],
+  "localizationResources": [
+    {
+      "path": "examples/basic/i18n/docs.hia-i18n.json",
+      "localeCount": 2
+    }
+  ],
+  "diagnostics": [],
+  "diagnosticCounts": {},
+  "docletNodeMap": [
+    {
+      "docletId": "greet",
+      "nodeId": "jsdoc:function:greet",
+      "kind": "function",
+      "name": "greet",
+      "longname": "greet"
+    },
+    {
+      "docletId": "normalizeName",
+      "nodeId": "jsdoc:function:normalizeName",
+      "kind": "function",
+      "name": "normalizeName",
+      "longname": "normalizeName"
+    }
+  ]
+}

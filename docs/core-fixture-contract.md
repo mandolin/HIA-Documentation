@@ -8,6 +8,8 @@ Core fixtures are shared inputs for `@hia-doc/core`, `@hia-doc/renderer-html`, `
 
 The first fixture shape must follow the current JSDoc implementation practice, not the early i18n sketches. In particular, multilingual text is represented as field-level i18n data compatible with `doclet.hia.i18n.fields`.
 
+`fixtures/jsdoc-integration.basic.json` records a compact `jsdoc-plugin-hia-sys` HIA Integration output sample. `@hia-doc/parser-jsdoc` converts it into the core document shape during tests instead of asking core to depend on JSDoc-specific doclet objects.
+
 ## Minimal Document Shape
 
 ```json
@@ -124,6 +126,8 @@ Source metadata follows the current JPHS/JTH split:
 
 All fixture paths must be relative paths. No fixture should contain a local absolute path.
 
+Adapter fixtures may preserve parser metadata, but local absolute fields such as generated `filePath` values must be removed or sanitized before they become core IR metadata.
+
 ## Diagnostics
 
 Diagnostics are stored as arrays with a stable code, severity, message and optional `targetPath`.
@@ -136,4 +140,3 @@ Diagnostics are stored as arrays with a stable code, severity, message and optio
   "targetPath": "symbols.0.source.definedIn.relativePath"
 }
 ```
-

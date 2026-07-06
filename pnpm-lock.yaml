@@ -32,6 +32,12 @@ importers:
 
   packages/core: {}
 
+  packages/parser-jsdoc:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/renderer-html:
     dependencies:
       '@hia-doc/core':
