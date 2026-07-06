@@ -9,8 +9,10 @@ This file records the initial dependency choices for `S-sara-1`.
 | `vitest@2.1.9` | Unit tests for package boundaries and CLI smoke tests; pinned to a Node 20.9-compatible line. | MIT |
 | `tsx` | Development-time TypeScript CLI runner. | MIT |
 | `@types/node` | Node.js 20 type definitions. | MIT |
+| `vscode-languageserver` | LSP transport and protocol types for `@hia-doc/lsp`. | MIT |
+| `vscode-languageserver-textdocument` | In-memory text document model for LSP tests and server document handling. | MIT |
 
-No runtime dependency is introduced in `S-sara-1`; `core`, `renderer-html`, and `cli` use only local workspace packages and Node.js built-ins.
+`S-sara-6` introduces the first runtime LSP dependencies in `@hia-doc/lsp`. The diagnostics engine still consumes core documents and does not depend on any IDE-specific API.
 
 ## Tool Versions
 

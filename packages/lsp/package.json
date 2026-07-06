@@ -1,0 +1,33 @@
+{
+  "name": "@hia-doc/lsp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Language Server Protocol layer for HIA documents.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hia-lsp": "./dist/node.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@hia-doc/core": "workspace:*",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "sideEffects": false
+}
