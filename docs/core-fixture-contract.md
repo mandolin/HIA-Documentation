@@ -27,6 +27,7 @@ The core document version and schema version are aligned in this pass. Text i18n
 | `fixtures/i18n-resource.hia.json` | Field-level key/path and external resource fixture. |
 | `fixtures/source-reference.hia.json` | Source definedIn, primary block, named fragment, reference and preview fixture. |
 | `fixtures/jsdoc-integration.basic.json` | JSDoc Integration input consumed by `@hia-doc/parser-jsdoc` during bridge tests. |
+| `fixtures/jsdoc-integration.compat.json` | JSDoc adapter compatibility fixture for metadata sanitization and diagnostic data passthrough. |
 
 ## Minimal Document Shape
 
@@ -217,3 +218,17 @@ The runtime validator additionally enforces:
 - nested diagnostics must use supported severity values
 
 The schema keeps `additionalProperties` open for draft fields. New consumers should ignore unknown fields unless an ADR promotes them into a required contract.
+
+## Adapter Compatibility Baseline
+
+JSDoc Integration fixtures are adapter input fixtures, not core document fixtures. They become part of the core compatibility baseline only after `@hia-doc/parser-jsdoc` converts them into a `HiaDocument`.
+
+The converted document must:
+
+- pass `validateHiaDocumentDetailed()`
+- include adapter bridge and metadata schema versions in `document.metadata`
+- keep JSDoc-specific trace data inside sanitized `metadata`
+- preserve adapter diagnostic `data` when it is an object
+- remove unsafe path strings and `filePath` fields from metadata and diagnostic data
+
+Future adapters should add equivalent input and compatibility fixtures before being treated as stable core consumers.

@@ -2,13 +2,17 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { validateHiaDocumentDetailed } from "@hia-doc/core";
 import {
+  JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
+  JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
+  JSDOC_ADAPTER_NAME,
+  JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
   convertJSDocIntegrationToHiaDocument,
   convertJSDocIntegrationToHiaDocumentDetailed,
   fromJSDocIntegration
 } from "./index.js";
 
-async function readIntegrationFixture() {
-  const fixturePath = new URL("../../../fixtures/jsdoc-integration.basic.json", import.meta.url);
+async function readIntegrationFixture(name = "jsdoc-integration.basic.json") {
+  const fixturePath = new URL(`../../../fixtures/${name}`, import.meta.url);
   return JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
 }
 
@@ -54,6 +58,85 @@ describe("@hia-doc/parser-jsdoc", () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.document.symbols[1]?.summary).toBe("标准化用户名称。");
     expect(aliasDocument.symbols[0]?.id).toBe("jsdoc:function:greet");
+  });
+
+  it("keeps JSDoc integration compatibility fixtures inside the core schema baseline", async () => {
+    for (const fixtureName of ["jsdoc-integration.basic.json", "jsdoc-integration.compat.json"]) {
+      const integration = await readIntegrationFixture(fixtureName);
+      const result = convertJSDocIntegrationToHiaDocumentDetailed(integration, {
+        documentId: `fixture.${fixtureName}`,
+        title: fixtureName
+      });
+      const validation = validateHiaDocumentDetailed(result.document);
+
+      expect(validation.valid, fixtureName).toBe(true);
+      expect(validation.diagnostics.filter((item) => item.severity === "error"), fixtureName).toEqual([]);
+    }
+  });
+
+  it("preserves adapter metadata and sanitizes unsafe metadata paths", async () => {
+    const integration = await readIntegrationFixture("jsdoc-integration.compat.json");
+    const result = convertJSDocIntegrationToHiaDocumentDetailed(integration);
+    const metadata = result.document.metadata as Record<string, unknown>;
+    const integrationMetadata = metadata.integration as Record<string, unknown>;
+    const parserBoundary = integrationMetadata.parserBoundary as Record<string, unknown>;
+    const localizationResources = integrationMetadata.localizationResources as Record<string, unknown>[];
+    const symbolMetadata = result.document.symbols[0]?.metadata as Record<string, unknown>;
+    const jsdocMetadata = symbolMetadata.jsdoc as Record<string, unknown>;
+    const jsdocMeta = jsdocMetadata.meta as Record<string, unknown>;
+    const warning = result.document.symbols[0]?.diagnostics?.[0];
+
+    expect(metadata).toMatchObject({
+      adapter: JSDOC_ADAPTER_NAME,
+      adapterBridgeVersion: JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
+      metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
+      source: "jsdoc"
+    });
+    expect(integrationMetadata.contractVersion).toBe(JSDOC_HIA_INTEGRATION_CONTRACT_VERSION);
+    expect(parserBoundary.safeRelative).toBe("examples/compat");
+    expect(parserBoundary).not.toHaveProperty("workspaceRoot");
+    expect(parserBoundary).not.toHaveProperty("sourceFilePath");
+    expect(localizationResources[0]).toMatchObject({
+      path: "examples/compat/i18n/docs.hia-i18n.json",
+      localeCount: 2
+    });
+    expect(localizationResources[0]).not.toHaveProperty("sourceFilePath");
+    expect(symbolMetadata).toMatchObject({
+      adapter: JSDOC_ADAPTER_NAME,
+      metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION
+    });
+    expect(jsdocMetadata.docletId).toBe("compatExample");
+    expect(jsdocMetadata).not.toHaveProperty("filePath");
+    expect(jsdocMeta.relativePath).toBe("examples/compat/src/compat.js");
+    expect(jsdocMeta).not.toHaveProperty("workspaceRoot");
+    expect(warning?.data).toMatchObject({
+      docletId: "compatExample",
+      safeRelativePath: "examples/compat/src/compat.js",
+      nested: {
+        note: "kept"
+      }
+    });
+    expect(warning?.data).not.toHaveProperty("workspaceRoot");
+    expect(warning?.data).not.toHaveProperty("filePath");
+    expect(JSON.stringify(result.document)).not.toContain("/private/");
+  });
+
+  it("warns when a fixture uses an unsupported JSDoc integration contract version", async () => {
+    const integration = await readIntegrationFixture("jsdoc-integration.compat.json") as Record<string, unknown>;
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      ...integration,
+      contractVersion: "9.0.0"
+    });
+
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      code: "HIA_JSDOC_CONTRACT_VERSION_UNSUPPORTED",
+      data: {
+        actualVersion: "9.0.0",
+        expectedVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION
+      },
+      severity: "warning",
+      targetPath: "contractVersion"
+    }));
   });
 
   it("does not leak local absolute paths into converted core IR", async () => {

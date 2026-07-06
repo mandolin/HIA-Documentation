@@ -3,10 +3,12 @@ import {
   HIA_SOURCE_MODEL_VERSION,
   HIA_TEXT_I18N_MODEL,
   HIA_TEXT_I18N_MODEL_VERSION,
+  createHiaDiagnostic,
   createHiaDocument
 } from "@hia-doc/core";
 import type {
   HiaDiagnostic,
+  HiaDiagnosticData,
   HiaDiagnosticSeverity,
   HiaDocument,
   HiaFallbackLocale,
@@ -33,8 +35,32 @@ import type {
   HiaTextResolution
 } from "@hia-doc/core";
 
+export const JSDOC_ADAPTER_NAME = "parser-jsdoc";
+export const JSDOC_ADAPTER_CORE_BRIDGE_VERSION = "0.1.0";
+export const JSDOC_ADAPTER_METADATA_SCHEMA_VERSION = "0.1.0";
 export const JSDOC_HIA_INTEGRATION_CONTRACT = "hia-jsdoc-integration";
 export const JSDOC_HIA_INTEGRATION_CONTRACT_VERSION = "0.1.0";
+
+export interface JSDocAdapterIntegrationMetadata extends Record<string, unknown> {
+  contract: string;
+  contractVersion: string;
+  pluginVersion: string;
+  mode: string;
+  irVersion: string;
+  parserBoundary: unknown;
+  docletNodeMap: unknown;
+  sourceFragments: unknown;
+  localizationResources: unknown;
+  diagnosticCounts: unknown;
+}
+
+export interface JSDocAdapterDocumentMetadata extends Record<string, unknown> {
+  adapter: typeof JSDOC_ADAPTER_NAME;
+  adapterBridgeVersion: typeof JSDOC_ADAPTER_CORE_BRIDGE_VERSION;
+  metadataSchemaVersion: typeof JSDOC_ADAPTER_METADATA_SCHEMA_VERSION;
+  source: "jsdoc";
+  integration: JSDocAdapterIntegrationMetadata;
+}
 
 export interface JSDocIntegrationInput {
   contract?: string;
@@ -109,7 +135,24 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
       "HIA_JSDOC_CONTRACT_UNSUPPORTED",
       `Unsupported JSDoc integration contract: ${integration.contract}.`,
       "warning",
-      "contract"
+      "contract",
+      {
+        actualContract: integration.contract,
+        expectedContract: JSDOC_HIA_INTEGRATION_CONTRACT
+      }
+    ));
+  }
+
+  if (integration.contractVersion && integration.contractVersion !== JSDOC_HIA_INTEGRATION_CONTRACT_VERSION) {
+    diagnostics.push(createDiagnostic(
+      "HIA_JSDOC_CONTRACT_VERSION_UNSUPPORTED",
+      `Unsupported JSDoc integration contractVersion: ${integration.contractVersion}.`,
+      "warning",
+      "contractVersion",
+      {
+        actualVersion: integration.contractVersion,
+        expectedVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION
+      }
     ));
   }
 
@@ -136,6 +179,24 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
     ...mapDiagnostics(integration.diagnostics, "diagnostics"),
     ...diagnostics
   ];
+  const adapterMetadata: JSDocAdapterDocumentMetadata = {
+    adapter: JSDOC_ADAPTER_NAME,
+    adapterBridgeVersion: JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
+    metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
+    source: "jsdoc",
+    integration: {
+      contract: integration.contract ?? "",
+      contractVersion: integration.contractVersion ?? "",
+      pluginVersion: integration.pluginVersion ?? "",
+      mode: integration.mode ?? "",
+      irVersion: integration.ir?.version ?? "",
+      parserBoundary: sanitizeMetadata(integration.parserBoundary ?? {}),
+      docletNodeMap: sanitizeMetadata(integration.docletNodeMap ?? []),
+      sourceFragments: sanitizeMetadata(integration.sourceFragments ?? []),
+      localizationResources: sanitizeMetadata(integration.localizationResources ?? []),
+      diagnosticCounts: sanitizeMetadata(integration.diagnosticCounts ?? {})
+    }
+  };
   const documentInput = {
     id: options.documentId ?? "jsdoc.integration",
     title: options.title ?? "JSDoc Integration",
@@ -144,22 +205,7 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
     nodes: documentNodes,
     symbols,
     diagnostics: documentDiagnostics,
-    metadata: {
-      adapter: "parser-jsdoc",
-      source: "jsdoc",
-      integration: {
-        contract: integration.contract ?? "",
-        contractVersion: integration.contractVersion ?? "",
-        pluginVersion: integration.pluginVersion ?? "",
-        mode: integration.mode ?? "",
-        irVersion: integration.ir?.version ?? "",
-        parserBoundary: sanitizeMetadata(integration.parserBoundary ?? {}),
-        docletNodeMap: sanitizeMetadata(integration.docletNodeMap ?? []),
-        sourceFragments: sanitizeMetadata(integration.sourceFragments ?? []),
-        localizationResources: sanitizeMetadata(integration.localizationResources ?? []),
-        diagnosticCounts: sanitizeMetadata(integration.diagnosticCounts ?? {})
-      }
-    }
+    metadata: adapterMetadata
   };
 
   if (fallbackLocale) {
@@ -205,7 +251,8 @@ function mapIntegrationNodeToSymbol(
     kind,
     summary: chooseSummary(node, i18n, defaultLocale),
     metadata: {
-      adapter: "parser-jsdoc",
+      adapter: JSDOC_ADAPTER_NAME,
+      metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
       jsdoc: sanitizeMetadata(node.jsdoc ?? {}),
       hia: sanitizeMetadata(node.hia ?? {})
     }
@@ -901,7 +948,8 @@ function mapDiagnostics(value: unknown, targetPathPrefix: string): HiaDiagnostic
         stringValue(item.code) || "HIA_JSDOC_ADAPTER_DIAGNOSTIC",
         stringValue(item.message) || "JSDoc adapter diagnostic.",
         toSeverity(item.severity),
-        stringValue(item.targetPath) || `${targetPathPrefix}.${index}`
+        stringValue(item.targetPath) || `${targetPathPrefix}.${index}`,
+        sanitizeDiagnosticData(item.data)
       );
       const path = stringValue(item.path);
 
@@ -1070,6 +1118,12 @@ function sanitizeMetadata(value: unknown): unknown {
   return value;
 }
 
+function sanitizeDiagnosticData(value: unknown): HiaDiagnosticData | undefined {
+  const sanitized = sanitizeMetadata(value);
+
+  return isRecord(sanitized) ? sanitized : undefined;
+}
+
 function isUnsafePathLike(value: string): boolean {
   const normalized = value.replace(/\\/g, "/");
 
@@ -1086,20 +1140,23 @@ function createDiagnostic(
   code: string,
   message: string,
   severity: HiaDiagnosticSeverity,
-  targetPath?: string
+  targetPath?: string,
+  data?: HiaDiagnosticData
 ): HiaDiagnostic {
-  const diagnostic: HiaDiagnostic = {
-    code,
-    message,
-    severity
-  };
+  const options: {
+    data?: HiaDiagnosticData;
+    targetPath?: string;
+  } = {};
 
   if (targetPath) {
-    diagnostic.targetPath = targetPath;
-    diagnostic.path = targetPath;
+    options.targetPath = targetPath;
   }
 
-  return diagnostic;
+  if (data) {
+    options.data = data;
+  }
+
+  return createHiaDiagnostic(code, message, severity, options);
 }
 
 function stringValue(value: unknown): string {

@@ -1,0 +1,150 @@
+{
+  "contract": "hia-jsdoc-integration",
+  "contractVersion": "0.1.0",
+  "pluginVersion": "0.1.0",
+  "mode": "hiaIntegration",
+  "parserBoundary": {
+    "adapter": "parser-jsdoc",
+    "safeRelative": "examples/compat",
+    "workspaceRoot": "/private/workspace",
+    "sourceFilePath": "/private/workspace/src/compat.js"
+  },
+  "ir": {
+    "version": "0.1.0",
+    "source": "jsdoc",
+    "nodes": [
+      {
+        "id": "jsdoc:function:compatExample",
+        "kind": "function",
+        "name": "compatExample",
+        "longname": "compatExample",
+        "summary": "Builds a compact compatibility example.",
+        "jsdoc": {
+          "docletId": "compatExample",
+          "kind": "function",
+          "name": "compatExample",
+          "longname": "compatExample",
+          "filePath": "/private/workspace/src/compat.js",
+          "meta": {
+            "filename": "compat.js",
+            "relativePath": "examples/compat/src/compat.js",
+            "workspaceRoot": "/private/workspace"
+          }
+        },
+        "hia": {
+          "metadataKey": "hia",
+          "microPlugins": ["doc-i18n", "source-preview", "diagnostics"]
+        },
+        "source": {
+          "model": "hia-jsdoc-source",
+          "modelVersion": "0.2.0",
+          "mode": "all",
+          "definedIn": {
+            "kind": "defined-in",
+            "relativePath": "examples/compat/src/compat.js",
+            "language": "javascript",
+            "position": {
+              "line": 5,
+              "column": 1
+            }
+          },
+          "primaryBlock": {
+            "kind": "primary-block",
+            "id": "doclet:function:compatExample",
+            "relativePath": "examples/compat/src/compat.js",
+            "language": "javascript",
+            "range": {
+              "start": {
+                "line": 5,
+                "column": 1
+              },
+              "end": {
+                "line": 7,
+                "column": 2
+              }
+            },
+            "content": "function compatExample() {\n  return true;\n}",
+            "rangeSource": "parser-js",
+            "confidence": "high"
+          },
+          "fragments": [],
+          "references": [],
+          "diagnostics": []
+        },
+        "i18n": {
+          "enabled": true,
+          "model": "hia-jsdoc-text-i18n",
+          "modelVersion": "0.2.0",
+          "defaultLocale": "en",
+          "fallbackLocale": "zh-CN",
+          "locales": ["en", "zh-CN"],
+          "mode": "runtimeSwitch",
+          "key": "compat.description",
+          "path": "api.compat",
+          "fields": {
+            "description": {
+              "fieldPath": "description",
+              "kind": "description",
+              "defaultLocale": "en",
+              "defaultText": "Builds a compact compatibility example.",
+              "source": "doclet.description",
+              "localizedText": {
+                "en": "Builds a compact compatibility example.",
+                "zh-CN": "构建一个紧凑的兼容性示例。"
+              },
+              "resolutions": {
+                "zh-CN": {
+                  "requestedLocale": "zh-CN",
+                  "resolvedLocale": "zh-CN",
+                  "fallbackChain": ["zh-CN", "en"],
+                  "usedFallback": false,
+                  "missing": false
+                }
+              }
+            }
+          },
+          "diagnostics": []
+        },
+        "diagnostics": [
+          {
+            "code": "HIA_JSDOC_ADAPTER_DIAGNOSTIC",
+            "message": "Adapter compatibility warning.",
+            "severity": "warning",
+            "targetPath": "ir.nodes.0",
+            "data": {
+              "docletId": "compatExample",
+              "safeRelativePath": "examples/compat/src/compat.js",
+              "workspaceRoot": "/private/workspace",
+              "filePath": "/private/workspace/src/compat.js",
+              "nested": {
+                "note": "kept",
+                "sourceFilePath": "/private/workspace/src/compat.js"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "sourceFragments": [],
+  "localizationResources": [
+    {
+      "path": "examples/compat/i18n/docs.hia-i18n.json",
+      "localeCount": 2,
+      "sourceFilePath": "/private/workspace/i18n/docs.hia-i18n.json"
+    }
+  ],
+  "diagnostics": [],
+  "diagnosticCounts": {
+    "warning": 1
+  },
+  "docletNodeMap": [
+    {
+      "docletId": "compatExample",
+      "nodeId": "jsdoc:function:compatExample",
+      "kind": "function",
+      "name": "compatExample",
+      "longname": "compatExample"
+    }
+  ]
+}

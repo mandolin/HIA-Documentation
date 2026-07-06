@@ -84,6 +84,7 @@ export const HIA_DIAGNOSTIC_CODE_REGISTRY = [
   { code: "HIA_LSP_JSON_PARSE_ERROR", defaultSeverity: "error", layer: "lsp", description: "LSP document text is not valid JSON." },
   { code: "HIA_JSDOC_INTEGRATION_INVALID", defaultSeverity: "error", layer: "adapter", description: "JSDoc Integration payload is invalid." },
   { code: "HIA_JSDOC_CONTRACT_UNSUPPORTED", defaultSeverity: "warning", layer: "adapter", description: "JSDoc Integration contract is unsupported." },
+  { code: "HIA_JSDOC_CONTRACT_VERSION_UNSUPPORTED", defaultSeverity: "warning", layer: "adapter", description: "JSDoc Integration contractVersion is unsupported." },
   { code: "HIA_JSDOC_NODE_INVALID", defaultSeverity: "warning", layer: "adapter", description: "JSDoc Integration node is invalid." },
   { code: "HIA_JSDOC_ADAPTER_DIAGNOSTIC", defaultSeverity: "warning", layer: "adapter", description: "Generic diagnostic from the JSDoc adapter." }
 ] as const satisfies readonly HiaDiagnosticCodeDefinition[];
@@ -129,4 +130,3 @@ export function createHiaDiagnostic(
 
   return diagnostic;
 }
-
