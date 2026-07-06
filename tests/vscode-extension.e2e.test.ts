@@ -17,13 +17,18 @@ describe("VS Code extension package", () => {
     expect(manifest.main).toBe("./dist/extension.js");
     expect(manifest.activationEvents).toContain("onLanguage:hia");
     expect(manifest.activationEvents).toContain("onCommand:hia.showOutput");
+    expect(manifest.activationEvents).toContain("onCommand:hia.buildDocs");
+    expect(manifest.activationEvents).toContain("onCommand:hia.openPreview");
+    expect(manifest.activationEvents).toContain("onCommand:hia.validateWorkspace");
     expect(manifest.contributes.languages[0]).toMatchObject({
       id: "hia",
       extensions: [".hia.json"]
     });
-    expect(manifest.contributes.commands[0]).toMatchObject({
-      command: "hia.showOutput",
-      title: "HIA: Show Output"
-    });
+    expect(manifest.contributes.commands.map((command) => command.command)).toEqual([
+      "hia.showOutput",
+      "hia.buildDocs",
+      "hia.openPreview",
+      "hia.validateWorkspace"
+    ]);
   });
 });

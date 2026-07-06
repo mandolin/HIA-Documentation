@@ -13,4 +13,10 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - missing i18n locales;
   - duplicate inline i18n keys;
   - unresolved or incomplete source references.
+- Resource index over managed core documents:
+  - external i18n resource paths;
+  - inline i18n keys and paths;
+  - missing locale entries;
+  - source references and source fragments.
 - Node LSP transport entry for future VS Code integration.
+- Custom request: `hia/documentResourceIndex`.

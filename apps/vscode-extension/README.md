@@ -6,8 +6,14 @@ The extension starts the shared `@hia-doc/lsp` server and connects it through `v
 
 ## Current Scope
 
-- Activates on `.hia.json` documents and the `HIA: Show Output` command.
+- Activates on `.hia.json` documents and HIA commands.
 - Creates a HIA output channel.
 - Starts the local HIA LSP server over stdio.
 - Registers the `.hia.json` language id as `hia`.
-- Leaves build, preview and workspace validation commands for the next planning step.
+- Provides command entries:
+  - `HIA: Show Output`
+  - `HIA: Build Docs`
+  - `HIA: Open Preview`
+  - `HIA: Validate Workspace`
+
+`HIA: Build Docs` delegates to the shared CLI. `HIA: Validate Workspace` asks the LSP server for the active document resource index. The extension still does not parse JSDoc, generate HTML directly, or duplicate core diagnostics.

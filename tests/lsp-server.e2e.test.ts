@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -11,6 +12,7 @@ interface JsonRpcMessage {
 describe("LSP server stdio", () => {
   it("responds to initialize and shutdown", async () => {
     const workspaceRoot = fileURLToPath(new URL("..", import.meta.url));
+    const documentText = await readFile(new URL("../fixtures/basic.hia.json", import.meta.url), "utf8");
     const child = spawn(process.execPath, ["packages/lsp/dist/node.js", "--stdio"], {
       cwd: workspaceRoot,
       stdio: ["pipe", "pipe", "pipe"]
@@ -39,12 +41,43 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
+      method: "textDocument/didOpen",
+      params: {
+        textDocument: {
+          uri: "file:///workspace/basic.hia.json",
+          languageId: "hia",
+          version: 1,
+          text: documentText
+        }
+      }
+    });
+
+    await client.waitFor((message) => message.method === "textDocument/publishDiagnostics");
+
+    client.send({
+      jsonrpc: "2.0",
       id: 2,
+      method: "hia/documentResourceIndex",
+      params: {
+        uri: "file:///workspace/basic.hia.json"
+      }
+    });
+
+    const resourceIndexResponse = await client.waitFor((message) => message.id === 2);
+    expect(resourceIndexResponse.result).toMatchObject({
+      documentId: "fixture.basic",
+      title: "HIA Basic Fixture",
+      uri: "file:///workspace/basic.hia.json"
+    });
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 3,
       method: "shutdown",
       params: null
     });
 
-    const shutdownResponse = await client.waitFor((message) => message.id === 2);
+    const shutdownResponse = await client.waitFor((message) => message.id === 3);
     expect(shutdownResponse.result).toBeNull();
 
     client.send({

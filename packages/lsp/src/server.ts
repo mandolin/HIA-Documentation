@@ -7,6 +7,10 @@ import type {
   Connection
 } from "vscode-languageserver/node.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
+import {
+  HIA_LSP_RESOURCE_INDEX_REQUEST,
+  type HiaDocumentResourceIndexParams
+} from "./resources.js";
 import { createHiaLspService } from "./service.js";
 
 export interface StartHiaLspServerOptions {
@@ -23,23 +27,37 @@ export function startHiaLspServer(options: StartHiaLspServerOptions = {}): Conne
     service.shutdown();
   });
 
+  connection.onRequest(HIA_LSP_RESOURCE_INDEX_REQUEST, (params: HiaDocumentResourceIndexParams) => {
+    return service.getManagedResourceIndex(params.uri);
+  });
+
   documents.onDidOpen((event) => {
-    const diagnostics = service.validateTextDocument(event.document);
+    const managedDocument = service.openDocument(
+      event.document.uri,
+      event.document.getText(),
+      event.document.languageId,
+      event.document.version
+    );
     connection.sendDiagnostics({
       uri: event.document.uri,
-      diagnostics
+      diagnostics: managedDocument.diagnostics
     });
   });
 
   documents.onDidChangeContent((event) => {
-    const diagnostics = service.validateTextDocument(event.document);
+    const managedDocument = service.updateDocument(
+      event.document.uri,
+      event.document.getText(),
+      event.document.version
+    );
     connection.sendDiagnostics({
       uri: event.document.uri,
-      diagnostics
+      diagnostics: managedDocument.diagnostics
     });
   });
 
   documents.onDidClose((event) => {
+    service.closeDocument(event.document.uri);
     connection.sendDiagnostics({
       uri: event.document.uri,
       diagnostics: []

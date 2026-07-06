@@ -15,6 +15,9 @@
   "activationEvents": [
     "onLanguage:hia",
     "onCommand:hia.showOutput",
+    "onCommand:hia.buildDocs",
+    "onCommand:hia.openPreview",
+    "onCommand:hia.validateWorkspace",
     "workspaceContains:**/*.hia.json"
   ],
   "contributes": {
@@ -30,6 +33,18 @@
       {
         "command": "hia.showOutput",
         "title": "HIA: Show Output"
+      },
+      {
+        "command": "hia.buildDocs",
+        "title": "HIA: Build Docs"
+      },
+      {
+        "command": "hia.openPreview",
+        "title": "HIA: Open Preview"
+      },
+      {
+        "command": "hia.validateWorkspace",
+        "title": "HIA: Validate Workspace"
       }
     ],
     "configuration": {
