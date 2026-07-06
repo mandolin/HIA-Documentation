@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.core-minimal",
+  "title": "HIA Core Minimal Fixture",
+  "defaultLocale": "en",
+  "locales": ["en"],
+  "nodes": [
+    {
+      "id": "node.root",
+      "kind": "root",
+      "title": "API",
+      "symbolIds": ["module:sample"]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "module:sample",
+      "kind": "module",
+      "name": "sample",
+      "summary": "Sample API module."
+    }
+  ],
+  "diagnostics": []
+}

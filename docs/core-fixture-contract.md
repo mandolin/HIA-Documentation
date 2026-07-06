@@ -1,27 +1,56 @@
-# Core Fixture Contract
+# Core IR Schema and Fixture Contract
 
-Status: draft for `S-sara-2`.
+Status: draft for the first formal core IR/schema pass.
 
 ## Purpose
 
-Core fixtures are shared inputs for `@hia-doc/core`, `@hia-doc/renderer-html`, `@hia-doc/cli`, future LSP diagnostics and IDE integrations.
+Core fixtures are shared inputs for `@hia-doc/core`, `@hia-doc/renderer-html`, `@hia-doc/cli`, LSP diagnostics and IDE integrations.
 
-The first fixture shape must follow the current JSDoc implementation practice, not the early i18n sketches. In particular, multilingual text is represented as field-level i18n data compatible with `doclet.hia.i18n.fields`.
+The first formal schema pass keeps TypeScript types as the authoring source, `HIA_DOCUMENT_SCHEMA` as a serializable JSON Schema draft, and `validateHiaDocumentDetailed()` as the runtime guard used by CLI and LSP tests.
 
-`fixtures/jsdoc-integration.basic.json` records a compact `jsdoc-plugin-hia-sys` HIA Integration output sample. `@hia-doc/parser-jsdoc` converts it into the core document shape during tests instead of asking core to depend on JSDoc-specific doclet objects.
+## Versions
+
+- Core document `schemaVersion`: `0.2.0`.
+- `HIA_CORE_CONTRACT_VERSION`: `0.2.0`.
+- `HIA_DOCUMENT_SCHEMA_VERSION`: `0.2.0`.
+- Text i18n model version: `0.1.0`.
+- Source model version: `0.1.0`.
+
+The core document version and schema version are aligned in this pass. Text i18n and source remain independent submodels and will be deepened in later contract passes.
+
+## Fixtures
+
+| Fixture | Purpose |
+| --- | --- |
+| `fixtures/core-minimal.hia.json` | Minimal valid core document with one node and one symbol. |
+| `fixtures/basic.hia.json` | Shared renderer/CLI/LSP fixture with field i18n and source metadata. |
+| `fixtures/jsdoc-integration.basic.json` | JSDoc Integration input consumed by `@hia-doc/parser-jsdoc` during bridge tests. |
 
 ## Minimal Document Shape
 
 ```json
 {
   "schemaVersion": "0.2.0",
-  "id": "fixture.basic",
-  "title": "HIA Basic Fixture",
-  "defaultLocale": "zh-CN",
-  "fallbackLocale": ["en", "zh-CN"],
-  "locales": ["zh-CN", "en"],
-  "nodes": [],
-  "symbols": [],
+  "id": "fixture.core-minimal",
+  "title": "HIA Core Minimal Fixture",
+  "defaultLocale": "en",
+  "locales": ["en"],
+  "nodes": [
+    {
+      "id": "node.root",
+      "kind": "root",
+      "title": "API",
+      "symbolIds": ["module:sample"]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "module:sample",
+      "kind": "module",
+      "name": "sample",
+      "summary": "Sample API module."
+    }
+  ],
   "diagnostics": []
 }
 ```
@@ -73,7 +102,7 @@ Symbols are a flat list. Parent/containment information is expressed with `paren
 
 Core uses field-level i18n. A plain `summary` string may exist as a rendered cache or compatibility field, but it is not the source of truth.
 
-This shape intentionally follows the current `jsdoc-plugin-hia-sys` practice:
+This shape intentionally follows the current JSDoc adapter practice:
 
 - `@lang` produces doclet description language blocks.
 - `<lang>` produces inline field segments.
@@ -117,7 +146,7 @@ This shape intentionally follows the current `jsdoc-plugin-hia-sys` practice:
 
 ## Source Metadata
 
-Source metadata follows the current JPHS/JTH split:
+Source metadata follows the current adapter/renderer split:
 
 - `definedIn`: definition link and relative file position.
 - `primaryBlock`: current symbol source preview.
@@ -140,3 +169,23 @@ Diagnostics are stored as arrays with a stable code, severity, message and optio
   "targetPath": "symbols.0.source.definedIn.relativePath"
 }
 ```
+
+## Schema and Validator Coverage
+
+The current JSON Schema draft covers:
+
+- document required fields and version constant
+- node and symbol identity fields
+- diagnostic shape and severity enum
+- field i18n model shell, fields, blocks, segments and resources
+- source metadata shell, definedIn, primaryBlock, references and fragments
+
+The runtime validator additionally enforces:
+
+- `defaultLocale` must be included in `locales`
+- source paths must not be local absolute paths
+- source positions use positive 1-based line numbers
+- i18n field keys must match `fieldPath`
+- nested diagnostics must use supported severity values
+
+The schema keeps `additionalProperties` open for draft fields. New consumers should ignore unknown fields unless an ADR promotes them into a required contract.

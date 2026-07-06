@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import {
   HIA_CORE_CONTRACT_VERSION,
+  HIA_DOCUMENT_SCHEMA,
+  HIA_DOCUMENT_SCHEMA_VERSION,
   buildLocaleFallbackChain,
   createBasicFixtureDocument,
   createHiaDocument,
@@ -25,6 +27,23 @@ describe("@hia-doc/core", () => {
     expect(document.nodes).toEqual([]);
     expect(document.symbols).toHaveLength(1);
     expect(validateHiaDocument(document)).toEqual([]);
+  });
+
+  it("publishes a schema draft aligned with the current contract version", () => {
+    expect(HIA_DOCUMENT_SCHEMA_VERSION).toBe(HIA_CORE_CONTRACT_VERSION);
+    expect(HIA_DOCUMENT_SCHEMA.properties.schemaVersion).toEqual({
+      const: HIA_CORE_CONTRACT_VERSION
+    });
+    expect(HIA_DOCUMENT_SCHEMA.$defs.symbol.required).toEqual(["id", "name", "kind"]);
+    expect(HIA_DOCUMENT_SCHEMA.$defs.sourceMetadata.required).toEqual(["model", "modelVersion", "mode"]);
+    expect(HIA_DOCUMENT_SCHEMA.$defs.i18nModel.required).toEqual([
+      "enabled",
+      "model",
+      "modelVersion",
+      "defaultLocale",
+      "locales",
+      "fields"
+    ]);
   });
 
   it("validates the shared basic fixture", () => {
@@ -66,6 +85,79 @@ describe("@hia-doc/core", () => {
     expect(diagnostics.map((item) => item.code)).toContain("HIA_SOURCE_POSITION_INVALID");
   });
 
+  it("reports nested i18n, source and diagnostics boundaries", () => {
+    const diagnostics = validateHiaDocument({
+      schemaVersion: HIA_CORE_CONTRACT_VERSION,
+      id: "fixture.boundary",
+      title: "Boundary Fixture",
+      defaultLocale: "en",
+      locales: ["en"],
+      nodes: [],
+      symbols: [
+        {
+          id: "function:bad",
+          name: "bad",
+          kind: "function",
+          i18n: {
+            enabled: "yes",
+            model: "legacy-i18n",
+            modelVersion: "0.1.0",
+            defaultLocale: "en",
+            locales: ["en"],
+            fields: {
+              description: {
+                fieldPath: "other",
+                kind: "description",
+                defaultLocale: "en",
+                localizedText: {
+                  en: "Bad fixture.",
+                  "": 123
+                },
+                segments: [
+                  {
+                    kind: "lang-inline",
+                    id: "",
+                    fieldPath: "description",
+                    raw: "<lang />",
+                    localized: []
+                  }
+                ]
+              }
+            }
+          },
+          source: {
+            model: "legacy-source",
+            modelVersion: "0.1.0",
+            mode: "all",
+            references: [
+              {
+                kind: "source-reference",
+                referenceKind: "coderef",
+                targetId: "",
+                resolved: "no"
+              }
+            ]
+          },
+          diagnostics: [
+            {
+              code: "BAD",
+              message: "Bad diagnostic.",
+              severity: "fatal"
+            }
+          ]
+        }
+      ]
+    });
+    const codes = diagnostics.map((item) => item.code);
+
+    expect(codes).toContain("HIA_FIELD_INVALID");
+    expect(codes).toContain("HIA_I18N_MODEL_UNSUPPORTED");
+    expect(codes).toContain("HIA_I18N_FIELD_PATH_MISMATCH");
+    expect(codes).toContain("HIA_I18N_LOCALIZED_TEXT_INVALID");
+    expect(codes).toContain("HIA_SOURCE_MODEL_UNSUPPORTED");
+    expect(codes).toContain("HIA_DIAGNOSTIC_SEVERITY_INVALID");
+  });
+
   it("exposes runtime package information", () => {
     expect(getCoreRuntimeInfo()).toEqual({
       packageName: "@hia-doc/core",
@@ -75,6 +167,13 @@ describe("@hia-doc/core", () => {
 
   it("keeps the JSON fixture aligned with the validator", async () => {
     const fixturePath = new URL("../../../fixtures/basic.hia.json", import.meta.url);
+    const fixture = JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
+
+    expect(validateHiaDocument(fixture)).toEqual([]);
+  });
+
+  it("keeps the minimal JSON fixture aligned with the validator", async () => {
+    const fixturePath = new URL("../../../fixtures/core-minimal.hia.json", import.meta.url);
     const fixture = JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
 
     expect(validateHiaDocument(fixture)).toEqual([]);

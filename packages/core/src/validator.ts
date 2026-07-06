@@ -1,11 +1,21 @@
-import { HIA_CORE_CONTRACT_VERSION } from "./model.js";
+import {
+  HIA_CORE_CONTRACT_VERSION,
+  HIA_SOURCE_MODEL,
+  HIA_TEXT_I18N_MODEL
+} from "./model.js";
 import type {
   HiaDiagnostic,
   HiaDiagnosticSeverity,
   HiaDocument,
   HiaI18nField,
+  HiaI18nModel,
+  HiaLangBlock,
+  HiaLangInlineSegment,
+  HiaNode,
+  HiaSourceFragment,
   HiaSourceMetadata,
   HiaSourcePosition,
+  HiaSourceReference,
   HiaSymbol
 } from "./model.js";
 
@@ -56,8 +66,15 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
     ));
   }
 
+  if (Array.isArray(document.locales)) {
+    validateStringArray(document.locales, diagnostics, "locales", true);
+  }
+
+  validateFallbackLocale(document.fallbackLocale, diagnostics, "fallbackLocale");
+  validateDiagnostics(document.diagnostics, diagnostics, "diagnostics");
+
   if (Array.isArray(document.nodes)) {
-    validateNodes(document.nodes, diagnostics);
+    validateNodes(document.nodes, diagnostics, "nodes");
   }
 
   if (Array.isArray(document.symbols)) {
@@ -70,18 +87,29 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
   };
 }
 
-function validateNodes(nodes: unknown[], diagnostics: HiaDiagnostic[]): void {
+function validateNodes(nodes: unknown[], diagnostics: HiaDiagnostic[], targetPath: string): void {
   for (const [index, node] of nodes.entries()) {
-    const targetPath = `nodes.${index}`;
+    const itemPath = `${targetPath}.${index}`;
 
     if (!isRecord(node)) {
-      diagnostics.push(createDiagnostic("HIA_NODE_INVALID", "HIA node must be an object.", "error", targetPath));
+      diagnostics.push(createDiagnostic("HIA_NODE_INVALID", "HIA node must be an object.", "error", itemPath));
       continue;
     }
 
-    requireString(node, "id", diagnostics, targetPath);
-    requireString(node, "kind", diagnostics, targetPath);
-    requireString(node, "title", diagnostics, targetPath);
+    const typedNode = node as unknown as HiaNode;
+
+    requireString(node, "id", diagnostics, itemPath);
+    requireString(node, "kind", diagnostics, itemPath);
+    requireString(node, "title", diagnostics, itemPath);
+    validateOptionalStringArray(typedNode.symbolIds, diagnostics, `${itemPath}.symbolIds`);
+
+    if (typedNode.children !== undefined) {
+      if (!Array.isArray(typedNode.children)) {
+        diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${itemPath}.children must be an array.`, "error", `${itemPath}.children`));
+      } else {
+        validateNodes(typedNode.children, diagnostics, `${itemPath}.children`);
+      }
+    }
   }
 }
 
@@ -100,14 +128,55 @@ function validateSymbols(symbols: unknown[], diagnostics: HiaDiagnostic[]): void
       requireString(symbol, field, diagnostics, targetPath);
     }
 
+    validateOptionalString(symbol, "longname", diagnostics, targetPath);
+    validateOptionalString(symbol, "parentId", diagnostics, targetPath);
+    validateOptionalString(symbol, "signature", diagnostics, targetPath);
+    validateOptionalString(symbol, "summary", diagnostics, targetPath);
+    validateOptionalStringArray(typedSymbol.path, diagnostics, `${targetPath}.path`);
+    validateDiagnostics(typedSymbol.diagnostics, diagnostics, `${targetPath}.diagnostics`);
+
     if (typedSymbol.i18n) {
-      validateI18nFields(typedSymbol.i18n.fields, diagnostics, `${targetPath}.i18n.fields`);
+      validateI18nModel(typedSymbol.i18n, diagnostics, `${targetPath}.i18n`);
     }
 
     if (typedSymbol.source) {
       validateSourceMetadata(typedSymbol.source, diagnostics, `${targetPath}.source`);
     }
   }
+}
+
+function validateI18nModel(model: HiaI18nModel, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (!isRecord(model)) {
+    diagnostics.push(createDiagnostic("HIA_I18N_INVALID", "i18n must be an object.", "error", targetPath));
+    return;
+  }
+
+  if (typeof model.enabled !== "boolean") {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.enabled must be a boolean.`, "error", `${targetPath}.enabled`));
+  }
+
+  requireString(model, "model", diagnostics, targetPath);
+  requireString(model, "modelVersion", diagnostics, targetPath);
+  requireString(model, "defaultLocale", diagnostics, targetPath);
+  requireArray(model, "locales", diagnostics, targetPath);
+
+  if (model.model && model.model !== HIA_TEXT_I18N_MODEL) {
+    diagnostics.push(createDiagnostic(
+      "HIA_I18N_MODEL_UNSUPPORTED",
+      `Unsupported i18n model: ${model.model}.`,
+      "error",
+      `${targetPath}.model`
+    ));
+  }
+
+  if (Array.isArray(model.locales)) {
+    validateStringArray(model.locales, diagnostics, `${targetPath}.locales`, true);
+  }
+
+  validateFallbackLocale(model.fallbackLocale, diagnostics, `${targetPath}.fallbackLocale`);
+  validateI18nFields(model.fields, diagnostics, `${targetPath}.fields`);
+  validateI18nResources(model.resources, diagnostics, `${targetPath}.resources`);
+  validateDiagnostics(model.diagnostics, diagnostics, `${targetPath}.diagnostics`);
 }
 
 function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
@@ -145,33 +214,277 @@ function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targe
         "error",
         `${itemPath}.localizedText`
       ));
+    } else {
+      validateLocalizedText(typedField.localizedText, diagnostics, `${itemPath}.localizedText`);
     }
+
+    validateLangBlocks(typedField.blocks, diagnostics, `${itemPath}.blocks`);
+    validateLangInlineSegments(typedField.segments, diagnostics, `${itemPath}.segments`);
+    validateOptionalStringArray(typedField.missingLocales, diagnostics, `${itemPath}.missingLocales`);
   }
 }
 
 function validateSourceMetadata(source: HiaSourceMetadata, diagnostics: HiaDiagnostic[], targetPath: string): void {
-  if (source.definedIn) {
-    validateRelativePath(source.definedIn.relativePath, diagnostics, `${targetPath}.definedIn.relativePath`);
-    validatePosition(source.definedIn.position, diagnostics, `${targetPath}.definedIn.position`);
+  if (!isRecord(source)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_INVALID", "source must be an object.", "error", targetPath));
+    return;
   }
 
-  if (source.primaryBlock?.relativePath) {
-    validateRelativePath(source.primaryBlock.relativePath, diagnostics, `${targetPath}.primaryBlock.relativePath`);
+  requireString(source, "model", diagnostics, targetPath);
+  requireString(source, "modelVersion", diagnostics, targetPath);
+  requireString(source, "mode", diagnostics, targetPath);
+
+  if (source.model && source.model !== HIA_SOURCE_MODEL) {
+    diagnostics.push(createDiagnostic(
+      "HIA_SOURCE_MODEL_UNSUPPORTED",
+      `Unsupported source model: ${source.model}.`,
+      "error",
+      `${targetPath}.model`
+    ));
+  }
+
+  if (source.definedIn) {
+    const definedIn = source.definedIn as unknown as Record<string, unknown>;
+
+    requireString(definedIn, "kind", diagnostics, `${targetPath}.definedIn`);
+    validateRelativePath(source.definedIn.relativePath, diagnostics, `${targetPath}.definedIn.relativePath`);
+    validatePosition(source.definedIn.position, diagnostics, `${targetPath}.definedIn.position`);
+    validateRange(source.definedIn.range, diagnostics, `${targetPath}.definedIn.range`);
+  }
+
+  if (source.primaryBlock) {
+    const primaryBlock = source.primaryBlock as unknown as Record<string, unknown>;
+
+    requireString(primaryBlock, "kind", diagnostics, `${targetPath}.primaryBlock`);
+    requireString(primaryBlock, "content", diagnostics, `${targetPath}.primaryBlock`);
+    requireString(primaryBlock, "rangeSource", diagnostics, `${targetPath}.primaryBlock`);
+    requireString(primaryBlock, "confidence", diagnostics, `${targetPath}.primaryBlock`);
+
+    if (source.primaryBlock.relativePath) {
+      validateRelativePath(source.primaryBlock.relativePath, diagnostics, `${targetPath}.primaryBlock.relativePath`);
+    }
+
+    validateRange(source.primaryBlock.range, diagnostics, `${targetPath}.primaryBlock.range`);
+    validateDiagnostics(source.primaryBlock.diagnostics, diagnostics, `${targetPath}.primaryBlock.diagnostics`);
   }
 
   for (const [index, fragment] of (source.fragments || []).entries()) {
-    validateRelativePath(fragment.relativePath, diagnostics, `${targetPath}.fragments.${index}.relativePath`);
-    validatePosition(fragment.range.start, diagnostics, `${targetPath}.fragments.${index}.range.start`);
-    validatePosition(fragment.range.end, diagnostics, `${targetPath}.fragments.${index}.range.end`);
+    validateSourceFragment(fragment, diagnostics, `${targetPath}.fragments.${index}`);
   }
 
   for (const [index, reference] of (source.references || []).entries()) {
-    if (reference.fragment) {
-      validateRelativePath(reference.fragment.relativePath, diagnostics, `${targetPath}.references.${index}.fragment.relativePath`);
-      validatePosition(reference.fragment.range.start, diagnostics, `${targetPath}.references.${index}.fragment.range.start`);
-      validatePosition(reference.fragment.range.end, diagnostics, `${targetPath}.references.${index}.fragment.range.end`);
+    validateSourceReference(reference, diagnostics, `${targetPath}.references.${index}`);
+  }
+
+  validateDiagnostics(source.diagnostics, diagnostics, `${targetPath}.diagnostics`);
+}
+
+function validateSourceReference(reference: HiaSourceReference, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (!isRecord(reference)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_REFERENCE_INVALID", "source reference must be an object.", "error", targetPath));
+    return;
+  }
+
+  requireString(reference, "kind", diagnostics, targetPath);
+  requireString(reference, "referenceKind", diagnostics, targetPath);
+  requireString(reference, "targetId", diagnostics, targetPath);
+
+  if (typeof reference.resolved !== "boolean") {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.resolved must be a boolean.`, "error", `${targetPath}.resolved`));
+  }
+
+  if (reference.fragment) {
+    validateSourceFragment(reference.fragment, diagnostics, `${targetPath}.fragment`);
+  }
+
+  validateDiagnostics(reference.diagnostics, diagnostics, `${targetPath}.diagnostics`);
+}
+
+function validateSourceFragment(fragment: HiaSourceFragment, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (!isRecord(fragment)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_FRAGMENT_INVALID", "source fragment must be an object.", "error", targetPath));
+    return;
+  }
+
+  requireString(fragment, "kind", diagnostics, targetPath);
+  requireString(fragment, "id", diagnostics, targetPath);
+  requireString(fragment, "relativePath", diagnostics, targetPath);
+  requireString(fragment, "content", diagnostics, targetPath);
+  validateRelativePath(fragment.relativePath, diagnostics, `${targetPath}.relativePath`);
+  validateRange(fragment.range, diagnostics, `${targetPath}.range`);
+}
+
+function validateI18nResources(resources: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (resources === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(resources)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be an array.`, "error", targetPath));
+    return;
+  }
+
+  for (const [index, resource] of resources.entries()) {
+    const itemPath = `${targetPath}.${index}`;
+
+    if (!isRecord(resource)) {
+      diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_INVALID", "i18n resource must be an object.", "error", itemPath));
+      continue;
+    }
+
+    requireString(resource, "path", diagnostics, itemPath);
+    validateOptionalString(resource, "locale", diagnostics, itemPath);
+    validateOptionalStringArray(resource.fields, diagnostics, `${itemPath}.fields`);
+  }
+}
+
+function validateLangBlocks(blocks: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (blocks === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(blocks)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be an array.`, "error", targetPath));
+    return;
+  }
+
+  for (const [index, block] of blocks.entries()) {
+    const itemPath = `${targetPath}.${index}`;
+
+    if (!isRecord(block)) {
+      diagnostics.push(createDiagnostic("HIA_I18N_BLOCK_INVALID", "i18n block must be an object.", "error", itemPath));
+      continue;
+    }
+
+    const typedBlock = block as unknown as HiaLangBlock;
+    requireString(block, "kind", diagnostics, itemPath);
+    requireString(block, "locale", diagnostics, itemPath);
+    requireString(block, "fieldPath", diagnostics, itemPath);
+    requireString(block, "text", diagnostics, itemPath);
+    validateTextRange(typedBlock.rangeInComment ?? undefined, diagnostics, `${itemPath}.rangeInComment`);
+  }
+}
+
+function validateLangInlineSegments(segments: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (segments === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(segments)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be an array.`, "error", targetPath));
+    return;
+  }
+
+  for (const [index, segment] of segments.entries()) {
+    const itemPath = `${targetPath}.${index}`;
+
+    if (!isRecord(segment)) {
+      diagnostics.push(createDiagnostic("HIA_I18N_SEGMENT_INVALID", "i18n segment must be an object.", "error", itemPath));
+      continue;
+    }
+
+    const typedSegment = segment as unknown as HiaLangInlineSegment;
+    requireString(segment, "kind", diagnostics, itemPath);
+    requireString(segment, "id", diagnostics, itemPath);
+    requireString(segment, "fieldPath", diagnostics, itemPath);
+    requireString(segment, "raw", diagnostics, itemPath);
+
+    if (!isRecord(typedSegment.localized)) {
+      diagnostics.push(createDiagnostic("HIA_I18N_LOCALIZED_TEXT_INVALID", "segment.localized must be an object.", "error", `${itemPath}.localized`));
+    } else {
+      validateLocalizedText(typedSegment.localized, diagnostics, `${itemPath}.localized`);
+    }
+
+    validateTextRange(typedSegment.rangeInField, diagnostics, `${itemPath}.rangeInField`);
+  }
+}
+
+function validateLocalizedText(value: Record<string, unknown>, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  for (const [locale, text] of Object.entries(value)) {
+    if (!locale || typeof text !== "string") {
+      diagnostics.push(createDiagnostic(
+        "HIA_I18N_LOCALIZED_TEXT_INVALID",
+        "localizedText entries must map non-empty locale keys to string values.",
+        "error",
+        `${targetPath}.${locale || "<empty>"}`
+      ));
     }
   }
+}
+
+function validateFallbackLocale(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (typeof value === "string") {
+    if (value.length === 0) {
+      diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be a non-empty string.`, "error", targetPath));
+    }
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be a string or string array.`, "error", targetPath));
+    return;
+  }
+
+  validateStringArray(value, diagnostics, targetPath, true);
+}
+
+function validateDiagnostics(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    diagnostics.push(createDiagnostic("HIA_DIAGNOSTICS_INVALID", `${targetPath} must be an array.`, "error", targetPath));
+    return;
+  }
+
+  for (const [index, diagnostic] of value.entries()) {
+    const itemPath = `${targetPath}.${index}`;
+
+    if (!isRecord(diagnostic)) {
+      diagnostics.push(createDiagnostic("HIA_DIAGNOSTIC_INVALID", "diagnostic must be an object.", "error", itemPath));
+      continue;
+    }
+
+    requireString(diagnostic, "code", diagnostics, itemPath);
+    requireString(diagnostic, "message", diagnostics, itemPath);
+    requireString(diagnostic, "severity", diagnostics, itemPath);
+    validateOptionalString(diagnostic, "path", diagnostics, itemPath);
+    validateOptionalString(diagnostic, "targetPath", diagnostics, itemPath);
+
+    if (typeof diagnostic.severity === "string" && !["info", "warning", "error"].includes(diagnostic.severity)) {
+      diagnostics.push(createDiagnostic("HIA_DIAGNOSTIC_SEVERITY_INVALID", `${itemPath}.severity is not supported.`, "error", `${itemPath}.severity`));
+    }
+  }
+}
+
+function validateStringArray(value: unknown[], diagnostics: HiaDiagnostic[], targetPath: string, requireNonEmpty = false): void {
+  if (requireNonEmpty && value.length === 0) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must not be empty.`, "error", targetPath));
+  }
+
+  for (const [index, item] of value.entries()) {
+    if (typeof item !== "string" || item.length === 0) {
+      diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.${index} must be a non-empty string.`, "error", `${targetPath}.${index}`));
+    }
+  }
+}
+
+function validateOptionalStringArray(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be an array of strings.`, "error", targetPath));
+    return;
+  }
+
+  validateStringArray(value, diagnostics, targetPath);
 }
 
 function validateRelativePath(value: string, diagnostics: HiaDiagnostic[], targetPath: string): void {
@@ -185,9 +498,33 @@ function validateRelativePath(value: string, diagnostics: HiaDiagnostic[], targe
   }
 }
 
+function validateRange(range: { start: HiaSourcePosition; end: HiaSourcePosition } | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (range === undefined) {
+    return;
+  }
+
+  if (!isRecord(range)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_RANGE_INVALID", `${targetPath} must be an object.`, "error", targetPath));
+    return;
+  }
+
+  validatePosition(range.start, diagnostics, `${targetPath}.start`);
+  validatePosition(range.end, diagnostics, `${targetPath}.end`);
+}
+
 function validatePosition(position: HiaSourcePosition | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
   if (!position || !Number.isInteger(position.line) || position.line < 1) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position line must be a positive integer.", "error", targetPath));
+  }
+}
+
+function validateTextRange(range: { start: number; end: number } | null | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (range === undefined || range === null) {
+    return;
+  }
+
+  if (!isRecord(range) || !Number.isInteger(range.start) || !Number.isInteger(range.end) || range.start < 0 || range.end < range.start) {
+    diagnostics.push(createDiagnostic("HIA_TEXT_RANGE_INVALID", `${targetPath} must contain a valid start/end pair.`, "error", targetPath));
   }
 }
 
@@ -195,6 +532,15 @@ function requireString(record: Record<string, unknown>, field: string, diagnosti
   if (typeof record[field] !== "string" || String(record[field]).length === 0) {
     const targetPath = prefix ? `${prefix}.${field}` : field;
     diagnostics.push(createDiagnostic("HIA_FIELD_MISSING", `HIA document requires a non-empty ${targetPath}.`, "error", targetPath));
+  }
+}
+
+function validateOptionalString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {
+  const value = record[field];
+
+  if (value !== undefined && (typeof value !== "string" || value.length === 0)) {
+    const targetPath = prefix ? `${prefix}.${field}` : field;
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be a non-empty string.`, "error", targetPath));
   }
 }
 
