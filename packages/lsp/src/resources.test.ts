@@ -20,13 +20,15 @@ describe("@hia-doc/lsp resources", () => {
           i18n: {
             enabled: true,
             model: "hia-text-i18n",
-            modelVersion: "0.1.0",
+            modelVersion: "0.2.0",
             defaultLocale: "zh-CN",
             locales: ["zh-CN", "en"],
             resources: [
               {
+                kind: "external-resource",
                 path: "i18n/render.en.json",
                 locale: "en",
+                format: "hia-i18n-json",
                 fields: ["description"]
               }
             ],
@@ -34,6 +36,8 @@ describe("@hia-doc/lsp resources", () => {
               description: {
                 fieldPath: "description",
                 kind: "description",
+                key: "render.description",
+                path: "api.render",
                 defaultLocale: "zh-CN",
                 localizedText: {
                   "zh-CN": "渲染 <lang key=\"render.target\" />。"
@@ -58,8 +62,23 @@ describe("@hia-doc/lsp resources", () => {
           },
           source: {
             model: "hia-source",
-            modelVersion: "0.1.0",
+            modelVersion: "0.2.0",
             mode: "all",
+            primaryBlock: {
+              kind: "primary-block",
+              id: "function:render",
+              relativePath: "src/render.js",
+              range: {
+                start: { line: 8 },
+                end: { line: 12 }
+              },
+              content: "export function render() {}",
+              rangeSource: "parser-js",
+              confidence: "high",
+              preview: {
+                enabled: true
+              }
+            },
             references: [
               {
                 kind: "source-reference",
@@ -74,7 +93,9 @@ describe("@hia-doc/lsp resources", () => {
                     start: { line: 10 },
                     end: { line: 12 }
                   },
-                  content: "export function render() {}"
+                  content: "export function render() {}",
+                  rangeSource: "manual",
+                  confidence: "high"
                 }
               }
             ]
@@ -92,13 +113,26 @@ describe("@hia-doc/lsp resources", () => {
     expect(index.i18nResources).toEqual([
       {
         fields: ["description"],
+        format: "hia-i18n-json",
+        kind: "external-resource",
         locale: "en",
         resourcePath: "i18n/render.en.json",
         symbolId: "function:render",
         symbolName: "render"
       }
     ]);
+    expect(findI18nKeyLocations(index, "render.description")).toEqual([
+      expect.objectContaining({
+        fieldPath: "description",
+        path: "api.render",
+        source: "field"
+      })
+    ]);
     expect(findI18nKeyLocations(index, "render.target")).toHaveLength(1);
+    expect(findI18nKeyLocations(index, "render.target")[0]).toMatchObject({
+      segmentId: "description.0",
+      source: "segment"
+    });
     expect(index.missingLocales[0]).toMatchObject({
       fieldPath: "description",
       locale: "en"
@@ -107,8 +141,26 @@ describe("@hia-doc/lsp resources", () => {
       targetId: "RENDER_IMPL",
       resolved: true
     });
+    expect(index.sourceBlocks).toEqual([
+      expect.objectContaining({
+        blockId: "function:render",
+        blockKind: "primary-block",
+        confidence: "high",
+        rangeSource: "parser-js",
+        relativePath: "src/render.js"
+      }),
+      expect.objectContaining({
+        blockId: "RENDER_IMPL",
+        blockKind: "source-fragment",
+        confidence: "high",
+        rangeSource: "manual",
+        relativePath: "src/render.js"
+      })
+    ]);
     expect(index.sourceFragments[0]).toMatchObject({
+      confidence: "high",
       fragmentId: "RENDER_IMPL",
+      rangeSource: "manual",
       relativePath: "src/render.js"
     });
   });

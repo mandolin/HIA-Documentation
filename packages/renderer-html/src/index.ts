@@ -7,6 +7,7 @@ import {
   type HiaResolvedText,
   type HiaSourceDefinedIn,
   type HiaSourceFragment,
+  type HiaSourceMetadata,
   type HiaSourcePrimaryBlock,
   type HiaSourceReference,
   type HiaSymbol
@@ -248,16 +249,15 @@ function createFallbackResolvedText(locale: string, selectedLocale: string, text
 function renderSource(symbol: HiaSymbol): string {
   const source = symbol.source;
 
-  if (!source) {
+  if (!source || source.mode === "none") {
     return "";
   }
 
-  const definedIn = source.definedIn ? renderDefinedIn(source.definedIn) : "";
-  const primaryBlock = source.primaryBlock?.content ? renderPrimaryBlock(source.primaryBlock) : "";
-  const fragments = [
-    ...(source.fragments || []).map((fragment) => renderSourceFragment(fragment)),
-    ...(source.references || []).map((reference) => renderSourceReference(reference)).filter(Boolean)
-  ].join("");
+  const showLinks = source.mode === "link" || source.mode === "all";
+  const showPreview = source.mode === "include" || source.mode === "all";
+  const definedIn = source.definedIn ? renderDefinedIn(source.definedIn, showLinks) : "";
+  const primaryBlock = showPreview && source.primaryBlock?.content ? renderPrimaryBlock(source.primaryBlock) : "";
+  const fragments = showPreview ? renderSourceReferences(source) : "";
 
   if (!definedIn && !primaryBlock && !fragments) {
     return "";
@@ -273,11 +273,11 @@ function renderSource(symbol: HiaSymbol): string {
   ].join("");
 }
 
-function renderDefinedIn(definedIn: HiaSourceDefinedIn): string {
+function renderDefinedIn(definedIn: HiaSourceDefinedIn, enableLink: boolean): string {
   const line = definedIn.position?.line ? `:${definedIn.position.line}` : "";
   const label = `${definedIn.relativePath}${line}`;
 
-  if (definedIn.link?.lineUrl) {
+  if (enableLink && definedIn.link?.enabled !== false && definedIn.link?.lineUrl) {
     return `<p class="hia-source-line">Defined in <a href="${escapeHtml(definedIn.link.lineUrl)}">${escapeHtml(label)}</a></p>`;
   }
 
@@ -285,32 +285,60 @@ function renderDefinedIn(definedIn: HiaSourceDefinedIn): string {
 }
 
 function renderPrimaryBlock(block: HiaSourcePrimaryBlock): string {
-  if (!block.content || block.confidence === "none") {
+  if (!block.content || block.confidence === "none" || block.preview?.enabled === false) {
     return "";
   }
 
   const caption = formatSourceCaption(block.relativePath || "source", block.range);
+  const open = block.preview?.defaultExpanded === false ? "" : " open";
   return [
-    "<details class=\"hia-source-preview\" open>",
-    `<summary>${escapeHtml(caption)}</summary>`,
+    `<details class="hia-source-preview"${open}>`,
+    `<summary>${renderSourceCaption(caption, block.link?.lineUrl, block.link?.enabled !== false)}</summary>`,
     `<pre class="hia-source-code"><code>${escapeHtml(block.content)}</code></pre>`,
     "</details>"
   ].join("");
 }
 
-function renderSourceReference(reference: HiaSourceReference): string {
+function renderSourceReferences(source: HiaSourceMetadata): string {
+  const fragmentsById = new Map((source.fragments || []).map((fragment) => [fragment.id, fragment]));
+  const referencedFragmentIds = new Set(
+    (source.references || [])
+      .map((reference) => reference.fragment?.id)
+      .filter((id): id is string => Boolean(id))
+  );
+  const standaloneFragments = (source.fragments || []).filter((fragment) => !referencedFragmentIds.has(fragment.id));
+
+  return [
+    ...standaloneFragments.map((fragment) => renderSourceFragment(fragment)),
+    ...(source.references || [])
+      .map((reference) => renderSourceReference(reference, fragmentsById.get(reference.fragment?.id || reference.targetId)))
+      .filter(Boolean)
+  ].join("");
+}
+
+function renderSourceReference(reference: HiaSourceReference, fallbackFragment?: HiaSourceFragment): string {
   if (!reference.resolved || !reference.fragment) {
     return `<p class="hia-source-unresolved">${escapeHtml(reference.targetId)} unresolved</p>`;
   }
 
-  return renderSourceFragment(reference.fragment, reference.targetId);
+  const fragment = {
+    ...fallbackFragment,
+    ...reference.fragment
+  };
+
+  return renderSourceFragment(fragment, reference.targetId);
 }
 
 function renderSourceFragment(fragment: HiaSourceFragment, label = fragment.id): string {
+  if (!fragment.content || fragment.confidence === "none" || fragment.preview?.enabled === false) {
+    return "";
+  }
+
   const caption = `${label} - ${formatSourceCaption(fragment.relativePath, fragment.range)}`;
+  const open = fragment.preview?.defaultExpanded === true ? " open" : "";
   return [
-    "<details class=\"hia-source-fragment\">",
-    `<summary>${escapeHtml(caption)}</summary>`,
+    `<details class="hia-source-fragment"${open}>`,
+    `<summary>${renderSourceCaption(caption, fragment.link?.lineUrl, fragment.link?.enabled !== false)}</summary>`,
     `<pre class="hia-source-code"><code>${escapeHtml(fragment.content)}</code></pre>`,
     "</details>"
   ].join("");
@@ -322,6 +350,14 @@ function formatSourceCaption(path: string, range: HiaSourcePrimaryBlock["range"]
   }
 
   return `${path}:${range.start.line}-${range.end.line}`;
+}
+
+function renderSourceCaption(caption: string, lineUrl: string | undefined, enableLink: boolean): string {
+  if (!enableLink || !lineUrl) {
+    return escapeHtml(caption);
+  }
+
+  return `<a href="${escapeHtml(lineUrl)}">${escapeHtml(caption)}</a>`;
 }
 
 function normalizeLocales(document: HiaDocument, selectedLocale: string): string[] {

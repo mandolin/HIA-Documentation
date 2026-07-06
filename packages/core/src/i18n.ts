@@ -1,5 +1,13 @@
 import type { HiaFallbackLocale, HiaI18nField, HiaI18nModel, HiaResolvedText } from "./model.js";
 
+export const HIA_I18N_TEXT_SOURCE_PRIORITY = [
+  "inline-segment",
+  "lang-block",
+  "external-resource",
+  "localized-text",
+  "default-text"
+] as const;
+
 export interface ResolveI18nTextOptions {
   defaultLocale?: string;
   fallbackLocale?: HiaFallbackLocale;
@@ -47,6 +55,7 @@ export function resolveI18nFieldText(
       fallbackChain,
       usedFallback: false,
       missing: true,
+      sourceKind: "default-text",
       text: ""
     };
   }
@@ -55,26 +64,42 @@ export function resolveI18nFieldText(
     const text = field.localizedText[locale];
 
     if (typeof text === "string" && text.length > 0) {
-      return {
+      const resolved: HiaResolvedText = {
         requestedLocale,
         resolvedLocale: locale,
         fallbackChain,
         usedFallback: locale !== requestedLocale,
         missing: false,
+        sourceKind: "localized-text",
+        sourceLocale: locale,
         text
       };
+
+      if (field.source) {
+        resolved.source = field.source;
+      }
+
+      return resolved;
     }
   }
 
   const defaultText = field.defaultText || "";
-  return {
+  const resolved: HiaResolvedText = {
     requestedLocale,
     resolvedLocale: defaultText ? defaultLocale : "",
     fallbackChain,
     usedFallback: Boolean(defaultText && requestedLocale !== defaultLocale),
     missing: !defaultText,
+    sourceKind: "default-text",
+    sourceLocale: defaultText ? defaultLocale : "",
     text: defaultText
   };
+
+  if (field.source) {
+    resolved.source = field.source;
+  }
+
+  return resolved;
 }
 
 export function getI18nField(model: HiaI18nModel | undefined, fieldPath: string): HiaI18nField | undefined {

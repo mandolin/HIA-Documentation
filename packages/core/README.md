@@ -7,8 +7,8 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 ## Current Scope
 
 - HIA document, node and symbol model.
-- Field-level i18n model aligned with the current `jsdoc-plugin-hia-sys` `i18n.fields` practice.
-- Source metadata model for `definedIn`, `primaryBlock`, references and fragments.
+- Field-level i18n model with `key`/`path`, external resource references and fallback resolution metadata.
+- Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
 - Runtime validation through `validateHiaDocumentDetailed()`.
 - Fixture helpers and JSON fixtures for renderer, CLI and LSP tests.

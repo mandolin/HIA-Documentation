@@ -1,6 +1,6 @@
 # Core IR Schema and Fixture Contract
 
-Status: draft for the first formal core IR/schema pass.
+Status: draft for the first formal core IR/schema, i18n resource and source/reference pass.
 
 ## Purpose
 
@@ -13,10 +13,10 @@ The first formal schema pass keeps TypeScript types as the authoring source, `HI
 - Core document `schemaVersion`: `0.2.0`.
 - `HIA_CORE_CONTRACT_VERSION`: `0.2.0`.
 - `HIA_DOCUMENT_SCHEMA_VERSION`: `0.2.0`.
-- Text i18n model version: `0.1.0`.
-- Source model version: `0.1.0`.
+- Text i18n model version: `0.2.0`.
+- Source model version: `0.2.0`.
 
-The core document version and schema version are aligned in this pass. Text i18n and source remain independent submodels and will be deepened in later contract passes.
+The core document version and schema version are aligned in this pass. Text i18n now has a formal field/resource/key/path layer. Source remains an independent submodel and now has a formal source block, reference, relative path and preview/link contract.
 
 ## Fixtures
 
@@ -24,6 +24,8 @@ The core document version and schema version are aligned in this pass. Text i18n
 | --- | --- |
 | `fixtures/core-minimal.hia.json` | Minimal valid core document with one node and one symbol. |
 | `fixtures/basic.hia.json` | Shared renderer/CLI/LSP fixture with field i18n and source metadata. |
+| `fixtures/i18n-resource.hia.json` | Field-level key/path and external resource fixture. |
+| `fixtures/source-reference.hia.json` | Source definedIn, primary block, named fragment, reference and preview fixture. |
 | `fixtures/jsdoc-integration.basic.json` | JSDoc Integration input consumed by `@hia-doc/parser-jsdoc` during bridge tests. |
 
 ## Minimal Document Shape
@@ -112,14 +114,25 @@ This shape intentionally follows the current JSDoc adapter practice:
 ```json
 {
   "model": "hia-text-i18n",
-  "modelVersion": "0.1.0",
+  "modelVersion": "0.2.0",
   "defaultLocale": "zh-CN",
   "fallbackLocale": ["en", "zh-CN"],
   "locales": ["zh-CN", "en"],
+  "resources": [
+    {
+      "kind": "external-resource",
+      "path": "i18n/profile.hia-i18n.json",
+      "locale": "en",
+      "format": "hia-i18n-json",
+      "fields": ["description"]
+    }
+  ],
   "fields": {
     "description": {
       "fieldPath": "description",
       "kind": "description",
+      "key": "profile.render.description",
+      "path": "profile.render",
       "defaultLocale": "zh-CN",
       "defaultText": "生成用户资料摘要。",
       "source": "doc.description",
@@ -135,7 +148,10 @@ This shape intentionally follows the current JSDoc adapter practice:
           "resolvedLocale": "en",
           "fallbackChain": ["en", "zh-CN"],
           "usedFallback": false,
-          "missing": false
+          "missing": false,
+          "sourceKind": "external-resource",
+          "sourceLocale": "en",
+          "source": "i18n/profile.hia-i18n.json"
         }
       },
       "missingLocales": []
@@ -149,13 +165,15 @@ This shape intentionally follows the current JSDoc adapter practice:
 Source metadata follows the current adapter/renderer split:
 
 - `definedIn`: definition link and relative file position.
-- `primaryBlock`: current symbol source preview.
-- `references`: extra source fragments such as `@coderef`.
-- `fragments`: reusable source fragments.
+- `primaryBlock`: current symbol source preview and first source block role.
+- `references`: field-level references to named source fragments such as `@coderef`.
+- `fragments`: reusable named source fragments.
 
 All fixture paths must be relative paths. No fixture should contain a local absolute path.
 
 Adapter fixtures may preserve parser metadata, but local absolute fields such as generated `filePath` values must be removed or sanitized before they become core IR metadata.
+
+`primaryBlock` and `source-fragment` share the source block fields `relativePath`, `range`, `content`, `rangeSource`, `confidence`, `link` and `preview`. `definedIn` is only a source location and does not carry source content.
 
 ## Diagnostics
 
@@ -183,9 +201,15 @@ The current JSON Schema draft covers:
 The runtime validator additionally enforces:
 
 - `defaultLocale` must be included in `locales`
-- source paths must not be local absolute paths
-- source positions use positive 1-based line numbers
+- source modelVersion must match the current `HIA_SOURCE_MODEL_VERSION`
+- source paths must not be local absolute paths and must not escape through `..`
+- source positions use positive 1-based line/column values
+- source ranges must not end before they start
+- source blocks must use supported `rangeSource` and `confidence` values
+- resolved source references must include a fragment snapshot
 - i18n field keys must match `fieldPath`
+- i18n resource paths must be relative and must not escape through `..`
+- i18n field and inline segment `key/path` values must be non-empty when present
 - nested diagnostics must use supported severity values
 
 The schema keeps `additionalProperties` open for draft fields. New consumers should ignore unknown fields unless an ADR promotes them into a required contract.

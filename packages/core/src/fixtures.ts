@@ -170,6 +170,8 @@ export function createBasicFixtureDocument(): HiaDocument {
               "const status = profile.active ? \"active\" : \"inactive\";",
               "return `${name} - ${status}`;"
             ].join("\n"),
+            rangeSource: "manual",
+            confidence: "high",
             origin: {
               marker: "codeblock"
             },

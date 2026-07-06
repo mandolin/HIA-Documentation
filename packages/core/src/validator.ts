@@ -1,7 +1,12 @@
 import {
   HIA_CORE_CONTRACT_VERSION,
+  HIA_SOURCE_CONFIDENCE_LEVELS,
   HIA_SOURCE_MODEL,
-  HIA_TEXT_I18N_MODEL
+  HIA_SOURCE_MODEL_VERSION,
+  HIA_SOURCE_MODES,
+  HIA_SOURCE_RANGE_SOURCES,
+  HIA_TEXT_I18N_MODEL,
+  HIA_TEXT_I18N_MODEL_VERSION
 } from "./model.js";
 import type {
   HiaDiagnostic,
@@ -15,6 +20,7 @@ import type {
   HiaSourceFragment,
   HiaSourceMetadata,
   HiaSourcePosition,
+  HiaSourcePrimaryBlock,
   HiaSourceReference,
   HiaSymbol
 } from "./model.js";
@@ -169,8 +175,26 @@ function validateI18nModel(model: HiaI18nModel, diagnostics: HiaDiagnostic[], ta
     ));
   }
 
+  if (model.modelVersion && model.modelVersion !== HIA_TEXT_I18N_MODEL_VERSION) {
+    diagnostics.push(createDiagnostic(
+      "HIA_I18N_MODEL_VERSION_UNSUPPORTED",
+      `Unsupported i18n modelVersion: ${model.modelVersion}.`,
+      "error",
+      `${targetPath}.modelVersion`
+    ));
+  }
+
   if (Array.isArray(model.locales)) {
     validateStringArray(model.locales, diagnostics, `${targetPath}.locales`, true);
+
+    if (typeof model.defaultLocale === "string" && !model.locales.includes(model.defaultLocale)) {
+      diagnostics.push(createDiagnostic(
+        "HIA_I18N_DEFAULT_LOCALE_MISSING",
+        "i18n.defaultLocale must be included in i18n.locales.",
+        "error",
+        `${targetPath}.defaultLocale`
+      ));
+    }
   }
 
   validateFallbackLocale(model.fallbackLocale, diagnostics, `${targetPath}.fallbackLocale`);
@@ -197,6 +221,8 @@ function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targe
     requireString(field, "fieldPath", diagnostics, itemPath);
     requireString(field, "kind", diagnostics, itemPath);
     requireString(field, "defaultLocale", diagnostics, itemPath);
+    validateOptionalString(field, "key", diagnostics, itemPath);
+    validateOptionalString(field, "path", diagnostics, itemPath);
 
     if (typedField.fieldPath && typedField.fieldPath !== fieldPath) {
       diagnostics.push(createDiagnostic(
@@ -220,6 +246,7 @@ function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targe
 
     validateLangBlocks(typedField.blocks, diagnostics, `${itemPath}.blocks`);
     validateLangInlineSegments(typedField.segments, diagnostics, `${itemPath}.segments`);
+    validateTextResolutions(typedField.resolutions, diagnostics, `${itemPath}.resolutions`);
     validateOptionalStringArray(typedField.missingLocales, diagnostics, `${itemPath}.missingLocales`);
   }
 }
@@ -243,37 +270,47 @@ function validateSourceMetadata(source: HiaSourceMetadata, diagnostics: HiaDiagn
     ));
   }
 
+  if (source.modelVersion && source.modelVersion !== HIA_SOURCE_MODEL_VERSION) {
+    diagnostics.push(createDiagnostic(
+      "HIA_SOURCE_MODEL_VERSION_UNSUPPORTED",
+      `Unsupported source modelVersion: ${source.modelVersion}.`,
+      "error",
+      `${targetPath}.modelVersion`
+    ));
+  }
+
+  validateStringEnum(source.mode, HIA_SOURCE_MODES, "HIA_SOURCE_MODE_UNSUPPORTED", diagnostics, `${targetPath}.mode`);
+
   if (source.definedIn) {
     const definedIn = source.definedIn as unknown as Record<string, unknown>;
 
     requireString(definedIn, "kind", diagnostics, `${targetPath}.definedIn`);
-    validateRelativePath(source.definedIn.relativePath, diagnostics, `${targetPath}.definedIn.relativePath`);
+    validateLiteral(definedIn.kind, "defined-in", "HIA_SOURCE_KIND_INVALID", diagnostics, `${targetPath}.definedIn.kind`);
+    validateRelativePath(String(source.definedIn.relativePath || ""), diagnostics, `${targetPath}.definedIn.relativePath`);
+    validateOptionalString(definedIn, "language", diagnostics, `${targetPath}.definedIn`);
     validatePosition(source.definedIn.position, diagnostics, `${targetPath}.definedIn.position`);
     validateRange(source.definedIn.range, diagnostics, `${targetPath}.definedIn.range`);
+    validateSourceLink(source.definedIn.link, diagnostics, `${targetPath}.definedIn.link`);
   }
 
   if (source.primaryBlock) {
-    const primaryBlock = source.primaryBlock as unknown as Record<string, unknown>;
+    validateSourceBlock(source.primaryBlock, "primary-block", diagnostics, `${targetPath}.primaryBlock`, false);
+  }
 
-    requireString(primaryBlock, "kind", diagnostics, `${targetPath}.primaryBlock`);
-    requireString(primaryBlock, "content", diagnostics, `${targetPath}.primaryBlock`);
-    requireString(primaryBlock, "rangeSource", diagnostics, `${targetPath}.primaryBlock`);
-    requireString(primaryBlock, "confidence", diagnostics, `${targetPath}.primaryBlock`);
-
-    if (source.primaryBlock.relativePath) {
-      validateRelativePath(source.primaryBlock.relativePath, diagnostics, `${targetPath}.primaryBlock.relativePath`);
+  if (source.fragments !== undefined && !Array.isArray(source.fragments)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.fragments must be an array.`, "error", `${targetPath}.fragments`));
+  } else {
+    for (const [index, fragment] of (source.fragments || []).entries()) {
+      validateSourceFragment(fragment, diagnostics, `${targetPath}.fragments.${index}`);
     }
-
-    validateRange(source.primaryBlock.range, diagnostics, `${targetPath}.primaryBlock.range`);
-    validateDiagnostics(source.primaryBlock.diagnostics, diagnostics, `${targetPath}.primaryBlock.diagnostics`);
   }
 
-  for (const [index, fragment] of (source.fragments || []).entries()) {
-    validateSourceFragment(fragment, diagnostics, `${targetPath}.fragments.${index}`);
-  }
-
-  for (const [index, reference] of (source.references || []).entries()) {
-    validateSourceReference(reference, diagnostics, `${targetPath}.references.${index}`);
+  if (source.references !== undefined && !Array.isArray(source.references)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.references must be an array.`, "error", `${targetPath}.references`));
+  } else {
+    for (const [index, reference] of (source.references || []).entries()) {
+      validateSourceReference(reference, diagnostics, `${targetPath}.references.${index}`);
+    }
   }
 
   validateDiagnostics(source.diagnostics, diagnostics, `${targetPath}.diagnostics`);
@@ -288,9 +325,22 @@ function validateSourceReference(reference: HiaSourceReference, diagnostics: Hia
   requireString(reference, "kind", diagnostics, targetPath);
   requireString(reference, "referenceKind", diagnostics, targetPath);
   requireString(reference, "targetId", diagnostics, targetPath);
+  validateLiteral(reference.kind, "source-reference", "HIA_SOURCE_KIND_INVALID", diagnostics, `${targetPath}.kind`);
+
+  validateOptionalString(reference as unknown as Record<string, unknown>, "sourceNodeId", diagnostics, targetPath);
+  validateOptionalString(reference as unknown as Record<string, unknown>, "fieldPath", diagnostics, targetPath);
 
   if (typeof reference.resolved !== "boolean") {
     diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.resolved must be a boolean.`, "error", `${targetPath}.resolved`));
+  }
+
+  if (reference.resolved === true && !reference.fragment) {
+    diagnostics.push(createDiagnostic(
+      "HIA_SOURCE_REFERENCE_FRAGMENT_MISSING",
+      "Resolved source references must include a fragment snapshot.",
+      "error",
+      `${targetPath}.fragment`
+    ));
   }
 
   if (reference.fragment) {
@@ -310,8 +360,54 @@ function validateSourceFragment(fragment: HiaSourceFragment, diagnostics: HiaDia
   requireString(fragment, "id", diagnostics, targetPath);
   requireString(fragment, "relativePath", diagnostics, targetPath);
   requireString(fragment, "content", diagnostics, targetPath);
-  validateRelativePath(fragment.relativePath, diagnostics, `${targetPath}.relativePath`);
-  validateRange(fragment.range, diagnostics, `${targetPath}.range`);
+  validateSourceBlock(fragment, "source-fragment", diagnostics, targetPath, true);
+}
+
+function validateSourceBlock(
+  block: HiaSourcePrimaryBlock | HiaSourceFragment,
+  expectedKind: "primary-block" | "source-fragment",
+  diagnostics: HiaDiagnostic[],
+  targetPath: string,
+  requirePathAndRange: boolean
+): void {
+  if (!isRecord(block)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_BLOCK_INVALID", "source block must be an object.", "error", targetPath));
+    return;
+  }
+
+  requireString(block, "kind", diagnostics, targetPath);
+  requireString(block, "content", diagnostics, targetPath);
+  requireString(block, "rangeSource", diagnostics, targetPath);
+  requireString(block, "confidence", diagnostics, targetPath);
+  validateLiteral(block.kind, expectedKind, "HIA_SOURCE_KIND_INVALID", diagnostics, `${targetPath}.kind`);
+  validateStringEnum(block.rangeSource, HIA_SOURCE_RANGE_SOURCES, "HIA_SOURCE_RANGE_SOURCE_UNSUPPORTED", diagnostics, `${targetPath}.rangeSource`);
+  validateStringEnum(block.confidence, HIA_SOURCE_CONFIDENCE_LEVELS, "HIA_SOURCE_CONFIDENCE_UNSUPPORTED", diagnostics, `${targetPath}.confidence`);
+  validateOptionalString(block, "language", diagnostics, targetPath);
+
+  if (block.id !== undefined) {
+    validateOptionalString(block, "id", diagnostics, targetPath);
+  }
+
+  if (requirePathAndRange || block.relativePath !== undefined) {
+    validateRelativePath(String(block.relativePath || ""), diagnostics, `${targetPath}.relativePath`);
+  }
+
+  if (requirePathAndRange || block.range !== undefined) {
+    validateRange(block.range, diagnostics, `${targetPath}.range`);
+  }
+
+  if (block.rangeSource === "unresolved" && block.confidence !== "none") {
+    diagnostics.push(createDiagnostic(
+      "HIA_SOURCE_RANGE_CONFIDENCE_MISMATCH",
+      "source blocks with rangeSource unresolved must use confidence none.",
+      "error",
+      `${targetPath}.confidence`
+    ));
+  }
+
+  validateSourceLink(block.link, diagnostics, `${targetPath}.link`);
+  validateSourcePreview(block.preview, diagnostics, `${targetPath}.preview`);
+  validateDiagnostics(block.diagnostics, diagnostics, `${targetPath}.diagnostics`);
 }
 
 function validateI18nResources(resources: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
@@ -333,7 +429,10 @@ function validateI18nResources(resources: unknown, diagnostics: HiaDiagnostic[],
     }
 
     requireString(resource, "path", diagnostics, itemPath);
+    validateI18nResourcePath(String(resource.path || ""), diagnostics, `${itemPath}.path`);
+    validateOptionalString(resource, "kind", diagnostics, itemPath);
     validateOptionalString(resource, "locale", diagnostics, itemPath);
+    validateOptionalString(resource, "format", diagnostics, itemPath);
     validateOptionalStringArray(resource.fields, diagnostics, `${itemPath}.fields`);
   }
 }
@@ -388,6 +487,8 @@ function validateLangInlineSegments(segments: unknown, diagnostics: HiaDiagnosti
     requireString(segment, "id", diagnostics, itemPath);
     requireString(segment, "fieldPath", diagnostics, itemPath);
     requireString(segment, "raw", diagnostics, itemPath);
+    validateOptionalString(segment, "key", diagnostics, itemPath);
+    validateOptionalString(segment, "path", diagnostics, itemPath);
 
     if (!isRecord(typedSegment.localized)) {
       diagnostics.push(createDiagnostic("HIA_I18N_LOCALIZED_TEXT_INVALID", "segment.localized must be an object.", "error", `${itemPath}.localized`));
@@ -396,6 +497,46 @@ function validateLangInlineSegments(segments: unknown, diagnostics: HiaDiagnosti
     }
 
     validateTextRange(typedSegment.rangeInField, diagnostics, `${itemPath}.rangeInField`);
+  }
+}
+
+function validateTextResolutions(resolutions: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (resolutions === undefined) {
+    return;
+  }
+
+  if (!isRecord(resolutions)) {
+    diagnostics.push(createDiagnostic("HIA_I18N_RESOLUTIONS_INVALID", `${targetPath} must be an object.`, "error", targetPath));
+    return;
+  }
+
+  for (const [locale, resolution] of Object.entries(resolutions)) {
+    const itemPath = `${targetPath}.${locale}`;
+
+    if (!isRecord(resolution)) {
+      diagnostics.push(createDiagnostic("HIA_I18N_RESOLUTION_INVALID", "i18n resolution must be an object.", "error", itemPath));
+      continue;
+    }
+
+    requireString(resolution, "requestedLocale", diagnostics, itemPath);
+    requireString(resolution, "resolvedLocale", diagnostics, itemPath);
+    requireArray(resolution, "fallbackChain", diagnostics, itemPath);
+
+    if (Array.isArray(resolution.fallbackChain)) {
+      validateStringArray(resolution.fallbackChain, diagnostics, `${itemPath}.fallbackChain`);
+    }
+
+    if (typeof resolution.usedFallback !== "boolean") {
+      diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${itemPath}.usedFallback must be a boolean.`, "error", `${itemPath}.usedFallback`));
+    }
+
+    if (typeof resolution.missing !== "boolean") {
+      diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${itemPath}.missing must be a boolean.`, "error", `${itemPath}.missing`));
+    }
+
+    validateOptionalString(resolution, "sourceKind", diagnostics, itemPath);
+    validateOptionalString(resolution, "sourceLocale", diagnostics, itemPath);
+    validateOptionalString(resolution, "source", diagnostics, itemPath);
   }
 }
 
@@ -487,14 +628,81 @@ function validateOptionalStringArray(value: unknown, diagnostics: HiaDiagnostic[
   validateStringArray(value, diagnostics, targetPath);
 }
 
+function validateSourceLink(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!isRecord(value)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_LINK_INVALID", `${targetPath} must be an object.`, "error", targetPath));
+    return;
+  }
+
+  if (typeof value.enabled !== "boolean") {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.enabled must be a boolean.`, "error", `${targetPath}.enabled`));
+  }
+
+  validateOptionalString(value, "fileUrl", diagnostics, targetPath);
+  validateOptionalString(value, "lineUrl", diagnostics, targetPath);
+  validateOptionalString(value, "openMode", diagnostics, targetPath);
+}
+
+function validateSourcePreview(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!isRecord(value)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_PREVIEW_INVALID", `${targetPath} must be an object.`, "error", targetPath));
+    return;
+  }
+
+  if (typeof value.enabled !== "boolean") {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.enabled must be a boolean.`, "error", `${targetPath}.enabled`));
+  }
+
+  if (value.defaultExpanded !== undefined && typeof value.defaultExpanded !== "boolean") {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.defaultExpanded must be a boolean.`, "error", `${targetPath}.defaultExpanded`));
+  }
+
+  validateOptionalString(value, "content", diagnostics, targetPath);
+  validateOptionalString(value, "language", diagnostics, targetPath);
+  validateRange(value.range as { start: HiaSourcePosition; end: HiaSourcePosition } | undefined, diagnostics, `${targetPath}.range`);
+}
+
 function validateRelativePath(value: string, diagnostics: HiaDiagnostic[], targetPath: string): void {
   if (!value) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_PATH_MISSING", "Source relativePath is required.", "error", targetPath));
     return;
   }
 
-  if (/^[A-Za-z]:[\\/]/.test(value) || value.startsWith("/") || value.startsWith("\\\\")) {
+  const normalized = value.replaceAll("\\", "/");
+
+  if (/^[A-Za-z]:[\\/]/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_ABSOLUTE_PATH", "Source paths must be relative.", "error", targetPath));
+    return;
+  }
+
+  if (normalized === ".." || normalized.startsWith("../") || normalized.includes("/../") || normalized.endsWith("/..")) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_PATH_TRAVERSAL", "Source paths must stay inside the project source boundary.", "error", targetPath));
+  }
+}
+
+function validateI18nResourcePath(value: string, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (!value) {
+    diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_PATH_MISSING", "i18n resource path is required.", "error", targetPath));
+    return;
+  }
+
+  const normalized = value.replaceAll("\\", "/");
+
+  if (/^[A-Za-z]:[\\/]/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
+    diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_ABSOLUTE_PATH", "i18n resource paths must be relative.", "error", targetPath));
+    return;
+  }
+
+  if (normalized === ".." || normalized.startsWith("../") || normalized.includes("/../") || normalized.endsWith("/..")) {
+    diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_PATH_TRAVERSAL", "i18n resource paths must stay inside the project resource boundary.", "error", targetPath));
   }
 }
 
@@ -508,14 +716,33 @@ function validateRange(range: { start: HiaSourcePosition; end: HiaSourcePosition
     return;
   }
 
-  validatePosition(range.start, diagnostics, `${targetPath}.start`);
-  validatePosition(range.end, diagnostics, `${targetPath}.end`);
+  const startValid = validatePosition(range.start, diagnostics, `${targetPath}.start`);
+  const endValid = validatePosition(range.end, diagnostics, `${targetPath}.end`);
+
+  if (startValid && endValid) {
+    const startColumn = range.start.column || 1;
+    const endColumn = range.end.column || 1;
+    const endsBeforeStart = range.end.line < range.start.line
+      || (range.end.line === range.start.line && endColumn < startColumn);
+
+    if (endsBeforeStart) {
+      diagnostics.push(createDiagnostic("HIA_SOURCE_RANGE_ORDER_INVALID", "Source range end must not be before start.", "error", targetPath));
+    }
+  }
 }
 
-function validatePosition(position: HiaSourcePosition | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
+function validatePosition(position: HiaSourcePosition | undefined, diagnostics: HiaDiagnostic[], targetPath: string): boolean {
   if (!position || !Number.isInteger(position.line) || position.line < 1) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position line must be a positive integer.", "error", targetPath));
+    return false;
   }
+
+  if (position.column !== undefined && (!Number.isInteger(position.column) || position.column < 1)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position column must be a positive integer when present.", "error", `${targetPath}.column`));
+    return false;
+  }
+
+  return true;
 }
 
 function validateTextRange(range: { start: number; end: number } | null | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
@@ -525,6 +752,30 @@ function validateTextRange(range: { start: number; end: number } | null | undefi
 
   if (!isRecord(range) || !Number.isInteger(range.start) || !Number.isInteger(range.end) || range.start < 0 || range.end < range.start) {
     diagnostics.push(createDiagnostic("HIA_TEXT_RANGE_INVALID", `${targetPath} must contain a valid start/end pair.`, "error", targetPath));
+  }
+}
+
+function validateStringEnum(
+  value: unknown,
+  allowedValues: readonly string[],
+  code: string,
+  diagnostics: HiaDiagnostic[],
+  targetPath: string
+): void {
+  if (typeof value === "string" && !allowedValues.includes(value)) {
+    diagnostics.push(createDiagnostic(code, `${targetPath} is not supported.`, "error", targetPath));
+  }
+}
+
+function validateLiteral(
+  value: unknown,
+  expectedValue: string,
+  code: string,
+  diagnostics: HiaDiagnostic[],
+  targetPath: string
+): void {
+  if (typeof value === "string" && value !== expectedValue) {
+    diagnostics.push(createDiagnostic(code, `${targetPath} must be ${expectedValue}.`, "error", targetPath));
   }
 }
 

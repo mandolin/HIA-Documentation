@@ -1,6 +1,8 @@
 import type {
   HiaDocument,
+  HiaSourceBlock,
   HiaSourceFragment,
+  HiaSourcePrimaryBlock,
   HiaSourceReference,
   HiaSourceRange,
   HiaSymbol
@@ -19,6 +21,7 @@ export interface HiaLspResourceIndex {
   i18nResources: HiaLspI18nResourceLocation[];
   locales: string[];
   missingLocales: HiaLspMissingLocaleLocation[];
+  sourceBlocks: HiaLspSourceBlockLocation[];
   sourceFragments: HiaLspSourceFragmentLocation[];
   sourceReferences: HiaLspSourceReferenceLocation[];
   title?: string;
@@ -27,6 +30,8 @@ export interface HiaLspResourceIndex {
 
 export interface HiaLspI18nResourceLocation {
   fields: string[];
+  format?: string;
+  kind?: string;
   locale?: string;
   resourcePath: string;
   symbolId: string;
@@ -38,7 +43,8 @@ export interface HiaLspI18nKeyLocation {
   key?: string;
   locales: string[];
   path?: string;
-  segmentId: string;
+  segmentId?: string;
+  source: "field" | "segment";
   symbolId: string;
   symbolName: string;
 }
@@ -62,9 +68,23 @@ export interface HiaLspSourceReferenceLocation {
 }
 
 export interface HiaLspSourceFragmentLocation {
+  confidence?: string;
   fragmentId: string;
   range: HiaSourceRange;
+  rangeSource?: string;
   relativePath: string;
+  symbolId: string;
+  symbolName: string;
+}
+
+export interface HiaLspSourceBlockLocation {
+  blockId?: string;
+  blockKind: HiaSourceBlock["kind"];
+  confidence: string;
+  previewEnabled?: boolean;
+  range?: HiaSourceRange;
+  rangeSource: string;
+  relativePath?: string;
   symbolId: string;
   symbolName: string;
 }
@@ -79,6 +99,7 @@ export function createEmptyHiaResourceIndex(options: HiaResourceIndexOptions = {
     i18nResources: [],
     locales: [],
     missingLocales: [],
+    sourceBlocks: [],
     sourceFragments: [],
     sourceReferences: []
   };
@@ -101,6 +122,7 @@ export function createHiaResourceIndex(document: HiaDocument, options: HiaResour
   for (const symbol of document.symbols) {
     collectI18nResources(symbol, index);
     collectI18nKeys(symbol, index);
+    collectSourceBlocks(symbol, index);
     collectSourceReferences(symbol, index);
     collectSourceFragments(symbol, index);
   }
@@ -131,12 +153,40 @@ function collectI18nResources(symbol: HiaSymbol, index: HiaLspResourceIndex): vo
       item.locale = resource.locale;
     }
 
+    if (resource.kind) {
+      item.kind = resource.kind;
+    }
+
+    if (resource.format) {
+      item.format = resource.format;
+    }
+
     index.i18nResources.push(item);
   }
 }
 
 function collectI18nKeys(symbol: HiaSymbol, index: HiaLspResourceIndex): void {
   for (const [fieldPath, field] of Object.entries(symbol.i18n?.fields || {})) {
+    if (field.key || field.path) {
+      const item: HiaLspI18nKeyLocation = {
+        fieldPath,
+        locales: Object.keys(field.localizedText),
+        source: "field",
+        symbolId: symbol.id,
+        symbolName: symbol.name
+      };
+
+      if (field.key) {
+        item.key = field.key;
+      }
+
+      if (field.path) {
+        item.path = field.path;
+      }
+
+      index.i18nKeys.push(item);
+    }
+
     for (const locale of field.missingLocales || []) {
       index.missingLocales.push({
         fieldPath,
@@ -155,6 +205,7 @@ function collectI18nKeys(symbol: HiaSymbol, index: HiaLspResourceIndex): void {
         fieldPath,
         locales: Object.keys(segment.localized),
         segmentId: segment.id,
+        source: "segment",
         symbolId: symbol.id,
         symbolName: symbol.name
       };
@@ -198,24 +249,116 @@ function collectSourceReferences(symbol: HiaSymbol, index: HiaLspResourceIndex):
   }
 }
 
-function collectSourceFragments(symbol: HiaSymbol, index: HiaLspResourceIndex): void {
+function collectSourceBlocks(symbol: HiaSymbol, index: HiaLspResourceIndex): void {
+  const primaryBlock = symbol.source?.primaryBlock;
+
+  if (primaryBlock) {
+    pushUniqueSourceBlock(index, createSourceBlockLocation(symbol, primaryBlock));
+  }
+
   for (const fragment of symbol.source?.fragments || []) {
-    index.sourceFragments.push(createSourceFragmentLocation(symbol, fragment));
+    pushUniqueSourceBlock(index, createSourceBlockLocation(symbol, fragment));
   }
 
   for (const reference of symbol.source?.references || []) {
     if (reference.fragment) {
-      index.sourceFragments.push(createSourceFragmentLocation(symbol, reference.fragment));
+      pushUniqueSourceBlock(index, createSourceBlockLocation(symbol, reference.fragment));
+    }
+  }
+}
+
+function collectSourceFragments(symbol: HiaSymbol, index: HiaLspResourceIndex): void {
+  for (const fragment of symbol.source?.fragments || []) {
+    pushUniqueSourceFragment(index, createSourceFragmentLocation(symbol, fragment));
+  }
+
+  for (const reference of symbol.source?.references || []) {
+    if (reference.fragment) {
+      pushUniqueSourceFragment(index, createSourceFragmentLocation(symbol, reference.fragment));
     }
   }
 }
 
 function createSourceFragmentLocation(symbol: HiaSymbol, fragment: HiaSourceFragment): HiaLspSourceFragmentLocation {
   return {
+    confidence: fragment.confidence,
     fragmentId: fragment.id,
     range: fragment.range,
+    rangeSource: fragment.rangeSource,
     relativePath: fragment.relativePath,
     symbolId: symbol.id,
     symbolName: symbol.name
   };
+}
+
+function createSourceBlockLocation(symbol: HiaSymbol, block: HiaSourcePrimaryBlock | HiaSourceFragment): HiaLspSourceBlockLocation {
+  const item: HiaLspSourceBlockLocation = {
+    blockKind: block.kind,
+    confidence: block.confidence,
+    rangeSource: block.rangeSource,
+    symbolId: symbol.id,
+    symbolName: symbol.name
+  };
+
+  if (block.id) {
+    item.blockId = block.id;
+  }
+
+  if (block.relativePath) {
+    item.relativePath = block.relativePath;
+  }
+
+  if (block.range) {
+    item.range = block.range;
+  }
+
+  if (block.preview) {
+    item.previewEnabled = block.preview.enabled;
+  }
+
+  return item;
+}
+
+function pushUniqueSourceBlock(index: HiaLspResourceIndex, item: HiaLspSourceBlockLocation): void {
+  const key = [
+    item.symbolId,
+    item.blockKind,
+    item.blockId || "",
+    item.relativePath || "",
+    item.range?.start.line ?? "",
+    item.range?.end.line ?? ""
+  ].join("\u0000");
+  const exists = index.sourceBlocks.some((existing) => [
+    existing.symbolId,
+    existing.blockKind,
+    existing.blockId || "",
+    existing.relativePath || "",
+    existing.range?.start.line ?? "",
+    existing.range?.end.line ?? ""
+  ].join("\u0000") === key);
+
+  if (!exists) {
+    index.sourceBlocks.push(item);
+  }
+}
+
+function pushUniqueSourceFragment(index: HiaLspResourceIndex, item: HiaLspSourceFragmentLocation): void {
+  const key = [
+    item.symbolId,
+    item.fragmentId,
+    item.relativePath,
+    item.range.start.line,
+    item.range.end.line
+  ].join("\u0000");
+  const exists = index.sourceFragments.some((existing) => [
+    existing.symbolId,
+    existing.fragmentId,
+    existing.relativePath,
+    existing.range.start.line,
+    existing.range.end.line
+  ].join("\u0000") === key);
+
+  if (!exists) {
+    index.sourceFragments.push(item);
+  }
 }

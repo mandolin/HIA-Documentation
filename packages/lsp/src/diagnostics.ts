@@ -69,7 +69,7 @@ export function analyzeHiaDocumentText(text: string, options: HiaLspDiagnosticOp
 }
 
 function collectI18nDiagnostics(document: HiaDocument, diagnostics: Diagnostic[]): void {
-  const seenKeys = new Map<string, { symbol: HiaSymbol; fieldPath: string; segment: HiaLangInlineSegment }>();
+  const seenKeys = new Map<string, { symbol: HiaSymbol; fieldPath: string; segment?: HiaLangInlineSegment }>();
 
   for (const symbol of document.symbols) {
     if (!symbol.i18n?.fields) {
@@ -77,6 +77,25 @@ function collectI18nDiagnostics(document: HiaDocument, diagnostics: Diagnostic[]
     }
 
     for (const [fieldPath, field] of Object.entries(symbol.i18n.fields)) {
+      if (field.key) {
+        const previous = seenKeys.get(field.key);
+
+        if (previous) {
+          diagnostics.push({
+            code: HiaLspDiagnosticCode.I18nKeyDuplicate,
+            message: `Duplicate i18n key "${field.key}" in ${symbol.name}.${fieldPath}; first seen in ${previous.symbol.name}.${previous.fieldPath}.`,
+            range: createRangeForField(field),
+            severity: DiagnosticSeverity.Warning,
+            source: HIA_LSP_SOURCE
+          });
+        } else {
+          seenKeys.set(field.key, {
+            symbol,
+            fieldPath
+          });
+        }
+      }
+
       for (const locale of field.missingLocales || []) {
         diagnostics.push({
           code: HiaLspDiagnosticCode.I18nLocaleMissing,

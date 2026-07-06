@@ -12,6 +12,7 @@ import type {
   HiaFallbackLocale,
   HiaI18nField,
   HiaI18nModel,
+  HiaI18nResource,
   HiaLangBlock,
   HiaLangInlineSegment,
   HiaLocalizedText,
@@ -246,7 +247,10 @@ function mapI18nModel(
     return undefined;
   }
 
-  const fields = mapI18nFields(value.fields, defaultLocale);
+  const fields = mapI18nFields(value.fields, defaultLocale, {
+    descriptionKey: stringValue(value.key),
+    descriptionPath: stringValue(value.path)
+  });
   const model: HiaI18nModel = {
     enabled: value.enabled !== false,
     model: HIA_TEXT_I18N_MODEL,
@@ -283,7 +287,11 @@ function mapI18nModel(
   return model;
 }
 
-function mapI18nFields(value: unknown, defaultLocale: string): Record<string, HiaI18nField> {
+function mapI18nFields(
+  value: unknown,
+  defaultLocale: string,
+  options: { descriptionKey?: string; descriptionPath?: string } = {}
+): Record<string, HiaI18nField> {
   if (!isRecord(value)) {
     return {};
   }
@@ -308,11 +316,21 @@ function mapI18nFields(value: unknown, defaultLocale: string): Record<string, Hi
       defaultLocale: stringValue(rawField.defaultLocale) || defaultLocale,
       localizedText
     };
+    const key = stringValue(rawField.key) || (fieldPath === "description" ? options.descriptionKey || "" : "");
+    const path = stringValue(rawField.path) || (fieldPath === "description" ? options.descriptionPath || "" : "");
     const source = stringValue(rawField.source);
     const blocks = mapLangBlocks(rawField.blocks, field.fieldPath);
     const segments = mapLangInlineSegments(rawField.segments, field.fieldPath);
     const resolutions = mapTextResolutions(rawField.resolutions);
     const missingLocales = collectStringArray(rawField.missingLocales);
+
+    if (key) {
+      field.key = key;
+    }
+
+    if (path) {
+      field.path = path;
+    }
 
     if (defaultText) {
       field.defaultText = defaultText;
@@ -549,12 +567,15 @@ function mapSourceFragment(value: unknown): HiaSourceFragment | undefined {
     id,
     relativePath,
     range,
-    content: stringValue(value.content)
+    content: stringValue(value.content),
+    rangeSource: toRangeSource(value.rangeSource) === "unresolved" ? "manual" : toRangeSource(value.rangeSource),
+    confidence: toConfidence(value.confidence) === "none" ? "high" : toConfidence(value.confidence)
   };
   const language = stringValue(value.language);
   const origin = isRecord(value.origin) ? sanitizeMetadata(value.origin) : undefined;
   const link = mapSourceLink(value.link);
   const preview = mapSourcePreview(value.preview);
+  const diagnostics = mapDiagnostics(value.diagnostics, "source.fragments.diagnostics");
 
   if (language) {
     fragment.language = language;
@@ -570,6 +591,10 @@ function mapSourceFragment(value: unknown): HiaSourceFragment | undefined {
 
   if (preview) {
     fragment.preview = preview;
+  }
+
+  if (diagnostics.length > 0) {
+    fragment.diagnostics = diagnostics;
   }
 
   return fragment;
@@ -611,6 +636,8 @@ function mapSourcePreview(value: unknown): HiaSourcePreview | undefined {
     enabled: value.enabled !== false
   };
   const content = stringValue(value.content);
+  const language = stringValue(value.language);
+  const range = mapRange(value.range);
 
   if (typeof value.defaultExpanded === "boolean") {
     preview.defaultExpanded = value.defaultExpanded;
@@ -618,6 +645,14 @@ function mapSourcePreview(value: unknown): HiaSourcePreview | undefined {
 
   if (content) {
     preview.content = content;
+  }
+
+  if (language) {
+    preview.language = language;
+  }
+
+  if (range) {
+    preview.range = range;
   }
 
   return preview;
@@ -791,13 +826,13 @@ function mapTextResolutions(value: unknown): Record<string, HiaTextResolution> {
   return resolutions;
 }
 
-function mapI18nResources(value: unknown): { path: string; locale?: string; fields?: string[] }[] {
+function mapI18nResources(value: unknown): HiaI18nResource[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value
-    .map((item): { path: string; locale?: string; fields?: string[] } | null => {
+    .map((item): HiaI18nResource | null => {
       if (!isRecord(item)) {
         return null;
       }
@@ -808,12 +843,22 @@ function mapI18nResources(value: unknown): { path: string; locale?: string; fiel
         return null;
       }
 
-      const resource: { path: string; locale?: string; fields?: string[] } = { path };
+      const resource: HiaI18nResource = { path };
+      const kind = stringValue(item.kind);
       const locale = stringValue(item.locale);
+      const format = stringValue(item.format);
       const fields = collectStringArray(item.fields);
+
+      if (kind) {
+        resource.kind = kind;
+      }
 
       if (locale) {
         resource.locale = locale;
+      }
+
+      if (format) {
+        resource.format = format;
       }
 
       if (fields.length > 0) {
@@ -822,7 +867,7 @@ function mapI18nResources(value: unknown): { path: string; locale?: string; fiel
 
       return resource;
     })
-    .filter((item): item is { path: string; locale?: string; fields?: string[] } => Boolean(item));
+    .filter((item): item is HiaI18nResource => Boolean(item));
 }
 
 function mapLocalizedText(value: unknown): HiaLocalizedText {
@@ -993,7 +1038,7 @@ function toSeverity(value: unknown): HiaDiagnosticSeverity {
 function toRelativePath(value: unknown): string {
   const text = stringValue(value).replace(/\\/g, "/");
 
-  return isAbsolutePathLike(text) ? "" : text;
+  return isUnsafePathLike(text) ? "" : text;
 }
 
 function sanitizeMetadata(value: unknown): unknown {
@@ -1018,15 +1063,23 @@ function sanitizeMetadata(value: unknown): unknown {
     return record;
   }
 
-  if (typeof value === "string" && isAbsolutePathLike(value)) {
+  if (typeof value === "string" && isUnsafePathLike(value)) {
     return undefined;
   }
 
   return value;
 }
 
-function isAbsolutePathLike(value: string): boolean {
-  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith("/") || value.startsWith("\\\\");
+function isUnsafePathLike(value: string): boolean {
+  const normalized = value.replace(/\\/g, "/");
+
+  return /^[A-Za-z]:[\\/]/.test(value)
+    || normalized.startsWith("/")
+    || normalized.startsWith("//")
+    || normalized === ".."
+    || normalized.startsWith("../")
+    || normalized.includes("/../")
+    || normalized.endsWith("/..");
 }
 
 function createDiagnostic(

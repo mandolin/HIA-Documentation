@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.i18n-resource",
+  "title": "HIA I18n Resource Fixture",
+  "defaultLocale": "zh-CN",
+  "fallbackLocale": ["en", "zh-CN"],
+  "locales": ["zh-CN", "en"],
+  "nodes": [
+    {
+      "id": "node.module.i18n",
+      "kind": "module",
+      "title": "i18n",
+      "symbolIds": ["function:renderProfile"]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "function:renderProfile",
+      "kind": "function",
+      "name": "renderProfile",
+      "summary": "渲染用户资料。",
+      "i18n": {
+        "enabled": true,
+        "model": "hia-text-i18n",
+        "modelVersion": "0.2.0",
+        "defaultLocale": "zh-CN",
+        "fallbackLocale": ["en", "zh-CN"],
+        "locales": ["zh-CN", "en"],
+        "mode": "runtimeSwitch",
+        "resources": [
+          {
+            "kind": "external-resource",
+            "path": "i18n/profile.hia-i18n.json",
+            "locale": "en",
+            "format": "hia-i18n-json",
+            "fields": ["description", "params.profile.description"]
+          }
+        ],
+        "fields": {
+          "description": {
+            "fieldPath": "description",
+            "kind": "description",
+            "key": "profile.render.description",
+            "path": "profile.render",
+            "defaultLocale": "zh-CN",
+            "defaultText": "渲染用户资料。",
+            "source": "doclet.description",
+            "localizedText": {
+              "zh-CN": "渲染用户资料。",
+              "en": "Render a user profile."
+            },
+            "resolutions": {
+              "en": {
+                "requestedLocale": "en",
+                "resolvedLocale": "en",
+                "fallbackChain": ["en", "zh-CN"],
+                "usedFallback": false,
+                "missing": false,
+                "sourceKind": "external-resource",
+                "sourceLocale": "en",
+                "source": "i18n/profile.hia-i18n.json"
+              }
+            },
+            "missingLocales": []
+          },
+          "params.profile.description": {
+            "fieldPath": "params.profile.description",
+            "kind": "param.description",
+            "key": "profile.render.param.profile",
+            "path": "profile.render.params.profile",
+            "defaultLocale": "zh-CN",
+            "defaultText": "用户资料对象。",
+            "source": "doclet.params.0.description",
+            "localizedText": {
+              "zh-CN": "用户资料对象。",
+              "en": "User profile object."
+            },
+            "segments": [
+              {
+                "kind": "lang-inline",
+                "id": "params.profile.description.0",
+                "fieldPath": "params.profile.description",
+                "raw": "<lang key=\"profile.render.param.profile\"><zh-CN>用户资料对象</zh-CN><en>User profile object</en></lang>",
+                "key": "profile.render.param.profile",
+                "path": "profile.render.params.profile",
+                "localized": {
+                  "zh-CN": "用户资料对象",
+                  "en": "User profile object"
+                },
+                "rangeInField": {
+                  "start": 0,
+                  "end": 111
+                }
+              }
+            ],
+            "missingLocales": []
+          }
+        }
+      }
+    }
+  ],
+  "diagnostics": []
+}

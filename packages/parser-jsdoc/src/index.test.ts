@@ -34,9 +34,16 @@ describe("@hia-doc/parser-jsdoc", () => {
       summary: "问候一个用户。"
     });
     expect(document.symbols[0]?.i18n?.model).toBe("hia-text-i18n");
+    expect(document.symbols[0]?.i18n?.fields.description?.key).toBe("greet.description");
+    expect(document.symbols[0]?.i18n?.fields.description?.path).toBe("api.greet");
     expect(document.symbols[0]?.source?.model).toBe("hia-source");
+    expect(document.symbols[0]?.source?.modelVersion).toBe("0.2.0");
     expect(document.symbols[0]?.source?.definedIn?.relativePath).toBe("examples/basic/src/greet.js");
     expect(document.symbols[0]?.source?.references?.[0]?.fragment).not.toHaveProperty("filePath");
+    expect(document.symbols[0]?.source?.references?.[0]?.fragment).toMatchObject({
+      confidence: "high",
+      rangeSource: "manual"
+    });
   });
 
   it("exposes a compact detailed result and alias", async () => {

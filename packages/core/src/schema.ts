@@ -1,7 +1,10 @@
 import {
   HIA_CORE_CONTRACT_VERSION,
+  HIA_SOURCE_CONFIDENCE_LEVELS,
   HIA_SOURCE_MODEL,
   HIA_SOURCE_MODEL_VERSION,
+  HIA_SOURCE_MODES,
+  HIA_SOURCE_RANGE_SOURCES,
   HIA_TEXT_I18N_MODEL,
   HIA_TEXT_I18N_MODEL_VERSION
 } from "./model.js";
@@ -139,8 +142,10 @@ export const HIA_DOCUMENT_SCHEMA = {
       required: ["path"],
       additionalProperties: true,
       properties: {
+        kind: { $ref: "#/$defs/nonEmptyString" },
         path: { $ref: "#/$defs/nonEmptyString" },
         locale: { $ref: "#/$defs/nonEmptyString" },
+        format: { $ref: "#/$defs/nonEmptyString" },
         fields: {
           type: "array",
           items: { $ref: "#/$defs/nonEmptyString" }
@@ -155,6 +160,8 @@ export const HIA_DOCUMENT_SCHEMA = {
         fieldPath: { $ref: "#/$defs/nonEmptyString" },
         kind: { $ref: "#/$defs/nonEmptyString" },
         defaultLocale: { $ref: "#/$defs/nonEmptyString" },
+        key: { $ref: "#/$defs/nonEmptyString" },
+        path: { $ref: "#/$defs/nonEmptyString" },
         defaultText: { type: "string" },
         source: { $ref: "#/$defs/nonEmptyString" },
         localizedText: { $ref: "#/$defs/localizedText" },
@@ -234,7 +241,10 @@ export const HIA_DOCUMENT_SCHEMA = {
           items: { $ref: "#/$defs/nonEmptyString" }
         },
         usedFallback: { type: "boolean" },
-        missing: { type: "boolean" }
+        missing: { type: "boolean" },
+        sourceKind: { $ref: "#/$defs/nonEmptyString" },
+        sourceLocale: { type: "string" },
+        source: { $ref: "#/$defs/nonEmptyString" }
       }
     },
     sourcePosition: {
@@ -273,7 +283,9 @@ export const HIA_DOCUMENT_SCHEMA = {
       properties: {
         enabled: { type: "boolean" },
         defaultExpanded: { type: "boolean" },
-        content: { type: "string" }
+        content: { type: "string" },
+        language: { $ref: "#/$defs/nonEmptyString" },
+        range: { $ref: "#/$defs/sourceRange" }
       }
     },
     sourceDefinedIn: {
@@ -300,8 +312,8 @@ export const HIA_DOCUMENT_SCHEMA = {
         language: { $ref: "#/$defs/nonEmptyString" },
         range: { $ref: "#/$defs/sourceRange" },
         content: { type: "string" },
-        rangeSource: { enum: ["heuristic", "parser", "parser-js", "jsdoc-meta", "manual", "unresolved"] },
-        confidence: { enum: ["high", "medium", "low", "none"] },
+        rangeSource: { enum: [...HIA_SOURCE_RANGE_SOURCES] },
+        confidence: { enum: [...HIA_SOURCE_CONFIDENCE_LEVELS] },
         link: { $ref: "#/$defs/sourceLink" },
         preview: { $ref: "#/$defs/sourcePreview" },
         diagnostics: {
@@ -330,7 +342,7 @@ export const HIA_DOCUMENT_SCHEMA = {
     },
     sourceFragment: {
       type: "object",
-      required: ["kind", "id", "relativePath", "range", "content"],
+      required: ["kind", "id", "relativePath", "range", "content", "rangeSource", "confidence"],
       additionalProperties: true,
       properties: {
         kind: { const: "source-fragment" },
@@ -339,9 +351,15 @@ export const HIA_DOCUMENT_SCHEMA = {
         language: { $ref: "#/$defs/nonEmptyString" },
         range: { $ref: "#/$defs/sourceRange" },
         content: { type: "string" },
+        rangeSource: { enum: [...HIA_SOURCE_RANGE_SOURCES] },
+        confidence: { enum: [...HIA_SOURCE_CONFIDENCE_LEVELS] },
         origin: { type: "object" },
         link: { $ref: "#/$defs/sourceLink" },
-        preview: { $ref: "#/$defs/sourcePreview" }
+        preview: { $ref: "#/$defs/sourcePreview" },
+        diagnostics: {
+          type: "array",
+          items: { $ref: "#/$defs/diagnostic" }
+        }
       }
     },
     sourceMetadata: {
@@ -351,7 +369,7 @@ export const HIA_DOCUMENT_SCHEMA = {
       properties: {
         model: { const: HIA_SOURCE_MODEL },
         modelVersion: { const: HIA_SOURCE_MODEL_VERSION },
-        mode: { enum: ["none", "link", "include", "all"] },
+        mode: { enum: [...HIA_SOURCE_MODES] },
         definedIn: { $ref: "#/$defs/sourceDefinedIn" },
         primaryBlock: {
           anyOf: [

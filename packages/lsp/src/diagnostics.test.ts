@@ -27,7 +27,7 @@ describe("@hia-doc/lsp diagnostics", () => {
           i18n: {
             enabled: true,
             model: "hia-text-i18n",
-            modelVersion: "0.1.0",
+            modelVersion: "0.2.0",
             defaultLocale: "zh-CN",
             locales: ["zh-CN", "en"],
             fields: {
@@ -56,7 +56,7 @@ describe("@hia-doc/lsp diagnostics", () => {
           },
           source: {
             model: "hia-source",
-            modelVersion: "0.1.0",
+            modelVersion: "0.2.0",
             mode: "all",
             references: [
               {

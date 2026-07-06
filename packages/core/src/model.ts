@@ -1,18 +1,24 @@
 export const HIA_CORE_PACKAGE_NAME = "@hia-doc/core";
 export const HIA_CORE_CONTRACT_VERSION = "0.2.0";
 export const HIA_TEXT_I18N_MODEL = "hia-text-i18n";
-export const HIA_TEXT_I18N_MODEL_VERSION = "0.1.0";
+export const HIA_TEXT_I18N_MODEL_VERSION = "0.2.0";
 export const HIA_SOURCE_MODEL = "hia-source";
-export const HIA_SOURCE_MODEL_VERSION = "0.1.0";
+export const HIA_SOURCE_MODEL_VERSION = "0.2.0";
+export const HIA_SOURCE_MODES = ["none", "link", "include", "all"] as const;
+export const HIA_SOURCE_RANGE_SOURCES = ["heuristic", "parser", "parser-js", "jsdoc-meta", "manual", "unresolved"] as const;
+export const HIA_SOURCE_CONFIDENCE_LEVELS = ["high", "medium", "low", "none"] as const;
 
 export type HiaDiagnosticSeverity = "info" | "warning" | "error";
 export type HiaFallbackLocale = string | string[];
 export type HiaLocalizedText = Record<string, string>;
+export type HiaI18nTextSourceKind = "localized-text" | "inline-segment" | "lang-block" | "external-resource" | "default-text" | string;
+export type HiaI18nResourceFormat = "hia-i18n-json" | "json" | string;
 export type HiaSymbolKind = "module" | "class" | "function" | "member" | "constant" | "typedef" | string;
 export type HiaNodeKind = "root" | "module" | "namespace" | "group" | string;
-export type HiaSourceMode = "none" | "link" | "include" | "all";
-export type HiaSourceRangeSource = "heuristic" | "parser" | "parser-js" | "jsdoc-meta" | "manual" | "unresolved";
-export type HiaSourceConfidence = "high" | "medium" | "low" | "none";
+export type HiaSourceMode = typeof HIA_SOURCE_MODES[number];
+export type HiaSourceRangeSource = typeof HIA_SOURCE_RANGE_SOURCES[number];
+export type HiaSourceConfidence = typeof HIA_SOURCE_CONFIDENCE_LEVELS[number];
+export type HiaSourceBlockKind = "primary-block" | "source-fragment";
 
 export interface HiaRuntimeInfo {
   packageName: string;
@@ -89,9 +95,11 @@ export interface HiaI18nModel {
 }
 
 export interface HiaI18nResource {
+  kind?: "external-resource" | string;
   path: string;
   locale?: string;
   fields?: string[];
+  format?: HiaI18nResourceFormat;
 }
 
 export interface HiaI18nField {
@@ -99,6 +107,8 @@ export interface HiaI18nField {
   kind: string;
   defaultLocale: string;
   localizedText: HiaLocalizedText;
+  key?: string;
+  path?: string;
   defaultText?: string;
   source?: string;
   blocks?: HiaLangBlock[];
@@ -138,6 +148,9 @@ export interface HiaTextResolution {
   fallbackChain: string[];
   usedFallback: boolean;
   missing: boolean;
+  sourceKind?: HiaI18nTextSourceKind;
+  sourceLocale?: string;
+  source?: string;
 }
 
 export interface HiaResolvedText extends HiaTextResolution {
@@ -165,6 +178,8 @@ export interface HiaSourcePreview {
   enabled: boolean;
   defaultExpanded?: boolean;
   content?: string;
+  language?: string;
+  range?: HiaSourceRange;
 }
 
 export interface HiaSourceDefinedIn {
@@ -176,8 +191,8 @@ export interface HiaSourceDefinedIn {
   link?: HiaSourceLink;
 }
 
-export interface HiaSourcePrimaryBlock {
-  kind: "primary-block";
+export interface HiaSourceBlockBase {
+  kind: HiaSourceBlockKind;
   id?: string;
   relativePath?: string;
   language?: string;
@@ -188,6 +203,10 @@ export interface HiaSourcePrimaryBlock {
   link?: HiaSourceLink;
   preview?: HiaSourcePreview;
   diagnostics?: HiaDiagnostic[];
+}
+
+export interface HiaSourcePrimaryBlock extends HiaSourceBlockBase {
+  kind: "primary-block";
 }
 
 export interface HiaSourceReference {
@@ -201,17 +220,17 @@ export interface HiaSourceReference {
   diagnostics?: HiaDiagnostic[];
 }
 
-export interface HiaSourceFragment {
+export interface HiaSourceFragment extends HiaSourceBlockBase {
   kind: "source-fragment";
   id: string;
   relativePath: string;
-  language?: string;
   range: HiaSourceRange;
-  content: string;
+  rangeSource: HiaSourceRangeSource;
+  confidence: HiaSourceConfidence;
   origin?: Record<string, unknown>;
-  link?: HiaSourceLink;
-  preview?: HiaSourcePreview;
 }
+
+export type HiaSourceBlock = HiaSourcePrimaryBlock | HiaSourceFragment;
 
 export interface HiaSourceMetadata {
   model: string;

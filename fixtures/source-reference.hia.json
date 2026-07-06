@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.source-reference",
+  "title": "HIA Source Reference Fixture",
+  "defaultLocale": "en",
+  "locales": ["en"],
+  "nodes": [
+    {
+      "id": "node.source",
+      "kind": "module",
+      "title": "source",
+      "symbolIds": ["function:renderChart"],
+      "children": []
+    }
+  ],
+  "symbols": [
+    {
+      "id": "function:renderChart",
+      "kind": "function",
+      "name": "renderChart",
+      "summary": "Render a chart.",
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.2.0",
+        "mode": "all",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/chart/render-chart.js",
+          "language": "javascript",
+          "position": { "line": 12, "column": 1 },
+          "range": {
+            "start": { "line": 12, "column": 1 },
+            "end": { "line": 20, "column": 1 }
+          },
+          "link": {
+            "enabled": true,
+            "fileUrl": "https://example.test/repo/src/chart/render-chart.js",
+            "lineUrl": "https://example.test/repo/src/chart/render-chart.js#L12-L20",
+            "openMode": "new-tab"
+          }
+        },
+        "primaryBlock": {
+          "kind": "primary-block",
+          "id": "function:renderChart",
+          "relativePath": "src/chart/render-chart.js",
+          "language": "javascript",
+          "range": {
+            "start": { "line": 12, "column": 1 },
+            "end": { "line": 20, "column": 1 }
+          },
+          "content": "export function renderChart(data) {\n  const normalized = normalizeSeries(data);\n  return drawCanvas(normalized);\n}",
+          "rangeSource": "parser-js",
+          "confidence": "high",
+          "link": {
+            "enabled": true,
+            "fileUrl": "https://example.test/repo/src/chart/render-chart.js",
+            "lineUrl": "https://example.test/repo/src/chart/render-chart.js#L12-L20",
+            "openMode": "new-tab"
+          },
+          "preview": {
+            "enabled": true,
+            "defaultExpanded": false,
+            "language": "javascript",
+            "range": {
+              "start": { "line": 12, "column": 1 },
+              "end": { "line": 20, "column": 1 }
+            }
+          }
+        },
+        "fragments": [
+          {
+            "kind": "source-fragment",
+            "id": "NORMALIZE_SERIES",
+            "relativePath": "src/chart/render-chart.js",
+            "language": "javascript",
+            "range": {
+              "start": { "line": 13, "column": 3 },
+              "end": { "line": 14, "column": 38 }
+            },
+            "content": "const normalized = normalizeSeries(data);",
+            "rangeSource": "manual",
+            "confidence": "high",
+            "origin": {
+              "marker": "codeblock"
+            },
+            "link": {
+              "enabled": true,
+              "fileUrl": "https://example.test/repo/src/chart/render-chart.js",
+              "lineUrl": "https://example.test/repo/src/chart/render-chart.js#L13-L14",
+              "openMode": "new-tab"
+            },
+            "preview": {
+              "enabled": true,
+              "defaultExpanded": false
+            }
+          }
+        ],
+        "references": [
+          {
+            "kind": "source-reference",
+            "referenceKind": "coderef",
+            "targetId": "NORMALIZE_SERIES",
+            "sourceNodeId": "function:renderChart",
+            "fieldPath": "examples.0.body",
+            "resolved": true,
+            "fragment": {
+              "kind": "source-fragment",
+              "id": "NORMALIZE_SERIES",
+              "relativePath": "src/chart/render-chart.js",
+              "language": "javascript",
+              "range": {
+                "start": { "line": 13, "column": 3 },
+                "end": { "line": 14, "column": 38 }
+              },
+              "content": "const normalized = normalizeSeries(data);",
+              "rangeSource": "manual",
+              "confidence": "high",
+              "preview": {
+                "enabled": true,
+                "defaultExpanded": false
+              }
+            }
+          },
+          {
+            "kind": "source-reference",
+            "referenceKind": "coderef",
+            "targetId": "MISSING_FRAGMENT",
+            "sourceNodeId": "function:renderChart",
+            "fieldPath": "examples.1.body",
+            "resolved": false,
+            "diagnostics": [
+              {
+                "code": "HIA_SOURCE_REFERENCE_UNRESOLVED",
+                "message": "Cannot resolve source fragment MISSING_FRAGMENT.",
+                "severity": "warning",
+                "targetPath": "symbols.0.source.references.1"
+              }
+            ]
+          }
+        ],
+        "diagnostics": []
+      }
+    }
+  ],
+  "diagnostics": []
+}
