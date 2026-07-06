@@ -597,6 +597,10 @@ function validateDiagnostics(value: unknown, diagnostics: HiaDiagnostic[], targe
     validateOptionalString(diagnostic, "path", diagnostics, itemPath);
     validateOptionalString(diagnostic, "targetPath", diagnostics, itemPath);
 
+    if (diagnostic.data !== undefined && !isRecord(diagnostic.data)) {
+      diagnostics.push(createDiagnostic("HIA_DIAGNOSTIC_DATA_INVALID", `${itemPath}.data must be an object when present.`, "error", `${itemPath}.data`));
+    }
+
     if (typeof diagnostic.severity === "string" && !["info", "warning", "error"].includes(diagnostic.severity)) {
       diagnostics.push(createDiagnostic("HIA_DIAGNOSTIC_SEVERITY_INVALID", `${itemPath}.severity is not supported.`, "error", `${itemPath}.severity`));
     }

@@ -4,15 +4,20 @@ import {
   HIA_CORE_CONTRACT_VERSION,
   HIA_DOCUMENT_SCHEMA,
   HIA_DOCUMENT_SCHEMA_VERSION,
+  HIA_DIAGNOSTIC_CODE_REGISTRY,
   HIA_I18N_TEXT_SOURCE_PRIORITY,
+  HIA_PROTOCOL_ENVELOPE_VERSION,
   HIA_SOURCE_CONFIDENCE_LEVELS,
   HIA_SOURCE_MODEL_VERSION,
   HIA_SOURCE_RANGE_SOURCES,
   HIA_TEXT_I18N_MODEL_VERSION,
   buildLocaleFallbackChain,
   createBasicFixtureDocument,
+  createHiaDiagnostic,
   createHiaDocument,
+  createHiaProtocolEnvelope,
   getCoreRuntimeInfo,
+  isKnownHiaDiagnosticCode,
   resolveI18nFieldText,
   validateHiaDocument,
   validateHiaDocumentDetailed
@@ -39,6 +44,7 @@ describe("@hia-doc/core", () => {
     expect(HIA_DOCUMENT_SCHEMA.properties.schemaVersion).toEqual({
       const: HIA_CORE_CONTRACT_VERSION
     });
+    expect(HIA_DOCUMENT_SCHEMA.$defs.diagnostic.properties).toHaveProperty("data");
     expect(HIA_DOCUMENT_SCHEMA.$defs.symbol.required).toEqual(["id", "name", "kind"]);
     expect(HIA_DOCUMENT_SCHEMA.$defs.sourceMetadata.required).toEqual(["model", "modelVersion", "mode"]);
     expect(HIA_DOCUMENT_SCHEMA.$defs.sourceMetadata.properties.modelVersion).toEqual({
@@ -206,7 +212,8 @@ describe("@hia-doc/core", () => {
             {
               code: "BAD",
               message: "Bad diagnostic.",
-              severity: "fatal"
+              severity: "fatal",
+              data: []
             }
           ]
         }
@@ -225,7 +232,45 @@ describe("@hia-doc/core", () => {
     expect(codes).toContain("HIA_SOURCE_RANGE_ORDER_INVALID");
     expect(codes).toContain("HIA_SOURCE_RANGE_CONFIDENCE_MISMATCH");
     expect(codes).toContain("HIA_SOURCE_REFERENCE_FRAGMENT_MISSING");
+    expect(codes).toContain("HIA_DIAGNOSTIC_DATA_INVALID");
     expect(codes).toContain("HIA_DIAGNOSTIC_SEVERITY_INVALID");
+  });
+
+  it("exposes the diagnostic registry and protocol envelope helpers", () => {
+    const diagnostic = createHiaDiagnostic(
+      "HIA_CLI_LOCALE_NOT_DECLARED",
+      "Locale is not declared.",
+      "warning",
+      {
+        targetPath: "docs.locale",
+        data: {
+          locale: "en-US"
+        }
+      }
+    );
+    const envelope = createHiaProtocolEnvelope("diagnostics", [diagnostic], {
+      diagnostics: [diagnostic],
+      producer: "@hia-doc/core",
+      requestId: "test-request"
+    });
+
+    expect(HIA_DIAGNOSTIC_CODE_REGISTRY.length).toBeGreaterThan(20);
+    expect(isKnownHiaDiagnosticCode("HIA_CLI_LOCALE_NOT_DECLARED")).toBe(true);
+    expect(isKnownHiaDiagnosticCode("HIA_UNKNOWN_CODE")).toBe(false);
+    expect(diagnostic).toMatchObject({
+      code: "HIA_CLI_LOCALE_NOT_DECLARED",
+      targetPath: "docs.locale",
+      path: "docs.locale",
+      data: {
+        locale: "en-US"
+      }
+    });
+    expect(envelope).toMatchObject({
+      schemaVersion: HIA_PROTOCOL_ENVELOPE_VERSION,
+      kind: "diagnostics",
+      producer: "@hia-doc/core",
+      requestId: "test-request"
+    });
   });
 
   it("exposes runtime package information", () => {

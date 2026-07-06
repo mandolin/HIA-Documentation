@@ -107,10 +107,21 @@ describe("@hia-doc/lsp diagnostics", () => {
     });
 
     const codes = analyzeHiaDocument(document).map((item) => item.code);
+    const diagnostics = analyzeHiaDocument(document);
 
     expect(codes).toContain(HiaLspDiagnosticCode.I18nLocaleMissing);
     expect(codes).toContain(HiaLspDiagnosticCode.I18nKeyDuplicate);
     expect(codes).toContain(HiaLspDiagnosticCode.SourceReferenceInvalid);
+    expect(diagnostics.find((item) => item.code === HiaLspDiagnosticCode.I18nLocaleMissing)?.data).toMatchObject({
+      locale: "en",
+      symbolId: "function:badOne",
+      fieldPath: "description"
+    });
+    expect(diagnostics.find((item) => item.code === HiaLspDiagnosticCode.SourceReferenceInvalid)?.data).toMatchObject({
+      symbolId: "function:badOne",
+      targetId: "MISSING",
+      resolved: false
+    });
   });
 
   it("reports JSON parse errors for text documents", () => {
@@ -118,5 +129,8 @@ describe("@hia-doc/lsp diagnostics", () => {
 
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]?.code).toBe(HiaLspDiagnosticCode.JsonParseError);
+    expect(diagnostics[0]?.data).toEqual({
+      parser: "json"
+    });
   });
 });

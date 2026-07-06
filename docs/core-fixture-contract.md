@@ -177,14 +177,17 @@ Adapter fixtures may preserve parser metadata, but local absolute fields such as
 
 ## Diagnostics
 
-Diagnostics are stored as arrays with a stable code, severity, message and optional `targetPath`.
+Diagnostics are stored as arrays with a stable code, severity, message, optional `targetPath` and optional machine-readable `data`.
 
 ```json
 {
   "code": "HIA_SOURCE_ABSOLUTE_PATH",
   "severity": "error",
   "message": "Source paths must be relative.",
-  "targetPath": "symbols.0.source.definedIn.relativePath"
+  "targetPath": "symbols.0.source.definedIn.relativePath",
+  "data": {
+    "relativePath": "K:/bad/file.js"
+  }
 }
 ```
 
@@ -195,6 +198,7 @@ The current JSON Schema draft covers:
 - document required fields and version constant
 - node and symbol identity fields
 - diagnostic shape and severity enum
+- diagnostic machine-readable `data`
 - field i18n model shell, fields, blocks, segments and resources
 - source metadata shell, definedIn, primaryBlock, references and fragments
 

@@ -9,6 +9,7 @@ export const HIA_SOURCE_RANGE_SOURCES = ["heuristic", "parser", "parser-js", "js
 export const HIA_SOURCE_CONFIDENCE_LEVELS = ["high", "medium", "low", "none"] as const;
 
 export type HiaDiagnosticSeverity = "info" | "warning" | "error";
+export type HiaDiagnosticData = Record<string, unknown>;
 export type HiaFallbackLocale = string | string[];
 export type HiaLocalizedText = Record<string, string>;
 export type HiaI18nTextSourceKind = "localized-text" | "inline-segment" | "lang-block" | "external-resource" | "default-text" | string;
@@ -29,6 +30,7 @@ export interface HiaDiagnostic {
   code: string;
   message: string;
   severity: HiaDiagnosticSeverity;
+  data?: HiaDiagnosticData;
   path?: string;
   targetPath?: string;
 }

@@ -9,6 +9,8 @@ Current scope:
 
 The build command reads config through `@hia-doc/config`, reads a HIA document JSON fixture, validates it through `@hia-doc/core`, reports diagnostics, renders it through `@hia-doc/renderer-html`, writes HTML/theme assets, and emits an output manifest. The default manifest path is `hia-manifest.json`.
 
+Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
+
 In the local workspace, run it through the root script after building:
 
 ```bash

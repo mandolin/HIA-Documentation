@@ -14,6 +14,8 @@ import {
 } from "@hia-doc/core";
 import { DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH, getDefaultThemeAssets } from "@hia-doc/theme-default";
 
+export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
+
 export interface RenderedHtmlFile {
   path: string;
   contents: string;
@@ -34,7 +36,7 @@ export interface RenderHtmlResult {
 }
 
 export interface RenderHtmlManifest {
-  schemaVersion: "0.1.0";
+  schemaVersion: typeof HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION;
   renderer: "@hia-doc/renderer-html";
   documentId: string;
   title: string;
@@ -82,7 +84,7 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
 
 function createManifest(document: HiaDocument, files: RenderedHtmlFile[], options: RenderHtmlOptions): RenderHtmlManifest {
   return {
-    schemaVersion: "0.1.0",
+    schemaVersion: HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
     renderer: "@hia-doc/renderer-html",
     documentId: document.id,
     title: options.title ?? document.title,

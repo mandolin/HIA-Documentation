@@ -62,7 +62,10 @@ export function analyzeHiaDocumentText(text: string, options: HiaLspDiagnosticOp
         message: error instanceof Error ? error.message : "Cannot parse HIA document JSON.",
         range: createZeroRange(),
         severity: DiagnosticSeverity.Error,
-        source: HIA_LSP_SOURCE
+        source: HIA_LSP_SOURCE,
+        data: {
+          parser: "json"
+        }
       }
     ];
   }
@@ -86,7 +89,14 @@ function collectI18nDiagnostics(document: HiaDocument, diagnostics: Diagnostic[]
             message: `Duplicate i18n key "${field.key}" in ${symbol.name}.${fieldPath}; first seen in ${previous.symbol.name}.${previous.fieldPath}.`,
             range: createRangeForField(field),
             severity: DiagnosticSeverity.Warning,
-            source: HIA_LSP_SOURCE
+            source: HIA_LSP_SOURCE,
+            data: {
+              key: field.key,
+              symbolId: symbol.id,
+              fieldPath,
+              previousSymbolId: previous.symbol.id,
+              previousFieldPath: previous.fieldPath
+            }
           });
         } else {
           seenKeys.set(field.key, {
@@ -102,7 +112,12 @@ function collectI18nDiagnostics(document: HiaDocument, diagnostics: Diagnostic[]
           message: `Missing ${locale} localized text for ${symbol.name}.${fieldPath}.`,
           range: createRangeForField(field),
           severity: DiagnosticSeverity.Warning,
-          source: HIA_LSP_SOURCE
+          source: HIA_LSP_SOURCE,
+          data: {
+            locale,
+            symbolId: symbol.id,
+            fieldPath
+          }
         });
       }
 
@@ -119,7 +134,16 @@ function collectI18nDiagnostics(document: HiaDocument, diagnostics: Diagnostic[]
             message: `Duplicate i18n key "${segment.key}" in ${symbol.name}.${fieldPath}; first seen in ${previous.symbol.name}.${previous.fieldPath}.`,
             range: createRangeForSegment(segment),
             severity: DiagnosticSeverity.Warning,
-            source: HIA_LSP_SOURCE
+            source: HIA_LSP_SOURCE,
+            data: {
+              key: segment.key,
+              symbolId: symbol.id,
+              fieldPath,
+              segmentId: segment.id,
+              previousSymbolId: previous.symbol.id,
+              previousFieldPath: previous.fieldPath,
+              previousSegmentId: previous.segment?.id
+            }
           });
           continue;
         }
@@ -149,7 +173,9 @@ function collectSourceReferenceDiagnostics(document: HiaDocument, diagnostics: D
         source: HIA_LSP_SOURCE,
         data: {
           symbolId: symbol.id,
-          referenceIndex: index
+          referenceIndex: index,
+          targetId: reference.targetId,
+          resolved: reference.resolved
         }
       });
     }
@@ -171,6 +197,7 @@ function mapCoreDiagnostic(diagnostic: HiaDiagnostic, uri?: string): Diagnostic 
 
   if (uri || diagnostic.targetPath || diagnostic.path) {
     lspDiagnostic.data = {
+      ...(diagnostic.data || {}),
       uri,
       targetPath: diagnostic.targetPath,
       path: diagnostic.path

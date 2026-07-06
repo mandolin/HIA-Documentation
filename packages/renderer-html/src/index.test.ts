@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createBasicFixtureDocument } from "@hia-doc/core";
-import { renderHtmlDocument } from "./index.js";
+import {
+  HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
+  renderHtmlDocument
+} from "./index.js";
 
 describe("@hia-doc/renderer-html", () => {
   it("renders a themed index.html file and static assets", () => {
@@ -14,6 +17,7 @@ describe("@hia-doc/renderer-html", () => {
       "assets/hia-default.js"
     ]);
     expect(result.manifest).toMatchObject({
+      schemaVersion: HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
       documentId: "fixture.basic",
       entrypoint: "index.html",
       initialLocale: "zh-CN"

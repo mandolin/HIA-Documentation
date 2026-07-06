@@ -10,8 +10,10 @@ import {
 } from "@hia-doc/config";
 import {
   createBasicFixtureDocument,
+  createHiaDiagnostic,
   validateHiaDocumentDetailed,
   type HiaDiagnostic,
+  type HiaDiagnosticData,
   type HiaDiagnosticSeverity,
   type HiaDocument
 } from "@hia-doc/core";
@@ -162,7 +164,17 @@ async function loadDocument(inputPath: string, io: CliIo): Promise<{ document?: 
     return { document: JSON.parse(content) as HiaDocument };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    io.stderr(`[error:HIA_INPUT_READ_FAILED] ${inputPath} - ${message}`);
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_INPUT_READ_FAILED",
+        `${inputPath} - ${message}`,
+        "error",
+        undefined,
+        {
+          inputPath
+        }
+      )
+    ], io);
     return {};
   }
 }
@@ -209,7 +221,11 @@ function collectBuildDiagnostics(document: HiaDocument, locale: string | undefin
         "HIA_CLI_LOCALE_NOT_DECLARED",
         `Configured locale "${item}" is not declared by the HIA document.`,
         "warning",
-        "docs.locale"
+        "docs.locale",
+        {
+          locale: item,
+          declaredLocales: document.locales
+        }
       ));
     }
   }
@@ -225,7 +241,10 @@ function validateBuildOptions(manifestPath: string): HiaDiagnostic[] {
       "HIA_CLI_MANIFEST_PATH_INVALID",
       "--manifest and docs.manifest must be a relative path inside the output directory.",
       "error",
-      "docs.manifest"
+      "docs.manifest",
+      {
+        manifestPath
+      }
     ));
   }
 
@@ -249,7 +268,10 @@ function validateOptionValues(argv: string[], names: readonly string[]): HiaDiag
         "HIA_CLI_OPTION_VALUE_MISSING",
         `${name} requires a value.`,
         "error",
-        name
+        name,
+        {
+          option: name
+        }
       ));
     }
   }
@@ -320,15 +342,27 @@ function readOption(argv: string[], name: string): string | undefined {
   return value && !value.startsWith("-") ? value : undefined;
 }
 
-function createCliDiagnostic(code: string, message: string, severity: HiaDiagnosticSeverity, targetPath?: string): HiaDiagnostic {
-  const diagnostic: HiaDiagnostic = { code, message, severity };
+function createCliDiagnostic(
+  code: string,
+  message: string,
+  severity: HiaDiagnosticSeverity,
+  targetPath?: string,
+  data?: HiaDiagnosticData
+): HiaDiagnostic {
+  const options: {
+    data?: HiaDiagnosticData;
+    targetPath?: string;
+  } = {};
 
-  if (targetPath) {
-    diagnostic.targetPath = targetPath;
-    diagnostic.path = targetPath;
+  if (data) {
+    options.data = data;
   }
 
-  return diagnostic;
+  if (targetPath) {
+    options.targetPath = targetPath;
+  }
+
+  return createHiaDiagnostic(code, message, severity, options);
 }
 
 function createDefaultIo(): CliIo {

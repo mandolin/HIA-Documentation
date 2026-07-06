@@ -1,8 +1,8 @@
 # HIA Configuration
 
-`hia.config.json` is the first shared configuration contract for the main HIA toolchain.
+`hia.config.json` is the first shared project/build profile contract for the main HIA toolchain.
 
-The current contract is intentionally small. It is used by `@hia-doc/cli` first, and is shaped so LSP and VS Code integration can consume the same project-level settings later.
+The current contract is intentionally small. It is used by `@hia-doc/cli` first, and is shaped so LSP and VS Code integration can consume the same project-level settings later. It is not part of the core document IR.
 
 The repository includes `hia.config.example.json` as a runnable example.
 
@@ -62,6 +62,8 @@ CLI options override config values.
 | `docs.source.mode` | `"none"`, `"file"`, `"external"` | Reserved for source-link behavior. |
 | `docs.source.baseUrl` | string | Reserved for external source links. |
 | `docs.source.openMode` | `"same-tab"`, `"new-tab"` | Reserved for generated source-link UI behavior. |
+
+Validation diagnostics use the shared `HiaDiagnostic` shape with stable `code`, `severity`, `targetPath` and optional machine-readable `data`.
 
 ## Deferred
 

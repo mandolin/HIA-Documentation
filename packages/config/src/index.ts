@@ -1,9 +1,13 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
-import type { HiaDiagnostic, HiaDiagnosticSeverity } from "@hia-doc/core";
+import { createHiaDiagnostic } from "@hia-doc/core";
+import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
 
 export const HIA_CONFIG_SCHEMA_VERSION = "0.1.0";
 export const HIA_CONFIG_FILE_NAMES = ["hia.config.json"] as const;
+export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
+export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
+export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
 
 export interface HiaProjectConfig {
   schemaVersion?: string;
@@ -33,9 +37,9 @@ export interface HiaThemeConfig {
 
 export interface HiaSourceLinkConfig {
   enabled?: boolean;
-  mode?: "none" | "file" | "external";
+  mode?: typeof HIA_CONFIG_SOURCE_MODES[number];
   baseUrl?: string;
-  openMode?: "same-tab" | "new-tab";
+  openMode?: typeof HIA_CONFIG_SOURCE_OPEN_MODES[number];
 }
 
 export interface HiaConfigLoadOptions {
@@ -93,7 +97,11 @@ export async function loadHiaProjectConfig(options: HiaConfigLoadOptions = {}): 
         createConfigDiagnostic(
           error instanceof SyntaxError ? "HIA_CONFIG_PARSE_FAILED" : "HIA_CONFIG_READ_FAILED",
           `${configPath} - ${message}`,
-          "error"
+          "error",
+          undefined,
+          {
+            configPath
+          }
         )
       ],
       path: configPath
@@ -187,12 +195,16 @@ function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targe
   validateOptionalString(value, "name", diagnostics, targetPath);
   validateOptionalString(value, "skin", diagnostics, targetPath);
 
-  if (typeof value.name === "string" && value.name !== "default") {
+  if (typeof value.name === "string" && !HIA_CONFIG_THEME_NAMES.includes(value.name as typeof HIA_CONFIG_THEME_NAMES[number])) {
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_THEME_UNSUPPORTED",
       `Theme "${value.name}" is not implemented yet; the default theme will be used.`,
       "warning",
-      `${targetPath}.name`
+      `${targetPath}.name`,
+      {
+        requestedTheme: value.name,
+        fallbackTheme: "default"
+      }
     ));
   }
 }
@@ -205,8 +217,8 @@ function validateSourceConfig(value: unknown, diagnostics: HiaDiagnostic[], targ
 
   validateOptionalBoolean(value, "enabled", diagnostics, targetPath);
   validateOptionalString(value, "baseUrl", diagnostics, targetPath);
-  validateOptionalEnum(value, "mode", ["none", "file", "external"], diagnostics, targetPath);
-  validateOptionalEnum(value, "openMode", ["same-tab", "new-tab"], diagnostics, targetPath);
+  validateOptionalEnum(value, "mode", HIA_CONFIG_SOURCE_MODES, diagnostics, targetPath);
+  validateOptionalEnum(value, "openMode", HIA_CONFIG_SOURCE_OPEN_MODES, diagnostics, targetPath);
 }
 
 function validateOptionalString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {
@@ -261,15 +273,27 @@ function validateOptionalEnum(
   }
 }
 
-function createConfigDiagnostic(code: string, message: string, severity: HiaDiagnosticSeverity, targetPath?: string): HiaDiagnostic {
-  const diagnostic: HiaDiagnostic = { code, message, severity };
+function createConfigDiagnostic(
+  code: string,
+  message: string,
+  severity: HiaDiagnosticSeverity,
+  targetPath?: string,
+  data?: HiaDiagnosticData
+): HiaDiagnostic {
+  const options: {
+    data?: HiaDiagnosticData;
+    targetPath?: string;
+  } = {};
 
-  if (targetPath) {
-    diagnostic.targetPath = targetPath;
-    diagnostic.path = targetPath;
+  if (data) {
+    options.data = data;
   }
 
-  return diagnostic;
+  if (targetPath) {
+    options.targetPath = targetPath;
+  }
+
+  return createHiaDiagnostic(code, message, severity, options);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

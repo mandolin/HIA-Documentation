@@ -3,7 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  HIA_CONFIG_SOURCE_MODES,
   HIA_CONFIG_SCHEMA_VERSION,
+  HIA_CONFIG_THEME_NAMES,
   hasConfigErrors,
   loadHiaProjectConfig,
   validateHiaProjectConfig
@@ -42,6 +44,8 @@ describe("@hia-doc/config", () => {
       expect(result.baseDir).toBe(root);
       expect(result.config.docs?.input).toBe("fixtures/basic.hia.json");
       expect(result.diagnostics).toEqual([]);
+      expect(HIA_CONFIG_SOURCE_MODES).toEqual(["none", "file", "external"]);
+      expect(HIA_CONFIG_THEME_NAMES).toEqual(["default"]);
     } finally {
       await rm(root, { force: true, recursive: true });
     }
@@ -82,6 +86,10 @@ describe("@hia-doc/config", () => {
     expect(hasConfigErrors(diagnostics)).toBe(true);
     expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SCHEMA_UNSUPPORTED");
     expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_THEME_UNSUPPORTED");
+    expect(diagnostics.find((diagnostic) => diagnostic.code === "HIA_CONFIG_THEME_UNSUPPORTED")?.data).toEqual({
+      requestedTheme: "custom-theme",
+      fallbackTheme: "default"
+    });
     expect(diagnostics.some((diagnostic) => diagnostic.severity === "warning")).toBe(true);
   });
 });

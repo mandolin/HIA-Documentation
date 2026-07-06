@@ -70,6 +70,28 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("reports machine-readable CLI diagnostics for missing input files", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-missing-input-"));
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--input",
+        path.join(root, "missing.hia.json"),
+        "--out",
+        path.join(root, "docs")
+      ], createTestIo(messages));
+
+      expect(exitCode).toBe(1);
+      expect(messages.join("\n")).toContain("[error:HIA_CLI_INPUT_READ_FAILED]");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+
   it("builds from hia.config.json with config-relative paths", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-config-"));
     const inputDir = path.join(root, "input");

@@ -64,6 +64,7 @@ export const HIA_DOCUMENT_SCHEMA = {
         code: { $ref: "#/$defs/nonEmptyString" },
         message: { $ref: "#/$defs/nonEmptyString" },
         severity: { enum: ["info", "warning", "error"] },
+        data: { type: "object" },
         path: { $ref: "#/$defs/nonEmptyString" },
         targetPath: { $ref: "#/$defs/nonEmptyString" }
       }
