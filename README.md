@@ -15,6 +15,8 @@ pnpm run test:unit
 pnpm run test:e2e
 pnpm run check
 pnpm run release:gate
+pnpm run license:audit
+pnpm run smoke:published-jsdoc
 pnpm run hia -- --help
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-en --locale en
@@ -31,9 +33,12 @@ pnpm run hia -- docs build --config hia.config.example.json
 - `docs/contract-index.md`: 主仓实现侧 contract 索引。
 - `docs/core-fixture-contract.md`: core schema、fixture 和 validator contract。
 - `docs/configuration.md`: `hia.config.json` 配置契约。
+- `docs/dependency-license-audit.md`: 直接依赖许可证审计和新增依赖策略。
+- `docs/dependency-review-template.md`: 新增第三方依赖前的审查模板。
 - `docs/adapter-authoring-notes.md`: adapter 作者指南。
 - `docs/ci.md`: GitHub Actions baseline 和失败排查入口。
 - `docs/example-fixture-governance.md`: examples、fixtures 与 generated output 治理规则。
+- `docs/published-jsdoc-usage.md`: 已发布 JSDoc plugin/theme 的 npm 使用路径。
 - `docs/release-gate.md`: 发布前检查和 JSDoc 卫星包发布流程。
 
 ## 子目录

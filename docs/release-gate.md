@@ -18,6 +18,7 @@ The gate runs:
 - Real JPHS Integration fixture through `hia docs build --jsdoc-integration`.
 - Output safety checks for local absolute paths, `filePath`, legacy `currentPage` and synthetic `package:undefined`.
 - Example and fixture governance checks.
+- Direct dependency and license audit.
 
 ## JSDoc Satellite Packages
 
@@ -51,6 +52,12 @@ An `E404 Not Found` result from `npm view` is expected for a version that has no
 
 After publishing, test from a clean project by installing from the official npm registry and running a minimal JSDoc build with both `@mandolin/jsdoc-plugin-hia-sys` and `@mandolin/jsdoc-theme-hia`.
 
+From `main-repo`, this can be run with:
+
+```bash
+pnpm run smoke:published-jsdoc
+```
+
 The smoke output should include:
 
 - `index.html`
@@ -66,3 +73,13 @@ GitHub Actions runs the same release gates on pull requests, pushes to `main` an
 ## Example And Fixture Governance
 
 See `docs/example-fixture-governance.md` for fixture refresh rules, webtest output policy and generated output commit boundaries.
+
+## Dependency And License Audit
+
+Run the direct dependency and license audit from `main-repo`:
+
+```bash
+pnpm run license:audit
+```
+
+See `docs/dependency-license-audit.md` and `docs/dependency-review-template.md` for the allowed license policy and required review steps for new external dependencies.

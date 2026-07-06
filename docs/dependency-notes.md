@@ -2,6 +2,8 @@
 
 This file records the initial dependency choices for the HIA main repository.
 
+Current release-facing dependency and license policy is maintained in `docs/dependency-license-audit.md`. New external dependencies should first use `docs/dependency-review-template.md`, then update the audit script and documentation together.
+
 | Dependency | Purpose | License |
 | --- | --- | --- |
 | `pnpm` | Workspace package manager, pinned through Corepack. | MIT |
@@ -25,3 +27,7 @@ VS Code extension-shell dependencies are limited to `apps/vscode-extension`; cor
 - `pnpm@10.34.4`
 
 `package.json` keeps `packageManager: pnpm@10.34.4` so package-manager metadata and mise stay aligned.
+
+## Release Gate
+
+`pnpm run license:audit` checks the direct external dependency audit and is included in `pnpm run release:gate`.

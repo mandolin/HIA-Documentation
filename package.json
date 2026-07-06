@@ -14,7 +14,9 @@
     "dev:cli": "pnpm --filter @hia-doc/cli dev",
     "governance:check": "node scripts/check-example-fixture-governance.mjs",
     "hia": "node apps/cli/dist/index.js",
-    "release:gate": "pnpm run check && node scripts/release-gate-jsdoc-smoke.mjs && pnpm run governance:check",
+    "license:audit": "node scripts/check-dependency-license-audit.mjs",
+    "release:gate": "pnpm run check && node scripts/release-gate-jsdoc-smoke.mjs && pnpm run governance:check && pnpm run license:audit",
+    "smoke:published-jsdoc": "pnpm run build && node scripts/published-jsdoc-smoke.mjs",
     "test": "pnpm run check",
     "test:e2e": "vitest run tests",
     "test:unit": "vitest run --exclude tests/**/*.test.ts"
