@@ -1,0 +1,29 @@
+{
+  "name": "@hia-doc/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Command line entry for the HIA documentation system.",
+  "type": "module",
+  "bin": {
+    "hia": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@hia-doc/core": "workspace:*",
+    "@hia-doc/renderer-html": "workspace:*"
+  }
+}

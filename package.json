@@ -1,0 +1,26 @@
+{
+  "name": "hia-documentation-sys-main",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Core monorepo for the HIA documentation engineering system.",
+  "type": "module",
+  "packageManager": "pnpm@10.34.4",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc -b --pretty false",
+    "check": "pnpm run build && pnpm run test:unit && pnpm run test:e2e",
+    "dev:cli": "pnpm --filter @hia-doc/cli dev",
+    "hia": "node apps/cli/dist/index.js",
+    "test": "pnpm run check",
+    "test:e2e": "vitest run tests/cli-renderer.e2e.test.ts",
+    "test:unit": "vitest run --exclude tests/**/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "2.1.9"
+  }
+}

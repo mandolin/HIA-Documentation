@@ -1,0 +1,230 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.basic",
+  "title": "HIA Basic Fixture",
+  "defaultLocale": "zh-CN",
+  "fallbackLocale": ["en", "zh-CN"],
+  "locales": ["zh-CN", "en"],
+  "nodes": [
+    {
+      "id": "node.module.webtest",
+      "kind": "module",
+      "title": "webtest",
+      "symbolIds": ["module:webtest", "function:buildProfileSummary"],
+      "children": []
+    }
+  ],
+  "symbols": [
+    {
+      "id": "module:webtest",
+      "kind": "module",
+      "name": "webtest",
+      "longname": "module:webtest",
+      "path": ["webtest"],
+      "summary": "Webtest 示例模块。",
+      "i18n": {
+        "enabled": true,
+        "model": "hia-text-i18n",
+        "modelVersion": "0.1.0",
+        "defaultLocale": "zh-CN",
+        "fallbackLocale": ["en", "zh-CN"],
+        "locales": ["zh-CN", "en"],
+        "mode": "runtimeSwitch",
+        "fields": {
+          "description": {
+            "fieldPath": "description",
+            "kind": "description",
+            "defaultLocale": "zh-CN",
+            "defaultText": "Webtest 示例模块。",
+            "source": "fixture.description",
+            "blocks": [],
+            "segments": [],
+            "localizedText": {
+              "zh-CN": "Webtest 示例模块。",
+              "en": "Webtest sample module."
+            },
+            "resolutions": {
+              "zh-CN": {
+                "requestedLocale": "zh-CN",
+                "resolvedLocale": "zh-CN",
+                "fallbackChain": ["zh-CN", "en"],
+                "usedFallback": false,
+                "missing": false
+              },
+              "en": {
+                "requestedLocale": "en",
+                "resolvedLocale": "en",
+                "fallbackChain": ["en", "zh-CN"],
+                "usedFallback": false,
+                "missing": false
+              }
+            },
+            "missingLocales": []
+          }
+        }
+      },
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.1.0",
+        "mode": "all",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/index.js",
+          "language": "javascript",
+          "position": { "line": 1, "column": 1 },
+          "range": {
+            "start": { "line": 1, "column": 1 },
+            "end": { "line": 1, "column": 1 }
+          },
+          "link": {
+            "enabled": true,
+            "fileUrl": "https://example.test/repo/src/index.js",
+            "lineUrl": "https://example.test/repo/src/index.js#L1",
+            "openMode": "new-tab"
+          }
+        },
+        "primaryBlock": null,
+        "references": [],
+        "fragments": []
+      }
+    },
+    {
+      "id": "function:buildProfileSummary",
+      "kind": "function",
+      "name": "buildProfileSummary",
+      "longname": "module:webtest.buildProfileSummary",
+      "parentId": "module:webtest",
+      "path": ["webtest", "buildProfileSummary"],
+      "signature": "buildProfileSummary(profile) => string",
+      "summary": "生成用户资料摘要。",
+      "i18n": {
+        "enabled": true,
+        "model": "hia-text-i18n",
+        "modelVersion": "0.1.0",
+        "defaultLocale": "zh-CN",
+        "fallbackLocale": ["en", "zh-CN"],
+        "locales": ["zh-CN", "en"],
+        "mode": "runtimeSwitch",
+        "fields": {
+          "description": {
+            "fieldPath": "description",
+            "kind": "description",
+            "defaultLocale": "zh-CN",
+            "defaultText": "生成用户资料摘要。",
+            "source": "fixture.description",
+            "blocks": [],
+            "segments": [],
+            "localizedText": {
+              "zh-CN": "生成用户资料摘要。",
+              "en": "Builds a user profile summary."
+            },
+            "resolutions": {},
+            "missingLocales": []
+          },
+          "params.profile.description": {
+            "fieldPath": "params.profile.description",
+            "kind": "params.profile.description",
+            "defaultLocale": "zh-CN",
+            "defaultText": "标准化后的用户资料对象。",
+            "source": "fixture.params.profile.description",
+            "blocks": [],
+            "segments": [],
+            "localizedText": {
+              "zh-CN": "标准化后的用户资料对象。",
+              "en": "Normalized user profile object."
+            },
+            "resolutions": {},
+            "missingLocales": []
+          },
+          "returns.0.description": {
+            "fieldPath": "returns.0.description",
+            "kind": "returns.0.description",
+            "defaultLocale": "zh-CN",
+            "defaultText": "摘要文本。",
+            "source": "fixture.returns.0.description",
+            "blocks": [],
+            "segments": [],
+            "localizedText": {
+              "zh-CN": "摘要文本。",
+              "en": "Summary text."
+            },
+            "resolutions": {},
+            "missingLocales": []
+          }
+        }
+      },
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.1.0",
+        "mode": "all",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/services/profile-service.js",
+          "language": "javascript",
+          "position": { "line": 48, "column": 1 },
+          "range": {
+            "start": { "line": 48, "column": 1 },
+            "end": { "line": 56, "column": 1 }
+          },
+          "link": {
+            "enabled": true,
+            "fileUrl": "https://example.test/repo/src/services/profile-service.js",
+            "lineUrl": "https://example.test/repo/src/services/profile-service.js#L48-L56",
+            "openMode": "new-tab"
+          }
+        },
+        "primaryBlock": {
+          "kind": "primary-block",
+          "id": "function:buildProfileSummary",
+          "relativePath": "src/services/profile-service.js",
+          "language": "javascript",
+          "range": {
+            "start": { "line": 48, "column": 1 },
+            "end": { "line": 56, "column": 1 }
+          },
+          "content": "function buildProfileSummary(profile) {\n  const name = profile.displayName || profile.username;\n  const status = profile.active ? \"active\" : \"inactive\";\n  return `${name} - ${status}`;\n}",
+          "rangeSource": "parser-js",
+          "confidence": "high",
+          "preview": {
+            "enabled": true,
+            "defaultExpanded": false
+          }
+        },
+        "references": [
+          {
+            "kind": "source-reference",
+            "referenceKind": "coderef",
+            "targetId": "BUILD_PROFILE_SUMMARY",
+            "sourceNodeId": "function:buildProfileSummary",
+            "fieldPath": "examples.0.body",
+            "resolved": true,
+            "fragment": {
+              "kind": "source-fragment",
+              "id": "BUILD_PROFILE_SUMMARY",
+              "relativePath": "src/services/profile-service.js",
+              "language": "javascript",
+              "range": {
+                "start": { "line": 50, "column": 3 },
+                "end": { "line": 54, "column": 32 }
+              },
+              "content": "const name = profile.displayName || profile.username;\nconst status = profile.active ? \"active\" : \"inactive\";\nreturn `${name} - ${status}`;",
+              "origin": {
+                "marker": "codeblock"
+              },
+              "preview": {
+                "enabled": true,
+                "defaultExpanded": false
+              }
+            }
+          }
+        ],
+        "fragments": []
+      }
+    }
+  ],
+  "diagnostics": [],
+  "metadata": {
+    "fixture": "basic",
+    "purpose": "S-sara-2 shared core fixture"
+  }
+}

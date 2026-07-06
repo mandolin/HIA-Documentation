@@ -1,0 +1,9 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/theme-default" },
+    { "path": "./packages/renderer-html" },
+    { "path": "./apps/cli" }
+  ]
+}
