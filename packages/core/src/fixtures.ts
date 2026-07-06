@@ -205,7 +205,7 @@ export function createBasicFixtureDocument(): HiaDocument {
     diagnostics: [],
     metadata: {
       fixture: "basic",
-      purpose: "S-sara-2 shared core fixture"
+      purpose: "Shared core fixture"
     }
   });
 }

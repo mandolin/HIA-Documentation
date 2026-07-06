@@ -28,3 +28,5 @@ The compatibility fixtures are:
 
 - `fixtures/jsdoc-integration.basic.json`
 - `fixtures/jsdoc-integration.compat.json`
+
+See `docs/adapter-authoring-notes.md` and `docs/contract-index.md` for the adapter-to-core boundary.

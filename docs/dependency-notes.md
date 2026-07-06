@@ -1,6 +1,6 @@
 # Dependency Notes
 
-This file records the initial dependency choices for `S-sara-1`.
+This file records the initial dependency choices for the HIA main repository.
 
 | Dependency | Purpose | License |
 | --- | --- | --- |
@@ -14,8 +14,8 @@ This file records the initial dependency choices for `S-sara-1`.
 | `vscode-languageclient` | VS Code extension client for connecting to the HIA LSP server. | MIT |
 | `@types/vscode` | VS Code extension API type definitions for `@hia-doc/vscode-extension`. | MIT |
 
-`S-sara-6` introduces the first runtime LSP dependencies in `@hia-doc/lsp`. The diagnostics engine still consumes core documents and does not depend on any IDE-specific API.
-`S-sara-7` adds VS Code extension-shell dependencies only in `apps/vscode-extension`; core, parser, renderer, CLI and LSP internals remain VS Code independent.
+The first runtime LSP dependencies are limited to `@hia-doc/lsp`. The diagnostics engine still consumes core documents and does not depend on any IDE-specific API.
+VS Code extension-shell dependencies are limited to `apps/vscode-extension`; core, parser, renderer, CLI and LSP internals remain VS Code independent.
 
 ## Tool Versions
 

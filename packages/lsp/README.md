@@ -21,3 +21,9 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - source references and source fragments.
 - Node LSP transport entry for future VS Code integration.
 - Custom request: `hia/documentResourceIndex`.
+
+## Contract
+
+The LSP resource index is an IDE view model derived from core documents. It is not written back into the core document IR.
+
+See `docs/contract-index.md` for the current boundary between core documents, diagnostics and LSP views.

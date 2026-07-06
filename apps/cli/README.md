@@ -23,3 +23,9 @@ pnpm run hia -- docs build --config hia.config.example.json
 ```
 
 CLI options override values from `hia.config.json`. Paths in config files are resolved relative to the config file directory.
+
+## Contract
+
+The CLI consumes core documents and project config, then writes renderer output to disk. It may add build-output files such as `hia-manifest.json`, but it does not change the renderer manifest contract.
+
+See `docs/contract-index.md` for the current CLI/config/renderer layering rule.

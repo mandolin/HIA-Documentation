@@ -12,3 +12,9 @@ Current scope:
 The config package represents project/build profile settings. It does not add fields to the core document IR.
 
 The first contract is intentionally small. `hia.config.ts`, layered config merging and dynamic config evaluation are deferred.
+
+## Contract
+
+The current JSON config schema version is exported as `HIA_CONFIG_SCHEMA_VERSION`.
+
+See `docs/configuration.md` and `docs/contract-index.md` in the repository root for the current config boundary.
