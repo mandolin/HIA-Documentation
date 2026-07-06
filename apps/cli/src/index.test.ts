@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -68,6 +68,128 @@ describe("@hia-doc/cli", () => {
     } finally {
       await rm(root, { force: true, recursive: true });
     }
+  });
+
+  it("builds from hia.config.json with config-relative paths", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-config-"));
+    const inputDir = path.join(root, "input");
+    const messages: string[] = [];
+
+    try {
+      await mkdir(inputDir, { recursive: true });
+      await writeFile(
+        path.join(inputDir, "basic.hia.json"),
+        await readFile(path.join(process.cwd(), "fixtures/basic.hia.json"), "utf8"),
+        "utf8"
+      );
+      await writeFile(path.join(root, "hia.config.json"), JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          input: "input/basic.hia.json",
+          output: "site",
+          locale: "en",
+          manifest: "meta/hia-manifest.json",
+          renderer: {
+            title: "Configured HIA Docs",
+            includeThemeAssets: true
+          },
+          theme: {
+            name: "default"
+          },
+          source: {
+            enabled: true,
+            mode: "file",
+            openMode: "same-tab"
+          }
+        }
+      }), "utf8");
+
+      const exitCode = await runCli(["docs", "build", "--config", path.join(root, "hia.config.json")], createTestIo(messages));
+      const html = await readFile(path.join(root, "site/index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(root, "site/meta/hia-manifest.json"), "utf8")) as {
+        initialLocale: string;
+        title: string;
+        files: Array<{ path: string; role: string }>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(html).toContain("<title>Configured HIA Docs</title>");
+      expect(html).toContain("<html lang=\"en\">");
+      expect(manifest.title).toBe("Configured HIA Docs");
+      expect(manifest.initialLocale).toBe("en");
+      expect(manifest.files.at(-1)).toEqual({
+        path: "meta/hia-manifest.json",
+        role: "manifest",
+        contentType: "application/json; charset=utf-8"
+      });
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("lets CLI options override config values", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-config-override-"));
+    const messages: string[] = [];
+
+    try {
+      await writeFile(path.join(root, "hia.config.json"), JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          input: path.join(process.cwd(), "fixtures/basic.hia.json"),
+          output: "from-config",
+          locale: "zh-CN"
+        }
+      }), "utf8");
+
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--config",
+        path.join(root, "hia.config.json"),
+        "--out",
+        path.join(root, "from-cli"),
+        "--locale",
+        "en"
+      ], createTestIo(messages));
+      const html = await readFile(path.join(root, "from-cli/index.html"), "utf8");
+
+      expect(exitCode).toBe(0);
+      expect(html).toContain("<html lang=\"en\">");
+      await expect(readFile(path.join(root, "from-config/index.html"), "utf8")).rejects.toThrow();
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("rejects manifest paths outside the output directory", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-manifest-"));
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--input",
+        "fixtures/basic.hia.json",
+        "--out",
+        path.join(root, "docs"),
+        "--manifest",
+        "../manifest.json"
+      ], createTestIo(messages));
+
+      expect(exitCode).toBe(1);
+      expect(messages.join("\n")).toContain("[error:HIA_CLI_MANIFEST_PATH_INVALID]");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("reports missing option values", async () => {
+    const messages: string[] = [];
+    const exitCode = await runCli(["docs", "build", "--config"], createTestIo(messages));
+
+    expect(exitCode).toBe(1);
+    expect(messages.join("\n")).toContain("[error:HIA_CLI_OPTION_VALUE_MISSING]");
   });
 });
 

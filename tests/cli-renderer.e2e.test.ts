@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -56,6 +56,50 @@ describe("CLI to renderer e2e", () => {
         role: "manifest",
         contentType: "application/json; charset=utf-8"
       });
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("builds through hia.config.json", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-e2e-config-"));
+    const messages: string[] = [];
+
+    try {
+      const configPath = path.join(root, "hia.config.json");
+      await writeFile(configPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          input: path.join(process.cwd(), "fixtures/basic.hia.json"),
+          output: "docs",
+          locale: "en",
+          manifest: "manifest/hia.json",
+          renderer: {
+            title: "Configured E2E Docs"
+          }
+        }
+      }), "utf8");
+
+      const exitCode = await runCli(["docs", "build", "--config", configPath], {
+        cwd: process.cwd(),
+        stdout: (message) => messages.push(message),
+        stderr: (message) => messages.push(message)
+      });
+
+      const html = await readFile(path.join(root, "docs/index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(root, "docs/manifest/hia.json"), "utf8")) as {
+        title: string;
+        initialLocale: string;
+        files: Array<{ path: string; role: string }>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(html).toContain("<title>Configured E2E Docs</title>");
+      expect(html).toContain("<html lang=\"en\">");
+      expect(html).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+      expect(manifest.title).toBe("Configured E2E Docs");
+      expect(manifest.initialLocale).toBe("en");
+      expect(manifest.files.at(-1)?.path).toBe("manifest/hia.json");
     } finally {
       await rm(root, { force: true, recursive: true });
     }

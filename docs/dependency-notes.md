@@ -11,8 +11,11 @@ This file records the initial dependency choices for `S-sara-1`.
 | `@types/node` | Node.js 20 type definitions. | MIT |
 | `vscode-languageserver` | LSP transport and protocol types for `@hia-doc/lsp`. | MIT |
 | `vscode-languageserver-textdocument` | In-memory text document model for LSP tests and server document handling. | MIT |
+| `vscode-languageclient` | VS Code extension client for connecting to the HIA LSP server. | MIT |
+| `@types/vscode` | VS Code extension API type definitions for `@hia-doc/vscode-extension`. | MIT |
 
 `S-sara-6` introduces the first runtime LSP dependencies in `@hia-doc/lsp`. The diagnostics engine still consumes core documents and does not depend on any IDE-specific API.
+`S-sara-7` adds VS Code extension-shell dependencies only in `apps/vscode-extension`; core, parser, renderer, CLI and LSP internals remain VS Code independent.
 
 ## Tool Versions
 

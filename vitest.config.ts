@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@hia-doc/core": fileURLToPath(new URL("./packages/core/src/index.ts", import.meta.url)),
+      "@hia-doc/config": fileURLToPath(new URL("./packages/config/src/index.ts", import.meta.url)),
       "@hia-doc/parser-jsdoc": fileURLToPath(new URL("./packages/parser-jsdoc/src/index.ts", import.meta.url)),
       "@hia-doc/lsp": fileURLToPath(new URL("./packages/lsp/src/index.ts", import.meta.url)),
       "@hia-doc/renderer-html": fileURLToPath(new URL("./packages/renderer-html/src/index.ts", import.meta.url)),

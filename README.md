@@ -2,7 +2,7 @@
 
 `main-repo/` 是 HIA 文档工程化系统的核心 monorepo。
 
-当前已建立 `S-sara-4` 的最小端到端链路。外层工作区仍只是 VS Code 容器，包管理器、lockfile、构建工具和后续 CI 入口都限制在本目录内部。
+当前已建立 `S-sara-8` 的最小配置文件链路。外层工作区仍只是 VS Code 容器，包管理器、lockfile、构建工具和后续 CI 入口都限制在本目录内部。
 
 ## 快速命令
 
@@ -17,6 +17,7 @@ pnpm run check
 pnpm run hia -- --help
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-en --locale en
+pnpm run hia -- docs build --config hia.config.example.json
 ```
 
 ## 子目录
@@ -34,24 +35,30 @@ pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-en --
 ## 重点包占位
 
 - `packages/core`: 语言无关、IDE 无关、渲染器无关的 HIA 文档模型和协议。
+- `packages/config`: HIA 项目配置契约和加载器。
 - `packages/parser-jsdoc`: JSDoc Integration JSON 到 HIA core IR 的底层适配。
 - `packages/lsp`: 面向多 IDE 的 LSP diagnostics 与服务入口。
 - `packages/renderer-html`: HIA HTML 渲染协议。
 - `packages/theme-default`: HIA 默认主题。
 - `apps/cli`: HIA 命令行入口。
+- `apps/vscode-extension`: VS Code 插件壳，连接 `@hia-doc/lsp`。
 
 JSDoc 用户侧集成包放在 `../HIA/jsdoc-plugin-hia-sys/`，JSDoc 主题放在 `../HIA/jsdoc-theme-hia/`，它们作为官方卫星项目独立发布和联调。
 
 ## 当前能力
 
 - `@hia-doc/core`: 最小 HIA IR、字段级 i18n、source metadata、fixture helper 和轻量 validator。
+- `@hia-doc/config`: 加载并验证 `hia.config.json`，为 CLI、LSP 和 IDE 集成提供共享配置契约。
 - `@hia-doc/parser-jsdoc`: 将 `jsdoc-plugin-hia-sys` 的 HIA Integration JSON 转换为 core document，并清理本机绝对路径。
 - `@hia-doc/lsp`: 最小 LSP 服务骨架与 diagnostics 内核，直接消费 core document。
 - `@hia-doc/theme-default`: 默认 CSS/JS 静态主题资产。
 - `@hia-doc/renderer-html`: 从 core document 生成 `index.html`、默认主题资产和 renderer manifest，支持字段级 i18n、source preview、source references 和最小语言切换。
-- `@hia-doc/cli`: 提供 `hia --help` 和 `hia docs build --input <file> --out <dir> [--locale <locale>] [--manifest <file>]`，默认输出 `hia-manifest.json`。
+- `@hia-doc/cli`: 提供 `hia --help` 和 `hia docs build [--config <file>] [--input <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`，默认输出 `hia-manifest.json`。
+- `@hia-doc/vscode-extension`: VS Code 开发版插件壳，激活 `.hia.json` 文件并通过 `vscode-languageclient` 启动 LSP。
 
 CLI 生成物当前包含 `index.html`、`assets/hia-default.css`、`assets/hia-default.js` 和 `hia-manifest.json`。端到端测试会检查这些文件以及生成物中不泄露本机绝对路径。
+
+配置文件第一版见 `docs/configuration.md`，可运行示例见 `hia.config.example.json`。当前只支持 JSON 配置；`hia.config.ts`、多层合并和动态配置后移。
 
 ## 本地工具版本
 

@@ -4,12 +4,18 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
+  hasConfigErrors,
+  loadHiaProjectConfig,
+  type HiaDocsConfig
+} from "@hia-doc/config";
+import {
   createBasicFixtureDocument,
   validateHiaDocumentDetailed,
   type HiaDiagnostic,
+  type HiaDiagnosticSeverity,
   type HiaDocument
 } from "@hia-doc/core";
-import { renderHtmlDocument } from "@hia-doc/renderer-html";
+import { renderHtmlDocument, type RenderHtmlOptions } from "@hia-doc/renderer-html";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
@@ -17,12 +23,13 @@ const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--input <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--out <dir>] [--locale <locale>]
 
 Commands:
   docs build   Generate HTML documentation from a HIA document fixture.
 
 Options:
+  --config <file>     HIA config JSON file. Defaults to hia.config.json when present.
   --input <file>      HIA document JSON file. Defaults to the built-in basic fixture.
   --out <dir>         Output directory. Defaults to dist/docs.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
@@ -53,11 +60,47 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const outputDir = path.resolve(io.cwd, readOption(argv, "--out") ?? "dist/docs");
-  const inputPath = readOption(argv, "--input");
-  const locale = readOption(argv, "--locale");
-  const manifestPath = readOption(argv, "--manifest") ?? OUTPUT_MANIFEST_PATH;
-  const documentResult = await loadDocument(inputPath ? path.resolve(io.cwd, inputPath) : "", io);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--out", "--locale", "--manifest"]);
+  reportDiagnostics(optionDiagnostics, io);
+
+  if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    return 1;
+  }
+
+  const configPath = readOption(argv, "--config");
+  const configResult = await loadHiaProjectConfig(configPath
+    ? { cwd: io.cwd, configPath }
+    : { cwd: io.cwd });
+  reportDiagnostics(configResult.diagnostics, io);
+
+  if (hasConfigErrors(configResult.diagnostics)) {
+    return 1;
+  }
+
+  const docsConfig = configResult.config.docs ?? {};
+  const outputDir = resolveConfiguredPath(
+    readOption(argv, "--out"),
+    docsConfig.output,
+    "dist/docs",
+    io.cwd,
+    configResult.baseDir
+  );
+  const inputPath = resolveOptionalConfiguredPath(
+    readOption(argv, "--input"),
+    docsConfig.input,
+    io.cwd,
+    configResult.baseDir
+  );
+  const locale = readOption(argv, "--locale") ?? docsConfig.locale;
+  const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
+  const buildOptionDiagnostics = validateBuildOptions(manifestPath);
+  reportDiagnostics(buildOptionDiagnostics, io);
+
+  if (buildOptionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    return 1;
+  }
+
+  const documentResult = await loadDocument(inputPath ?? "", io);
 
   if (!documentResult.document) {
     return 1;
@@ -70,7 +113,10 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     return 1;
   }
 
-  const rendered = renderHtmlDocument(documentResult.document, locale ? { locale } : {});
+  const documentDiagnostics = collectBuildDiagnostics(documentResult.document, locale, docsConfig);
+  reportDiagnostics(documentDiagnostics, io);
+
+  const rendered = renderHtmlDocument(documentResult.document, createRenderOptions(locale, docsConfig));
   reportDiagnostics(rendered.diagnostics, io);
 
   if (rendered.diagnostics.some((item) => item.severity === "error")) {
@@ -129,6 +175,140 @@ function reportDiagnostics(diagnostics: HiaDiagnostic[], io: CliIo): void {
   }
 }
 
+function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConfig): RenderHtmlOptions {
+  const options: RenderHtmlOptions = {};
+
+  if (locale) {
+    options.locale = locale;
+  }
+
+  if (docsConfig.renderer?.title) {
+    options.title = docsConfig.renderer.title;
+  }
+
+  if (typeof docsConfig.renderer?.includeThemeAssets === "boolean") {
+    options.includeThemeAssets = docsConfig.renderer.includeThemeAssets;
+  }
+
+  return options;
+}
+
+function collectBuildDiagnostics(document: HiaDocument, locale: string | undefined, docsConfig: HiaDocsConfig): HiaDiagnostic[] {
+  const diagnostics: HiaDiagnostic[] = [];
+  const checkedLocales = new Set<string>();
+
+  for (const item of [locale, ...(docsConfig.locales || [])]) {
+    if (!item || checkedLocales.has(item)) {
+      continue;
+    }
+
+    checkedLocales.add(item);
+
+    if (!document.locales.includes(item)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_LOCALE_NOT_DECLARED",
+        `Configured locale "${item}" is not declared by the HIA document.`,
+        "warning",
+        "docs.locale"
+      ));
+    }
+  }
+
+  return diagnostics;
+}
+
+function validateBuildOptions(manifestPath: string): HiaDiagnostic[] {
+  const diagnostics: HiaDiagnostic[] = [];
+
+  if (isUnsafeOutputRelativePath(manifestPath)) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_MANIFEST_PATH_INVALID",
+      "--manifest and docs.manifest must be a relative path inside the output directory.",
+      "error",
+      "docs.manifest"
+    ));
+  }
+
+  return diagnostics;
+}
+
+function validateOptionValues(argv: string[], names: readonly string[]): HiaDiagnostic[] {
+  const diagnostics: HiaDiagnostic[] = [];
+
+  for (const name of names) {
+    const index = argv.indexOf(name);
+
+    if (index === -1) {
+      continue;
+    }
+
+    const value = argv[index + 1];
+
+    if (!value || value.startsWith("--")) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_OPTION_VALUE_MISSING",
+        `${name} requires a value.`,
+        "error",
+        name
+      ));
+    }
+  }
+
+  return diagnostics;
+}
+
+function resolveConfiguredPath(
+  cliValue: string | undefined,
+  configValue: string | undefined,
+  defaultValue: string,
+  cwd: string,
+  configBaseDir: string
+): string {
+  if (cliValue) {
+    return path.resolve(cwd, cliValue);
+  }
+
+  if (configValue) {
+    return path.resolve(configBaseDir, configValue);
+  }
+
+  return path.resolve(cwd, defaultValue);
+}
+
+function resolveOptionalConfiguredPath(
+  cliValue: string | undefined,
+  configValue: string | undefined,
+  cwd: string,
+  configBaseDir: string
+): string | undefined {
+  if (cliValue) {
+    return path.resolve(cwd, cliValue);
+  }
+
+  if (configValue) {
+    return path.resolve(configBaseDir, configValue);
+  }
+
+  return undefined;
+}
+
+function normalizeOutputRelativePath(value: string): string {
+  const normalized = value.replaceAll("\\", "/");
+  return normalized.startsWith("./") ? normalized.slice(2) : normalized;
+}
+
+function isUnsafeOutputRelativePath(value: string): boolean {
+  const normalized = normalizeOutputRelativePath(value);
+
+  return !normalized
+    || normalized === "."
+    || path.isAbsolute(normalized)
+    || normalized === ".."
+    || normalized.startsWith("../")
+    || normalized.includes("/../")
+    || normalized.endsWith("/..");
+}
+
 function readOption(argv: string[], name: string): string | undefined {
   const index = argv.indexOf(name);
 
@@ -138,6 +318,17 @@ function readOption(argv: string[], name: string): string | undefined {
 
   const value = argv[index + 1];
   return value && !value.startsWith("-") ? value : undefined;
+}
+
+function createCliDiagnostic(code: string, message: string, severity: HiaDiagnosticSeverity, targetPath?: string): HiaDiagnostic {
+  const diagnostic: HiaDiagnostic = { code, message, severity };
+
+  if (targetPath) {
+    diagnostic.targetPath = targetPath;
+    diagnostic.path = targetPath;
+  }
+
+  return diagnostic;
 }
 
 function createDefaultIo(): CliIo {

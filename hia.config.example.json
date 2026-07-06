@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.1.0",
+  "docs": {
+    "input": "fixtures/basic.hia.json",
+    "output": "dist/docs-config",
+    "locale": "en",
+    "manifest": "hia-manifest.json",
+    "renderer": {
+      "title": "HIA Config Example",
+      "includeThemeAssets": true
+    },
+    "theme": {
+      "name": "default"
+    },
+    "source": {
+      "enabled": true,
+      "mode": "file",
+      "openMode": "same-tab"
+    }
+  }
+}
