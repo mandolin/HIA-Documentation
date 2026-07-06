@@ -16,6 +16,10 @@ async function readIntegrationFixture(name = "jsdoc-integration.basic.json") {
   return JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
 }
 
+function findDuplicateIds(ids: string[]): string[] {
+  return ids.filter((id, index) => ids.indexOf(id) !== index);
+}
+
 describe("@hia-doc/parser-jsdoc", () => {
   it("converts JSDoc integration JSON into a valid HIA document", async () => {
     const integration = await readIntegrationFixture();
@@ -61,7 +65,7 @@ describe("@hia-doc/parser-jsdoc", () => {
   });
 
   it("keeps JSDoc integration compatibility fixtures inside the core schema baseline", async () => {
-    for (const fixtureName of ["jsdoc-integration.basic.json", "jsdoc-integration.compat.json"]) {
+    for (const fixtureName of ["jsdoc-integration.basic.json", "jsdoc-integration.compat.json", "jsdoc-integration.real-basic.json"]) {
       const integration = await readIntegrationFixture(fixtureName);
       const result = convertJSDocIntegrationToHiaDocumentDetailed(integration, {
         documentId: `fixture.${fixtureName}`,
@@ -72,6 +76,30 @@ describe("@hia-doc/parser-jsdoc", () => {
       expect(validation.valid, fixtureName).toBe(true);
       expect(validation.diagnostics.filter((item) => item.severity === "error"), fixtureName).toEqual([]);
     }
+  });
+
+  it("converts real JPHS output into a valid, deduplicated HIA document", async () => {
+    const integration = await readIntegrationFixture("jsdoc-integration.real-basic.json");
+    const result = convertJSDocIntegrationToHiaDocumentDetailed(integration, {
+      documentId: "fixture.jsdoc.real-basic",
+      title: "Real JPHS Basic"
+    });
+    const validation = validateHiaDocumentDetailed(result.document);
+    const symbolIds = result.document.symbols.map((symbol) => symbol.id);
+    const serialized = JSON.stringify(result.document);
+
+    expect(result.diagnostics.filter((item) => item.severity === "error")).toEqual([]);
+    expect(validation.valid).toBe(true);
+    expect(validation.diagnostics).toEqual([]);
+    expect(symbolIds).toEqual(["jsdoc:function:greet", "jsdoc:function:normalizeName"]);
+    expect(findDuplicateIds(symbolIds)).toEqual([]);
+    expect(result.document.symbols.every((symbol) => symbol.summary && symbol.summary.length > 0)).toBe(true);
+    expect(result.document.symbols[0]?.source?.definedIn?.link?.openMode).toBe("same-tab");
+    expect(result.document.symbols[0]?.source?.primaryBlock?.link?.openMode).toBe("same-tab");
+    expect(serialized).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+    expect(serialized).not.toContain("/Users/");
+    expect(serialized).not.toContain("\\\\");
+    expect(serialized).not.toContain("package:undefined");
   });
 
   it("preserves adapter metadata and sanitizes unsafe metadata paths", async () => {
@@ -139,12 +167,54 @@ describe("@hia-doc/parser-jsdoc", () => {
     }));
   });
 
-  it("does not leak local absolute paths into converted core IR", async () => {
-    const integration = await readIntegrationFixture();
-    const document = convertJSDocIntegrationToHiaDocument(integration);
+  it("maps JPHS hint diagnostics to core info diagnostics and sanitizes diagnostic data", () => {
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: "hia-jsdoc-integration",
+      contractVersion: "0.1.0",
+      ir: {
+        version: "0.1.0",
+        source: "jsdoc",
+        nodes: [
+          {
+            id: "jsdoc:function:hinted",
+            kind: "function",
+            name: "hinted",
+            summary: "Has a hint diagnostic.",
+            diagnostics: [
+              {
+                code: "HIA_JSDOC_HINT",
+                message: "Adapter hint.",
+                severity: "hint",
+                data: {
+                  filePath: "C:\\Users\\example\\project\\src\\hinted.js",
+                  safeRelativePath: "src/hinted.js"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+    const diagnostic = result.document.symbols[0]?.diagnostics?.[0];
 
-    expect(JSON.stringify(document)).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
-    expect(JSON.stringify(document)).not.toContain("/Users/");
-    expect(JSON.stringify(document)).not.toContain("\\\\");
+    expect(diagnostic).toMatchObject({
+      code: "HIA_JSDOC_HINT",
+      severity: "info",
+      data: {
+        safeRelativePath: "src/hinted.js"
+      }
+    });
+    expect(diagnostic?.data).not.toHaveProperty("filePath");
+  });
+
+  it("does not leak local absolute paths into converted core IR", async () => {
+    for (const fixtureName of ["jsdoc-integration.basic.json", "jsdoc-integration.real-basic.json"]) {
+      const integration = await readIntegrationFixture(fixtureName);
+      const document = convertJSDocIntegrationToHiaDocument(integration);
+
+      expect(JSON.stringify(document), fixtureName).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+      expect(JSON.stringify(document), fixtureName).not.toContain("/Users/");
+      expect(JSON.stringify(document), fixtureName).not.toContain("\\\\");
+    }
   });
 });

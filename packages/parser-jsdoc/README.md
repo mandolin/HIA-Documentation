@@ -9,6 +9,9 @@ This package consumes the `hia-jsdoc-integration` JSON emitted by `@mandolin/jsd
 - Reads JSDoc Integration JSON objects.
 - Maps integration nodes to `HiaSymbol` entries.
 - Converts JPHS field-level i18n and source metadata into core model names.
+- Filters undocumented JSDoc-derived synthetic nodes before they enter core.
+- Deduplicates repeated symbol ids and repeated source references/fragments.
+- Normalizes JPHS compatibility values such as `currentPage` source links and `hint` diagnostics.
 - Preserves selected adapter metadata without leaking local absolute file paths.
 - Provides a bridge fixture for core, renderer, CLI and future LSP tests.
 
@@ -28,5 +31,8 @@ The compatibility fixtures are:
 
 - `fixtures/jsdoc-integration.basic.json`
 - `fixtures/jsdoc-integration.compat.json`
+- `fixtures/jsdoc-integration.real-basic.json`
+
+`jsdoc-integration.real-basic.json` is generated from the JPHS basic example, with local machine paths replaced by synthetic absolute paths. It intentionally preserves the real producer shape so the adapter can prove it cleans metadata, removes synthetic nodes, normalizes source link mode and emits a valid core document.
 
 See `docs/adapter-authoring-notes.md` and `docs/contract-index.md` for the adapter-to-core boundary.

@@ -17,6 +17,7 @@ import {
   type HiaDiagnosticSeverity,
   type HiaDocument
 } from "@hia-doc/core";
+import { convertJSDocIntegrationToHiaDocumentDetailed } from "@hia-doc/parser-jsdoc";
 import { renderHtmlDocument, type RenderHtmlOptions } from "@hia-doc/renderer-html";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
@@ -25,7 +26,7 @@ const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--config <file>] [--input <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--out <dir>] [--locale <locale>]
 
 Commands:
   docs build   Generate HTML documentation from a HIA document fixture.
@@ -33,6 +34,8 @@ Commands:
 Options:
   --config <file>     HIA config JSON file. Defaults to hia.config.json when present.
   --input <file>      HIA document JSON file. Defaults to the built-in basic fixture.
+  --jsdoc-integration <file>
+                      JSDoc HIA Integration JSON file to convert before rendering.
   --out <dir>         Output directory. Defaults to dist/docs.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
@@ -62,7 +65,7 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -93,16 +96,22 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     io.cwd,
     configResult.baseDir
   );
+  const jsdocIntegrationPath = resolveOptionalConfiguredPath(
+    readOption(argv, "--jsdoc-integration"),
+    undefined,
+    io.cwd,
+    configResult.baseDir
+  );
   const locale = readOption(argv, "--locale") ?? docsConfig.locale;
   const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
-  const buildOptionDiagnostics = validateBuildOptions(manifestPath);
+  const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath);
   reportDiagnostics(buildOptionDiagnostics, io);
 
   if (buildOptionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
     return 1;
   }
 
-  const documentResult = await loadDocument(inputPath ?? "", io);
+  const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
 
   if (!documentResult.document) {
     return 1;
@@ -154,7 +163,11 @@ function createOutputManifest(rendered: ReturnType<typeof renderHtmlDocument>, m
   };
 }
 
-async function loadDocument(inputPath: string, io: CliIo): Promise<{ document?: HiaDocument }> {
+async function loadDocument(inputPath: string, jsdocIntegrationPath: string, io: CliIo): Promise<{ document?: HiaDocument }> {
+  if (jsdocIntegrationPath) {
+    return loadJSDocIntegrationDocument(jsdocIntegrationPath, io);
+  }
+
   if (!inputPath) {
     return { document: createBasicFixtureDocument() };
   }
@@ -167,6 +180,39 @@ async function loadDocument(inputPath: string, io: CliIo): Promise<{ document?: 
     reportDiagnostics([
       createCliDiagnostic(
         "HIA_CLI_INPUT_READ_FAILED",
+        `${inputPath} - ${message}`,
+        "error",
+        undefined,
+        {
+          inputPath
+        }
+      )
+    ], io);
+    return {};
+  }
+}
+
+async function loadJSDocIntegrationDocument(inputPath: string, io: CliIo): Promise<{ document?: HiaDocument }> {
+  try {
+    const content = await readFile(inputPath, "utf8");
+    const integration = JSON.parse(content) as unknown;
+    const result = convertJSDocIntegrationToHiaDocumentDetailed(integration, {
+      documentId: "jsdoc.integration",
+      title: "JSDoc Integration"
+    });
+
+    reportDiagnostics(result.diagnostics, io);
+
+    if (result.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+      return {};
+    }
+
+    return { document: result.document };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_JSDOC_INTEGRATION_READ_FAILED",
         `${inputPath} - ${message}`,
         "error",
         undefined,
@@ -233,8 +279,21 @@ function collectBuildDiagnostics(document: HiaDocument, locale: string | undefin
   return diagnostics;
 }
 
-function validateBuildOptions(manifestPath: string): HiaDiagnostic[] {
+function validateBuildOptions(manifestPath: string, inputPath?: string, jsdocIntegrationPath?: string): HiaDiagnostic[] {
   const diagnostics: HiaDiagnostic[] = [];
+
+  if (inputPath && jsdocIntegrationPath) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_INPUT_CONFLICT",
+      "--input and --jsdoc-integration cannot be used together.",
+      "error",
+      "docs.input",
+      {
+        inputPath,
+        jsdocIntegrationPath
+      }
+    ));
+  }
 
   if (isUnsafeOutputRelativePath(manifestPath)) {
     diagnostics.push(createCliDiagnostic(

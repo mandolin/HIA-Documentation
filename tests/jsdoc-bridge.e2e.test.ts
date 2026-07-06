@@ -14,7 +14,7 @@ describe("JSDoc bridge e2e", () => {
     });
     const validation = validateHiaDocumentDetailed(document);
     const rendered = renderHtmlDocument(document, {
-      initialLocale: "zh-CN"
+      locale: "zh-CN"
     });
     const html = rendered.files.find((file) => file.path === "index.html")?.contents ?? "";
 
@@ -23,5 +23,30 @@ describe("JSDoc bridge e2e", () => {
     expect(html).toContain("问候一个用户。");
     expect(html).toContain("examples/basic/src/greet.js");
     expect(JSON.stringify(rendered)).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+  });
+
+  it("renders real JPHS integration output through core and renderer", async () => {
+    const fixturePath = new URL("../fixtures/jsdoc-integration.real-basic.json", import.meta.url);
+    const integration = JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
+    const document = convertJSDocIntegrationToHiaDocument(integration, {
+      documentId: "fixture.jsdoc.real-basic",
+      title: "Real JPHS Basic"
+    });
+    const validation = validateHiaDocumentDetailed(document);
+    const rendered = renderHtmlDocument(document, {
+      locale: "zh-CN"
+    });
+    const html = rendered.files.find((file) => file.path === "index.html")?.contents ?? "";
+    const serialized = JSON.stringify(rendered);
+
+    expect(validation.valid).toBe(true);
+    expect(rendered.manifest.documentId).toBe("fixture.jsdoc.real-basic");
+    expect(html).toContain("问候一个用户。");
+    expect(html).toContain("标准化用户名称。");
+    expect(html).toContain("examples/basic/src/greet.js");
+    expect(html).not.toContain("package:undefined");
+    expect(serialized).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+    expect(serialized).not.toContain("/Users/");
+    expect(serialized).not.toContain("\\\\");
   });
 });

@@ -160,10 +160,12 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
   const defaultLocale = options.defaultLocale ?? findFirstString(sourceNodes, "i18n.defaultLocale") ?? "en";
   const fallbackLocale = options.fallbackLocale ?? findFirstFallbackLocale(sourceNodes);
   const locales = collectLocales(sourceNodes, options.locales, defaultLocale);
-  const symbols = sourceNodes
+  const mappedSymbols = sourceNodes
     .map((node, index) => mapIntegrationNodeToSymbol(node, index, defaultLocale, fallbackLocale, locales, diagnostics))
     .filter((symbol): symbol is HiaSymbol => Boolean(symbol))
     .filter((symbol) => options.includeEmptySymbols || symbol.name.length > 0);
+  const symbols = dedupeSymbols(mappedSymbols
+    .filter((symbol) => options.includeEmptySymbols || hasUserFacingSymbolContent(symbol)));
   const documentNodes: HiaNode[] = symbols.length > 0
     ? [
         {
@@ -179,6 +181,7 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
     ...mapDiagnostics(integration.diagnostics, "diagnostics"),
     ...diagnostics
   ];
+  const symbolIds = new Set(symbols.map((symbol) => symbol.id));
   const adapterMetadata: JSDocAdapterDocumentMetadata = {
     adapter: JSDOC_ADAPTER_NAME,
     adapterBridgeVersion: JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
@@ -191,7 +194,7 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
       mode: integration.mode ?? "",
       irVersion: integration.ir?.version ?? "",
       parserBoundary: sanitizeMetadata(integration.parserBoundary ?? {}),
-      docletNodeMap: sanitizeMetadata(integration.docletNodeMap ?? []),
+      docletNodeMap: sanitizeMetadata(filterDocletNodeMap(integration.docletNodeMap, symbolIds)),
       sourceFragments: sanitizeMetadata(integration.sourceFragments ?? []),
       localizationResources: sanitizeMetadata(integration.localizationResources ?? []),
       diagnosticCounts: sanitizeMetadata(integration.diagnosticCounts ?? {})
@@ -245,11 +248,11 @@ function mapIntegrationNodeToSymbol(
   const longname = stringValue(node.longname);
   const name = stringValue(node.name) || longname || id;
   const i18n = mapI18nModel(node.i18n, defaultLocale, fallbackLocale, locales);
+  const summary = chooseSummary(node, i18n, defaultLocale);
   const symbol: HiaSymbol = {
     id,
     name,
     kind,
-    summary: chooseSummary(node, i18n, defaultLocale),
     metadata: {
       adapter: JSDOC_ADAPTER_NAME,
       metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
@@ -259,6 +262,10 @@ function mapIntegrationNodeToSymbol(
   };
   const source = mapSourceMetadata(node.source);
   const nodeDiagnostics = mapDiagnostics(node.diagnostics, `symbols.${index}.diagnostics`);
+
+  if (summary) {
+    symbol.summary = summary;
+  }
 
   if (longname) {
     symbol.longname = longname;
@@ -542,7 +549,7 @@ function mapSourceReferences(value: unknown): HiaSourceReference[] {
     return [];
   }
 
-  return value
+  const references = value
     .map((item): HiaSourceReference | null => {
       if (!isRecord(item)) {
         return null;
@@ -584,6 +591,8 @@ function mapSourceReferences(value: unknown): HiaSourceReference[] {
       return reference;
     })
     .filter((item): item is HiaSourceReference => Boolean(item));
+
+  return dedupeSourceReferences(references);
 }
 
 function mapSourceFragments(value: unknown): HiaSourceFragment[] {
@@ -591,9 +600,11 @@ function mapSourceFragments(value: unknown): HiaSourceFragment[] {
     return [];
   }
 
-  return value
+  const fragments = value
     .map((item) => mapSourceFragment(item))
     .filter((item): item is HiaSourceFragment => Boolean(item));
+
+  return dedupeSourceFragments(fragments);
 }
 
 function mapSourceFragment(value: unknown): HiaSourceFragment | undefined {
@@ -667,8 +678,10 @@ function mapSourceLink(value: unknown): HiaSourceLink | undefined {
     link.lineUrl = lineUrl;
   }
 
-  if (openMode) {
-    link.openMode = openMode;
+  const normalizedOpenMode = toSourceOpenMode(openMode);
+
+  if (normalizedOpenMode) {
+    link.openMode = normalizedOpenMode;
   }
 
   return link;
@@ -1080,7 +1093,178 @@ function toConfidence(value: unknown): HiaSourceConfidence {
 }
 
 function toSeverity(value: unknown): HiaDiagnosticSeverity {
-  return value === "info" || value === "warning" || value === "error" ? value : "warning";
+  if (value === "info" || value === "warning" || value === "error") {
+    return value;
+  }
+
+  return value === "hint" ? "info" : "warning";
+}
+
+function toSourceOpenMode(value: unknown): HiaSourceLink["openMode"] | undefined {
+  if (value === "new-tab" || value === "newTab" || value === "external") {
+    return "new-tab";
+  }
+
+  if (value === "same-tab" || value === "sameTab" || value === "currentPage" || value === "current-page") {
+    return "same-tab";
+  }
+
+  return undefined;
+}
+
+function dedupeSymbols(symbols: HiaSymbol[]): HiaSymbol[] {
+  const result: HiaSymbol[] = [];
+  const indexesById = new Map<string, number>();
+
+  for (const symbol of symbols) {
+    const existingIndex = indexesById.get(symbol.id);
+
+    if (existingIndex === undefined) {
+      indexesById.set(symbol.id, result.length);
+      result.push(symbol);
+      continue;
+    }
+
+    const existing = result[existingIndex];
+
+    if (!existing || scoreSymbol(symbol) > scoreSymbol(existing)) {
+      result[existingIndex] = symbol;
+    }
+  }
+
+  return result;
+}
+
+function scoreSymbol(symbol: HiaSymbol): number {
+  let score = 0;
+
+  if (symbol.summary) {
+    score += 100;
+  }
+
+  score += countI18nFieldContent(symbol.i18n?.fields) * 20;
+  score += countJSDocArrayMetadata(symbol, "params") * 10;
+  score += countJSDocArrayMetadata(symbol, "returns") * 10;
+  score += countJSDocArrayMetadata(symbol, "properties") * 8;
+  score += countJSDocArrayMetadata(symbol, "examples") * 8;
+
+  if (symbol.source?.primaryBlock) {
+    score += 4;
+  }
+
+  if (symbol.source?.definedIn) {
+    score += 2;
+  }
+
+  score += symbol.diagnostics?.length ?? 0;
+
+  return score;
+}
+
+function hasUserFacingSymbolContent(symbol: HiaSymbol): boolean {
+  if (!symbol.name) {
+    return false;
+  }
+
+  return Boolean(symbol.summary)
+    || countI18nFieldContent(symbol.i18n?.fields) > 0
+    || countJSDocArrayMetadata(symbol, "params") > 0
+    || countJSDocArrayMetadata(symbol, "returns") > 0
+    || countJSDocArrayMetadata(symbol, "properties") > 0
+    || countJSDocArrayMetadata(symbol, "examples") > 0
+    || Boolean(symbol.diagnostics?.length);
+}
+
+function countI18nFieldContent(fields: HiaI18nModel["fields"] | undefined): number {
+  if (!fields || !isRecord(fields)) {
+    return 0;
+  }
+
+  let count = 0;
+
+  for (const field of Object.values(fields)) {
+    if (!isRecord(field)) {
+      continue;
+    }
+
+    const localizedText = isRecord(field.localizedText) ? field.localizedText : {};
+
+    if (stringValue(field.defaultText)
+      || Object.values(localizedText).some((text) => stringValue(text))
+      || (Array.isArray(field.blocks) && field.blocks.length > 0)
+      || (Array.isArray(field.segments) && field.segments.length > 0)) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+function countJSDocArrayMetadata(symbol: HiaSymbol, field: string): number {
+  if (!isRecord(symbol.metadata) || !isRecord(symbol.metadata.jsdoc)) {
+    return 0;
+  }
+
+  const value = symbol.metadata.jsdoc[field];
+
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function dedupeSourceReferences(references: HiaSourceReference[]): HiaSourceReference[] {
+  const result: HiaSourceReference[] = [];
+  const seen = new Set<string>();
+
+  for (const reference of references) {
+    const key = [
+      reference.referenceKind,
+      reference.targetId,
+      reference.sourceNodeId || "",
+      sourceFragmentKey(reference.fragment)
+    ].join("\n");
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(reference);
+  }
+
+  return result;
+}
+
+function dedupeSourceFragments(fragments: HiaSourceFragment[]): HiaSourceFragment[] {
+  const result: HiaSourceFragment[] = [];
+  const seen = new Set<string>();
+
+  for (const fragment of fragments) {
+    const key = sourceFragmentKey(fragment);
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(fragment);
+  }
+
+  return result;
+}
+
+function sourceFragmentKey(fragment: HiaSourceFragment | undefined): string {
+  if (!fragment) {
+    return "";
+  }
+
+  return [
+    fragment.id,
+    fragment.relativePath,
+    fragment.range?.start.line ?? "",
+    fragment.range?.start.column ?? "",
+    fragment.range?.end.line ?? "",
+    fragment.range?.end.column ?? "",
+    fragment.content
+  ].join("\n");
 }
 
 function toRelativePath(value: unknown): string {
@@ -1122,6 +1306,38 @@ function sanitizeDiagnosticData(value: unknown): HiaDiagnosticData | undefined {
   const sanitized = sanitizeMetadata(value);
 
   return isRecord(sanitized) ? sanitized : undefined;
+}
+
+function filterDocletNodeMap(value: unknown, symbolIds: Set<string>): unknown {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const result: unknown[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    if (!isRecord(item)) {
+      continue;
+    }
+
+    const nodeId = stringValue(item.nodeId);
+
+    if (!symbolIds.has(nodeId)) {
+      continue;
+    }
+
+    const key = `${stringValue(item.docletId)}\n${nodeId}`;
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(item);
+  }
+
+  return result;
 }
 
 function isUnsafePathLike(value: string): boolean {

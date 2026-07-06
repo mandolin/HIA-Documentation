@@ -40,6 +40,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | `fixtures/source-reference.hia.json` | Source location, primary block, fragments, references, links and preview fixture. |
 | `fixtures/jsdoc-integration.basic.json` | Realistic JSDoc Integration adapter input. |
 | `fixtures/jsdoc-integration.compat.json` | Adapter compatibility input for metadata sanitization and diagnostic data passthrough. |
+| `fixtures/jsdoc-integration.real-basic.json` | Real JPHS basic output, with local paths replaced by synthetic absolute paths for adapter sanitation tests. |
 
 ## Rules
 

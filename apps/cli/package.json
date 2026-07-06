@@ -25,6 +25,7 @@
   "dependencies": {
     "@hia-doc/config": "workspace:*",
     "@hia-doc/core": "workspace:*",
+    "@hia-doc/parser-jsdoc": "workspace:*",
     "@hia-doc/renderer-html": "workspace:*"
   }
 }

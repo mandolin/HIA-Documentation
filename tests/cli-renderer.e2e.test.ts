@@ -104,4 +104,48 @@ describe("CLI to renderer e2e", () => {
       await rm(root, { force: true, recursive: true });
     }
   });
+
+  it("builds real JSDoc integration input into html and output manifest", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-e2e-jsdoc-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--jsdoc-integration",
+        "fixtures/jsdoc-integration.real-basic.json",
+        "--out",
+        outDir,
+        "--locale",
+        "zh-CN"
+      ], {
+        cwd: process.cwd(),
+        stdout: (message) => messages.push(message),
+        stderr: (message) => messages.push(message)
+      });
+
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        documentId: string;
+        initialLocale: string;
+        files: Array<{ path: string; role: string; contentType: string }>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("Generated 4 file");
+      expect(html).toContain("问候一个用户。");
+      expect(html).toContain("标准化用户名称。");
+      expect(html).toContain("examples/basic/src/greet.js");
+      expect(html).not.toContain("package:undefined");
+      expect(html).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+      expect(html).not.toContain("/Users/");
+      expect(manifest.documentId).toBe("jsdoc.integration");
+      expect(manifest.initialLocale).toBe("zh-CN");
+      expect(JSON.stringify(manifest)).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
 });
