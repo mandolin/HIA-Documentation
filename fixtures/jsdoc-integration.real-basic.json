@@ -3,6 +3,7 @@
   "contractVersion": "0.1.0",
   "pluginVersion": "0.1.0",
   "mode": "standalone",
+  "artifactKind": "hia-integration",
   "parserBoundary": {
     "adapter": "parser-jsdoc",
     "owns": [
@@ -98,7 +99,7 @@
               "enabled": true,
               "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
               "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L3",
-              "openMode": "currentPage"
+              "openMode": "same-tab"
             }
           },
           "primaryBlock": {
@@ -124,7 +125,7 @@
               "enabled": true,
               "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
               "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L17-L22",
-              "openMode": "currentPage"
+              "openMode": "same-tab"
             },
             "preview": {
               "enabled": true,
@@ -147,7 +148,6 @@
             {
               "kind": "source-fragment",
               "id": "GREET_BODY",
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\greet.js",
               "relativePath": "examples/basic/src/greet.js",
               "language": "javascript",
               "range": {
@@ -165,7 +165,7 @@
                 "enabled": true,
                 "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
                 "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
-                "openMode": "currentPage"
+                "openMode": "same-tab"
               },
               "preview": {
                 "enabled": true,
@@ -187,7 +187,6 @@
             {
               "kind": "source-fragment",
               "id": "GREET_BODY",
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\greet.js",
               "relativePath": "examples/basic/src/greet.js",
               "language": "javascript",
               "range": {
@@ -205,7 +204,7 @@
                 "enabled": true,
                 "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
                 "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
-                "openMode": "currentPage"
+                "openMode": "same-tab"
               },
               "preview": {
                 "enabled": true,
@@ -236,7 +235,6 @@
               "fragment": {
                 "kind": "source-fragment",
                 "id": "GREET_BODY",
-                "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\greet.js",
                 "relativePath": "examples/basic/src/greet.js",
                 "language": "javascript",
                 "range": {
@@ -254,7 +252,7 @@
                   "enabled": true,
                   "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
                   "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
-                  "openMode": "currentPage"
+                  "openMode": "same-tab"
                 },
                 "preview": {
                   "enabled": true,
@@ -285,7 +283,6 @@
               "fragment": {
                 "kind": "source-fragment",
                 "id": "GREET_BODY",
-                "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\greet.js",
                 "relativePath": "examples/basic/src/greet.js",
                 "language": "javascript",
                 "range": {
@@ -303,7 +300,7 @@
                   "enabled": true,
                   "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
                   "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
-                  "openMode": "currentPage"
+                  "openMode": "same-tab"
                 },
                 "preview": {
                   "enabled": true,
@@ -329,7 +326,7 @@
           "link": {
             "enabled": true,
             "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
+            "openMode": "same-tab"
           },
           "preview": {
             "enabled": true,
@@ -593,7 +590,16 @@
           "missingLocales": [],
           "resources": [
             {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
+              "kind": "external-resource",
+              "path": "examples/basic/i18n/docs.hia-i18n.json",
+              "format": "hia-i18n-json",
+              "fields": [
+                "shared.helper"
+              ],
+              "locales": [
+                "en",
+                "zh-CN"
+              ],
               "localeCount": 2
             }
           ],
@@ -1108,650 +1114,6 @@
         "diagnostics": []
       },
       {
-        "id": "jsdoc:function:greet",
-        "kind": "function",
-        "name": "greet",
-        "longname": "greet",
-        "title": "greet",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "greet",
-          "kind": "function",
-          "name": "greet",
-          "longname": "greet",
-          "memberof": "",
-          "scope": "global",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "position": {
-              "line": 17,
-              "column": 1
-            },
-            "range": {
-              "start": {
-                "line": 17,
-                "column": 1
-              },
-              "end": {
-                "line": 17,
-                "column": 1
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L17",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:function:greet",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 17,
-                "column": 1
-              },
-              "end": {
-                "line": 22,
-                "column": 2
-              }
-            },
-            "content": "function greet(name) {\n  /* @codeblock GREET_BODY */\n  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
-            "rangeSource": "parser-js",
-            "confidence": "high",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L17-L22",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "function greet(name) {\n  /* @codeblock GREET_BODY */\n  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
-              "range": {
-                "start": {
-                  "line": 17,
-                  "column": 1
-                },
-                "end": {
-                  "line": 22,
-                  "column": 2
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "greet",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:constant:greet~message",
-        "kind": "constant",
-        "name": "message",
-        "longname": "greet~message",
-        "title": "greet~message",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "greet~message",
-          "kind": "constant",
-          "name": "message",
-          "longname": "greet~message",
-          "memberof": "greet",
-          "scope": "inner",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "position": {
-              "line": 19,
-              "column": 8
-            },
-            "range": {
-              "start": {
-                "line": 19,
-                "column": 8
-              },
-              "end": {
-                "line": 19,
-                "column": 8
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:constant:greet~message",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 19,
-                "column": 1
-              },
-              "end": {
-                "line": 22,
-                "column": 2
-              }
-            },
-            "content": "  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
-            "rangeSource": "parser-js",
-            "confidence": "high",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L22",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "  const message = `Hello, ${name}`;\n  return message;\n  /* @codeblockend GREET_BODY */\n}",
-              "range": {
-                "start": {
-                  "line": 19,
-                  "column": 1
-                },
-                "end": {
-                  "line": 22,
-                  "column": 2
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "greet",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:member:module.exports",
-        "kind": "member",
-        "name": "exports",
-        "longname": "module.exports",
-        "title": "module.exports",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "module.exports",
-          "kind": "member",
-          "name": "exports",
-          "longname": "module.exports",
-          "memberof": "module",
-          "scope": "static",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "position": {
-              "line": 24,
-              "column": 1
-            },
-            "range": {
-              "start": {
-                "line": 24,
-                "column": 1
-              },
-              "end": {
-                "line": 24,
-                "column": 1
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L24",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:member:module.exports",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 24,
-                "column": 1
-              },
-              "end": {
-                "line": 26,
-                "column": 3
-              }
-            },
-            "content": "module.exports = {\n  greet\n};",
-            "rangeSource": "heuristic",
-            "confidence": "medium",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L24-L26",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "module.exports = {\n  greet\n};",
-              "range": {
-                "start": {
-                  "line": 24,
-                  "column": 1
-                },
-                "end": {
-                  "line": 26,
-                  "column": 3
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "module",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:member:module.exports.greet",
-        "kind": "member",
-        "name": "greet",
-        "longname": "module.exports.greet",
-        "title": "module.exports.greet",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "module.exports.greet",
-          "kind": "member",
-          "name": "greet",
-          "longname": "module.exports.greet",
-          "memberof": "module.exports",
-          "scope": "static",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "position": {
-              "line": 25,
-              "column": 2
-            },
-            "range": {
-              "start": {
-                "line": 25,
-                "column": 2
-              },
-              "end": {
-                "line": 25,
-                "column": 2
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L25",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:member:module.exports.greet",
-            "relativePath": "examples/basic/src/greet.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 25,
-                "column": 1
-              },
-              "end": {
-                "line": 26,
-                "column": 3
-              }
-            },
-            "content": "  greet\n};",
-            "rangeSource": "heuristic",
-            "confidence": "medium",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L25-L26",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "  greet\n};",
-              "range": {
-                "start": {
-                  "line": 25,
-                  "column": 1
-                },
-                "end": {
-                  "line": 26,
-                  "column": 3
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "module.exports",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
         "id": "jsdoc:function:normalizeName",
         "kind": "function",
         "name": "normalizeName",
@@ -1826,7 +1188,7 @@
               "enabled": true,
               "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
               "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L3",
-              "openMode": "currentPage"
+              "openMode": "same-tab"
             }
           },
           "primaryBlock": {
@@ -1852,7 +1214,7 @@
               "enabled": true,
               "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
               "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13-L15",
-              "openMode": "currentPage"
+              "openMode": "same-tab"
             },
             "preview": {
               "enabled": true,
@@ -1877,7 +1239,7 @@
           "link": {
             "enabled": true,
             "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
+            "openMode": "same-tab"
           },
           "preview": {
             "enabled": true,
@@ -2057,7 +1419,16 @@
           "missingLocales": [],
           "resources": [
             {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
+              "kind": "external-resource",
+              "path": "examples/basic/i18n/docs.hia-i18n.json",
+              "format": "hia-i18n-json",
+              "fields": [
+                "shared.helper"
+              ],
+              "locales": [
+                "en",
+                "zh-CN"
+              ],
               "localeCount": 2
             }
           ],
@@ -2402,527 +1773,6 @@
           }
         },
         "diagnostics": []
-      },
-      {
-        "id": "jsdoc:function:normalizeName",
-        "kind": "function",
-        "name": "normalizeName",
-        "longname": "normalizeName",
-        "title": "normalizeName",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "normalizeName",
-          "kind": "function",
-          "name": "normalizeName",
-          "longname": "normalizeName",
-          "memberof": "",
-          "scope": "global",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "position": {
-              "line": 13,
-              "column": 1
-            },
-            "range": {
-              "start": {
-                "line": 13,
-                "column": 1
-              },
-              "end": {
-                "line": 13,
-                "column": 1
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:function:normalizeName",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 13,
-                "column": 1
-              },
-              "end": {
-                "line": 15,
-                "column": 2
-              }
-            },
-            "content": "function normalizeName(name) {\n  return String(name).trim();\n}",
-            "rangeSource": "parser-js",
-            "confidence": "high",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13-L15",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "function normalizeName(name) {\n  return String(name).trim();\n}",
-              "range": {
-                "start": {
-                  "line": 13,
-                  "column": 1
-                },
-                "end": {
-                  "line": 15,
-                  "column": 2
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "normalizeName",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:member:module.exports",
-        "kind": "member",
-        "name": "exports",
-        "longname": "module.exports",
-        "title": "module.exports",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "module.exports",
-          "kind": "member",
-          "name": "exports",
-          "longname": "module.exports",
-          "memberof": "module",
-          "scope": "static",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "position": {
-              "line": 18,
-              "column": 1
-            },
-            "range": {
-              "start": {
-                "line": 18,
-                "column": 1
-              },
-              "end": {
-                "line": 18,
-                "column": 1
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L18",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:member:module.exports",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 18,
-                "column": 1
-              },
-              "end": {
-                "line": 20,
-                "column": 3
-              }
-            },
-            "content": "module.exports = {\n  normalizeName\n};",
-            "rangeSource": "heuristic",
-            "confidence": "medium",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L18-L20",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "module.exports = {\n  normalizeName\n};",
-              "range": {
-                "start": {
-                  "line": 18,
-                  "column": 1
-                },
-                "end": {
-                  "line": 20,
-                  "column": 3
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "module",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:member:module.exports.normalizeName",
-        "kind": "member",
-        "name": "normalizeName",
-        "longname": "module.exports.normalizeName",
-        "title": "module.exports.normalizeName",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "module.exports.normalizeName",
-          "kind": "member",
-          "name": "normalizeName",
-          "longname": "module.exports.normalizeName",
-          "memberof": "module.exports",
-          "scope": "static",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "code-fragment",
-            "source-link",
-            "source-preview",
-            "doc-i18n",
-            "doclet-normalizer",
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": {
-            "kind": "defined-in",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "position": {
-              "line": 19,
-              "column": 2
-            },
-            "range": {
-              "start": {
-                "line": 19,
-                "column": 2
-              },
-              "end": {
-                "line": 19,
-                "column": 2
-              }
-            },
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L19",
-              "openMode": "currentPage"
-            }
-          },
-          "primaryBlock": {
-            "kind": "primary-block",
-            "id": "doclet:member:module.exports.normalizeName",
-            "relativePath": "examples/basic/src/shared.js",
-            "language": "javascript",
-            "range": {
-              "start": {
-                "line": 19,
-                "column": 1
-              },
-              "end": {
-                "line": 20,
-                "column": 3
-              }
-            },
-            "content": "  normalizeName\n};",
-            "rangeSource": "heuristic",
-            "confidence": "medium",
-            "diagnostics": [],
-            "link": {
-              "enabled": true,
-              "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
-              "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L19-L20",
-              "openMode": "currentPage"
-            },
-            "preview": {
-              "enabled": true,
-              "defaultExpanded": false,
-              "language": "javascript",
-              "content": "  normalizeName\n};",
-              "range": {
-                "start": {
-                  "line": 19,
-                  "column": 1
-                },
-                "end": {
-                  "line": 20,
-                  "column": 3
-                }
-              }
-            }
-          },
-          "fragments": [],
-          "references": [],
-          "diagnostics": [],
-          "link": {
-            "enabled": true,
-            "rootUrl": "https://example.test/repo",
-            "openMode": "currentPage"
-          },
-          "preview": {
-            "enabled": true,
-            "defaultExpanded": false
-          }
-        },
-        "i18n": {
-          "enabled": true,
-          "model": "hia-jsdoc-text-i18n",
-          "modelVersion": "0.2.0",
-          "defaultLocale": "zh-CN",
-          "fallbackLocale": "en",
-          "locales": [
-            "zh-CN",
-            "en"
-          ],
-          "mode": "runtimeSwitch",
-          "key": "",
-          "path": "module.exports",
-          "locale": "",
-          "fields": {},
-          "localized": {},
-          "missingLocales": [],
-          "resources": [
-            {
-              "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
-              "localeCount": 2
-            }
-          ],
-          "diagnostics": [],
-          "generation": {
-            "mode": "runtimeSwitch",
-            "perLocale": {
-              "zh-CN": null,
-              "en": null
-            },
-            "runtimeSwitch": {
-              "locales": [
-                "zh-CN",
-                "en"
-              ],
-              "fallbackLocale": "en",
-              "content": {},
-              "fields": {}
-            },
-            "hiaIntegration": {
-              "localized": {},
-              "fields": {}
-            }
-          }
-        },
-        "diagnostics": []
-      },
-      {
-        "id": "jsdoc:package:package:undefined",
-        "kind": "package",
-        "name": "",
-        "longname": "package:undefined",
-        "title": "package:undefined",
-        "summary": "",
-        "jsdoc": {
-          "docletId": "package:undefined",
-          "kind": "package",
-          "name": "",
-          "longname": "package:undefined",
-          "memberof": "",
-          "scope": "",
-          "params": [],
-          "returns": [],
-          "properties": [],
-          "examples": []
-        },
-        "hia": {
-          "metadataKey": "hia",
-          "microPlugins": [
-            "diagnostics"
-          ]
-        },
-        "source": {
-          "model": "hia-jsdoc-source",
-          "modelVersion": "0.2.0",
-          "mode": "all",
-          "definedIn": null,
-          "primaryBlock": null,
-          "fragments": [],
-          "references": [],
-          "diagnostics": []
-        },
-        "i18n": {},
-        "diagnostics": []
       }
     ]
   },
@@ -2930,7 +1780,6 @@
     {
       "kind": "source-fragment",
       "id": "GREET_BODY",
-      "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\greet.js",
       "relativePath": "examples/basic/src/greet.js",
       "language": "javascript",
       "range": {
@@ -2948,7 +1797,7 @@
         "enabled": true,
         "fileUrl": "https://example.test/repo/examples/basic/src/greet.js",
         "lineUrl": "https://example.test/repo/examples/basic/src/greet.js#L19-L20",
-        "openMode": "currentPage"
+        "openMode": "same-tab"
       },
       "preview": {
         "enabled": true,
@@ -2970,7 +1819,6 @@
     {
       "kind": "source-fragment",
       "id": "SHARED_HELPER",
-      "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\src\\shared.js",
       "relativePath": "examples/basic/src/shared.js",
       "language": "javascript",
       "range": {
@@ -2988,7 +1836,7 @@
         "enabled": true,
         "fileUrl": "https://example.test/repo/examples/basic/src/shared.js",
         "lineUrl": "https://example.test/repo/examples/basic/src/shared.js#L13-L15",
-        "openMode": "currentPage"
+        "openMode": "same-tab"
       },
       "preview": {
         "enabled": true,
@@ -3010,7 +1858,16 @@
   ],
   "localizationResources": [
     {
-      "filePath": "C:\\Users\\example\\HIA-Documentation-Sys\\HIA\\jsdoc-plugin-hia-sys\\examples\\basic\\i18n\\docs.hia-i18n.json",
+      "kind": "external-resource",
+      "path": "examples/basic/i18n/docs.hia-i18n.json",
+      "format": "hia-i18n-json",
+      "fields": [
+        "shared.helper"
+      ],
+      "locales": [
+        "en",
+        "zh-CN"
+      ],
       "localeCount": 2
     }
   ],
@@ -3025,67 +1882,11 @@
       "longname": "greet"
     },
     {
-      "docletId": "greet",
-      "nodeId": "jsdoc:function:greet",
-      "kind": "function",
-      "name": "greet",
-      "longname": "greet"
-    },
-    {
-      "docletId": "greet~message",
-      "nodeId": "jsdoc:constant:greet~message",
-      "kind": "constant",
-      "name": "message",
-      "longname": "greet~message"
-    },
-    {
-      "docletId": "module.exports",
-      "nodeId": "jsdoc:member:module.exports",
-      "kind": "member",
-      "name": "exports",
-      "longname": "module.exports"
-    },
-    {
-      "docletId": "module.exports.greet",
-      "nodeId": "jsdoc:member:module.exports.greet",
-      "kind": "member",
-      "name": "greet",
-      "longname": "module.exports.greet"
-    },
-    {
       "docletId": "normalizeName",
       "nodeId": "jsdoc:function:normalizeName",
       "kind": "function",
       "name": "normalizeName",
       "longname": "normalizeName"
-    },
-    {
-      "docletId": "normalizeName",
-      "nodeId": "jsdoc:function:normalizeName",
-      "kind": "function",
-      "name": "normalizeName",
-      "longname": "normalizeName"
-    },
-    {
-      "docletId": "module.exports",
-      "nodeId": "jsdoc:member:module.exports",
-      "kind": "member",
-      "name": "exports",
-      "longname": "module.exports"
-    },
-    {
-      "docletId": "module.exports.normalizeName",
-      "nodeId": "jsdoc:member:module.exports.normalizeName",
-      "kind": "member",
-      "name": "normalizeName",
-      "longname": "module.exports.normalizeName"
-    },
-    {
-      "docletId": "package:undefined",
-      "nodeId": "jsdoc:package:package:undefined",
-      "kind": "package",
-      "name": "",
-      "longname": "package:undefined"
     }
   ]
 }

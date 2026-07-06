@@ -84,6 +84,7 @@ The JSDoc baseline fixtures are:
 
 - `fixtures/jsdoc-integration.basic.json`
 - `fixtures/jsdoc-integration.compat.json`
+- `fixtures/jsdoc-integration.real-basic.json`
 
 The adapter exports:
 
@@ -92,3 +93,12 @@ The adapter exports:
 - `JSDOC_ADAPTER_METADATA_SCHEMA_VERSION`
 - `JSDOC_HIA_INTEGRATION_CONTRACT`
 - `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION`
+
+Current JPHS producer expectations for real fixtures:
+
+- Integration input should use `artifactKind: "hia-integration"`.
+- `ir.nodes` should contain user-facing doclets only; JSDoc synthetic nodes such as empty CommonJS export members should not be emitted.
+- `docletNodeMap` should describe the emitted nodes, not every raw JSDoc doclet.
+- Source links should use `same-tab` or `new-tab`; legacy `currentPage` is adapter-compatible but should not be produced by current JPHS.
+- Localization resources should use relative `external-resource` records with `path`, `format`, `fields` and `locales`.
+- Raw producer output should not contain local absolute paths or adapter-private `filePath` fields.

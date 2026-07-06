@@ -20,6 +20,17 @@ function findDuplicateIds(ids: string[]): string[] {
   return ids.filter((id, index) => ids.indexOf(id) !== index);
 }
 
+type IntegrationFixture = {
+  artifactKind?: string;
+  ir?: {
+    nodes?: Array<{
+      id?: string;
+    }>;
+  };
+  localizationResources?: Array<Record<string, unknown>>;
+  docletNodeMap?: unknown[];
+};
+
 describe("@hia-doc/parser-jsdoc", () => {
   it("converts JSDoc integration JSON into a valid HIA document", async () => {
     const integration = await readIntegrationFixture();
@@ -100,6 +111,32 @@ describe("@hia-doc/parser-jsdoc", () => {
     expect(serialized).not.toContain("/Users/");
     expect(serialized).not.toContain("\\\\");
     expect(serialized).not.toContain("package:undefined");
+  });
+
+  it("keeps the real JPHS fixture aligned with the hardened producer contract", async () => {
+    const integration = await readIntegrationFixture("jsdoc-integration.real-basic.json") as IntegrationFixture;
+    const nodes = integration.ir?.nodes ?? [];
+    const nodeIds = nodes.map((node) => node.id ?? "");
+    const serialized = JSON.stringify(integration);
+    const resource = integration.localizationResources?.[0];
+
+    expect(integration.artifactKind).toBe("hia-integration");
+    expect(nodeIds).toEqual(["jsdoc:function:greet", "jsdoc:function:normalizeName"]);
+    expect(findDuplicateIds(nodeIds)).toEqual([]);
+    expect(integration.docletNodeMap).toHaveLength(nodes.length);
+    expect(resource).toMatchObject({
+      kind: "external-resource",
+      path: "examples/basic/i18n/docs.hia-i18n.json",
+      format: "hia-i18n-json",
+      fields: ["shared.helper"],
+      locales: ["en", "zh-CN"],
+      localeCount: 2
+    });
+    expect(resource).not.toHaveProperty("filePath");
+    expect(serialized).not.toContain("filePath");
+    expect(serialized).not.toContain("currentPage");
+    expect(serialized).not.toContain("package:undefined");
+    expect(serialized).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
   });
 
   it("preserves adapter metadata and sanitizes unsafe metadata paths", async () => {
