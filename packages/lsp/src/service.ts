@@ -3,13 +3,29 @@ import type {
   HiaDocument
 } from "@hia-doc/core";
 import type {
+  CompletionItem,
   Diagnostic,
+  FoldingRange,
+  Hover,
   InitializeParams,
-  InitializeResult
+  InitializeResult,
+  Location,
+  Position
 } from "vscode-languageserver/node.js";
 import {
   TextDocumentSyncKind
 } from "vscode-languageserver/node.js";
+import {
+  createHiaAuthoringLocations,
+  createHiaCompletionItems,
+  createHiaDefinitionLocations,
+  createHiaDiagnosticsWithRelatedInformation,
+  createHiaFoldingRanges,
+  createHiaHover,
+  createHiaIdeCapabilities,
+  type HiaDocumentAuthoringLocationsResult,
+  type HiaIdeCapabilitiesResult
+} from "./authoring.js";
 import { analyzeHiaDocumentText } from "./diagnostics.js";
 import {
   createEmptyHiaResourceIndex,
@@ -34,6 +50,12 @@ export interface HiaLspService {
   openDocument(uri: string, text: string, languageId?: string, version?: number): HiaLspManagedDocument;
   updateDocument(uri: string, text: string, version?: number): HiaLspManagedDocument;
   closeDocument(uri: string): void;
+  getAuthoringLocations(uri: string): HiaDocumentAuthoringLocationsResult;
+  getCompletionItems(uri: string, position?: Position): CompletionItem[];
+  getDefinitionLocations(uri: string, position?: Position): Location[];
+  getFoldingRanges(uri: string): FoldingRange[];
+  getHover(uri: string, position?: Position): Hover | null;
+  getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult;
   getManagedResourceIndex(uri: string): HiaLspResourceIndex;
   getWorkspaceRoots(): readonly string[];
   validateTextDocument(document: TextDocument): Diagnostic[];
@@ -48,8 +70,8 @@ export function createHiaLspService(): HiaLspService {
 
   function createManagedDocument(uri: string, text: string, languageId = "json", version = 1): HiaLspManagedDocument {
     const document = TextDocument.create(uri, languageId, version, text);
-    const diagnostics = validateTextDocument(document);
     const resourceIndex = createResourceIndexFromText(uri, text);
+    const diagnostics = validateTextDocumentWithResourceIndex(document, resourceIndex);
 
     return {
       diagnostics,
@@ -61,8 +83,27 @@ export function createHiaLspService(): HiaLspService {
   }
 
   function validateTextDocument(document: TextDocument): Diagnostic[] {
-    return analyzeHiaDocumentText(document.getText(), {
+    return validateTextDocumentWithResourceIndex(
+      document,
+      createResourceIndexFromText(document.uri, document.getText())
+    );
+  }
+
+  function validateTextDocumentWithResourceIndex(document: TextDocument, resourceIndex: HiaLspResourceIndex): Diagnostic[] {
+    const text = document.getText();
+    const rawDiagnostics = analyzeHiaDocumentText(text, {
       uri: document.uri
+    });
+
+    return createHiaDiagnosticsWithRelatedInformation({
+      document: {
+        diagnostics: rawDiagnostics,
+        resourceIndex,
+        text,
+        uri: document.uri
+      },
+      uri: document.uri,
+      workspaceRoots
     });
   }
 
@@ -75,6 +116,13 @@ export function createHiaLspService(): HiaLspService {
 
       return {
         capabilities: {
+          completionProvider: {
+            resolveProvider: false,
+            triggerCharacters: ["\"", ".", "/", ":", "@"]
+          },
+          definitionProvider: true,
+          foldingRangeProvider: true,
+          hoverProvider: true,
           textDocumentSync: TextDocumentSyncKind.Incremental,
           workspace: {
             workspaceFolders: {
@@ -112,6 +160,24 @@ export function createHiaLspService(): HiaLspService {
     closeDocument(uri: string): void {
       documents.delete(uri);
     },
+    getAuthoringLocations(uri: string): HiaDocumentAuthoringLocationsResult {
+      return createHiaAuthoringLocations(createAuthoringContext(uri));
+    },
+    getCompletionItems(uri: string, position?: Position): CompletionItem[] {
+      return createHiaCompletionItems(createAuthoringContext(uri), position);
+    },
+    getDefinitionLocations(uri: string, position?: Position): Location[] {
+      return createHiaDefinitionLocations(createAuthoringContext(uri), position);
+    },
+    getFoldingRanges(uri: string): FoldingRange[] {
+      return createHiaFoldingRanges(createAuthoringContext(uri));
+    },
+    getHover(uri: string, position?: Position): Hover | null {
+      return createHiaHover(createAuthoringContext(uri), position);
+    },
+    getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult {
+      return createHiaIdeCapabilities(createAuthoringContext(uri));
+    },
     getManagedResourceIndex(uri: string): HiaLspResourceIndex {
       return documents.get(uri)?.resourceIndex ?? createEmptyHiaResourceIndex({ uri });
     },
@@ -123,6 +189,23 @@ export function createHiaLspService(): HiaLspService {
       return documents.get(uri)?.diagnostics ?? [];
     }
   };
+
+  function createAuthoringContext(uri: string) {
+    const context = {
+      uri,
+      workspaceRoots
+    };
+    const document = documents.get(uri);
+
+    if (document) {
+      return {
+        ...context,
+        document
+      };
+    }
+
+    return context;
+  }
 }
 
 function createResourceIndexFromText(uri: string, text: string): HiaLspResourceIndex {

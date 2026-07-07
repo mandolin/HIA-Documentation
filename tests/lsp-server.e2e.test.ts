@@ -35,6 +35,12 @@ describe("LSP server stdio", () => {
     const initializeResponse = await client.waitFor((message) => message.id === 1);
     expect(initializeResponse.result).toMatchObject({
       capabilities: {
+        completionProvider: {
+          resolveProvider: false
+        },
+        definitionProvider: true,
+        foldingRangeProvider: true,
+        hoverProvider: true,
         textDocumentSync: 2
       }
     });
@@ -73,11 +79,76 @@ describe("LSP server stdio", () => {
     client.send({
       jsonrpc: "2.0",
       id: 3,
+      method: "hia/ideCapabilities",
+      params: {
+        uri: "file:///workspace/basic.hia.json"
+      }
+    });
+
+    const capabilitiesResponse = await client.waitFor((message) => message.id === 3);
+    expect(capabilitiesResponse.result).toMatchObject({
+      uri: "file:///workspace/basic.hia.json",
+      capabilities: expect.arrayContaining([
+        expect.objectContaining({
+          id: "hia.resource.index",
+          status: "available"
+        }),
+        expect.objectContaining({
+          id: "hia.completion.i18n"
+        })
+      ])
+    });
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 4,
+      method: "hia/documentAuthoringLocations",
+      params: {
+        uri: "file:///workspace/basic.hia.json"
+      }
+    });
+
+    const locationsResponse = await client.waitFor((message) => message.id === 4);
+    expect(locationsResponse.result).toMatchObject({
+      uri: "file:///workspace/basic.hia.json",
+      locations: expect.arrayContaining([
+        expect.objectContaining({
+          kind: "core-document",
+          uri: "file:///workspace/basic.hia.json"
+        })
+      ])
+    });
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 5,
+      method: "textDocument/completion",
+      params: {
+        textDocument: {
+          uri: "file:///workspace/basic.hia.json"
+        },
+        position: {
+          line: 0,
+          character: 0
+        }
+      }
+    });
+
+    const completionResponse = await client.waitFor((message) => message.id === 5);
+    expect(completionResponse.result).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        label: "zh-CN"
+      })
+    ]));
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 6,
       method: "shutdown",
       params: null
     });
 
-    const shutdownResponse = await client.waitFor((message) => message.id === 3);
+    const shutdownResponse = await client.waitFor((message) => message.id === 6);
     expect(shutdownResponse.result).toBeNull();
 
     client.send({

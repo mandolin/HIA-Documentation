@@ -8,6 +8,12 @@ import type {
 } from "vscode-languageserver/node.js";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
+  HIA_LSP_AUTHORING_LOCATIONS_REQUEST,
+  HIA_LSP_IDE_CAPABILITIES_REQUEST,
+  type HiaDocumentAuthoringLocationsParams,
+  type HiaIdeCapabilitiesParams
+} from "./authoring.js";
+import {
   HIA_LSP_RESOURCE_INDEX_REQUEST,
   type HiaDocumentResourceIndexParams
 } from "./resources.js";
@@ -29,6 +35,30 @@ export function startHiaLspServer(options: StartHiaLspServerOptions = {}): Conne
 
   connection.onRequest(HIA_LSP_RESOURCE_INDEX_REQUEST, (params: HiaDocumentResourceIndexParams) => {
     return service.getManagedResourceIndex(params.uri);
+  });
+
+  connection.onRequest(HIA_LSP_IDE_CAPABILITIES_REQUEST, (params: HiaIdeCapabilitiesParams) => {
+    return service.getIdeCapabilities(params.uri);
+  });
+
+  connection.onRequest(HIA_LSP_AUTHORING_LOCATIONS_REQUEST, (params: HiaDocumentAuthoringLocationsParams) => {
+    return service.getAuthoringLocations(params.uri);
+  });
+
+  connection.onCompletion((params) => {
+    return service.getCompletionItems(params.textDocument.uri, params.position);
+  });
+
+  connection.onHover((params) => {
+    return service.getHover(params.textDocument.uri, params.position);
+  });
+
+  connection.onDefinition((params) => {
+    return service.getDefinitionLocations(params.textDocument.uri, params.position);
+  });
+
+  connection.onFoldingRanges((params) => {
+    return service.getFoldingRanges(params.textDocument.uri);
   });
 
   documents.onDidOpen((event) => {

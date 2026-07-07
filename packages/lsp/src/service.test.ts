@@ -24,6 +24,12 @@ describe("@hia-doc/lsp service", () => {
     );
 
     expect(initializeResult.capabilities.textDocumentSync).toBe(2);
+    expect(initializeResult.capabilities.completionProvider).toMatchObject({
+      resolveProvider: false
+    });
+    expect(initializeResult.capabilities.hoverProvider).toBe(true);
+    expect(initializeResult.capabilities.definitionProvider).toBe(true);
+    expect(initializeResult.capabilities.foldingRangeProvider).toBe(true);
     expect(service.isInitialized()).toBe(true);
     expect(service.getWorkspaceRoots()).toEqual(["file:///workspace"]);
     expect(document.diagnostics).toEqual([]);
