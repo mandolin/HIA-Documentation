@@ -4,6 +4,8 @@ VS Code extension shell for HIA Documentation.
 
 The extension starts the shared `@hia-doc/lsp` server and connects it through `vscode-languageclient`. It does not parse JSDoc, generate HTML, or duplicate core diagnostics.
 
+VS Code is the first IDE shell for HIA Documentation. Other IDE integrations should reuse the LSP and CLI surfaces described in `../../docs/ide-integration-boundary.md`.
+
 ## Current Scope
 
 - Activates on `.hia.json` documents and HIA commands.

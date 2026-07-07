@@ -43,4 +43,4 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 
 The LSP resource index is an IDE view model derived from core documents. It is not written back into the core document IR.
 
-See `docs/contract-index.md` and the IDE/LSP capability contract for the current boundary between core documents, diagnostics, authoring capabilities and IDE views.
+See `docs/contract-index.md`, `docs/ide-integration-boundary.md` and the IDE/LSP capability contract for the current boundary between core documents, diagnostics, authoring capabilities and IDE views.
