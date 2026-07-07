@@ -9,6 +9,9 @@ describe("VS Code extension package", () => {
       activationEvents: string[];
       contributes: {
         commands: Array<{ command: string; title: string }>;
+        configuration: {
+          properties: Record<string, unknown>;
+        };
         languages: Array<{ extensions: string[]; id: string }>;
       };
       main: string;
@@ -20,6 +23,7 @@ describe("VS Code extension package", () => {
     expect(manifest.activationEvents).toContain("onCommand:hia.buildDocs");
     expect(manifest.activationEvents).toContain("onCommand:hia.openPreview");
     expect(manifest.activationEvents).toContain("onCommand:hia.validateWorkspace");
+    expect(manifest.activationEvents).toContain("onCommand:hia.openRelatedLocation");
     expect(manifest.contributes.languages[0]).toMatchObject({
       id: "hia",
       extensions: [".hia.json"]
@@ -30,5 +34,13 @@ describe("VS Code extension package", () => {
       "hia.openPreview",
       "hia.validateWorkspace"
     ]);
+    expect(Object.keys(manifest.contributes.configuration.properties)).toEqual(expect.arrayContaining([
+      "hia.build.config",
+      "hia.build.input",
+      "hia.build.jsdocIntegration",
+      "hia.build.out",
+      "hia.build.locale",
+      "hia.preview.path"
+    ]));
   });
 });

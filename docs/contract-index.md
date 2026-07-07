@@ -28,7 +28,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Project config | `@hia-doc/config` | Project/build profile settings. Config is not part of the core document IR. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
-| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership and authoring boundary, extended through the W-P5.3 resource diagnostics/navigation baseline. |
+| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership and authoring boundary, consumed by the W-P5.4 VS Code authoring UX baseline. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
 
 ## Fixtures

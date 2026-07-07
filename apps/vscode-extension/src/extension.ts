@@ -10,31 +10,36 @@ import type {
   ServerOptions
 } from "vscode-languageclient/node";
 import {
+  HIA_AUTHORING_LOCATIONS_REQUEST,
   HIA_BUILD_DOCS_COMMAND,
   HIA_CLIENT_ID,
+  HIA_CONFIGURATION_SECTION,
   HIA_EXTENSION_NAME,
+  HIA_IDE_CAPABILITIES_REQUEST,
   HIA_OPEN_PREVIEW_COMMAND,
+  HIA_OPEN_RELATED_LOCATION_COMMAND,
   HIA_OUTPUT_CHANNEL_NAME,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
+  createHiaBuildArgs,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
-  resolveDefaultPreviewPath,
+  createHiaValidationReport,
+  normalizeHiaCommandSettings,
+  resolveConfiguredPreviewPath,
   resolveHiaCliModule,
-  resolveHiaServerModule
+  resolveHiaServerModule,
+  type HiaAuthoringLocationSummary,
+  type HiaAuthoringLocationsSummary,
+  type HiaCommandSettings,
+  type HiaCommandSettingsInput,
+  type HiaDiagnosticSummary,
+  type HiaIdeCapabilitiesSummary,
+  type HiaResourceIndexSummary
 } from "./config.js";
 
 let client: LanguageClient | undefined;
-
-interface HiaResourceIndexSummary {
-  documentId?: string;
-  i18nKeys?: unknown[];
-  i18nResources?: unknown[];
-  missingLocales?: unknown[];
-  sourceReferences?: unknown[];
-  uri?: string;
-}
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel(HIA_OUTPUT_CHANNEL_NAME);
@@ -68,6 +73,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   const buildDocsCommand = vscode.commands.registerCommand(HIA_BUILD_DOCS_COMMAND, async () => {
     const workspaceRoot = resolveWorkspaceRoot();
+    const settings = getHiaCommandSettings();
 
     if (!workspaceRoot) {
       void vscode.window.showWarningMessage("Open a workspace folder before building HIA docs.");
@@ -76,11 +82,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
     outputChannel.show(true);
     outputChannel.appendLine("Running HIA docs build...");
+    outputChannel.appendLine(`Build arguments: ${createHiaBuildArgs(settings).join(" ")}`);
 
-    const exitCode = await runHiaCliBuild(context.extensionPath, workspaceRoot, outputChannel);
+    const exitCode = await runHiaCliBuild(context.extensionPath, workspaceRoot, outputChannel, createHiaBuildArgs(settings));
 
     if (exitCode === 0) {
-      void vscode.window.showInformationMessage("HIA docs build completed.");
+      void vscode.window.showInformationMessage(`HIA docs build completed at ${settings.out}.`);
       return;
     }
 
@@ -88,13 +95,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   const openPreviewCommand = vscode.commands.registerCommand(HIA_OPEN_PREVIEW_COMMAND, async () => {
     const workspaceRoot = resolveWorkspaceRoot();
+    const settings = getHiaCommandSettings();
 
     if (!workspaceRoot) {
       void vscode.window.showWarningMessage("Open a workspace folder before opening HIA preview.");
       return;
     }
 
-    const previewPath = resolveDefaultPreviewPath(workspaceRoot);
+    const previewPath = resolveConfiguredPreviewPath(workspaceRoot, settings.previewPath);
 
     try {
       await access(previewPath);
@@ -113,29 +121,70 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       return;
     }
 
+    if (!isHiaDocument(editor.document)) {
+      void vscode.window.showWarningMessage("Open a .hia.json document before validating HIA workspace.");
+      return;
+    }
+
     if (!client) {
       void vscode.window.showWarningMessage("HIA language server is not running.");
       return;
     }
 
     const uri = editor.document.uri.toString();
-    const index = await client.sendRequest<HiaResourceIndexSummary>(HIA_RESOURCE_INDEX_REQUEST, { uri });
-    const summary = [
-      `document=${index.documentId || uri}`,
-      `resources=${index.i18nResources?.length ?? 0}`,
-      `keys=${index.i18nKeys?.length ?? 0}`,
-      `missingLocales=${index.missingLocales?.length ?? 0}`,
-      `sourceRefs=${index.sourceReferences?.length ?? 0}`
-    ].join(", ");
+    const diagnostics = vscode.languages.getDiagnostics(editor.document.uri).map(toDiagnosticSummary);
 
     outputChannel.show(true);
-    outputChannel.appendLine(`HIA validation summary: ${summary}`);
-    void vscode.window.showInformationMessage("HIA workspace validation summary written to output.");
+    outputChannel.appendLine(`Validating HIA workspace document: ${uri}`);
+
+    try {
+      const [index, capabilities, authoringLocations] = await Promise.all([
+        client.sendRequest<HiaResourceIndexSummary>(HIA_RESOURCE_INDEX_REQUEST, { uri }),
+        client.sendRequest<HiaIdeCapabilitiesSummary>(HIA_IDE_CAPABILITIES_REQUEST, { uri }),
+        client.sendRequest<HiaAuthoringLocationsSummary>(HIA_AUTHORING_LOCATIONS_REQUEST, { uri })
+      ]);
+      const report = createHiaValidationReport({
+        authoringLocations,
+        capabilities,
+        diagnostics,
+        resourceIndex: index,
+        uri
+      });
+
+      outputChannel.appendLine("HIA validation report:");
+
+      for (const line of report) {
+        outputChannel.appendLine(`- ${line}`);
+      }
+
+      if (diagnostics.some((diagnostic) => diagnostic.severity === vscode.DiagnosticSeverity.Error)) {
+        void vscode.window.showWarningMessage("HIA workspace validation completed with errors. See HIA output for details.");
+        return;
+      }
+
+      void vscode.window.showInformationMessage("HIA workspace validation report written to output.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      outputChannel.appendLine(`HIA workspace validation failed: ${message}`);
+      void vscode.window.showErrorMessage("HIA workspace validation failed. See HIA output for details.");
+    }
+  });
+  const openRelatedLocationCommand = vscode.commands.registerCommand(HIA_OPEN_RELATED_LOCATION_COMMAND, async (location: HiaAuthoringLocationSummary) => {
+    await openHiaRelatedLocation(location, outputChannel);
+  });
+  const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
+    provideCodeActions(_document, _range, codeActionContext) {
+      return createDiagnosticCodeActions(codeActionContext.diagnostics);
+    }
+  }, {
+    providedCodeActionKinds: [
+      vscode.CodeActionKind.QuickFix
+    ]
   });
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, validateWorkspaceCommand, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, validateWorkspaceCommand, openRelatedLocationCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -163,9 +212,165 @@ function resolveWorkspaceRoot(): string | undefined {
   return folder?.uri.fsPath;
 }
 
-function runHiaCliBuild(extensionPath: string, workspaceRoot: string, outputChannel: vscode.OutputChannel): Promise<number | null> {
+function getHiaCommandSettings(): HiaCommandSettings {
+  const configuration = vscode.workspace.getConfiguration(HIA_CONFIGURATION_SECTION);
+  const input: HiaCommandSettingsInput = {
+    config: configuration.get<string>("build.config"),
+    input: configuration.get<string>("build.input"),
+    jsdocIntegration: configuration.get<string>("build.jsdocIntegration"),
+    locale: configuration.get<string>("build.locale"),
+    out: configuration.get<string>("build.out"),
+    previewPath: configuration.get<string>("preview.path")
+  };
+
+  return normalizeHiaCommandSettings(input);
+}
+
+function isHiaDocument(document: vscode.TextDocument): boolean {
+  return document.languageId === "hia" || document.uri.fsPath.endsWith(".hia.json");
+}
+
+function createDiagnosticCodeActions(diagnostics: readonly vscode.Diagnostic[]): vscode.CodeAction[] {
+  const actions: vscode.CodeAction[] = [];
+  const seen = new Set<string>();
+
+  for (const diagnostic of diagnostics) {
+    const location = getFirstRelatedLocation(diagnostic) ?? getUnavailableDiagnosticLocation(diagnostic);
+
+    if (!location) {
+      continue;
+    }
+
+    const title = location.uri ? "HIA: Open Related Location" : "HIA: Explain Unavailable Location";
+    const key = [
+      title,
+      location.uri || "",
+      location.targetPath || "",
+      location.unavailableReason || "",
+      String(diagnostic.code || "")
+    ].join("\u0000");
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+
+    const action = new vscode.CodeAction(title, vscode.CodeActionKind.QuickFix);
+    action.command = {
+      command: HIA_OPEN_RELATED_LOCATION_COMMAND,
+      title,
+      arguments: [location]
+    };
+    action.diagnostics = [diagnostic];
+    action.isPreferred = Boolean(location.uri);
+    actions.push(action);
+  }
+
+  return actions;
+}
+
+async function openHiaRelatedLocation(location: HiaAuthoringLocationSummary, outputChannel: vscode.OutputChannel): Promise<void> {
+  if (!location.uri) {
+    const reason = location.unavailableReason || "diagnostic-target-unknown";
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA related location unavailable: ${reason}`);
+    void vscode.window.showInformationMessage(`HIA related location unavailable: ${reason}.`);
+    return;
+  }
+
+  try {
+    const uri = vscode.Uri.parse(location.uri);
+    const document = await vscode.workspace.openTextDocument(uri);
+    const options: vscode.TextDocumentShowOptions = {
+      preview: true
+    };
+
+    if (location.range) {
+      options.selection = toVscodeRange(location.range);
+    }
+
+    await vscode.window.showTextDocument(document, options);
+    outputChannel.appendLine(`Opened HIA related location: ${location.uri}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`Cannot open HIA related location ${location.uri}: ${message}`);
+    void vscode.window.showWarningMessage("Cannot open HIA related location. See HIA output for details.");
+  }
+}
+
+function getFirstRelatedLocation(diagnostic: vscode.Diagnostic): HiaAuthoringLocationSummary | undefined {
+  const data = getDiagnosticData(diagnostic);
+
+  if (!isRecord(data) || !Array.isArray(data.relatedLocations)) {
+    return undefined;
+  }
+
+  return data.relatedLocations.find(isAuthoringLocation);
+}
+
+function getUnavailableDiagnosticLocation(diagnostic: vscode.Diagnostic): HiaAuthoringLocationSummary | undefined {
+  const data = getDiagnosticData(diagnostic);
+
+  if (!isRecord(data) || typeof data.unavailableReason !== "string") {
+    return undefined;
+  }
+
+  return {
+    kind: "diagnostic-target",
+    unavailableReason: data.unavailableReason
+  };
+}
+
+function isAuthoringLocation(value: unknown): value is HiaAuthoringLocationSummary {
+  return isRecord(value) && typeof value.kind === "string";
+}
+
+function toDiagnosticSummary(diagnostic: vscode.Diagnostic): HiaDiagnosticSummary {
+  const data = getDiagnosticData(diagnostic);
+  const summary: HiaDiagnosticSummary = {
+    severity: diagnostic.severity
+  };
+
+  if (diagnostic.code !== undefined) {
+    summary.code = typeof diagnostic.code === "object" ? diagnostic.code.value : diagnostic.code;
+  }
+
+  if (data !== undefined) {
+    summary.data = data;
+  }
+
+  if (diagnostic.relatedInformation) {
+    summary.relatedInformation = diagnostic.relatedInformation;
+  }
+
+  return summary;
+}
+
+function getDiagnosticData(diagnostic: vscode.Diagnostic): unknown {
+  return (diagnostic as vscode.Diagnostic & { data?: unknown }).data;
+}
+
+function toVscodeRange(range: NonNullable<HiaAuthoringLocationSummary["range"]>): vscode.Range {
+  return new vscode.Range(
+    new vscode.Position(range.start.line, range.start.character),
+    new vscode.Position(range.end.line, range.end.character)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function runHiaCliBuild(
+  extensionPath: string,
+  workspaceRoot: string,
+  outputChannel: vscode.OutputChannel,
+  args = ["docs", "build"]
+): Promise<number | null> {
   const cliModule = resolveHiaCliModule(extensionPath);
-  const child = spawn(process.execPath, [cliModule, "docs", "build"], {
+  const child = spawn(process.execPath, [cliModule, ...args], {
     cwd: workspaceRoot,
     stdio: ["ignore", "pipe", "pipe"]
   });

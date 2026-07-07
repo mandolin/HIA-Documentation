@@ -18,6 +18,7 @@
     "onCommand:hia.buildDocs",
     "onCommand:hia.openPreview",
     "onCommand:hia.validateWorkspace",
+    "onCommand:hia.openRelatedLocation",
     "workspaceContains:**/*.hia.json"
   ],
   "contributes": {
@@ -55,6 +56,36 @@
           "enum": ["off", "messages", "verbose"],
           "default": "off",
           "description": "Controls tracing for the HIA language server."
+        },
+        "hia.build.config": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace-relative HIA config JSON file passed to `hia docs build --config`."
+        },
+        "hia.build.input": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace-relative HIA document JSON file passed to `hia docs build --input`."
+        },
+        "hia.build.jsdocIntegration": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace-relative JSDoc HIA Integration JSON file passed to `hia docs build --jsdoc-integration`."
+        },
+        "hia.build.out": {
+          "type": "string",
+          "default": "dist/docs",
+          "description": "Workspace-relative output directory passed to `hia docs build --out`."
+        },
+        "hia.build.locale": {
+          "type": "string",
+          "default": "",
+          "description": "Initial rendered locale passed to `hia docs build --locale`."
+        },
+        "hia.preview.path": {
+          "type": "string",
+          "default": "dist/docs/index.html",
+          "description": "Workspace-relative or absolute HTML file opened by HIA: Open Preview."
         }
       }
     }
@@ -62,7 +93,7 @@
   "files": ["dist", "README.md", "language-configuration.json", "package.json"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run src/**/*.test.ts"
+    "test": "cd ../.. && vitest run apps/vscode-extension/src/config.test.ts"
   },
   "dependencies": {
     "@hia-doc/lsp": "workspace:*",
