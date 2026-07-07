@@ -3,17 +3,21 @@ import { describe, expect, it } from "vitest";
 import {
   HIA_BUILD_DOCS_COMMAND,
   HIA_AUTHORING_LOCATIONS_REQUEST,
+  HIA_COPY_RESOURCE_KEY_COMMAND,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_LANGUAGE_ID,
   HIA_OPEN_PREVIEW_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
+  HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
+  HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
   createHiaPreviewReport,
+  createHiaResourceActionReport,
   createHiaValidationReport,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
@@ -44,9 +48,12 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_OPEN_PREVIEW_COMMAND).toBe("hia.openPreview");
     expect(HIA_VALIDATE_WORKSPACE_COMMAND).toBe("hia.validateWorkspace");
     expect(HIA_OPEN_RELATED_LOCATION_COMMAND).toBe("hia.openRelatedLocation");
+    expect(HIA_SHOW_RESOURCE_ACTION_COMMAND).toBe("hia.showResourceAction");
+    expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_IDE_CAPABILITIES_REQUEST).toBe("hia/ideCapabilities");
     expect(HIA_AUTHORING_LOCATIONS_REQUEST).toBe("hia/documentAuthoringLocations");
+    expect(HIA_RESOURCE_ACTIONS_REQUEST).toBe("hia/resourceActions");
     expect(createHiaDocumentSelector()).toEqual([
       {
         scheme: "file",
@@ -196,6 +203,18 @@ describe("@hia-doc/vscode-extension config", () => {
           { kind: "diagnostic-target", unavailableReason: "source-fragment-missing" }
         ]
       },
+      resourceActions: {
+        actions: [
+          { id: "open", kind: "open-resource", status: "available" },
+          { id: "stub", kind: "create-missing-locale-stub", status: "preflight" },
+          {
+            id: "blocked",
+            kind: "create-missing-locale-stub",
+            status: "blocked",
+            unavailableReason: "resource-key-missing"
+          }
+        ]
+      },
       diagnostics: [
         {
           code: "HIA_LSP_SOURCE_REFERENCE_INVALID",
@@ -218,8 +237,39 @@ describe("@hia-doc/vscode-extension config", () => {
       "Resources: 1 resource(s), 1 key(s), 1 missing locale(s), 2 source reference(s)",
       "Authoring locations: 2 total, 1 unavailable",
       "Capabilities: available=1, planned=1",
-      "Unavailable reasons: source-fragment-missing=2",
+      "Resource actions: 3 total, 1 preflight, 1 blocked",
+      "Unavailable reasons: resource-key-missing=1, source-fragment-missing=2",
       "Diagnostic codes: HIA_LSP_I18N_LOCALE_MISSING=1, HIA_LSP_SOURCE_REFERENCE_INVALID=1"
+    ]);
+  });
+
+  it("creates resource action preview reports", () => {
+    expect(createHiaResourceActionReport({
+      kind: "create-missing-locale-stub",
+      locale: "en",
+      preflight: {
+        conflictStatus: "not-checked",
+        editKind: "create-missing-locale-entry",
+        requiresFileRead: true,
+        resourcePath: "i18n/profile.hia-i18n.json",
+        resourcePointer: "/en/profile.render.description",
+        targetUri: "file:///workspace/i18n/profile.hia-i18n.json",
+        workspaceEditBoundary: "external-resource-only"
+      },
+      status: "preflight",
+      title: "HIA: Preview en resource stub"
+    })).toEqual([
+      "Action: HIA: Preview en resource stub",
+      "Status: preflight",
+      "Kind: create-missing-locale-stub",
+      "Locale: en",
+      "Preflight edit: create-missing-locale-entry",
+      "Preflight target: file:///workspace/i18n/profile.hia-i18n.json",
+      "Preflight resource: i18n/profile.hia-i18n.json",
+      "Preflight pointer: /en/profile.render.description",
+      "Conflict status: not-checked",
+      "Workspace edit boundary: external-resource-only",
+      "Requires file read: yes"
     ]);
   });
 });

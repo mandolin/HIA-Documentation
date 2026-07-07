@@ -24,6 +24,8 @@ describe("VS Code extension package", () => {
     expect(manifest.activationEvents).toContain("onCommand:hia.openPreview");
     expect(manifest.activationEvents).toContain("onCommand:hia.validateWorkspace");
     expect(manifest.activationEvents).toContain("onCommand:hia.openRelatedLocation");
+    expect(manifest.activationEvents).toContain("onCommand:hia.showResourceAction");
+    expect(manifest.activationEvents).toContain("onCommand:hia.copyResourceKey");
     expect(manifest.contributes.languages[0]).toMatchObject({
       id: "hia",
       extensions: [".hia.json"]

@@ -23,15 +23,21 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 - Authoring capability surface:
   - custom capability request;
   - custom authoring location request;
+  - custom resource action request;
   - i18n/source completion candidates;
   - document hover summary;
   - definition locations for external resources and source ranges;
   - unavailable reason codes for unsafe paths, missing workspace roots and unresolved source fragments;
   - JSON folding ranges for HIA documents.
+- Resource actions for IDE shells:
+  - open external resources or source targets;
+  - copy i18n key/path values;
+  - return missing-locale stub preflight data without writing files.
 - Node LSP transport entry for future VS Code integration.
 - Custom request: `hia/documentResourceIndex`.
 - Custom request: `hia/ideCapabilities`.
 - Custom request: `hia/documentAuthoringLocations`.
+- Custom request: `hia/resourceActions`.
 
 ## Contract
 

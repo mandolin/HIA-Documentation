@@ -4,6 +4,7 @@ import { createHiaDocument } from "@hia-doc/core";
 import {
   HIA_LSP_AUTHORING_LOCATIONS_REQUEST,
   HIA_LSP_IDE_CAPABILITIES_REQUEST,
+  HIA_LSP_RESOURCE_ACTIONS_REQUEST,
   HiaIdeCapabilityId
 } from "./authoring.js";
 import {
@@ -25,7 +26,8 @@ describe("@hia-doc/lsp authoring", () => {
     expect(byId.get(HiaIdeCapabilityId.ResourceIndex)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CompletionI18n)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CompletionSource)?.status).toBe("partial");
-    expect(byId.get(HiaIdeCapabilityId.CodeActionResourceStub)?.status).toBe("planned");
+    expect(byId.get(HiaIdeCapabilityId.CodeActionResourceOpen)?.status).toBe("available");
+    expect(byId.get(HiaIdeCapabilityId.CodeActionResourceStub)?.status).toBe("partial");
   });
 
   it("creates i18n completion items from core resource data", () => {
@@ -251,6 +253,95 @@ describe("@hia-doc/lsp authoring", () => {
           sourceTargetId: "MISSING"
         })
       ]
+    });
+  });
+
+  it("creates resource actions and missing-locale stub preflight data", () => {
+    const service = createInitializedService();
+    const uri = "file:///workspace/fixtures/resource-actions.hia.json";
+    const document = createHiaDocument({
+      id: "fixture.lsp.resource-actions",
+      title: "Resource Actions Fixture",
+      defaultLocale: "zh-CN",
+      locales: ["zh-CN", "en"],
+      symbols: [
+        {
+          id: "function:renderProfile",
+          kind: "function",
+          name: "renderProfile",
+          i18n: {
+            enabled: true,
+            model: "hia-text-i18n",
+            modelVersion: "0.2.0",
+            defaultLocale: "zh-CN",
+            locales: ["zh-CN", "en"],
+            resources: [
+              {
+                kind: "external-resource",
+                path: "i18n/profile.hia-i18n.json",
+                locale: "en",
+                format: "hia-i18n-json",
+                fields: ["description"]
+              }
+            ],
+            fields: {
+              description: {
+                fieldPath: "description",
+                kind: "description",
+                key: "profile.render.description",
+                path: "profile.render",
+                defaultLocale: "zh-CN",
+                defaultText: "渲染用户资料。",
+                localizedText: {
+                  "zh-CN": "渲染用户资料。"
+                },
+                missingLocales: ["en"]
+              }
+            }
+          }
+        }
+      ]
+    });
+
+    service.openDocument(uri, JSON.stringify(document), "hia", 1);
+
+    const result = service.getResourceActions(uri);
+
+    expect(HIA_LSP_RESOURCE_ACTIONS_REQUEST).toBe("hia/resourceActions");
+    expect(result).toMatchObject({
+      uri,
+      actions: expect.arrayContaining([
+        expect.objectContaining({
+          kind: "open-resource",
+          resourcePath: "i18n/profile.hia-i18n.json",
+          status: "available",
+          targetUri: "file:///workspace/i18n/profile.hia-i18n.json"
+        }),
+        expect.objectContaining({
+          kind: "copy-resource-key",
+          key: "profile.render.description",
+          status: "available"
+        }),
+        expect.objectContaining({
+          kind: "create-missing-locale-stub",
+          locale: "en",
+          resourcePointer: "/en/profile.render.description",
+          status: "preflight",
+          preflight: expect.objectContaining({
+            conflictStatus: "not-checked",
+            editKind: "create-missing-locale-entry",
+            requiresFileRead: true,
+            resourcePath: "i18n/profile.hia-i18n.json",
+            targetUri: "file:///workspace/i18n/profile.hia-i18n.json",
+            workspaceEditBoundary: "external-resource-only",
+            stub: expect.objectContaining({
+              key: "profile.render.description",
+              locale: "en",
+              text: ""
+            })
+          })
+        })
+      ])
     });
   });
 

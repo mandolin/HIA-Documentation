@@ -23,7 +23,9 @@ import {
   createHiaFoldingRanges,
   createHiaHover,
   createHiaIdeCapabilities,
+  createHiaResourceActions,
   type HiaDocumentAuthoringLocationsResult,
+  type HiaDocumentResourceActionsResult,
   type HiaIdeCapabilitiesResult
 } from "./authoring.js";
 import { analyzeHiaDocumentText } from "./diagnostics.js";
@@ -57,6 +59,7 @@ export interface HiaLspService {
   getHover(uri: string, position?: Position): Hover | null;
   getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult;
   getManagedResourceIndex(uri: string): HiaLspResourceIndex;
+  getResourceActions(uri: string): HiaDocumentResourceActionsResult;
   getWorkspaceRoots(): readonly string[];
   validateTextDocument(document: TextDocument): Diagnostic[];
   validateManagedDocument(uri: string): Diagnostic[];
@@ -180,6 +183,9 @@ export function createHiaLspService(): HiaLspService {
     },
     getManagedResourceIndex(uri: string): HiaLspResourceIndex {
       return documents.get(uri)?.resourceIndex ?? createEmptyHiaResourceIndex({ uri });
+    },
+    getResourceActions(uri: string): HiaDocumentResourceActionsResult {
+      return createHiaResourceActions(createAuthoringContext(uri));
     },
     getWorkspaceRoots(): readonly string[] {
       return workspaceRoots;

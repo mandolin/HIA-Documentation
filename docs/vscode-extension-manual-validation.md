@@ -42,6 +42,14 @@ pnpm run build
 4. Confirm `HIA: Explain Unavailable Location` is offered for unresolved targets.
 5. Confirm the command writes the unavailable reason to the HIA output channel.
 
+## Validate Resource Actions
+
+1. Open `fixtures/i18n-resource.hia.json`.
+2. Open the lightbulb or Quick Fix menu in the document.
+3. Confirm resource actions backed by the LSP are offered, including opening an external resource and copying an i18n key/path.
+4. Run a copy action and confirm the HIA output channel reports the copied key/path.
+5. For a document with a missing locale and external resource target, confirm the stub action writes a preflight report to the HIA output channel instead of changing files.
+
 ## Validate Commands
 
 Open the Command Palette and run:
@@ -54,7 +62,7 @@ Open the Command Palette and run:
 Expected results:
 
 - `HIA: Show Output` opens the HIA output channel.
-- `HIA: Validate Workspace` writes a capability-driven report for the active `.hia.json` document, including diagnostics, resources, authoring locations, capability status and unavailable reasons.
+- `HIA: Validate Workspace` writes a capability-driven report for the active `.hia.json` document, including diagnostics, resources, authoring locations, resource actions, capability status and unavailable reasons.
 - `HIA: Build Docs` invokes the shared CLI and writes the configured output directory.
 - `HIA: Open Preview` opens the configured preview HTML file in the default browser.
 
@@ -103,7 +111,8 @@ Then run:
 - Preview uses the generated file path instead of a VS Code Webview.
 - Preview reads the CLI output manifest when present and falls back to `hia.preview.path`.
 - Validation summary uses LSP capability, resource index, authoring location and diagnostics data.
-- Quick Fix support is limited to opening or explaining LSP-provided related locations.
+- Quick Fix support consumes LSP diagnostic related locations and resource actions.
+- Resource edit quick fixes currently show preflight data only; they do not create or modify resource files.
 - Webview/preview server is deferred until a separate preview planning record is started.
-- Resource edit WorkspaceEdit and inline/external resource conversion are deferred.
+- Resource edit WorkspaceEdit and inline/external resource conversion are deferred to the resource editing plan.
 - Build command delegates to the CLI and does not parse or render documents inside the extension.

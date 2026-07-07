@@ -19,6 +19,8 @@
     "onCommand:hia.openPreview",
     "onCommand:hia.validateWorkspace",
     "onCommand:hia.openRelatedLocation",
+    "onCommand:hia.showResourceAction",
+    "onCommand:hia.copyResourceKey",
     "workspaceContains:**/*.hia.json"
   ],
   "contributes": {

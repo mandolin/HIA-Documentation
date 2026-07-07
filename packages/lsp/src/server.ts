@@ -10,7 +10,9 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   HIA_LSP_AUTHORING_LOCATIONS_REQUEST,
   HIA_LSP_IDE_CAPABILITIES_REQUEST,
+  HIA_LSP_RESOURCE_ACTIONS_REQUEST,
   type HiaDocumentAuthoringLocationsParams,
+  type HiaDocumentResourceActionsParams,
   type HiaIdeCapabilitiesParams
 } from "./authoring.js";
 import {
@@ -43,6 +45,10 @@ export function startHiaLspServer(options: StartHiaLspServerOptions = {}): Conne
 
   connection.onRequest(HIA_LSP_AUTHORING_LOCATIONS_REQUEST, (params: HiaDocumentAuthoringLocationsParams) => {
     return service.getAuthoringLocations(params.uri);
+  });
+
+  connection.onRequest(HIA_LSP_RESOURCE_ACTIONS_REQUEST, (params: HiaDocumentResourceActionsParams) => {
+    return service.getResourceActions(params.uri);
   });
 
   connection.onCompletion((params) => {

@@ -28,7 +28,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Project config | `@hia-doc/config` | Project/build profile settings. Config is not part of the core document IR. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
-| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership and authoring boundary, consumed by the W-P5.5 VS Code generated HTML preview UX baseline. |
+| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, authoring boundary and resource action/preflight data, consumed by the W-P5.6 VS Code baseline. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
 
 ## Fixtures
@@ -51,7 +51,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Source and i18n resource paths must stay relative and must not escape with `..`.
 - Diagnostics use stable `code`, `severity`, human-readable `message`, optional `targetPath/path` and optional machine-readable `data`.
 - LSP resource index data is derived from core documents and should not be written back into core documents.
-- IDE/LSP capability data is a view and ownership contract. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
+- IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
 ## Related Docs

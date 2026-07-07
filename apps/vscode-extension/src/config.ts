@@ -8,6 +8,8 @@ export const HIA_BUILD_DOCS_COMMAND = "hia.buildDocs";
 export const HIA_OPEN_PREVIEW_COMMAND = "hia.openPreview";
 export const HIA_VALIDATE_WORKSPACE_COMMAND = "hia.validateWorkspace";
 export const HIA_OPEN_RELATED_LOCATION_COMMAND = "hia.openRelatedLocation";
+export const HIA_SHOW_RESOURCE_ACTION_COMMAND = "hia.showResourceAction";
+export const HIA_COPY_RESOURCE_KEY_COMMAND = "hia.copyResourceKey";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -19,6 +21,7 @@ export const HIA_DEFAULT_MANIFEST_PATH = "hia-manifest.json";
 export const HIA_RESOURCE_INDEX_REQUEST = "hia/documentResourceIndex";
 export const HIA_IDE_CAPABILITIES_REQUEST = "hia/ideCapabilities";
 export const HIA_AUTHORING_LOCATIONS_REQUEST = "hia/documentAuthoringLocations";
+export const HIA_RESOURCE_ACTIONS_REQUEST = "hia/resourceActions";
 
 export interface HiaDocumentSelectorItem {
   language?: string;
@@ -91,6 +94,39 @@ export interface HiaAuthoringLocationsSummary {
   uri?: string;
 }
 
+export interface HiaResourceActionPreflightSummary {
+  conflictStatus?: string;
+  editKind?: string;
+  requiresFileRead?: boolean;
+  resourcePath?: string;
+  resourcePointer?: string;
+  targetUri?: string;
+  workspaceEditBoundary?: string;
+}
+
+export interface HiaResourceActionSummary {
+  fieldPath?: string;
+  id?: string;
+  key?: string;
+  kind?: string;
+  locale?: string;
+  location?: HiaAuthoringLocationSummary;
+  path?: string;
+  preflight?: HiaResourceActionPreflightSummary;
+  resourcePath?: string;
+  resourcePointer?: string;
+  status?: string;
+  symbolId?: string;
+  targetUri?: string;
+  title?: string;
+  unavailableReason?: string;
+}
+
+export interface HiaResourceActionsSummary {
+  actions?: HiaResourceActionSummary[];
+  uri?: string;
+}
+
 export interface HiaDiagnosticSummary {
   code?: number | string;
   data?: unknown;
@@ -102,6 +138,7 @@ export interface HiaValidationReportInput {
   authoringLocations?: HiaAuthoringLocationsSummary;
   capabilities?: HiaIdeCapabilitiesSummary;
   diagnostics?: HiaDiagnosticSummary[];
+  resourceActions?: HiaResourceActionsSummary;
   resourceIndex?: HiaResourceIndexSummary;
   uri: string;
 }
@@ -240,13 +277,16 @@ export function createHiaValidationReport(input: HiaValidationReportInput): stri
   const diagnostics = input.diagnostics ?? [];
   const capabilities = input.capabilities?.capabilities ?? [];
   const locations = input.authoringLocations?.locations ?? [];
+  const resourceActions = input.resourceActions?.actions ?? [];
   const diagnosticCounts = countDiagnostics(diagnostics);
   const capabilityCounts = countBy(capabilities.map((item) => item.status || "unknown"));
   const unavailableReasons = countBy([
     ...locations.map((item) => item.unavailableReason).filter(isNonEmptyString),
+    ...resourceActions.map((item) => item.unavailableReason).filter(isNonEmptyString),
     ...diagnostics.map((item) => getDiagnosticUnavailableReason(item)).filter(isNonEmptyString)
   ]);
   const diagnosticCodes = countBy(diagnostics.map((item) => String(item.code ?? "unknown")));
+  const resourceActionStatuses = countBy(resourceActions.map((item) => item.status || "unknown"));
 
   const lines = [
     `Document: ${index.documentId || input.uri}`,
@@ -257,12 +297,44 @@ export function createHiaValidationReport(input: HiaValidationReportInput): stri
     `Capabilities: ${formatCounts(capabilityCounts)}`
   ];
 
+  if (input.resourceActions) {
+    lines.push(`Resource actions: ${resourceActions.length} total, ${resourceActionStatuses.get("preflight") ?? 0} preflight, ${resourceActionStatuses.get("blocked") ?? 0} blocked`);
+  }
+
   if (unavailableReasons.size > 0) {
     lines.push(`Unavailable reasons: ${formatCounts(unavailableReasons)}`);
   }
 
   if (diagnosticCodes.size > 0) {
     lines.push(`Diagnostic codes: ${formatCounts(diagnosticCodes)}`);
+  }
+
+  return lines;
+}
+
+export function createHiaResourceActionReport(action: HiaResourceActionSummary): string[] {
+  const lines = [
+    `Action: ${action.title || action.kind || action.id || "HIA resource action"}`,
+    `Status: ${action.status || "unknown"}`
+  ];
+
+  pushReportLine(lines, "Kind", action.kind);
+  pushReportLine(lines, "Target URI", action.targetUri);
+  pushReportLine(lines, "Resource path", action.resourcePath);
+  pushReportLine(lines, "Resource pointer", action.resourcePointer);
+  pushReportLine(lines, "Locale", action.locale);
+  pushReportLine(lines, "Key", action.key);
+  pushReportLine(lines, "Path", action.path);
+  pushReportLine(lines, "Unavailable reason", action.unavailableReason);
+
+  if (action.preflight) {
+    pushReportLine(lines, "Preflight edit", action.preflight.editKind);
+    pushReportLine(lines, "Preflight target", action.preflight.targetUri);
+    pushReportLine(lines, "Preflight resource", action.preflight.resourcePath);
+    pushReportLine(lines, "Preflight pointer", action.preflight.resourcePointer);
+    pushReportLine(lines, "Conflict status", action.preflight.conflictStatus);
+    pushReportLine(lines, "Workspace edit boundary", action.preflight.workspaceEditBoundary);
+    lines.push(`Requires file read: ${action.preflight.requiresFileRead ? "yes" : "no"}`);
   }
 
   return lines;
@@ -363,6 +435,12 @@ function isSafeOutputRelativePath(value: string): boolean {
 function pushOption(args: string[], name: string, value: string | undefined): void {
   if (value) {
     args.push(name, value);
+  }
+}
+
+function pushReportLine(lines: string[], label: string, value: string | undefined): void {
+  if (value) {
+    lines.push(`${label}: ${value}`);
   }
 }
 

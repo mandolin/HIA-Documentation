@@ -22,11 +22,13 @@ import {
   HiaLspDiagnosticCode
 } from "./diagnostics.js";
 import type {
+  HiaLspMissingLocaleLocation,
   HiaLspResourceIndex
 } from "./resources.js";
 
 export const HIA_LSP_IDE_CAPABILITIES_REQUEST = "hia/ideCapabilities";
 export const HIA_LSP_AUTHORING_LOCATIONS_REQUEST = "hia/documentAuthoringLocations";
+export const HIA_LSP_RESOURCE_ACTIONS_REQUEST = "hia/resourceActions";
 
 export const HiaIdeCapabilityId = {
   DiagnosticsDocument: "hia.diagnostics.document",
@@ -67,6 +69,10 @@ export interface HiaDocumentAuthoringLocationsParams {
   uri: string;
 }
 
+export interface HiaDocumentResourceActionsParams {
+  uri: string;
+}
+
 export interface HiaIdeCapabilitiesResult {
   capabilities: HiaIdeCapability[];
   uri: string;
@@ -74,6 +80,11 @@ export interface HiaIdeCapabilitiesResult {
 
 export interface HiaDocumentAuthoringLocationsResult {
   locations: HiaLspAuthoringLocation[];
+  uri: string;
+}
+
+export interface HiaDocumentResourceActionsResult {
+  actions: HiaLspResourceAction[];
   uri: string;
 }
 
@@ -102,12 +113,42 @@ export type HiaLspUnavailableReason =
   | "document-not-open"
   | "not-hia-document"
   | "resource-file-unknown"
+  | "resource-key-missing"
   | "workspace-root-missing"
   | "relative-path-missing"
   | "unsafe-relative-path"
   | "source-fragment-missing"
   | "range-unavailable"
   | "diagnostic-target-unknown";
+
+export type HiaLspResourceActionKind =
+  | "open-resource"
+  | "open-source"
+  | "copy-resource-key"
+  | "create-missing-locale-stub"
+  | "explain-unavailable";
+
+export type HiaLspResourceActionStatus = "available" | "preflight" | "blocked";
+export type HiaLspResourceEditConflictStatus = "not-checked" | "none" | "conflict";
+
+export interface HiaLspResourceStubPreview {
+  key?: string;
+  locale: string;
+  path?: string;
+  text: string;
+}
+
+export interface HiaLspResourceEditPreflight {
+  conflictStatus: HiaLspResourceEditConflictStatus;
+  editKind: "create-missing-locale-entry";
+  requiresFileRead: boolean;
+  resourcePath?: string;
+  resourcePointer: string;
+  rollback: "host-undo";
+  stub: HiaLspResourceStubPreview;
+  targetUri?: string;
+  workspaceEditBoundary: "external-resource-only";
+}
 
 export interface HiaLspAuthoringLocation {
   capability?: HiaIdeCapabilityId;
@@ -129,10 +170,32 @@ export interface HiaLspAuthoringLocation {
   uri?: string;
 }
 
+export interface HiaLspResourceAction {
+  capability: HiaIdeCapabilityId;
+  fieldPath?: string;
+  id: string;
+  key?: string;
+  kind: HiaLspResourceActionKind;
+  locale?: string;
+  location?: HiaLspAuthoringLocation;
+  path?: string;
+  preflight?: HiaLspResourceEditPreflight;
+  resourcePath?: string;
+  resourcePointer?: string;
+  status: HiaLspResourceActionStatus;
+  symbolId?: string;
+  symbolName?: string;
+  targetUri?: string;
+  title: string;
+  unavailableReason?: HiaLspUnavailableReason;
+}
+
 export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaIdeCapabilitiesResult {
   const document = context.document;
   const index = document?.resourceIndex;
   const hasDocument = Boolean(document);
+  const openableResourceLocations =
+    (index?.i18nResources.length ?? 0) + (index?.sourceBlocks.length ?? 0) + (index?.sourceFragments.length ?? 0);
 
   return {
     uri: context.uri,
@@ -173,8 +236,8 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         (index?.sourceBlocks.length ?? 0) + (index?.sourceFragments.length ?? 0)
       ),
       implementedCapability(HiaIdeCapabilityId.FoldingDocument, "lsp", hasDocument),
-      plannedCapability(HiaIdeCapabilityId.CodeActionResourceOpen, "lsp", "Planned for G-LSP-P2.4."),
-      plannedCapability(HiaIdeCapabilityId.CodeActionResourceStub, "lsp", "Planned for G-LSP-P2.4."),
+      dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceOpen, "lsp", hasDocument, openableResourceLocations),
+      dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceStub, "lsp", hasDocument, index?.missingLocales.length ?? 0),
       plannedCapability(HiaIdeCapabilityId.CommandBuildDocs, "vscode", "Owned by the IDE shell and CLI."),
       plannedCapability(HiaIdeCapabilityId.CommandOpenPreview, "vscode", "Owned by the IDE shell and CLI/renderer manifest."),
       plannedCapability(HiaIdeCapabilityId.CommandValidateWorkspace, "vscode", "Owned by the IDE shell over LSP diagnostics and resource index.")
@@ -373,6 +436,58 @@ export function createHiaAuthoringLocations(context: HiaLspAuthoringContext): Hi
   return {
     uri: document.uri,
     locations
+  };
+}
+
+export function createHiaResourceActions(context: HiaLspAuthoringContext): HiaDocumentResourceActionsResult {
+  const document = context.document;
+
+  if (!document) {
+    return {
+      uri: context.uri,
+      actions: [
+        {
+          capability: HiaIdeCapabilityId.CodeActionResourceOpen,
+          id: "explain-unavailable:document-not-open",
+          kind: "explain-unavailable",
+          status: "blocked",
+          title: "HIA: Explain unavailable resource actions",
+          unavailableReason: "document-not-open"
+        }
+      ]
+    };
+  }
+
+  const locations = createHiaAuthoringLocations(context).locations;
+  const actions: HiaLspResourceAction[] = [];
+  const seen = new Set<string>();
+
+  for (const location of locations) {
+    if (location.kind === "i18n-field") {
+      pushCopyResourceKeyAction(actions, seen, location);
+      continue;
+    }
+
+    if (location.kind === "i18n-resource") {
+      pushOpenResourceAction(actions, seen, location);
+      pushCopyResourceKeyAction(actions, seen, location);
+      pushUnavailableResourceAction(actions, seen, location, HiaIdeCapabilityId.CodeActionResourceOpen);
+      continue;
+    }
+
+    if (location.kind === "source-block" || location.kind === "source-fragment") {
+      pushOpenSourceAction(actions, seen, location);
+      pushUnavailableResourceAction(actions, seen, location, HiaIdeCapabilityId.CodeActionResourceOpen);
+    }
+  }
+
+  for (const missingLocale of document.resourceIndex.missingLocales) {
+    pushMissingLocaleStubAction(actions, seen, locations, missingLocale);
+  }
+
+  return {
+    uri: document.uri,
+    actions
   };
 }
 
@@ -836,6 +951,272 @@ function findI18nFieldLocation(
       && location.fieldPath === fieldPath
       && (!segmentId || location.segmentId === segmentId);
   });
+}
+
+function findI18nResourceLocation(
+  locations: HiaLspAuthoringLocation[],
+  symbolId: string,
+  fieldPath: string,
+  locale: string
+): HiaLspAuthoringLocation | undefined {
+  return locations.find((location) => {
+    return location.kind === "i18n-resource"
+      && location.symbolId === symbolId
+      && location.fieldPath === fieldPath
+      && (location.locale === locale || !location.locale);
+  }) ?? locations.find((location) => {
+    return location.kind === "i18n-resource"
+      && location.symbolId === symbolId
+      && location.fieldPath === fieldPath;
+  });
+}
+
+function pushOpenResourceAction(
+  actions: HiaLspResourceAction[],
+  seen: Set<string>,
+  location: HiaLspAuthoringLocation
+): void {
+  if (!location.uri) {
+    return;
+  }
+
+  const action = createResourceAction("open-resource", HiaIdeCapabilityId.CodeActionResourceOpen, "available", [
+    "open-resource",
+    location.uri,
+    location.resourcePointer,
+    location.targetPath
+  ], `HIA: Open i18n resource${location.resourcePointer ? ` ${location.resourcePointer}` : ""}`);
+
+  attachLocationFields(action, location);
+  pushUniqueResourceAction(actions, seen, action);
+}
+
+function pushOpenSourceAction(
+  actions: HiaLspResourceAction[],
+  seen: Set<string>,
+  location: HiaLspAuthoringLocation
+): void {
+  if (!location.uri) {
+    return;
+  }
+
+  const action = createResourceAction("open-source", HiaIdeCapabilityId.CodeActionResourceOpen, "available", [
+    "open-source",
+    location.uri,
+    location.sourceTargetId,
+    location.targetPath
+  ], `HIA: Open source ${location.sourceTargetId || location.targetPath || "target"}`);
+
+  attachLocationFields(action, location);
+  pushUniqueResourceAction(actions, seen, action);
+}
+
+function pushCopyResourceKeyAction(
+  actions: HiaLspResourceAction[],
+  seen: Set<string>,
+  location: HiaLspAuthoringLocation
+): void {
+  const value = location.key || location.path;
+
+  if (!value) {
+    return;
+  }
+
+  const action = createResourceAction("copy-resource-key", HiaIdeCapabilityId.CodeActionResourceOpen, "available", [
+    "copy-resource-key",
+    location.symbolId,
+    location.fieldPath,
+    value
+  ], `HIA: Copy i18n ${location.key ? "key" : "path"}`);
+
+  attachLocationFields(action, location);
+  pushUniqueResourceAction(actions, seen, action);
+}
+
+function pushUnavailableResourceAction(
+  actions: HiaLspResourceAction[],
+  seen: Set<string>,
+  location: HiaLspAuthoringLocation,
+  capability: HiaIdeCapabilityId
+): void {
+  if (!location.unavailableReason) {
+    return;
+  }
+
+  const action = createResourceAction("explain-unavailable", capability, "blocked", [
+    "explain-unavailable",
+    location.kind,
+    location.symbolId,
+    location.fieldPath,
+    location.sourceTargetId,
+    location.unavailableReason
+  ], `HIA: Explain unavailable ${location.kind}`);
+
+  attachLocationFields(action, location);
+  action.unavailableReason = location.unavailableReason;
+  pushUniqueResourceAction(actions, seen, action);
+}
+
+function pushMissingLocaleStubAction(
+  actions: HiaLspResourceAction[],
+  seen: Set<string>,
+  locations: HiaLspAuthoringLocation[],
+  missingLocale: HiaLspMissingLocaleLocation
+): void {
+  const fieldLocation = findI18nFieldLocation(locations, missingLocale.symbolId, missingLocale.fieldPath);
+  const resourceLocation = findI18nResourceLocation(
+    locations,
+    missingLocale.symbolId,
+    missingLocale.fieldPath,
+    missingLocale.locale
+  );
+  const key = fieldLocation?.key || resourceLocation?.key;
+  const path = fieldLocation?.path || resourceLocation?.path;
+  const resourcePointer = createResourcePointer(missingLocale.locale, key, path, missingLocale.fieldPath);
+  const hasWritableTarget = Boolean(resourceLocation?.uri && resourceLocation.resourcePath);
+  const hasResourceKey = Boolean(key || path);
+  const status: HiaLspResourceActionStatus = hasWritableTarget && hasResourceKey ? "preflight" : "blocked";
+  const action = createResourceAction("create-missing-locale-stub", HiaIdeCapabilityId.CodeActionResourceStub, status, [
+    "create-missing-locale-stub",
+    missingLocale.symbolId,
+    missingLocale.fieldPath,
+    missingLocale.locale,
+    resourceLocation?.uri,
+    key,
+    path
+  ], `HIA: Preview ${missingLocale.locale} resource stub`);
+
+  action.fieldPath = missingLocale.fieldPath;
+  action.locale = missingLocale.locale;
+  action.resourcePointer = resourcePointer;
+  action.symbolId = missingLocale.symbolId;
+  action.symbolName = missingLocale.symbolName;
+  copyOptionalActionString(action, "key", key);
+  copyOptionalActionString(action, "path", path);
+
+  if (resourceLocation) {
+    attachLocationFields(action, resourceLocation);
+  }
+
+  if (!hasResourceKey) {
+    action.unavailableReason = "resource-key-missing";
+  } else if (!hasWritableTarget) {
+    action.unavailableReason = resourceLocation?.unavailableReason ?? "resource-file-unknown";
+  } else if (resourceLocation?.uri) {
+    action.preflight = createMissingLocaleStubPreflight(missingLocale.locale, resourcePointer, resourceLocation, key, path);
+  }
+
+  pushUniqueResourceAction(actions, seen, action);
+}
+
+function createMissingLocaleStubPreflight(
+  locale: string,
+  resourcePointer: string,
+  location: HiaLspAuthoringLocation,
+  key?: string,
+  path?: string
+): HiaLspResourceEditPreflight {
+  const stub: HiaLspResourceStubPreview = {
+    locale,
+    text: ""
+  };
+  const preflight: HiaLspResourceEditPreflight = {
+    conflictStatus: "not-checked",
+    editKind: "create-missing-locale-entry",
+    requiresFileRead: true,
+    resourcePointer,
+    rollback: "host-undo",
+    stub,
+    workspaceEditBoundary: "external-resource-only"
+  };
+
+  copyOptionalStubString(stub, "key", key);
+  copyOptionalStubString(stub, "path", path);
+  copyOptionalPreflightString(preflight, "resourcePath", location.resourcePath);
+  copyOptionalPreflightString(preflight, "targetUri", location.uri);
+
+  return preflight;
+}
+
+function createResourceAction(
+  kind: HiaLspResourceActionKind,
+  capability: HiaIdeCapabilityId,
+  status: HiaLspResourceActionStatus,
+  idParts: readonly unknown[],
+  title: string
+): HiaLspResourceAction {
+  return {
+    capability,
+    id: createResourceActionId(idParts),
+    kind,
+    status,
+    title
+  };
+}
+
+function attachLocationFields(action: HiaLspResourceAction, location: HiaLspAuthoringLocation): void {
+  action.location = location;
+  copyOptionalActionString(action, "fieldPath", location.fieldPath);
+  copyOptionalActionString(action, "key", location.key);
+  copyOptionalActionString(action, "locale", location.locale);
+  copyOptionalActionString(action, "path", location.path);
+  copyOptionalActionString(action, "resourcePath", location.resourcePath);
+  copyOptionalActionString(action, "resourcePointer", location.resourcePointer);
+  copyOptionalActionString(action, "symbolId", location.symbolId);
+  copyOptionalActionString(action, "symbolName", location.symbolName);
+  copyOptionalActionString(action, "targetUri", location.uri);
+}
+
+function pushUniqueResourceAction(actions: HiaLspResourceAction[], seen: Set<string>, action: HiaLspResourceAction): void {
+  if (seen.has(action.id)) {
+    return;
+  }
+
+  seen.add(action.id);
+  actions.push(action);
+}
+
+function createResourceActionId(parts: readonly unknown[]): string {
+  return parts
+    .map((part) => typeof part === "string" ? part : "")
+    .filter((part) => part.length > 0)
+    .join("\u0000");
+}
+
+function copyOptionalActionString<T extends keyof HiaLspResourceAction>(
+  target: HiaLspResourceAction,
+  key: T,
+  value: HiaLspResourceAction[T] | undefined
+): void {
+  if (typeof value === "string") {
+    Object.assign(target, {
+      [key]: value
+    });
+  }
+}
+
+function copyOptionalPreflightString<T extends keyof HiaLspResourceEditPreflight>(
+  target: HiaLspResourceEditPreflight,
+  key: T,
+  value: HiaLspResourceEditPreflight[T] | undefined
+): void {
+  if (typeof value === "string") {
+    Object.assign(target, {
+      [key]: value
+    });
+  }
+}
+
+function copyOptionalStubString<T extends keyof HiaLspResourceStubPreview>(
+  target: HiaLspResourceStubPreview,
+  key: T,
+  value: HiaLspResourceStubPreview[T] | undefined
+): void {
+  if (typeof value === "string") {
+    Object.assign(target, {
+      [key]: value
+    });
+  }
 }
 
 function createI18nFieldTargetPath(symbolId: string, fieldPath: string, segmentId?: string): string {

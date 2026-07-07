@@ -122,6 +122,21 @@ describe("LSP server stdio", () => {
     client.send({
       jsonrpc: "2.0",
       id: 5,
+      method: "hia/resourceActions",
+      params: {
+        uri: "file:///workspace/basic.hia.json"
+      }
+    });
+
+    const resourceActionsResponse = await client.waitFor((message) => message.id === 5);
+    expect(resourceActionsResponse.result).toMatchObject({
+      uri: "file:///workspace/basic.hia.json",
+      actions: expect.any(Array)
+    });
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 6,
       method: "textDocument/completion",
       params: {
         textDocument: {
@@ -134,7 +149,7 @@ describe("LSP server stdio", () => {
       }
     });
 
-    const completionResponse = await client.waitFor((message) => message.id === 5);
+    const completionResponse = await client.waitFor((message) => message.id === 6);
     expect(completionResponse.result).toEqual(expect.arrayContaining([
       expect.objectContaining({
         label: "zh-CN"
@@ -143,12 +158,12 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
-      id: 6,
+      id: 7,
       method: "shutdown",
       params: null
     });
 
-    const shutdownResponse = await client.waitFor((message) => message.id === 6);
+    const shutdownResponse = await client.waitFor((message) => message.id === 7);
     expect(shutdownResponse.result).toBeNull();
 
     client.send({

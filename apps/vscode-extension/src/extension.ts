@@ -15,17 +15,21 @@ import {
   HIA_CLIENT_ID,
   HIA_CONFIGURATION_SECTION,
   HIA_EXTENSION_NAME,
+  HIA_COPY_RESOURCE_KEY_COMMAND,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_OPEN_PREVIEW_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
   HIA_OUTPUT_CHANNEL_NAME,
+  HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
+  HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
   createHiaPreviewReport,
+  createHiaResourceActionReport,
   createHiaValidationReport,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
@@ -41,6 +45,8 @@ import {
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
+  type HiaResourceActionSummary,
+  type HiaResourceActionsSummary,
   type HiaResourceIndexSummary
 } from "./config.js";
 
@@ -165,15 +171,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine(`Validating HIA workspace document: ${uri}`);
 
     try {
-      const [index, capabilities, authoringLocations] = await Promise.all([
+      const [index, capabilities, authoringLocations, resourceActions] = await Promise.all([
         client.sendRequest<HiaResourceIndexSummary>(HIA_RESOURCE_INDEX_REQUEST, { uri }),
         client.sendRequest<HiaIdeCapabilitiesSummary>(HIA_IDE_CAPABILITIES_REQUEST, { uri }),
-        client.sendRequest<HiaAuthoringLocationsSummary>(HIA_AUTHORING_LOCATIONS_REQUEST, { uri })
+        client.sendRequest<HiaAuthoringLocationsSummary>(HIA_AUTHORING_LOCATIONS_REQUEST, { uri }),
+        client.sendRequest<HiaResourceActionsSummary>(HIA_RESOURCE_ACTIONS_REQUEST, { uri })
       ]);
       const report = createHiaValidationReport({
         authoringLocations,
         capabilities,
         diagnostics,
+        resourceActions,
         resourceIndex: index,
         uri
       });
@@ -199,9 +207,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const openRelatedLocationCommand = vscode.commands.registerCommand(HIA_OPEN_RELATED_LOCATION_COMMAND, async (location: HiaAuthoringLocationSummary) => {
     await openHiaRelatedLocation(location, outputChannel);
   });
+  const showResourceActionCommand = vscode.commands.registerCommand(HIA_SHOW_RESOURCE_ACTION_COMMAND, async (action: HiaResourceActionSummary) => {
+    showHiaResourceAction(action, outputChannel);
+  });
+  const copyResourceKeyCommand = vscode.commands.registerCommand(HIA_COPY_RESOURCE_KEY_COMMAND, async (action: HiaResourceActionSummary) => {
+    await copyHiaResourceKey(action, outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
-    provideCodeActions(_document, _range, codeActionContext) {
-      return createDiagnosticCodeActions(codeActionContext.diagnostics);
+    provideCodeActions(document, _range, codeActionContext) {
+      return createHiaCodeActions(document, codeActionContext.diagnostics);
     }
   }, {
     providedCodeActionKinds: [
@@ -211,7 +225,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, validateWorkspaceCommand, openRelatedLocationCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -366,6 +380,26 @@ function isHiaDocument(document: vscode.TextDocument): boolean {
   return document.languageId === "hia" || document.uri.fsPath.endsWith(".hia.json");
 }
 
+async function createHiaCodeActions(document: vscode.TextDocument, diagnostics: readonly vscode.Diagnostic[]): Promise<vscode.CodeAction[]> {
+  const actions = createDiagnosticCodeActions(diagnostics);
+
+  if (!client || !isHiaDocument(document)) {
+    return actions;
+  }
+
+  try {
+    const resourceActions = await client.sendRequest<HiaResourceActionsSummary>(HIA_RESOURCE_ACTIONS_REQUEST, {
+      uri: document.uri.toString()
+    });
+
+    actions.push(...createResourceCodeActions(resourceActions));
+  } catch {
+    return actions;
+  }
+
+  return actions;
+}
+
 function createDiagnosticCodeActions(diagnostics: readonly vscode.Diagnostic[]): vscode.CodeAction[] {
   const actions: vscode.CodeAction[] = [];
   const seen = new Set<string>();
@@ -406,6 +440,51 @@ function createDiagnosticCodeActions(diagnostics: readonly vscode.Diagnostic[]):
   return actions;
 }
 
+function createResourceCodeActions(resourceActions: HiaResourceActionsSummary): vscode.CodeAction[] {
+  const actions: vscode.CodeAction[] = [];
+  const seen = new Set<string>();
+
+  for (const action of resourceActions.actions || []) {
+    if (!isResourceAction(action) || seen.has(action.id)) {
+      continue;
+    }
+
+    seen.add(action.id);
+    const codeAction = new vscode.CodeAction(action.title || "HIA: Resource Action", vscode.CodeActionKind.QuickFix);
+
+    if (action.kind === "open-resource" || action.kind === "open-source") {
+      const location = getResourceActionLocation(action);
+
+      if (!location) {
+        continue;
+      }
+
+      codeAction.command = {
+        command: HIA_OPEN_RELATED_LOCATION_COMMAND,
+        title: action.title || "HIA: Open Related Location",
+        arguments: [location]
+      };
+      codeAction.isPreferred = action.status === "available";
+    } else if (action.kind === "copy-resource-key") {
+      codeAction.command = {
+        command: HIA_COPY_RESOURCE_KEY_COMMAND,
+        title: action.title || "HIA: Copy i18n Key",
+        arguments: [action]
+      };
+    } else {
+      codeAction.command = {
+        command: HIA_SHOW_RESOURCE_ACTION_COMMAND,
+        title: action.title || "HIA: Show Resource Action",
+        arguments: [action]
+      };
+    }
+
+    actions.push(codeAction);
+  }
+
+  return actions;
+}
+
 async function openHiaRelatedLocation(location: HiaAuthoringLocationSummary, outputChannel: vscode.OutputChannel): Promise<void> {
   if (!location.uri) {
     const reason = location.unavailableReason || "diagnostic-target-unknown";
@@ -436,6 +515,43 @@ async function openHiaRelatedLocation(location: HiaAuthoringLocationSummary, out
   }
 }
 
+function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA resource action:");
+
+  for (const line of createHiaResourceActionReport(action)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  if (action.status === "blocked") {
+    const reason = action.unavailableReason || "diagnostic-target-unknown";
+    void vscode.window.showWarningMessage(`HIA resource action is unavailable: ${reason}.`);
+    return;
+  }
+
+  if (action.status === "preflight") {
+    void vscode.window.showInformationMessage("HIA resource edit preview written to output. File write is not enabled yet.");
+    return;
+  }
+
+  void vscode.window.showInformationMessage("HIA resource action details written to output.");
+}
+
+async function copyHiaResourceKey(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): Promise<void> {
+  const value = action.key || action.path;
+
+  if (!value) {
+    outputChannel.show(true);
+    outputChannel.appendLine("HIA resource key/path unavailable for copy action.");
+    void vscode.window.showWarningMessage("HIA resource key/path unavailable.");
+    return;
+  }
+
+  await vscode.env.clipboard.writeText(value);
+  outputChannel.appendLine(`Copied HIA resource key/path: ${value}`);
+  void vscode.window.showInformationMessage("HIA resource key/path copied.");
+}
+
 function getFirstRelatedLocation(diagnostic: vscode.Diagnostic): HiaAuthoringLocationSummary | undefined {
   const data = getDiagnosticData(diagnostic);
 
@@ -461,6 +577,42 @@ function getUnavailableDiagnosticLocation(diagnostic: vscode.Diagnostic): HiaAut
 
 function isAuthoringLocation(value: unknown): value is HiaAuthoringLocationSummary {
   return isRecord(value) && typeof value.kind === "string";
+}
+
+function isResourceAction(value: unknown): value is HiaResourceActionSummary & { id: string; kind: string } {
+  return isRecord(value) && typeof value.id === "string" && typeof value.kind === "string";
+}
+
+function getResourceActionLocation(action: HiaResourceActionSummary): HiaAuthoringLocationSummary | undefined {
+  if (isAuthoringLocation(action.location)) {
+    return action.location;
+  }
+
+  if (action.targetUri) {
+    const location: HiaAuthoringLocationSummary = {
+      kind: action.kind === "open-source" ? "source-fragment" : "i18n-resource",
+      uri: action.targetUri
+    };
+
+    if (action.resourcePath) {
+      location.resourcePath = action.resourcePath;
+    }
+
+    if (action.fieldPath) {
+      location.targetPath = action.fieldPath;
+    }
+
+    return location;
+  }
+
+  if (action.unavailableReason) {
+    return {
+      kind: "diagnostic-target",
+      unavailableReason: action.unavailableReason
+    };
+  }
+
+  return undefined;
 }
 
 function toDiagnosticSummary(diagnostic: vscode.Diagnostic): HiaDiagnosticSummary {
