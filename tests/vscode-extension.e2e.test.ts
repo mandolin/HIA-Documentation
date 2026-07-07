@@ -40,6 +40,7 @@ describe("VS Code extension package", () => {
       "hia.build.jsdocIntegration",
       "hia.build.out",
       "hia.build.locale",
+      "hia.build.manifest",
       "hia.preview.path"
     ]));
   });

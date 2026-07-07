@@ -15,6 +15,7 @@ export const HIA_CLI_RELATIVE_PATH = ["..", "..", "apps", "cli", "dist", "index.
 export const HIA_DEFAULT_PREVIEW_RELATIVE_PATH = ["dist", "docs", "index.html"] as const;
 export const HIA_DEFAULT_BUILD_OUTPUT = "dist/docs";
 export const HIA_DEFAULT_PREVIEW_PATH = "dist/docs/index.html";
+export const HIA_DEFAULT_MANIFEST_PATH = "hia-manifest.json";
 export const HIA_RESOURCE_INDEX_REQUEST = "hia/documentResourceIndex";
 export const HIA_IDE_CAPABILITIES_REQUEST = "hia/ideCapabilities";
 export const HIA_AUTHORING_LOCATIONS_REQUEST = "hia/documentAuthoringLocations";
@@ -30,6 +31,7 @@ export interface HiaCommandSettingsInput {
   input?: string | undefined;
   jsdocIntegration?: string | undefined;
   locale?: string | undefined;
+  manifest?: string | undefined;
   out?: string | undefined;
   previewPath?: string | undefined;
 }
@@ -39,6 +41,7 @@ export interface HiaCommandSettings {
   input?: string;
   jsdocIntegration?: string;
   locale?: string;
+  manifest: string;
   out: string;
   previewPath: string;
 }
@@ -103,6 +106,41 @@ export interface HiaValidationReportInput {
   uri: string;
 }
 
+export interface HiaPreviewManifestSummary {
+  documentId?: string;
+  entrypoint?: unknown;
+  initialLocale?: string;
+  locales?: unknown[];
+  title?: string;
+}
+
+export type HiaPreviewPathSource = "manifest" | "setting";
+
+export type HiaPreviewUnavailableReason =
+  | "manifest-entrypoint-missing"
+  | "manifest-entrypoint-unsafe"
+  | "preview-file-missing"
+  | "manifest-file-missing"
+  | "active-document-newer-than-preview"
+  | "manifest-newer-than-preview";
+
+export interface HiaPreviewPathResolution {
+  manifestEntrypoint?: string;
+  previewPath: string;
+  source: HiaPreviewPathSource;
+  unavailableReason?: HiaPreviewUnavailableReason;
+}
+
+export interface HiaPreviewStatusReportInput {
+  manifest?: HiaPreviewManifestSummary;
+  manifestExists: boolean;
+  manifestPath: string;
+  previewExists: boolean;
+  previewPath: string;
+  source: HiaPreviewPathSource;
+  staleReason?: HiaPreviewUnavailableReason;
+}
+
 export function resolveHiaServerModule(extensionPath: string): string {
   return path.resolve(extensionPath, ...HIA_SERVER_RELATIVE_PATH);
 }
@@ -120,8 +158,43 @@ export function resolveConfiguredPreviewPath(workspaceRoot: string, previewPath?
   return path.isAbsolute(normalized) ? path.resolve(normalized) : path.resolve(workspaceRoot, normalized);
 }
 
+export function resolveConfiguredManifestPath(workspaceRoot: string, settings: Pick<HiaCommandSettings, "manifest" | "out">): string {
+  return path.resolve(workspaceRoot, settings.out, settings.manifest);
+}
+
+export function resolveHiaPreviewPath(
+  workspaceRoot: string,
+  settings: Pick<HiaCommandSettings, "out" | "previewPath">,
+  manifest?: HiaPreviewManifestSummary
+): HiaPreviewPathResolution {
+  if (typeof manifest?.entrypoint === "string") {
+    const entrypoint = normalizeOutputRelativePath(manifest.entrypoint);
+
+    if (isSafeOutputRelativePath(entrypoint)) {
+      return {
+        manifestEntrypoint: entrypoint,
+        previewPath: path.resolve(workspaceRoot, settings.out, entrypoint),
+        source: "manifest"
+      };
+    }
+
+    return {
+      previewPath: resolveConfiguredPreviewPath(workspaceRoot, settings.previewPath),
+      source: "setting",
+      unavailableReason: "manifest-entrypoint-unsafe"
+    };
+  }
+
+  return {
+    previewPath: resolveConfiguredPreviewPath(workspaceRoot, settings.previewPath),
+    source: "setting",
+    ...(manifest ? { unavailableReason: "manifest-entrypoint-missing" as const } : {})
+  };
+}
+
 export function normalizeHiaCommandSettings(input: HiaCommandSettingsInput = {}): HiaCommandSettings {
   const settings: HiaCommandSettings = {
+    manifest: normalizeOptionalSetting(input.manifest) ?? HIA_DEFAULT_MANIFEST_PATH,
     out: normalizeOptionalSetting(input.out) ?? HIA_DEFAULT_BUILD_OUTPUT,
     previewPath: normalizeOptionalSetting(input.previewPath) ?? HIA_DEFAULT_PREVIEW_PATH
   };
@@ -157,6 +230,7 @@ export function createHiaBuildArgs(settings: HiaCommandSettings = normalizeHiaCo
   pushOption(args, "--jsdoc-integration", settings.jsdocIntegration);
   pushOption(args, "--out", settings.out);
   pushOption(args, "--locale", settings.locale);
+  pushOption(args, "--manifest", settings.manifest);
 
   return args;
 }
@@ -194,6 +268,61 @@ export function createHiaValidationReport(input: HiaValidationReportInput): stri
   return lines;
 }
 
+export function createHiaPreviewReport(input: HiaPreviewStatusReportInput): string[] {
+  const status = input.previewExists
+    ? input.staleReason ? "stale" : "ready"
+    : "missing";
+  const lines = [
+    `Strategy: generated-html`,
+    `Status: ${status}`,
+    `Preview file: ${input.previewPath}`,
+    `Preview source: ${input.source}`,
+    `Manifest: ${input.manifestExists ? input.manifestPath : `${input.manifestPath} (missing)`}`
+  ];
+
+  if (typeof input.manifest?.entrypoint === "string") {
+    lines.push(`Manifest entrypoint: ${input.manifest.entrypoint}`);
+  }
+
+  if (input.manifest?.documentId) {
+    lines.push(`Document: ${input.manifest.documentId}`);
+  }
+
+  if (input.manifest?.title) {
+    lines.push(`Title: ${input.manifest.title}`);
+  }
+
+  if (input.manifest?.initialLocale) {
+    lines.push(`Initial locale: ${input.manifest.initialLocale}`);
+  }
+
+  if (input.staleReason) {
+    lines.push(`Stale reason: ${input.staleReason}`);
+  }
+
+  return lines;
+}
+
+export function getHiaPreviewStaleReason(input: {
+  manifestMtimeMs?: number;
+  previewMtimeMs?: number;
+  sourceMtimeMs?: number;
+}): HiaPreviewUnavailableReason | undefined {
+  if (input.previewMtimeMs === undefined) {
+    return undefined;
+  }
+
+  if (input.sourceMtimeMs !== undefined && input.sourceMtimeMs > input.previewMtimeMs) {
+    return "active-document-newer-than-preview";
+  }
+
+  if (input.manifestMtimeMs !== undefined && input.manifestMtimeMs > input.previewMtimeMs) {
+    return "manifest-newer-than-preview";
+  }
+
+  return undefined;
+}
+
 export function createHiaDocumentSelector(): HiaDocumentSelectorItem[] {
   return [
     {
@@ -214,6 +343,21 @@ export function createHiaFileWatcherPattern(): string {
 function normalizeOptionalSetting(value: string | undefined): string | undefined {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function normalizeOutputRelativePath(value: string): string {
+  const normalized = value.replaceAll("\\", "/");
+  return normalized.startsWith("./") ? normalized.slice(2) : normalized;
+}
+
+function isSafeOutputRelativePath(value: string): boolean {
+  return Boolean(value)
+    && value !== "."
+    && !path.isAbsolute(value)
+    && value !== ".."
+    && !value.startsWith("../")
+    && !value.includes("/../")
+    && !value.endsWith("/..");
 }
 
 function pushOption(args: string[], name: string, value: string | undefined): void {

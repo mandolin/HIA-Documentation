@@ -67,6 +67,7 @@ Add a workspace `.vscode/settings.json` or temporary user settings:
   "hia.build.input": "fixtures/basic.hia.json",
   "hia.build.out": "dist/docs",
   "hia.build.locale": "en",
+  "hia.build.manifest": "hia-manifest.json",
   "hia.preview.path": "dist/docs/index.html"
 }
 ```
@@ -76,8 +77,19 @@ Then run:
 1. `HIA: Build Docs`.
 2. Confirm the HIA output channel logs the CLI arguments.
 3. Confirm `dist/docs/index.html` exists.
-4. Run `HIA: Open Preview`.
-5. Remove or reset the temporary settings after validation.
+4. Confirm `dist/docs/hia-manifest.json` exists and contains `entrypoint`.
+5. Run `HIA: Open Preview`.
+6. Confirm the HIA output channel logs a preview report with `Strategy: generated-html`, manifest path and preview file.
+7. Remove or reset the temporary settings after validation.
+
+## Validate Preview Stale Feedback
+
+1. Run `HIA: Build Docs`.
+2. Edit and save the active `.hia.json` document without rebuilding.
+3. Run `HIA: Open Preview`.
+4. Confirm VS Code warns that the preview may be stale and offers `Open Preview` and `Build Docs`.
+5. Choose `Build Docs` and confirm the CLI runs.
+6. Run `HIA: Open Preview` again and confirm the generated HTML opens.
 
 ## Validate Failure Feedback
 
@@ -89,7 +101,9 @@ Then run:
 ## Current Boundaries
 
 - Preview uses the generated file path instead of a VS Code Webview.
+- Preview reads the CLI output manifest when present and falls back to `hia.preview.path`.
 - Validation summary uses LSP capability, resource index, authoring location and diagnostics data.
 - Quick Fix support is limited to opening or explaining LSP-provided related locations.
+- Webview/preview server is deferred until a separate preview planning record is started.
 - Resource edit WorkspaceEdit and inline/external resource conversion are deferred.
 - Build command delegates to the CLI and does not parse or render documents inside the extension.

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import * as vscode from "vscode";
 import {
   LanguageClient,
@@ -25,9 +25,12 @@ import {
   createHiaBuildArgs,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
+  createHiaPreviewReport,
   createHiaValidationReport,
+  getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
-  resolveConfiguredPreviewPath,
+  resolveConfiguredManifestPath,
+  resolveHiaPreviewPath,
   resolveHiaCliModule,
   resolveHiaServerModule,
   type HiaAuthoringLocationSummary,
@@ -36,6 +39,8 @@ import {
   type HiaCommandSettingsInput,
   type HiaDiagnosticSummary,
   type HiaIdeCapabilitiesSummary,
+  type HiaPreviewManifestSummary,
+  type HiaPreviewStatusReportInput,
   type HiaResourceIndexSummary
 } from "./config.js";
 
@@ -102,16 +107,38 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       return;
     }
 
-    const previewPath = resolveConfiguredPreviewPath(workspaceRoot, settings.previewPath);
+    const status = await readHiaPreviewStatus(workspaceRoot, settings, getActiveHiaDocumentPath());
+    outputChannel.show(true);
+    outputChannel.appendLine("HIA preview report:");
 
-    try {
-      await access(previewPath);
-      await vscode.env.openExternal(vscode.Uri.file(previewPath));
-      outputChannel.appendLine(`Opened HIA preview: ${previewPath}`);
-    } catch {
-      void vscode.window.showWarningMessage("HIA preview was not found. Run HIA: Build Docs first.");
-      outputChannel.appendLine(`HIA preview not found: ${previewPath}`);
+    for (const line of createHiaPreviewReport(status)) {
+      outputChannel.appendLine(`- ${line}`);
     }
+
+    if (!status.previewExists) {
+      void vscode.window.showWarningMessage("HIA preview was not found. Run HIA: Build Docs first.");
+      return;
+    }
+
+    if (status.staleReason) {
+      const selection = await vscode.window.showWarningMessage(
+        "HIA preview may be stale.",
+        "Open Preview",
+        "Build Docs"
+      );
+
+      if (selection === "Build Docs") {
+        await vscode.commands.executeCommand(HIA_BUILD_DOCS_COMMAND);
+        return;
+      }
+
+      if (selection !== "Open Preview") {
+        return;
+      }
+    }
+
+    await vscode.env.openExternal(vscode.Uri.file(status.previewPath));
+    outputChannel.appendLine(`Opened HIA preview: ${status.previewPath}`);
   });
   const validateWorkspaceCommand = vscode.commands.registerCommand(HIA_VALIDATE_WORKSPACE_COMMAND, async () => {
     const editor = vscode.window.activeTextEditor;
@@ -212,6 +239,114 @@ function resolveWorkspaceRoot(): string | undefined {
   return folder?.uri.fsPath;
 }
 
+async function readHiaPreviewStatus(
+  workspaceRoot: string,
+  settings: HiaCommandSettings,
+  sourcePath?: string
+): Promise<HiaPreviewStatusReportInput> {
+  const manifestPath = resolveConfiguredManifestPath(workspaceRoot, settings);
+  const manifestResult = await readPreviewManifest(manifestPath);
+  const previewResolution = resolveHiaPreviewPath(workspaceRoot, settings, manifestResult.manifest);
+  const previewStat = await tryStat(previewResolution.previewPath);
+  const sourceStat = sourcePath ? await tryStat(sourcePath) : undefined;
+  const staleInput: {
+    manifestMtimeMs?: number;
+    previewMtimeMs?: number;
+    sourceMtimeMs?: number;
+  } = {};
+
+  if (manifestResult.mtimeMs !== undefined) {
+    staleInput.manifestMtimeMs = manifestResult.mtimeMs;
+  }
+
+  if (previewStat?.mtimeMs !== undefined) {
+    staleInput.previewMtimeMs = previewStat.mtimeMs;
+  }
+
+  if (sourceStat?.mtimeMs !== undefined) {
+    staleInput.sourceMtimeMs = sourceStat.mtimeMs;
+  }
+
+  const staleReason = getHiaPreviewStaleReason(staleInput) ?? previewResolution.unavailableReason;
+  const status: HiaPreviewStatusReportInput = {
+    manifestExists: manifestResult.exists,
+    manifestPath,
+    previewExists: Boolean(previewStat),
+    previewPath: previewResolution.previewPath,
+    source: previewResolution.source
+  };
+
+  if (manifestResult.manifest) {
+    status.manifest = manifestResult.manifest;
+  }
+
+  if (staleReason) {
+    status.staleReason = staleReason;
+  }
+
+  return status;
+}
+
+async function readPreviewManifest(manifestPath: string): Promise<{
+  exists: boolean;
+  manifest?: HiaPreviewManifestSummary;
+  mtimeMs?: number;
+}> {
+  const manifestStat = await tryStat(manifestPath);
+
+  if (!manifestStat) {
+    return {
+      exists: false
+    };
+  }
+
+  try {
+    const text = await readFile(manifestPath, "utf8");
+    const parsed = JSON.parse(text) as unknown;
+    const result: {
+      exists: boolean;
+      manifest?: HiaPreviewManifestSummary;
+      mtimeMs?: number;
+    } = {
+      exists: true,
+      mtimeMs: manifestStat.mtimeMs
+    };
+
+    if (isRecord(parsed)) {
+      result.manifest = parsed;
+    }
+
+    return result;
+  } catch {
+    return {
+      exists: true,
+      mtimeMs: manifestStat.mtimeMs
+    };
+  }
+}
+
+async function tryStat(targetPath: string): Promise<{ mtimeMs: number } | undefined> {
+  try {
+    const stats = await stat(targetPath);
+
+    return {
+      mtimeMs: stats.mtimeMs
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function getActiveHiaDocumentPath(): string | undefined {
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (!document || !isHiaDocument(document) || document.uri.scheme !== "file") {
+    return undefined;
+  }
+
+  return document.uri.fsPath;
+}
+
 function getHiaCommandSettings(): HiaCommandSettings {
   const configuration = vscode.workspace.getConfiguration(HIA_CONFIGURATION_SECTION);
   const input: HiaCommandSettingsInput = {
@@ -219,6 +354,7 @@ function getHiaCommandSettings(): HiaCommandSettings {
     input: configuration.get<string>("build.input"),
     jsdocIntegration: configuration.get<string>("build.jsdocIntegration"),
     locale: configuration.get<string>("build.locale"),
+    manifest: configuration.get<string>("build.manifest"),
     out: configuration.get<string>("build.out"),
     previewPath: configuration.get<string>("preview.path")
   };

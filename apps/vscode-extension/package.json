@@ -82,6 +82,11 @@
           "default": "",
           "description": "Initial rendered locale passed to `hia docs build --locale`."
         },
+        "hia.build.manifest": {
+          "type": "string",
+          "default": "hia-manifest.json",
+          "description": "Output manifest path inside hia.build.out, passed to `hia docs build --manifest` and read by HIA: Open Preview."
+        },
         "hia.preview.path": {
           "type": "string",
           "default": "dist/docs/index.html",

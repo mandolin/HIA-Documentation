@@ -13,10 +13,14 @@ import {
   createHiaBuildArgs,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
+  createHiaPreviewReport,
   createHiaValidationReport,
+  getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
+  resolveConfiguredManifestPath,
   resolveConfiguredPreviewPath,
   resolveDefaultPreviewPath,
+  resolveHiaPreviewPath,
   resolveHiaCliModule,
   resolveHiaServerModule
 } from "./config.js";
@@ -63,6 +67,7 @@ describe("@hia-doc/vscode-extension config", () => {
       input: " fixtures/basic.hia.json ",
       jsdocIntegration: " ",
       locale: " en ",
+      manifest: " meta/hia-manifest.json ",
       out: " output/docs ",
       previewPath: " output/docs/index.html "
     });
@@ -71,6 +76,7 @@ describe("@hia-doc/vscode-extension config", () => {
       config: "hia.config.json",
       input: "fixtures/basic.hia.json",
       locale: "en",
+      manifest: "meta/hia-manifest.json",
       out: "output/docs",
       previewPath: "output/docs/index.html"
     });
@@ -84,16 +90,88 @@ describe("@hia-doc/vscode-extension config", () => {
       "--out",
       "output/docs",
       "--locale",
-      "en"
+      "en",
+      "--manifest",
+      "meta/hia-manifest.json"
     ]);
   });
 
-  it("resolves configured preview paths", () => {
+  it("resolves configured preview and manifest paths", () => {
     const workspaceRoot = path.resolve("workspace");
+    const settings = normalizeHiaCommandSettings({
+      manifest: "meta/hia-manifest.json",
+      out: "site"
+    });
 
     expect(resolveConfiguredPreviewPath(workspaceRoot).replace(/\\/g, "/")).toMatch(/workspace\/dist\/docs\/index\.html$/);
     expect(resolveConfiguredPreviewPath(workspaceRoot, "out/index.html").replace(/\\/g, "/")).toMatch(/workspace\/out\/index\.html$/);
     expect(resolveConfiguredPreviewPath(workspaceRoot, path.resolve("external/index.html"))).toBe(path.resolve("external/index.html"));
+    expect(resolveConfiguredManifestPath(workspaceRoot, settings).replace(/\\/g, "/")).toMatch(/workspace\/site\/meta\/hia-manifest\.json$/);
+  });
+
+  it("resolves preview entrypoints from output manifests", () => {
+    const workspaceRoot = path.resolve("workspace");
+    const settings = normalizeHiaCommandSettings({
+      out: "site",
+      previewPath: "fallback/index.html"
+    });
+
+    expect(resolveHiaPreviewPath(workspaceRoot, settings, {
+      entrypoint: "index.html"
+    })).toMatchObject({
+      manifestEntrypoint: "index.html",
+      previewPath: path.resolve(workspaceRoot, "site/index.html"),
+      source: "manifest"
+    });
+    expect(resolveHiaPreviewPath(workspaceRoot, settings, {
+      entrypoint: "../outside.html"
+    })).toMatchObject({
+      previewPath: path.resolve(workspaceRoot, "fallback/index.html"),
+      source: "setting",
+      unavailableReason: "manifest-entrypoint-unsafe"
+    });
+    expect(resolveHiaPreviewPath(workspaceRoot, settings, {})).toMatchObject({
+      source: "setting",
+      unavailableReason: "manifest-entrypoint-missing"
+    });
+  });
+
+  it("creates preview reports and stale reasons", () => {
+    const report = createHiaPreviewReport({
+      manifest: {
+        documentId: "fixture.basic",
+        entrypoint: "index.html",
+        initialLocale: "en",
+        title: "Fixture"
+      },
+      manifestExists: true,
+      manifestPath: "K:/workspace/dist/docs/hia-manifest.json",
+      previewExists: true,
+      previewPath: "K:/workspace/dist/docs/index.html",
+      source: "manifest",
+      staleReason: "active-document-newer-than-preview"
+    });
+
+    expect(report).toEqual([
+      "Strategy: generated-html",
+      "Status: stale",
+      "Preview file: K:/workspace/dist/docs/index.html",
+      "Preview source: manifest",
+      "Manifest: K:/workspace/dist/docs/hia-manifest.json",
+      "Manifest entrypoint: index.html",
+      "Document: fixture.basic",
+      "Title: Fixture",
+      "Initial locale: en",
+      "Stale reason: active-document-newer-than-preview"
+    ]);
+    expect(getHiaPreviewStaleReason({
+      previewMtimeMs: 100,
+      sourceMtimeMs: 200
+    })).toBe("active-document-newer-than-preview");
+    expect(getHiaPreviewStaleReason({
+      manifestMtimeMs: 200,
+      previewMtimeMs: 100
+    })).toBe("manifest-newer-than-preview");
   });
 
   it("creates capability-driven validation reports", () => {
