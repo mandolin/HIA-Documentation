@@ -74,6 +74,11 @@
           "default": "",
           "description": "Workspace-relative JSDoc HIA Integration JSON file passed to `hia docs build --jsdoc-integration`."
         },
+        "hia.build.projectManifest": {
+          "type": "string",
+          "default": "",
+          "description": "Workspace-relative project docs manifest JSON file passed to `hia docs build --project-manifest`."
+        },
         "hia.build.out": {
           "type": "string",
           "default": "dist/docs",

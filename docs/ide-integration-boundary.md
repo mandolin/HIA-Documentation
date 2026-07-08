@@ -8,7 +8,7 @@ This document describes how IDE shells should integrate with HIA Documentation w
 | --- | --- | --- |
 | `@hia-doc/core` | HIA document, diagnostics, i18n, source and protocol primitives | IDE APIs, CLI processes, rendered HTML |
 | Adapters | Language-specific input conversion into core documents | IDE UI, renderer output |
-| `@hia-doc/lsp` | Diagnostics, resource index, authoring queries, locations, resource actions and capability data | VS Code commands, HTML generation, JSDoc parsing |
+| `@hia-doc/lsp` | Diagnostics, resource index, profile-derived authoring data, authoring queries, locations, resource actions and capability data | VS Code commands, HTML generation, JSDoc parsing, profile rule definitions |
 | `@hia-doc/cli` | Build execution, config loading, adapter bridge input and renderer invocation | IDE UI and LSP providers |
 | `@hia-doc/renderer-html` | HTML output, assets and renderer manifest | IDE commands and workspace edits |
 | IDE shells | Editor APIs, commands, menus, output/log panels and user feedback | HIA semantic parsing, JSDoc parsing, HTML generation |
@@ -32,6 +32,8 @@ HIA-specific data is available through custom requests under the `hia/` namespac
 
 Custom request responses are IDE-neutral view models derived from managed core documents. They should not be written back into the core document IR.
 
+When a documentation profile set is available, `hia/ideCapabilities`, completion and hover may include profile-derived tag and diagnostic information. IDE shells should display that data as returned by the LSP and should not implement their own profile registry logic.
+
 ## VS Code Baseline
 
 The VS Code extension is the first IDE shell. It provides:
@@ -43,6 +45,7 @@ The VS Code extension is the first IDE shell. It provides:
 - related-location quick fixes;
 - resource action quick fixes;
 - generated HTML preview opening.
+- project manifest build setting pass-through.
 
 The VS Code extension is a presentation and command layer. It does not parse JSDoc, generate HTML, or duplicate core/LSP diagnostics.
 
@@ -91,4 +94,3 @@ Webview or preview-server integrations require a separate preview planning step.
 - Treat unknown fields in `hia/*` responses as forward-compatible additions.
 - Keep source and resource paths relative until an IDE shell resolves them inside a workspace.
 - Do not expose local absolute paths in generated documents, diagnostics or logs intended for users.
-

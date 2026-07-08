@@ -65,6 +65,9 @@ importers:
       '@hia-doc/core':
         specifier: workspace:*
         version: link:../core
+      '@hia-doc/profile':
+        specifier: workspace:*
+        version: link:../profile
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1

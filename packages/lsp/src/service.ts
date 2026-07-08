@@ -1,7 +1,15 @@
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type {
+  HiaDiagnostic,
   HiaDocument
 } from "@hia-doc/core";
+import {
+  createHiaProfileSet
+} from "@hia-doc/profile";
+import type {
+  HiaDocumentationProfile,
+  HiaProfileSet
+} from "@hia-doc/profile";
 import type {
   CompletionItem,
   Diagnostic,
@@ -43,6 +51,12 @@ export interface HiaLspManagedDocument {
   version: number;
 }
 
+export interface HiaLspServiceOptions {
+  profileDiagnostics?: HiaDiagnostic[];
+  profiles?: HiaDocumentationProfile[];
+  profileSet?: HiaProfileSet;
+}
+
 export interface HiaLspService {
   readonly documents: ReadonlyMap<string, HiaLspManagedDocument>;
   initialize(params?: InitializeParams): InitializeResult;
@@ -65,8 +79,9 @@ export interface HiaLspService {
   validateManagedDocument(uri: string): Diagnostic[];
 }
 
-export function createHiaLspService(): HiaLspService {
+export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspService {
   const documents = new Map<string, HiaLspManagedDocument>();
+  const profileState = createProfileState(options);
   let initialized = false;
   let shutdownRequested = false;
   let workspaceRoots: string[] = [];
@@ -197,11 +212,24 @@ export function createHiaLspService(): HiaLspService {
   };
 
   function createAuthoringContext(uri: string) {
-    const context = {
+    const context: {
+      profileDiagnostics?: HiaDiagnostic[];
+      profileSet?: HiaProfileSet;
+      uri: string;
+      workspaceRoots: string[];
+    } = {
       uri,
       workspaceRoots
     };
     const document = documents.get(uri);
+
+    if (profileState.profileSet) {
+      context.profileSet = profileState.profileSet;
+    }
+
+    if (profileState.profileDiagnostics.length > 0) {
+      context.profileDiagnostics = profileState.profileDiagnostics;
+    }
 
     if (document) {
       return {
@@ -212,6 +240,33 @@ export function createHiaLspService(): HiaLspService {
 
     return context;
   }
+}
+
+function createProfileState(options: HiaLspServiceOptions): {
+  profileDiagnostics: HiaDiagnostic[];
+  profileSet?: HiaProfileSet;
+} {
+  if (options.profileSet) {
+    return {
+      profileDiagnostics: options.profileDiagnostics ?? options.profileSet.diagnostics,
+      profileSet: options.profileSet
+    };
+  }
+
+  if (options.profiles) {
+    const profileSet = createHiaProfileSet({
+      profiles: options.profiles
+    });
+
+    return {
+      profileDiagnostics: options.profileDiagnostics ?? profileSet.diagnostics,
+      profileSet
+    };
+  }
+
+  return {
+    profileDiagnostics: options.profileDiagnostics ?? []
+  };
 }
 
 function createResourceIndexFromText(uri: string, text: string): HiaLspResourceIndex {

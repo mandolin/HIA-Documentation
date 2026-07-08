@@ -78,6 +78,10 @@ describe("@hia-doc/vscode-extension config", () => {
       out: " output/docs ",
       previewPath: " output/docs/index.html "
     });
+    const projectSettings = normalizeHiaCommandSettings({
+      out: " dist/project-docs ",
+      projectManifest: " fixtures/project-mixed.hia-project.json "
+    });
 
     expect(settings).toEqual({
       config: "hia.config.json",
@@ -100,6 +104,16 @@ describe("@hia-doc/vscode-extension config", () => {
       "en",
       "--manifest",
       "meta/hia-manifest.json"
+    ]);
+    expect(createHiaBuildArgs(projectSettings)).toEqual([
+      "docs",
+      "build",
+      "--project-manifest",
+      "fixtures/project-mixed.hia-project.json",
+      "--out",
+      "dist/project-docs",
+      "--manifest",
+      "hia-manifest.json"
     ]);
   });
 
@@ -195,6 +209,18 @@ describe("@hia-doc/vscode-extension config", () => {
         capabilities: [
           { id: "hia.resource.index", status: "available" },
           { id: "hia.codeAction.resource.open", status: "planned" }
+        ],
+        profiles: [
+          {
+            profileId: "cssdoc",
+            profileVersion: "0.1.0-draft",
+            tagCount: 14
+          }
+        ],
+        profileDiagnostics: [
+          {
+            code: "HIA_PROFILE_FIELD_INVALID"
+          }
         ]
       },
       authoringLocations: {
@@ -238,6 +264,7 @@ describe("@hia-doc/vscode-extension config", () => {
       "Authoring locations: 2 total, 1 unavailable",
       "Capabilities: available=1, planned=1",
       "Resource actions: 3 total, 1 preflight, 1 blocked",
+      "Profiles: cssdoc@0.1.0-draft; 14 tag(s), 1 diagnostic(s)",
       "Unavailable reasons: resource-key-missing=1, source-fragment-missing=2",
       "Diagnostic codes: HIA_LSP_I18N_LOCALE_MISSING=1, HIA_LSP_SOURCE_REFERENCE_INVALID=1"
     ]);

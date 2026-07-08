@@ -25,7 +25,9 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - custom authoring location request;
   - custom resource action request;
   - i18n/source completion candidates;
+  - profile-driven tag completion candidates from `@hia-doc/profile`;
   - document hover summary;
+  - profile summary in hover/capability responses when a profile set is supplied;
   - definition locations for external resources and source ranges;
   - unavailable reason codes for unsafe paths, missing workspace roots and unresolved source fragments;
   - JSON folding ranges for HIA documents.
@@ -42,5 +44,7 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 ## Contract
 
 The LSP resource index is an IDE view model derived from core documents. It is not written back into the core document IR.
+
+Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 
 See `docs/contract-index.md`, `docs/ide-integration-boundary.md` and the IDE/LSP capability contract for the current boundary between core documents, diagnostics, authoring capabilities and IDE views.

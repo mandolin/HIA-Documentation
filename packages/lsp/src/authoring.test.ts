@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createHiaDocument } from "@hia-doc/core";
+import type {
+  HiaDocumentationProfile
+} from "@hia-doc/profile";
 import {
   HIA_LSP_AUTHORING_LOCATIONS_REQUEST,
   HIA_LSP_IDE_CAPABILITIES_REQUEST,
@@ -64,6 +67,33 @@ describe("@hia-doc/lsp authoring", () => {
         }
       })
     }));
+  });
+
+  it("creates profile-driven tag completions and capability summaries", () => {
+    const service = createInitializedService([
+      readProfileFixture("cssdoc.profile.json"),
+      readProfileFixture("jsdoc.profile.json")
+    ]);
+    const uri = "file:///workspace/fixtures/basic.hia.json";
+
+    service.openDocument(uri, readFixture("basic.hia.json"), "hia", 1);
+
+    const capabilities = service.getIdeCapabilities(uri);
+    const byId = new Map(capabilities.capabilities.map((item) => [item.id, item]));
+    const labels = service.getCompletionItems(uri).map((item) => item.label);
+    const hover = service.getHover(uri);
+
+    expect(capabilities.profiles.map((profile) => profile.profileId)).toEqual(["cssdoc", "jsdoc"]);
+    expect(capabilities.profileDiagnostics).toEqual([]);
+    expect(byId.get(HiaIdeCapabilityId.ProfileRegistry)?.status).toBe("available");
+    expect(byId.get(HiaIdeCapabilityId.CompletionProfileTag)?.status).toBe("available");
+    expect(byId.get(HiaIdeCapabilityId.HoverProfile)?.status).toBe("available");
+    expect(labels).toContain("@component");
+    expect(labels).toContain("@param");
+    expect(hover?.contents).toMatchObject({
+      kind: "markdown",
+      value: expect.stringContaining("Profiles: cssdoc@0.1.0-draft, jsdoc@0.1.0-draft")
+    });
   });
 
   it("creates document hover and JSON folding ranges", () => {
@@ -382,8 +412,8 @@ describe("@hia-doc/lsp authoring", () => {
   });
 });
 
-function createInitializedService() {
-  const service = createHiaLspService();
+function createInitializedService(profiles?: HiaDocumentationProfile[]) {
+  const service = profiles ? createHiaLspService({ profiles }) : createHiaLspService();
   service.initialize({
     capabilities: {},
     processId: null,
@@ -400,4 +430,8 @@ function createInitializedService() {
 
 function readFixture(name: string): string {
   return readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8");
+}
+
+function readProfileFixture(name: string): HiaDocumentationProfile {
+  return JSON.parse(readFileSync(new URL(`../../profile/src/fixtures/profiles/${name}`, import.meta.url), "utf8")) as HiaDocumentationProfile;
 }

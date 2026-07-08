@@ -16,8 +16,17 @@ import type {
   Diagnostic
 } from "vscode-languageserver/node.js";
 import type {
+  HiaDiagnostic,
   HiaSourceRange
 } from "@hia-doc/core";
+import {
+  listHiaProfileIds,
+  listHiaProfileTags
+} from "@hia-doc/profile";
+import type {
+  HiaProfileSet,
+  HiaProfileTagDefinition
+} from "@hia-doc/profile";
 import {
   HiaLspDiagnosticCode
 } from "./diagnostics.js";
@@ -37,11 +46,15 @@ export const HiaIdeCapabilityId = {
   ResourceLocation: "hia.resource.location",
   CompletionI18n: "hia.completion.i18n",
   CompletionSource: "hia.completion.source",
+  CompletionProfileTag: "hia.completion.profileTag",
   HoverSymbol: "hia.hover.symbol",
   HoverResource: "hia.hover.resource",
+  HoverProfile: "hia.hover.profile",
   DefinitionResource: "hia.definition.resource",
   DefinitionSource: "hia.definition.source",
   FoldingDocument: "hia.folding.document",
+  ProfileRegistry: "hia.profile.registry",
+  DiagnosticsProfile: "hia.diagnostics.profile",
   CodeActionResourceOpen: "hia.codeAction.resource.open",
   CodeActionResourceStub: "hia.codeAction.resource.stub",
   CommandBuildDocs: "hia.command.buildDocs",
@@ -75,7 +88,27 @@ export interface HiaDocumentResourceActionsParams {
 
 export interface HiaIdeCapabilitiesResult {
   capabilities: HiaIdeCapability[];
+  profileDiagnostics: HiaProfileDiagnosticSummary[];
+  profiles: HiaProfileSummary[];
   uri: string;
+}
+
+export interface HiaProfileSummary {
+  diagnosticCount: number;
+  displayName: string;
+  layer: string;
+  profileId: string;
+  profileVersion: string;
+  ruleCount: number;
+  tagCount: number;
+  targets: string[];
+}
+
+export interface HiaProfileDiagnosticSummary {
+  code: string;
+  message: string;
+  severity: string;
+  targetPath?: string;
 }
 
 export interface HiaDocumentAuthoringLocationsResult {
@@ -97,6 +130,8 @@ export interface HiaLspAuthoringDocument {
 
 export interface HiaLspAuthoringContext {
   document?: HiaLspAuthoringDocument;
+  profileDiagnostics?: HiaDiagnostic[];
+  profileSet?: HiaProfileSet;
   uri: string;
   workspaceRoots: readonly string[];
 }
@@ -194,15 +229,23 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
   const document = context.document;
   const index = document?.resourceIndex;
   const hasDocument = Boolean(document);
+  const profileSummaries = createProfileSummaries(context.profileSet);
+  const profileDiagnosticSummaries = createProfileDiagnosticSummaries(context.profileDiagnostics ?? []);
+  const profileTagCount = countProfileTags(context.profileSet);
+  const hasProfiles = Boolean(context.profileSet);
   const openableResourceLocations =
     (index?.i18nResources.length ?? 0) + (index?.sourceBlocks.length ?? 0) + (index?.sourceFragments.length ?? 0);
 
   return {
     uri: context.uri,
+    profiles: profileSummaries,
+    profileDiagnostics: profileDiagnosticSummaries,
     capabilities: [
       implementedCapability(HiaIdeCapabilityId.DiagnosticsDocument, "lsp", hasDocument),
       implementedCapability(HiaIdeCapabilityId.DiagnosticsResource, "lsp", hasDocument),
+      dataBackedCapability(HiaIdeCapabilityId.DiagnosticsProfile, "lsp", hasProfiles, profileSummaries.length, "profile-data-empty"),
       implementedCapability(HiaIdeCapabilityId.ResourceIndex, "lsp", hasDocument),
+      dataBackedCapability(HiaIdeCapabilityId.ProfileRegistry, "lsp", hasProfiles, profileSummaries.length, "profile-data-empty"),
       dataBackedCapability(
         HiaIdeCapabilityId.ResourceLocation,
         "lsp",
@@ -221,6 +264,7 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         hasDocument,
         (index?.sourceReferences.length ?? 0) + (index?.sourceFragments.length ?? 0) + (index?.sourceBlocks.length ?? 0)
       ),
+      dataBackedCapability(HiaIdeCapabilityId.CompletionProfileTag, "lsp", hasProfiles, profileTagCount, "profile-data-empty"),
       implementedCapability(HiaIdeCapabilityId.HoverSymbol, "lsp", hasDocument),
       dataBackedCapability(
         HiaIdeCapabilityId.HoverResource,
@@ -228,6 +272,7 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         hasDocument,
         (index?.i18nKeys.length ?? 0) + (index?.i18nResources.length ?? 0) + (index?.sourceReferences.length ?? 0)
       ),
+      dataBackedCapability(HiaIdeCapabilityId.HoverProfile, "lsp", hasProfiles, profileSummaries.length, "profile-data-empty"),
       dataBackedCapability(HiaIdeCapabilityId.DefinitionResource, "lsp", hasDocument, index?.i18nResources.length ?? 0),
       dataBackedCapability(
         HiaIdeCapabilityId.DefinitionSource,
@@ -604,6 +649,8 @@ export function createHiaCompletionItems(context: HiaLspAuthoringContext, _posit
     });
   }
 
+  pushProfileTagCompletions(items, seen, context.profileSet);
+
   return items;
 }
 
@@ -628,6 +675,19 @@ export function createHiaHover(context: HiaLspAuthoringContext, _position?: Posi
     `- Source references: ${index.sourceReferences.length}`,
     `- Source blocks: ${index.sourceBlocks.length}`
   ];
+  const profileSummaries = createProfileSummaries(context.profileSet);
+
+  if (profileSummaries.length > 0) {
+    lines.push(
+      `- Profiles: ${profileSummaries.map((profile) => `${profile.profileId}@${profile.profileVersion}`).join(", ")}`,
+      `- Profile tags: ${profileSummaries.reduce((count, profile) => count + profile.tagCount, 0)}`
+    );
+  }
+
+  if ((context.profileDiagnostics?.length ?? 0) > 0) {
+    lines.push(`- Profile diagnostics: ${context.profileDiagnostics?.length ?? 0}`);
+  }
+
   const contents: MarkupContent = {
     kind: MarkupKind.Markdown,
     value: lines.join("\n")
@@ -1302,6 +1362,58 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function createProfileSummaries(profileSet: HiaProfileSet | undefined): HiaProfileSummary[] {
+  if (!profileSet) {
+    return [];
+  }
+
+  return listHiaProfileIds(profileSet).map((profileId) => {
+    const profile = profileSet.profiles.get(profileId);
+    const tags = listHiaProfileTags(profileSet, profileId, {
+      includeInherited: true
+    });
+
+    return {
+      diagnosticCount: profile?.diagnostics.length ?? 0,
+      displayName: profile?.displayName ?? profileId,
+      layer: profile?.layer ?? "unknown",
+      profileId,
+      profileVersion: profile?.profileVersion ?? "unknown",
+      ruleCount: profile?.rules.length ?? 0,
+      tagCount: tags.length,
+      targets: profile ? [...profile.targets] : []
+    };
+  });
+}
+
+function createProfileDiagnosticSummaries(diagnostics: readonly HiaDiagnostic[]): HiaProfileDiagnosticSummary[] {
+  return diagnostics.map((diagnostic) => {
+    const summary: HiaProfileDiagnosticSummary = {
+      code: diagnostic.code,
+      message: diagnostic.message,
+      severity: diagnostic.severity
+    };
+
+    if (diagnostic.targetPath) {
+      summary.targetPath = diagnostic.targetPath;
+    }
+
+    return summary;
+  });
+}
+
+function countProfileTags(profileSet: HiaProfileSet | undefined): number {
+  if (!profileSet) {
+    return 0;
+  }
+
+  return listHiaProfileIds(profileSet).reduce((count, profileId) => {
+    return count + listHiaProfileTags(profileSet, profileId, {
+      includeInherited: true
+    }).length;
+  }, 0);
+}
+
 function implementedCapability(id: HiaIdeCapabilityId, owner: HiaIdeCapabilityOwner, hasDocument: boolean): HiaIdeCapability {
   if (hasDocument) {
     return {
@@ -1319,7 +1431,13 @@ function implementedCapability(id: HiaIdeCapabilityId, owner: HiaIdeCapabilityOw
   };
 }
 
-function dataBackedCapability(id: HiaIdeCapabilityId, owner: HiaIdeCapabilityOwner, hasDocument: boolean, count: number): HiaIdeCapability {
+function dataBackedCapability(
+  id: HiaIdeCapabilityId,
+  owner: HiaIdeCapabilityOwner,
+  hasDocument: boolean,
+  count: number,
+  emptyReason = "source-data-empty"
+): HiaIdeCapability {
   if (!hasDocument) {
     return {
       id,
@@ -1341,7 +1459,7 @@ function dataBackedCapability(id: HiaIdeCapabilityId, owner: HiaIdeCapabilityOwn
     id,
     owner,
     status: "partial",
-    reason: "source-data-empty"
+    reason: emptyReason
   };
 }
 
@@ -1361,6 +1479,56 @@ function pushCompletion(items: CompletionItem[], seen: Set<string>, key: string,
 
   seen.add(key);
   items.push(item);
+}
+
+function pushProfileTagCompletions(items: CompletionItem[], seen: Set<string>, profileSet: HiaProfileSet | undefined): void {
+  if (!profileSet) {
+    return;
+  }
+
+  for (const profileId of listHiaProfileIds(profileSet)) {
+    for (const tag of listHiaProfileTags(profileSet, profileId, { includeInherited: true })) {
+      pushCompletion(items, seen, `profile-tag:${profileId}:${tag.name}`, {
+        label: `@${tag.name}`,
+        kind: CompletionItemKind.Keyword,
+        detail: `${profileId} ${tag.status} annotation tag`,
+        documentation: createProfileTagDocumentation(profileId, tag),
+        data: {
+          capability: HiaIdeCapabilityId.CompletionProfileTag,
+          source: "profile.tags",
+          profileId,
+          tagName: tag.name,
+          status: tag.status,
+          scope: tag.scope,
+          targets: tag.targets
+        }
+      });
+    }
+  }
+}
+
+function createProfileTagDocumentation(profileId: string, tag: HiaProfileTagDefinition): MarkupContent {
+  const lines = [
+    `### @${tag.name}`,
+    "",
+    `- Profile: \`${profileId}\``,
+    `- Status: \`${tag.status}\``,
+    `- Scope: ${tag.scope.join(", ") || "none"}`,
+    `- Targets: ${tag.targets.join(", ") || "none"}`
+  ];
+
+  if (tag.valueGrammar) {
+    lines.push(`- Value grammar: \`${tag.valueGrammar}\``);
+  }
+
+  if (tag.aliasFor) {
+    lines.push(`- Alias for: \`@${tag.aliasFor}\``);
+  }
+
+  return {
+    kind: MarkupKind.Markdown,
+    value: lines.join("\n")
+  };
 }
 
 function pushLocation(locations: Location[], seen: Set<string>, location: Location): void {

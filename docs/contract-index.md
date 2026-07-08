@@ -31,7 +31,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
-| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, authoring boundary and resource action/preflight data, consumed by IDE shells. |
+| IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
 
 ## Fixtures
@@ -58,6 +58,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Source and i18n resource paths must stay relative and must not escape with `..`.
 - Diagnostics use stable `code`, `severity`, human-readable `message`, optional `targetPath/path` and optional machine-readable `data`.
 - Documentation profile is the shared tag/rule/mapping/diagnostic configuration layer. It should not replace parser, extractor, adapter or renderer responsibilities.
+- LSP and IDE shells may consume normalized documentation profile runtime data for completion, hover and capability summaries, but should not redefine profile semantics.
 - Project docs manifests are explicit aggregation manifests. They should reference language extraction artifacts instead of making the CLI parse source languages directly.
 - LSP resource index data is derived from core documents and should not be written back into core documents.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.

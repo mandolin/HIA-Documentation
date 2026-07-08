@@ -370,7 +370,8 @@ function getHiaCommandSettings(): HiaCommandSettings {
     locale: configuration.get<string>("build.locale"),
     manifest: configuration.get<string>("build.manifest"),
     out: configuration.get<string>("build.out"),
-    previewPath: configuration.get<string>("preview.path")
+    previewPath: configuration.get<string>("preview.path"),
+    projectManifest: configuration.get<string>("build.projectManifest")
   };
 
   return normalizeHiaCommandSettings(input);

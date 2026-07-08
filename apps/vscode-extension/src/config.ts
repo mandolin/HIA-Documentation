@@ -37,6 +37,7 @@ export interface HiaCommandSettingsInput {
   manifest?: string | undefined;
   out?: string | undefined;
   previewPath?: string | undefined;
+  projectManifest?: string | undefined;
 }
 
 export interface HiaCommandSettings {
@@ -47,6 +48,7 @@ export interface HiaCommandSettings {
   manifest: string;
   out: string;
   previewPath: string;
+  projectManifest?: string;
 }
 
 export interface HiaResourceIndexSummary {
@@ -67,7 +69,16 @@ export interface HiaIdeCapabilitySummary {
 
 export interface HiaIdeCapabilitiesSummary {
   capabilities?: HiaIdeCapabilitySummary[];
+  profileDiagnostics?: unknown[];
+  profiles?: HiaProfileSummary[];
   uri?: string;
+}
+
+export interface HiaProfileSummary {
+  displayName?: string;
+  profileId?: string;
+  profileVersion?: string;
+  tagCount?: number;
 }
 
 export interface HiaAuthoringLocationSummary {
@@ -239,6 +250,7 @@ export function normalizeHiaCommandSettings(input: HiaCommandSettingsInput = {})
   const hiaInput = normalizeOptionalSetting(input.input);
   const jsdocIntegration = normalizeOptionalSetting(input.jsdocIntegration);
   const locale = normalizeOptionalSetting(input.locale);
+  const projectManifest = normalizeOptionalSetting(input.projectManifest);
 
   if (config) {
     settings.config = config;
@@ -256,6 +268,10 @@ export function normalizeHiaCommandSettings(input: HiaCommandSettingsInput = {})
     settings.locale = locale;
   }
 
+  if (projectManifest) {
+    settings.projectManifest = projectManifest;
+  }
+
   return settings;
 }
 
@@ -265,6 +281,7 @@ export function createHiaBuildArgs(settings: HiaCommandSettings = normalizeHiaCo
   pushOption(args, "--config", settings.config);
   pushOption(args, "--input", settings.input);
   pushOption(args, "--jsdoc-integration", settings.jsdocIntegration);
+  pushOption(args, "--project-manifest", settings.projectManifest);
   pushOption(args, "--out", settings.out);
   pushOption(args, "--locale", settings.locale);
   pushOption(args, "--manifest", settings.manifest);
@@ -276,6 +293,8 @@ export function createHiaValidationReport(input: HiaValidationReportInput): stri
   const index = input.resourceIndex ?? {};
   const diagnostics = input.diagnostics ?? [];
   const capabilities = input.capabilities?.capabilities ?? [];
+  const profiles = input.capabilities?.profiles ?? [];
+  const profileDiagnostics = input.capabilities?.profileDiagnostics ?? [];
   const locations = input.authoringLocations?.locations ?? [];
   const resourceActions = input.resourceActions?.actions ?? [];
   const diagnosticCounts = countDiagnostics(diagnostics);
@@ -299,6 +318,14 @@ export function createHiaValidationReport(input: HiaValidationReportInput): stri
 
   if (input.resourceActions) {
     lines.push(`Resource actions: ${resourceActions.length} total, ${resourceActionStatuses.get("preflight") ?? 0} preflight, ${resourceActionStatuses.get("blocked") ?? 0} blocked`);
+  }
+
+  if (profiles.length > 0 || profileDiagnostics.length > 0) {
+    const profileIds = profiles
+      .map((profile) => profile.profileId && profile.profileVersion ? `${profile.profileId}@${profile.profileVersion}` : profile.profileId)
+      .filter(isNonEmptyString);
+    const tagCount = profiles.reduce((count, profile) => count + (profile.tagCount ?? 0), 0);
+    lines.push(`Profiles: ${profileIds.join(", ") || "none"}; ${tagCount} tag(s), ${profileDiagnostics.length} diagnostic(s)`);
   }
 
   if (unavailableReasons.size > 0) {
