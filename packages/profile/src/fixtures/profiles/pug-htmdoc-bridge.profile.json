@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "pug-htmdoc-bridge",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "Pug to HTMDoc Bridge",
+  "layer": "bridge",
+  "extends": ["htmdoc", "doc-source-map"],
+  "contracts": [
+    {
+      "name": "hia-htmdoc-extraction",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    },
+    {
+      "name": "doc-source-map",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    }
+  ],
+  "targets": ["pug-source", "generated-html", "htmdoc-extraction", "doc-source-map-manifest"],
+  "tags": [
+    {
+      "name": "mixin",
+      "status": "experimental",
+      "scope": ["block"],
+      "targets": ["pug-mixin", "generated-html"],
+      "repeatable": false,
+      "valueGrammar": "mixin-name [summary]",
+      "mapsTo": { "symbolKind": "html-template" },
+      "metadata": { "bridgeOnly": true }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "pug-htmdoc/no-heuristic-high-confidence",
+      "category": "source-map",
+      "defaultSeverity": "error",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["doc-source-map-entry"],
+      "messages": { "default": "Heuristic Pug to HTML linkage must not be marked high confidence." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "pug-htmdoc/include-block-deferred",
+      "category": "bridge",
+      "defaultSeverity": "info",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["pug-include", "pug-extends", "pug-block"],
+      "messages": { "default": "Pug include/extends/block full linkage is deferred beyond P1." },
+      "fixable": false,
+      "hasSuggestions": false
+    }
+  ],
+  "mappings": [
+    {
+      "from": "tag:component",
+      "to": "symbolKind:html-component",
+      "conditions": ["pug-comment-attached-to-node", "generated-html-node-resolved"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-pug-parser-range",
+      "metadataPolicy": "preserve-generated-html-selector",
+      "diagnostics": []
+    },
+    {
+      "from": "pug-mixin-call",
+      "to": "html-template-or-component-reference",
+      "conditions": ["mixin-name-resolved"],
+      "confidence": "medium",
+      "sourcePolicy": "preserve-pug-parser-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": ["PUG_HTMDOC_MIXIN_LINKAGE_PARTIAL"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "PUG_HTMDOC_HEURISTIC_HIGH_CONFIDENCE",
+      "severity": "error",
+      "messageKey": "pugHtmdoc.heuristicHighConfidence",
+      "defaultMessage": "Heuristic Pug to HTML linkage must not be marked high confidence.",
+      "target": "doc-source-map-entry"
+    },
+    {
+      "code": "PUG_HTMDOC_MIXIN_LINKAGE_PARTIAL",
+      "severity": "warning",
+      "messageKey": "pugHtmdoc.mixinLinkagePartial",
+      "defaultMessage": "Pug mixin linkage is partial in P1.",
+      "target": "bridge"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true },
+    "hover": { "tags": true, "entries": true },
+    "diagnostics": ["PUG_HTMDOC_HEURISTIC_HIGH_CONFIDENCE", "PUG_HTMDOC_MIXIN_LINKAGE_PARTIAL"],
+    "sourceMap": { "index": true, "locations": true },
+    "renderer": { "views": ["html", "all"] }
+  }
+}

@@ -3,6 +3,7 @@
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/config" },
+    { "path": "./packages/profile" },
     { "path": "./packages/parser-jsdoc" },
     { "path": "./packages/lsp" },
     { "path": "./packages/theme-default" },

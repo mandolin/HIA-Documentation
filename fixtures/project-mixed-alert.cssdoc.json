@@ -1,0 +1,49 @@
+{
+  "contract": "hia-cssdoc-extraction",
+  "contractVersion": "0.1.0-draft",
+  "id": "cssdoc:fixture:alert",
+  "profile": {
+    "name": "cssdoc",
+    "version": "0.1.0-draft"
+  },
+  "source": {
+    "kind": "css-source",
+    "path": "src/styles/alert.css",
+    "language": "css"
+  },
+  "symbols": [
+    {
+      "id": "css:component:alert",
+      "kind": "css-component-style",
+      "name": "Alert",
+      "summary": "Alert component styles.",
+      "source": {
+        "path": "src/styles/alert.css",
+        "language": "css",
+        "range": {
+          "start": { "line": 3, "column": 1 },
+          "end": { "line": 12, "column": 2 }
+        },
+        "rangeSource": "parser",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "css:selector:alert",
+      "kind": "css-selector",
+      "name": ".alert",
+      "summary": "Public component selector.",
+      "source": {
+        "path": "src/styles/alert.css",
+        "language": "css",
+        "range": {
+          "start": { "line": 8, "column": 1 },
+          "end": { "line": 12, "column": 2 }
+        },
+        "rangeSource": "parser",
+        "confidence": "high"
+      }
+    }
+  ],
+  "diagnostics": []
+}

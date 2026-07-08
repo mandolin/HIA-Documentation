@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "doc-source-map",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "Doc Source Map",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [],
+  "targets": ["doc-source-map"],
+  "tags": [],
+  "rules": [],
+  "mappings": [],
+  "diagnostics": [],
+  "capabilities": {}
+}

@@ -1,0 +1,202 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "htmdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "HTMDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [
+    {
+      "name": "hia-htmdoc-extraction",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    }
+  ],
+  "targets": ["html-source", "html-fragment", "htmdoc-extraction", "hia-core-document"],
+  "tags": [
+    {
+      "name": "component",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-element", "html-fragment"],
+      "repeatable": false,
+      "valueGrammar": "identifier [summary]",
+      "mapsTo": { "symbolKind": "html-component" }
+    },
+    {
+      "name": "element",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-element"],
+      "repeatable": false,
+      "valueGrammar": "tag-name [summary]",
+      "mapsTo": { "symbolKind": "html-element" }
+    },
+    {
+      "name": "template",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-template", "html-fragment"],
+      "repeatable": false,
+      "valueGrammar": "name [summary]",
+      "mapsTo": { "symbolKind": "html-template" }
+    },
+    {
+      "name": "attr",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-element", "html-component"],
+      "repeatable": true,
+      "valueGrammar": "attribute-name [description]",
+      "mapsTo": { "symbolKind": "html-attribute" }
+    },
+    {
+      "name": "attribute",
+      "status": "alias",
+      "aliasFor": "attr",
+      "scope": ["block"],
+      "targets": ["html-element", "html-component"],
+      "repeatable": true,
+      "valueGrammar": "attribute-name [description]"
+    },
+    {
+      "name": "slot",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-component", "html-template"],
+      "repeatable": true,
+      "valueGrammar": "slot-name [description]",
+      "mapsTo": { "symbolKind": "html-slot" }
+    },
+    {
+      "name": "stylehook",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-component", "html-element"],
+      "repeatable": true,
+      "valueGrammar": "selector-or-css-hook [description]",
+      "mapsTo": { "symbolKind": "html-style-hook" }
+    },
+    {
+      "name": "style-hook",
+      "status": "alias",
+      "aliasFor": "stylehook",
+      "scope": ["block"],
+      "targets": ["html-component", "html-element"],
+      "repeatable": true,
+      "valueGrammar": "selector-or-css-hook [description]"
+    },
+    {
+      "name": "a11y",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-component", "html-element"],
+      "repeatable": true,
+      "valueGrammar": "accessibility-note",
+      "mapsTo": { "symbolKind": "html-a11y-note" }
+    },
+    {
+      "name": "accessibility",
+      "status": "alias",
+      "aliasFor": "a11y",
+      "scope": ["block"],
+      "targets": ["html-component", "html-element"],
+      "repeatable": true,
+      "valueGrammar": "accessibility-note"
+    },
+    {
+      "name": "description",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-symbol", "html-fragment"],
+      "repeatable": false,
+      "valueGrammar": "markdown-inline",
+      "mapsTo": { "field": "summary" }
+    },
+    {
+      "name": "example",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["html-symbol"],
+      "repeatable": true,
+      "valueGrammar": "example-body",
+      "mapsTo": { "symbolKind": "html-example" }
+    },
+    {
+      "name": "lang",
+      "status": "stable",
+      "scope": ["inline", "block"],
+      "targets": ["text"],
+      "repeatable": true,
+      "valueGrammar": "locale text",
+      "mapsTo": { "field": "localizedText" }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "htmdoc/no-unknown-tag",
+      "category": "semantic",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["annotation"],
+      "messages": { "default": "Unknown HTMDoc annotation tag." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "htmdoc/component-name-required",
+      "category": "semantic",
+      "defaultSeverity": "error",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["tag:component"],
+      "messages": { "default": "@component requires a stable component name." },
+      "fixable": false,
+      "hasSuggestions": true
+    }
+  ],
+  "mappings": [
+    {
+      "from": "tag:component",
+      "to": "symbolKind:html-component",
+      "conditions": ["attached-html-element-or-fragment"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": ["HTMDOC_COMPONENT_NAME_REQUIRED"]
+    },
+    {
+      "from": "tag:stylehook",
+      "to": "symbolKind:html-style-hook",
+      "conditions": ["component-or-element-context"],
+      "confidence": "medium",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "HTMDOC_UNKNOWN_TAG",
+      "severity": "warning",
+      "messageKey": "htmdoc.unknownTag",
+      "defaultMessage": "Unknown HTMDoc annotation tag.",
+      "target": "annotation",
+      "suggestions": ["Use a stable HTMDoc tag or declare an extension profile."]
+    },
+    {
+      "code": "HTMDOC_COMPONENT_NAME_REQUIRED",
+      "severity": "error",
+      "messageKey": "htmdoc.componentNameRequired",
+      "defaultMessage": "@component requires a stable component name.",
+      "target": "annotation",
+      "suggestions": ["Provide an explicit @component name."]
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true },
+    "hover": { "tags": true, "symbolKinds": true },
+    "diagnostics": ["HTMDOC_UNKNOWN_TAG", "HTMDOC_COMPONENT_NAME_REQUIRED"],
+    "folding": { "commentBlocks": true },
+    "renderer": { "views": ["html", "all"] }
+  }
+}

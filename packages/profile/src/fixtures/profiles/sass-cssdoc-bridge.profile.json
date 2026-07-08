@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "sass-cssdoc-bridge",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "Sass to CSSDoc Bridge",
+  "layer": "bridge",
+  "extends": ["cssdoc", "doc-source-map"],
+  "contracts": [
+    {
+      "name": "hia-cssdoc-extraction",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    },
+    {
+      "name": "doc-source-map",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    }
+  ],
+  "targets": ["sass-source", "scss-source", "generated-css", "cssdoc-extraction", "doc-source-map-manifest"],
+  "tags": [
+    {
+      "name": "variable",
+      "status": "experimental",
+      "scope": ["block"],
+      "targets": ["sass-variable", "scss-variable"],
+      "repeatable": true,
+      "valueGrammar": "variable-name [description]",
+      "mapsTo": { "metadata": "sass-variable" },
+      "metadata": { "bridgeOnly": true }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "sass-cssdoc/generated-css-linkage",
+      "category": "source-map",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["doc-source-map-entry", "ordinary-source-map"],
+      "messages": { "default": "Sass to CSSDoc bridge should preserve generated CSS linkage." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "sass-cssdoc/custom-property-alias",
+      "category": "compat",
+      "defaultSeverity": "info",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["tag:custom-property", "tag:cssprop"],
+      "messages": { "default": "@custom-property is an alias of CSSDoc @cssprop." },
+      "fixable": false,
+      "hasSuggestions": false
+    }
+  ],
+  "mappings": [
+    {
+      "from": "tag:component",
+      "to": "symbolKind:css-component-style",
+      "conditions": ["sass-comment-attached", "generated-css-selector-resolved"],
+      "confidence": "high",
+      "sourcePolicy": "prefer-sass-source-range",
+      "metadataPolicy": "preserve-generated-css-selector",
+      "diagnostics": []
+    },
+    {
+      "from": "tag:custom-property",
+      "to": "symbolKind:css-custom-property",
+      "conditions": ["custom-property-name-present"],
+      "confidence": "high",
+      "sourcePolicy": "prefer-sass-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": []
+    },
+    {
+      "from": "sass-variable",
+      "to": "design-token-or-css-custom-property-link",
+      "conditions": ["variable-used-in-css-custom-property"],
+      "confidence": "medium",
+      "sourcePolicy": "preserve-sass-source-range",
+      "metadataPolicy": "preserve-variable-value-policy",
+      "diagnostics": ["SASS_CSSDOC_VARIABLE_TOKEN_LINK_PARTIAL"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "SASS_CSSDOC_GENERATED_LINKAGE_MISSING",
+      "severity": "warning",
+      "messageKey": "sassCssdoc.generatedLinkageMissing",
+      "defaultMessage": "Generated CSS linkage is missing for a Sass documentation entry.",
+      "target": "doc-source-map-entry"
+    },
+    {
+      "code": "SASS_CSSDOC_VARIABLE_TOKEN_LINK_PARTIAL",
+      "severity": "info",
+      "messageKey": "sassCssdoc.variableTokenLinkPartial",
+      "defaultMessage": "Sass variable to design token linkage is partial.",
+      "target": "bridge"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true },
+    "hover": { "tags": true, "entries": true },
+    "diagnostics": ["SASS_CSSDOC_GENERATED_LINKAGE_MISSING", "SASS_CSSDOC_VARIABLE_TOKEN_LINK_PARTIAL"],
+    "sourceMap": { "index": true, "locations": true },
+    "renderer": { "views": ["css", "all"] }
+  }
+}

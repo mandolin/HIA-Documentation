@@ -15,10 +15,26 @@ import {
   type HiaDiagnostic,
   type HiaDiagnosticData,
   type HiaDiagnosticSeverity,
-  type HiaDocument
+  type HiaDocument,
+  type HiaSymbol
 } from "@hia-doc/core";
 import { convertJSDocIntegrationToHiaDocumentDetailed } from "@hia-doc/parser-jsdoc";
-import { renderHtmlDocument, type RenderHtmlOptions } from "@hia-doc/renderer-html";
+import {
+  createHiaProfileSet,
+  hasProfileErrors,
+  loadHiaProfileFromFile,
+  type HiaDocumentationProfile
+} from "@hia-doc/profile";
+import {
+  renderHtmlDocument,
+  renderProjectHtmlDocument,
+  type RenderHtmlOptions,
+  type RenderProjectDocSourceMapRef,
+  type RenderProjectEntry,
+  type RenderProjectHtmlInput,
+  type RenderProjectProfileRef,
+  type RenderProjectView
+} from "@hia-doc/renderer-html";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
@@ -26,7 +42,7 @@ const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
 
 Commands:
   docs build   Generate HTML documentation from a HIA document fixture.
@@ -36,6 +52,8 @@ Options:
   --input <file>      HIA document JSON file. Defaults to the built-in basic fixture.
   --jsdoc-integration <file>
                       JSDoc HIA Integration JSON file to convert before rendering.
+  --project-manifest <file>
+                      Project docs manifest that aggregates JSDoc, CSSDoc, HTMDoc and doc-source-map artifacts.
   --out <dir>         Output directory. Defaults to dist/docs.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
@@ -45,6 +63,43 @@ export interface CliIo {
   cwd: string;
   stdout: (message: string) => void;
   stderr: (message: string) => void;
+}
+
+type ProjectInputKind = "hia-document" | "jsdoc-integration" | "htmdoc-extraction" | "cssdoc-extraction" | "doc-source-map";
+
+interface ProjectDocsManifest {
+  schemaVersion?: string;
+  project?: {
+    id?: string;
+    name?: string;
+    title?: string;
+  };
+  profiles?: ProjectProfileManifestEntry[];
+  inputs?: ProjectManifestInput[];
+}
+
+interface ProjectProfileManifestEntry {
+  profileId?: string;
+  profileVersion?: string;
+  layer?: string;
+  path?: string;
+}
+
+interface ProjectManifestInput {
+  kind?: ProjectInputKind | string;
+  path?: string;
+  domain?: RenderProjectView;
+  profile?: RenderProjectProfileRef;
+  sourceRoot?: string;
+}
+
+interface ProjectAggregationResult {
+  projectInput?: RenderProjectHtmlInput;
+  inputRefs: Array<{
+    kind: string;
+    path: string;
+    profile?: RenderProjectProfileRef;
+  }>;
 }
 
 export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo = createDefaultIo()): Promise<number> {
@@ -65,7 +120,7 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -96,6 +151,12 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     io.cwd,
     configResult.baseDir
   );
+  const projectManifestPath = resolveOptionalConfiguredPath(
+    readOption(argv, "--project-manifest"),
+    docsConfig.projectManifest,
+    io.cwd,
+    configResult.baseDir
+  );
   const jsdocIntegrationPath = resolveOptionalConfiguredPath(
     readOption(argv, "--jsdoc-integration"),
     undefined,
@@ -104,11 +165,15 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   );
   const locale = readOption(argv, "--locale") ?? docsConfig.locale;
   const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
-  const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath);
+  const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath, projectManifestPath);
   reportDiagnostics(buildOptionDiagnostics, io);
 
   if (buildOptionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
     return 1;
+  }
+
+  if (projectManifestPath) {
+    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, locale, io);
   }
 
   const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
@@ -149,9 +214,84 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   return 0;
 }
 
+async function runProjectDocsBuild(
+  projectManifestPath: string,
+  outputDir: string,
+  manifestPath: string,
+  docsConfig: HiaDocsConfig,
+  locale: string | undefined,
+  io: CliIo
+): Promise<number> {
+  const manifestResult = await loadProjectManifest(projectManifestPath, io);
+
+  if (!manifestResult.manifest) {
+    return 1;
+  }
+
+  const baseDir = path.dirname(projectManifestPath);
+  const profileResult = await loadProjectProfiles(manifestResult.manifest, baseDir);
+  reportDiagnostics(profileResult.diagnostics, io);
+
+  if (hasProfileErrors(profileResult.diagnostics)) {
+    return 1;
+  }
+
+  const aggregation = await aggregateProjectDocs(manifestResult.manifest, projectManifestPath, profileResult.profiles, io);
+
+  if (!aggregation.projectInput) {
+    return 1;
+  }
+
+  const rendered = renderProjectHtmlDocument(aggregation.projectInput, createRenderOptions(locale, docsConfig));
+  reportDiagnostics(rendered.diagnostics, io);
+
+  if (rendered.diagnostics.some((item) => item.severity === "error")) {
+    return 1;
+  }
+
+  for (const file of rendered.files) {
+    const targetPath = path.join(outputDir, file.path);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, file.contents, "utf8");
+  }
+
+  const manifestFile = createProjectOutputManifest(rendered, manifestPath, aggregation.inputRefs);
+  const manifestTargetPath = path.join(outputDir, manifestPath);
+  await mkdir(path.dirname(manifestTargetPath), { recursive: true });
+  await writeFile(manifestTargetPath, JSON.stringify(manifestFile, null, 2), "utf8");
+
+  io.stdout(`Generated ${rendered.files.length + 1} file(s) at ${outputDir}`);
+  return 0;
+}
+
 function createOutputManifest(rendered: ReturnType<typeof renderHtmlDocument>, manifestPath: string) {
   return {
     ...rendered.manifest,
+    files: [
+      ...rendered.manifest.files,
+      {
+        path: manifestPath,
+        role: "manifest",
+        contentType: "application/json; charset=utf-8"
+      }
+    ]
+  };
+}
+
+function createProjectOutputManifest(
+  rendered: ReturnType<typeof renderProjectHtmlDocument>,
+  manifestPath: string,
+  inputRefs: ProjectAggregationResult["inputRefs"]
+) {
+  return {
+    ...rendered.manifest,
+    build: {
+      mode: "project",
+      inputs: inputRefs,
+      profiles: rendered.manifest.project?.profiles ?? [],
+      docSourceMaps: rendered.manifest.project?.docSourceMaps ?? []
+    },
+    docSourceMaps: rendered.manifest.project?.docSourceMaps ?? [],
     files: [
       ...rendered.manifest.files,
       {
@@ -225,6 +365,502 @@ async function loadJSDocIntegrationDocument(inputPath: string, io: CliIo): Promi
   }
 }
 
+async function loadProjectManifest(inputPath: string, io: CliIo): Promise<{ manifest?: ProjectDocsManifest }> {
+  try {
+    const content = await readFile(inputPath, "utf8");
+    const manifest = JSON.parse(content) as unknown;
+    const diagnostics = validateProjectManifest(manifest, inputPath);
+    reportDiagnostics(diagnostics, io);
+
+    if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+      return {};
+    }
+
+    return { manifest: manifest as ProjectDocsManifest };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_PROJECT_MANIFEST_READ_FAILED",
+        `${inputPath} - ${message}`,
+        "error",
+        undefined,
+        {
+          projectManifestPath: inputPath
+        }
+      )
+    ], io);
+    return {};
+  }
+}
+
+async function loadProjectProfiles(manifest: ProjectDocsManifest, baseDir: string): Promise<{
+  profiles: RenderProjectProfileRef[];
+  diagnostics: HiaDiagnostic[];
+}> {
+  const diagnostics: HiaDiagnostic[] = [];
+  const loadedProfiles: HiaDocumentationProfile[] = [];
+  const profileRefs: RenderProjectProfileRef[] = [];
+
+  for (const profileRef of manifest.profiles ?? []) {
+    if (!profileRef.profileId) {
+      continue;
+    }
+
+    if (profileRef.path) {
+      const loaded = await loadHiaProfileFromFile(path.resolve(baseDir, profileRef.path));
+      diagnostics.push(...loaded.diagnostics);
+
+      if (!hasProfileErrors(loaded.diagnostics)) {
+        loadedProfiles.push(loaded.profile);
+        profileRefs.push({
+          profileId: loaded.profile.profileId,
+          profileVersion: loaded.profile.profileVersion,
+          layer: loaded.profile.layer,
+          path: profileRef.path
+        });
+      }
+      continue;
+    }
+
+    profileRefs.push({
+      profileId: profileRef.profileId,
+      ...(profileRef.profileVersion ? { profileVersion: profileRef.profileVersion } : {}),
+      ...(profileRef.layer ? { layer: profileRef.layer } : {})
+    });
+  }
+
+  if (loadedProfiles.length > 0) {
+    const profileSet = createHiaProfileSet({ profiles: loadedProfiles });
+    diagnostics.push(...profileSet.diagnostics);
+  }
+
+  return {
+    profiles: dedupeProfileRefs(profileRefs),
+    diagnostics
+  };
+}
+
+async function aggregateProjectDocs(
+  manifest: ProjectDocsManifest,
+  projectManifestPath: string,
+  profileRefs: RenderProjectProfileRef[],
+  io: CliIo
+): Promise<ProjectAggregationResult> {
+  const baseDir = path.dirname(projectManifestPath);
+  const entries: RenderProjectEntry[] = [];
+  const diagnostics: HiaDiagnostic[] = [];
+  const docSourceMaps: RenderProjectDocSourceMapRef[] = [];
+  const inputRefs: ProjectAggregationResult["inputRefs"] = [];
+  const knownProfileIds = new Set(profileRefs.map((profile) => profile.profileId));
+
+  for (const input of manifest.inputs ?? []) {
+    if (!input.kind || !input.path) {
+      continue;
+    }
+
+    inputRefs.push({
+      kind: input.kind,
+      path: input.path,
+      ...(input.profile ? { profile: input.profile } : {})
+    });
+
+    if (input.profile?.profileId && knownProfileIds.size > 0 && !knownProfileIds.has(input.profile.profileId)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PROJECT_PROFILE_UNKNOWN",
+        `Project input references unknown profile "${input.profile.profileId}".`,
+        "warning",
+        input.path,
+        {
+          profileId: input.profile.profileId,
+          inputPath: input.path
+        }
+      ));
+    }
+
+    const inputPath = path.resolve(baseDir, input.path);
+    const readResult = await readProjectJson(inputPath, input, io);
+
+    if (!readResult) {
+      return { inputRefs };
+    }
+
+    if (input.kind === "hia-document") {
+      const document = readResult as HiaDocument;
+      const validation = validateHiaDocumentDetailed(document);
+      diagnostics.push(...validation.diagnostics);
+
+      if (!validation.valid) {
+        continue;
+      }
+
+      entries.push(...document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, document, input, index)));
+      continue;
+    }
+
+    if (input.kind === "jsdoc-integration") {
+      const result = convertJSDocIntegrationToHiaDocumentDetailed(readResult, {
+        documentId: `project:${manifest.project?.name ?? "docs"}:jsdoc`,
+        title: "JSDoc Integration"
+      });
+      diagnostics.push(...result.diagnostics);
+
+      if (result.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+        continue;
+      }
+
+      entries.push(...result.document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, result.document, input, index, "js")));
+      continue;
+    }
+
+    if (input.kind === "htmdoc-extraction" || input.kind === "cssdoc-extraction") {
+      entries.push(...extractionArtifactToProjectEntries(readResult, input));
+      continue;
+    }
+
+    if (input.kind === "doc-source-map") {
+      docSourceMaps.push(docSourceMapToRef(readResult, input));
+      continue;
+    }
+
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_PROJECT_INPUT_KIND_UNSUPPORTED",
+      `Unsupported project input kind: ${input.kind}.`,
+      "error",
+      input.path,
+      {
+        inputKind: input.kind
+      }
+    ));
+  }
+
+  return {
+    projectInput: {
+      project: {
+        name: manifest.project?.name ?? "HIA Project",
+        ...(manifest.project?.id ? { id: manifest.project.id } : {}),
+        ...(manifest.project?.title ? { title: manifest.project.title } : {})
+      },
+      profiles: profileRefs,
+      docSourceMaps,
+      entries,
+      diagnostics
+    },
+    inputRefs
+  };
+}
+
+async function readProjectJson(inputPath: string, input: ProjectManifestInput, io: CliIo): Promise<unknown | undefined> {
+  try {
+    return JSON.parse(await readFile(inputPath, "utf8")) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_PROJECT_INPUT_READ_FAILED",
+        `${input.path} - ${message}`,
+        "error",
+        input.path,
+        {
+          inputKind: input.kind,
+          inputPath: input.path
+        }
+      )
+    ], io);
+    return undefined;
+  }
+}
+
+function hiaSymbolToProjectEntry(
+  symbol: HiaSymbol,
+  document: HiaDocument,
+  input: ProjectManifestInput,
+  index: number,
+  fallbackView?: RenderProjectView
+): RenderProjectEntry {
+  const sourceRef = createProjectSourceFromHiaSymbol(symbol).source;
+
+  return {
+    id: createProjectEntryId(input.kind ?? "hia-document", symbol.id || symbol.name, index),
+    name: symbol.name || symbol.id,
+    kind: symbol.kind,
+    view: input.domain ?? fallbackView ?? inferProjectView(symbol.kind),
+    ...(symbol.summary ? { summary: symbol.summary } : {}),
+    ...(symbol.signature ? { signature: symbol.signature } : {}),
+    ...(input.profile ? { profile: input.profile } : {}),
+    input: {
+      kind: input.kind ?? "hia-document",
+      path: input.path ?? "",
+      ...(document.schemaVersion ? { contract: "hia-core-document", contractVersion: document.schemaVersion } : {})
+    },
+    ...(sourceRef ? { source: sourceRef } : {})
+  };
+}
+
+function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectManifestInput): RenderProjectEntry[] {
+  if (!isRecord(artifact) || !Array.isArray(artifact.symbols)) {
+    return [];
+  }
+
+  return artifact.symbols
+    .filter(isRecord)
+    .map((symbol, index) => {
+      const kind = stringValue(symbol.kind) ?? "symbol";
+      const name = stringValue(symbol.name) ?? stringValue(symbol.id) ?? `${input.kind}-${index + 1}`;
+      const artifactSource = isRecord(artifact.source) ? artifact.source : {};
+      const symbolSource = isRecord(symbol.source) ? symbol.source : artifactSource;
+      const profile = input.profile ?? profileFromArtifact(artifact);
+
+      const summary = stringValue(symbol.summary);
+      const sourceRange = isRecord(symbolSource.range) ? normalizeProjectRange(symbolSource.range) : undefined;
+      const sourceLanguage = stringValue(symbolSource.language);
+      const sourceRangeSource = stringValue(symbolSource.rangeSource);
+      const sourceConfidence = stringValue(symbolSource.confidence);
+      const artifactId = stringValue(artifact.id);
+      const contract = stringValue(artifact.contract);
+      const contractVersion = stringValue(artifact.contractVersion);
+
+      return {
+        id: createProjectEntryId(input.kind ?? "extraction", stringValue(symbol.id) ?? name, index),
+        name,
+        kind,
+        view: input.domain ?? inferProjectView(kind, input.kind),
+        ...(summary ? { summary } : {}),
+        ...(profile ? { profile } : {}),
+        input: {
+          kind: input.kind ?? "extraction",
+          path: input.path ?? "",
+          ...(artifactId ? { artifactId } : {}),
+          ...(contract ? { contract } : {}),
+          ...(contractVersion ? { contractVersion } : {})
+        },
+        source: {
+          path: stringValue(symbolSource.path) ?? stringValue(artifactSource.path) ?? input.path ?? "",
+          ...(sourceLanguage ? { language: sourceLanguage } : {}),
+          ...(sourceRange ? { range: sourceRange } : {}),
+          ...(sourceRangeSource ? { rangeSource: sourceRangeSource } : {}),
+          ...(sourceConfidence ? { confidence: sourceConfidence } : {})
+        }
+      };
+    });
+}
+
+function docSourceMapToRef(manifest: unknown, input: ProjectManifestInput): RenderProjectDocSourceMapRef {
+  const record = isRecord(manifest) ? manifest : {};
+  const contractVersion = stringValue(record.contractVersion);
+  const entryArtifact = Array.isArray(record.artifacts) && isRecord(record.artifacts[0])
+    ? stringValue(record.artifacts[0].path)
+    : undefined;
+
+  return {
+    path: input.path ?? "",
+    ...(contractVersion ? { contractVersion } : {}),
+    ...(entryArtifact ? { entryArtifact } : {}),
+    status: "available"
+  };
+}
+
+function profileFromArtifact(artifact: Record<string, unknown>): RenderProjectProfileRef | undefined {
+  const profile = isRecord(artifact.profile) ? artifact.profile : undefined;
+  const profileId = stringValue(profile?.profileId) ?? stringValue(profile?.name);
+
+  if (!profileId) {
+    return undefined;
+  }
+
+  const profileVersion = stringValue(profile?.profileVersion) ?? stringValue(profile?.version);
+
+  return {
+    profileId,
+    ...(profileVersion ? { profileVersion } : {})
+  };
+}
+
+function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderProjectEntry["source"] } {
+  const definedIn = symbol.source?.definedIn;
+
+  if (!definedIn?.relativePath) {
+    return {};
+  }
+
+  const source: NonNullable<RenderProjectEntry["source"]> = {
+    path: definedIn.relativePath
+  };
+
+  if (definedIn.position) {
+    source.range = {
+      start: {
+        line: definedIn.position.line,
+        ...(definedIn.position.column ? { column: definedIn.position.column } : {})
+      }
+    };
+  }
+
+  return { source };
+}
+
+function validateProjectManifest(value: unknown, manifestPath: string): HiaDiagnostic[] {
+  const diagnostics: HiaDiagnostic[] = [];
+
+  if (!isRecord(value)) {
+    return [
+      createCliDiagnostic("HIA_CLI_PROJECT_MANIFEST_INVALID", "Project docs manifest must be a JSON object.", "error", manifestPath)
+    ];
+  }
+
+  if (value.schemaVersion !== "0.1.0-draft") {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_PROJECT_MANIFEST_INVALID",
+      "Project docs manifest schemaVersion must be 0.1.0-draft.",
+      "error",
+      `${manifestPath}.schemaVersion`
+    ));
+  }
+
+  if (!isRecord(value.project) || typeof value.project.name !== "string" || value.project.name.length === 0) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_PROJECT_MANIFEST_INVALID",
+      "Project docs manifest project.name must be a non-empty string.",
+      "error",
+      `${manifestPath}.project.name`
+    ));
+  }
+
+  if (!Array.isArray(value.inputs) || value.inputs.length === 0) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_PROJECT_MANIFEST_INVALID",
+      "Project docs manifest inputs must be a non-empty array.",
+      "error",
+      `${manifestPath}.inputs`
+    ));
+  }
+
+  validateManifestPathEntries(value.profiles, "profiles", manifestPath, diagnostics);
+  validateManifestPathEntries(value.inputs, "inputs", manifestPath, diagnostics);
+
+  return diagnostics;
+}
+
+function validateManifestPathEntries(value: unknown, field: string, manifestPath: string, diagnostics: HiaDiagnostic[]): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_PROJECT_MANIFEST_INVALID",
+      `Project docs manifest ${field} must be an array.`,
+      "error",
+      `${manifestPath}.${field}`
+    ));
+    return;
+  }
+
+  value.forEach((item, index) => {
+    if (!isRecord(item)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PROJECT_MANIFEST_INVALID",
+        `Project docs manifest ${field}.${index} must be an object.`,
+        "error",
+        `${manifestPath}.${field}.${index}`
+      ));
+      return;
+    }
+
+    if (field === "inputs" && (typeof item.kind !== "string" || item.kind.length === 0)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PROJECT_MANIFEST_INVALID",
+        `Project docs manifest ${field}.${index}.kind must be a non-empty string.`,
+        "error",
+        `${manifestPath}.${field}.${index}.kind`
+      ));
+    }
+
+    if (typeof item.path !== "string" || item.path.length === 0 || isUnsafeInputRelativePath(item.path)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PROJECT_MANIFEST_INVALID",
+        `Project docs manifest ${field}.${index}.path must be a safe relative path.`,
+        "error",
+        `${manifestPath}.${field}.${index}.path`
+      ));
+    }
+  });
+}
+
+function inferProjectView(kind: string, inputKind?: string): RenderProjectView {
+  if (inputKind === "jsdoc-integration" || kind.startsWith("js-") || ["module", "class", "function", "member", "constant", "typedef"].includes(kind)) {
+    return "js";
+  }
+
+  if (inputKind === "cssdoc-extraction" || kind.startsWith("css-") || kind === "design-token") {
+    return "css";
+  }
+
+  if (inputKind === "htmdoc-extraction" || kind.startsWith("html-")) {
+    return "html";
+  }
+
+  return "other";
+}
+
+function createProjectEntryId(inputKind: string, rawId: string, index: number): string {
+  return `${inputKind}:${slug(rawId || `entry-${index + 1}`)}`;
+}
+
+function normalizeProjectRange(value: Record<string, unknown>): NonNullable<RenderProjectEntry["source"]>["range"] | undefined {
+  const start = isRecord(value.start) ? value.start : undefined;
+  const end = isRecord(value.end) ? value.end : undefined;
+  const startLine = numberValue(start?.line);
+  const startColumn = numberValue(start?.column);
+  const endLine = numberValue(end?.line);
+  const endColumn = numberValue(end?.column);
+
+  if (!startLine) {
+    return undefined;
+  }
+
+  return {
+    start: {
+      line: startLine,
+      ...(startColumn ? { column: startColumn } : {})
+    },
+    ...(endLine
+      ? {
+          end: {
+            line: endLine,
+            ...(endColumn ? { column: endColumn } : {})
+          }
+        }
+      : {})
+  };
+}
+
+function dedupeProfileRefs(profileRefs: RenderProjectProfileRef[]): RenderProjectProfileRef[] {
+  const result = new Map<string, RenderProjectProfileRef>();
+
+  for (const profileRef of profileRefs) {
+    result.set(profileRef.profileId, profileRef);
+  }
+
+  return [...result.values()].sort((left, right) => left.profileId.localeCompare(right.profileId));
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function slug(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-|-$/g, "") || "unnamed";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function reportDiagnostics(diagnostics: HiaDiagnostic[], io: CliIo): void {
   for (const diagnostic of diagnostics) {
     const target = diagnostic.targetPath || diagnostic.path || "";
@@ -279,7 +915,7 @@ function collectBuildDiagnostics(document: HiaDocument, locale: string | undefin
   return diagnostics;
 }
 
-function validateBuildOptions(manifestPath: string, inputPath?: string, jsdocIntegrationPath?: string): HiaDiagnostic[] {
+function validateBuildOptions(manifestPath: string, inputPath?: string, jsdocIntegrationPath?: string, projectManifestPath?: string): HiaDiagnostic[] {
   const diagnostics: HiaDiagnostic[] = [];
 
   if (inputPath && jsdocIntegrationPath) {
@@ -291,6 +927,20 @@ function validateBuildOptions(manifestPath: string, inputPath?: string, jsdocInt
       {
         inputPath,
         jsdocIntegrationPath
+      }
+    ));
+  }
+
+  if (projectManifestPath && (inputPath || jsdocIntegrationPath)) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_INPUT_CONFLICT",
+      "--project-manifest cannot be used with --input or --jsdoc-integration.",
+      "error",
+      "docs.projectManifest",
+      {
+        projectManifestPath,
+        inputPath: inputPath ?? "",
+        jsdocIntegrationPath: jsdocIntegrationPath ?? ""
       }
     ));
   }
@@ -380,6 +1030,18 @@ function normalizeOutputRelativePath(value: string): string {
 
 function isUnsafeOutputRelativePath(value: string): boolean {
   const normalized = normalizeOutputRelativePath(value);
+
+  return !normalized
+    || normalized === "."
+    || path.isAbsolute(normalized)
+    || normalized === ".."
+    || normalized.startsWith("../")
+    || normalized.includes("/../")
+    || normalized.endsWith("/..");
+}
+
+function isUnsafeInputRelativePath(value: string): boolean {
+  const normalized = value.replaceAll("\\", "/");
 
   return !normalized
     || normalized === "."

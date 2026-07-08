@@ -5,13 +5,19 @@ Command line entry for the HIA documentation system.
 Current scope:
 
 - `hia --help`
-- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
+- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 
-The build command reads config through `@hia-doc/config`, reads either a HIA document JSON fixture or a JSDoc HIA Integration JSON file, validates the converted core document through `@hia-doc/core`, reports diagnostics, renders it through `@hia-doc/renderer-html`, writes HTML/theme assets, and emits an output manifest. The default manifest path is `hia-manifest.json`.
+The build command reads config through `@hia-doc/config`, then renders one of three input modes:
+
+- a normalized HIA document JSON file
+- a JSDoc HIA Integration JSON file produced by `@mandolin/jsdoc-plugin-hia-sys`
+- a project docs manifest that aggregates JS, CSS, HTML and doc-source-map artifacts into one project page
+
+Single-document modes validate the converted core document through `@hia-doc/core`. Project mode keeps each source artifact explicit in the output manifest and renders a unified page with all/JS/CSS/HTML views. All modes report diagnostics, render through `@hia-doc/renderer-html`, write HTML/theme assets, and emit an output manifest. The default manifest path is `hia-manifest.json`.
 
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
-`--input` and `--jsdoc-integration` are mutually exclusive. Use `--input` for already-normalized core documents, and `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`.
+`--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest.
 
 In the local workspace, run it through the root script after building:
 
@@ -22,6 +28,7 @@ pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-en --locale en
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-custom --manifest manifest.json
 pnpm run hia -- docs build --jsdoc-integration fixtures/jsdoc-integration.real-basic.json --out dist/jsdoc-docs --locale zh-CN
+pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project.json --out dist/project-docs
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 

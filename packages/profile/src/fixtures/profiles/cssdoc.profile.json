@@ -1,0 +1,247 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "cssdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "CSSDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [
+    {
+      "name": "hia-cssdoc-extraction",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    }
+  ],
+  "targets": ["css-source", "cssdoc-extraction", "hia-core-document"],
+  "tags": [
+    {
+      "name": "cssdoc",
+      "status": "stable",
+      "scope": ["directive", "file", "region"],
+      "targets": ["css-source", "comment-block"],
+      "repeatable": true,
+      "valueGrammar": "version | ignore-start | ignore-end | region-start name | region-end",
+      "mapsTo": { "directive": "cssdoc-control" }
+    },
+    {
+      "name": "component",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-rule", "css-component-style"],
+      "repeatable": false,
+      "valueGrammar": "identifier [summary]",
+      "mapsTo": { "symbolKind": "css-component-style" }
+    },
+    {
+      "name": "selector",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-rule", "css-component-style"],
+      "repeatable": true,
+      "valueGrammar": "selector [description]",
+      "mapsTo": { "symbolKind": "css-selector" }
+    },
+    {
+      "name": "modifier",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-component-style", "css-selector"],
+      "repeatable": true,
+      "valueGrammar": "selector [description]",
+      "mapsTo": { "symbolKind": "css-modifier" }
+    },
+    {
+      "name": "cssprop",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-declaration", "css-component-style"],
+      "repeatable": true,
+      "valueGrammar": "custom-property-name [description]",
+      "mapsTo": { "symbolKind": "css-custom-property" }
+    },
+    {
+      "name": "custom-property",
+      "status": "alias",
+      "aliasFor": "cssprop",
+      "scope": ["block"],
+      "targets": ["css-declaration", "css-component-style"],
+      "repeatable": true,
+      "valueGrammar": "custom-property-name [description]"
+    },
+    {
+      "name": "token",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-declaration", "design-token-artifact", "css-component-style"],
+      "repeatable": true,
+      "valueGrammar": "token-name [description]",
+      "mapsTo": { "symbolKind": "design-token" }
+    },
+    {
+      "name": "layer",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-layer", "css-at-rule"],
+      "repeatable": true,
+      "valueGrammar": "layer-name [description]",
+      "mapsTo": { "symbolKind": "css-layer" }
+    },
+    {
+      "name": "media",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-media-query", "css-at-rule"],
+      "repeatable": true,
+      "valueGrammar": "media-query [description]",
+      "mapsTo": { "symbolKind": "css-media-query" }
+    },
+    {
+      "name": "container",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-container-query", "css-at-rule"],
+      "repeatable": true,
+      "valueGrammar": "container-query [description]",
+      "mapsTo": { "symbolKind": "css-container-query" }
+    },
+    {
+      "name": "keyframes",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-keyframes", "css-at-rule"],
+      "repeatable": true,
+      "valueGrammar": "animation-name [description]",
+      "mapsTo": { "symbolKind": "css-keyframes" }
+    },
+    {
+      "name": "description",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-symbol", "css-rule"],
+      "repeatable": false,
+      "valueGrammar": "markdown-inline",
+      "mapsTo": { "field": "summary" }
+    },
+    {
+      "name": "example",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["css-symbol"],
+      "repeatable": true,
+      "valueGrammar": "example-body",
+      "mapsTo": { "field": "examples" }
+    },
+    {
+      "name": "lang",
+      "status": "stable",
+      "scope": ["inline", "block"],
+      "targets": ["text"],
+      "repeatable": true,
+      "valueGrammar": "locale text",
+      "mapsTo": { "field": "localizedText" }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "cssdoc/no-unknown-tag",
+      "category": "semantic",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["annotation"],
+      "messages": { "default": "Unknown CSSDoc annotation tag." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "cssdoc/no-orphan-subtag",
+      "category": "semantic",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["tag:selector", "tag:modifier", "tag:cssprop", "tag:token"],
+      "messages": { "default": "CSSDoc subtag should be attached to a component or CSS rule context." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "cssdoc/source-map-privacy",
+      "category": "privacy",
+      "defaultSeverity": "error",
+      "optionsSchema": {
+        "type": "object",
+        "properties": {
+          "sourcesContentPolicy": { "enum": ["none", "reference", "embed", "redacted"] }
+        },
+        "additionalProperties": false
+      },
+      "appliesTo": ["cssdoc-extraction", "doc-source-map"],
+      "messages": { "default": "CSSDoc source content embedding must be explicit." },
+      "fixable": false,
+      "hasSuggestions": true
+    }
+  ],
+  "mappings": [
+    {
+      "from": "tag:component",
+      "to": "symbolKind:css-component-style",
+      "conditions": ["css-rule-or-selector-context"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": []
+    },
+    {
+      "from": "tag:selector",
+      "to": "symbolKind:css-selector",
+      "conditions": ["css-rule-or-component-context"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-selector-metadata",
+      "diagnostics": ["CSSDOC_SELECTOR_WITHOUT_COMPONENT"]
+    },
+    {
+      "from": "tag:token",
+      "to": "symbolKind:design-token",
+      "conditions": ["token-name-present"],
+      "confidence": "medium",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-token-metadata",
+      "diagnostics": []
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "CSSDOC_UNKNOWN_TAG",
+      "severity": "warning",
+      "messageKey": "cssdoc.unknownTag",
+      "defaultMessage": "Unknown CSSDoc annotation tag.",
+      "target": "annotation",
+      "suggestions": ["Use a stable CSSDoc tag or declare an extension profile."]
+    },
+    {
+      "code": "CSSDOC_SELECTOR_WITHOUT_COMPONENT",
+      "severity": "warning",
+      "messageKey": "cssdoc.selectorWithoutComponent",
+      "defaultMessage": "@selector should be attached to a component or CSS rule context.",
+      "target": "annotation",
+      "suggestions": ["Add @component or move the selector tag to a CSS rule doc block."]
+    },
+    {
+      "code": "CSSDOC_SOURCE_CONTENT_POLICY_REQUIRED",
+      "severity": "error",
+      "messageKey": "cssdoc.sourceContentPolicyRequired",
+      "defaultMessage": "Embedding CSS source content requires an explicit policy.",
+      "target": "source"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true },
+    "hover": { "tags": true, "symbolKinds": true },
+    "diagnostics": [
+      "CSSDOC_UNKNOWN_TAG",
+      "CSSDOC_SELECTOR_WITHOUT_COMPONENT",
+      "CSSDOC_SOURCE_CONTENT_POLICY_REQUIRED"
+    ],
+    "folding": { "commentBlocks": true },
+    "renderer": { "views": ["css", "all"] }
+  }
+}

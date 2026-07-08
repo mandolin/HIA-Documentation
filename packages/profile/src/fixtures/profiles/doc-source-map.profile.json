@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "doc-source-map",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "Doc Source Map",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [
+    {
+      "name": "doc-source-map",
+      "version": "0.1.0-draft",
+      "role": "consumes"
+    }
+  ],
+  "targets": ["doc-source-map-manifest", "ordinary-source-map", "renderer-output", "lsp-location"],
+  "tags": [],
+  "rules": [
+    {
+      "ruleId": "doc-source-map/no-unsafe-path",
+      "category": "privacy",
+      "defaultSeverity": "error",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["source", "artifact", "sourceMap"],
+      "messages": { "default": "Doc source map path must be workspace-relative or virtual." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "doc-source-map/source-content-policy",
+      "category": "privacy",
+      "defaultSeverity": "error",
+      "optionsSchema": {
+        "type": "object",
+        "properties": {
+          "defaultPolicy": { "enum": ["none", "reference", "embed", "redacted"] }
+        },
+        "additionalProperties": false
+      },
+      "appliesTo": ["manifest", "source", "ordinary-source-map"],
+      "messages": { "default": "sourcesContentPolicy defaults to none and embed must be explicit." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "doc-source-map/unresolved-entry-confidence",
+      "category": "semantic",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["entry"],
+      "messages": { "default": "Unresolved doc source map entry must use confidence none." },
+      "fixable": false,
+      "hasSuggestions": true
+    }
+  ],
+  "mappings": [
+    {
+      "from": "entry:annotation",
+      "to": "annotation-source-reference",
+      "conditions": ["sourceRefs-present"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": ["DOC_SOURCE_MAP_ENTRY_UNRESOLVED"]
+    },
+    {
+      "from": "entry:symbol",
+      "to": "symbol-source-reference",
+      "conditions": ["symbolId-present"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-range",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": ["DOC_SOURCE_MAP_ENTRY_UNRESOLVED"]
+    },
+    {
+      "from": "ordinary-source-map",
+      "to": "position-linkage",
+      "conditions": ["source-map-v3-compatible"],
+      "confidence": "medium",
+      "sourcePolicy": "do-not-inline-mappings",
+      "metadataPolicy": "preserve-reference-only",
+      "diagnostics": ["DOC_SOURCE_MAP_SOURCE_MAP_MISSING"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "DOC_SOURCE_MAP_MANIFEST_INVALID",
+      "severity": "error",
+      "messageKey": "docSourceMap.manifestInvalid",
+      "defaultMessage": "Doc source map manifest is invalid.",
+      "target": "manifest"
+    },
+    {
+      "code": "DOC_SOURCE_MAP_UNSAFE_PATH",
+      "severity": "error",
+      "messageKey": "docSourceMap.unsafePath",
+      "defaultMessage": "Doc source map contains an unsafe path.",
+      "target": "source"
+    },
+    {
+      "code": "DOC_SOURCE_MAP_SOURCE_MAP_MISSING",
+      "severity": "warning",
+      "messageKey": "docSourceMap.sourceMapMissing",
+      "defaultMessage": "Referenced ordinary source map is missing.",
+      "target": "sourceMap"
+    },
+    {
+      "code": "DOC_SOURCE_MAP_ENTRY_UNRESOLVED",
+      "severity": "warning",
+      "messageKey": "docSourceMap.entryUnresolved",
+      "defaultMessage": "Doc source map entry could not be resolved.",
+      "target": "entry"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": false },
+    "hover": { "entries": true },
+    "diagnostics": [
+      "DOC_SOURCE_MAP_MANIFEST_INVALID",
+      "DOC_SOURCE_MAP_UNSAFE_PATH",
+      "DOC_SOURCE_MAP_SOURCE_MAP_MISSING",
+      "DOC_SOURCE_MAP_ENTRY_UNRESOLVED"
+    ],
+    "sourceMap": { "index": true, "locations": true },
+    "renderer": { "views": ["source-map-status", "all"] }
+  }
+}

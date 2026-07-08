@@ -20,6 +20,7 @@ describe("@hia-doc/config", () => {
         schemaVersion: HIA_CONFIG_SCHEMA_VERSION,
         docs: {
           input: "fixtures/basic.hia.json",
+          projectManifest: "fixtures/project.hia-project.json",
           output: "dist/docs",
           locale: "en",
           renderer: {
@@ -43,6 +44,7 @@ describe("@hia-doc/config", () => {
       expect(result.path).toBe(path.join(root, "hia.config.json"));
       expect(result.baseDir).toBe(root);
       expect(result.config.docs?.input).toBe("fixtures/basic.hia.json");
+      expect(result.config.docs?.projectManifest).toBe("fixtures/project.hia-project.json");
       expect(result.diagnostics).toEqual([]);
       expect(HIA_CONFIG_SOURCE_MODES).toEqual(["none", "file", "external"]);
       expect(HIA_CONFIG_THEME_NAMES).toEqual(["default"]);

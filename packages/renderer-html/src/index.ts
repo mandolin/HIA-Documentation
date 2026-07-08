@@ -29,6 +29,68 @@ export interface RenderHtmlOptions {
   includeThemeAssets?: boolean;
 }
 
+export type RenderProjectView = "all" | "js" | "css" | "html" | "other";
+
+export interface RenderProjectHtmlInput {
+  project: RenderProjectInfo;
+  entries: RenderProjectEntry[];
+  profiles?: RenderProjectProfileRef[];
+  docSourceMaps?: RenderProjectDocSourceMapRef[];
+  diagnostics?: HiaDiagnostic[];
+}
+
+export interface RenderProjectInfo {
+  id?: string;
+  name: string;
+  title?: string;
+}
+
+export interface RenderProjectProfileRef {
+  profileId: string;
+  profileVersion?: string;
+  layer?: string;
+  path?: string;
+}
+
+export interface RenderProjectDocSourceMapRef {
+  path: string;
+  contractVersion?: string;
+  entryArtifact?: string;
+  status?: string;
+}
+
+export interface RenderProjectEntry {
+  id: string;
+  name: string;
+  kind: string;
+  view: RenderProjectView;
+  summary?: string;
+  signature?: string;
+  profile?: RenderProjectProfileRef;
+  input?: RenderProjectInputRef;
+  source?: RenderProjectSourceRef;
+  diagnostics?: HiaDiagnostic[];
+}
+
+export interface RenderProjectInputRef {
+  kind: string;
+  path: string;
+  artifactId?: string;
+  contract?: string;
+  contractVersion?: string;
+}
+
+export interface RenderProjectSourceRef {
+  path: string;
+  language?: string;
+  range?: {
+    start: { line: number; column?: number };
+    end?: { line: number; column?: number };
+  };
+  rangeSource?: string;
+  confidence?: string;
+}
+
 export interface RenderHtmlResult {
   files: RenderedHtmlFile[];
   diagnostics: HiaDiagnostic[];
@@ -44,6 +106,14 @@ export interface RenderHtmlManifest {
   initialLocale: string;
   locales: string[];
   files: RenderHtmlManifestFile[];
+  project?: {
+    id: string;
+    name: string;
+    views: RenderProjectView[];
+    entryCounts: Record<string, number>;
+    profiles?: RenderProjectProfileRef[];
+    docSourceMaps?: RenderProjectDocSourceMapRef[];
+  };
 }
 
 export interface RenderHtmlManifestFile {
@@ -82,6 +152,36 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
   };
 }
 
+export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
+  const pageTitle = options.title ?? projectInput.project.title ?? projectInput.project.name;
+  const includeThemeAssets = options.includeThemeAssets ?? true;
+  const files: RenderedHtmlFile[] = [
+    {
+      path: "index.html",
+      contents: renderProjectIndexHtml(pageTitle, projectInput),
+      contentType: "text/html; charset=utf-8",
+      role: "entry"
+    }
+  ];
+
+  if (includeThemeAssets) {
+    for (const asset of getDefaultThemeAssets()) {
+      files.push({
+        path: asset.path,
+        contents: asset.contents,
+        contentType: asset.contentType,
+        role: "asset"
+      });
+    }
+  }
+
+  return {
+    files,
+    diagnostics: projectInput.diagnostics ?? [],
+    manifest: createProjectManifest(projectInput, files, pageTitle)
+  };
+}
+
 function createManifest(document: HiaDocument, files: RenderedHtmlFile[], options: RenderHtmlOptions): RenderHtmlManifest {
   return {
     schemaVersion: HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
@@ -96,6 +196,34 @@ function createManifest(document: HiaDocument, files: RenderedHtmlFile[], option
       role: file.role,
       contentType: file.contentType
     }))
+  };
+}
+
+function createProjectManifest(projectInput: RenderProjectHtmlInput, files: RenderedHtmlFile[], pageTitle: string): RenderHtmlManifest {
+  const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
+  const views = collectProjectViews(projectInput.entries);
+
+  return {
+    schemaVersion: HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
+    renderer: "@hia-doc/renderer-html",
+    documentId: projectId,
+    title: pageTitle,
+    entrypoint: "index.html",
+    initialLocale: "und",
+    locales: ["und"],
+    files: files.map((file) => ({
+      path: file.path,
+      role: file.role,
+      contentType: file.contentType
+    })),
+    project: {
+      id: projectId,
+      name: projectInput.project.name,
+      views,
+      entryCounts: countEntriesByView(projectInput.entries),
+      ...(projectInput.profiles && projectInput.profiles.length > 0 ? { profiles: projectInput.profiles } : {}),
+      ...(projectInput.docSourceMaps && projectInput.docSourceMaps.length > 0 ? { docSourceMaps: projectInput.docSourceMaps } : {})
+    }
   };
 }
 
@@ -131,6 +259,209 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
     "</body>",
     "</html>"
   ].join("");
+}
+
+function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHtmlInput): string {
+  const projectName = projectInput.project.title ?? projectInput.project.name;
+  const views = collectProjectViews(projectInput.entries);
+  const navigation = projectInput.entries
+    .map((entry) => `<li data-hia-project-nav="${escapeHtml(entry.view)}"><a href="#${escapeHtml(entry.id)}">${escapeHtml(entry.name)}</a></li>`)
+    .join("");
+  const entries = projectInput.entries.map((entry) => renderProjectEntry(entry)).join("");
+  const profileSummary = renderProjectProfiles(projectInput.profiles ?? []);
+  const docSourceMapSummary = renderProjectDocSourceMaps(projectInput.docSourceMaps ?? []);
+  const diagnostics = renderProjectDiagnostics(projectInput.diagnostics ?? []);
+
+  return [
+    "<!doctype html>",
+    "<html lang=\"und\">",
+    "<head>",
+    "<meta charset=\"utf-8\">",
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+    `<title>${escapeHtml(pageTitle)}</title>`,
+    `<link rel="stylesheet" href="${escapeHtml(DEFAULT_THEME_CSS_PATH)}">`,
+    "</head>",
+    "<body>",
+    "<div class=\"hia-shell hia-project-shell\">",
+    "<aside class=\"hia-sidebar\">",
+    `<h1>${escapeHtml(projectName)}</h1>`,
+    renderProjectViewControl(views),
+    navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
+    profileSummary,
+    docSourceMapSummary,
+    diagnostics,
+    "</aside>",
+    "<main class=\"hia-main hia-project-main\">",
+    entries || "<p>No project documentation entries.</p>",
+    "</main>",
+    "</div>",
+    `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
+    renderProjectViewScript(),
+    "</body>",
+    "</html>"
+  ].join("");
+}
+
+function renderProjectViewControl(views: RenderProjectView[]): string {
+  const buttons = views
+    .map((view) => `<button type="button" class="hia-project-view-button" data-hia-project-view="${escapeHtml(view)}">${escapeHtml(formatProjectViewLabel(view))}</button>`)
+    .join("");
+
+  return `<div class="hia-project-views">${buttons}</div>`;
+}
+
+function renderProjectEntry(entry: RenderProjectEntry): string {
+  const signature = entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "";
+  const summary = entry.summary ? `<p>${escapeHtml(entry.summary)}</p>` : "";
+  const input = entry.input ? renderProjectEntryInput(entry.input) : "";
+  const profile = entry.profile ? renderProjectEntryProfile(entry.profile) : "";
+  const source = entry.source ? renderProjectEntrySource(entry.source) : "";
+  const diagnostics = renderProjectDiagnostics(entry.diagnostics ?? []);
+
+  return [
+    `<article class="hia-symbol hia-project-entry" id="${escapeHtml(entry.id)}" data-hia-project-entry="${escapeHtml(entry.view)}">`,
+    `<h2>${escapeHtml(entry.name)}</h2>`,
+    `<span class="hia-kind">${escapeHtml(entry.kind)}</span>`,
+    `<span class="hia-kind">${escapeHtml(formatProjectViewLabel(entry.view))}</span>`,
+    signature,
+    summary,
+    input,
+    profile,
+    source,
+    diagnostics,
+    "</article>"
+  ].join("");
+}
+
+function renderProjectEntryInput(input: RenderProjectInputRef): string {
+  const details = [
+    `<dt>Input</dt><dd>${escapeHtml(input.kind)}</dd>`,
+    `<dt>Path</dt><dd>${escapeHtml(input.path)}</dd>`,
+    input.contract ? `<dt>Contract</dt><dd>${escapeHtml(input.contract)}</dd>` : "",
+    input.contractVersion ? `<dt>Version</dt><dd>${escapeHtml(input.contractVersion)}</dd>` : "",
+    input.artifactId ? `<dt>Artifact</dt><dd>${escapeHtml(input.artifactId)}</dd>` : ""
+  ].join("");
+
+  return `<dl class="hia-project-meta">${details}</dl>`;
+}
+
+function renderProjectEntryProfile(profile: RenderProjectProfileRef): string {
+  const version = profile.profileVersion ? `@${profile.profileVersion}` : "";
+  return `<p class="hia-project-profile">Profile ${escapeHtml(profile.profileId)}${escapeHtml(version)}</p>`;
+}
+
+function renderProjectEntrySource(source: RenderProjectSourceRef): string {
+  const range = source.range ? `:${source.range.start.line}${source.range.end ? `-${source.range.end.line}` : ""}` : "";
+  const sourceDetails = [
+    `<dt>Source</dt><dd>${escapeHtml(source.path)}${escapeHtml(range)}</dd>`,
+    source.language ? `<dt>Language</dt><dd>${escapeHtml(source.language)}</dd>` : "",
+    source.rangeSource ? `<dt>Range Source</dt><dd>${escapeHtml(source.rangeSource)}</dd>` : "",
+    source.confidence ? `<dt>Confidence</dt><dd>${escapeHtml(source.confidence)}</dd>` : ""
+  ].join("");
+
+  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl></section>`;
+}
+
+function renderProjectProfiles(profiles: RenderProjectProfileRef[]): string {
+  if (profiles.length === 0) {
+    return "";
+  }
+
+  const items = profiles
+    .map((profile) => {
+      const version = profile.profileVersion ? `@${profile.profileVersion}` : "";
+      return `<li>${escapeHtml(profile.profileId)}${escapeHtml(version)}</li>`;
+    })
+    .join("");
+
+  return `<section class="hia-project-summary"><h2>Profiles</h2><ul>${items}</ul></section>`;
+}
+
+function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[]): string {
+  if (docSourceMaps.length === 0) {
+    return "";
+  }
+
+  const items = docSourceMaps
+    .map((item) => `<li>${escapeHtml(item.path)}${item.status ? ` (${escapeHtml(item.status)})` : ""}</li>`)
+    .join("");
+
+  return `<section class="hia-project-summary"><h2>Doc Source Maps</h2><ul>${items}</ul></section>`;
+}
+
+function renderProjectDiagnostics(diagnostics: HiaDiagnostic[]): string {
+  if (diagnostics.length === 0) {
+    return "";
+  }
+
+  const items = diagnostics
+    .map((diagnostic) => `<li>${escapeHtml(diagnostic.severity)}:${escapeHtml(diagnostic.code)} - ${escapeHtml(diagnostic.message)}</li>`)
+    .join("");
+
+  return `<section class="hia-project-diagnostics"><h3>Diagnostics</h3><ul>${items}</ul></section>`;
+}
+
+function renderProjectViewScript(): string {
+  return [
+    "<script>",
+    "(() => {",
+    "  const buttons = Array.from(document.querySelectorAll('[data-hia-project-view]'));",
+    "  const entries = Array.from(document.querySelectorAll('[data-hia-project-entry]'));",
+    "  const navItems = Array.from(document.querySelectorAll('[data-hia-project-nav]'));",
+    "  function activate(view) {",
+    "    for (const entry of entries) entry.hidden = view !== 'all' && entry.dataset.hiaProjectEntry !== view;",
+    "    for (const item of navItems) item.hidden = view !== 'all' && item.dataset.hiaProjectNav !== view;",
+    "    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === view));",
+    "  }",
+    "  for (const button of buttons) button.addEventListener('click', () => activate(button.dataset.hiaProjectView || 'all'));",
+    "  activate('all');",
+    "})();",
+    "</script>"
+  ].join("");
+}
+
+function collectProjectViews(entries: RenderProjectEntry[]): RenderProjectView[] {
+  const views: RenderProjectView[] = ["all"];
+
+  for (const view of ["js", "css", "html", "other"] as const) {
+    if (entries.some((entry) => entry.view === view)) {
+      views.push(view);
+    }
+  }
+
+  return views;
+}
+
+function countEntriesByView(entries: RenderProjectEntry[]): Record<string, number> {
+  const counts: Record<string, number> = {
+    all: entries.length
+  };
+
+  for (const entry of entries) {
+    counts[entry.view] = (counts[entry.view] ?? 0) + 1;
+  }
+
+  return counts;
+}
+
+function formatProjectViewLabel(view: RenderProjectView): string {
+  if (view === "js") {
+    return "JS";
+  }
+
+  if (view === "css") {
+    return "CSS";
+  }
+
+  if (view === "html") {
+    return "HTML";
+  }
+
+  if (view === "all") {
+    return "All";
+  }
+
+  return "Other";
 }
 
 function renderLocaleControl(locales: string[], selectedLocale: string): string {

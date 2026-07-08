@@ -70,6 +70,58 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("builds a unified project page from a project manifest", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-project-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-mixed.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        project?: {
+          views: string[];
+          entryCounts: Record<string, number>;
+        };
+        build?: {
+          mode: string;
+          inputs: Array<{ kind: string; path: string }>;
+        };
+        docSourceMaps?: Array<{ path: string }>;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("Generated 4 file");
+      expect(html).toContain("Mixed Project Documentation");
+      expect(html).toContain("data-hia-project-view=\"js\"");
+      expect(html).toContain("data-hia-project-view=\"css\"");
+      expect(html).toContain("data-hia-project-view=\"html\"");
+      expect(html).toContain("greet");
+      expect(html).toContain("css-component-style");
+      expect(html).toContain("html-component");
+      expect(html).toContain("project-mixed-alert.docmap.json");
+      expect(manifest.project?.views).toEqual(["all", "js", "css", "html"]);
+      expect(manifest.project?.entryCounts).toMatchObject({ js: 2, css: 2, html: 2 });
+      expect(manifest.build?.mode).toBe("project");
+      expect(manifest.build?.inputs.map((input) => input.kind)).toEqual([
+        "jsdoc-integration",
+        "htmdoc-extraction",
+        "cssdoc-extraction",
+        "doc-source-map"
+      ]);
+      expect(manifest.docSourceMaps?.[0]?.path).toBe("project-mixed-alert.docmap.json");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("reports machine-readable CLI diagnostics for missing input files", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-missing-input-"));
     const messages: string[] = [];

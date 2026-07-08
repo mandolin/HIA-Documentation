@@ -44,12 +44,25 @@ CLI options override config values.
 }
 ```
 
+Project aggregation mode uses `docs.projectManifest` instead of `docs.input`:
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "docs": {
+    "projectManifest": "fixtures/project-mixed.hia-project.json",
+    "output": "dist/project-docs"
+  }
+}
+```
+
 ## Fields
 
 | Field | Type | Current behavior |
 | --- | --- | --- |
 | `schemaVersion` | string | Must be `0.1.0` when present. |
 | `docs.input` | string | HIA document JSON input path. |
+| `docs.projectManifest` | string | Project docs manifest path. Mutually exclusive with `docs.input` and CLI `--input`/`--jsdoc-integration` usage. |
 | `docs.output` | string | Output directory. |
 | `docs.locale` | string | Initial rendered locale. CLI emits a warning if the document does not declare it. |
 | `docs.locales` | string[] | Reserved for shared tool checks; currently used for warning-level locale validation. |

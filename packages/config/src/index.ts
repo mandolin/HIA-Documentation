@@ -16,6 +16,7 @@ export interface HiaProjectConfig {
 
 export interface HiaDocsConfig {
   input?: string;
+  projectManifest?: string;
   output?: string;
   locale?: string;
   locales?: string[];
@@ -158,6 +159,7 @@ function validateDocsConfig(value: unknown, diagnostics: HiaDiagnostic[], target
   }
 
   validateOptionalString(value, "input", diagnostics, targetPath);
+  validateOptionalString(value, "projectManifest", diagnostics, targetPath);
   validateOptionalString(value, "output", diagnostics, targetPath);
   validateOptionalString(value, "locale", diagnostics, targetPath);
   validateOptionalString(value, "manifest", diagnostics, targetPath);

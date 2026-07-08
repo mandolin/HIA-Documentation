@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:mixed",
+    "name": "Mixed Project",
+    "title": "Mixed Project Documentation"
+  },
+  "profiles": [
+    {
+      "profileId": "jsdoc",
+      "path": "project-mixed-profiles/jsdoc.profile.json"
+    },
+    {
+      "profileId": "htmdoc",
+      "path": "project-mixed-profiles/htmdoc.profile.json"
+    },
+    {
+      "profileId": "cssdoc",
+      "path": "project-mixed-profiles/cssdoc.profile.json"
+    },
+    {
+      "profileId": "doc-source-map",
+      "path": "project-mixed-profiles/doc-source-map.profile.json"
+    }
+  ],
+  "inputs": [
+    {
+      "kind": "jsdoc-integration",
+      "path": "jsdoc-integration.basic.json",
+      "domain": "js",
+      "profile": {
+        "profileId": "jsdoc",
+        "profileVersion": "0.1.0-draft"
+      }
+    },
+    {
+      "kind": "htmdoc-extraction",
+      "path": "project-mixed-alert.htmdoc.json",
+      "domain": "html",
+      "profile": {
+        "profileId": "htmdoc",
+        "profileVersion": "0.1.0-draft"
+      }
+    },
+    {
+      "kind": "cssdoc-extraction",
+      "path": "project-mixed-alert.cssdoc.json",
+      "domain": "css",
+      "profile": {
+        "profileId": "cssdoc",
+        "profileVersion": "0.1.0-draft"
+      }
+    },
+    {
+      "kind": "doc-source-map",
+      "path": "project-mixed-alert.docmap.json",
+      "profile": {
+        "profileId": "doc-source-map",
+        "profileVersion": "0.1.0-draft"
+      }
+    }
+  ]
+}

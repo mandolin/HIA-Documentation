@@ -1,0 +1,49 @@
+{
+  "contract": "hia-htmdoc-extraction",
+  "contractVersion": "0.1.0-draft",
+  "id": "htmdoc:fixture:alert",
+  "profile": {
+    "name": "htmdoc",
+    "version": "0.1.0-draft"
+  },
+  "source": {
+    "kind": "html-source",
+    "path": "src/components/alert.html",
+    "language": "html"
+  },
+  "symbols": [
+    {
+      "id": "html:component:alert",
+      "kind": "html-component",
+      "name": "Alert",
+      "summary": "Alert component markup.",
+      "source": {
+        "path": "src/components/alert.html",
+        "language": "html",
+        "range": {
+          "start": { "line": 1, "column": 1 },
+          "end": { "line": 8, "column": 11 }
+        },
+        "rangeSource": "parser",
+        "confidence": "high"
+      }
+    },
+    {
+      "id": "html:slot:alert:default",
+      "kind": "html-slot",
+      "name": "default",
+      "summary": "Message content slot.",
+      "source": {
+        "path": "src/components/alert.html",
+        "language": "html",
+        "range": {
+          "start": { "line": 6, "column": 3 },
+          "end": { "line": 6, "column": 16 }
+        },
+        "rangeSource": "parser",
+        "confidence": "high"
+      }
+    }
+  ],
+  "diagnostics": []
+}

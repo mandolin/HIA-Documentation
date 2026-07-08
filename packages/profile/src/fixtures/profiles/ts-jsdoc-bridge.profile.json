@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "ts-jsdoc-bridge",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "TypeScript to JSDoc Bridge",
+  "layer": "bridge",
+  "extends": ["jsdoc", "doc-source-map"],
+  "contracts": [
+    {
+      "name": "jsdoc-integration",
+      "version": "0.1.0",
+      "role": "produces"
+    },
+    {
+      "name": "doc-source-map",
+      "version": "0.1.0-draft",
+      "role": "produces"
+    }
+  ],
+  "targets": ["typescript-source", "generated-javascript", "jsdoc-doclet", "jsdoc-integration", "doc-source-map-manifest"],
+  "tags": [
+    {
+      "name": "typeParam",
+      "status": "experimental",
+      "scope": ["block"],
+      "targets": ["typescript-symbol", "jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "type-parameter-name [description]",
+      "mapsTo": { "field": "typeParameters" },
+      "metadata": { "bridgeOnly": true }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "ts-jsdoc/type-only-symbol-policy",
+      "category": "bridge",
+      "defaultSeverity": "info",
+      "optionsSchema": {
+        "type": "object",
+        "properties": {
+          "typeOnlySymbolPolicy": { "enum": ["artifact-only", "metadata", "core-symbol"] }
+        },
+        "additionalProperties": false
+      },
+      "appliesTo": ["typescript-symbol"],
+      "messages": { "default": "Type-only symbols stay in TS extraction artifact or metadata in P1." },
+      "fixable": false,
+      "hasSuggestions": false
+    },
+    {
+      "ruleId": "ts-jsdoc/generated-js-linkage",
+      "category": "source-map",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["doc-source-map-entry", "ordinary-source-map"],
+      "messages": { "default": "TypeScript to JSDoc bridge should preserve generated JS linkage." },
+      "fixable": false,
+      "hasSuggestions": true
+    }
+  ],
+  "mappings": [
+    {
+      "from": "typescript-symbol",
+      "to": "jsdoc-doclet",
+      "conditions": ["runtime-symbol-or-exported-declaration"],
+      "confidence": "high",
+      "sourcePolicy": "prefer-typescript-source-range",
+      "metadataPolicy": "preserve-type-metadata",
+      "diagnostics": []
+    },
+    {
+      "from": "typescript-type-only-symbol",
+      "to": "adapter-metadata:type-only-symbol",
+      "conditions": ["not-runtime-symbol"],
+      "confidence": "medium",
+      "sourcePolicy": "preserve-typescript-source-range",
+      "metadataPolicy": "do-not-promote-to-core-kind",
+      "diagnostics": ["TS_JSDOC_TYPE_ONLY_SYMBOL_DEFERRED"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "TS_JSDOC_TYPE_ONLY_SYMBOL_DEFERRED",
+      "severity": "info",
+      "messageKey": "tsJsdoc.typeOnlySymbolDeferred",
+      "defaultMessage": "Type-only symbol is kept in TS extraction artifact or adapter metadata in P1.",
+      "target": "bridge"
+    },
+    {
+      "code": "TS_JSDOC_GENERATED_LINKAGE_MISSING",
+      "severity": "warning",
+      "messageKey": "tsJsdoc.generatedLinkageMissing",
+      "defaultMessage": "Generated JS linkage is missing for a TypeScript documentation entry.",
+      "target": "doc-source-map-entry"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true },
+    "hover": { "tags": true, "entries": true },
+    "diagnostics": ["TS_JSDOC_TYPE_ONLY_SYMBOL_DEFERRED", "TS_JSDOC_GENERATED_LINKAGE_MISSING"],
+    "sourceMap": { "index": true, "locations": true },
+    "renderer": { "views": ["js", "all"] }
+  }
+}

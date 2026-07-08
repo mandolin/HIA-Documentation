@@ -1,0 +1,259 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "jsdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "JSDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [
+    {
+      "name": "jsdoc-integration",
+      "version": "0.1.0",
+      "role": "consumes"
+    },
+    {
+      "name": "hia-core-document",
+      "version": "0.2.0",
+      "role": "produces"
+    }
+  ],
+  "targets": ["javascript-source", "jsdoc-doclet", "jsdoc-integration", "hia-core-document"],
+  "tags": [
+    {
+      "name": "module",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "module-name",
+      "mapsTo": { "symbolKind": "module" }
+    },
+    {
+      "name": "class",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "class-name",
+      "mapsTo": { "symbolKind": "class" }
+    },
+    {
+      "name": "function",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "function-name",
+      "mapsTo": { "symbolKind": "function" }
+    },
+    {
+      "name": "param",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "{type} name [description]",
+      "mapsTo": { "field": "params" }
+    },
+    {
+      "name": "returns",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "{type} [description]",
+      "mapsTo": { "field": "returns" }
+    },
+    {
+      "name": "typedef",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "{type} name",
+      "mapsTo": { "symbolKind": "typedef" }
+    },
+    {
+      "name": "property",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "{type} name [description]",
+      "mapsTo": { "field": "properties" }
+    },
+    {
+      "name": "example",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "example-body",
+      "mapsTo": { "field": "examples" }
+    },
+    {
+      "name": "deprecated",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "[message]",
+      "mapsTo": { "field": "deprecated" }
+    },
+    {
+      "name": "lang",
+      "status": "stable",
+      "scope": ["block", "inline"],
+      "targets": ["jsdoc-doclet", "text"],
+      "repeatable": true,
+      "valueGrammar": "locale text",
+      "mapsTo": { "field": "localizedText" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys" }
+    },
+    {
+      "name": "hiaLocale",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "locale",
+      "mapsTo": { "field": "resource.locale" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys", "namespace": "hia" }
+    },
+    {
+      "name": "hiaKey",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "resource-key",
+      "mapsTo": { "field": "resource.key" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys", "namespace": "hia" }
+    },
+    {
+      "name": "hiaPath",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": false,
+      "valueGrammar": "resource-path",
+      "mapsTo": { "field": "resource.path" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys", "namespace": "hia" }
+    },
+    {
+      "name": "hiaText",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet", "text"],
+      "repeatable": true,
+      "valueGrammar": "locale text",
+      "mapsTo": { "field": "localizedText.blocks" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys", "namespace": "hia" }
+    },
+    {
+      "name": "hiaBlock",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet", "text"],
+      "repeatable": true,
+      "valueGrammar": "locale fenced-block",
+      "mapsTo": { "field": "localizedText.blocks" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys", "namespace": "hia" }
+    },
+    {
+      "name": "codeblock",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "block-id [language]",
+      "mapsTo": { "field": "source.fragments" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys" }
+    },
+    {
+      "name": "codeblockend",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "block-id",
+      "mapsTo": { "field": "source.fragments" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys" }
+    },
+    {
+      "name": "coderef",
+      "status": "stable",
+      "scope": ["block"],
+      "targets": ["jsdoc-doclet"],
+      "repeatable": true,
+      "valueGrammar": "block-id",
+      "mapsTo": { "field": "source.references" },
+      "metadata": { "origin": "jsdoc-plugin-hia-sys" }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "jsdoc/hia-resource-key-valid",
+      "category": "resource",
+      "defaultSeverity": "warning",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["tag:hiaKey", "tag:hiaPath"],
+      "messages": { "default": "HIA JSDoc resource key or path is not valid." },
+      "fixable": false,
+      "hasSuggestions": true
+    },
+    {
+      "ruleId": "jsdoc/codeblock-balanced",
+      "category": "source",
+      "defaultSeverity": "error",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["tag:codeblock", "tag:codeblockend"],
+      "messages": { "default": "JSDoc code block tags must be balanced." },
+      "fixable": false,
+      "hasSuggestions": true
+    }
+  ],
+  "mappings": [
+    {
+      "from": "jsdoc-doclet",
+      "to": "hia-core-symbol",
+      "conditions": ["doclet-kind-present"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-jsdoc-source",
+      "metadataPolicy": "strip-private-paths",
+      "diagnostics": []
+    },
+    {
+      "from": "tag:coderef",
+      "to": "sourceReference",
+      "conditions": ["codeblock-id-resolved"],
+      "confidence": "high",
+      "sourcePolicy": "preserve-source-fragment",
+      "metadataPolicy": "preserve-known-fields",
+      "diagnostics": ["JSDOC_CODEBLOCK_REF_UNRESOLVED"]
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "JSDOC_HIA_RESOURCE_KEY_INVALID",
+      "severity": "warning",
+      "messageKey": "jsdoc.hiaResourceKeyInvalid",
+      "defaultMessage": "HIA JSDoc resource key or path is not valid.",
+      "target": "annotation"
+    },
+    {
+      "code": "JSDOC_CODEBLOCK_REF_UNRESOLVED",
+      "severity": "error",
+      "messageKey": "jsdoc.codeblockRefUnresolved",
+      "defaultMessage": "JSDoc code reference points to an unknown code block.",
+      "target": "source-reference"
+    }
+  ],
+  "capabilities": {
+    "completion": { "tags": true, "resources": true },
+    "hover": { "tags": true, "symbolKinds": true },
+    "diagnostics": ["JSDOC_HIA_RESOURCE_KEY_INVALID", "JSDOC_CODEBLOCK_REF_UNRESOLVED"],
+    "folding": { "commentBlocks": true },
+    "renderer": { "views": ["js", "all"] }
+  }
+}

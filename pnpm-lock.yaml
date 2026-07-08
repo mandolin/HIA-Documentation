@@ -32,6 +32,9 @@ importers:
       '@hia-doc/parser-jsdoc':
         specifier: workspace:*
         version: link:../../packages/parser-jsdoc
+      '@hia-doc/profile':
+        specifier: workspace:*
+        version: link:../../packages/profile
       '@hia-doc/renderer-html':
         specifier: workspace:*
         version: link:../../packages/renderer-html
@@ -70,6 +73,12 @@ importers:
         version: 1.0.12
 
   packages/parser-jsdoc:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/profile:
     dependencies:
       '@hia-doc/core':
         specifier: workspace:*

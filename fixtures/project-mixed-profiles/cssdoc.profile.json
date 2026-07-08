@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "cssdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "CSSDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [],
+  "targets": ["cssdoc-extraction"],
+  "tags": [],
+  "rules": [],
+  "mappings": [],
+  "diagnostics": [],
+  "capabilities": {}
+}

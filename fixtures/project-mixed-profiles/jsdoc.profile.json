@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "jsdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "JSDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [],
+  "targets": ["jsdoc-integration"],
+  "tags": [],
+  "rules": [],
+  "mappings": [],
+  "diagnostics": [],
+  "capabilities": {}
+}

@@ -1,0 +1,63 @@
+{
+  "contract": "doc-source-map",
+  "contractVersion": "0.1.0-draft",
+  "id": "docmap:fixture:alert",
+  "producer": {
+    "name": "@hia-doc/project-fixture",
+    "version": "0.1.0"
+  },
+  "artifacts": [
+    {
+      "id": "artifact:html:alert",
+      "kind": "generated-html",
+      "path": "dist/alert.html",
+      "language": "html"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source:html:alert",
+      "kind": "source",
+      "path": "src/components/alert.html",
+      "language": "html",
+      "sourcesContentPolicy": "none"
+    }
+  ],
+  "sourceMaps": [],
+  "chains": [],
+  "entries": [
+    {
+      "id": "entry:html:alert",
+      "kind": "symbol",
+      "symbolKind": "html-component",
+      "symbolId": "html:component:alert",
+      "sourceRefs": [
+        {
+          "sourceId": "source:html:alert",
+          "range": {
+            "start": { "line": 1, "column": 1 },
+            "end": { "line": 8, "column": 11 }
+          },
+          "rangeSource": "parser",
+          "confidence": "high"
+        }
+      ],
+      "artifactRefs": [
+        {
+          "artifactId": "artifact:html:alert",
+          "selector": "[data-component=\"Alert\"]",
+          "rangeSource": "adapter",
+          "confidence": "medium"
+        }
+      ],
+      "diagnostics": []
+    }
+  ],
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "allowAbsolutePaths": false,
+    "allowUncPaths": false,
+    "allowPathTraversal": false
+  },
+  "diagnostics": []
+}

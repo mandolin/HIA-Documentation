@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "profileId": "htmdoc",
+  "profileVersion": "0.1.0-draft",
+  "displayName": "HTMDoc",
+  "layer": "stable",
+  "extends": [],
+  "contracts": [],
+  "targets": ["htmdoc-extraction"],
+  "tags": [],
+  "rules": [],
+  "mappings": [],
+  "diagnostics": [],
+  "capabilities": {}
+}

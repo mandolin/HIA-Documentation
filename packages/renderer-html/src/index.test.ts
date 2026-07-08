@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createBasicFixtureDocument } from "@hia-doc/core";
 import {
   HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
-  renderHtmlDocument
+  renderHtmlDocument,
+  renderProjectHtmlDocument
 } from "./index.js";
 
 describe("@hia-doc/renderer-html", () => {
@@ -45,5 +46,68 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.files[0]?.contents).toContain("<html lang=\"en-US\">");
     expect(result.files[0]?.contents).toContain("data-hia-fallback-from=\"en\"");
     expect(result.manifest.initialLocale).toBe("en-US");
+  });
+
+  it("renders a unified project page with JS CSS and HTML views", () => {
+    const result = renderProjectHtmlDocument({
+      project: {
+        id: "project:mixed",
+        name: "Mixed Project",
+        title: "Mixed Project Docs"
+      },
+      profiles: [
+        { profileId: "jsdoc", profileVersion: "0.1.0-draft" },
+        { profileId: "cssdoc", profileVersion: "0.1.0-draft" },
+        { profileId: "htmdoc", profileVersion: "0.1.0-draft" }
+      ],
+      docSourceMaps: [
+        { path: "maps/button.docmap.json", contractVersion: "0.1.0-draft", status: "available" }
+      ],
+      entries: [
+        {
+          id: "js:build",
+          name: "buildProfileSummary",
+          kind: "function",
+          view: "js",
+          summary: "Builds a user profile summary.",
+          profile: { profileId: "jsdoc", profileVersion: "0.1.0-draft" },
+          input: { kind: "jsdoc-integration", path: "jsdoc.json", contract: "jsdoc-integration" },
+          source: { path: "src/profile.js", language: "javascript", range: { start: { line: 12 } } }
+        },
+        {
+          id: "css:alert",
+          name: "Alert",
+          kind: "css-component-style",
+          view: "css",
+          summary: "Alert component styles.",
+          profile: { profileId: "cssdoc", profileVersion: "0.1.0-draft" },
+          input: { kind: "cssdoc-extraction", path: "alert.cssdoc.json", contract: "hia-cssdoc-extraction" },
+          source: { path: "src/alert.css", language: "css", range: { start: { line: 3 }, end: { line: 9 } } }
+        },
+        {
+          id: "html:alert",
+          name: "x-alert",
+          kind: "html-component",
+          view: "html",
+          summary: "Alert markup.",
+          profile: { profileId: "htmdoc", profileVersion: "0.1.0-draft" },
+          input: { kind: "htmdoc-extraction", path: "alert.htmdoc.json", contract: "hia-htmdoc-extraction" },
+          source: { path: "src/alert.html", language: "html", range: { start: { line: 1 }, end: { line: 8 } } }
+        }
+      ]
+    });
+
+    const html = result.files[0]?.contents ?? "";
+    expect(result.diagnostics).toEqual([]);
+    expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html"]);
+    expect(result.manifest.project?.entryCounts).toMatchObject({ all: 3, js: 1, css: 1, html: 1 });
+    expect(html).toContain("Mixed Project Docs");
+    expect(html).toContain("data-hia-project-view=\"js\"");
+    expect(html).toContain("data-hia-project-entry=\"css\"");
+    expect(html).toContain("buildProfileSummary");
+    expect(html).toContain("css-component-style");
+    expect(html).toContain("html-component");
+    expect(html).toContain("maps/button.docmap.json");
+    expect(html).toContain("Profile cssdoc@0.1.0-draft");
   });
 });

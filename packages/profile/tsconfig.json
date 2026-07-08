@@ -9,9 +9,6 @@
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"],
   "references": [
-    { "path": "../../packages/config" },
-    { "path": "../../packages/core" },
-    { "path": "../../packages/profile" },
-    { "path": "../../packages/renderer-html" }
+    { "path": "../core" }
   ]
 }
