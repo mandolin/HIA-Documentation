@@ -2,6 +2,17 @@
 
 This document defines the local release gate for the HIA main repository and the official JSDoc satellite packages.
 
+For release classification, checklist ownership, satellite package status and npm publish policy, see `docs/release-governance.md`.
+
+## Gate Ownership
+
+| Surface | Gate | Notes |
+| --- | --- | --- |
+| `main-repo` core/tooling/docs contracts | `pnpm run release:gate` | Run from `main-repo`. |
+| Official JSDoc plugin/theme packages | `npm run release:gate` | Run from each package repository. |
+| Incubating `hia-*doc` satellites | `npm run release:gate` | Required before public release baseline. |
+| Public npm publish | Matching gate plus publish preflight | Manual today; Trusted Publishing is the preferred automation target. |
+
 ## Main Repository
 
 Run the full main-repo gate before merging release-facing changes:
@@ -38,7 +49,7 @@ Package gates also run example governance checks to ensure `examples/basic/out` 
 
 ## Publish Preflight
 
-Before publishing a public scoped package, use the official npm registry explicitly:
+Before publishing a public scoped package manually, use the official npm registry explicitly:
 
 ```bash
 npm whoami --registry=https://registry.npmjs.org/
@@ -47,6 +58,8 @@ npm publish --access public --registry=https://registry.npmjs.org/
 ```
 
 An `E404 Not Found` result from `npm view` is expected for a version that has not been published yet.
+
+Before adding automated npm publication, prefer npm Trusted Publishing through GitHub Actions OpenID Connect instead of storing long-lived npm tokens. Automated publish workflows must not run on ordinary pull requests and must keep minimal workflow permissions.
 
 ## Post-Publish Smoke
 
@@ -70,6 +83,8 @@ The integration JSON should use `contract: "hia-jsdoc-integration"`, `contractVe
 
 GitHub Actions runs the same release gates on pull requests, pushes to `main` and manual workflow dispatches. See `docs/ci.md` for workflow triggers and troubleshooting notes.
 
+CI is a gate mirror, not a replacement for local release review. Contract-facing changes still need compatibility matrix and public docs review.
+
 ## Example And Fixture Governance
 
 See `docs/example-fixture-governance.md` for fixture refresh rules, webtest output policy and generated output commit boundaries.
@@ -83,3 +98,5 @@ pnpm run license:audit
 ```
 
 See `docs/dependency-license-audit.md` and `docs/dependency-review-template.md` for the allowed license policy and required review steps for new external dependencies.
+
+See `docs/security-policy.md` for secret handling, source-content policy and CI security requirements.

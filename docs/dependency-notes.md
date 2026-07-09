@@ -2,7 +2,7 @@
 
 This file records the initial dependency choices for the HIA main repository.
 
-Current release-facing dependency and license policy is maintained in `docs/dependency-license-audit.md`. New external dependencies should first use `docs/dependency-review-template.md`, then update the audit script and documentation together.
+Current release-facing dependency, license and security policy is maintained in `docs/dependency-license-audit.md` and `docs/security-policy.md`. New external dependencies should first use `docs/dependency-review-template.md`, then update the audit script and documentation together.
 
 | Dependency | Purpose | License |
 | --- | --- | --- |

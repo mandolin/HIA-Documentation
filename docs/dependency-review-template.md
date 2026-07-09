@@ -28,6 +28,8 @@ Use this template before adding a new external dependency.
 - Package size or bundle impact:
 - Maintenance status:
 - Security considerations:
+- Secret or credential handling involved: yes/no
+- Release or publish automation involved: yes/no
 - Alternative packages considered:
 
 ## Required Updates

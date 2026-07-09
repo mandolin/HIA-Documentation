@@ -42,6 +42,8 @@ pnpm run hia -- docs build --config hia.config.example.json
 - `docs/ide-usage.md`: VS Code/LSP 使用入口。
 - `docs/dependency-license-audit.md`: 直接依赖许可证审计和新增依赖策略。
 - `docs/dependency-review-template.md`: 新增第三方依赖前的审查模板。
+- `docs/release-governance.md`: release class、checklist、satellite gate 和 npm 发布治理。
+- `docs/security-policy.md`: 安全报告、依赖安全、secret、source content 和 CI 安全基线。
 - `docs/ide-integration-boundary.md`: IDE shell 与 LSP/CLI/renderer 的分层接入边界。
 - `docs/adapter-authoring-notes.md`: adapter 作者指南。
 - `docs/ci.md`: GitHub Actions baseline 和失败排查入口。

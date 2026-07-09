@@ -30,6 +30,8 @@ Restricted license families require explicit maintainer approval before use:
 
 The current audit is direct-dependency focused. A full transitive SBOM is deferred until the package boundaries and publication targets are more stable.
 
+Dependency review is also a security review. New external dependencies must record runtime impact, maintenance status, security considerations and alternatives in `docs/dependency-review-template.md` before landing.
+
 ## Pinned Tools
 
 | Tool | Version | Purpose | License |
@@ -63,3 +65,5 @@ Before adding a new external dependency:
 3. Update this audit table.
 4. Update `scripts/check-dependency-license-audit.mjs`.
 5. Run `pnpm run license:audit` and `pnpm run release:gate`.
+
+Do not add dependencies only for release automation if an official platform mechanism covers the same need. For npm publication automation, prefer npm Trusted Publishing over long-lived npm token storage.
