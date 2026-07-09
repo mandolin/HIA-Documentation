@@ -67,6 +67,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 ## Related Docs
 
 - `docs/core-fixture-contract.md`
+- `docs/versioning.md`
+- `docs/compatibility-matrix.md`
 - `docs/configuration.md`
 - `packages/profile/README.md`
 - `docs/ide-integration-boundary.md`

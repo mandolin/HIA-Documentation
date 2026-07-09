@@ -32,6 +32,8 @@ pnpm run hia -- docs build --config hia.config.example.json
 开发者入口：
 
 - `docs/contract-index.md`: 主仓实现侧 contract 索引。
+- `docs/versioning.md`: package 与 contract 版本策略。
+- `docs/compatibility-matrix.md`: 当前 runtime、package、contract 和 fixture 兼容矩阵。
 - `docs/core-fixture-contract.md`: core schema、fixture 和 validator contract。
 - `docs/configuration.md`: `hia.config.json` 配置契约。
 - `docs/dependency-license-audit.md`: 直接依赖许可证审计和新增依赖策略。
