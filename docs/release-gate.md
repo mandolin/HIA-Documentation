@@ -26,6 +26,7 @@ The gate runs:
 - TypeScript build.
 - Unit tests.
 - Cross-package e2e tests.
+- Schema contract checks for core document, project manifest and documentation profile fixtures.
 - Real JPHS Integration fixture through `hia docs build --jsdoc-integration`.
 - Output safety checks for local absolute paths, `filePath`, legacy `currentPage` and synthetic `package:undefined`.
 - Example and fixture governance checks.

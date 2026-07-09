@@ -10,6 +10,7 @@ The profile schema is `0.1.0-draft`.
 
 The runtime package is `@hia-doc/profile`. It can:
 
+- export the `HIA_PROFILE_JSON_SCHEMA` machine-readable contract;
 - validate profile structure;
 - normalize tag/rule/mapping/diagnostic registries;
 - resolve tag aliases;

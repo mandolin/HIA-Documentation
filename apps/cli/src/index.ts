@@ -6,7 +6,10 @@ import { pathToFileURL } from "node:url";
 import {
   hasConfigErrors,
   loadHiaProjectConfig,
-  type HiaDocsConfig
+  validateHiaProjectManifest,
+  type HiaDocsConfig,
+  type HiaProjectDocsManifest as ProjectDocsManifest,
+  type HiaProjectManifestInput as ProjectManifestInput
 } from "@hia-doc/config";
 import {
   createBasicFixtureDocument,
@@ -63,34 +66,6 @@ export interface CliIo {
   cwd: string;
   stdout: (message: string) => void;
   stderr: (message: string) => void;
-}
-
-type ProjectInputKind = "hia-document" | "jsdoc-integration" | "htmdoc-extraction" | "cssdoc-extraction" | "doc-source-map";
-
-interface ProjectDocsManifest {
-  schemaVersion?: string;
-  project?: {
-    id?: string;
-    name?: string;
-    title?: string;
-  };
-  profiles?: ProjectProfileManifestEntry[];
-  inputs?: ProjectManifestInput[];
-}
-
-interface ProjectProfileManifestEntry {
-  profileId?: string;
-  profileVersion?: string;
-  layer?: string;
-  path?: string;
-}
-
-interface ProjectManifestInput {
-  kind?: ProjectInputKind | string;
-  path?: string;
-  domain?: RenderProjectView;
-  profile?: RenderProjectProfileRef;
-  sourceRoot?: string;
 }
 
 interface ProjectAggregationResult {
@@ -369,7 +344,7 @@ async function loadProjectManifest(inputPath: string, io: CliIo): Promise<{ mani
   try {
     const content = await readFile(inputPath, "utf8");
     const manifest = JSON.parse(content) as unknown;
-    const diagnostics = validateProjectManifest(manifest, inputPath);
+    const diagnostics = validateHiaProjectManifest(manifest, { targetPath: inputPath });
     reportDiagnostics(diagnostics, io);
 
     if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -699,94 +674,6 @@ function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderP
   return { source };
 }
 
-function validateProjectManifest(value: unknown, manifestPath: string): HiaDiagnostic[] {
-  const diagnostics: HiaDiagnostic[] = [];
-
-  if (!isRecord(value)) {
-    return [
-      createCliDiagnostic("HIA_CLI_PROJECT_MANIFEST_INVALID", "Project docs manifest must be a JSON object.", "error", manifestPath)
-    ];
-  }
-
-  if (value.schemaVersion !== "0.1.0-draft") {
-    diagnostics.push(createCliDiagnostic(
-      "HIA_CLI_PROJECT_MANIFEST_INVALID",
-      "Project docs manifest schemaVersion must be 0.1.0-draft.",
-      "error",
-      `${manifestPath}.schemaVersion`
-    ));
-  }
-
-  if (!isRecord(value.project) || typeof value.project.name !== "string" || value.project.name.length === 0) {
-    diagnostics.push(createCliDiagnostic(
-      "HIA_CLI_PROJECT_MANIFEST_INVALID",
-      "Project docs manifest project.name must be a non-empty string.",
-      "error",
-      `${manifestPath}.project.name`
-    ));
-  }
-
-  if (!Array.isArray(value.inputs) || value.inputs.length === 0) {
-    diagnostics.push(createCliDiagnostic(
-      "HIA_CLI_PROJECT_MANIFEST_INVALID",
-      "Project docs manifest inputs must be a non-empty array.",
-      "error",
-      `${manifestPath}.inputs`
-    ));
-  }
-
-  validateManifestPathEntries(value.profiles, "profiles", manifestPath, diagnostics);
-  validateManifestPathEntries(value.inputs, "inputs", manifestPath, diagnostics);
-
-  return diagnostics;
-}
-
-function validateManifestPathEntries(value: unknown, field: string, manifestPath: string, diagnostics: HiaDiagnostic[]): void {
-  if (value === undefined) {
-    return;
-  }
-
-  if (!Array.isArray(value)) {
-    diagnostics.push(createCliDiagnostic(
-      "HIA_CLI_PROJECT_MANIFEST_INVALID",
-      `Project docs manifest ${field} must be an array.`,
-      "error",
-      `${manifestPath}.${field}`
-    ));
-    return;
-  }
-
-  value.forEach((item, index) => {
-    if (!isRecord(item)) {
-      diagnostics.push(createCliDiagnostic(
-        "HIA_CLI_PROJECT_MANIFEST_INVALID",
-        `Project docs manifest ${field}.${index} must be an object.`,
-        "error",
-        `${manifestPath}.${field}.${index}`
-      ));
-      return;
-    }
-
-    if (field === "inputs" && (typeof item.kind !== "string" || item.kind.length === 0)) {
-      diagnostics.push(createCliDiagnostic(
-        "HIA_CLI_PROJECT_MANIFEST_INVALID",
-        `Project docs manifest ${field}.${index}.kind must be a non-empty string.`,
-        "error",
-        `${manifestPath}.${field}.${index}.kind`
-      ));
-    }
-
-    if (typeof item.path !== "string" || item.path.length === 0 || isUnsafeInputRelativePath(item.path)) {
-      diagnostics.push(createCliDiagnostic(
-        "HIA_CLI_PROJECT_MANIFEST_INVALID",
-        `Project docs manifest ${field}.${index}.path must be a safe relative path.`,
-        "error",
-        `${manifestPath}.${field}.${index}.path`
-      ));
-    }
-  });
-}
-
 function inferProjectView(kind: string, inputKind?: string): RenderProjectView {
   if (inputKind === "jsdoc-integration" || kind.startsWith("js-") || ["module", "class", "function", "member", "constant", "typedef"].includes(kind)) {
     return "js";
@@ -1030,18 +917,6 @@ function normalizeOutputRelativePath(value: string): string {
 
 function isUnsafeOutputRelativePath(value: string): boolean {
   const normalized = normalizeOutputRelativePath(value);
-
-  return !normalized
-    || normalized === "."
-    || path.isAbsolute(normalized)
-    || normalized === ".."
-    || normalized.startsWith("../")
-    || normalized.includes("/../")
-    || normalized.endsWith("/..");
-}
-
-function isUnsafeInputRelativePath(value: string): boolean {
-  const normalized = value.replaceAll("\\", "/");
 
   return !normalized
     || normalized === "."

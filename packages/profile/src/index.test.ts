@@ -5,6 +5,9 @@ import {
   createHiaProfileSet,
   getHiaProfileDiagnostic,
   getHiaProfileRule,
+  HIA_PROFILE_JSON_SCHEMA,
+  HIA_PROFILE_SCHEMA_ID,
+  HIA_PROFILE_SCHEMA_VERSION,
   hasProfileErrors,
   listHiaProfileIds,
   listHiaProfileTags,
@@ -16,6 +19,13 @@ import type { HiaDocumentationProfile } from "./index.js";
 const fixtureDir = path.resolve(__dirname, "fixtures/profiles");
 
 describe("@hia-doc/profile", () => {
+  it("exports the profile JSON Schema contract", () => {
+    expect(HIA_PROFILE_JSON_SCHEMA.$id).toBe(HIA_PROFILE_SCHEMA_ID);
+    expect(HIA_PROFILE_JSON_SCHEMA.properties.schemaVersion.const).toBe(HIA_PROFILE_SCHEMA_VERSION);
+    expect(HIA_PROFILE_JSON_SCHEMA.required).toContain("profileId");
+    expect(HIA_PROFILE_JSON_SCHEMA.$defs.tag.required).toEqual(["name", "status", "scope", "targets"]);
+  });
+
   it("validates and loads the first official profile draft set", async () => {
     const profiles = await loadProfileFixtures();
     const profileSet = createHiaProfileSet({ profiles });

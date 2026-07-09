@@ -16,6 +16,13 @@ The CLI does not scan source files or parse source languages in project mode. Th
 
 The project docs manifest shape is `0.1.0-draft`.
 
+`@hia-doc/config` exports the machine-readable manifest contract:
+
+- `HIA_PROJECT_MANIFEST_SCHEMA_VERSION`
+- `HIA_PROJECT_MANIFEST_SCHEMA_ID`
+- `HIA_PROJECT_MANIFEST_JSON_SCHEMA`
+- `validateHiaProjectManifest()`
+
 The current fixture is:
 
 ```text

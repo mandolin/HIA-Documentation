@@ -6,9 +6,13 @@ import {
   HIA_CONFIG_SOURCE_MODES,
   HIA_CONFIG_SCHEMA_VERSION,
   HIA_CONFIG_THEME_NAMES,
+  HIA_PROJECT_MANIFEST_JSON_SCHEMA,
+  HIA_PROJECT_MANIFEST_SCHEMA_ID,
+  HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
   hasConfigErrors,
   loadHiaProjectConfig,
-  validateHiaProjectConfig
+  validateHiaProjectConfig,
+  validateHiaProjectManifest
 } from "./index.js";
 
 describe("@hia-doc/config", () => {
@@ -93,5 +97,58 @@ describe("@hia-doc/config", () => {
       fallbackTheme: "default"
     });
     expect(diagnostics.some((diagnostic) => diagnostic.severity === "warning")).toBe(true);
+  });
+
+  it("exports and validates the project manifest contract", () => {
+    expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.$id).toBe(HIA_PROJECT_MANIFEST_SCHEMA_ID);
+    expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.properties.schemaVersion.const).toBe(HIA_PROJECT_MANIFEST_SCHEMA_VERSION);
+
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Mixed Project"
+      },
+      profiles: [
+        {
+          profileId: "cssdoc",
+          path: "profiles/cssdoc.profile.json"
+        }
+      ],
+      inputs: [
+        {
+          kind: "cssdoc-extraction",
+          path: "artifacts/button.cssdoc.json",
+          domain: "css",
+          profile: {
+            profileId: "cssdoc",
+            profileVersion: "0.1.0-draft"
+          }
+        }
+      ]
+    });
+
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("rejects unsafe project manifest paths", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Unsafe Project"
+      },
+      inputs: [
+        {
+          kind: "hia-document",
+          path: "../private.hia.json"
+        },
+        {
+          kind: "cssdoc-extraction",
+          path: "C:/private/button.cssdoc.json"
+        }
+      ]
+    }, { targetPath: "project.hia-project.json" });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_PATH_INVALID");
+    expect(hasConfigErrors(diagnostics)).toBe(true);
   });
 });

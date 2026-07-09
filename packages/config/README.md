@@ -17,4 +17,11 @@ The first contract is intentionally small. `hia.config.ts`, layered config mergi
 
 The current JSON config schema version is exported as `HIA_CONFIG_SCHEMA_VERSION`.
 
+Project docs manifests use a separate draft contract exported by this package:
+
+- `HIA_PROJECT_MANIFEST_SCHEMA_VERSION`
+- `HIA_PROJECT_MANIFEST_SCHEMA_ID`
+- `HIA_PROJECT_MANIFEST_JSON_SCHEMA`
+- `validateHiaProjectManifest()`
+
 See `docs/configuration.md` and `docs/contract-index.md` in the repository root for the current config boundary.

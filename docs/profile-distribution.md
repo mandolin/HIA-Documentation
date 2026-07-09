@@ -6,6 +6,13 @@ This document defines how official HIA documentation profiles are distributed, v
 
 The documentation profile schema is `0.1.0-draft`.
 
+`@hia-doc/profile` now exports the profile schema contract:
+
+- `HIA_PROFILE_SCHEMA_VERSION`
+- `HIA_PROFILE_SCHEMA_ID`
+- `HIA_PROFILE_JSON_SCHEMA`
+- `validateHiaProfile()`
+
 Official profile drafts currently have two homes:
 
 | Location | Role |
@@ -61,10 +68,9 @@ The CLI should consume explicit artifacts and explicit profile references. It sh
 
 The reserved target is an official profile distribution package such as `@hia-doc/profiles` or an equivalent package name chosen during publication planning.
 
-The package should wait until:
+The dedicated `@hia-doc/profiles` package should wait until:
 
-- profile schema validation is stronger than the current fixture-focused runtime checks;
-- profile JSON Schema or equivalent machine-readable schema is published;
+- profile schema validation is backed by the exported `HIA_PROFILE_JSON_SCHEMA` and at least one schema compatibility gate;
 - project manifest profile loading and LSP profile capability consumption are stable enough for external users;
 - public npm scope and release ownership are decided;
 - migration rules for stable profile changes are documented.
@@ -114,4 +120,3 @@ node work-zone/dev/scripts/check-profile-drafts.cjs
 - Workspace profile auto-discovery.
 - Profile marketplace or community registry.
 - Full profile-defined rule execution.
-

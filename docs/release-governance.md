@@ -34,7 +34,7 @@ Before merging or publishing release-facing changes:
 pnpm run release:gate
 ```
 
-The gate covers build, unit tests, e2e tests, real JSDoc integration smoke, example/fixture governance and direct dependency/license audit.
+The gate covers build, unit tests, e2e tests, schema contract checks, real JSDoc integration smoke, example/fixture governance and direct dependency/license audit.
 
 ## Satellite Gate Matrix
 
@@ -95,4 +95,3 @@ Release artifacts must not include:
 - Credentials, npm tokens, GitHub tokens or registry authentication files.
 
 See `docs/security-policy.md` for source-content and secret handling rules.
-

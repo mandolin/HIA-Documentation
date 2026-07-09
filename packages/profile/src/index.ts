@@ -7,6 +7,144 @@ export const HIA_PROFILE_LAYERS = ["stable", "compat", "bridge", "extension"] as
 export const HIA_PROFILE_TAG_STATUSES = ["stable", "alias", "deprecated", "reserved", "experimental"] as const;
 export const HIA_PROFILE_TAG_SCOPES = ["block", "inline", "file", "region", "directive"] as const;
 export const HIA_PROFILE_DIAGNOSTIC_SEVERITIES = ["info", "warning", "error"] as const;
+export const HIA_PROFILE_SCHEMA_ID = "https://hia-doc.local/schema/documentation-profile-0.1.0-draft.json";
+
+export const HIA_PROFILE_JSON_SCHEMA = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: HIA_PROFILE_SCHEMA_ID,
+  type: "object",
+  required: ["schemaVersion", "profileId", "profileVersion", "displayName", "layer", "extends", "contracts", "targets", "tags", "rules", "mappings", "diagnostics", "capabilities"],
+  additionalProperties: true,
+  properties: {
+    schemaVersion: { const: HIA_PROFILE_SCHEMA_VERSION },
+    profileId: {
+      type: "string",
+      pattern: "^[a-z0-9._-]+$"
+    },
+    profileVersion: { $ref: "#/$defs/nonEmptyString" },
+    displayName: { $ref: "#/$defs/nonEmptyString" },
+    layer: { enum: [...HIA_PROFILE_LAYERS] },
+    extends: {
+      type: "array",
+      items: { $ref: "#/$defs/nonEmptyString" }
+    },
+    contracts: {
+      type: "array",
+      items: { $ref: "#/$defs/contractRef" }
+    },
+    targets: {
+      type: "array",
+      items: { $ref: "#/$defs/nonEmptyString" }
+    },
+    tags: {
+      type: "array",
+      items: { $ref: "#/$defs/tag" }
+    },
+    rules: {
+      type: "array",
+      items: { $ref: "#/$defs/rule" }
+    },
+    mappings: {
+      type: "array",
+      items: { $ref: "#/$defs/mapping" }
+    },
+    diagnostics: {
+      type: "array",
+      items: { $ref: "#/$defs/diagnostic" }
+    },
+    capabilities: { type: "object" }
+  },
+  $defs: {
+    nonEmptyString: { type: "string", minLength: 1 },
+    stringList: {
+      type: "array",
+      items: { $ref: "#/$defs/nonEmptyString" }
+    },
+    jsonObject: { type: "object" },
+    contractRef: {
+      type: "object",
+      required: ["name"],
+      additionalProperties: true,
+      properties: {
+        name: { $ref: "#/$defs/nonEmptyString" },
+        version: { $ref: "#/$defs/nonEmptyString" },
+        role: { $ref: "#/$defs/nonEmptyString" }
+      }
+    },
+    tag: {
+      type: "object",
+      required: ["name", "status", "scope", "targets"],
+      additionalProperties: true,
+      properties: {
+        name: { $ref: "#/$defs/nonEmptyString" },
+        status: { enum: [...HIA_PROFILE_TAG_STATUSES] },
+        aliasFor: { $ref: "#/$defs/nonEmptyString" },
+        scope: {
+          type: "array",
+          items: { enum: [...HIA_PROFILE_TAG_SCOPES] }
+        },
+        targets: { $ref: "#/$defs/stringList" },
+        repeatable: { type: "boolean" },
+        valueGrammar: { $ref: "#/$defs/nonEmptyString" },
+        conflicts: { $ref: "#/$defs/stringList" },
+        requires: { $ref: "#/$defs/stringList" },
+        mapsTo: { $ref: "#/$defs/jsonObject" },
+        diagnostics: { $ref: "#/$defs/stringList" },
+        metadata: { $ref: "#/$defs/jsonObject" }
+      }
+    },
+    rule: {
+      type: "object",
+      required: ["ruleId", "optionsSchema", "messages"],
+      additionalProperties: true,
+      properties: {
+        ruleId: { $ref: "#/$defs/nonEmptyString" },
+        category: { $ref: "#/$defs/nonEmptyString" },
+        defaultSeverity: { enum: [...HIA_PROFILE_DIAGNOSTIC_SEVERITIES] },
+        optionsSchema: { $ref: "#/$defs/jsonObject" },
+        appliesTo: { $ref: "#/$defs/stringList" },
+        messages: {
+          type: "object",
+          additionalProperties: { type: "string" }
+        },
+        fixable: { type: "boolean" },
+        hasSuggestions: { type: "boolean" },
+        metadata: { $ref: "#/$defs/jsonObject" }
+      }
+    },
+    mapping: {
+      type: "object",
+      required: ["from", "to"],
+      additionalProperties: true,
+      properties: {
+        from: { $ref: "#/$defs/nonEmptyString" },
+        to: { $ref: "#/$defs/nonEmptyString" },
+        conditions: { $ref: "#/$defs/stringList" },
+        confidence: { $ref: "#/$defs/nonEmptyString" },
+        sourcePolicy: { $ref: "#/$defs/nonEmptyString" },
+        metadataPolicy: { $ref: "#/$defs/nonEmptyString" },
+        diagnostics: { $ref: "#/$defs/stringList" }
+      }
+    },
+    diagnostic: {
+      type: "object",
+      required: ["code", "severity", "defaultMessage"],
+      additionalProperties: true,
+      properties: {
+        code: { $ref: "#/$defs/nonEmptyString" },
+        severity: { enum: [...HIA_PROFILE_DIAGNOSTIC_SEVERITIES] },
+        messageKey: { $ref: "#/$defs/nonEmptyString" },
+        defaultMessage: { $ref: "#/$defs/nonEmptyString" },
+        target: { $ref: "#/$defs/nonEmptyString" },
+        relatedLocations: {
+          type: "array",
+          items: {}
+        },
+        suggestions: { $ref: "#/$defs/stringList" }
+      }
+    }
+  }
+} as const;
 
 export type HiaProfileLayer = typeof HIA_PROFILE_LAYERS[number];
 export type HiaProfileTagStatus = typeof HIA_PROFILE_TAG_STATUSES[number];

@@ -3,6 +3,8 @@ import path from "node:path";
 import { createHiaDiagnostic } from "@hia-doc/core";
 import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
 
+export * from "./project-manifest.js";
+
 export const HIA_CONFIG_SCHEMA_VERSION = "0.1.0";
 export const HIA_CONFIG_FILE_NAMES = ["hia.config.json"] as const;
 export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
