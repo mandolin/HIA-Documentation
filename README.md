@@ -36,6 +36,10 @@ pnpm run hia -- docs build --config hia.config.example.json
 - `docs/compatibility-matrix.md`: 当前 runtime、package、contract 和 fixture 兼容矩阵。
 - `docs/core-fixture-contract.md`: core schema、fixture 和 validator contract。
 - `docs/configuration.md`: `hia.config.json` 配置契约。
+- `docs/profile-authoring-guide.md`: documentation profile 编写入口。
+- `docs/project-manifest-guide.md`: project docs manifest 编写入口。
+- `docs/unified-html-demo.md`: JSDoc/CSSDoc/HTMDoc 统一 HTML demo。
+- `docs/ide-usage.md`: VS Code/LSP 使用入口。
 - `docs/dependency-license-audit.md`: 直接依赖许可证审计和新增依赖策略。
 - `docs/dependency-review-template.md`: 新增第三方依赖前的审查模板。
 - `docs/ide-integration-boundary.md`: IDE shell 与 LSP/CLI/renderer 的分层接入边界。

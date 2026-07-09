@@ -90,6 +90,18 @@ Then run:
 6. Confirm the HIA output channel logs a preview report with `Strategy: generated-html`, manifest path and preview file.
 7. Remove or reset the temporary settings after validation.
 
+For project manifest builds, use:
+
+```json
+{
+  "hia.build.projectManifest": "fixtures/project-mixed.hia-project.json",
+  "hia.build.out": "dist/project-docs",
+  "hia.preview.path": "dist/project-docs/index.html"
+}
+```
+
+Then run `HIA: Build Docs` and confirm the output channel logs `--project-manifest fixtures/project-mixed.hia-project.json`.
+
 ## Validate Preview Stale Feedback
 
 1. Run `HIA: Build Docs`.

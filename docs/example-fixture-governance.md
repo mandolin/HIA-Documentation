@@ -29,6 +29,7 @@ All release-facing fixtures and generated output must avoid local absolute paths
 Rules:
 
 - Commit example source, config and README files.
+- Use `examples/README.md` as the public index for runnable demos and reserved example areas.
 - Do not commit `examples/**/out`, `examples/**/dist` or `examples/**/docs/api`.
 - Generate disposable output under `main-repo/dist`.
 

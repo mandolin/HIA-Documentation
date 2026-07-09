@@ -70,6 +70,10 @@ This page summarizes the first stable contract baseline implemented in this mono
 - `docs/versioning.md`
 - `docs/compatibility-matrix.md`
 - `docs/configuration.md`
+- `docs/profile-authoring-guide.md`
+- `docs/project-manifest-guide.md`
+- `docs/unified-html-demo.md`
+- `docs/ide-usage.md`
 - `packages/profile/README.md`
 - `docs/ide-integration-boundary.md`
 - `docs/adapter-authoring-notes.md`
