@@ -187,7 +187,7 @@ function createProject() {
           },
           code: {
             controls: true,
-            fontFamily: "cascadia",
+            fontFamily: "sarasa",
             fontSize: 12,
             lineHeight: 1.55,
             tabSize: 2,
