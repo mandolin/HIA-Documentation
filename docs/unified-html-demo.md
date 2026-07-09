@@ -50,6 +50,7 @@ The page should include:
 - an `HTML` view with HTMDoc extraction entries;
 - profile summary;
 - doc-source-map summary.
+- project view buttons styled by the default theme and updating `aria-pressed` as views change.
 
 The manifest should include:
 
@@ -80,6 +81,33 @@ rg --fixed-strings $repoRoot dist/project-docs
 ```
 
 No matches are expected.
+
+## Browser Smoke
+
+For a browser-level smoke, serve the generated directory with any local static server and open `index.html`.
+
+Example:
+
+```powershell
+python -m http.server 58185 --bind 127.0.0.1 -d dist/project-docs
+```
+
+Then open:
+
+```text
+http://127.0.0.1:58185/index.html
+```
+
+Expected view counts:
+
+| View | Visible entries |
+| --- | ---: |
+| All | 6 |
+| JS | 2 |
+| CSS | 2 |
+| HTML | 2 |
+
+A `favicon.ico` 404 from a minimal static server is non-blocking.
 
 ## Related Fixtures
 

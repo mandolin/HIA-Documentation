@@ -102,6 +102,8 @@ For project manifest builds, use:
 
 Then run `HIA: Build Docs` and confirm the output channel logs `--project-manifest fixtures/project-mixed.hia-project.json`.
 
+Confirm the generated output also passes the CLI/renderer acceptance checks in `docs/user-acceptance-checklist.md`.
+
 ## Validate Preview Stale Feedback
 
 1. Run `HIA: Build Docs`.

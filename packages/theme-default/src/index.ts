@@ -34,7 +34,7 @@ export const DEFAULT_THEME_CSS = `
   --hia-accent-soft: #dff4ef;
   --hia-code-bg: #101820;
   --hia-code-text: #d7f4ff;
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-family: "Inter", "Noto Sans SC", "Source Han Sans SC", "Sarasa Gothic SC", sans-serif;
 }
 
 * {
@@ -62,6 +62,49 @@ a {
   border-right: 1px solid var(--hia-border);
   padding: 1.5rem;
   background: #eef2f6;
+}
+
+.hia-sidebar nav ul,
+.hia-project-summary ul {
+  padding-left: 1.25rem;
+}
+
+.hia-sidebar nav li,
+.hia-project-summary li {
+  margin: .25rem 0;
+}
+
+.hia-project-views {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin: 1rem 0;
+}
+
+.hia-project-view-button {
+  appearance: none;
+  background: var(--hia-surface);
+  border: 1px solid var(--hia-border);
+  border-radius: 6px;
+  color: var(--hia-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: .86rem;
+  line-height: 1.2;
+  min-height: 2rem;
+  padding: .35rem .65rem;
+}
+
+.hia-project-view-button:hover {
+  border-color: var(--hia-accent);
+  color: var(--hia-accent);
+}
+
+.hia-project-view-button[aria-pressed="true"] {
+  background: var(--hia-accent);
+  border-color: var(--hia-accent);
+  color: #ffffff;
 }
 
 .hia-language-switch {
@@ -114,7 +157,7 @@ a {
 .hia-source-code {
   overflow-x: auto;
   border-radius: 6px;
-  font-family: "Cascadia Code", Consolas, monospace;
+  font-family: "Sarasa Mono SC", "Sarasa Fixed SC", "Noto Sans Mono CJK SC", "Source Han Mono SC", "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
 }
 
 .hia-signature {
@@ -168,7 +211,7 @@ a {
 
 .hia-i18n-field dt {
   color: var(--hia-muted);
-  font-family: "Cascadia Code", Consolas, monospace;
+  font-family: "Sarasa Mono SC", "Sarasa Fixed SC", "Noto Sans Mono CJK SC", "Source Han Mono SC", "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
   font-size: .85rem;
 }
 
@@ -185,7 +228,7 @@ a {
 .hia-source-fragment summary {
   color: var(--hia-muted);
   cursor: pointer;
-  font-family: "Cascadia Code", Consolas, monospace;
+  font-family: "Sarasa Mono SC", "Sarasa Fixed SC", "Noto Sans Mono CJK SC", "Source Han Mono SC", "Cascadia Code", "JetBrains Mono", "Fira Code", monospace;
   font-size: .86rem;
   margin-bottom: .35rem;
 }

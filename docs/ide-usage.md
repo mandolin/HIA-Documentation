@@ -83,6 +83,12 @@ Use the detailed checklist:
 docs/vscode-extension-manual-validation.md
 ```
 
+The cross-surface CLI/renderer/IDE acceptance checklist is:
+
+```text
+docs/user-acceptance-checklist.md
+```
+
 ## Boundaries
 
 - Preview opens generated HTML in an external browser.
@@ -90,4 +96,3 @@ docs/vscode-extension-manual-validation.md
 - Resource edit quick fixes currently show preflight data only.
 - WorkspaceEdit-based resource writes are deferred.
 - Profile file discovery and profile-defined diagnostics execution are deferred.
-

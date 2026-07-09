@@ -75,6 +75,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - `docs/migration-guide.md`
 - `docs/project-manifest-guide.md`
 - `docs/unified-html-demo.md`
+- `docs/user-acceptance-checklist.md`
 - `docs/ide-usage.md`
 - `docs/release-governance.md`
 - `docs/security-policy.md`

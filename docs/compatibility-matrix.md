@@ -62,6 +62,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | Project manifest or renderer output change | CLI/renderer tests plus generated output path-leak checks. |
 | Profile draft change | profile runtime tests and profile draft check in WorkZone. |
 | Profile migration guidance change | public docs review plus profile runtime tests when tag status changes. |
+| User-visible CLI/renderer/IDE workflow change | `docs/user-acceptance-checklist.md` plus targeted tests and `pnpm run release:gate`. |
 
 ## Deferred Compatibility Work
 

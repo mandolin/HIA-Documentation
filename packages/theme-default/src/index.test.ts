@@ -8,6 +8,8 @@ describe("@hia-doc/theme-default", () => {
     expect(assets.map((asset) => asset.path)).toEqual([DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH]);
     expect(assets[0]?.contents).toContain(".hia-shell");
     expect(assets[0]?.contents).toContain(".hia-fallback-badge");
+    expect(assets[0]?.contents).toContain(".hia-project-view-button");
+    expect(assets[0]?.contents).toContain("[aria-pressed=\"true\"]");
     expect(assets[1]?.contents).toContain("hiaTheme");
     expect(assets[1]?.contents).toContain("data-hia-locale-control");
   });

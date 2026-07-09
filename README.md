@@ -41,6 +41,7 @@ pnpm run hia -- docs build --config hia.config.example.json
 - `docs/migration-guide.md`: JSDoc、CSSDOC、SassDoc、TSDoc/API Extractor/TypeDoc 和 Pug/HTMDoc 迁移入口。
 - `docs/project-manifest-guide.md`: project docs manifest 编写入口。
 - `docs/unified-html-demo.md`: JSDoc/CSSDoc/HTMDoc 统一 HTML demo。
+- `docs/user-acceptance-checklist.md`: CLI、renderer、IDE shell 用户验收清单。
 - `docs/ide-usage.md`: VS Code/LSP 使用入口。
 - `docs/dependency-license-audit.md`: 直接依赖许可证审计和新增依赖策略。
 - `docs/dependency-review-template.md`: 新增第三方依赖前的审查模板。
