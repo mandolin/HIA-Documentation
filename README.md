@@ -37,6 +37,8 @@ pnpm run hia -- docs build --config hia.config.example.json
 - `docs/core-fixture-contract.md`: core schema、fixture 和 validator contract。
 - `docs/configuration.md`: `hia.config.json` 配置契约。
 - `docs/profile-authoring-guide.md`: documentation profile 编写入口。
+- `docs/profile-distribution.md`: official profile 分发、版本和扩展策略。
+- `docs/migration-guide.md`: JSDoc、CSSDOC、SassDoc、TSDoc/API Extractor/TypeDoc 和 Pug/HTMDoc 迁移入口。
 - `docs/project-manifest-guide.md`: project docs manifest 编写入口。
 - `docs/unified-html-demo.md`: JSDoc/CSSDoc/HTMDoc 统一 HTML demo。
 - `docs/ide-usage.md`: VS Code/LSP 使用入口。

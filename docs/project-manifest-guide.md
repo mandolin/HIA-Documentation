@@ -22,6 +22,8 @@ The current fixture is:
 fixtures/project-mixed.hia-project.json
 ```
 
+Profile references are explicit. Current official profile fixtures are local files, not remote registry entries. See `docs/profile-distribution.md`.
+
 ## Minimal Manifest
 
 ```json
@@ -128,3 +130,4 @@ In project mode, the output manifest includes:
 
 See `docs/unified-html-demo.md` for a runnable mixed project demo.
 
+See `docs/migration-guide.md` for migration paths from JSDoc, CSSDoc, HTMDoc and generated DSL artifacts into project aggregation.

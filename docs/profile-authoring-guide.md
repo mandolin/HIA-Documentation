@@ -139,3 +139,8 @@ node work-zone/dev/scripts/check-profile-drafts.cjs
 
 See `docs/versioning.md` and `docs/compatibility-matrix.md` for the current governance baseline.
 
+## Distribution And Migration
+
+Official profile distribution policy is documented in `docs/profile-distribution.md`.
+
+Migration paths from JSDoc, CSSDOC 0.2.22, SassDoc legacy, TSDoc/API Extractor/TypeDoc and Pug/HTMDoc are documented in `docs/migration-guide.md`.

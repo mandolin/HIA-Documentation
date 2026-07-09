@@ -34,6 +34,7 @@ This document defines the first versioning baseline for the HIA main repository 
 | Protocol envelope | `0.1.0` | Active pre-1.0 contract | `@hia-doc/core` |
 | Config schema | `0.1.0` | Active pre-1.0 contract | `@hia-doc/config` |
 | Documentation profile schema | `0.1.0-draft` | Draft | `@hia-doc/profile` |
+| Official profile drafts | `0.1.0-draft` | Draft | profile distribution docs and fixtures |
 | Renderer manifest | `0.1.0` | Active pre-1.0 contract | `@hia-doc/renderer-html` |
 | JSDoc Integration input | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` and `@mandolin/jsdoc-plugin-hia-sys` |
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
@@ -90,3 +91,4 @@ Before publishing a public package or changing a release-facing contract:
 
 See `docs/release-gate.md` for exact commands.
 
+Official profile distribution policy is documented in `docs/profile-distribution.md`. Profile IDs and profile versions are the current compatibility surface; a public profile package is deferred.

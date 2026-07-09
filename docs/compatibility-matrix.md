@@ -43,6 +43,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | Source model `0.2.0` | core helpers and adapters | renderer, LSP source navigation | `fixtures/source-reference.hia.json` |
 | JSDoc Integration `0.1.0` | `jsdoc-plugin-hia-sys` | `@hia-doc/parser-jsdoc`, CLI | `fixtures/jsdoc-integration.*.json` |
 | Documentation profile `0.1.0-draft` | official profile drafts | profile runtime, LSP capability/completion | `packages/profile/src/fixtures/profiles/*.json` |
+| Official profile distribution policy | profile docs and fixtures | project manifest authors, LSP/IDE consumers | `docs/profile-distribution.md` |
 | Project docs manifest `0.1.0-draft` | explicit user/fixture manifest | CLI project build | `fixtures/project-mixed.hia-project.json` |
 | HTMDoc extraction `0.1.0-draft` | `hia-htmdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.htmdoc.json` |
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
@@ -60,14 +61,15 @@ This matrix records the current compatibility baseline for the main repository, 
 | Fixture or generated output governance | `pnpm run governance:check`. |
 | Project manifest or renderer output change | CLI/renderer tests plus generated output path-leak checks. |
 | Profile draft change | profile runtime tests and profile draft check in WorkZone. |
+| Profile migration guidance change | public docs review plus profile runtime tests when tag status changes. |
 
 ## Deferred Compatibility Work
 
 - Published `@hia-doc/*` package policy.
 - Project docs manifest JSON Schema.
 - HTMDoc/CSSDoc/doc-source-map formal schema publication.
+- Published official profile package.
 - Workspace profile auto-discovery.
 - Profile-defined diagnostic rule execution.
 - Browser/DevTools compatibility matrix.
 - Vue/React/CSS-in-JS/Storybook bridge compatibility matrix.
-

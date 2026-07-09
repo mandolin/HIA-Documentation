@@ -71,6 +71,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 - `docs/compatibility-matrix.md`
 - `docs/configuration.md`
 - `docs/profile-authoring-guide.md`
+- `docs/profile-distribution.md`
+- `docs/migration-guide.md`
 - `docs/project-manifest-guide.md`
 - `docs/unified-html-demo.md`
 - `docs/ide-usage.md`
