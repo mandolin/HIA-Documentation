@@ -5,6 +5,7 @@
     { "path": "./packages/config" },
     { "path": "./packages/profile" },
     { "path": "./packages/parser-jsdoc" },
+    { "path": "./packages/source-linkage" },
     { "path": "./packages/lsp" },
     { "path": "./packages/theme-default" },
     { "path": "./packages/renderer-html" },

@@ -38,6 +38,9 @@ importers:
       '@hia-doc/renderer-html':
         specifier: workspace:*
         version: link:../../packages/renderer-html
+      '@hia-doc/source-linkage':
+        specifier: workspace:*
+        version: link:../../packages/source-linkage
 
   apps/vscode-extension:
     dependencies:
@@ -95,6 +98,12 @@ importers:
       '@hia-doc/theme-default':
         specifier: workspace:*
         version: link:../theme-default
+
+  packages/source-linkage:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/theme-default: {}
 

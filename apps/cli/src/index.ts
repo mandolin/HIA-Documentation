@@ -38,6 +38,11 @@ import {
   type RenderProjectProfileRef,
   type RenderProjectView
 } from "@hia-doc/renderer-html";
+import {
+  createDocSourceMapIndex,
+  type DocSourceMapIndex,
+  type DocSourceMapIndexedEntry
+} from "@hia-doc/source-linkage";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
@@ -75,6 +80,11 @@ interface ProjectAggregationResult {
     path: string;
     profile?: RenderProjectProfileRef;
   }>;
+}
+
+interface IndexedProjectDocSourceMap {
+  index: DocSourceMapIndex;
+  input: ProjectManifestInput;
 }
 
 export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo = createDefaultIo()): Promise<number> {
@@ -426,6 +436,7 @@ async function aggregateProjectDocs(
   const entries: RenderProjectEntry[] = [];
   const diagnostics: HiaDiagnostic[] = [];
   const docSourceMaps: RenderProjectDocSourceMapRef[] = [];
+  const indexedDocSourceMaps: IndexedProjectDocSourceMap[] = [];
   const inputRefs: ProjectAggregationResult["inputRefs"] = [];
   const knownProfileIds = new Set(profileRefs.map((profile) => profile.profileId));
 
@@ -494,7 +505,13 @@ async function aggregateProjectDocs(
     }
 
     if (input.kind === "doc-source-map") {
-      docSourceMaps.push(docSourceMapToRef(readResult, input));
+      const sourceMapIndex = createDocSourceMapIndex(readResult, { path: input.path });
+      diagnostics.push(...sourceMapIndex.diagnostics);
+      indexedDocSourceMaps.push({
+        index: sourceMapIndex,
+        input
+      });
+      docSourceMaps.push(docSourceMapToRef(sourceMapIndex, input));
       continue;
     }
 
@@ -518,7 +535,7 @@ async function aggregateProjectDocs(
       },
       profiles: profileRefs,
       docSourceMaps,
-      entries,
+      entries: linkProjectEntriesWithDocSourceMaps(entries, indexedDocSourceMaps),
       diagnostics
     },
     inputRefs
@@ -559,6 +576,7 @@ function hiaSymbolToProjectEntry(
     id: createProjectEntryId(input.kind ?? "hia-document", symbol.id || symbol.name, index),
     name: symbol.name || symbol.id,
     kind: symbol.kind,
+    symbolId: symbol.id,
     view: input.domain ?? fallbackView ?? inferProjectView(symbol.kind),
     ...(symbol.summary ? { summary: symbol.summary } : {}),
     ...(symbol.signature ? { signature: symbol.signature } : {}),
@@ -581,6 +599,7 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
     .filter(isRecord)
     .map((symbol, index) => {
       const kind = stringValue(symbol.kind) ?? "symbol";
+      const symbolId = stringValue(symbol.id);
       const name = stringValue(symbol.name) ?? stringValue(symbol.id) ?? `${input.kind}-${index + 1}`;
       const artifactSource = isRecord(artifact.source) ? artifact.source : {};
       const symbolSource = isRecord(symbol.source) ? symbol.source : artifactSource;
@@ -599,6 +618,7 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
         id: createProjectEntryId(input.kind ?? "extraction", stringValue(symbol.id) ?? name, index),
         name,
         kind,
+        ...(symbolId ? { symbolId } : {}),
         view: input.domain ?? inferProjectView(kind, input.kind),
         ...(summary ? { summary } : {}),
         ...(profile ? { profile } : {}),
@@ -620,19 +640,74 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
     });
 }
 
-function docSourceMapToRef(manifest: unknown, input: ProjectManifestInput): RenderProjectDocSourceMapRef {
-  const record = isRecord(manifest) ? manifest : {};
-  const contractVersion = stringValue(record.contractVersion);
-  const entryArtifact = Array.isArray(record.artifacts) && isRecord(record.artifacts[0])
-    ? stringValue(record.artifacts[0].path)
-    : undefined;
-
+function docSourceMapToRef(index: DocSourceMapIndex, input: ProjectManifestInput): RenderProjectDocSourceMapRef {
   return {
     path: input.path ?? "",
-    ...(contractVersion ? { contractVersion } : {}),
-    ...(entryArtifact ? { entryArtifact } : {}),
-    status: "available"
+    ...(index.contractVersion ? { contractVersion: index.contractVersion } : {}),
+    ...(index.entries[0]?.artifactLinks[0]?.path ? { entryArtifact: index.entries[0].artifactLinks[0].path } : {}),
+    artifactCount: index.artifactCount,
+    entryCount: index.entryCount,
+    linkedEntryCount: index.linkedEntryCount,
+    sourceCount: index.sourceCount,
+    sourceMapCount: index.sourceMapCount,
+    sourcesContentPolicy: index.sourcesContentPolicy,
+    status: index.status,
+    unresolvedEntryCount: index.unresolvedEntryCount
   };
+}
+
+function linkProjectEntriesWithDocSourceMaps(
+  entries: RenderProjectEntry[],
+  docSourceMaps: IndexedProjectDocSourceMap[]
+): RenderProjectEntry[] {
+  if (docSourceMaps.length === 0) {
+    return entries;
+  }
+
+  const docMapEntriesBySymbolId = new Map<string, Array<{
+    entry: DocSourceMapIndexedEntry;
+    sourceMap: IndexedProjectDocSourceMap;
+  }>>();
+
+  for (const sourceMap of docSourceMaps) {
+    for (const entry of sourceMap.index.entries) {
+      if (!entry.symbolId) {
+        continue;
+      }
+
+      const bucket = docMapEntriesBySymbolId.get(entry.symbolId) ?? [];
+      bucket.push({ entry, sourceMap });
+      docMapEntriesBySymbolId.set(entry.symbolId, bucket);
+    }
+  }
+
+  return entries.map((entry) => {
+    const matches = entry.symbolId ? docMapEntriesBySymbolId.get(entry.symbolId) ?? [] : [];
+    const firstMatch = matches[0];
+
+    if (!firstMatch) {
+      return entry;
+    }
+
+    const sourceLink = firstMatch.entry.sourceLinks[0];
+    const artifactLink = firstMatch.entry.artifactLinks[0];
+
+    return {
+      ...entry,
+      docSourceMap: {
+        path: firstMatch.sourceMap.input.path ?? "",
+        entryId: firstMatch.entry.id,
+        ...(sourceLink?.path ? { sourcePath: sourceLink.path } : {}),
+        ...(sourceLink?.range ? { sourceRange: sourceLink.range } : {}),
+        ...(sourceLink?.rangeSource ? { sourceRangeSource: sourceLink.rangeSource } : {}),
+        ...(sourceLink?.confidence ? { sourceConfidence: sourceLink.confidence } : {}),
+        ...(artifactLink?.path ? { artifactPath: artifactLink.path } : {}),
+        ...(artifactLink?.selector ? { artifactSelector: artifactLink.selector } : {}),
+        ...(artifactLink?.confidence ? { artifactConfidence: artifactLink.confidence } : {}),
+        ...(firstMatch.entry.diagnostics.length > 0 ? { diagnostics: firstMatch.entry.diagnostics } : {})
+      }
+    };
+  });
 }
 
 function profileFromArtifact(artifact: Record<string, unknown>): RenderProjectProfileRef | undefined {

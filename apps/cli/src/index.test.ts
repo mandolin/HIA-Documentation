@@ -107,6 +107,10 @@ describe("@hia-doc/cli", () => {
       expect(html).toContain("css-component-style");
       expect(html).toContain("html-component");
       expect(html).toContain("project-mixed-alert.docmap.json");
+      expect(html).toContain("1/1 linked");
+      expect(html).toContain("Doc Source Map");
+      expect(html).toContain("entry:html:alert");
+      expect(html).toContain("[data-component=&quot;Alert&quot;]");
       expect(manifest.project?.views).toEqual(["all", "js", "css", "html"]);
       expect(manifest.project?.entryCounts).toMatchObject({ js: 2, css: 2, html: 2 });
       expect(manifest.build?.mode).toBe("project");
@@ -117,6 +121,16 @@ describe("@hia-doc/cli", () => {
         "doc-source-map"
       ]);
       expect(manifest.docSourceMaps?.[0]?.path).toBe("project-mixed-alert.docmap.json");
+      expect(manifest.docSourceMaps?.[0]).toMatchObject({
+        artifactCount: 1,
+        entryCount: 1,
+        linkedEntryCount: 1,
+        sourceCount: 1,
+        sourceMapCount: 0,
+        sourcesContentPolicy: "none",
+        status: "available",
+        unresolvedEntryCount: 0
+      });
     } finally {
       await rm(root, { force: true, recursive: true });
     }

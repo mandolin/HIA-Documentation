@@ -69,7 +69,7 @@ Profile references are explicit. Current official profile fixtures are local fil
 | `jsdoc-integration` | JSON produced by `@mandolin/jsdoc-plugin-hia-sys`. |
 | `htmdoc-extraction` | HTMDoc extraction artifact. |
 | `cssdoc-extraction` | CSSDoc extraction artifact. |
-| `doc-source-map` | Documentation source map manifest. |
+| `doc-source-map` | Documentation source map manifest. The CLI indexes it and exposes source/artifact linkage to the renderer. |
 
 ## Domains
 
@@ -128,11 +128,30 @@ In project mode, the output manifest includes:
 - `project.entryCounts`;
 - `docSourceMaps`.
 
+`docSourceMaps` entries include the first-round consumption summary:
+
+```json
+{
+  "path": "project-mixed-alert.docmap.json",
+  "contractVersion": "0.1.0-draft",
+  "status": "available",
+  "entryCount": 1,
+  "linkedEntryCount": 1,
+  "unresolvedEntryCount": 0,
+  "sourceCount": 1,
+  "artifactCount": 1,
+  "sourcesContentPolicy": "none"
+}
+```
+
+When a `doc-source-map` entry has a matching `symbolId`, the rendered project entry shows a `Doc Source Map` section with the manifest path, doc-source-map entry id, original source path/range and generated artifact selector.
+
 ## Safety Rules
 
 - Paths in the manifest are resolved relative to the manifest file.
 - Parent traversal and absolute input paths are rejected.
 - Generated output must not leak local absolute paths.
+- `doc-source-map` input is checked for unsafe paths and blocked embedded source content.
 - Missing optional source metadata should degrade the page instead of blocking rendering.
 
 See `docs/unified-html-demo.md` for a runnable mixed project demo.

@@ -53,10 +53,17 @@ export interface RenderProjectProfileRef {
 }
 
 export interface RenderProjectDocSourceMapRef {
+  artifactCount?: number;
   path: string;
   contractVersion?: string;
   entryArtifact?: string;
+  entryCount?: number;
+  linkedEntryCount?: number;
+  sourceCount?: number;
+  sourceMapCount?: number;
+  sourcesContentPolicy?: string;
   status?: string;
+  unresolvedEntryCount?: number;
 }
 
 export interface RenderProjectEntry {
@@ -69,7 +76,25 @@ export interface RenderProjectEntry {
   profile?: RenderProjectProfileRef;
   input?: RenderProjectInputRef;
   source?: RenderProjectSourceRef;
+  symbolId?: string;
+  docSourceMap?: RenderProjectEntryDocSourceMapRef;
   diagnostics?: HiaDiagnostic[];
+}
+
+export interface RenderProjectEntryDocSourceMapRef {
+  artifactConfidence?: string;
+  artifactPath?: string;
+  artifactSelector?: string;
+  diagnostics?: string[];
+  entryId: string;
+  path: string;
+  sourceConfidence?: string;
+  sourcePath?: string;
+  sourceRange?: {
+    start: { line: number; column?: number };
+    end?: { line: number; column?: number };
+  };
+  sourceRangeSource?: string;
 }
 
 export interface RenderProjectInputRef {
@@ -316,6 +341,7 @@ function renderProjectEntry(entry: RenderProjectEntry): string {
   const input = entry.input ? renderProjectEntryInput(entry.input) : "";
   const profile = entry.profile ? renderProjectEntryProfile(entry.profile) : "";
   const source = entry.source ? renderProjectEntrySource(entry.source) : "";
+  const docSourceMap = entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap) : "";
   const diagnostics = renderProjectDiagnostics(entry.diagnostics ?? []);
 
   return [
@@ -328,6 +354,7 @@ function renderProjectEntry(entry: RenderProjectEntry): string {
     input,
     profile,
     source,
+    docSourceMap,
     diagnostics,
     "</article>"
   ].join("");
@@ -362,6 +389,26 @@ function renderProjectEntrySource(source: RenderProjectSourceRef): string {
   return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl></section>`;
 }
 
+function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
+  const sourceRange = docSourceMap.sourceRange ? `:${docSourceMap.sourceRange.start.line}${docSourceMap.sourceRange.end ? `-${docSourceMap.sourceRange.end.line}` : ""}` : "";
+  const diagnostics = docSourceMap.diagnostics && docSourceMap.diagnostics.length > 0
+    ? `<dt>Diagnostics</dt><dd>${escapeHtml(docSourceMap.diagnostics.join(", "))}</dd>`
+    : "";
+  const details = [
+    `<dt>Manifest</dt><dd>${escapeHtml(docSourceMap.path)}</dd>`,
+    `<dt>Entry</dt><dd>${escapeHtml(docSourceMap.entryId)}</dd>`,
+    docSourceMap.sourcePath ? `<dt>Original Source</dt><dd>${escapeHtml(docSourceMap.sourcePath)}${escapeHtml(sourceRange)}</dd>` : "",
+    docSourceMap.sourceRangeSource ? `<dt>Range Source</dt><dd>${escapeHtml(docSourceMap.sourceRangeSource)}</dd>` : "",
+    docSourceMap.sourceConfidence ? `<dt>Source Confidence</dt><dd>${escapeHtml(docSourceMap.sourceConfidence)}</dd>` : "",
+    docSourceMap.artifactPath ? `<dt>Generated Artifact</dt><dd>${escapeHtml(docSourceMap.artifactPath)}</dd>` : "",
+    docSourceMap.artifactSelector ? `<dt>Selector</dt><dd>${escapeHtml(docSourceMap.artifactSelector)}</dd>` : "",
+    docSourceMap.artifactConfidence ? `<dt>Artifact Confidence</dt><dd>${escapeHtml(docSourceMap.artifactConfidence)}</dd>` : "",
+    diagnostics
+  ].join("");
+
+  return `<section class="hia-source-section"><h3>Doc Source Map</h3><dl class="hia-project-meta">${details}</dl></section>`;
+}
+
 function renderProjectProfiles(profiles: RenderProjectProfileRef[]): string {
   if (profiles.length === 0) {
     return "";
@@ -383,7 +430,17 @@ function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[
   }
 
   const items = docSourceMaps
-    .map((item) => `<li>${escapeHtml(item.path)}${item.status ? ` (${escapeHtml(item.status)})` : ""}</li>`)
+    .map((item) => {
+      const status = item.status ? ` (${escapeHtml(item.status)})` : "";
+      const counts = typeof item.entryCount === "number"
+        ? ` - ${escapeHtml(String(item.linkedEntryCount ?? 0))}/${escapeHtml(String(item.entryCount))} linked`
+        : "";
+      const privacy = item.sourcesContentPolicy ? `, sourcesContentPolicy=${escapeHtml(item.sourcesContentPolicy)}` : "";
+      const shape = typeof item.sourceCount === "number" && typeof item.artifactCount === "number"
+        ? `, ${escapeHtml(String(item.sourceCount))} source(s), ${escapeHtml(String(item.artifactCount))} artifact(s)`
+        : "";
+      return `<li>${escapeHtml(item.path)}${status}${counts}${privacy}${shape}</li>`;
+    })
     .join("");
 
   return `<section class="hia-project-summary"><h2>Doc Source Maps</h2><ul>${items}</ul></section>`;

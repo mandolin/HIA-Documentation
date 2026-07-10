@@ -61,7 +61,18 @@ describe("@hia-doc/renderer-html", () => {
         { profileId: "htmdoc", profileVersion: "0.1.0-draft" }
       ],
       docSourceMaps: [
-        { path: "maps/button.docmap.json", contractVersion: "0.1.0-draft", status: "available" }
+        {
+          path: "maps/button.docmap.json",
+          artifactCount: 1,
+          contractVersion: "0.1.0-draft",
+          entryCount: 1,
+          linkedEntryCount: 1,
+          sourceCount: 1,
+          sourceMapCount: 0,
+          sourcesContentPolicy: "none",
+          status: "available",
+          unresolvedEntryCount: 0
+        }
       ],
       entries: [
         {
@@ -90,9 +101,21 @@ describe("@hia-doc/renderer-html", () => {
           kind: "html-component",
           view: "html",
           summary: "Alert markup.",
+          symbolId: "html:component:alert",
           profile: { profileId: "htmdoc", profileVersion: "0.1.0-draft" },
           input: { kind: "htmdoc-extraction", path: "alert.htmdoc.json", contract: "hia-htmdoc-extraction" },
-          source: { path: "src/alert.html", language: "html", range: { start: { line: 1 }, end: { line: 8 } } }
+          source: { path: "src/alert.html", language: "html", range: { start: { line: 1 }, end: { line: 8 } } },
+          docSourceMap: {
+            path: "maps/button.docmap.json",
+            entryId: "entry:html:alert",
+            sourcePath: "src/alert.html",
+            sourceRange: { start: { line: 1 }, end: { line: 8 } },
+            sourceRangeSource: "parser",
+            sourceConfidence: "high",
+            artifactPath: "dist/alert.html",
+            artifactSelector: "[data-component=\"Alert\"]",
+            artifactConfidence: "medium"
+          }
         }
       ]
     });
@@ -108,6 +131,11 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("css-component-style");
     expect(html).toContain("html-component");
     expect(html).toContain("maps/button.docmap.json");
+    expect(html).toContain("1/1 linked");
+    expect(html).toContain("sourcesContentPolicy=none");
+    expect(html).toContain("Doc Source Map");
+    expect(html).toContain("entry:html:alert");
+    expect(html).toContain("dist/alert.html");
     expect(html).toContain("Profile cssdoc@0.1.0-draft");
   });
 });

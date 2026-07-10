@@ -49,7 +49,8 @@ The page should include:
 - a `CSS` view with CSSDoc extraction entries;
 - an `HTML` view with HTMDoc extraction entries;
 - profile summary;
-- doc-source-map summary.
+- doc-source-map summary with linked entry counts;
+- a `Doc Source Map` section on the HTML `Alert` entry.
 - project view buttons styled by the default theme and updating `aria-pressed` as views change.
 
 The manifest should include:
@@ -67,7 +68,16 @@ The manifest should include:
   },
   "build": {
     "mode": "project"
-  }
+  },
+  "docSourceMaps": [
+    {
+      "path": "project-mixed-alert.docmap.json",
+      "status": "available",
+      "entryCount": 1,
+      "linkedEntryCount": 1,
+      "sourcesContentPolicy": "none"
+    }
+  ]
 }
 ```
 
