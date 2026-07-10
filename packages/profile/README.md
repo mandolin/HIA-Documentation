@@ -13,4 +13,4 @@ The package loads and normalizes documentation profile drafts, resolves tag alia
 - duplicate and unknown-reference diagnostics
 - exported `HIA_PROFILE_JSON_SCHEMA` contract metadata
 
-Official profile drafts are still owned by the planning/contracts layer in `work-zone/docs/profiles`; the JSON files under `src/fixtures/profiles` are test fixtures for this runtime.
+Official profile JSON is distributed by `@hia-doc/profiles`. This package deliberately does not bundle a default profile set; callers can validate project-defined profiles, official profiles or extension profiles through the same runtime API.

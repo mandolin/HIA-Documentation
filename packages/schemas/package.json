@@ -1,0 +1,44 @@
+{
+  "name": "@hia-doc/schemas",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Machine-readable JSON Schema distribution for HIA documentation contracts.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/schemas"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./catalog.json": "./dist/catalog.json",
+    "./documentation-profile.schema.json": "./dist/schemas/documentation-profile.schema.json",
+    "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
+    "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
+    "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "sync": "node scripts/sync-schema-assets.mjs",
+    "sync:check": "node scripts/sync-schema-assets.mjs --check",
+    "test": "vitest run --root ../.. packages/schemas/src/index.test.ts"
+  },
+  "devDependencies": {
+    "@hia-doc/config": "workspace:*",
+    "@hia-doc/core": "workspace:*",
+    "@hia-doc/profile": "workspace:*",
+    "@hia-doc/source-linkage": "workspace:*"
+  },
+  "sideEffects": false
+}

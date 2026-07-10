@@ -12,6 +12,8 @@ Each repository owns its own workflow and runs commands from its own repository 
 
 The workflows run on pull requests, pushes to `main` and manual `workflow_dispatch` runs.
 
+`main-repo/.github/workflows/schema-pages.yml` is a publication workflow rather than an ordinary validation workflow. It runs on pushes to `main` and manual dispatch, executes the full release gate, deploys the generated schema site through GitHub Pages and verifies the public catalog, canonical schema ids and aliases after deployment.
+
 Current release-gate workflows declare read-only repository contents permission:
 
 ```yaml
@@ -30,7 +32,7 @@ pnpm install --frozen-lockfile
 pnpm run release:gate
 ```
 
-This covers TypeScript build, unit tests, e2e tests and the real JSDoc Integration smoke check.
+This covers TypeScript build, unit tests, e2e tests, schema/profile distribution consistency, npm-readiness state and the real JSDoc Integration smoke check.
 
 ## JSDoc Satellite Packages
 
@@ -52,6 +54,7 @@ CI workflows must:
 - Avoid `pull_request_target` unless a dedicated reviewed workflow requires it.
 - Keep GitHub token permissions to the minimum required by the job.
 - Prefer npm Trusted Publishing before adding an automated npm publish job.
+- Keep Pages publication on the `github-pages` environment and verify deployed schema ids before reporting success.
 
 The current workflows are validation-only and do not consume npm or GitHub publication secrets.
 

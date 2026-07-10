@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project",
+    "inputs"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": {
+      "const": "0.1.0-draft"
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/profileRef"
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/input"
+      }
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "const": "."
+          },
+          {
+            "const": ".."
+          },
+          {
+            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
+          }
+        ]
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "profileRef": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "profileId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "layer": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    },
+    "inputProfileRef": {
+      "type": "object",
+      "required": [
+        "profileId"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "profileId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "layer": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "input": {
+      "type": "object",
+      "required": [
+        "kind",
+        "path"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "kind": {
+          "enum": [
+            "hia-document",
+            "jsdoc-integration",
+            "htmdoc-extraction",
+            "cssdoc-extraction",
+            "doc-source-map"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "domain": {
+          "enum": [
+            "js",
+            "css",
+            "html",
+            "other"
+          ]
+        },
+        "profile": {
+          "$ref": "#/$defs/inputProfileRef"
+        },
+        "sourceRoot": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    }
+  }
+}

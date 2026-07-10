@@ -34,7 +34,9 @@ This document defines the first versioning baseline for the HIA main repository 
 | Protocol envelope | `0.1.0` | Active pre-1.0 contract | `@hia-doc/core` |
 | Config schema | `0.1.0` | Active pre-1.0 contract | `@hia-doc/config` |
 | Documentation profile schema | `0.1.0-draft` | Draft | `@hia-doc/profile` |
-| Official profile drafts | `0.1.0-draft` | Draft | profile distribution docs and fixtures |
+| Official profile catalog | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
+| Official profile set | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
+| Schema distribution catalog | `0.1.0-draft` | Draft | `@hia-doc/schemas` |
 | Renderer manifest | `0.1.0` | Active pre-1.0 contract | `@hia-doc/renderer-html` |
 | JSDoc Integration input | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` and `@mandolin/jsdoc-plugin-hia-sys` |
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
@@ -43,6 +45,7 @@ This document defines the first versioning baseline for the HIA main repository 
 | HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
 | CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
 | Doc source map | `0.1.0-draft` | Draft | `doc-source-map` contract docs and satellite tools |
+| Doc source map schema | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
 
 ## Change Rules
 
@@ -68,6 +71,16 @@ Draft changes:
 - Draft contracts may change faster, but every change still needs fixture updates and an entry in the compatibility matrix.
 - Draft contracts should graduate only after at least one parser/extractor, one renderer/CLI consumer and one fixture have proven the shape.
 
+## Public Schema Identifiers
+
+Public schema `$id` values use versioned URLs under:
+
+```text
+https://mandolin.github.io/HIA-Documentation/schemas/
+```
+
+Once published, a canonical `$id` is immutable. A contract version change that requires a new schema identity must publish a new versioned URL; package-style unversioned aliases may move to the current supported snapshot but must not replace canonical ids in `$ref` or compatibility records.
+
 ## Dependency Versions
 
 The pinned local toolchain is:
@@ -91,4 +104,4 @@ Before publishing a public package or changing a release-facing contract:
 
 See `docs/release-gate.md` for exact commands.
 
-Official profile distribution policy is documented in `docs/profile-distribution.md`. Profile IDs and profile versions are the current compatibility surface; a public profile package is deferred.
+Official profile distribution policy is documented in `docs/profile-distribution.md`; schema catalog policy is documented in `docs/schema-distribution.md`. Package versions, catalog versions and individual contract/profile versions remain independent. The distribution packages exist in the workspace but remain private until their public release blockers are closed.

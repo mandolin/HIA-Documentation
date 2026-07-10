@@ -29,7 +29,7 @@ The current fixture is:
 fixtures/project-mixed.hia-project.json
 ```
 
-Profile references are explicit. Current official profile fixtures are local files, not remote registry entries. See `docs/profile-distribution.md`.
+Profile references are explicit. `@hia-doc/profiles` distributes the official profile set, while project manifests continue to reference a safe local artifact path when profile data is required. The CLI does not silently fetch remote profiles. See `docs/profile-distribution.md`.
 
 ## Minimal Manifest
 

@@ -1,0 +1,42 @@
+{
+  "name": "@hia-doc/profiles",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Official documentation profile distribution for HIA documentation tools.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/profiles"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./catalog.json": "./dist/catalog.json",
+    "./cssdoc.profile.json": "./dist/profiles/cssdoc.profile.json",
+    "./doc-source-map.profile.json": "./dist/profiles/doc-source-map.profile.json",
+    "./htmdoc.profile.json": "./dist/profiles/htmdoc.profile.json",
+    "./jsdoc.profile.json": "./dist/profiles/jsdoc.profile.json",
+    "./pug-htmdoc-bridge.profile.json": "./dist/profiles/pug-htmdoc-bridge.profile.json",
+    "./sass-cssdoc-bridge.profile.json": "./dist/profiles/sass-cssdoc-bridge.profile.json",
+    "./ts-jsdoc-bridge.profile.json": "./dist/profiles/ts-jsdoc-bridge.profile.json",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --root ../.. packages/profiles/src/index.test.ts"
+  },
+  "dependencies": {
+    "@hia-doc/profile": "workspace:*"
+  },
+  "sideEffects": false
+}

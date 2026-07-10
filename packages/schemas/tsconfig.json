@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "../../node_modules/.cache/hia-doc/schemas.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": ["src/**/*.test.ts"]
+}

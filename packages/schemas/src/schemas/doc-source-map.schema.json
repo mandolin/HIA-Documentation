@@ -1,0 +1,481 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "producer",
+    "artifacts",
+    "sources",
+    "sourceMaps",
+    "chains",
+    "entries",
+    "privacy",
+    "diagnostics"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "contract": {
+      "const": "doc-source-map"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "producer": {
+      "$ref": "#/$defs/producer"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "sourceMaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sourceMap"
+      }
+    },
+    "chains": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/chain"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {}
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "const": "."
+          },
+          {
+            "const": ".."
+          },
+          {
+            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
+          }
+        ]
+      }
+    },
+    "stringList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      }
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "runtime": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "contractRef": {
+      "type": "object",
+      "required": [
+        "contract",
+        "path"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "contract": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contractVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "language": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "format": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "role": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contractRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contractRef"
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "language": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "role": {
+          "enum": [
+            "original",
+            "generated",
+            "intermediate",
+            "virtual",
+            "external"
+          ]
+        },
+        "sourcesContentPolicy": {
+          "$ref": "#/$defs/sourcesContentPolicy"
+        },
+        "sourcesContent": {
+          "type": "string"
+        }
+      }
+    },
+    "sourceMap": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "path"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "const": "ordinary-source-map"
+        },
+        "format": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "mapsFrom": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "mapsTo": {
+          "$ref": "#/$defs/stringList"
+        },
+        "sourcesContentPolicy": {
+          "$ref": "#/$defs/sourcesContentPolicy"
+        },
+        "pointer": {
+          "type": "object"
+        }
+      }
+    },
+    "chain": {
+      "type": "object",
+      "required": [
+        "id",
+        "stages"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stage"
+          }
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "transform"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "to": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "transform": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceMap": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          ]
+        },
+        "linkage": {
+          "$ref": "#/$defs/stringList"
+        }
+      }
+    },
+    "position": {
+      "type": "object",
+      "required": [
+        "line"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "required": [
+        "sourceId",
+        "rangeSource",
+        "confidence"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        },
+        "rangeSource": {
+          "$ref": "#/$defs/rangeSource"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    },
+    "artifactRef": {
+      "type": "object",
+      "required": [
+        "artifactId",
+        "rangeSource",
+        "confidence"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "artifactId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "selector": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "rangeSource": {
+          "$ref": "#/$defs/rangeSource"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "sourceRefs",
+        "artifactRefs",
+        "diagnostics"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "classification": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "relationKind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "symbolId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "symbolKind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "annotation": {
+          "type": "object"
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceRef"
+          }
+        },
+        "artifactRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifactRef"
+          }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {}
+        }
+      }
+    },
+    "rangeSource": {
+      "enum": [
+        "source-map",
+        "parser",
+        "compiler",
+        "adapter",
+        "manual",
+        "heuristic",
+        "unresolved"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "none"
+      ]
+    },
+    "sourcesContentPolicy": {
+      "enum": [
+        "none",
+        "reference",
+        "embed",
+        "redacted"
+      ]
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "sourcesContentPolicy"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "sourcesContentPolicy": {
+          "$ref": "#/$defs/sourcesContentPolicy"
+        },
+        "allowAbsolutePaths": {
+          "type": "boolean"
+        },
+        "allowUncPaths": {
+          "type": "boolean"
+        },
+        "allowPathTraversal": {
+          "type": "boolean"
+        },
+        "releaseGate": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

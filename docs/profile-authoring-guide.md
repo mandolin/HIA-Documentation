@@ -17,13 +17,13 @@ The runtime package is `@hia-doc/profile`. It can:
 - resolve inherited tags through `extends`;
 - report stable profile diagnostics.
 
-Official profile fixtures currently live in:
+Official distributed profiles live in:
 
 ```text
-packages/profile/src/fixtures/profiles/
+packages/profiles/src/profiles/
 ```
 
-The fixture set includes JSDoc, HTMDoc, CSSDoc, doc-source-map and bridge profiles.
+The distribution includes JSDoc, HTMDoc, CSSDoc, doc-source-map and bridge profiles. `@hia-doc/profiles` provides the JSON files, catalog and programmatic accessors; `@hia-doc/profile` remains the runtime and validator.
 
 ## Profile Shape
 
@@ -119,16 +119,11 @@ Consumers should treat unknown capability fields as forward-compatible additions
 
 ## Validate A Profile
 
-Profile runtime tests cover the current fixture set:
+Profile runtime and distribution tests cover the current official set:
 
 ```bash
-pnpm vitest run packages/profile/src/index.test.ts
-```
-
-When editing official profile drafts in WorkZone, run the draft checker:
-
-```powershell
-node work-zone/dev/scripts/check-profile-drafts.cjs
+pnpm --filter @hia-doc/profile test
+pnpm --filter @hia-doc/profiles test
 ```
 
 ## Compatibility Rules
@@ -143,5 +138,7 @@ See `docs/versioning.md` and `docs/compatibility-matrix.md` for the current gove
 ## Distribution And Migration
 
 Official profile distribution policy is documented in `docs/profile-distribution.md`.
+
+Machine-readable schema distribution is documented in `docs/schema-distribution.md`.
 
 Migration paths from JSDoc, CSSDOC 0.2.22, SassDoc legacy, TSDoc/API Extractor/TypeDoc and Pug/HTMDoc are documented in `docs/migration-guide.md`.

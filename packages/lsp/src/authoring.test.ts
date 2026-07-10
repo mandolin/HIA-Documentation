@@ -433,5 +433,5 @@ function readFixture(name: string): string {
 }
 
 function readProfileFixture(name: string): HiaDocumentationProfile {
-  return JSON.parse(readFileSync(new URL(`../../profile/src/fixtures/profiles/${name}`, import.meta.url), "utf8")) as HiaDocumentationProfile;
+  return JSON.parse(readFileSync(new URL(`../../profiles/src/profiles/${name}`, import.meta.url), "utf8")) as HiaDocumentationProfile;
 }

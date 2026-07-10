@@ -1,0 +1,42 @@
+{
+  "catalogVersion": "0.1.0-draft",
+  "publicBaseUrl": "https://mandolin.github.io/HIA-Documentation/schemas/",
+  "schemas": [
+    {
+      "contractVersion": "0.1.0-draft",
+      "key": "documentation-profile",
+      "ownerPackage": "@hia-doc/profile",
+      "path": "./documentation-profile.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
+      "key": "doc-source-map",
+      "ownerPackage": "@hia-doc/source-linkage",
+      "path": "./doc-source-map.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.2.0",
+      "key": "hia-document",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./hia-document.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json",
+      "stability": "active-pre-1.0"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
+      "key": "project-manifest",
+      "ownerPackage": "@hia-doc/config",
+      "path": "./project-manifest.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json",
+      "stability": "draft"
+    }
+  ]
+}

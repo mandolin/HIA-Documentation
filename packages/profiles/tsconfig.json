@@ -4,11 +4,11 @@
     "composite": true,
     "outDir": "dist",
     "rootDir": "src",
-    "tsBuildInfoFile": "../../node_modules/.cache/hia-doc/source-linkage.tsbuildinfo"
+    "tsBuildInfoFile": "../../node_modules/.cache/hia-doc/profiles.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.json"],
   "exclude": ["src/**/*.test.ts"],
   "references": [
-    { "path": "../core" }
+    { "path": "../profile" }
   ]
 }

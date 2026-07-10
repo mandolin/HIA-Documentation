@@ -1,0 +1,48 @@
+{
+  "catalogVersion": "0.1.0-draft",
+  "profileSchemaVersion": "0.1.0-draft",
+  "profiles": [
+    {
+      "profileId": "cssdoc",
+      "profileVersion": "0.1.0-draft",
+      "layer": "stable",
+      "path": "./cssdoc.profile.json"
+    },
+    {
+      "profileId": "doc-source-map",
+      "profileVersion": "0.1.0-draft",
+      "layer": "stable",
+      "path": "./doc-source-map.profile.json"
+    },
+    {
+      "profileId": "htmdoc",
+      "profileVersion": "0.1.0-draft",
+      "layer": "stable",
+      "path": "./htmdoc.profile.json"
+    },
+    {
+      "profileId": "jsdoc",
+      "profileVersion": "0.1.0-draft",
+      "layer": "stable",
+      "path": "./jsdoc.profile.json"
+    },
+    {
+      "profileId": "pug-htmdoc-bridge",
+      "profileVersion": "0.1.0-draft",
+      "layer": "bridge",
+      "path": "./pug-htmdoc-bridge.profile.json"
+    },
+    {
+      "profileId": "sass-cssdoc-bridge",
+      "profileVersion": "0.1.0-draft",
+      "layer": "bridge",
+      "path": "./sass-cssdoc-bridge.profile.json"
+    },
+    {
+      "profileId": "ts-jsdoc-bridge",
+      "profileVersion": "0.1.0-draft",
+      "layer": "bridge",
+      "path": "./ts-jsdoc-bridge.profile.json"
+    }
+  ]
+}

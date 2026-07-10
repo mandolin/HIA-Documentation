@@ -90,6 +90,12 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/profiles:
+    dependencies:
+      '@hia-doc/profile':
+        specifier: workspace:*
+        version: link:../profile
+
   packages/renderer-html:
     dependencies:
       '@hia-doc/core':
@@ -98,6 +104,21 @@ importers:
       '@hia-doc/theme-default':
         specifier: workspace:*
         version: link:../theme-default
+
+  packages/schemas:
+    devDependencies:
+      '@hia-doc/config':
+        specifier: workspace:*
+        version: link:../config
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@hia-doc/profile':
+        specifier: workspace:*
+        version: link:../profile
+      '@hia-doc/source-linkage':
+        specifier: workspace:*
+        version: link:../source-linkage
 
   packages/source-linkage:
     dependencies:

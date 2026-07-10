@@ -16,7 +16,7 @@ import {
 } from "./index.js";
 import type { HiaDocumentationProfile } from "./index.js";
 
-const fixtureDir = path.resolve(__dirname, "fixtures/profiles");
+const fixtureDir = path.resolve(__dirname, "../../profiles/src/profiles");
 
 describe("@hia-doc/profile", () => {
   it("exports the profile JSON Schema contract", () => {

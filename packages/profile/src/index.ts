@@ -7,7 +7,7 @@ export const HIA_PROFILE_LAYERS = ["stable", "compat", "bridge", "extension"] as
 export const HIA_PROFILE_TAG_STATUSES = ["stable", "alias", "deprecated", "reserved", "experimental"] as const;
 export const HIA_PROFILE_TAG_SCOPES = ["block", "inline", "file", "region", "directive"] as const;
 export const HIA_PROFILE_DIAGNOSTIC_SEVERITIES = ["info", "warning", "error"] as const;
-export const HIA_PROFILE_SCHEMA_ID = "https://hia-doc.local/schema/documentation-profile-0.1.0-draft.json";
+export const HIA_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json";
 
 export const HIA_PROFILE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",

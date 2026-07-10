@@ -11,6 +11,9 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Source model | `HIA_SOURCE_MODEL_VERSION` | `0.2.0` |
 | Config schema | `HIA_CONFIG_SCHEMA_VERSION` | `0.1.0` |
 | Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `0.1.0-draft` |
+| Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
+| Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
+| Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -28,6 +31,9 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Protocol envelope | `@hia-doc/core` | Lightweight message envelope, not split into a separate package yet. |
 | Project config | `@hia-doc/config` | Project/build profile settings. Config is not part of the core document IR. |
 | Documentation profile runtime | `@hia-doc/profile` | Loads, validates, normalizes and queries tag/rule/mapping/diagnostic profile registries. Profile is not part of the core document IR. |
+| Official profile distribution | `@hia-doc/profiles` | Distributes official profile JSON, catalog metadata and defensive-copy accessors. |
+| Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
+| Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
@@ -72,6 +78,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - `docs/configuration.md`
 - `docs/profile-authoring-guide.md`
 - `docs/profile-distribution.md`
+- `docs/schema-distribution.md`
 - `docs/migration-guide.md`
 - `docs/project-manifest-guide.md`
 - `docs/unified-html-demo.md`

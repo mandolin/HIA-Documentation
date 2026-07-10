@@ -2,33 +2,24 @@
 
 This document defines how official HIA documentation profiles are distributed, versioned and consumed.
 
-## Current Status
+## Package Boundaries
 
-The documentation profile schema is `0.1.0-draft`.
+The profile system has two packages with different responsibilities:
 
-`@hia-doc/profile` now exports the profile schema contract:
-
-- `HIA_PROFILE_SCHEMA_VERSION`
-- `HIA_PROFILE_SCHEMA_ID`
-- `HIA_PROFILE_JSON_SCHEMA`
-- `validateHiaProfile()`
-
-Official profile drafts currently have two homes:
-
-| Location | Role |
+| Package | Responsibility |
 | --- | --- |
-| `work-zone/docs/profiles/*.profile.json` | Source-of-truth planning and contract drafts. |
-| `packages/profile/src/fixtures/profiles/*.profile.json` | Runtime test fixtures for `@hia-doc/profile`. |
+| `@hia-doc/profile` | Profile types, loading, structural and semantic validation, registry queries and profile-set composition. |
+| `@hia-doc/profiles` | Official stable and bridge profile JSON files, a machine-readable catalog and defensive-copy accessors. |
 
-The fixture files are not yet a public package distribution surface. They prove runtime compatibility and keep release gates honest.
+The documentation profile schema is `0.1.0-draft`. The canonical official JSON files live under `packages/profiles/src/profiles/` and are copied into the package `dist` directory by the TypeScript build.
 
 ## Official Profile Set
 
 | Profile ID | Layer | Purpose |
 | --- | --- | --- |
-| `jsdoc` | `stable` | JSDoc fact-standard input plus HIA JSDoc extension tags from the published plugin. |
+| `jsdoc` | `stable` | JSDoc fact-standard input plus the documented HIA JSDoc extension tags. |
 | `htmdoc` | `stable` | HIA-led HTML documentation profile. |
-| `cssdoc` | `stable` | HIA-led CSS documentation profile, absorbing useful CSSDOC 0.2.22 ideas into one modern standard profile. |
+| `cssdoc` | `stable` | HIA-led CSS documentation profile. |
 | `doc-source-map` | `stable` | Documentation source map consumption rules. |
 | `pug-htmdoc-bridge` | `bridge` | Pug to HTMDoc generated-source bridge. |
 | `sass-cssdoc-bridge` | `bridge` | Sass/SCSS to CSSDoc generated-source bridge. |
@@ -36,9 +27,34 @@ The fixture files are not yet a public package distribution surface. They prove 
 
 Stable profiles define recommended standard semantics. Bridge profiles connect generated or external artifacts to stable profiles without promoting every external shape into HIA core.
 
-## Consumption Model
+## Programmatic Consumption
 
-Project manifests should reference profile IDs and versions explicitly:
+Use `@hia-doc/profiles` when a tool needs the official set:
+
+```ts
+import {
+  createOfficialHiaProfileSet,
+  getOfficialHiaProfile,
+  listOfficialHiaProfiles
+} from "@hia-doc/profiles";
+
+const cssdoc = getOfficialHiaProfile("cssdoc");
+const profileSet = createOfficialHiaProfileSet();
+const profiles = listOfficialHiaProfiles();
+```
+
+The accessors return defensive copies so project-specific customization cannot mutate package-owned data.
+
+Every profile and the catalog also has an explicit JSON export:
+
+```ts
+import catalog from "@hia-doc/profiles/catalog.json" with { type: "json" };
+import cssdoc from "@hia-doc/profiles/cssdoc.profile.json" with { type: "json" };
+```
+
+## Project Manifest Consumption
+
+Project manifests reference profile IDs and versions explicitly:
 
 ```json
 {
@@ -49,33 +65,17 @@ Project manifests should reference profile IDs and versions explicitly:
 }
 ```
 
-Until an official profile package exists, manifests should also list local profile files when a build needs profile metadata:
+When a build requires an explicit profile artifact, the manifest should still provide a safe local path. Package resolution or a caller-owned materialization step may supply that file, but the CLI does not silently fetch profiles from a remote registry.
 
-```json
-{
-  "profiles": [
-    {
-      "profileId": "cssdoc",
-      "path": "project-mixed-profiles/cssdoc.profile.json"
-    }
-  ]
-}
-```
+## Version Boundaries
 
-The CLI should consume explicit artifacts and explicit profile references. It should not silently fetch profiles from a remote registry.
+Three versions remain independent:
 
-## Future Package Boundary
+- npm package version: distribution release cadence;
+- `catalogVersion`: catalog shape and package indexing contract;
+- `profileVersion`: semantics of an individual profile.
 
-The reserved target is an official profile distribution package such as `@hia-doc/profiles` or an equivalent package name chosen during publication planning.
-
-The dedicated `@hia-doc/profiles` package should wait until:
-
-- profile schema validation is backed by the exported `HIA_PROFILE_JSON_SCHEMA` and at least one schema compatibility gate;
-- project manifest profile loading and LSP profile capability consumption are stable enough for external users;
-- public npm scope and release ownership are decided;
-- migration rules for stable profile changes are documented.
-
-Until then, profile IDs and profile versions are the compatibility contract, not a public package version.
+An additive package release does not automatically change every `profileVersion`. A breaking profile change must update that profile's version, fixtures, compatibility matrix and migration guidance.
 
 ## Extension Profiles
 
@@ -88,35 +88,30 @@ Extension profiles should:
 - extend an official stable profile instead of copying it;
 - avoid redefining stable tags with different meanings;
 - mark experimental tags as `experimental` until they are proven;
-- document migration plans before proposing an extension tag for the official profile set.
+- document migration plans before proposing an extension tag for the official set.
 
-## Change Policy
+## Change Gate
 
-Profile changes must update:
-
-- the profile draft;
-- runtime fixtures;
-- profile runtime tests;
-- `docs/compatibility-matrix.md` when compatibility status changes;
-- migration guidance when a tag is renamed, deprecated or promoted.
+Profile changes must update the canonical JSON file, runtime/distribution tests and compatibility or migration documentation when behavior changes.
 
 Run:
 
 ```bash
-pnpm vitest run packages/profile/src/index.test.ts
+pnpm --filter @hia-doc/profile test
+pnpm --filter @hia-doc/profiles test
+pnpm run schema:check
 pnpm run release:gate
 ```
 
-When editing WorkZone profile drafts, also run:
+## Publication Status
 
-```powershell
-node work-zone/dev/scripts/check-profile-drafts.cjs
-```
+`@hia-doc/profiles` is currently a private workspace distribution package, not a public npm release. Public publication requires:
 
-## Deferred Work
+- operational ownership of the approved `@hia-doc` npm scope;
+- release metadata and package versions for both `@hia-doc/profile` and `@hia-doc/profiles`;
+- a Trusted Publishing workflow owned by the public repository;
+- a successful pack/install smoke from the registry candidate.
 
-- Published profile package.
-- Profile JSON Schema publication.
-- Workspace profile auto-discovery.
-- Profile marketplace or community registry.
-- Full profile-defined rule execution.
+The repository and candidate package tarballs use the approved MIT license.
+
+Profile marketplace, community registry and automatic workspace discovery remain separate future capabilities.

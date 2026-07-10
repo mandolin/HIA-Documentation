@@ -111,6 +111,8 @@ Project mode can combine:
 
 The output page can show all entries together or split them into JS, CSS and HTML views.
 
+Tools that need the official vocabulary can consume `@hia-doc/profiles` as JSON or through its programmatic accessors. Generic schema consumers can use the owner-preserving catalog in `@hia-doc/schemas`; semantic validation should still use `@hia-doc/profile`, `@hia-doc/config`, `@hia-doc/core` or `@hia-doc/source-linkage` as appropriate.
+
 ## What Is Not Migrated Yet
 
 - Automatic workspace profile discovery.
@@ -118,4 +120,3 @@ The output page can show all entries together or split them into JS, CSS and HTM
 - Full SassDoc legacy compatibility.
 - Complete API Extractor or TypeDoc bridge.
 - Vue, React, CSS-in-JS and Storybook deep bridges.
-

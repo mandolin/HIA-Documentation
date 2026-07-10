@@ -1,0 +1,73 @@
+name: Schema Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: schema-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build schema site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.20.2
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release gate
+        run: pnpm run release:gate
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload schema site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/schema-pages
+
+  deploy:
+    name: Deploy and verify schema site
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.20.2
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify published schemas
+        run: node scripts/check-schema-pages-online.mjs

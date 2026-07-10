@@ -6,9 +6,14 @@ import {
   type HiaDiagnosticSeverity,
   type HiaSourceRange
 } from "@hia-doc/core";
+import { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
 
-export const DOC_SOURCE_MAP_CONTRACT = "doc-source-map";
-export const DOC_SOURCE_MAP_CONTRACT_VERSION = "0.1.0-draft";
+export { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
+export {
+  DOC_SOURCE_MAP_JSON_SCHEMA,
+  DOC_SOURCE_MAP_SCHEMA_ID,
+  DOC_SOURCE_MAP_SCHEMA_VERSION
+} from "./schema.js";
 
 export interface DocSourceMapIndexOptions {
   path?: string;

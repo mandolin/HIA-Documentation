@@ -19,6 +19,22 @@ import {
   HIA_PROFILE_SCHEMA_VERSION,
   validateHiaProfile
 } from "../packages/profile/dist/index.js";
+import {
+  createOfficialHiaProfileSet,
+  HIA_OFFICIAL_PROFILE_CATALOG,
+  HIA_OFFICIAL_PROFILE_IDS
+} from "../packages/profiles/dist/index.js";
+import {
+  getHiaSchema,
+  HIA_SCHEMA_CATALOG,
+  HIA_SCHEMA_KEYS
+} from "../packages/schemas/dist/index.js";
+import {
+  DOC_SOURCE_MAP_JSON_SCHEMA,
+  DOC_SOURCE_MAP_SCHEMA_ID,
+  DOC_SOURCE_MAP_SCHEMA_VERSION,
+  validateDocSourceMap
+} from "../packages/source-linkage/dist/index.js";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -33,7 +49,7 @@ async function readJson(relativePath) {
 }
 
 async function readProfileFixtures() {
-  const fixtureDir = path.join(rootDir, "packages/profile/src/fixtures/profiles");
+  const fixtureDir = path.join(rootDir, "packages/profiles/src/profiles");
   const fileNames = (await readdir(fixtureDir)).filter((fileName) => fileName.endsWith(".profile.json")).sort();
   return Promise.all(fileNames.map(async (fileName) => JSON.parse(await readFile(path.join(fixtureDir, fileName), "utf8"))));
 }
@@ -65,5 +81,39 @@ for (const profile of profiles) {
 
 const profileSet = createHiaProfileSet({ profiles });
 assert(profileSet.diagnostics.length === 0, `Profile set has diagnostics: ${JSON.stringify(profileSet.diagnostics, null, 2)}`);
+assert(
+  JSON.stringify([...profileSet.profiles.keys()].sort()) === JSON.stringify([...HIA_OFFICIAL_PROFILE_IDS]),
+  "Official profile distribution ids drifted from the schema fixture set."
+);
+assert(createOfficialHiaProfileSet().diagnostics.length === 0, "Official profile distribution has runtime diagnostics.");
+assert(HIA_OFFICIAL_PROFILE_CATALOG.profiles.length === profiles.length, "Official profile catalog size drifted.");
 
-console.log(`Schema contract check passed: 1 project manifest, ${profiles.length} profiles.`);
+assert(DOC_SOURCE_MAP_JSON_SCHEMA.$id === DOC_SOURCE_MAP_SCHEMA_ID, "Doc source map schema id drifted.");
+assert(
+  DOC_SOURCE_MAP_JSON_SCHEMA.properties.contractVersion.const === DOC_SOURCE_MAP_SCHEMA_VERSION,
+  "Doc source map contractVersion const drifted."
+);
+const docSourceMap = await readJson("fixtures/project-mixed-alert.docmap.json");
+const docSourceMapDiagnostics = validateDocSourceMap(docSourceMap, { path: "fixtures/project-mixed-alert.docmap.json" });
+assert(docSourceMapDiagnostics.length === 0, `Doc source map fixture has diagnostics: ${JSON.stringify(docSourceMapDiagnostics, null, 2)}`);
+
+const ownerSchemas = new Map([
+  [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
+  [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
+  [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
+  [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA]
+]);
+assert(
+  JSON.stringify(HIA_SCHEMA_CATALOG.schemas.map((entry) => entry.key)) === JSON.stringify([...HIA_SCHEMA_KEYS]),
+  "Schema distribution catalog keys drifted."
+);
+for (const entry of HIA_SCHEMA_CATALOG.schemas) {
+  const ownerSchema = ownerSchemas.get(entry.schemaId);
+  assert(ownerSchema, `Schema catalog references an unknown owner schema: ${entry.schemaId}`);
+  assert(
+    JSON.stringify(getHiaSchema(entry.key)) === JSON.stringify(ownerSchema),
+    `Distributed schema snapshot drifted from owner package: ${entry.key}`
+  );
+}
+
+console.log(`Schema contract check passed: 1 project manifest, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

@@ -9,7 +9,7 @@ import {
   HIA_TEXT_I18N_MODEL_VERSION
 } from "./model.js";
 
-export const HIA_DOCUMENT_SCHEMA_ID = "https://hia-doc.local/schema/hia-document-0.2.0.json";
+export const HIA_DOCUMENT_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json";
 export const HIA_DOCUMENT_SCHEMA_VERSION = HIA_CORE_CONTRACT_VERSION;
 
 export const HIA_DOCUMENT_SCHEMA = {

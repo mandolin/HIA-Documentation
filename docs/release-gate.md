@@ -26,11 +26,22 @@ The gate runs:
 - TypeScript build.
 - Unit tests.
 - Cross-package e2e tests.
-- Schema contract checks for core document, project manifest and documentation profile fixtures.
+- Schema contract checks for core document, project manifest, documentation profile, doc-source-map and distributed schema snapshots.
+- Distribution readiness checks that verify the approved `@hia-doc` scope, MIT package licenses and GitHub Pages schema namespace while keeping candidates private until release versions and Trusted Publishing are ready.
+- Local schema Pages artifact generation with canonical versioned files and package-style aliases.
 - Real JPHS Integration fixture through `hia docs build --jsdoc-integration`.
 - Output safety checks for local absolute paths, `filePath`, legacy `currentPage` and synthetic `package:undefined`.
 - Example and fixture governance checks.
 - Direct dependency and license audit.
+
+Targeted distribution checks are also available:
+
+```bash
+pnpm run schema:check
+pnpm run distribution:check
+pnpm --filter @hia-doc/schemas sync:check
+pnpm run schema:site
+```
 
 ## JSDoc Satellite Packages
 
@@ -61,6 +72,8 @@ npm publish --access public --registry=https://registry.npmjs.org/
 An `E404 Not Found` result from `npm view` is expected for a version that has not been published yet.
 
 Before adding automated npm publication, prefer npm Trusted Publishing through GitHub Actions OpenID Connect instead of storing long-lived npm tokens. Automated publish workflows must not run on ordinary pull requests and must keep minimal workflow permissions.
+
+The main-repo distribution packages remain private until `docs/schema-distribution.md` and `docs/profile-distribution.md` publication blockers are closed. A successful workspace pack dry-run or Pages deployment is necessary but does not by itself authorize npm publication.
 
 ## Post-Publish Smoke
 

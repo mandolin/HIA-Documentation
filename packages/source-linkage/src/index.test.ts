@@ -1,7 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { createDocSourceMapIndex, validateDocSourceMap } from "./index.js";
+import {
+  createDocSourceMapIndex,
+  DOC_SOURCE_MAP_JSON_SCHEMA,
+  DOC_SOURCE_MAP_SCHEMA_ID,
+  DOC_SOURCE_MAP_SCHEMA_VERSION,
+  validateDocSourceMap
+} from "./index.js";
 
 describe("@hia-doc/source-linkage", () => {
+  it("exports the doc-source-map JSON Schema contract", () => {
+    expect(DOC_SOURCE_MAP_JSON_SCHEMA.$id).toBe(DOC_SOURCE_MAP_SCHEMA_ID);
+    expect(DOC_SOURCE_MAP_JSON_SCHEMA.properties.contractVersion.const).toBe(DOC_SOURCE_MAP_SCHEMA_VERSION);
+    expect(DOC_SOURCE_MAP_JSON_SCHEMA.required).toContain("entries");
+    expect(DOC_SOURCE_MAP_JSON_SCHEMA.$defs.privacy.required).toContain("sourcesContentPolicy");
+  });
+
   it("indexes doc-source-map entries and linked source/artifact paths", () => {
     const index = createDocSourceMapIndex({
       contract: "doc-source-map",
