@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-0.1.0-draft.schema.json",
+  "title": "Documentation Producer Descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "version",
+    "displayName",
+    "inputKinds",
+    "outputKinds",
+    "capabilities"
+  ],
+  "properties": {
+    "contract": {
+      "const": "documentation-producer"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputKinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z0-9][a-z0-9._/-]*$"
+      }
+    },
+    "outputKinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z0-9][a-z0-9._/-]*$"
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceLinkage",
+        "incremental",
+        "watch"
+      ],
+      "properties": {
+        "sourceLinkage": {
+          "type": "boolean"
+        },
+        "incremental": {
+          "const": false
+        },
+        "watch": {
+          "const": false
+        }
+      }
+    }
+  }
+}

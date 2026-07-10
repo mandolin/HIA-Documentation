@@ -11,6 +11,8 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `hia-document` | `@hia-doc/core` | active pre-1.0 |
 | `project-manifest` | `@hia-doc/config` | draft |
 | `documentation-profile` | `@hia-doc/profile` | draft |
+| `documentation-producer` | `@hia-doc/plugin-sdk` | draft |
+| `documentation-producer-result` | `@hia-doc/plugin-sdk` | draft |
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
@@ -30,6 +32,7 @@ Explicit JSON exports are available for non-runtime consumers:
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
+import producerSchema from "@hia-doc/schemas/documentation-producer.schema.json" with { type: "json" };
 ```
 
 The catalog contains `key`, `schemaId`, `contractVersion`, `ownerPackage`, `stability` and package-relative `path` fields.
@@ -84,4 +87,4 @@ The `schema-pages.yml` workflow runs the full release gate, deploys `dist/schema
 
 `@hia-doc/schemas` is currently private. The package scope is `@hia-doc`, the repository license is MIT and the GitHub Pages `$id` namespace is approved. A custom domain and GitHub organization are not required. Public npm publication still requires package versions, operational npm ownership and Trusted Publishing setup.
 
-GitHub Pages is enabled, but the first content deployment remains pending until the workflow and versioned ids are committed and pushed to `main`.
+GitHub Pages is enabled and the initial four-schema deployment is online. Newly added owner schemas are published by the same workflow after their changes reach `main`.

@@ -1,0 +1,38 @@
+{
+  "contract": "documentation-producer-result",
+  "contractVersion": "0.1.0-draft",
+  "producer": {
+    "id": "fixture-doc",
+    "version": "0.1.0"
+  },
+  "status": "success",
+  "artifacts": [
+    {
+      "id": "fixture-extraction",
+      "kind": "fixture-extraction",
+      "path": "artifacts/fixture.extraction.json",
+      "contract": "fixture-extraction",
+      "contractVersion": "0.1.0-draft",
+      "language": "fixture",
+      "mediaType": "application/json",
+      "profileIds": ["fixture-doc"]
+    },
+    {
+      "id": "fixture-hia-document",
+      "kind": "hia-document",
+      "path": "artifacts/fixture.hia.json",
+      "contract": "hia-document",
+      "contractVersion": "0.2.0",
+      "mediaType": "application/json"
+    },
+    {
+      "id": "fixture-doc-source-map",
+      "kind": "doc-source-map",
+      "path": "artifacts/fixture.docmap.json",
+      "contract": "doc-source-map",
+      "contractVersion": "0.1.0-draft",
+      "mediaType": "application/json"
+    }
+  ],
+  "diagnostics": []
+}

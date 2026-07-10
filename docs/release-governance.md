@@ -10,7 +10,7 @@ The current baseline is intentionally practical: local release gates remain the 
 | --- | --- | --- |
 | Documentation-only | README, public docs, examples index | `git diff --check` and targeted doc review. |
 | Contract-facing | Core schema, profile schema, project manifest, renderer manifest, protocol envelope | `pnpm run release:gate`, fixture updates and compatibility matrix review. |
-| Distribution catalog | Official profiles, schema snapshots, doc-source-map schema | `pnpm run release:gate`, `pnpm run distribution:check`, snapshot/mirror checks and pack dry-run. |
+| Distribution catalog | Official profiles, schema snapshots, producer/result and doc-source-map schemas | `pnpm run release:gate`, `pnpm run distribution:check`, snapshot/mirror checks and pack dry-run. |
 | Runtime/tooling | CLI, renderer, LSP, VS Code shell, config/profile runtime | `pnpm run release:gate`, relevant manual smoke when user-facing behavior changes. |
 | Official satellite package | `jsdoc-plugin-hia-sys`, `jsdoc-theme-hia`, future `hia-*doc` packages | Package `npm run release:gate`, pack dry-run and release metadata review. |
 | Public npm publish | Any package published to `registry.npmjs.org` | All matching gates, version uniqueness check and post-publish smoke. |
@@ -71,7 +71,7 @@ pnpm run smoke:published-jsdoc
 
 Before adding an automated npm publish workflow, prefer npm Trusted Publishing with GitHub Actions OpenID Connect instead of long-lived npm automation tokens. npm documents Trusted Publishing as a way to publish packages from supported CI providers without storing long-lived npm tokens.
 
-The canonical main-repo package scope is `@hia-doc/*`, the repository license is MIT and public schema ids use `https://mandolin.github.io/HIA-Documentation/schemas/`. Operational npm scope ownership still has to be established before first publication. `@hia-doc/profiles`, `@hia-doc/schemas` and `@hia-doc/source-linkage` remain private `0.0.0` workspace packages until release versions and Trusted Publishing are ready. Existing `@mandolin/*` JSDoc packages retain their current names.
+The canonical main-repo package scope is `@hia-doc/*`, the repository license is MIT and public schema ids use `https://mandolin.github.io/HIA-Documentation/schemas/`. Operational npm scope ownership still has to be established before first publication. `@hia-doc/profiles`, `@hia-doc/schemas`, `@hia-doc/source-linkage` and `@hia-doc/plugin-sdk` remain private `0.0.0` workspace packages until release versions and Trusted Publishing are ready. Existing `@mandolin/*` JSDoc packages retain their current names.
 
 Automation publish workflows must:
 

@@ -19,7 +19,8 @@ This matrix records the current compatibility baseline for the main repository, 
 | `@hia-doc/config` | private `0.0.0` | config schema `0.1.0` | Active pre-1.0 baseline. |
 | `@hia-doc/profile` | private `0.0.0` | profile schema `0.1.0-draft` | Draft profile runtime baseline. |
 | `@hia-doc/profiles` | private `0.0.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; `@hia-doc` scope approved, release version/ownership setup pending. |
-| `@hia-doc/schemas` | private `0.0.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; GitHub Pages namespace approved/enabled, first deployment pending push. |
+| `@hia-doc/plugin-sdk` | private `0.0.0`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; single-run in-process producer baseline. |
+| `@hia-doc/schemas` | private `0.0.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; initial GitHub Pages deployment online, producer schemas pending next push. |
 | `@hia-doc/source-linkage` | private `0.0.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer consumption baseline; LSP request handler deferred. |
 | `@hia-doc/parser-jsdoc` | private `0.0.0` | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline. |
 | `@hia-doc/renderer-html` | private `0.0.0` | renderer manifest `0.1.0` | Active renderer baseline with single-document and project-page outputs. |
@@ -36,6 +37,9 @@ This matrix records the current compatibility baseline for the main repository, 
 | `HIA/hia-htmdoc` | private workspace `0.0.0` | HTMDoc extraction `0.1.0-draft` | Incubating foundation project. |
 | `HIA/hia-cssdoc` | private workspace `0.0.0` | CSSDoc extraction `0.1.0-draft` | Incubating foundation project. |
 | `HIA/hia-sassdoc` | private workspace `0.0.0` | Sass -> CSSDoc -> doc-source-map bridge outputs | Incubating generated-DSL project. |
+| `HIA/hia-jsdoc` | private workspace `0.0.0` | JSDoc preset/runner/plugin/theme bridges | Incubating umbrella project. |
+| `HIA/hia-pugdoc` | private workspace `0.0.0` | Pug -> HTMDoc/doc-source-map bridge outputs | Incubating generated-DSL project. |
+| `HIA/hia-tsdoc` | private workspace `0.0.0` | TS -> JSDoc/doc-source-map bridge outputs | Incubating generated-DSL project. |
 
 ## Data Contracts
 
@@ -48,6 +52,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | Documentation profile `0.1.0-draft` | `@hia-doc/profiles` official JSON | profile runtime, LSP capability/completion | `packages/profiles/src/profiles/*.json` |
 | Official profile distribution `0.1.0-draft` | `@hia-doc/profiles` | project manifest authors, LSP/IDE consumers | catalog, package tests and `docs/profile-distribution.md` |
 | Schema distribution `0.1.0-draft` | `@hia-doc/schemas` snapshots | JSON Schema consumers and contract tooling | owner/snapshot equality gate and `docs/schema-distribution.md` |
+| Documentation producer/result `0.1.0-draft` | `@hia-doc/plugin-sdk`, future `hia-*doc` producers | CLI orchestration, CI and adapter tooling | `fixtures/producer/*.json` plus owner/distribution schemas |
 | Project docs manifest `0.1.0-draft` | explicit user/fixture manifest | CLI project build | `fixtures/project-mixed.hia-project.json` |
 | HTMDoc extraction `0.1.0-draft` | `hia-htmdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.htmdoc.json` |
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
@@ -73,7 +78,7 @@ This matrix records the current compatibility baseline for the main repository, 
 - Published `@hia-doc/*` package policy.
 - Project docs manifest JSON Schema.
 - HTMDoc/CSSDoc/doc-source-map formal schema publication.
-- Public npm release of official profile/schema/source-linkage packages.
+- Public npm release of official profile/schema/source-linkage/plugin-sdk packages.
 - Workspace profile auto-discovery.
 - Profile-defined diagnostic rule execution.
 - Browser/DevTools compatibility matrix.

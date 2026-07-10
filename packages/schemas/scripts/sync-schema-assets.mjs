@@ -14,6 +14,12 @@ import {
   HIA_PROFILE_SCHEMA_VERSION
 } from "../../profile/dist/index.js";
 import {
+  DOCUMENTATION_PRODUCER_CONTRACT_VERSION,
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA,
+  DOCUMENTATION_PRODUCER_RESULT_CONTRACT_VERSION,
+  DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA
+} from "../../plugin-sdk/dist/index.js";
+import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_VERSION
 } from "../../source-linkage/dist/index.js";
@@ -31,6 +37,22 @@ const definitions = [
     key: "documentation-profile",
     ownerPackage: "@hia-doc/profile",
     schema: HIA_PROFILE_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: DOCUMENTATION_PRODUCER_CONTRACT_VERSION,
+    fileName: "documentation-producer.schema.json",
+    key: "documentation-producer",
+    ownerPackage: "@hia-doc/plugin-sdk",
+    schema: DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: DOCUMENTATION_PRODUCER_RESULT_CONTRACT_VERSION,
+    fileName: "documentation-producer-result.schema.json",
+    key: "documentation-producer-result",
+    ownerPackage: "@hia-doc/plugin-sdk",
+    schema: DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA,
     stability: "draft"
   },
   {

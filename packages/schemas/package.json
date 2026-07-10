@@ -22,6 +22,8 @@
     },
     "./catalog.json": "./dist/catalog.json",
     "./documentation-profile.schema.json": "./dist/schemas/documentation-profile.schema.json",
+    "./documentation-producer.schema.json": "./dist/schemas/documentation-producer.schema.json",
+    "./documentation-producer-result.schema.json": "./dist/schemas/documentation-producer-result.schema.json",
     "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
     "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",
@@ -37,6 +39,7 @@
   "devDependencies": {
     "@hia-doc/config": "workspace:*",
     "@hia-doc/core": "workspace:*",
+    "@hia-doc/plugin-sdk": "workspace:*",
     "@hia-doc/profile": "workspace:*",
     "@hia-doc/source-linkage": "workspace:*"
   },

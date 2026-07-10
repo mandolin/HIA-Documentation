@@ -19,6 +19,7 @@ describe("@hia-doc/schemas", () => {
     expect(new Set(HIA_SCHEMA_CATALOG.schemas.map((entry) => entry.ownerPackage))).toEqual(new Set([
       "@hia-doc/config",
       "@hia-doc/core",
+      "@hia-doc/plugin-sdk",
       "@hia-doc/profile",
       "@hia-doc/source-linkage"
     ]));

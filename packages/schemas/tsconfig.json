@@ -7,5 +7,12 @@
     "tsBuildInfoFile": "../../node_modules/.cache/hia-doc/schemas.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.json"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts"],
+  "references": [
+    { "path": "../config" },
+    { "path": "../core" },
+    { "path": "../plugin-sdk" },
+    { "path": "../profile" },
+    { "path": "../source-linkage" }
+  ]
 }

@@ -25,6 +25,16 @@ import {
   HIA_OFFICIAL_PROFILE_IDS
 } from "../packages/profiles/dist/index.js";
 import {
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA,
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID,
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_VERSION,
+  DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA,
+  DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID,
+  DOCUMENTATION_PRODUCER_RESULT_SCHEMA_VERSION,
+  validateDocumentationProducerDescriptor,
+  validateDocumentationProducerResult
+} from "../packages/plugin-sdk/dist/index.js";
+import {
   getHiaSchema,
   HIA_SCHEMA_CATALOG,
   HIA_SCHEMA_KEYS
@@ -88,6 +98,33 @@ assert(
 assert(createOfficialHiaProfileSet().diagnostics.length === 0, "Official profile distribution has runtime diagnostics.");
 assert(HIA_OFFICIAL_PROFILE_CATALOG.profiles.length === profiles.length, "Official profile catalog size drifted.");
 
+assert(
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA.$id === DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID,
+  "Documentation producer descriptor schema id drifted."
+);
+assert(
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_VERSION === "0.1.0-draft",
+  "Unexpected documentation producer descriptor schema version."
+);
+assert(
+  DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA.$id === DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID,
+  "Documentation producer result schema id drifted."
+);
+assert(
+  DOCUMENTATION_PRODUCER_RESULT_SCHEMA_VERSION === "0.1.0-draft",
+  "Unexpected documentation producer result schema version."
+);
+const producerDescriptor = await readJson("fixtures/producer/basic.producer-descriptor.json");
+const producerResult = await readJson("fixtures/producer/basic.producer-result.json");
+assert(
+  validateDocumentationProducerDescriptor(producerDescriptor).length === 0,
+  "Documentation producer descriptor fixture has diagnostics."
+);
+assert(
+  validateDocumentationProducerResult(producerResult, { descriptor: producerDescriptor }).length === 0,
+  "Documentation producer result fixture has diagnostics."
+);
+
 assert(DOC_SOURCE_MAP_JSON_SCHEMA.$id === DOC_SOURCE_MAP_SCHEMA_ID, "Doc source map schema id drifted.");
 assert(
   DOC_SOURCE_MAP_JSON_SCHEMA.properties.contractVersion.const === DOC_SOURCE_MAP_SCHEMA_VERSION,
@@ -101,6 +138,8 @@ const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
+  [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
+  [DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID, DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA],
   [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA]
 ]);
 assert(
@@ -116,4 +155,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: 1 project manifest, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: 1 project manifest, 1 producer descriptor/result, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

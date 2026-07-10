@@ -1,0 +1,33 @@
+{
+  "name": "@hia-doc/plugin-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Documentation producer contracts and runtime helpers for HIA adapters.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --root ../.. packages/plugin-sdk/src/index.test.ts"
+  },
+  "dependencies": {
+    "@hia-doc/core": "workspace:*"
+  },
+  "sideEffects": false
+}

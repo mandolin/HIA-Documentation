@@ -26,7 +26,7 @@ The gate runs:
 - TypeScript build.
 - Unit tests.
 - Cross-package e2e tests.
-- Schema contract checks for core document, project manifest, documentation profile, doc-source-map and distributed schema snapshots.
+- Schema contract checks for core document, project manifest, documentation profile, documentation producer/result, doc-source-map and distributed schema snapshots.
 - Distribution readiness checks that verify the approved `@hia-doc` scope, MIT package licenses and GitHub Pages schema namespace while keeping candidates private until release versions and Trusted Publishing are ready.
 - Local schema Pages artifact generation with canonical versioned files and package-style aliases.
 - Real JPHS Integration fixture through `hia docs build --jsdoc-integration`.

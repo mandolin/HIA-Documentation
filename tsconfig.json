@@ -5,6 +5,7 @@
     { "path": "./packages/config" },
     { "path": "./packages/profile" },
     { "path": "./packages/profiles" },
+    { "path": "./packages/plugin-sdk" },
     { "path": "./packages/parser-jsdoc" },
     { "path": "./packages/source-linkage" },
     { "path": "./packages/schemas" },

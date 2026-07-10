@@ -6,6 +6,7 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const schemaCatalog = JSON.parse(await readFile(path.join(rootDir, "packages/schemas/src/catalog.json"), "utf8"));
 const schemaPublicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 const packagePaths = [
+  "packages/plugin-sdk/package.json",
   "packages/profiles/package.json",
   "packages/schemas/package.json",
   "packages/source-linkage/package.json"

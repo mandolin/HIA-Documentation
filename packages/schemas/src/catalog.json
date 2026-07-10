@@ -13,6 +13,24 @@
     },
     {
       "contractVersion": "0.1.0-draft",
+      "key": "documentation-producer",
+      "ownerPackage": "@hia-doc/plugin-sdk",
+      "path": "./documentation-producer.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
+      "key": "documentation-producer-result",
+      "ownerPackage": "@hia-doc/plugin-sdk",
+      "path": "./documentation-producer-result.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-result-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-result-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "doc-source-map",
       "ownerPackage": "@hia-doc/source-linkage",
       "path": "./doc-source-map.schema.json",

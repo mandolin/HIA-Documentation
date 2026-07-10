@@ -102,3 +102,19 @@ Current JPHS producer expectations for real fixtures:
 - Source links should use `same-tab` or `new-tab`; legacy `currentPage` is adapter-compatible but should not be produced by current JPHS.
 - Localization resources should use relative `external-resource` records with `path`, `format`, `fields` and `locales`.
 - Raw producer output should not contain local absolute paths or adapter-private `filePath` fields.
+
+## Documentation Producer Surface
+
+W-P11 adds `@hia-doc/plugin-sdk` for adapters that must run as standalone libraries and participate in HIA project builds.
+
+Keep the layers separate:
+
+- parser/extractor/adapter APIs remain owned by the language package;
+- a documentation producer wraps those APIs and returns a normalized artifact manifest;
+- producer result paths are relative to the requested output directory;
+- the main CLI may orchestrate explicitly configured producers later, but the SDK does not discover or spawn them;
+- renderer/LSP consumers read artifacts and source linkage, not producer-private state.
+
+Use `defineDocumentationProducer()` for the module surface and `runDocumentationProducer()` for contract-checked single-run execution. P1 producers must declare `incremental: false` and `watch: false`.
+
+See `packages/plugin-sdk/README.md` and the distributed `documentation-producer` schemas.

@@ -14,6 +14,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
+| Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -34,6 +35,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Official profile distribution | `@hia-doc/profiles` | Distributes official profile JSON, catalog metadata and defensive-copy accessors. |
 | Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
 | Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
+| Documentation producer | `@hia-doc/plugin-sdk` | Owns descriptor/request/result types, schemas, semantic validation and single-run execution helper; it does not load modules or orchestrate builds. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
@@ -55,6 +57,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | `fixtures/project-mixed-alert.htmdoc.json` | HTMDoc-style extraction artifact consumed by the project aggregation fixture. |
 | `fixtures/project-mixed-alert.cssdoc.json` | CSSDoc-style extraction artifact consumed by the project aggregation fixture. |
 | `fixtures/project-mixed-alert.docmap.json` | Documentation source map artifact referenced by the project aggregation fixture. |
+| `fixtures/producer/basic.producer-descriptor.json` | Valid documentation producer descriptor fixture. |
+| `fixtures/producer/basic.producer-result.json` | Valid serializable producer result with extraction/core/source-linkage artifacts. |
 
 ## Rules
 
@@ -66,6 +70,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Documentation profile is the shared tag/rule/mapping/diagnostic configuration layer. It should not replace parser, extractor, adapter or renderer responsibilities.
 - LSP and IDE shells may consume normalized documentation profile runtime data for completion, hover and capability summaries, but should not redefine profile semantics.
 - Project docs manifests are explicit aggregation manifests. They should reference language extraction artifacts instead of making the CLI parse source languages directly.
+- Documentation producers are explicitly configured wrappers around standalone doc-line APIs; core and the plugin SDK do not depend on language satellite packages.
 - LSP resource index data is derived from core documents and should not be written back into core documents.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.

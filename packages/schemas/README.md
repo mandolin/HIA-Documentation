@@ -23,6 +23,7 @@ The package exports its catalog and each schema as JSON:
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" with { type: "json" };
+import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 ```
 
 The canonical public schema root is:
@@ -41,4 +42,4 @@ The package does not select or bundle a JSON Schema validator. Consumers may use
 
 ## Status
 
-This workspace package is not yet a public npm release. The GitHub Pages namespace, `@hia-doc` scope and MIT license are approved. Public npm publication still requires release versions, operational npm ownership and Trusted Publishing setup. The first Pages content deployment will occur when the schema workflow is committed and pushed to `main`.
+This workspace package is not yet a public npm release. The GitHub Pages namespace, `@hia-doc` scope and MIT license are approved, and the initial Pages deployment is online. New producer schemas will become public when the W-P11.1 changes are committed and the schema workflow succeeds. Public npm publication still requires release versions, operational npm ownership and Trusted Publishing setup.

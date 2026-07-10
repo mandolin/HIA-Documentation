@@ -1,0 +1,14 @@
+{
+  "contract": "documentation-producer",
+  "contractVersion": "0.1.0-draft",
+  "id": "fixture-doc",
+  "version": "0.1.0",
+  "displayName": "Fixture Documentation Producer",
+  "inputKinds": ["fixture-source"],
+  "outputKinds": ["fixture-extraction", "hia-document", "doc-source-map"],
+  "capabilities": {
+    "sourceLinkage": true,
+    "incremental": false,
+    "watch": false
+  }
+}
