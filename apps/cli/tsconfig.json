@@ -9,6 +9,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts"],
   "references": [
+    { "path": "../../packages/browser-panel" },
     { "path": "../../packages/config" },
     { "path": "../../packages/core" },
     { "path": "../../packages/plugin-sdk" },

@@ -4,6 +4,13 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
+  createBrowserPanelPayload,
+  renderBrowserPanel,
+  type BrowserPanelDocSourceMapInput,
+  type BrowserPanelOrdinarySourceMapInput,
+  type BrowserPanelProjectInfo
+} from "@hia-doc/browser-panel";
+import {
   hasConfigErrors,
   loadHiaProjectConfig,
   validateHiaProjectManifest,
@@ -46,8 +53,10 @@ import {
 } from "@hia-doc/renderer-html";
 import {
   createDocSourceMapIndex,
+  createOrdinarySourceMapIndex,
   type DocSourceMapIndex,
-  type DocSourceMapIndexedEntry
+  type DocSourceMapIndexedEntry,
+  type DocSourceMapSourceMapLink
 } from "@hia-doc/source-linkage";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
@@ -57,9 +66,11 @@ const HELP_TEXT = `HIA Documentation CLI
 Usage:
   hia --help
   hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
+  hia browser panel [--config <file>] [--project-manifest <file>] [--out <dir>]
 
 Commands:
-  docs build   Generate HTML documentation from a HIA document fixture.
+  docs build      Generate HTML documentation from a HIA document fixture.
+  browser panel   Generate a static source-linked browser panel.
 
 Options:
   --config <file>     HIA config JSON file. Defaults to hia.config.json when present.
@@ -124,6 +135,10 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "build") {
     return runDocsBuild(normalizedArgv.slice(2), io);
+  }
+
+  if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {
+    return runBrowserPanel(normalizedArgv.slice(2), io);
   }
 
   io.stderr(`Unknown command: ${normalizedArgv.join(" ")}`);
@@ -223,6 +238,87 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   await writeFile(manifestTargetPath, JSON.stringify(manifestFile, null, 2), "utf8");
 
   io.stdout(`Generated ${rendered.files.length + 1} file(s) at ${outputDir}`);
+  return 0;
+}
+
+async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--project-manifest", "--out"]);
+  reportDiagnostics(optionDiagnostics, io);
+
+  if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    return 1;
+  }
+
+  const configPath = readOption(argv, "--config");
+  const configResult = await loadHiaProjectConfig(configPath
+    ? { cwd: io.cwd, configPath }
+    : { cwd: io.cwd });
+  reportDiagnostics(configResult.diagnostics, io);
+
+  if (hasConfigErrors(configResult.diagnostics)) {
+    return 1;
+  }
+
+  const docsConfig = configResult.config.docs ?? {};
+  const outputDir = resolveConfiguredPath(
+    readOption(argv, "--out"),
+    undefined,
+    "dist/browser-panel",
+    io.cwd,
+    configResult.baseDir
+  );
+  const projectManifestPath = resolveOptionalConfiguredPath(
+    readOption(argv, "--project-manifest"),
+    docsConfig.projectManifest,
+    io.cwd,
+    configResult.baseDir
+  );
+
+  if (!projectManifestPath) {
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_BROWSER_PROJECT_MANIFEST_REQUIRED",
+        "browser panel requires --project-manifest or docs.projectManifest.",
+        "error",
+        "browser.projectManifest"
+      )
+    ], io);
+    return 1;
+  }
+
+  const manifestResult = await loadProjectManifest(projectManifestPath, io);
+
+  if (!manifestResult.manifest) {
+    return 1;
+  }
+
+  const panelDocSourceMaps = await loadBrowserPanelDocSourceMaps(manifestResult.manifest, projectManifestPath, io);
+
+  if (panelDocSourceMaps.length === 0) {
+    reportDiagnostics([
+      createCliDiagnostic(
+        "HIA_CLI_BROWSER_DOC_SOURCE_MAP_MISSING",
+        "browser panel requires at least one doc-source-map project input.",
+        "error",
+        projectManifestPath
+      )
+    ], io);
+    return 1;
+  }
+
+  const payload = createBrowserPanelPayload({
+    project: createBrowserPanelProjectInfo(manifestResult.manifest),
+    docSourceMaps: panelDocSourceMaps
+  });
+  const rendered = renderBrowserPanel(payload);
+
+  for (const file of rendered.files) {
+    const targetPath = path.join(outputDir, file.path);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, file.contents, "utf8");
+  }
+
+  io.stdout(`Generated ${rendered.files.length} browser panel file(s) at ${outputDir}`);
   return 0;
 }
 
@@ -452,6 +548,167 @@ async function loadProjectProfiles(manifest: ProjectDocsManifest, baseDir: strin
     profiles: dedupeProfileRefs(profileRefs),
     diagnostics
   };
+}
+
+async function loadBrowserPanelDocSourceMaps(
+  manifest: ProjectDocsManifest,
+  projectManifestPath: string,
+  io: CliIo
+): Promise<BrowserPanelDocSourceMapInput[]> {
+  const baseDir = path.dirname(projectManifestPath);
+  const docSourceMaps: BrowserPanelDocSourceMapInput[] = [];
+
+  for (const input of manifest.inputs ?? []) {
+    if (input.kind !== "doc-source-map" || !input.path) {
+      continue;
+    }
+
+    const inputPath = path.resolve(baseDir, input.path);
+    const readResult = await readProjectJson(inputPath, input, io);
+
+    if (!readResult) {
+      continue;
+    }
+
+    const index = createDocSourceMapIndex(readResult, { path: input.path });
+    reportDiagnostics(index.diagnostics, io);
+    const ordinarySourceMaps = await loadBrowserPanelOrdinarySourceMaps(index, input.path, inputPath, baseDir, io);
+    const item: BrowserPanelDocSourceMapInput = {
+      path: input.path,
+      index,
+      ...(ordinarySourceMaps.length > 0 ? { ordinarySourceMaps } : {})
+    };
+    docSourceMaps.push(item);
+  }
+
+  return docSourceMaps;
+}
+
+async function loadBrowserPanelOrdinarySourceMaps(
+  docSourceMapIndex: DocSourceMapIndex,
+  docSourceMapInputPath: string,
+  docSourceMapAbsolutePath: string,
+  projectBaseDir: string,
+  io: CliIo
+): Promise<BrowserPanelOrdinarySourceMapInput[]> {
+  const ordinarySourceMaps: BrowserPanelOrdinarySourceMapInput[] = [];
+
+  for (const sourceMapRef of docSourceMapIndex.sourceMaps) {
+    if (!sourceMapRef.path) {
+      continue;
+    }
+
+    if (isUnsafeOutputRelativePath(sourceMapRef.path)) {
+      reportDiagnostics([
+        createCliDiagnostic(
+          "HIA_CLI_BROWSER_SOURCE_MAP_PATH_UNSAFE",
+          `Skipped unsafe source map path: ${sourceMapRef.path}.`,
+          "warning",
+          sourceMapRef.path,
+          {
+            docSourceMapPath: docSourceMapInputPath,
+            sourceMapPath: sourceMapRef.path
+          }
+        )
+      ], io);
+      continue;
+    }
+
+    const readResult = await readBrowserPanelSourceMapJson(sourceMapRef, docSourceMapInputPath, docSourceMapAbsolutePath, projectBaseDir, io);
+
+    if (!readResult) {
+      continue;
+    }
+
+    const artifactPath = inferSourceMapArtifactPath(docSourceMapIndex, sourceMapRef);
+    const sourceMapIndex = createOrdinarySourceMapIndex(readResult.value, {
+      path: sourceMapRef.path,
+      ...(artifactPath ? { artifactPath } : {})
+    });
+    reportDiagnostics(sourceMapIndex.diagnostics, io);
+    ordinarySourceMaps.push({
+      path: sourceMapRef.path,
+      index: sourceMapIndex
+    });
+  }
+
+  return ordinarySourceMaps;
+}
+
+async function readBrowserPanelSourceMapJson(
+  sourceMapRef: DocSourceMapSourceMapLink,
+  docSourceMapInputPath: string,
+  docSourceMapAbsolutePath: string,
+  projectBaseDir: string,
+  io: CliIo
+): Promise<{ path: string; value: unknown } | undefined> {
+  const sourceMapPath = sourceMapRef.path ?? "";
+  const candidates = dedupePaths([
+    path.resolve(projectBaseDir, sourceMapPath),
+    path.resolve(path.dirname(docSourceMapAbsolutePath), sourceMapPath)
+  ]);
+
+  for (const candidate of candidates) {
+    try {
+      return {
+        path: candidate,
+        value: JSON.parse(await readFile(candidate, "utf8")) as unknown
+      };
+    } catch (error) {
+      if (isFileNotFoundError(error)) {
+        continue;
+      }
+
+      reportDiagnostics([
+        createCliDiagnostic(
+          error instanceof SyntaxError ? "HIA_CLI_BROWSER_SOURCE_MAP_PARSE_FAILED" : "HIA_CLI_BROWSER_SOURCE_MAP_READ_FAILED",
+          `${sourceMapPath} - ${errorMessage(error)}`,
+          "warning",
+          sourceMapPath,
+          {
+            docSourceMapPath: docSourceMapInputPath,
+            sourceMapPath,
+            resolvedPath: candidate
+          }
+        )
+      ], io);
+      return undefined;
+    }
+  }
+
+  reportDiagnostics([
+    createCliDiagnostic(
+      "HIA_CLI_BROWSER_SOURCE_MAP_NOT_FOUND",
+      `Source map declared by ${docSourceMapInputPath} was not found: ${sourceMapPath}.`,
+      "warning",
+      sourceMapPath,
+      {
+        docSourceMapPath: docSourceMapInputPath,
+        sourceMapPath
+      }
+    )
+  ], io);
+  return undefined;
+}
+
+function createBrowserPanelProjectInfo(manifest: ProjectDocsManifest): BrowserPanelProjectInfo {
+  return {
+    name: manifest.project?.name ?? "HIA Project",
+    ...(manifest.project?.id ? { id: manifest.project.id } : {}),
+    ...(manifest.project?.title ? { title: manifest.project.title } : {})
+  };
+}
+
+function inferSourceMapArtifactPath(index: DocSourceMapIndex, sourceMapRef: DocSourceMapSourceMapLink): string | undefined {
+  const sourceMapPath = sourceMapRef.path ? toPosix(sourceMapRef.path) : "";
+  const artifactPaths = index.entries
+    .flatMap((entry) => entry.artifactLinks.map((link) => link.path))
+    .filter((value): value is string => Boolean(value));
+
+  return artifactPaths.find((artifactPath) => {
+    const normalizedArtifactPath = toPosix(artifactPath);
+    return sourceMapPath === `${normalizedArtifactPath}.map` || sourceMapPath.endsWith(`/${basename(normalizedArtifactPath)}.map`);
+  }) ?? artifactPaths[0];
 }
 
 async function aggregateProjectDocs(
@@ -1101,6 +1358,29 @@ function toPosix(value: string): string {
   return value.replaceAll("\\", "/");
 }
 
+function basename(value: string): string {
+  const parts = toPosix(value).split("/");
+  return parts.at(-1) ?? value;
+}
+
+function dedupePaths(values: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const key = path.normalize(value).toLowerCase();
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    result.push(value);
+  }
+
+  return result;
+}
+
 function isPathInside(parent: string, child: string): boolean {
   const relative = path.relative(parent, child);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
@@ -1108,6 +1388,10 @@ function isPathInside(parent: string, child: string): boolean {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function isFileNotFoundError(error: unknown): boolean {
+  return isRecord(error) && error.code === "ENOENT";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

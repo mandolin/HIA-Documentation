@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:source-linked",
+    "name": "Source Linked Fixture",
+    "title": "Source Linked Browser Panel Fixture"
+  },
+  "inputs": [
+    {
+      "kind": "doc-source-map",
+      "path": "browser-panel/profile-card.docmap.json"
+    }
+  ]
+}

@@ -164,6 +164,14 @@ describe("@hia-doc/source-linkage", () => {
       sourceCount: 1,
       status: "available"
     });
+    expect(docSourceMapIndex.sourceMaps).toEqual([
+      {
+        id: "sourcemap:profile-card",
+        kind: "ordinary-source-map",
+        language: "json",
+        path: "dist/profile-card.js.map"
+      }
+    ]);
     expect(findOriginalPositionForGenerated(sourceMapIndex, { line: 2, column: 1 })).toMatchObject({
       original: {
         name: "renderProfileCard",

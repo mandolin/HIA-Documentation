@@ -76,6 +76,14 @@
       "releaseStatus": "candidate"
     },
     {
+      "name": "@hia-doc/browser-panel",
+      "path": "packages/browser-panel",
+      "targetVersion": "0.1.0",
+      "publishOrder": 40,
+      "kind": "browser-tooling-runtime",
+      "releaseStatus": "candidate"
+    },
+    {
       "name": "@hia-doc/profiles",
       "path": "packages/profiles",
       "targetVersion": "0.1.0",

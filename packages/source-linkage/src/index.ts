@@ -42,6 +42,7 @@ export interface DocSourceMapIndex {
   linkedEntryCount: number;
   path?: string;
   sourceCount: number;
+  sourceMaps: DocSourceMapSourceMapLink[];
   sourceMapCount: number;
   sourcesContentPolicy: string;
   status: "available" | "invalid" | "unsupported-version";
@@ -76,6 +77,13 @@ export interface DocSourceMapArtifactLink {
   path?: string;
   rangeSource?: string;
   selector?: string;
+}
+
+export interface DocSourceMapSourceMapLink {
+  id: string;
+  kind?: string;
+  language?: string;
+  path?: string;
 }
 
 export interface DocSourceMapQuery {
@@ -171,6 +179,7 @@ export interface SourceLinkedLookupResult {
 
 interface IndexedNode {
   id: string;
+  kind?: string;
   language?: string;
   path?: string;
 }
@@ -222,7 +231,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   const sourcesContentPolicy = stringValue(privacy.sourcesContentPolicy) ?? "none";
   const artifacts = collectIndexedNodes(value.artifacts);
   const sources = collectIndexedNodes(value.sources);
-  const sourceMaps = collectIndexedNodes(value.sourceMaps);
+  const sourceMaps = collectIndexedNodes(value.sourceMaps).map(indexedNodeToSourceMapLink);
   const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   const sourceById = new Map(sources.map((source) => [source.id, source]));
 
@@ -262,6 +271,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     linkedEntryCount: entries.filter(isLinkedEntry).length,
     ...(options.path ? { path: options.path } : {}),
     sourceCount: sources.length,
+    sourceMaps,
     sourceMapCount: sourceMaps.length,
     sourcesContentPolicy,
     status: hasErrors ? "invalid" : unsupportedVersion ? "unsupported-version" : "available",
@@ -785,8 +795,13 @@ function collectIndexedNodes(value: unknown): IndexedNode[] {
       const node: IndexedNode = {
         id: stringValue(item.id) ?? `node:${index + 1}`
       };
+      const kind = stringValue(item.kind);
       const language = stringValue(item.language);
       const itemPath = stringValue(item.path);
+
+      if (kind) {
+        node.kind = kind;
+      }
 
       if (language) {
         node.language = language;
@@ -798,6 +813,15 @@ function collectIndexedNodes(value: unknown): IndexedNode[] {
 
       return node;
     });
+}
+
+function indexedNodeToSourceMapLink(node: IndexedNode): DocSourceMapSourceMapLink {
+  return {
+    id: node.id,
+    ...(node.kind ? { kind: node.kind } : {}),
+    ...(node.language ? { language: node.language } : {}),
+    ...(node.path ? { path: node.path } : {})
+  };
 }
 
 function collectPathDiagnostics(diagnostics: HiaDiagnostic[], nodes: IndexedNode[], targetPath: string | undefined, kind: string): void {
@@ -974,6 +998,7 @@ function createEmptyIndex(options: {
     linkedEntryCount: 0,
     ...(options.path ? { path: options.path } : {}),
     sourceCount: 0,
+    sourceMaps: [],
     sourceMapCount: 0,
     sourcesContentPolicy: "none",
     status: options.status,

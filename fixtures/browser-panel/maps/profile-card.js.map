@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "file": "dist/profile-card.js",
+  "names": ["renderProfileCard"],
+  "sources": ["../src/profile-card.ts"],
+  "mappings": [
+    [],
+    [[0, 0, 5, 0, 0]],
+    [[2, 0, 6, 2, 0]]
+  ]
+}

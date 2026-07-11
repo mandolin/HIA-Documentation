@@ -7,6 +7,7 @@ const schemaCatalog = JSON.parse(await readFile(path.join(rootDir, "packages/sch
 const schemaPublicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 const packagePaths = [
   "apps/cli/package.json",
+  "packages/browser-panel/package.json",
   "packages/config/package.json",
   "packages/core/package.json",
   "packages/lsp/package.json",

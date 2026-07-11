@@ -11,6 +11,7 @@ describe("@hia-doc/cli", () => {
 
     expect(exitCode).toBe(0);
     expect(messages.join("\n")).toContain("hia docs build");
+    expect(messages.join("\n")).toContain("hia browser panel");
   });
 
   it("builds the shared fixture document", async () => {
@@ -236,6 +237,69 @@ describe("@hia-doc/cli", () => {
           artifactCount: 0
         }
       ]);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("builds a static browser panel from project doc-source-map inputs", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-browser-panel-"));
+    const outDir = path.join(root, "browser-panel");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "browser",
+        "panel",
+        "--project-manifest",
+        "fixtures/project-source-linked.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const payload = JSON.parse(await readFile(path.join(outDir, "browser-panel-payload.json"), "utf8")) as {
+        entries: Array<{
+          label: string;
+          lookup: {
+            generated?: { artifactPath?: string; position: { line: number; column?: number } };
+            original?: { sourcePath: string; position: { line: number; column?: number } };
+            status: string;
+          };
+        }>;
+        summary: { entryCount: number; linkedEntryCount: number; sourceMapCount: number };
+      };
+      const manifest = JSON.parse(await readFile(path.join(outDir, "browser-panel-manifest.json"), "utf8")) as {
+        entrypoint: string;
+        payload: string;
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("Generated 3 browser panel file");
+      expect(html).toContain("data-hia-browser-panel");
+      expect(html).toContain("Source Linked Browser Panel Fixture");
+      expect(payload.summary).toMatchObject({
+        entryCount: 1,
+        linkedEntryCount: 1,
+        sourceMapCount: 1
+      });
+      expect(payload.entries[0]).toMatchObject({
+        label: "ts:function:renderProfileCard",
+        lookup: {
+          generated: {
+            artifactPath: "dist/profile-card.js",
+            position: { line: 2, column: 1 }
+          },
+          original: {
+            sourcePath: "src/profile-card.ts",
+            position: { line: 6, column: 1 }
+          },
+          status: "available"
+        }
+      });
+      expect(manifest).toMatchObject({
+        entrypoint: "index.html",
+        payload: "browser-panel-payload.json"
+      });
     } finally {
       await rm(root, { force: true, recursive: true });
     }
