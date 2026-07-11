@@ -32,6 +32,9 @@ importers:
       '@hia-doc/parser-jsdoc':
         specifier: workspace:*
         version: link:../../packages/parser-jsdoc
+      '@hia-doc/plugin-sdk':
+        specifier: workspace:*
+        version: link:../../packages/plugin-sdk
       '@hia-doc/profile':
         specifier: workspace:*
         version: link:../../packages/profile

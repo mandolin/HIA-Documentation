@@ -10,7 +10,7 @@ Use it when a project has multiple documentation sources, such as:
 - doc-source-map JSON;
 - normalized HIA core documents.
 
-The CLI does not scan source files or parse source languages in project mode. The manifest explicitly lists already-produced artifacts.
+The CLI does not scan source files or discover producer packages in project mode. The manifest either explicitly lists already-produced artifacts, or explicitly names producer modules that should run before aggregation.
 
 ## Current Status
 
@@ -23,10 +23,16 @@ The project docs manifest shape is `0.1.0-draft`.
 - `HIA_PROJECT_MANIFEST_JSON_SCHEMA`
 - `validateHiaProjectManifest()`
 
-The current fixture is:
+The current static-artifact fixture is:
 
 ```text
 fixtures/project-mixed.hia-project.json
+```
+
+The current producer-driven fixture is:
+
+```text
+fixtures/project-producer.hia-project.json
 ```
 
 Profile references are explicit. `@hia-doc/profiles` distributes the official profile set, while project manifests continue to reference a safe local artifact path when profile data is required. The CLI does not silently fetch remote profiles. See `docs/profile-distribution.md`.
@@ -70,6 +76,49 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
 | `htmdoc-extraction` | HTMDoc extraction artifact. |
 | `cssdoc-extraction` | CSSDoc extraction artifact. |
 | `doc-source-map` | Documentation source map manifest. The CLI indexes it and exposes source/artifact linkage to the renderer. |
+
+## Producer Modules
+
+Use `producers` when source files should be converted to documentation artifacts during the project build. The CLI loads only the modules named by the manifest. It does not scan `node_modules`, does not install packages, and does not run shell commands.
+
+```json
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "name": "Producer Project"
+  },
+  "profiles": [
+    {
+      "profileId": "htmdoc",
+      "path": "project-mixed-profiles/htmdoc.profile.json"
+    }
+  ],
+  "producers": [
+    {
+      "id": "htmdoc",
+      "module": "node_modules/@hia-doc/htmdoc-producer/dist/index.js",
+      "workspaceRoot": ".",
+      "inputs": [
+        {
+          "kind": "html",
+          "path": "src/index.html"
+        }
+      ],
+      "profileIds": ["htmdoc"]
+    }
+  ]
+}
+```
+
+Producer output defaults to:
+
+```text
+<output>/.hia-producers/<producer-id>/
+```
+
+Artifacts whose kinds are known project input kinds are added to the aggregation result. The generated `hia-manifest.json` records them with `source: "producer"` and the configured `producerId`.
+
+If a producer fails, the CLI returns a non-zero exit code by default. Set `"failureMode": "warn"` on a producer entry to keep a partial build while downgrading that producer's errors to warnings.
 
 ## Domains
 
@@ -122,6 +171,7 @@ In project mode, the output manifest includes:
 
 - `build.mode = "project"`;
 - `build.inputs`;
+- `build.producers`, when producers are configured;
 - `build.profiles`;
 - `build.docSourceMaps`;
 - `project.views`;
@@ -150,6 +200,8 @@ When a `doc-source-map` entry has a matching `symbolId`, the rendered project en
 
 - Paths in the manifest are resolved relative to the manifest file.
 - Parent traversal and absolute input paths are rejected.
+- Producer module paths are explicit manifest-relative safe paths.
+- Producer output directories are resolved inside the CLI output directory.
 - Generated output must not leak local absolute paths.
 - `doc-source-map` input is checked for unsafe paths and blocked embedded source content.
 - Missing optional source metadata should degrade the page instead of blocking rendering.

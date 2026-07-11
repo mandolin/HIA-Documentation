@@ -130,6 +130,50 @@ describe("@hia-doc/config", () => {
     expect(diagnostics).toEqual([]);
   });
 
+  it("accepts producer-only project manifests", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Producer Project"
+      },
+      producers: [
+        {
+          id: "fixture-producer",
+          module: "producers/fixture.producer.mjs",
+          workspaceRoot: "src",
+          inputs: [
+            {
+              kind: "html",
+              path: "alert.html"
+            }
+          ],
+          profileIds: ["htmdoc"]
+        }
+      ]
+    });
+
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("rejects empty producer arrays when provided", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Empty Producer Project"
+      },
+      inputs: [
+        {
+          kind: "hia-document",
+          path: "artifacts/basic.hia.json"
+        }
+      ],
+      producers: []
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_FIELD_INVALID");
+    expect(hasConfigErrors(diagnostics)).toBe(true);
+  });
+
   it("rejects unsafe project manifest paths", () => {
     const diagnostics = validateHiaProjectManifest({
       schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
@@ -144,6 +188,19 @@ describe("@hia-doc/config", () => {
         {
           kind: "cssdoc-extraction",
           path: "C:/private/button.cssdoc.json"
+        }
+      ],
+      producers: [
+        {
+          id: "unsafe-producer",
+          module: "../producer.mjs",
+          outputDirectory: "../generated",
+          inputs: [
+            {
+              kind: "html",
+              path: "../alert.html"
+            }
+          ]
         }
       ]
     }, { targetPath: "project.hia-project.json" });

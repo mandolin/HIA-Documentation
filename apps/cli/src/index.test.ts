@@ -136,6 +136,111 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("runs configured producers before building a unified project page", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-project-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-producer.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        build?: {
+          inputs: Array<{ kind: string; path: string; producerId?: string; source?: string }>;
+          producers?: Array<{ id: string; status: string; artifactCount: number }>;
+        };
+        project?: {
+          entryCounts: Record<string, number>;
+        };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(html).toContain("Producer Mixed Project Documentation");
+      expect(html).toContain("Source-produced alert component.");
+      expect(html).toContain("Source-produced alert styles.");
+      expect(html).toContain(".hia-producers/mixed-source-fixture/alert.docmap.json");
+      expect(html).toContain("Doc Source Map");
+      expect(manifest.project?.entryCounts).toMatchObject({ css: 1, html: 1 });
+      expect(manifest.build?.producers).toEqual([
+        {
+          id: "mixed-source-fixture",
+          status: "success",
+          artifactCount: 3
+        }
+      ]);
+      expect(manifest.build?.inputs.map((input) => input.kind)).toEqual([
+        "htmdoc-extraction",
+        "cssdoc-extraction",
+        "doc-source-map"
+      ]);
+      expect(manifest.build?.inputs.every((input) => input.source === "producer")).toBe(true);
+      expect(await readFile(path.join(outDir, ".hia-producers", "mixed-source-fixture", "alert.htmdoc.json"), "utf8")).toContain("component:Alert");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("keeps building project docs when a configured producer fails in warn mode", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-warn-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-producer-warn.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        build?: {
+          inputs: Array<{ kind: string; path: string; profile?: { profileId: string }; source?: string }>;
+          producers?: Array<{ id: string; status: string; artifactCount: number }>;
+        };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("[warning:FIXTURE_PRODUCER_FAILED]");
+      expect(messages.join("\n")).toContain("[warning:DOCUMENTATION_PRODUCER_EXECUTION_FAILED]");
+      expect(html).toContain("Producer Warn Project Documentation");
+      expect(html).toContain("greet");
+      expect(manifest.build?.inputs).toEqual([
+        {
+          kind: "jsdoc-integration",
+          path: "jsdoc-integration.basic.json",
+          profile: {
+            profileId: "jsdoc"
+          },
+          source: "manifest"
+        }
+      ]);
+      expect(manifest.build?.producers).toEqual([
+        {
+          id: "failing-fixture",
+          status: "failed",
+          artifactCount: 0
+        },
+        {
+          id: "throwing-fixture",
+          status: "failed",
+          artifactCount: 0
+        }
+      ]);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("reports machine-readable CLI diagnostics for missing input files", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-missing-input-"));
     const messages: string[] = [];

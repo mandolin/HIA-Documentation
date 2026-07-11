@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:producer-mixed",
+    "name": "Producer Mixed Project",
+    "title": "Producer Mixed Project Documentation"
+  },
+  "profiles": [
+    {
+      "profileId": "htmdoc",
+      "path": "project-mixed-profiles/htmdoc.profile.json"
+    },
+    {
+      "profileId": "cssdoc",
+      "path": "project-mixed-profiles/cssdoc.profile.json"
+    },
+    {
+      "profileId": "doc-source-map",
+      "path": "project-mixed-profiles/doc-source-map.profile.json"
+    }
+  ],
+  "producers": [
+    {
+      "id": "mixed-source-fixture",
+      "module": "producers/mixed-source.producer.mjs",
+      "workspaceRoot": "project-producer-src",
+      "inputs": [
+        {
+          "kind": "html",
+          "path": "src/alert.html",
+          "language": "html"
+        },
+        {
+          "kind": "css",
+          "path": "src/alert.css",
+          "language": "css"
+        }
+      ],
+      "profileIds": [
+        "htmdoc",
+        "cssdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "sourcesContentPolicy": "none"
+      }
+    }
+  ]
+}

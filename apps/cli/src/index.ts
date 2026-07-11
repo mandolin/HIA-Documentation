@@ -23,6 +23,12 @@ import {
 } from "@hia-doc/core";
 import { convertJSDocIntegrationToHiaDocumentDetailed } from "@hia-doc/parser-jsdoc";
 import {
+  runDocumentationProducer,
+  type DocumentationProducer,
+  type DocumentationProducerArtifact,
+  type DocumentationProducerResult
+} from "@hia-doc/plugin-sdk";
+import {
   createHiaProfileSet,
   hasProfileErrors,
   loadHiaProfileFromFile,
@@ -79,12 +85,33 @@ interface ProjectAggregationResult {
     kind: string;
     path: string;
     profile?: RenderProjectProfileRef;
+    producerId?: string;
+    source?: "manifest" | "producer";
   }>;
+  producerResults?: ProducerRunSummary["results"];
 }
 
 interface IndexedProjectDocSourceMap {
   index: DocSourceMapIndex;
+  input: RuntimeProjectInput;
+}
+
+interface RuntimeProjectInput {
+  baseDir: string;
   input: ProjectManifestInput;
+  producerId?: string;
+  source: "manifest" | "producer";
+}
+
+interface ProducerRunSummary {
+  diagnostics: HiaDiagnostic[];
+  inputRefs: ProjectAggregationResult["inputRefs"];
+  runtimeInputs: RuntimeProjectInput[];
+  results: Array<{
+    id: string;
+    status: DocumentationProducerResult["status"];
+    artifactCount: number;
+  }>;
 }
 
 export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo = createDefaultIo()): Promise<number> {
@@ -221,7 +248,7 @@ async function runProjectDocsBuild(
     return 1;
   }
 
-  const aggregation = await aggregateProjectDocs(manifestResult.manifest, projectManifestPath, profileResult.profiles, io);
+  const aggregation = await aggregateProjectDocs(manifestResult.manifest, projectManifestPath, outputDir, profileResult.profiles, io);
 
   if (!aggregation.projectInput) {
     return 1;
@@ -240,7 +267,7 @@ async function runProjectDocsBuild(
     await writeFile(targetPath, file.contents, "utf8");
   }
 
-  const manifestFile = createProjectOutputManifest(rendered, manifestPath, aggregation.inputRefs);
+  const manifestFile = createProjectOutputManifest(rendered, manifestPath, aggregation);
   const manifestTargetPath = path.join(outputDir, manifestPath);
   await mkdir(path.dirname(manifestTargetPath), { recursive: true });
   await writeFile(manifestTargetPath, JSON.stringify(manifestFile, null, 2), "utf8");
@@ -266,13 +293,14 @@ function createOutputManifest(rendered: ReturnType<typeof renderHtmlDocument>, m
 function createProjectOutputManifest(
   rendered: ReturnType<typeof renderProjectHtmlDocument>,
   manifestPath: string,
-  inputRefs: ProjectAggregationResult["inputRefs"]
+  aggregation: ProjectAggregationResult
 ) {
   return {
     ...rendered.manifest,
     build: {
       mode: "project",
-      inputs: inputRefs,
+      inputs: aggregation.inputRefs,
+      ...(aggregation.producerResults && aggregation.producerResults.length > 0 ? { producers: aggregation.producerResults } : {}),
       profiles: rendered.manifest.project?.profiles ?? [],
       docSourceMaps: rendered.manifest.project?.docSourceMaps ?? []
     },
@@ -429,6 +457,7 @@ async function loadProjectProfiles(manifest: ProjectDocsManifest, baseDir: strin
 async function aggregateProjectDocs(
   manifest: ProjectDocsManifest,
   projectManifestPath: string,
+  outputDir: string,
   profileRefs: RenderProjectProfileRef[],
   io: CliIo
 ): Promise<ProjectAggregationResult> {
@@ -439,17 +468,32 @@ async function aggregateProjectDocs(
   const indexedDocSourceMaps: IndexedProjectDocSourceMap[] = [];
   const inputRefs: ProjectAggregationResult["inputRefs"] = [];
   const knownProfileIds = new Set(profileRefs.map((profile) => profile.profileId));
+  const producerSummary = await runProjectProducers(manifest, baseDir, outputDir, profileRefs);
+  diagnostics.push(...producerSummary.diagnostics);
+  inputRefs.push(...producerSummary.inputRefs);
+  const runtimeInputs: RuntimeProjectInput[] = [
+    ...(manifest.inputs ?? []).map((input) => ({
+      baseDir,
+      input,
+      source: "manifest" as const
+    })),
+    ...producerSummary.runtimeInputs
+  ];
 
-  for (const input of manifest.inputs ?? []) {
+  for (const runtimeInput of runtimeInputs) {
+    const { input } = runtimeInput;
     if (!input.kind || !input.path) {
       continue;
     }
 
-    inputRefs.push({
-      kind: input.kind,
-      path: input.path,
-      ...(input.profile ? { profile: input.profile } : {})
-    });
+    if (runtimeInput.source === "manifest") {
+      inputRefs.push({
+        kind: input.kind,
+        path: input.path,
+        ...(input.profile ? { profile: input.profile } : {}),
+        source: runtimeInput.source
+      });
+    }
 
     if (input.profile?.profileId && knownProfileIds.size > 0 && !knownProfileIds.has(input.profile.profileId)) {
       diagnostics.push(createCliDiagnostic(
@@ -464,11 +508,14 @@ async function aggregateProjectDocs(
       ));
     }
 
-    const inputPath = path.resolve(baseDir, input.path);
+    const inputPath = path.resolve(runtimeInput.baseDir, input.path);
     const readResult = await readProjectJson(inputPath, input, io);
 
     if (!readResult) {
-      return { inputRefs };
+      return {
+        inputRefs,
+        producerResults: producerSummary.results
+      };
     }
 
     if (input.kind === "hia-document") {
@@ -509,7 +556,7 @@ async function aggregateProjectDocs(
       diagnostics.push(...sourceMapIndex.diagnostics);
       indexedDocSourceMaps.push({
         index: sourceMapIndex,
-        input
+        input: runtimeInput
       });
       docSourceMaps.push(docSourceMapToRef(sourceMapIndex, input));
       continue;
@@ -538,8 +585,239 @@ async function aggregateProjectDocs(
       entries: linkProjectEntriesWithDocSourceMaps(entries, indexedDocSourceMaps),
       diagnostics
     },
-    inputRefs
+    inputRefs,
+    producerResults: producerSummary.results
   };
+}
+
+async function runProjectProducers(
+  manifest: ProjectDocsManifest,
+  baseDir: string,
+  outputDir: string,
+  profileRefs: RenderProjectProfileRef[]
+): Promise<ProducerRunSummary> {
+  const diagnostics: HiaDiagnostic[] = [];
+  const inputRefs: ProjectAggregationResult["inputRefs"] = [];
+  const runtimeInputs: RuntimeProjectInput[] = [];
+  const results: ProducerRunSummary["results"] = [];
+
+  for (const [index, producerRef] of (manifest.producers ?? []).entries()) {
+    const producerId = producerRef.id ?? `producer-${index + 1}`;
+    const failureMode = producerRef.failureMode ?? "fail";
+    const modulePath = producerRef.module ?? "";
+    const outputRelativePath = producerRef.outputDirectory ?? `.hia-producers/${slug(producerId)}`;
+    const producerOutputDir = path.resolve(outputDir, outputRelativePath);
+
+    if (!isPathInside(outputDir, producerOutputDir)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PRODUCER_OUTPUT_UNSAFE",
+        `Producer "${producerId}" outputDirectory must stay inside the CLI output directory.`,
+        failureMode === "warn" ? "warning" : "error",
+        `producers.${index}.outputDirectory`,
+        {
+          producerId,
+          outputDirectory: outputRelativePath
+        }
+      ));
+      results.push(createProducerRunResult(producerId, "failed", 0));
+      continue;
+    }
+
+    let producer: DocumentationProducer | undefined;
+    try {
+      producer = await loadDocumentationProducer(path.resolve(baseDir, modulePath), producerRef.exportName);
+    } catch (error) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PRODUCER_LOAD_FAILED",
+        `Unable to load producer "${producerId}": ${errorMessage(error)}`,
+        failureMode === "warn" ? "warning" : "error",
+        `producers.${index}.module`,
+        {
+          producerId,
+          module: modulePath
+        }
+      ));
+      results.push(createProducerRunResult(producerId, "failed", 0));
+      continue;
+    }
+
+    let result: DocumentationProducerResult;
+    try {
+      result = await runDocumentationProducer(producer, {
+        workspaceRoot: path.resolve(baseDir, producerRef.workspaceRoot ?? "."),
+        outputDirectory: producerOutputDir,
+        inputs: (producerRef.inputs ?? []).map((input) => ({
+          kind: input.kind ?? "",
+          path: input.path ?? "",
+          ...(input.language ? { language: input.language } : {})
+        })),
+        ...(producerRef.options ? { options: producerRef.options } : {}),
+        ...(producerRef.profileIds ? { profileIds: producerRef.profileIds } : {})
+      });
+    } catch (error) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_PRODUCER_RUN_FAILED",
+        `Producer "${producerId}" failed during execution: ${errorMessage(error)}`,
+        failureMode === "warn" ? "warning" : "error",
+        `producers.${index}`,
+        {
+          producerId
+        }
+      ));
+      results.push(createProducerRunResult(producerId, "failed", 0));
+      continue;
+    }
+
+    diagnostics.push(...normalizeProducerDiagnostics(result, producerId, index, failureMode === "warn"));
+    results.push(createProducerRunResult(producerId, result.status, result.artifacts.length));
+
+    for (const artifact of result.artifacts) {
+      const runtimeInput = producerArtifactToRuntimeInput(artifact, producerId, producerOutputDir, outputDir, profileRefs);
+      if (!runtimeInput) {
+        continue;
+      }
+
+      runtimeInputs.push(runtimeInput);
+      inputRefs.push({
+        kind: runtimeInput.input.kind ?? artifact.kind,
+        path: runtimeInput.input.path ?? artifact.path,
+        ...(runtimeInput.input.profile ? { profile: runtimeInput.input.profile } : {}),
+        producerId,
+        source: "producer"
+      });
+    }
+  }
+
+  return {
+    diagnostics,
+    inputRefs,
+    runtimeInputs,
+    results
+  };
+}
+
+function createProducerRunResult(
+  id: string,
+  status: DocumentationProducerResult["status"],
+  artifactCount: number
+): ProducerRunSummary["results"][number] {
+  return {
+    id,
+    status,
+    artifactCount
+  };
+}
+
+async function loadDocumentationProducer(modulePath: string, exportName?: string): Promise<DocumentationProducer> {
+  const moduleExports = await import(pathToFileURL(modulePath).href) as Record<string, unknown>;
+  const candidate = exportName ? moduleExports[exportName] : moduleExports.default;
+
+  if (isDocumentationProducer(candidate)) {
+    return candidate;
+  }
+
+  if (!exportName) {
+    const discovered = Object.values(moduleExports).find(isDocumentationProducer);
+    if (discovered) {
+      return discovered;
+    }
+  }
+
+  throw new Error(exportName
+    ? `Export "${exportName}" is not a documentation producer.`
+    : "Module does not export a documentation producer.");
+}
+
+function isDocumentationProducer(value: unknown): value is DocumentationProducer {
+  return isRecord(value)
+    && isRecord(value.descriptor)
+    && typeof value.produce === "function";
+}
+
+function normalizeProducerDiagnostics(
+  result: DocumentationProducerResult,
+  producerId: string,
+  producerIndex: number,
+  downgradeErrors: boolean
+): HiaDiagnostic[] {
+  return result.diagnostics.map((diagnostic, diagnosticIndex) => createCliDiagnostic(
+    diagnostic.code,
+    `Producer "${producerId}": ${diagnostic.message}`,
+    downgradeErrors && diagnostic.severity === "error" ? "warning" : diagnostic.severity,
+    diagnostic.targetPath ?? diagnostic.path ?? `producers.${producerIndex}.diagnostics.${diagnosticIndex}`,
+    {
+      ...(diagnostic.data ?? {}),
+      producerId,
+      producerStatus: result.status
+    }
+  ));
+}
+
+function producerArtifactToRuntimeInput(
+  artifact: DocumentationProducerArtifact,
+  producerId: string,
+  producerOutputDir: string,
+  outputDir: string,
+  profileRefs: RenderProjectProfileRef[]
+): RuntimeProjectInput | undefined {
+  const inputKind = projectInputKindFromArtifactKind(artifact.kind);
+  if (!inputKind) {
+    return undefined;
+  }
+
+  const artifactPath = path.resolve(producerOutputDir, artifact.path);
+  if (!isPathInside(producerOutputDir, artifactPath)) {
+    return undefined;
+  }
+
+  const projectRelativePath = toPosix(path.relative(outputDir, artifactPath));
+  if (isUnsafeOutputRelativePath(projectRelativePath)) {
+    return undefined;
+  }
+
+  const domain = domainFromProjectInputKind(inputKind);
+  const profile = profileFromArtifactProfileIds(artifact.profileIds, profileRefs);
+
+  return {
+    baseDir: outputDir,
+    input: {
+      kind: inputKind,
+      path: projectRelativePath,
+      ...(domain ? { domain } : {}),
+      ...(profile ? { profile } : {})
+    },
+    producerId,
+    source: "producer"
+  };
+}
+
+function projectInputKindFromArtifactKind(kind: string): ProjectManifestInput["kind"] | undefined {
+  if (kind === "hia-document" || kind === "jsdoc-integration" || kind === "htmdoc-extraction" || kind === "cssdoc-extraction" || kind === "doc-source-map") {
+    return kind;
+  }
+
+  return undefined;
+}
+
+function domainFromProjectInputKind(kind: string): ProjectManifestInput["domain"] | undefined {
+  if (kind === "jsdoc-integration") {
+    return "js";
+  }
+
+  if (kind === "cssdoc-extraction") {
+    return "css";
+  }
+
+  if (kind === "htmdoc-extraction") {
+    return "html";
+  }
+
+  return undefined;
+}
+
+function profileFromArtifactProfileIds(profileIds: string[] | undefined, profileRefs: RenderProjectProfileRef[]): RenderProjectProfileRef | undefined {
+  const profileId = profileIds?.find((candidate) => profileRefs.some((profile) => profile.profileId === candidate));
+  return profileId ? profileRefs.find((profile) => profile.profileId === profileId) : undefined;
 }
 
 async function readProjectJson(inputPath: string, input: ProjectManifestInput, io: CliIo): Promise<unknown | undefined> {
@@ -695,7 +973,7 @@ function linkProjectEntriesWithDocSourceMaps(
     return {
       ...entry,
       docSourceMap: {
-        path: firstMatch.sourceMap.input.path ?? "",
+        path: firstMatch.sourceMap.input.input.path ?? "",
         entryId: firstMatch.entry.id,
         ...(sourceLink?.path ? { sourcePath: sourceLink.path } : {}),
         ...(sourceLink?.range ? { sourceRange: sourceLink.range } : {}),
@@ -817,6 +1095,19 @@ function numberValue(value: unknown): number | undefined {
 
 function slug(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-|-$/g, "") || "unnamed";
+}
+
+function toPosix(value: string): string {
+  return value.replaceAll("\\", "/");
+}
+
+function isPathInside(parent: string, child: string): boolean {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -26,6 +26,7 @@
     "@hia-doc/config": "workspace:*",
     "@hia-doc/core": "workspace:*",
     "@hia-doc/parser-jsdoc": "workspace:*",
+    "@hia-doc/plugin-sdk": "workspace:*",
     "@hia-doc/profile": "workspace:*",
     "@hia-doc/renderer-html": "workspace:*",
     "@hia-doc/source-linkage": "workspace:*"

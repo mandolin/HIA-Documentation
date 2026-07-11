@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "producer-warn-project",
+    "name": "Producer Warn Project",
+    "title": "Producer Warn Project Documentation"
+  },
+  "profiles": [
+    {
+      "profileId": "jsdoc",
+      "path": "project-mixed-profiles/jsdoc.profile.json"
+    }
+  ],
+  "inputs": [
+    {
+      "kind": "jsdoc-integration",
+      "path": "jsdoc-integration.basic.json",
+      "profile": {
+        "profileId": "jsdoc"
+      }
+    }
+  ],
+  "producers": [
+    {
+      "id": "failing-fixture",
+      "module": "producers/failing.producer.mjs",
+      "failureMode": "warn",
+      "inputs": [
+        {
+          "kind": "fixture-source",
+          "path": "jsdoc-integration.basic.json"
+        }
+      ]
+    },
+    {
+      "id": "throwing-fixture",
+      "module": "producers/throwing.producer.mjs",
+      "failureMode": "warn",
+      "inputs": [
+        {
+          "kind": "fixture-source",
+          "path": "jsdoc-integration.basic.json"
+        }
+      ]
+    }
+  ]
+}

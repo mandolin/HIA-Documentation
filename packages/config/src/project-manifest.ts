@@ -13,6 +13,7 @@ export type HiaProjectManifestDomain = typeof HIA_PROJECT_MANIFEST_DOMAINS[numbe
 export interface HiaProjectDocsManifest {
   schemaVersion?: string;
   project?: HiaProjectManifestProjectInfo;
+  producers?: HiaProjectManifestProducerRef[];
   profiles?: HiaProjectManifestProfileRef[];
   inputs?: HiaProjectManifestInput[];
   metadata?: Record<string, unknown>;
@@ -45,6 +46,24 @@ export interface HiaProjectManifestInput {
   sourceRoot?: string;
 }
 
+export interface HiaProjectManifestProducerInput {
+  kind?: string;
+  language?: string;
+  path?: string;
+}
+
+export interface HiaProjectManifestProducerRef {
+  exportName?: string;
+  failureMode?: "fail" | "warn";
+  id?: string;
+  inputs?: HiaProjectManifestProducerInput[];
+  module?: string;
+  options?: Record<string, unknown>;
+  outputDirectory?: string;
+  profileIds?: string[];
+  workspaceRoot?: string;
+}
+
 export interface HiaProjectManifestValidationOptions {
   targetPath?: string;
 }
@@ -53,11 +72,30 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: HIA_PROJECT_MANIFEST_SCHEMA_ID,
   type: "object",
-  required: ["schemaVersion", "project", "inputs"],
+  required: ["schemaVersion", "project"],
   additionalProperties: true,
+  anyOf: [
+    {
+      required: ["inputs"],
+      properties: {
+        inputs: { type: "array", minItems: 1 }
+      }
+    },
+    {
+      required: ["producers"],
+      properties: {
+        producers: { type: "array", minItems: 1 }
+      }
+    }
+  ],
   properties: {
     schemaVersion: { const: HIA_PROJECT_MANIFEST_SCHEMA_VERSION },
     project: { $ref: "#/$defs/project" },
+    producers: {
+      type: "array",
+      minItems: 1,
+      items: { $ref: "#/$defs/producer" }
+    },
     profiles: {
       type: "array",
       items: { $ref: "#/$defs/profileRef" }
@@ -113,6 +151,40 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         layer: { $ref: "#/$defs/nonEmptyString" }
       }
     },
+    producerInput: {
+      type: "object",
+      required: ["kind", "path"],
+      additionalProperties: true,
+      properties: {
+        kind: { $ref: "#/$defs/nonEmptyString" },
+        language: { $ref: "#/$defs/nonEmptyString" },
+        path: { $ref: "#/$defs/safeRelativePath" }
+      }
+    },
+    producer: {
+      type: "object",
+      required: ["id", "module", "inputs"],
+      additionalProperties: true,
+      properties: {
+        id: { $ref: "#/$defs/nonEmptyString" },
+        module: { $ref: "#/$defs/safeRelativePath" },
+        exportName: { $ref: "#/$defs/nonEmptyString" },
+        failureMode: { enum: ["fail", "warn"] },
+        workspaceRoot: { $ref: "#/$defs/safeRelativePath" },
+        outputDirectory: { $ref: "#/$defs/safeRelativePath" },
+        inputs: {
+          type: "array",
+          minItems: 1,
+          items: { $ref: "#/$defs/producerInput" }
+        },
+        options: { type: "object" },
+        profileIds: {
+          type: "array",
+          minItems: 1,
+          items: { $ref: "#/$defs/nonEmptyString" }
+        }
+      }
+    },
     input: {
       type: "object",
       required: ["kind", "path"],
@@ -156,10 +228,13 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
     ));
   }
 
-  if (!Array.isArray(value.inputs) || value.inputs.length === 0) {
+  const hasInputs = Array.isArray(value.inputs) && value.inputs.length > 0;
+  const hasProducers = Array.isArray(value.producers) && value.producers.length > 0;
+
+  if (!hasInputs && !hasProducers) {
     diagnostics.push(createProjectManifestDiagnostic(
       "HIA_PROJECT_MANIFEST_FIELD_INVALID",
-      "Project docs manifest inputs must be a non-empty array.",
+      "Project docs manifest must declare at least one input or producer.",
       "error",
       joinTarget(targetPrefix, "inputs")
     ));
@@ -167,8 +242,128 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
 
   validateManifestPathEntries(value.profiles, "profiles", targetPrefix, diagnostics);
   validateManifestPathEntries(value.inputs, "inputs", targetPrefix, diagnostics);
+  validateProducerEntries(value.producers, targetPrefix, diagnostics);
 
   return diagnostics;
+}
+
+function validateProducerEntries(value: unknown, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(value)) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      "Project docs manifest producers must be an array.",
+      "error",
+      joinTarget(targetPrefix, "producers")
+    ));
+    return;
+  }
+
+  if (value.length === 0) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      "Project docs manifest producers must be a non-empty array when provided.",
+      "error",
+      joinTarget(targetPrefix, "producers")
+    ));
+    return;
+  }
+
+  value.forEach((item, index) => {
+    const itemPath = `producers.${index}`;
+    if (!isRecord(item)) {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+        `Project docs manifest ${itemPath} must be an object.`,
+        "error",
+        joinTarget(targetPrefix, itemPath)
+      ));
+      return;
+    }
+
+    validateRequiredString(item, "id", itemPath, targetPrefix, diagnostics);
+    validateSafeOptionalPath(item, "module", itemPath, targetPrefix, diagnostics, true);
+    validateSafeOptionalPath(item, "workspaceRoot", itemPath, targetPrefix, diagnostics, false);
+    validateSafeOptionalPath(item, "outputDirectory", itemPath, targetPrefix, diagnostics, false);
+
+    if (item.failureMode !== undefined && item.failureMode !== "fail" && item.failureMode !== "warn") {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+        `Project docs manifest ${itemPath}.failureMode must be "fail" or "warn".`,
+        "error",
+        joinTarget(targetPrefix, `${itemPath}.failureMode`)
+      ));
+    }
+
+    if (!Array.isArray(item.inputs) || item.inputs.length === 0) {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+        `Project docs manifest ${itemPath}.inputs must be a non-empty array.`,
+        "error",
+        joinTarget(targetPrefix, `${itemPath}.inputs`)
+      ));
+      return;
+    }
+
+    item.inputs.forEach((input, inputIndex) => {
+      const inputPath = `${itemPath}.inputs.${inputIndex}`;
+      if (!isRecord(input)) {
+        diagnostics.push(createProjectManifestDiagnostic(
+          "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+          `Project docs manifest ${inputPath} must be an object.`,
+          "error",
+          joinTarget(targetPrefix, inputPath)
+        ));
+        return;
+      }
+
+      validateRequiredString(input, "kind", inputPath, targetPrefix, diagnostics);
+      validateSafeOptionalPath(input, "path", inputPath, targetPrefix, diagnostics, true);
+    });
+  });
+}
+
+function validateRequiredString(
+  item: Record<string, unknown>,
+  field: string,
+  itemPath: string,
+  targetPrefix: string | undefined,
+  diagnostics: HiaDiagnostic[]
+): void {
+  if (typeof item[field] !== "string" || String(item[field]).length === 0) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      `Project docs manifest ${itemPath}.${field} must be a non-empty string.`,
+      "error",
+      joinTarget(targetPrefix, `${itemPath}.${field}`)
+    ));
+  }
+}
+
+function validateSafeOptionalPath(
+  item: Record<string, unknown>,
+  field: string,
+  itemPath: string,
+  targetPrefix: string | undefined,
+  diagnostics: HiaDiagnostic[],
+  required: boolean
+): void {
+  const value = item[field];
+  if (value === undefined && !required) {
+    return;
+  }
+
+  if (typeof value !== "string" || value.length === 0 || isUnsafeRelativePath(value)) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_PATH_INVALID",
+      `Project docs manifest ${itemPath}.${field} must be a safe relative path.`,
+      "error",
+      joinTarget(targetPrefix, `${itemPath}.${field}`)
+    ));
+  }
 }
 
 function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs", targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {

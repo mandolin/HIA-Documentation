@@ -1,0 +1,7 @@
+/**
+ * @component Alert Source-produced alert styles.
+ */
+.alert {
+  border: 1px solid currentColor;
+  padding: 0.75rem;
+}
