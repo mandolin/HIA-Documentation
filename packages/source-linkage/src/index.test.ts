@@ -1,9 +1,14 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   createDocSourceMapIndex,
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_ID,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
+  findDocSourceMapEntriesByArtifact,
+  findDocSourceMapEntriesBySource,
+  findDocSourceMapEntriesBySymbol,
+  queryDocSourceMapIndex,
   validateDocSourceMap
 } from "./index.js";
 
@@ -82,6 +87,65 @@ describe("@hia-doc/source-linkage", () => {
     expect(index.diagnostics).toEqual([]);
   });
 
+  it("queries doc-source-map entries by symbol, source position and artifact selector", () => {
+    const index = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [
+        { id: "artifact:html", path: "dist/card.html", language: "html" }
+      ],
+      sources: [
+        { id: "source:pug", path: "src/card.pug", language: "pug", sourcesContentPolicy: "none" }
+      ],
+      sourceMaps: [],
+      entries: [
+        {
+          id: "entry:card",
+          kind: "symbol",
+          symbolId: "component:Card",
+          symbolKind: "html-component",
+          sourceRefs: [
+            {
+              sourceId: "source:pug",
+              range: {
+                start: { line: 2, column: 1 },
+                end: { line: 4, column: 8 }
+              }
+            }
+          ],
+          artifactRefs: [
+            {
+              artifactId: "artifact:html",
+              selector: "[data-component=\"Card\"]"
+            }
+          ]
+        }
+      ],
+      privacy: {
+        sourcesContentPolicy: "none"
+      }
+    });
+
+    expect(findDocSourceMapEntriesBySymbol(index, "component:Card").map((entry) => entry.id)).toEqual(["entry:card"]);
+    expect(findDocSourceMapEntriesBySource(index, "src/card.pug", { line: 3, column: 2 }).map((entry) => entry.id)).toEqual(["entry:card"]);
+    expect(findDocSourceMapEntriesBySource(index, "src/card.pug", { line: 8, column: 1 })).toEqual([]);
+    expect(findDocSourceMapEntriesByArtifact(index, "dist/card.html", "[data-component=\"Card\"]").map((entry) => entry.id)).toEqual(["entry:card"]);
+    expect(queryDocSourceMapIndex(index, { symbolKind: "html-component" })).toMatchObject({
+      matchedEntryCount: 1,
+      status: "available"
+    });
+  });
+
+  it("queries generated-source navigation fixtures for Pug and TypeScript chains", () => {
+    const pugIndex = createDocSourceMapIndex(readFixture("source-linkage/pug-card.docmap.json"));
+    const tsIndex = createDocSourceMapIndex(readFixture("source-linkage/ts-calculator.docmap.json"));
+
+    expect(findDocSourceMapEntriesBySource(pugIndex, "src/card.pug", { line: 4, column: 2 }).map((entry) => entry.symbolId)).toEqual(["html:component:card"]);
+    expect(findDocSourceMapEntriesByArtifact(pugIndex, "dist/card.html", "[data-component=\"Card\"]").map((entry) => entry.id)).toEqual(["entry:pug:card"]);
+    expect(findDocSourceMapEntriesBySource(tsIndex, "src/calculator.ts", { line: 6, column: 1 }).map((entry) => entry.symbolId)).toEqual(["ts:function:add"]);
+    expect(findDocSourceMapEntriesByArtifact(tsIndex, "dist/calculator.js").map((entry) => entry.id)).toEqual(["entry:ts:add"]);
+  });
+
   it("reports unsafe paths and blocked embedded source content", () => {
     const diagnostics = validateDocSourceMap({
       contract: "doc-source-map",
@@ -103,3 +167,7 @@ describe("@hia-doc/source-linkage", () => {
     expect(diagnostics.every((diagnostic) => diagnostic.severity === "error")).toBe(true);
   });
 });
+
+function readFixture(name: string): unknown {
+  return JSON.parse(readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8")) as unknown;
+}

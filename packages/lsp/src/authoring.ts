@@ -27,6 +27,9 @@ import type {
   HiaProfileSet,
   HiaProfileTagDefinition
 } from "@hia-doc/profile";
+import type {
+  DocSourceMapIndex
+} from "@hia-doc/source-linkage";
 import {
   HiaLspDiagnosticCode
 } from "./diagnostics.js";
@@ -52,6 +55,7 @@ export const HiaIdeCapabilityId = {
   HoverProfile: "hia.hover.profile",
   DefinitionResource: "hia.definition.resource",
   DefinitionSource: "hia.definition.source",
+  SourceLinkageQuery: "hia.sourceLinkage.query",
   FoldingDocument: "hia.folding.document",
   ProfileRegistry: "hia.profile.registry",
   DiagnosticsProfile: "hia.diagnostics.profile",
@@ -122,6 +126,7 @@ export interface HiaDocumentResourceActionsResult {
 }
 
 export interface HiaLspAuthoringDocument {
+  docSourceMapIndex?: DocSourceMapIndex;
   diagnostics: Diagnostic[];
   resourceIndex: HiaLspResourceIndex;
   text: string;
@@ -228,6 +233,7 @@ export interface HiaLspResourceAction {
 export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaIdeCapabilitiesResult {
   const document = context.document;
   const index = document?.resourceIndex;
+  const docSourceMapIndex = document?.docSourceMapIndex;
   const hasDocument = Boolean(document);
   const profileSummaries = createProfileSummaries(context.profileSet);
   const profileDiagnosticSummaries = createProfileDiagnosticSummaries(context.profileDiagnostics ?? []);
@@ -280,6 +286,7 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         hasDocument,
         (index?.sourceBlocks.length ?? 0) + (index?.sourceFragments.length ?? 0)
       ),
+      sourceLinkageCapability(hasDocument, docSourceMapIndex),
       implementedCapability(HiaIdeCapabilityId.FoldingDocument, "lsp", hasDocument),
       dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceOpen, "lsp", hasDocument, openableResourceLocations),
       dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceStub, "lsp", hasDocument, index?.missingLocales.length ?? 0),
@@ -287,6 +294,41 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
       plannedCapability(HiaIdeCapabilityId.CommandOpenPreview, "vscode", "Owned by the IDE shell and CLI/renderer manifest."),
       plannedCapability(HiaIdeCapabilityId.CommandValidateWorkspace, "vscode", "Owned by the IDE shell over LSP diagnostics and resource index.")
     ]
+  };
+}
+
+function sourceLinkageCapability(hasDocument: boolean, index: DocSourceMapIndex | undefined): HiaIdeCapability {
+  if (!hasDocument) {
+    return {
+      id: HiaIdeCapabilityId.SourceLinkageQuery,
+      owner: "lsp",
+      status: "unsupported",
+      reason: "document-not-open"
+    };
+  }
+
+  if (!index) {
+    return {
+      id: HiaIdeCapabilityId.SourceLinkageQuery,
+      owner: "lsp",
+      status: "unsupported",
+      reason: "doc-source-map-not-open"
+    };
+  }
+
+  if (index.entries.length === 0) {
+    return {
+      id: HiaIdeCapabilityId.SourceLinkageQuery,
+      owner: "lsp",
+      status: "partial",
+      reason: "source-data-empty"
+    };
+  }
+
+  return {
+    id: HiaIdeCapabilityId.SourceLinkageQuery,
+    owner: "lsp",
+    status: "available"
   };
 }
 

@@ -8,7 +8,7 @@ This document describes how IDE shells should integrate with HIA Documentation w
 | --- | --- | --- |
 | `@hia-doc/core` | HIA document, diagnostics, i18n, source and protocol primitives | IDE APIs, CLI processes, rendered HTML |
 | Adapters | Language-specific input conversion into core documents | IDE UI, renderer output |
-| `@hia-doc/lsp` | Diagnostics, resource index, profile-derived authoring data, authoring queries, locations, resource actions and capability data | VS Code commands, HTML generation, JSDoc parsing, profile rule definitions |
+| `@hia-doc/lsp` | Diagnostics, resource index, source-linkage query, profile-derived authoring data, authoring queries, locations, resource actions and capability data | VS Code commands, HTML generation, JSDoc parsing, profile rule definitions |
 | `@hia-doc/cli` | Build execution, config loading, adapter bridge input and renderer invocation | IDE UI and LSP providers |
 | `@hia-doc/renderer-html` | HTML output, assets and renderer manifest | IDE commands and workspace edits |
 | IDE shells | Editor APIs, commands, menus, output/log panels and user feedback | HIA semantic parsing, JSDoc parsing, HTML generation |
@@ -26,11 +26,12 @@ IDE shells should consume the standard LSP providers first:
 HIA-specific data is available through custom requests under the `hia/` namespace:
 
 - `hia/documentResourceIndex`
+- `hia/documentSourceMapIndex`
 - `hia/ideCapabilities`
 - `hia/documentAuthoringLocations`
 - `hia/resourceActions`
 
-Custom request responses are IDE-neutral view models derived from managed core documents. They should not be written back into the core document IR.
+Custom request responses are IDE-neutral view models derived from managed core documents or `doc-source-map` manifests. They should not be written back into the core document IR.
 
 When a documentation profile set is available, `hia/ideCapabilities`, completion and hover may include profile-derived tag and diagnostic information. IDE shells should display that data as returned by the LSP and should not implement their own profile registry logic.
 

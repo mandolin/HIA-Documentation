@@ -4,6 +4,7 @@ import {
   type HiaDiagnostic,
   type HiaDiagnosticData,
   type HiaDiagnosticSeverity,
+  type HiaSourcePosition,
   type HiaSourceRange
 } from "@hia-doc/core";
 import { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
@@ -64,6 +65,23 @@ export interface DocSourceMapArtifactLink {
   path?: string;
   rangeSource?: string;
   selector?: string;
+}
+
+export interface DocSourceMapQuery {
+  artifactPath?: string;
+  selector?: string;
+  sourcePath?: string;
+  position?: HiaSourcePosition;
+  symbolId?: string;
+  symbolKind?: string;
+}
+
+export interface DocSourceMapQueryResult {
+  diagnostics: HiaDiagnostic[];
+  entries: DocSourceMapIndexedEntry[];
+  matchedEntryCount: number;
+  query: DocSourceMapQuery;
+  status: DocSourceMapIndex["status"];
 }
 
 interface IndexedNode {
@@ -168,6 +186,48 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
 
 export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): HiaDiagnostic[] {
   return createDocSourceMapIndex(value, options).diagnostics;
+}
+
+/**
+ * 查询 doc-source-map 索引中的文档化语义链路。
+ * Query documentation linkage entries from a doc-source-map index.
+ */
+export function queryDocSourceMapIndex(index: DocSourceMapIndex, query: DocSourceMapQuery = {}): DocSourceMapQueryResult {
+  const entries = index.entries.filter((entry) => matchesDocSourceMapQuery(entry, query));
+
+  return {
+    diagnostics: index.diagnostics,
+    entries,
+    matchedEntryCount: entries.length,
+    query,
+    status: index.status
+  };
+}
+
+export function findDocSourceMapEntriesBySymbol(index: DocSourceMapIndex, symbolId: string): DocSourceMapIndexedEntry[] {
+  return queryDocSourceMapIndex(index, { symbolId }).entries;
+}
+
+export function findDocSourceMapEntriesBySource(
+  index: DocSourceMapIndex,
+  sourcePath: string,
+  position?: HiaSourcePosition
+): DocSourceMapIndexedEntry[] {
+  return queryDocSourceMapIndex(index, {
+    sourcePath,
+    ...(position ? { position } : {})
+  }).entries;
+}
+
+export function findDocSourceMapEntriesByArtifact(
+  index: DocSourceMapIndex,
+  artifactPath: string,
+  selector?: string
+): DocSourceMapIndexedEntry[] {
+  return queryDocSourceMapIndex(index, {
+    artifactPath,
+    ...(selector ? { selector } : {})
+  }).entries;
 }
 
 function createIndexedEntry(
@@ -320,6 +380,42 @@ function isLinkedEntry(entry: DocSourceMapIndexedEntry): boolean {
   const hasUsableArtifact = entry.artifactLinks.some((link) => link.artifactId && link.path && link.confidence !== "none" && link.rangeSource !== "unresolved");
 
   return hasUsableSource && hasUsableArtifact;
+}
+
+function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSourceMapQuery): boolean {
+  if (query.symbolId && entry.symbolId !== query.symbolId) {
+    return false;
+  }
+
+  if (query.symbolKind && entry.symbolKind !== query.symbolKind) {
+    return false;
+  }
+
+  if (query.sourcePath && !entry.sourceLinks.some((link) => link.path === query.sourcePath && (!query.position || containsPosition(link.range, query.position)))) {
+    return false;
+  }
+
+  if (query.artifactPath && !entry.artifactLinks.some((link) => link.path === query.artifactPath && (!query.selector || link.selector === query.selector))) {
+    return false;
+  }
+
+  return true;
+}
+
+function containsPosition(range: HiaSourceRange | undefined, position: HiaSourcePosition): boolean {
+  if (!range) {
+    return false;
+  }
+
+  return comparePositions(position, range.start) >= 0 && comparePositions(position, range.end) <= 0;
+}
+
+function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): number {
+  if (left.line !== right.line) {
+    return left.line - right.line;
+  }
+
+  return (left.column ?? 0) - (right.column ?? 0);
 }
 
 function collectIndexedNodes(value: unknown): IndexedNode[] {

@@ -13,6 +13,7 @@ describe("LSP server stdio", () => {
   it("responds to initialize and shutdown", async () => {
     const workspaceRoot = fileURLToPath(new URL("..", import.meta.url));
     const documentText = await readFile(new URL("../fixtures/basic.hia.json", import.meta.url), "utf8");
+    const docSourceMapText = await readFile(new URL("../fixtures/project-mixed-alert.docmap.json", import.meta.url), "utf8");
     const child = spawn(process.execPath, ["packages/lsp/dist/node.js", "--stdio"], {
       cwd: workspaceRoot,
       stdio: ["pipe", "pipe", "pipe"]
@@ -136,7 +137,45 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
+      method: "textDocument/didOpen",
+      params: {
+        textDocument: {
+          uri: "file:///workspace/project-mixed-alert.docmap.json",
+          languageId: "json",
+          version: 1,
+          text: docSourceMapText
+        }
+      }
+    });
+
+    client.send({
+      jsonrpc: "2.0",
       id: 6,
+      method: "hia/documentSourceMapIndex",
+      params: {
+        uri: "file:///workspace/project-mixed-alert.docmap.json",
+        query: {
+          symbolId: "html:component:alert"
+        }
+      }
+    });
+
+    const sourceMapIndexResponse = await client.waitFor((message) => message.id === 6);
+    expect(sourceMapIndexResponse.result).toMatchObject({
+      uri: "file:///workspace/project-mixed-alert.docmap.json",
+      status: "available",
+      matchedEntryCount: 1,
+      entries: [
+        expect.objectContaining({
+          id: "entry:html:alert",
+          symbolId: "html:component:alert"
+        })
+      ]
+    });
+
+    client.send({
+      jsonrpc: "2.0",
+      id: 7,
       method: "textDocument/completion",
       params: {
         textDocument: {
@@ -149,7 +188,7 @@ describe("LSP server stdio", () => {
       }
     });
 
-    const completionResponse = await client.waitFor((message) => message.id === 6);
+    const completionResponse = await client.waitFor((message) => message.id === 7);
     expect(completionResponse.result).toEqual(expect.arrayContaining([
       expect.objectContaining({
         label: "zh-CN"
@@ -158,12 +197,12 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
-      id: 7,
+      id: 8,
       method: "shutdown",
       params: null
     });
 
-    const shutdownResponse = await client.waitFor((message) => message.id === 7);
+    const shutdownResponse = await client.waitFor((message) => message.id === 8);
     expect(shutdownResponse.result).toBeNull();
 
     client.send({

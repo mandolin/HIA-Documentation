@@ -1,0 +1,66 @@
+{
+  "contract": "doc-source-map",
+  "contractVersion": "0.1.0-draft",
+  "id": "docmap:fixture:pug-card",
+  "artifacts": [
+    {
+      "id": "artifact:html:card",
+      "kind": "generated-html",
+      "path": "dist/card.html",
+      "language": "html"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source:pug:card",
+      "kind": "source",
+      "path": "src/card.pug",
+      "language": "pug",
+      "sourcesContentPolicy": "none"
+    }
+  ],
+  "sourceMaps": [
+    {
+      "id": "sourcemap:pug-card",
+      "kind": "ordinary-source-map",
+      "path": "dist/card.html.map",
+      "language": "json"
+    }
+  ],
+  "chains": [],
+  "entries": [
+    {
+      "id": "entry:pug:card",
+      "kind": "symbol",
+      "symbolKind": "html-component",
+      "symbolId": "html:component:card",
+      "sourceRefs": [
+        {
+          "sourceId": "source:pug:card",
+          "range": {
+            "start": { "line": 3, "column": 1 },
+            "end": { "line": 8, "column": 12 }
+          },
+          "rangeSource": "pug-location",
+          "confidence": "medium"
+        }
+      ],
+      "artifactRefs": [
+        {
+          "artifactId": "artifact:html:card",
+          "selector": "[data-component=\"Card\"]",
+          "rangeSource": "htmdoc-bridge",
+          "confidence": "medium"
+        }
+      ],
+      "diagnostics": []
+    }
+  ],
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "allowAbsolutePaths": false,
+    "allowUncPaths": false,
+    "allowPathTraversal": false
+  },
+  "diagnostics": []
+}

@@ -1,0 +1,65 @@
+{
+  "contract": "doc-source-map",
+  "contractVersion": "0.1.0-draft",
+  "id": "docmap:fixture:ts-calculator",
+  "artifacts": [
+    {
+      "id": "artifact:js:calculator",
+      "kind": "generated-js",
+      "path": "dist/calculator.js",
+      "language": "javascript"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source:ts:calculator",
+      "kind": "source",
+      "path": "src/calculator.ts",
+      "language": "typescript",
+      "sourcesContentPolicy": "none"
+    }
+  ],
+  "sourceMaps": [
+    {
+      "id": "sourcemap:ts-calculator",
+      "kind": "ordinary-source-map",
+      "path": "dist/calculator.js.map",
+      "language": "json"
+    }
+  ],
+  "chains": [],
+  "entries": [
+    {
+      "id": "entry:ts:add",
+      "kind": "symbol",
+      "symbolKind": "ts-function",
+      "symbolId": "ts:function:add",
+      "sourceRefs": [
+        {
+          "sourceId": "source:ts:calculator",
+          "range": {
+            "start": { "line": 5, "column": 1 },
+            "end": { "line": 7, "column": 2 }
+          },
+          "rangeSource": "typescript-compiler",
+          "confidence": "medium"
+        }
+      ],
+      "artifactRefs": [
+        {
+          "artifactId": "artifact:js:calculator",
+          "rangeSource": "ordinary-source-map",
+          "confidence": "medium"
+        }
+      ],
+      "diagnostics": []
+    }
+  ],
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "allowAbsolutePaths": false,
+    "allowUncPaths": false,
+    "allowPathTraversal": false
+  },
+  "diagnostics": []
+}

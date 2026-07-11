@@ -20,6 +20,10 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - inline i18n keys and paths;
   - missing locale entries;
   - source references and source fragments.
+- Source-linkage index over managed `doc-source-map` documents:
+  - symbol/source/artifact query;
+  - workspace `hia.config.json` plus project manifest loading for configured `doc-source-map` inputs;
+  - watched-file reload hook for workspace runtime refresh.
 - Authoring capability surface:
   - custom capability request;
   - custom authoring location request;
@@ -37,6 +41,7 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - return missing-locale stub preflight data without writing files.
 - Node LSP transport entry for future VS Code integration.
 - Custom request: `hia/documentResourceIndex`.
+- Custom request: `hia/documentSourceMapIndex`.
 - Custom request: `hia/ideCapabilities`.
 - Custom request: `hia/documentAuthoringLocations`.
 - Custom request: `hia/resourceActions`.
@@ -44,6 +49,8 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 ## Contract
 
 The LSP resource index is an IDE view model derived from core documents. It is not written back into the core document IR.
+
+The LSP source-linkage index is an IDE view model derived from `doc-source-map` manifests and `@hia-doc/source-linkage`. It is a query surface for navigation; it does not execute producers or mutate project manifests.
 
 Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 

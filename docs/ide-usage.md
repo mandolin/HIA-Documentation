@@ -12,6 +12,7 @@ The IDE layer does not parse JSDoc, generate HTML, or duplicate profile semantic
 - Profile-driven annotation tag completion when a profile set is supplied to the LSP service.
 - Hover summaries.
 - Definition/source navigation.
+- Source-linkage queries for managed `doc-source-map` documents.
 - Folding ranges.
 - Resource action quick fixes.
 - Build Docs command.
@@ -68,6 +69,7 @@ The report includes:
 - resource actions;
 - capability status;
 - profile summary when profile data is available through the LSP.
+- source-linkage status when a `doc-source-map` document or configured project manifest is available to the LSP.
 
 ## Preview
 
@@ -95,4 +97,4 @@ docs/user-acceptance-checklist.md
 - Webview and preview server support are deferred.
 - Resource edit quick fixes currently show preflight data only.
 - WorkspaceEdit-based resource writes are deferred.
-- Profile file discovery and profile-defined diagnostics execution are deferred.
+- Profile-defined diagnostics execution is deferred.

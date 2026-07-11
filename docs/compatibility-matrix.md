@@ -21,11 +21,11 @@ This matrix records the current compatibility baseline for the main repository, 
 | `@hia-doc/profiles` | private `0.0.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; `@hia-doc` scope approved, release version/ownership setup pending. |
 | `@hia-doc/plugin-sdk` | private `0.0.0`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; single-run in-process producer baseline. |
 | `@hia-doc/schemas` | private `0.0.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; initial GitHub Pages deployment online, producer schemas pending next push. |
-| `@hia-doc/source-linkage` | private `0.0.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer consumption baseline; LSP request handler deferred. |
+| `@hia-doc/source-linkage` | private `0.0.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer consumption baseline and LSP query runtime. |
 | `@hia-doc/parser-jsdoc` | private `0.0.0` | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline. |
 | `@hia-doc/renderer-html` | private `0.0.0` | renderer manifest `0.1.0` | Active renderer baseline with single-document and project-page outputs. |
 | `@hia-doc/cli` | private `0.0.0` | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; project manifest remains draft. |
-| `@hia-doc/lsp` | private `0.0.0` | resource index, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline. |
+| `@hia-doc/lsp` | private `0.0.0` | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 
 ## Official And Incubating Satellite Projects

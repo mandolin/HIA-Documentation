@@ -19,6 +19,7 @@ export const HIA_DEFAULT_BUILD_OUTPUT = "dist/docs";
 export const HIA_DEFAULT_PREVIEW_PATH = "dist/docs/index.html";
 export const HIA_DEFAULT_MANIFEST_PATH = "hia-manifest.json";
 export const HIA_RESOURCE_INDEX_REQUEST = "hia/documentResourceIndex";
+export const HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST = "hia/documentSourceMapIndex";
 export const HIA_IDE_CAPABILITIES_REQUEST = "hia/ideCapabilities";
 export const HIA_AUTHORING_LOCATIONS_REQUEST = "hia/documentAuthoringLocations";
 export const HIA_RESOURCE_ACTIONS_REQUEST = "hia/resourceActions";

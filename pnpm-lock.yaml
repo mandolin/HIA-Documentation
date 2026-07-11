@@ -68,12 +68,18 @@ importers:
 
   packages/lsp:
     dependencies:
+      '@hia-doc/config':
+        specifier: workspace:*
+        version: link:../config
       '@hia-doc/core':
         specifier: workspace:*
         version: link:../core
       '@hia-doc/profile':
         specifier: workspace:*
         version: link:../profile
+      '@hia-doc/source-linkage':
+        specifier: workspace:*
+        version: link:../source-linkage
       vscode-languageserver:
         specifier: ^9.0.1
         version: 9.0.1
