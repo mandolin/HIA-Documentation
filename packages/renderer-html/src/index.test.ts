@@ -68,7 +68,14 @@ describe("@hia-doc/renderer-html", () => {
           entryCount: 1,
           linkedEntryCount: 1,
           sourceCount: 1,
-          sourceMapCount: 0,
+          sourceMaps: [
+            {
+              id: "sourcemap:button",
+              kind: "ordinary-source-map",
+              path: "maps/button.js.map"
+            }
+          ],
+          sourceMapCount: 1,
           sourcesContentPolicy: "none",
           status: "available",
           unresolvedEntryCount: 0
@@ -83,7 +90,17 @@ describe("@hia-doc/renderer-html", () => {
           summary: "Builds a user profile summary.",
           profile: { profileId: "jsdoc", profileVersion: "0.1.0-draft" },
           input: { kind: "jsdoc-integration", path: "jsdoc.json", contract: "jsdoc-integration" },
-          source: { path: "src/profile.js", language: "javascript", range: { start: { line: 12 } } }
+          source: {
+            path: "src/profile.js",
+            language: "javascript",
+            linkUrl: "https://example.test/src/profile.js#L12",
+            range: { start: { line: 12 } },
+            preview: {
+              content: "function buildProfileSummary(profile) {\n  return profile.displayName;\n}",
+              language: "javascript",
+              range: { start: { line: 12 }, end: { line: 14 } }
+            }
+          }
         },
         {
           id: "css:alert",
@@ -126,14 +143,22 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 3, js: 1, css: 1, html: 1 });
     expect(html).toContain("Mixed Project Docs");
     expect(html).toContain("data-hia-project-view=\"js\"");
+    expect(html).toContain("data-hia-project-search");
+    expect(html).toContain("data-hia-project-search-text=");
     expect(html).toContain("data-hia-project-entry=\"css\"");
     expect(html).toContain("buildProfileSummary");
     expect(html).toContain("css-component-style");
     expect(html).toContain("html-component");
     expect(html).toContain("maps/button.docmap.json");
+    expect(html).toContain("maps/button.js.map");
     expect(html).toContain("1/1 linked");
     expect(html).toContain("sourcesContentPolicy=none");
+    expect(html).toContain("Source Preview src/profile.js:12-14");
+    expect(html).toContain("function buildProfileSummary(profile)");
+    expect(html).toContain("https://example.test/src/profile.js#L12");
     expect(html).toContain("Doc Source Map");
+    expect(html).toContain("data-hia-open-request=\"source\"");
+    expect(html).toContain("data-hia-open-request=\"generated\"");
     expect(html).toContain("entry:html:alert");
     expect(html).toContain("dist/alert.html");
     expect(html).toContain("Profile cssdoc@0.1.0-draft");

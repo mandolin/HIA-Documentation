@@ -1145,6 +1145,7 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
       const sourceLanguage = stringValue(symbolSource.language);
       const sourceRangeSource = stringValue(symbolSource.rangeSource);
       const sourceConfidence = stringValue(symbolSource.confidence);
+      const sourcePreview = createProjectSourcePreviewFromRecord(symbolSource);
       const artifactId = stringValue(artifact.id);
       const contract = stringValue(artifact.contract);
       const contractVersion = stringValue(artifact.contractVersion);
@@ -1169,7 +1170,8 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
           ...(sourceLanguage ? { language: sourceLanguage } : {}),
           ...(sourceRange ? { range: sourceRange } : {}),
           ...(sourceRangeSource ? { rangeSource: sourceRangeSource } : {}),
-          ...(sourceConfidence ? { confidence: sourceConfidence } : {})
+          ...(sourceConfidence ? { confidence: sourceConfidence } : {}),
+          ...(sourcePreview ? { preview: sourcePreview } : {})
         }
       };
     });
@@ -1184,6 +1186,14 @@ function docSourceMapToRef(index: DocSourceMapIndex, input: ProjectManifestInput
     entryCount: index.entryCount,
     linkedEntryCount: index.linkedEntryCount,
     sourceCount: index.sourceCount,
+    ...(index.sourceMaps.length > 0 ? {
+      sourceMaps: index.sourceMaps.map((sourceMap) => ({
+        id: sourceMap.id,
+        ...(sourceMap.kind ? { kind: sourceMap.kind } : {}),
+        ...(sourceMap.language ? { language: sourceMap.language } : {}),
+        ...(sourceMap.path ? { path: sourceMap.path } : {})
+      }))
+    } : {}),
     sourceMapCount: index.sourceMapCount,
     sourcesContentPolicy: index.sourcesContentPolicy,
     status: index.status,
@@ -1263,6 +1273,7 @@ function profileFromArtifact(artifact: Record<string, unknown>): RenderProjectPr
 
 function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderProjectEntry["source"] } {
   const definedIn = symbol.source?.definedIn;
+  const primaryBlock = symbol.source?.primaryBlock;
 
   if (!definedIn?.relativePath) {
     return {};
@@ -1272,12 +1283,29 @@ function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderP
     path: definedIn.relativePath
   };
 
+  if (definedIn.language) {
+    source.language = definedIn.language;
+  }
+
+  if (definedIn.link?.enabled !== false && definedIn.link?.lineUrl) {
+    source.linkUrl = definedIn.link.lineUrl;
+  }
+
   if (definedIn.position) {
     source.range = {
       start: {
         line: definedIn.position.line,
         ...(definedIn.position.column ? { column: definedIn.position.column } : {})
       }
+    };
+  }
+
+  if ((symbol.source?.mode === "include" || symbol.source?.mode === "all") && primaryBlock?.content && primaryBlock.confidence !== "none" && primaryBlock.preview?.enabled !== false) {
+    source.preview = {
+      content: primaryBlock.preview?.content ?? primaryBlock.content,
+      ...(primaryBlock.preview?.defaultExpanded !== undefined ? { defaultExpanded: primaryBlock.preview.defaultExpanded } : {}),
+      ...(primaryBlock.preview?.language ?? primaryBlock.language ? { language: primaryBlock.preview?.language ?? primaryBlock.language } : {}),
+      ...(primaryBlock.preview?.range ?? primaryBlock.range ? { range: primaryBlock.preview?.range ?? primaryBlock.range } : {})
     };
   }
 
@@ -1329,6 +1357,28 @@ function normalizeProjectRange(value: Record<string, unknown>): NonNullable<Rend
           }
         }
       : {})
+  };
+}
+
+function createProjectSourcePreviewFromRecord(value: Record<string, unknown>): NonNullable<RenderProjectEntry["source"]>["preview"] | undefined {
+  const preview = isRecord(value.preview) ? value.preview : undefined;
+  const content = stringValue(preview?.content) ?? stringValue(value.content);
+
+  if (!content || preview?.enabled === false) {
+    return undefined;
+  }
+
+  const previewRange = isRecord(preview?.range) ? normalizeProjectRange(preview.range) : undefined;
+  const sourceRange = isRecord(value.range) ? normalizeProjectRange(value.range) : undefined;
+  const range = previewRange ?? sourceRange;
+  const language = stringValue(preview?.language) ?? stringValue(value.language);
+  const defaultExpanded = typeof preview?.defaultExpanded === "boolean" ? preview.defaultExpanded : undefined;
+
+  return {
+    content,
+    ...(defaultExpanded !== undefined ? { defaultExpanded } : {}),
+    ...(language ? { language } : {}),
+    ...(range ? { range } : {})
   };
 }
 

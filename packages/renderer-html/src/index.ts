@@ -60,10 +60,18 @@ export interface RenderProjectDocSourceMapRef {
   entryCount?: number;
   linkedEntryCount?: number;
   sourceCount?: number;
+  sourceMaps?: RenderProjectSourceMapRef[];
   sourceMapCount?: number;
   sourcesContentPolicy?: string;
   status?: string;
   unresolvedEntryCount?: number;
+}
+
+export interface RenderProjectSourceMapRef {
+  id: string;
+  kind?: string;
+  language?: string;
+  path?: string;
 }
 
 export interface RenderProjectEntry {
@@ -106,14 +114,26 @@ export interface RenderProjectInputRef {
 }
 
 export interface RenderProjectSourceRef {
-  path: string;
+  confidence?: string;
   language?: string;
+  linkUrl?: string;
+  path: string;
+  preview?: RenderProjectSourcePreviewRef;
   range?: {
     start: { line: number; column?: number };
     end?: { line: number; column?: number };
   };
   rangeSource?: string;
-  confidence?: string;
+}
+
+export interface RenderProjectSourcePreviewRef {
+  content: string;
+  defaultExpanded?: boolean;
+  language?: string;
+  range?: {
+    start: { line: number; column?: number };
+    end?: { line: number; column?: number };
+  };
 }
 
 export interface RenderHtmlResult {
@@ -267,6 +287,7 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
     `<title>${escapeHtml(pageTitle)}</title>`,
+    "<link rel=\"icon\" href=\"data:,\">",
     `<link rel="stylesheet" href="${escapeHtml(DEFAULT_THEME_CSS_PATH)}">`,
     "</head>",
     "<body>",
@@ -289,8 +310,9 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
 function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHtmlInput): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
   const views = collectProjectViews(projectInput.entries);
+  const entryCounts = countEntriesByView(projectInput.entries);
   const navigation = projectInput.entries
-    .map((entry) => `<li data-hia-project-nav="${escapeHtml(entry.view)}"><a href="#${escapeHtml(entry.id)}">${escapeHtml(entry.name)}</a></li>`)
+    .map((entry) => renderProjectNavItem(entry))
     .join("");
   const entries = projectInput.entries.map((entry) => renderProjectEntry(entry)).join("");
   const profileSummary = renderProjectProfiles(projectInput.profiles ?? []);
@@ -304,13 +326,15 @@ function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHt
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
     `<title>${escapeHtml(pageTitle)}</title>`,
+    "<link rel=\"icon\" href=\"data:,\">",
     `<link rel="stylesheet" href="${escapeHtml(DEFAULT_THEME_CSS_PATH)}">`,
     "</head>",
     "<body>",
     "<div class=\"hia-shell hia-project-shell\">",
     "<aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectName)}</h1>`,
-    renderProjectViewControl(views),
+    renderProjectViewControl(views, entryCounts),
+    renderProjectSearchControl(),
     navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
     profileSummary,
     docSourceMapSummary,
@@ -318,6 +342,7 @@ function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHt
     "</aside>",
     "<main class=\"hia-main hia-project-main\">",
     entries || "<p>No project documentation entries.</p>",
+    "<p class=\"hia-project-empty\" data-hia-project-empty hidden>No entries match the current filters.</p>",
     "</main>",
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
@@ -327,12 +352,33 @@ function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHt
   ].join("");
 }
 
-function renderProjectViewControl(views: RenderProjectView[]): string {
+function renderProjectViewControl(views: RenderProjectView[], entryCounts: Record<string, number>): string {
   const buttons = views
-    .map((view) => `<button type="button" class="hia-project-view-button" data-hia-project-view="${escapeHtml(view)}">${escapeHtml(formatProjectViewLabel(view))}</button>`)
+    .map((view) => `<button type="button" class="hia-project-view-button" data-hia-project-view="${escapeHtml(view)}">${escapeHtml(formatProjectViewLabel(view))}<span>${escapeHtml(String(entryCounts[view] ?? 0))}</span></button>`)
     .join("");
 
   return `<div class="hia-project-views">${buttons}</div>`;
+}
+
+function renderProjectSearchControl(): string {
+  return [
+    "<label class=\"hia-project-search\">",
+    "<span>Search</span>",
+    "<input type=\"search\" data-hia-project-search placeholder=\"Name, kind, source, selector\">",
+    "</label>"
+  ].join("");
+}
+
+function renderProjectNavItem(entry: RenderProjectEntry): string {
+  const searchText = createProjectEntrySearchText(entry);
+  return [
+    `<li data-hia-project-nav="${escapeHtml(entry.view)}" data-hia-project-search-text="${escapeHtml(searchText)}">`,
+    `<a href="#${escapeHtml(entry.id)}">`,
+    `<span>${escapeHtml(entry.name)}</span>`,
+    `<small>${escapeHtml(formatProjectViewLabel(entry.view))} / ${escapeHtml(entry.kind)}</small>`,
+    "</a>",
+    "</li>"
+  ].join("");
 }
 
 function renderProjectEntry(entry: RenderProjectEntry): string {
@@ -343,9 +389,10 @@ function renderProjectEntry(entry: RenderProjectEntry): string {
   const source = entry.source ? renderProjectEntrySource(entry.source) : "";
   const docSourceMap = entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap) : "";
   const diagnostics = renderProjectDiagnostics(entry.diagnostics ?? []);
+  const searchText = createProjectEntrySearchText(entry);
 
   return [
-    `<article class="hia-symbol hia-project-entry" id="${escapeHtml(entry.id)}" data-hia-project-entry="${escapeHtml(entry.view)}">`,
+    `<article class="hia-symbol hia-project-entry" id="${escapeHtml(entry.id)}" data-hia-project-entry="${escapeHtml(entry.view)}" data-hia-project-search-text="${escapeHtml(searchText)}">`,
     `<h2>${escapeHtml(entry.name)}</h2>`,
     `<span class="hia-kind">${escapeHtml(entry.kind)}</span>`,
     `<span class="hia-kind">${escapeHtml(formatProjectViewLabel(entry.view))}</span>`,
@@ -379,14 +426,19 @@ function renderProjectEntryProfile(profile: RenderProjectProfileRef): string {
 
 function renderProjectEntrySource(source: RenderProjectSourceRef): string {
   const range = source.range ? `:${source.range.start.line}${source.range.end ? `-${source.range.end.line}` : ""}` : "";
+  const label = `${source.path}${range}`;
+  const sourceLabel = source.linkUrl
+    ? `<a href="${escapeHtml(source.linkUrl)}">${escapeHtml(label)}</a>`
+    : escapeHtml(label);
   const sourceDetails = [
-    `<dt>Source</dt><dd>${escapeHtml(source.path)}${escapeHtml(range)}</dd>`,
+    `<dt>Source</dt><dd>${sourceLabel}</dd>`,
     source.language ? `<dt>Language</dt><dd>${escapeHtml(source.language)}</dd>` : "",
     source.rangeSource ? `<dt>Range Source</dt><dd>${escapeHtml(source.rangeSource)}</dd>` : "",
     source.confidence ? `<dt>Confidence</dt><dd>${escapeHtml(source.confidence)}</dd>` : ""
   ].join("");
+  const preview = source.preview ? renderProjectSourcePreview(source.preview, source.path) : "";
 
-  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl></section>`;
+  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl>${preview}</section>`;
 }
 
 function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
@@ -405,8 +457,45 @@ function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourc
     docSourceMap.artifactConfidence ? `<dt>Artifact Confidence</dt><dd>${escapeHtml(docSourceMap.artifactConfidence)}</dd>` : "",
     diagnostics
   ].join("");
+  const actions = renderProjectDocSourceMapOpenRequests(docSourceMap);
 
-  return `<section class="hia-source-section"><h3>Doc Source Map</h3><dl class="hia-project-meta">${details}</dl></section>`;
+  return `<section class="hia-source-section"><h3>Doc Source Map</h3><dl class="hia-project-meta">${details}</dl>${actions}</section>`;
+}
+
+function renderProjectSourcePreview(preview: RenderProjectSourcePreviewRef, fallbackPath: string): string {
+  if (!preview.content) {
+    return "";
+  }
+
+  const caption = preview.range
+    ? `${fallbackPath}:${preview.range.start.line}-${preview.range.end?.line ?? preview.range.start.line}`
+    : fallbackPath;
+  const open = preview.defaultExpanded === false ? "" : " open";
+  const language = preview.language ? ` data-hia-source-language="${escapeHtml(preview.language)}"` : "";
+
+  return [
+    `<details class="hia-source-preview hia-project-source-preview"${open}>`,
+    `<summary>Source Preview ${escapeHtml(caption)}</summary>`,
+    `<pre class="hia-source-code"${language}><code>${escapeHtml(preview.content)}</code></pre>`,
+    "</details>"
+  ].join("");
+}
+
+function renderProjectDocSourceMapOpenRequests(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
+  const sourceLabel = docSourceMap.sourcePath && docSourceMap.sourceRange
+    ? `${docSourceMap.sourcePath}:${docSourceMap.sourceRange.start.line}${docSourceMap.sourceRange.start.column ? `:${docSourceMap.sourceRange.start.column}` : ""}`
+    : docSourceMap.sourcePath;
+  const generatedLabel = docSourceMap.artifactPath ?? "";
+  const buttons = [
+    sourceLabel
+      ? `<button type="button" data-hia-open-request="source" data-hia-open-path="${escapeHtml(docSourceMap.sourcePath ?? "")}" data-hia-open-line="${escapeHtml(String(docSourceMap.sourceRange?.start.line ?? ""))}" data-hia-open-column="${escapeHtml(String(docSourceMap.sourceRange?.start.column ?? ""))}">Open Source ${escapeHtml(sourceLabel)}</button>`
+      : "",
+    generatedLabel
+      ? `<button type="button" data-hia-open-request="generated" data-hia-open-path="${escapeHtml(generatedLabel)}">Open Generated ${escapeHtml(generatedLabel)}</button>`
+      : ""
+  ].filter(Boolean).join("");
+
+  return buttons ? `<div class="hia-source-actions">${buttons}</div>` : "";
 }
 
 function renderProjectProfiles(profiles: RenderProjectProfileRef[]): string {
@@ -439,7 +528,11 @@ function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[
       const shape = typeof item.sourceCount === "number" && typeof item.artifactCount === "number"
         ? `, ${escapeHtml(String(item.sourceCount))} source(s), ${escapeHtml(String(item.artifactCount))} artifact(s)`
         : "";
-      return `<li>${escapeHtml(item.path)}${status}${counts}${privacy}${shape}</li>`;
+      const sourceMaps = item.sourceMaps && item.sourceMaps.length > 0
+        ? `<ul class="hia-project-source-map-list">${item.sourceMaps.map((sourceMap) => `<li>${escapeHtml(sourceMap.path ?? sourceMap.id)}</li>`).join("")}</ul>`
+        : "";
+      const sourceMapCount = typeof item.sourceMapCount === "number" ? `, ${escapeHtml(String(item.sourceMapCount))} source map(s)` : "";
+      return `<li>${escapeHtml(item.path)}${status}${counts}${privacy}${shape}${sourceMapCount}${sourceMaps}</li>`;
     })
     .join("");
 
@@ -465,12 +558,42 @@ function renderProjectViewScript(): string {
     "  const buttons = Array.from(document.querySelectorAll('[data-hia-project-view]'));",
     "  const entries = Array.from(document.querySelectorAll('[data-hia-project-entry]'));",
     "  const navItems = Array.from(document.querySelectorAll('[data-hia-project-nav]'));",
+    "  const search = document.querySelector('[data-hia-project-search]');",
+    "  const empty = document.querySelector('[data-hia-project-empty]');",
+    "  let activeView = 'all';",
+    "  function matchesFilter(item, view, query) {",
+    "    const viewName = item.dataset.hiaProjectEntry || item.dataset.hiaProjectNav || 'other';",
+    "    const text = (item.dataset.hiaProjectSearchText || '').toLowerCase();",
+    "    return (view === 'all' || viewName === view) && (!query || text.includes(query));",
+    "  }",
     "  function activate(view) {",
-    "    for (const entry of entries) entry.hidden = view !== 'all' && entry.dataset.hiaProjectEntry !== view;",
-    "    for (const item of navItems) item.hidden = view !== 'all' && item.dataset.hiaProjectNav !== view;",
+    "    activeView = view;",
+    "    const query = String(search?.value || '').trim().toLowerCase();",
+    "    let visibleCount = 0;",
+    "    for (const entry of entries) {",
+    "      const visible = matchesFilter(entry, view, query);",
+    "      entry.hidden = !visible;",
+    "      if (visible) visibleCount += 1;",
+    "    }",
+    "    for (const item of navItems) item.hidden = !matchesFilter(item, view, query);",
     "    for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === view));",
+    "    if (empty) empty.hidden = visibleCount > 0;",
     "  }",
     "  for (const button of buttons) button.addEventListener('click', () => activate(button.dataset.hiaProjectView || 'all'));",
+    "  search?.addEventListener('input', () => activate(activeView));",
+    "  for (const button of document.querySelectorAll('[data-hia-open-request]')) {",
+    "    button.addEventListener('click', () => {",
+    "      window.postMessage({",
+    "        type: 'hia.renderer.openRequest',",
+    "        request: {",
+    "          kind: button.getAttribute('data-hia-open-request'),",
+    "          path: button.getAttribute('data-hia-open-path'),",
+    "          line: Number(button.getAttribute('data-hia-open-line')) || undefined,",
+    "          column: Number(button.getAttribute('data-hia-open-column')) || undefined",
+    "        }",
+    "      }, window.location.protocol === 'file:' || window.location.origin === 'null' ? '*' : window.location.origin);",
+    "    });",
+    "  }",
     "  activate('all');",
     "})();",
     "</script>"
@@ -499,6 +622,29 @@ function countEntriesByView(entries: RenderProjectEntry[]): Record<string, numbe
   }
 
   return counts;
+}
+
+function createProjectEntrySearchText(entry: RenderProjectEntry): string {
+  return [
+    entry.id,
+    entry.name,
+    entry.kind,
+    entry.summary,
+    entry.signature,
+    entry.symbolId,
+    entry.view,
+    entry.profile?.profileId,
+    entry.input?.kind,
+    entry.input?.path,
+    entry.source?.path,
+    entry.source?.language,
+    entry.source?.preview?.content,
+    entry.docSourceMap?.path,
+    entry.docSourceMap?.entryId,
+    entry.docSourceMap?.sourcePath,
+    entry.docSourceMap?.artifactPath,
+    entry.docSourceMap?.artifactSelector
+  ].filter((item): item is string => typeof item === "string" && item.length > 0).join(" ").toLowerCase();
 }
 
 function formatProjectViewLabel(view: RenderProjectView): string {

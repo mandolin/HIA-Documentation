@@ -101,10 +101,13 @@ describe("@hia-doc/cli", () => {
       expect(exitCode).toBe(0);
       expect(messages.join("\n")).toContain("Generated 4 file");
       expect(html).toContain("Mixed Project Documentation");
+      expect(html).toContain("data-hia-project-search");
       expect(html).toContain("data-hia-project-view=\"js\"");
       expect(html).toContain("data-hia-project-view=\"css\"");
       expect(html).toContain("data-hia-project-view=\"html\"");
       expect(html).toContain("greet");
+      expect(html).toContain("Source Preview examples/basic/src/greet.js:17-22");
+      expect(html).toContain("function greet(name)");
       expect(html).toContain("css-component-style");
       expect(html).toContain("html-component");
       expect(html).toContain("project-mixed-alert.docmap.json");

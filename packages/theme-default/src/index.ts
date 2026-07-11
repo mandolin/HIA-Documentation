@@ -74,6 +74,17 @@ a {
   margin: .25rem 0;
 }
 
+.hia-sidebar nav a {
+  display: grid;
+  gap: .1rem;
+  text-decoration: none;
+}
+
+.hia-sidebar nav small {
+  color: var(--hia-muted);
+  font-size: .72rem;
+}
+
 .hia-project-views {
   align-items: center;
   display: inline-flex;
@@ -96,6 +107,13 @@ a {
   padding: .35rem .65rem;
 }
 
+.hia-project-view-button span {
+  display: inline-block;
+  font-size: .72rem;
+  margin-left: .35rem;
+  opacity: .8;
+}
+
 .hia-project-view-button:hover {
   border-color: var(--hia-accent);
   color: var(--hia-accent);
@@ -105,6 +123,34 @@ a {
   background: var(--hia-accent);
   border-color: var(--hia-accent);
   color: #ffffff;
+}
+
+.hia-project-search {
+  display: grid;
+  gap: .35rem;
+  margin: .75rem 0 1rem;
+}
+
+.hia-project-search span {
+  color: var(--hia-muted);
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.hia-project-search input {
+  background: var(--hia-surface);
+  border: 1px solid var(--hia-border);
+  border-radius: 6px;
+  color: var(--hia-text);
+  font: inherit;
+  min-height: 2.25rem;
+  padding: .45rem .6rem;
+  width: 100%;
+}
+
+.hia-project-search input:focus {
+  border-color: var(--hia-accent);
+  outline: 2px solid var(--hia-accent-soft);
 }
 
 .hia-language-switch {
@@ -235,6 +281,45 @@ a {
 
 .hia-source-unresolved {
   color: #9b2c2c;
+}
+
+.hia-project-source-preview {
+  margin-top: .75rem;
+}
+
+.hia-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .75rem;
+}
+
+.hia-source-actions button {
+  appearance: none;
+  background: var(--hia-accent);
+  border: 1px solid var(--hia-accent);
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: .86rem;
+  min-height: 2rem;
+  padding: .35rem .65rem;
+}
+
+.hia-source-actions button:hover {
+  background: #065f5b;
+  border-color: #065f5b;
+}
+
+.hia-project-source-map-list {
+  margin: .35rem 0 0;
+  padding-left: 1rem;
+}
+
+.hia-project-empty {
+  color: var(--hia-muted);
+  padding: 1rem;
 }
 
 @media (max-width: 760px) {
