@@ -13,19 +13,22 @@ This matrix records the current compatibility baseline for the main repository, 
 
 ## Main Repository Packages
 
+The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an explicit public release approval flips each package to its target version. The D2 public identity target for the first npm train is `0.1.0`; see `docs/public-package-release-plan.md`.
+
 | Package | Package version | Contract surfaces | Compatibility status |
 | --- | --- | --- | --- |
-| `@hia-doc/core` | private `0.0.0` | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0` | Active pre-1.0 baseline. |
-| `@hia-doc/config` | private `0.0.0` | config schema `0.1.0` | Active pre-1.0 baseline. |
-| `@hia-doc/profile` | private `0.0.0` | profile schema `0.1.0-draft` | Draft profile runtime baseline. |
-| `@hia-doc/profiles` | private `0.0.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; `@hia-doc` scope approved, release version/ownership setup pending. |
-| `@hia-doc/plugin-sdk` | private `0.0.0`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; single-run in-process producer baseline. |
-| `@hia-doc/schemas` | private `0.0.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; initial GitHub Pages deployment online, producer schemas pending next push. |
-| `@hia-doc/source-linkage` | private `0.0.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer consumption baseline and LSP query runtime. |
-| `@hia-doc/parser-jsdoc` | private `0.0.0` | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline. |
-| `@hia-doc/renderer-html` | private `0.0.0` | renderer manifest `0.1.0` | Active renderer baseline with single-document and project-page outputs. |
-| `@hia-doc/cli` | private `0.0.0` | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; project manifest remains draft. |
-| `@hia-doc/lsp` | private `0.0.0` | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline. |
+| `@hia-doc/core` | private `0.0.0`, target `0.1.0`, MIT | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0` | Active pre-1.0 baseline; public release candidate. |
+| `@hia-doc/config` | private `0.0.0`, target `0.1.0`, MIT | config schema `0.1.0` | Active pre-1.0 baseline; public release candidate. |
+| `@hia-doc/profile` | private `0.0.0`, target `0.1.0`, MIT | profile schema `0.1.0-draft` | Draft profile runtime baseline; public release candidate. |
+| `@hia-doc/profiles` | private `0.0.0`, target `0.1.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
+| `@hia-doc/plugin-sdk` | private `0.0.0`, target `0.1.0`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; public release candidate. |
+| `@hia-doc/schemas` | private `0.0.0`, target `0.1.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; public release candidate. |
+| `@hia-doc/source-linkage` | private `0.0.0`, target `0.1.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer/LSP query runtime; public release candidate. |
+| `@hia-doc/parser-jsdoc` | private `0.0.0`, target `0.1.0`, MIT | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
+| `@hia-doc/theme-default` | private `0.0.0`, target `0.1.0`, MIT | default renderer assets | Active renderer asset baseline; public release candidate. |
+| `@hia-doc/renderer-html` | private `0.0.0`, target `0.1.0`, MIT | renderer manifest `0.1.0` | Active renderer baseline with single-document and project-page outputs; public release candidate. |
+| `@hia-doc/cli` | private `0.0.0`, target `0.1.0`, MIT | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; public release candidate. |
+| `@hia-doc/lsp` | private `0.0.0`, target `0.1.0`, MIT | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline; public release candidate. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 
 ## Official And Incubating Satellite Projects
@@ -66,6 +69,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | --- | --- |
 | Core/config/profile/parser/lsp/renderer/cli behavior | `pnpm run release:gate` from `main-repo`. |
 | Public JSDoc package change | `npm run release:gate` from the package repository, plus publish preflight if releasing. |
+| Public `@hia-doc/*` npm release candidate | `pnpm run release:gate`, `pnpm run distribution:check`, publish-order review and Trusted Publishing readiness check. |
 | New external dependency | `docs/dependency-review-template.md`, `docs/dependency-license-audit.md`, `scripts/check-dependency-license-audit.mjs`, then `pnpm run license:audit`. |
 | Fixture or generated output governance | `pnpm run governance:check`. |
 | Project manifest or renderer output change | CLI/renderer tests plus generated output path-leak checks. |
@@ -75,7 +79,7 @@ This matrix records the current compatibility baseline for the main repository, 
 
 ## Deferred Compatibility Work
 
-- Published `@hia-doc/*` package policy.
+- Actual published `@hia-doc/*` package versions and post-publish smoke results.
 - Project docs manifest JSON Schema.
 - HTMDoc/CSSDoc/doc-source-map formal schema publication.
 - Public npm release of official profile/schema/source-linkage/plugin-sdk packages.

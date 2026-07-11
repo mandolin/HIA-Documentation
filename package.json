@@ -13,7 +13,7 @@
     "build": "tsc -b --pretty false",
     "check": "pnpm run build && pnpm run test:unit && pnpm run test:e2e",
     "dev:cli": "pnpm --filter @hia-doc/cli dev",
-    "distribution:check": "node scripts/check-distribution-readiness.mjs",
+    "distribution:check": "node scripts/check-distribution-readiness.mjs && node scripts/check-public-release-plan.mjs",
     "governance:check": "node scripts/check-example-fixture-governance.mjs",
     "hia": "node apps/cli/dist/index.js",
     "license:audit": "node scripts/check-dependency-license-audit.mjs",

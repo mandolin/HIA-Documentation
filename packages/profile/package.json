@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "description": "Documentation profile runtime for HIA documentation tools.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/profile"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,7 +21,7 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --root ../.. packages/profile/src/index.test.ts"

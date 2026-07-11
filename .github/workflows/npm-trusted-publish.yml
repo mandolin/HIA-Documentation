@@ -1,0 +1,64 @@
+name: npm Trusted Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: "Candidate package name, for example @hia-doc/core"
+        required: true
+        type: string
+      confirm_publish:
+        description: "Type: publish @hia-doc package"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-trusted-publish-${{ inputs.package_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish package with npm provenance
+    if: inputs.confirm_publish == 'publish @hia-doc package'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org/
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Install npm trusted publishing baseline
+        run: npm install -g npm@^11.5.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run release gate
+        run: pnpm run release:gate
+
+      - name: Resolve package
+        id: resolve
+        run: node scripts/resolve-public-release-package.mjs "${{ inputs.package_name }}" --publish-ready --github-output
+
+      - name: Pack package through pnpm
+        run: |
+          mkdir -p "$RUNNER_TEMP/hia-pack"
+          pnpm --filter "${{ steps.resolve.outputs.package_name }}" pack --pack-destination "$RUNNER_TEMP/hia-pack"
+          ls -la "$RUNNER_TEMP/hia-pack"
+
+      - name: Publish package tarball
+        run: npm publish "$RUNNER_TEMP"/hia-pack/*.tgz --access public --provenance --registry=https://registry.npmjs.org/

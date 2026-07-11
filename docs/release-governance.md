@@ -2,7 +2,7 @@
 
 This document defines the release governance baseline for `main-repo` and the official HIA satellite packages.
 
-The current baseline is intentionally practical: local release gates remain the source of truth, public npm publication is still manual, and trusted automation is documented as the next target before adding automatic publish workflows.
+The current baseline is intentionally practical: local release gates remain the source of truth, public npm publication is approval-gated, and Trusted Publishing automation exists only behind manual confirmation plus package-version readiness checks.
 
 ## Release Classes
 
@@ -69,9 +69,11 @@ pnpm run smoke:published-jsdoc
 
 ## Trusted Publishing Target
 
-Before adding an automated npm publish workflow, prefer npm Trusted Publishing with GitHub Actions OpenID Connect instead of long-lived npm automation tokens. npm documents Trusted Publishing as a way to publish packages from supported CI providers without storing long-lived npm tokens.
+Prefer npm Trusted Publishing with GitHub Actions OpenID Connect instead of long-lived npm automation tokens. npm documents Trusted Publishing as a way to publish packages from supported CI providers without storing long-lived npm tokens. It currently requires npm CLI `11.5.1` or later and Node.js `22.14.0` or later, and the GitHub Actions workflow must request `id-token: write`.
 
-The canonical main-repo package scope is `@hia-doc/*`, the repository license is MIT and public schema ids use `https://mandolin.github.io/HIA-Documentation/schemas/`. Operational npm scope ownership still has to be established before first publication. `@hia-doc/profiles`, `@hia-doc/schemas`, `@hia-doc/source-linkage` and `@hia-doc/plugin-sdk` remain private `0.0.0` workspace packages until release versions and Trusted Publishing are ready. Existing `@mandolin/*` JSDoc packages retain their current names.
+The canonical main-repo package scope is `@hia-doc/*`, the repository license is MIT and public schema ids use `https://mandolin.github.io/HIA-Documentation/schemas/`. Operational npm scope ownership still has to be established before first publication. The first release plan, target package versions and publish order are defined in `docs/public-package-release-plan.md` and `release/public-packages.json`. Existing `@mandolin/*` JSDoc packages retain their current names.
+
+The `@hia-doc/*` workflow uses Node 24.x for publishing and keeps package runtime compatibility at Node `>=20.19.0`. It packs with `pnpm` before `npm publish` so workspace protocol dependencies are rewritten into publishable ranges, then publishes the tarball through npm with provenance.
 
 Automation publish workflows must:
 
@@ -80,6 +82,7 @@ Automation publish workflows must:
 - Use npm provenance or trusted publisher settings when available for the package.
 - Keep package-specific publish ownership in the package repository.
 - Preserve the same local release gate as the manual process.
+- Refuse to publish packages that are still private `0.0.0`.
 
 References:
 

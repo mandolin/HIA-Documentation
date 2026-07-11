@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "description": "Command line entry for the HIA documentation system.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "apps/cli"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "bin": {
     "hia": "./dist/index.js"
@@ -15,7 +24,7 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",

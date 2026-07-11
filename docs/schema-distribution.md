@@ -85,6 +85,8 @@ The `schema-pages.yml` workflow runs the full release gate, deploys `dist/schema
 
 ## Publication Status
 
-`@hia-doc/schemas` is currently private. The package scope is `@hia-doc`, the repository license is MIT and the GitHub Pages `$id` namespace is approved. A custom domain and GitHub organization are not required. Public npm publication still requires package versions, operational npm ownership and Trusted Publishing setup.
+`@hia-doc/schemas` is currently private `0.0.0` with a first public target of `0.1.0`. The package scope is `@hia-doc`, the repository license is MIT and the GitHub Pages `$id` namespace is approved. A custom domain and GitHub organization are not required. Public npm publication still requires operational npm ownership and Trusted Publishing setup.
 
 GitHub Pages is enabled and the initial four-schema deployment is online. Newly added owner schemas are published by the same workflow after their changes reach `main`.
+
+The public package release plan, publish order and post-publish smoke are documented in `docs/public-package-release-plan.md`.

@@ -6,10 +6,18 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const schemaCatalog = JSON.parse(await readFile(path.join(rootDir, "packages/schemas/src/catalog.json"), "utf8"));
 const schemaPublicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 const packagePaths = [
+  "apps/cli/package.json",
+  "packages/config/package.json",
+  "packages/core/package.json",
+  "packages/lsp/package.json",
+  "packages/parser-jsdoc/package.json",
   "packages/plugin-sdk/package.json",
+  "packages/profile/package.json",
   "packages/profiles/package.json",
+  "packages/renderer-html/package.json",
   "packages/schemas/package.json",
-  "packages/source-linkage/package.json"
+  "packages/source-linkage/package.json",
+  "packages/theme-default/package.json"
 ];
 const rootLicense = await readFile(path.join(rootDir, "LICENSE"), "utf8");
 
@@ -40,7 +48,7 @@ for (const entry of schemaCatalog.schemas) {
   assert(entry.publicUrl === entry.schemaId, `Schema ${entry.key} publicUrl must match its canonical schemaId.`);
 }
 
-console.log("Distribution readiness check passed: @hia-doc scope, MIT license and GitHub Pages schema namespace are approved; npm publication remains blocked by release-version and Trusted Publishing setup.");
+console.log("Distribution readiness check passed: @hia-doc scope, MIT license and GitHub Pages schema namespace are approved; npm publication remains blocked by release-version flip and external npm ownership/Trusted Publisher setup.");
 
 async function anyPathExists(relativePaths) {
   for (const relativePath of relativePaths) {

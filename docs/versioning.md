@@ -17,7 +17,7 @@ This document defines the first versioning baseline for the HIA main repository 
 | Package group | Current state | Version policy |
 | --- | --- | --- |
 | `main-repo` root | private `0.0.0` | Not published. Version is a workspace marker. |
-| `@hia-doc/*` packages in `main-repo` | private `0.0.0` | Internal packages. Keep `0.0.0` until a package is approved for publication. |
+| `@hia-doc/*` packages in `main-repo` | private `0.0.0`; first public target `0.1.0` | Keep `0.0.0` and `private: true` until a package is explicitly approved for publication. First release package order is defined in `release/public-packages.json`. |
 | `@mandolin/jsdoc-plugin-hia-sys` | public `0.1.0` | Public npm SemVer. Patch for compatible fixes, minor for additive features, major for breaking output/config behavior. |
 | `@mandolin/jsdoc-theme-hia` | public `0.1.0` | Public npm SemVer. Patch for compatible fixes, minor for additive theme features, major for breaking template/asset behavior. |
 | `HIA/hia-htmdoc` | private workspace `0.0.0` | Satellite incubation. Contract versions are more important than package versions until publication. |
@@ -106,3 +106,5 @@ Before publishing a public package or changing a release-facing contract:
 See `docs/release-gate.md` for exact commands.
 
 Official profile distribution policy is documented in `docs/profile-distribution.md`; schema catalog policy is documented in `docs/schema-distribution.md`. Package versions, catalog versions and individual contract/profile versions remain independent. The distribution packages exist in the workspace but remain private until their public release blockers are closed.
+
+Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: packages currently target Node `>=20.19.0`, while npm Trusted Publishing uses a Node 24.x workflow with npm `^11.5.1`.
