@@ -1,14 +1,19 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  createOrdinarySourceMapIndex,
   createDocSourceMapIndex,
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_ID,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
+  findAllGeneratedPositionsForOriginal,
   findDocSourceMapEntriesByArtifact,
   findDocSourceMapEntriesBySource,
   findDocSourceMapEntriesBySymbol,
+  findGeneratedPositionForOriginal,
+  findOriginalPositionForGenerated,
   queryDocSourceMapIndex,
+  querySourceLinkedPosition,
   validateDocSourceMap
 } from "./index.js";
 
@@ -144,6 +149,59 @@ describe("@hia-doc/source-linkage", () => {
     expect(findDocSourceMapEntriesByArtifact(pugIndex, "dist/card.html", "[data-component=\"Card\"]").map((entry) => entry.id)).toEqual(["entry:pug:card"]);
     expect(findDocSourceMapEntriesBySource(tsIndex, "src/calculator.ts", { line: 6, column: 1 }).map((entry) => entry.symbolId)).toEqual(["ts:function:add"]);
     expect(findDocSourceMapEntriesByArtifact(tsIndex, "dist/calculator.js").map((entry) => entry.id)).toEqual(["entry:ts:add"]);
+  });
+
+  it("looks up ordinary source map positions and combines them with doc-source-map entries", () => {
+    const sourceMapIndex = createOrdinarySourceMapIndex(readFixture("source-linkage/profile-card.js.map.json"), {
+      artifactPath: "dist/profile-card.js",
+      path: "dist/profile-card.js.map"
+    });
+    const docSourceMapIndex = createDocSourceMapIndex(readFixture("source-linkage/profile-card.docmap.json"));
+
+    expect(sourceMapIndex).toMatchObject({
+      artifactPath: "dist/profile-card.js",
+      mappingCount: 2,
+      sourceCount: 1,
+      status: "available"
+    });
+    expect(findOriginalPositionForGenerated(sourceMapIndex, { line: 2, column: 1 })).toMatchObject({
+      original: {
+        name: "renderProfileCard",
+        position: { line: 6, column: 1 },
+        sourcePath: "src/profile-card.ts"
+      },
+      status: "available"
+    });
+    expect(findGeneratedPositionForOriginal(sourceMapIndex, "src/profile-card.ts", { line: 6, column: 1 })).toMatchObject({
+      generated: {
+        artifactPath: "dist/profile-card.js",
+        position: { line: 2, column: 1 }
+      },
+      status: "available"
+    });
+    expect(findAllGeneratedPositionsForOriginal(sourceMapIndex, "src/profile-card.ts", { line: 6, column: 1 }).generated).toEqual([
+      {
+        artifactPath: "dist/profile-card.js",
+        position: { line: 2, column: 1 }
+      }
+    ]);
+    expect(querySourceLinkedPosition(docSourceMapIndex, sourceMapIndex, {
+      generatedPath: "dist/profile-card.js",
+      generatedPosition: { line: 2, column: 1 }
+    })).toMatchObject({
+      matchedEntryCount: 1,
+      original: {
+        position: { line: 6, column: 1 },
+        sourcePath: "src/profile-card.ts"
+      },
+      entries: [
+        {
+          id: "entry:profile-card-render",
+          symbolId: "ts:function:renderProfileCard"
+        }
+      ],
+      status: "available"
+    });
   });
 
   it("reports unsafe paths and blocked embedded source content", () => {

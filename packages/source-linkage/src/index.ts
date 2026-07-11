@@ -1,5 +1,16 @@
 import path from "node:path";
 import {
+  allGeneratedPositionsFor,
+  eachMapping,
+  generatedPositionFor,
+  GREATEST_LOWER_BOUND,
+  LEAST_UPPER_BOUND,
+  originalPositionFor,
+  TraceMap,
+  type Bias,
+  type SourceMapInput
+} from "@jridgewell/trace-mapping";
+import {
   createHiaDiagnostic,
   type HiaDiagnostic,
   type HiaDiagnosticData,
@@ -82,6 +93,80 @@ export interface DocSourceMapQueryResult {
   matchedEntryCount: number;
   query: DocSourceMapQuery;
   status: DocSourceMapIndex["status"];
+}
+
+export type OrdinarySourceMapBias = "greatest-lower-bound" | "least-upper-bound";
+
+export interface OrdinarySourceMapIndexOptions {
+  artifactPath?: string;
+  path?: string;
+}
+
+export interface OrdinarySourceMapIndex {
+  artifactPath?: string;
+  diagnostics: HiaDiagnostic[];
+  mappingCount: number;
+  path?: string;
+  sources: string[];
+  sourceCount: number;
+  status: "available" | "invalid";
+  traceMap?: TraceMap;
+}
+
+export interface OrdinarySourceMapLookupOptions {
+  bias?: OrdinarySourceMapBias;
+}
+
+export interface SourceMapOriginalPosition {
+  name?: string;
+  position: HiaSourcePosition;
+  sourcePath: string;
+}
+
+export interface SourceMapGeneratedPosition {
+  artifactPath?: string;
+  position: HiaSourcePosition;
+}
+
+export interface SourceMapOriginalLookupResult {
+  diagnostics: HiaDiagnostic[];
+  generated: SourceMapGeneratedPosition;
+  original?: SourceMapOriginalPosition;
+  status: OrdinarySourceMapIndex["status"] | "unmapped";
+}
+
+export interface SourceMapGeneratedLookupResult {
+  diagnostics: HiaDiagnostic[];
+  generated?: SourceMapGeneratedPosition;
+  original: SourceMapOriginalPosition;
+  status: OrdinarySourceMapIndex["status"] | "unmapped";
+}
+
+export interface SourceMapAllGeneratedLookupResult {
+  diagnostics: HiaDiagnostic[];
+  generated: SourceMapGeneratedPosition[];
+  original: SourceMapOriginalPosition;
+  status: OrdinarySourceMapIndex["status"] | "unmapped";
+}
+
+export interface SourceLinkedLookupQuery {
+  generatedPath?: string;
+  generatedPosition?: HiaSourcePosition;
+  originalPosition?: HiaSourcePosition;
+  originalSourcePath?: string;
+  selector?: string;
+  symbolId?: string;
+  symbolKind?: string;
+}
+
+export interface SourceLinkedLookupResult {
+  diagnostics: HiaDiagnostic[];
+  entries: DocSourceMapIndexedEntry[];
+  generated?: SourceMapGeneratedPosition;
+  matchedEntryCount: number;
+  original?: SourceMapOriginalPosition;
+  query: SourceLinkedLookupQuery;
+  status: DocSourceMapIndex["status"] | OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
 interface IndexedNode {
@@ -189,6 +274,54 @@ export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexO
 }
 
 /**
+ * 建立普通 source map 查询索引。输入由调用方显式提供，本函数不抓取 sourceMappingURL，也不暴露 sourcesContent。
+ * Build an ordinary source map lookup index. The caller provides the map explicitly; this helper does not fetch sourceMappingURL or expose sourcesContent.
+ */
+export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, options: OrdinarySourceMapIndexOptions = {}): OrdinarySourceMapIndex {
+  const diagnostics: HiaDiagnostic[] = [];
+
+  try {
+    const traceMap = new TraceMap(value as SourceMapInput, options.path ?? null);
+    let mappingCount = 0;
+    eachMapping(traceMap, () => {
+      mappingCount += 1;
+    });
+
+    const sources = traceMap.sources
+      .map((source) => typeof source === "string" ? normalizeLookupPath(source) : "")
+      .filter((source) => source.length > 0);
+
+    return {
+      ...(options.artifactPath ? { artifactPath: normalizeLookupPath(options.artifactPath) } : {}),
+      diagnostics,
+      mappingCount,
+      ...(options.path ? { path: options.path } : {}),
+      sources,
+      sourceCount: sources.length,
+      status: "available",
+      traceMap
+    };
+  } catch (error) {
+    diagnostics.push(createSourceLinkageDiagnostic(
+      "ORDINARY_SOURCE_MAP_INVALID",
+      `ordinary source map could not be parsed: ${errorMessage(error)}`,
+      "error",
+      options.path
+    ));
+
+    return {
+      ...(options.artifactPath ? { artifactPath: normalizeLookupPath(options.artifactPath) } : {}),
+      diagnostics,
+      mappingCount: 0,
+      ...(options.path ? { path: options.path } : {}),
+      sources: [],
+      sourceCount: 0,
+      status: "invalid"
+    };
+  }
+}
+
+/**
  * 查询 doc-source-map 索引中的文档化语义链路。
  * Query documentation linkage entries from a doc-source-map index.
  */
@@ -228,6 +361,189 @@ export function findDocSourceMapEntriesByArtifact(
     artifactPath,
     ...(selector ? { selector } : {})
   }).entries;
+}
+
+/**
+ * 从生成位置追溯到原始源码位置。
+ * Trace a generated position back to the original source position.
+ */
+export function findOriginalPositionForGenerated(
+  index: OrdinarySourceMapIndex,
+  generatedPosition: HiaSourcePosition,
+  options: OrdinarySourceMapLookupOptions = {}
+): SourceMapOriginalLookupResult {
+  const generated = createGeneratedPosition(index.artifactPath, generatedPosition);
+
+  if (index.status !== "available" || !index.traceMap) {
+    return {
+      diagnostics: index.diagnostics,
+      generated,
+      status: index.status
+    };
+  }
+
+  const original = originalPositionFor(index.traceMap, {
+    line: generatedPosition.line,
+    column: hiaColumnToSourceMapColumn(generatedPosition.column),
+    bias: toTraceMapBias(options.bias)
+  });
+
+  if (!original.source || !original.line || original.column === null) {
+    return {
+      diagnostics: index.diagnostics,
+      generated,
+      status: "unmapped"
+    };
+  }
+
+  return {
+    diagnostics: index.diagnostics,
+    generated,
+    original: {
+      ...(original.name ? { name: original.name } : {}),
+      position: {
+        line: original.line,
+        column: sourceMapColumnToHiaColumn(original.column)
+      },
+      sourcePath: normalizeLookupPath(original.source)
+    },
+    status: index.status
+  };
+}
+
+/**
+ * 从原始源码位置查找一个生成位置。
+ * Find one generated position for an original source position.
+ */
+export function findGeneratedPositionForOriginal(
+  index: OrdinarySourceMapIndex,
+  sourcePath: string,
+  originalPosition: HiaSourcePosition,
+  options: OrdinarySourceMapLookupOptions = {}
+): SourceMapGeneratedLookupResult {
+  const original = createOriginalPosition(sourcePath, originalPosition);
+
+  if (index.status !== "available" || !index.traceMap) {
+    return {
+      diagnostics: index.diagnostics,
+      original,
+      status: index.status
+    };
+  }
+
+  const generated = generatedPositionFor(index.traceMap, {
+    source: normalizeLookupPath(sourcePath),
+    line: originalPosition.line,
+    column: hiaColumnToSourceMapColumn(originalPosition.column),
+    bias: toTraceMapBias(options.bias)
+  });
+
+  if (!generated.line || generated.column === null) {
+    return {
+      diagnostics: index.diagnostics,
+      original,
+      status: "unmapped"
+    };
+  }
+
+  return {
+    diagnostics: index.diagnostics,
+    generated: createGeneratedPosition(index.artifactPath, {
+      line: generated.line,
+      column: sourceMapColumnToHiaColumn(generated.column)
+    }),
+    original,
+    status: index.status
+  };
+}
+
+/**
+ * 从原始源码位置查找全部生成位置。
+ * Find all generated positions for an original source position.
+ */
+export function findAllGeneratedPositionsForOriginal(
+  index: OrdinarySourceMapIndex,
+  sourcePath: string,
+  originalPosition: HiaSourcePosition,
+  options: OrdinarySourceMapLookupOptions = {}
+): SourceMapAllGeneratedLookupResult {
+  const original = createOriginalPosition(sourcePath, originalPosition);
+
+  if (index.status !== "available" || !index.traceMap) {
+    return {
+      diagnostics: index.diagnostics,
+      generated: [],
+      original,
+      status: index.status
+    };
+  }
+
+  const generated = allGeneratedPositionsFor(index.traceMap, {
+    source: normalizeLookupPath(sourcePath),
+    line: originalPosition.line,
+    column: hiaColumnToSourceMapColumn(originalPosition.column),
+    bias: toTraceMapBias(options.bias)
+  }).map((position) => createGeneratedPosition(index.artifactPath, {
+    line: position.line,
+    column: sourceMapColumnToHiaColumn(position.column)
+  }));
+
+  return {
+    diagnostics: index.diagnostics,
+    generated,
+    original,
+    status: generated.length > 0 ? index.status : "unmapped"
+  };
+}
+
+/**
+ * 联合 ordinary source map 与 doc-source-map，回答生成物位置对应的文档化语义。
+ * Combine ordinary source map and doc-source-map lookup to answer documentation semantics for a generated artifact position.
+ */
+export function querySourceLinkedPosition(
+  docSourceMapIndex: DocSourceMapIndex,
+  ordinarySourceMapIndex: OrdinarySourceMapIndex,
+  query: SourceLinkedLookupQuery
+): SourceLinkedLookupResult {
+  let original: SourceMapOriginalPosition | undefined;
+  let generated: SourceMapGeneratedPosition | undefined;
+  let status: SourceLinkedLookupResult["status"] = docSourceMapIndex.status;
+
+  if (query.generatedPosition) {
+    const generatedLookup = findOriginalPositionForGenerated(ordinarySourceMapIndex, query.generatedPosition);
+    original = generatedLookup.original;
+    generated = createGeneratedPosition(query.generatedPath ?? generatedLookup.generated.artifactPath, query.generatedPosition);
+    status = generatedLookup.status === "available" ? status : generatedLookup.status;
+  }
+
+  if (query.originalSourcePath && query.originalPosition) {
+    original = createOriginalPosition(query.originalSourcePath, query.originalPosition);
+    const generatedLookup = findGeneratedPositionForOriginal(ordinarySourceMapIndex, query.originalSourcePath, query.originalPosition);
+    generated = generatedLookup.generated;
+    status = generatedLookup.status === "available" ? status : generatedLookup.status;
+  }
+
+  const docQuery: DocSourceMapQuery = {
+    ...(query.symbolId ? { symbolId: query.symbolId } : {}),
+    ...(query.symbolKind ? { symbolKind: query.symbolKind } : {}),
+    ...(original ? { sourcePath: original.sourcePath, position: original.position } : {}),
+    ...(generated?.artifactPath ?? query.generatedPath ? { artifactPath: generated?.artifactPath ?? query.generatedPath } : {}),
+    ...(query.selector ? { selector: query.selector } : {})
+  };
+  const docQueryResult = queryDocSourceMapIndex(docSourceMapIndex, docQuery);
+
+  return {
+    diagnostics: [
+      ...docQueryResult.diagnostics,
+      ...ordinarySourceMapIndex.diagnostics
+    ],
+    entries: docQueryResult.entries,
+    ...(generated ? { generated } : {}),
+    matchedEntryCount: docQueryResult.matchedEntryCount,
+    ...(original ? { original } : {}),
+    query,
+    status
+  };
 }
 
 function createIndexedEntry(
@@ -391,12 +707,18 @@ function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSou
     return false;
   }
 
-  if (query.sourcePath && !entry.sourceLinks.some((link) => link.path === query.sourcePath && (!query.position || containsPosition(link.range, query.position)))) {
-    return false;
+  if (query.sourcePath) {
+    const sourcePath = query.sourcePath;
+    if (!entry.sourceLinks.some((link) => pathsEqual(link.path, sourcePath) && (!query.position || containsPosition(link.range, query.position)))) {
+      return false;
+    }
   }
 
-  if (query.artifactPath && !entry.artifactLinks.some((link) => link.path === query.artifactPath && (!query.selector || link.selector === query.selector))) {
-    return false;
+  if (query.artifactPath) {
+    const artifactPath = query.artifactPath;
+    if (!entry.artifactLinks.some((link) => pathsEqual(link.path, artifactPath) && (!query.selector || link.selector === query.selector))) {
+      return false;
+    }
   }
 
   return true;
@@ -416,6 +738,40 @@ function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): nu
   }
 
   return (left.column ?? 0) - (right.column ?? 0);
+}
+
+function createOriginalPosition(sourcePath: string, position: HiaSourcePosition): SourceMapOriginalPosition {
+  return {
+    position,
+    sourcePath: normalizeLookupPath(sourcePath)
+  };
+}
+
+function createGeneratedPosition(artifactPath: string | undefined, position: HiaSourcePosition): SourceMapGeneratedPosition {
+  return {
+    ...(artifactPath ? { artifactPath: normalizeLookupPath(artifactPath) } : {}),
+    position
+  };
+}
+
+function hiaColumnToSourceMapColumn(column: number | undefined): number {
+  return Math.max(0, (column ?? 1) - 1);
+}
+
+function sourceMapColumnToHiaColumn(column: number): number {
+  return column + 1;
+}
+
+function toTraceMapBias(value: OrdinarySourceMapBias | undefined): Bias {
+  return value === "least-upper-bound" ? LEAST_UPPER_BOUND : GREATEST_LOWER_BOUND;
+}
+
+function pathsEqual(left: string | undefined, right: string): boolean {
+  return typeof left === "string" && normalizeLookupPath(left) === normalizeLookupPath(right);
+}
+
+function normalizeLookupPath(value: string): string {
+  return value.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 
 function collectIndexedNodes(value: unknown): IndexedNode[] {
@@ -642,6 +998,10 @@ function isUnsafeRelativePath(value: string): boolean {
     || path.posix.isAbsolute(normalized)
     || path.win32.isAbsolute(value)
     || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(normalized);
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function appendTarget(prefix: string | undefined, suffix: string): string {

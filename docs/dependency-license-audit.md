@@ -43,6 +43,7 @@ Dependency review is also a security review. New external dependencies must reco
 
 | Dependency | Declared As | Version Range | Purpose | License |
 | --- | --- | --- | --- | --- |
+| `@jridgewell/trace-mapping` | `dependencies` | `^0.3.31` | Ordinary source map generated/original position lookup for `@hia-doc/source-linkage`. | MIT |
 | `@types/node` | `devDependencies` | `^20.19.43` | Node.js 20 type definitions for workspace packages and tests. | MIT |
 | `@types/vscode` | `devDependencies` | `^1.92.0` | VS Code extension API type definitions. | MIT |
 | `tsx` | `devDependencies` | `^4.23.0` | Development-time TypeScript CLI runner for package scripts. | MIT |

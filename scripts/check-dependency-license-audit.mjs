@@ -10,6 +10,13 @@ const forbiddenLicenseFragments = ["GPL", "AGPL", "LGPL", "SSPL", "BUSL", "BSL"]
 
 const directDependencyAudit = [
   {
+    name: "@jridgewell/trace-mapping",
+    dependencyType: "dependencies",
+    versionRange: "^0.3.31",
+    license: "MIT",
+    purpose: "Ordinary source map generated/original position lookup for @hia-doc/source-linkage."
+  },
+  {
     name: "@types/node",
     dependencyType: "devDependencies",
     versionRange: "^20.19.43",

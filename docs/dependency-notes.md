@@ -6,6 +6,7 @@ Current release-facing dependency, license and security policy is maintained in 
 
 | Dependency | Purpose | License |
 | --- | --- | --- |
+| `@jridgewell/trace-mapping` | Ordinary source map generated/original position lookup for `@hia-doc/source-linkage`. | MIT |
 | `pnpm` | Workspace package manager, pinned through Corepack. | MIT |
 | `typescript` | TypeScript compiler and declaration output. | Apache-2.0 |
 | `vitest@2.1.9` | Unit tests for package boundaries and CLI smoke tests; pinned to a Node 20.9-compatible line. | MIT |
