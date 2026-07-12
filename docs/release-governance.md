@@ -84,6 +84,16 @@ Automation publish workflows must:
 - Preserve the same local release gate as the manual process.
 - Refuse to publish packages that are still private `0.0.0`.
 
+W-P12.6 also defines local D3 support commands:
+
+```bash
+pnpm run release:registry:check
+pnpm run release:registry:preflight
+pnpm run release:postpublish:smoke -- <package>
+```
+
+`release:registry:preflight` must pass before a real D3 publish batch. It requires local npm auth, visible `hia-doc` organization/scope access and unpublished target versions. If npm returns `E401`, treat the release as externally blocked rather than falling back to a long-lived npm token.
+
 References:
 
 - npm Trusted Publishing: <https://docs.npmjs.com/trusted-publishers/>

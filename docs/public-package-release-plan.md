@@ -18,6 +18,7 @@ The public package identity is prepared but real npm publication is still approv
 - License: MIT.
 - Runtime Node range: `>=20.19.0`.
 - First release target: `0.1.0` for every candidate package.
+- Release candidates: 13 packages.
 - Current package state: private `0.0.0` until a package is explicitly approved for publication.
 
 `npm view @hia-doc/core version --registry=https://registry.npmjs.org/` currently returns `E404`, so the first package is not already published under that name. npm organization/scope ownership still has to be completed before the first real publish.
@@ -33,6 +34,7 @@ The public package identity is prepared but real npm publication is still approv
 | 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.0` |
 | 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` |
 | 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.0` |
+| 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` |
 | 40 | `@hia-doc/profiles` | distribution | `0.1.0` |
 | 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` |
 | 50 | `@hia-doc/schemas` | distribution | `0.1.0` |
@@ -68,6 +70,22 @@ It requires:
 - Full `pnpm run release:gate`.
 - `scripts/resolve-public-release-package.mjs <package> --publish-ready`, which refuses to publish while a package is still private `0.0.0`.
 
+## Registry Preflight
+
+W-P12.6 adds a registry status command that does not publish anything:
+
+```bash
+pnpm run release:registry:check
+```
+
+For the final pre-publish gate, use:
+
+```bash
+pnpm run release:registry:preflight
+```
+
+The preflight mode requires npm authentication, visible `hia-doc` organization/scope membership and unpublished target versions. If npm auth returns `E401`, D3 publication is blocked until the local npm session and npm-side Trusted Publisher setup are fixed.
+
 ## Bootstrap Checklist
 
 Before the first real public publish:
@@ -75,20 +93,18 @@ Before the first real public publish:
 1. Confirm the npm account and create or claim the `@hia-doc` organization/scope.
 2. Bootstrap the first package under manual approval if npm requires an existing package before Trusted Publishing can be configured.
 3. Configure npm Trusted Publisher for `mandolin/HIA-Documentation` and workflow filename `npm-trusted-publish.yml`.
-4. Flip one package at a time from private `0.0.0` to the target version in publish-order sequence.
-5. Run `pnpm run release:gate`.
-6. Run the manual workflow for the selected package.
-7. Run the post-publish smoke below before continuing to the next package group.
+4. Run `pnpm run distribution:check` and `pnpm run release:registry:preflight`.
+5. Flip one package at a time from private `0.0.0` to the target version in publish-order sequence.
+6. Run `pnpm run release:gate`.
+7. Run the manual workflow for the selected package.
+8. Run the post-publish smoke below before continuing to the next package group.
 
 ## Post-Publish Smoke
 
 For each published package:
 
 ```bash
-npm view <package>@0.1.0 version --registry=https://registry.npmjs.org/
-npm pack <package>@0.1.0 --registry=https://registry.npmjs.org/
-npm install <package>@0.1.0 --registry=https://registry.npmjs.org/
-node -e "import('<package>').then(() => console.log('ok'))"
+pnpm run release:postpublish:smoke -- <package>
 ```
 
 For CLI-facing release batches, also run a project build smoke with a clean install workspace before announcing the release.
