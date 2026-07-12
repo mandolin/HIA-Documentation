@@ -16,12 +16,22 @@ import {
 import { DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH, getDefaultThemeAssets } from "@hia-doc/theme-default";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
+/**
+ * 项目导航索引的中性 contract 名称；供静态 portal、搜索与宿主导航消费。
+ * Neutral project-navigation-index contract name consumed by static portals, search, and host navigation.
+ */
+export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT = "hia-project-navigation-index";
+/**
+ * 项目导航索引的首个草案版本；它独立于 renderer manifest 的文件清单版本。
+ * First draft version of the project navigation index; independent from the renderer manifest file-list version.
+ */
+export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION = "0.1.0-draft";
 
 export interface RenderedHtmlFile {
   path: string;
   contents: string;
   contentType: string;
-  role: "entry" | "asset";
+  role: "entry" | "asset" | "index";
 }
 
 export interface RenderHtmlOptions {
@@ -172,6 +182,7 @@ export interface RenderHtmlManifest {
     name: string;
     views: RenderProjectView[];
     entryCounts: Record<string, number>;
+    navigationIndex?: RenderProjectNavigationIndexRef;
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
   };
@@ -181,6 +192,57 @@ export interface RenderHtmlManifestFile {
   path: string;
   role: RenderedHtmlFile["role"];
   contentType: string;
+}
+
+/**
+ * renderer 输出中项目导航索引的位置与兼容性标识。
+ * Location and compatibility identity for the project navigation index emitted by the renderer.
+ */
+export interface RenderProjectNavigationIndexRef {
+  contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
+  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  entryCount: number;
+  path: string;
+}
+
+/**
+ * 供 portal 使用的、无 HTML 表示细节的项目入口索引。
+ * Project entry index without HTML presentation details, intended for portal consumption.
+ */
+export interface RenderProjectNavigationIndex {
+  contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
+  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  project: {
+    defaultLocale: string;
+    entryCounts: Record<string, number>;
+    id: string;
+    locales: string[];
+    name: string;
+    title: string;
+    views: RenderProjectView[];
+  };
+  entries: RenderProjectNavigationEntry[];
+  profiles: RenderProjectProfileRef[];
+  docSourceMaps: RenderProjectDocSourceMapRef[];
+}
+
+/**
+ * 单个可导航入口的稳定标识及其公开元数据；完整详情仍由统一项目页负责渲染。
+ * Stable identity and public metadata for one navigable entry; the unified project page still renders full detail.
+ */
+export interface RenderProjectNavigationEntry {
+  id: string;
+  name: string;
+  kind: string;
+  view: RenderProjectView;
+  summary?: string;
+  signature?: string;
+  i18n?: HiaI18nModel;
+  profile?: RenderProjectProfileRef;
+  input?: RenderProjectInputRef;
+  source?: Omit<RenderProjectSourceRef, "preview">;
+  symbolId?: string;
+  docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
 
 export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOptions = {}): RenderHtmlResult {
@@ -216,12 +278,19 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
 export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
   const pageTitle = options.title ?? projectInput.project.title ?? projectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
+  const navigationIndex = createProjectNavigationIndex(projectInput, pageTitle, options);
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
       contents: renderProjectIndexHtml(pageTitle, projectInput, options),
       contentType: "text/html; charset=utf-8",
       role: "entry"
+    },
+    {
+      path: "project-index.json",
+      contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
     }
   ];
 
@@ -239,7 +308,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   return {
     files,
     diagnostics: projectInput.diagnostics ?? [],
-    manifest: createProjectManifest(projectInput, files, pageTitle, options)
+    manifest: createProjectManifest(projectInput, files, pageTitle, options, navigationIndex)
   };
 }
 
@@ -264,7 +333,8 @@ function createProjectManifest(
   projectInput: RenderProjectHtmlInput,
   files: RenderedHtmlFile[],
   pageTitle: string,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  navigationIndex: RenderProjectNavigationIndex
 ): RenderHtmlManifest {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const views = collectProjectViews(projectInput.entries);
@@ -288,10 +358,78 @@ function createProjectManifest(
       name: projectInput.project.name,
       views,
       entryCounts: countEntriesByView(projectInput.entries),
+      navigationIndex: {
+        contract: navigationIndex.contract,
+        contractVersion: navigationIndex.contractVersion,
+        entryCount: navigationIndex.entries.length,
+        path: "project-index.json"
+      },
       ...(projectInput.profiles && projectInput.profiles.length > 0 ? { profiles: projectInput.profiles } : {}),
       ...(projectInput.docSourceMaps && projectInput.docSourceMaps.length > 0 ? { docSourceMaps: projectInput.docSourceMaps } : {})
     }
   };
+}
+
+function createProjectNavigationIndex(
+  projectInput: RenderProjectHtmlInput,
+  pageTitle: string,
+  options: RenderHtmlOptions
+): RenderProjectNavigationIndex {
+  const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
+
+  return {
+    contract: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
+    contractVersion: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
+    project: {
+      defaultLocale: localeModel.selectedLocale,
+      entryCounts: countEntriesByView(projectInput.entries),
+      id: projectId,
+      locales: localeModel.locales,
+      name: projectInput.project.name,
+      title: pageTitle,
+      views: collectProjectViews(projectInput.entries)
+    },
+    entries: projectInput.entries
+      .map((entry) => ({
+        id: entry.id,
+        name: entry.name,
+        kind: entry.kind,
+        view: entry.view,
+        ...(entry.summary ? { summary: entry.summary } : {}),
+        ...(entry.signature ? { signature: entry.signature } : {}),
+        ...(entry.i18n ? { i18n: entry.i18n } : {}),
+        ...(entry.profile ? { profile: entry.profile } : {}),
+        ...(entry.input ? { input: entry.input } : {}),
+        ...(entry.source ? { source: omitProjectSourcePreview(entry.source) } : {}),
+        ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
+        ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {})
+      }))
+      .sort(compareProjectNavigationEntries),
+    profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
+    docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps)
+  };
+}
+
+function omitProjectSourcePreview(source: RenderProjectSourceRef): Omit<RenderProjectSourceRef, "preview"> {
+  const { preview: _preview, ...sourceWithoutPreview } = source;
+  return sourceWithoutPreview;
+}
+
+function compareProjectNavigationEntries(left: RenderProjectNavigationEntry, right: RenderProjectNavigationEntry): number {
+  return compareStableText(left.id, right.id);
+}
+
+function compareProjectProfiles(left: RenderProjectProfileRef, right: RenderProjectProfileRef): number {
+  return compareStableText(left.profileId, right.profileId);
+}
+
+function compareProjectDocSourceMaps(left: RenderProjectDocSourceMapRef, right: RenderProjectDocSourceMapRef): number {
+  return compareStableText(left.path, right.path);
+}
+
+function compareStableText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function renderIndexHtml(pageTitle: string, document: HiaDocument, options: RenderHtmlOptions): string {

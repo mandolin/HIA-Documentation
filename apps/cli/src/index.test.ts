@@ -86,10 +86,15 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const navigationIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        contract: string;
+        entries: Array<{ id: string; source?: { preview?: unknown } }>;
+      };
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         project?: {
           views: string[];
           entryCounts: Record<string, number>;
+          navigationIndex?: { path: string; entryCount: number };
         };
         build?: {
           mode: string;
@@ -99,7 +104,7 @@ describe("@hia-doc/cli", () => {
       };
 
       expect(exitCode).toBe(0);
-      expect(messages.join("\n")).toContain("Generated 4 file");
+      expect(messages.join("\n")).toContain("Generated 5 file");
       expect(html).toContain("Mixed Project Documentation");
       expect(html).toContain("data-hia-project-search");
       expect(html).toContain("data-hia-project-view=\"js\"");
@@ -117,6 +122,15 @@ describe("@hia-doc/cli", () => {
       expect(html).toContain("[data-component=&quot;Alert&quot;]");
       expect(manifest.project?.views).toEqual(["all", "js", "css", "html"]);
       expect(manifest.project?.entryCounts).toMatchObject({ js: 2, css: 2, html: 2 });
+      expect(manifest.project?.navigationIndex).toEqual({
+        contract: "hia-project-navigation-index",
+        contractVersion: "0.1.0-draft",
+        entryCount: 6,
+        path: "project-index.json"
+      });
+      expect(navigationIndex.contract).toBe("hia-project-navigation-index");
+      expect(navigationIndex.entries).toHaveLength(6);
+      expect(navigationIndex.entries.some((entry) => entry.source?.preview)).toBe(false);
       expect(manifest.build?.mode).toBe("project");
       expect(manifest.build?.inputs.map((input) => input.kind)).toEqual([
         "jsdoc-integration",

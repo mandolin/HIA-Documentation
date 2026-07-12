@@ -38,6 +38,7 @@ This document defines the first versioning baseline for the HIA main repository 
 | Official profile set | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
 | Schema distribution catalog | `0.1.0-draft` | Draft | `@hia-doc/schemas` |
 | Renderer manifest | `0.1.0` | Active pre-1.0 contract | `@hia-doc/renderer-html` |
+| Project navigation index | `0.1.0-draft` | Draft | `@hia-doc/renderer-html` |
 | JSDoc Integration input | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` and `@mandolin/jsdoc-plugin-hia-sys` |
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
 | JSDoc adapter metadata | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |

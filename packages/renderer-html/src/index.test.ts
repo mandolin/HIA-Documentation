@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createBasicFixtureDocument } from "@hia-doc/core";
 import {
   HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
+  HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
+  HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
   renderHtmlDocument,
   renderProjectHtmlDocument
 } from "./index.js";
@@ -158,11 +160,26 @@ describe("@hia-doc/renderer-html", () => {
     });
 
     const html = result.files[0]?.contents ?? "";
+    const navigationIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      contract?: string;
+      contractVersion?: string;
+      entries?: Array<{ id: string; source?: { preview?: unknown } }>;
+    };
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html"]);
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 3, js: 1, css: 1, html: 1 });
     expect(result.manifest.initialLocale).toBe("en");
     expect(result.manifest.locales).toEqual(["en", "zh-CN"]);
+    expect(result.manifest.project?.navigationIndex).toEqual({
+      contract: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
+      contractVersion: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
+      entryCount: 3,
+      path: "project-index.json"
+    });
+    expect(navigationIndex.contract).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT);
+    expect(navigationIndex.contractVersion).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION);
+    expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "html:alert", "js:build"]);
+    expect(navigationIndex.entries?.find((entry) => entry.id === "js:build")?.source?.preview).toBeUndefined();
     expect(html).toContain("Mixed Project Docs");
     expect(html).toContain("data-hia-project-view=\"js\"");
     expect(html).toContain("data-hia-project-search");

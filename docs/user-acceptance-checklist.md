@@ -27,13 +27,14 @@ pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project
 Expected output:
 
 ```text
-Generated 4 file(s) at .../dist/project-docs
+Generated 5 file(s) at .../dist/project-docs
 ```
 
 Expected files:
 
 ```text
 dist/project-docs/index.html
+dist/project-docs/project-index.json
 dist/project-docs/assets/hia-default.css
 dist/project-docs/assets/hia-default.js
 dist/project-docs/hia-manifest.json
@@ -105,4 +106,3 @@ Before treating this acceptance baseline as release-ready, run:
 ```bash
 pnpm run release:gate
 ```
-

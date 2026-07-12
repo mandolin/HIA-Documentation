@@ -22,13 +22,14 @@ pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project
 The CLI should report:
 
 ```text
-Generated 4 file(s) at .../dist/project-docs
+Generated 5 file(s) at .../dist/project-docs
 ```
 
 Generated files:
 
 ```text
 dist/project-docs/index.html
+dist/project-docs/project-index.json
 dist/project-docs/assets/hia-default.css
 dist/project-docs/assets/hia-default.js
 dist/project-docs/hia-manifest.json
@@ -80,6 +81,8 @@ The manifest should include:
   ]
 }
 ```
+
+`project-index.json` is a deterministic `hia-project-navigation-index@0.1.0-draft` artifact for static portals and search. It records stable entry identifiers and public navigation metadata, but intentionally excludes inline source previews. The unified `index.html` remains the complete source-linked detail surface.
 
 ## Verify Path Privacy
 

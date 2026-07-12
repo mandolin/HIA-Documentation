@@ -152,6 +152,7 @@ Expected output:
 
 ```text
 dist/project-docs/index.html
+dist/project-docs/project-index.json
 dist/project-docs/assets/hia-default.css
 dist/project-docs/assets/hia-default.js
 dist/project-docs/hia-manifest.json
@@ -174,6 +175,9 @@ Project aggregation mode can also be configured through `hia.config.json`:
 ## Output Manifest
 
 In project mode, the output manifest includes:
+
+- `project.navigationIndex`: the `hia-project-navigation-index@0.1.0-draft` reference for `project-index.json`.
+- `project-index.json`: deterministic, presentation-neutral entry metadata for static portals and search. It carries stable entry ids, views, public source/doc-source-map references and localized descriptions, but excludes inline source previews. `index.html` remains the complete source-linked detail surface.
 
 - `build.mode = "project"`;
 - `build.inputs`;
