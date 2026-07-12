@@ -643,9 +643,11 @@ async function readBrowserPanelSourceMapJson(
   io: CliIo
 ): Promise<{ path: string; value: unknown } | undefined> {
   const sourceMapPath = sourceMapRef.path ?? "";
+  const producerOutputDirectory = inferDocSourceMapOutputDirectory(docSourceMapAbsolutePath);
   const candidates = dedupePaths([
     path.resolve(projectBaseDir, sourceMapPath),
-    path.resolve(path.dirname(docSourceMapAbsolutePath), sourceMapPath)
+    path.resolve(path.dirname(docSourceMapAbsolutePath), sourceMapPath),
+    ...(producerOutputDirectory ? [path.resolve(producerOutputDirectory, sourceMapPath)] : [])
   ]);
 
   for (const candidate of candidates) {
@@ -689,6 +691,27 @@ async function readBrowserPanelSourceMapJson(
     )
   ], io);
   return undefined;
+}
+
+/**
+ * Producer artifact maps use `pathBases.artifacts=outputDirectory`, while the doc-source-map itself commonly lives below `artifacts/`.
+ *
+ * 生产器 artifact map 使用 `pathBases.artifacts=outputDirectory`，而 doc-source-map 本身通常位于 `artifacts/` 子目录中。
+ */
+function inferDocSourceMapOutputDirectory(docSourceMapAbsolutePath: string): string | undefined {
+  let current = path.dirname(docSourceMapAbsolutePath);
+
+  while (true) {
+    if (path.basename(current) === "artifacts") {
+      return path.dirname(current);
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) {
+      return undefined;
+    }
+    current = parent;
+  }
 }
 
 function createBrowserPanelProjectInfo(manifest: ProjectDocsManifest): BrowserPanelProjectInfo {
@@ -835,7 +858,9 @@ async function aggregateProjectDocs(
       project: {
         name: manifest.project?.name ?? "HIA Project",
         ...(manifest.project?.id ? { id: manifest.project.id } : {}),
-        ...(manifest.project?.title ? { title: manifest.project.title } : {})
+        ...(manifest.project?.title ? { title: manifest.project.title } : {}),
+        ...(manifest.project?.defaultLocale ? { defaultLocale: manifest.project.defaultLocale } : {}),
+        ...(manifest.project?.locales ? { locales: manifest.project.locales } : {})
       },
       profiles: profileRefs,
       docSourceMaps,
@@ -1115,6 +1140,7 @@ function hiaSymbolToProjectEntry(
     view: input.domain ?? fallbackView ?? inferProjectView(symbol.kind),
     ...(symbol.summary ? { summary: symbol.summary } : {}),
     ...(symbol.signature ? { signature: symbol.signature } : {}),
+    ...(symbol.i18n ? { i18n: symbol.i18n } : {}),
     ...(input.profile ? { profile: input.profile } : {}),
     input: {
       kind: input.kind ?? "hia-document",

@@ -308,6 +308,66 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("resolves producer output-relative ordinary source maps from nested doc-source-map artifacts", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-browser-panel-producer-"));
+    const producerArtifactDirectory = path.join(root, "producer", "artifacts");
+    const outDir = path.join(root, "browser-panel");
+    const messages: string[] = [];
+
+    try {
+      await mkdir(producerArtifactDirectory, { recursive: true });
+      await writeFile(path.join(root, "project.hia-project.json"), JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: { name: "Producer Source Map Fixture" },
+        inputs: [{ kind: "doc-source-map", path: "producer/artifacts/profile-card.docmap.json" }]
+      }), "utf8");
+      await writeFile(path.join(producerArtifactDirectory, "profile-card.docmap.json"), JSON.stringify({
+        contract: "doc-source-map",
+        contractVersion: "0.1.0-draft",
+        id: "docmap:producer-output-base",
+        producer: { name: "@hia-doc/fixture", version: "0.1.0" },
+        pathBases: { artifacts: "outputDirectory", sources: "workspaceRoot" },
+        artifacts: [{ id: "artifact:js", path: "artifacts/profile-card.js", language: "javascript" }],
+        sources: [{ id: "source:ts", path: "src/profile-card.ts", language: "typescript", sourcesContentPolicy: "none" }],
+        sourceMaps: [{ id: "sourcemap:profile-card", kind: "ordinary-source-map", path: "artifacts/profile-card.js.map" }],
+        chains: [],
+        entries: [{
+          id: "entry:profile-card",
+          kind: "symbol",
+          symbolId: "ts:function:renderProfileCard",
+          sourceRefs: [{ sourceId: "source:ts", range: { start: { line: 6, column: 1 } } }],
+          artifactRefs: [{ artifactId: "artifact:js", rangeSource: "source-map" }],
+          diagnostics: []
+        }],
+        privacy: { sourcesContentPolicy: "none", allowAbsolutePaths: false, allowUncPaths: false, allowPathTraversal: false },
+        diagnostics: []
+      }), "utf8");
+      await writeFile(
+        path.join(producerArtifactDirectory, "profile-card.js.map"),
+        await readFile(path.join(process.cwd(), "fixtures", "browser-panel", "maps", "profile-card.js.map"), "utf8"),
+        "utf8"
+      );
+
+      const exitCode = await runCli([
+        "browser",
+        "panel",
+        "--project-manifest",
+        path.join(root, "project.hia-project.json"),
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const payload = JSON.parse(await readFile(path.join(outDir, "browser-panel-payload.json"), "utf8")) as {
+        summary: { sourceMapCount: number };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).not.toContain("HIA_CLI_BROWSER_SOURCE_MAP_NOT_FOUND");
+      expect(payload.summary.sourceMapCount).toBe(1);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("reports machine-readable CLI diagnostics for missing input files", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-missing-input-"));
     const messages: string[] = [];

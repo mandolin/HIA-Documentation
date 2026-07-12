@@ -23,6 +23,16 @@ export interface HiaProjectManifestProjectInfo {
   id?: string;
   name?: string;
   title?: string;
+  /**
+   * 项目文档的默认展示语言；必须出现在 locales 中。
+   * Default display locale for project documentation; it must be included in locales.
+   */
+  defaultLocale?: string;
+  /**
+   * 项目聚合页可切换的语言集合。
+   * Locale set available to a project aggregation page.
+   */
+  locales?: string[];
 }
 
 export interface HiaProjectManifestProfileRef {
@@ -128,7 +138,13 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
       properties: {
         id: { $ref: "#/$defs/nonEmptyString" },
         name: { $ref: "#/$defs/nonEmptyString" },
-        title: { $ref: "#/$defs/nonEmptyString" }
+        title: { $ref: "#/$defs/nonEmptyString" },
+        defaultLocale: { $ref: "#/$defs/nonEmptyString" },
+        locales: {
+          type: "array",
+          minItems: 1,
+          items: { $ref: "#/$defs/nonEmptyString" }
+        }
       }
     },
     profileRef: {
@@ -226,6 +242,8 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
       "error",
       joinTarget(targetPrefix, "project.name")
     ));
+  } else {
+    validateProjectLocales(value.project, targetPrefix, diagnostics);
   }
 
   const hasInputs = Array.isArray(value.inputs) && value.inputs.length > 0;
@@ -245,6 +263,49 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
   validateProducerEntries(value.producers, targetPrefix, diagnostics);
 
   return diagnostics;
+}
+
+/**
+ * 校验 project 级 locale 声明，防止 renderer 收到无法解析的语言模型。
+ * Validates project-level locale declarations before the renderer receives an unresolved locale model.
+ */
+function validateProjectLocales(
+  project: Record<string, unknown>,
+  targetPrefix: string | undefined,
+  diagnostics: HiaDiagnostic[]
+): void {
+  const defaultLocale = project.defaultLocale;
+  const locales = project.locales;
+
+  if (defaultLocale !== undefined && (typeof defaultLocale !== "string" || defaultLocale.length === 0)) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      "Project docs manifest project.defaultLocale must be a non-empty string when provided.",
+      "error",
+      joinTarget(targetPrefix, "project.defaultLocale")
+    ));
+  }
+
+  if (locales !== undefined && (!Array.isArray(locales)
+    || locales.length === 0
+    || locales.some((locale) => typeof locale !== "string" || locale.length === 0))) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      "Project docs manifest project.locales must be a non-empty array of non-empty strings when provided.",
+      "error",
+      joinTarget(targetPrefix, "project.locales")
+    ));
+    return;
+  }
+
+  if (typeof defaultLocale === "string" && Array.isArray(locales) && !locales.includes(defaultLocale)) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+      "Project docs manifest project.defaultLocale must be included in project.locales.",
+      "error",
+      joinTarget(targetPrefix, "project.defaultLocale")
+    ));
+  }
 }
 
 function validateProducerEntries(value: unknown, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {

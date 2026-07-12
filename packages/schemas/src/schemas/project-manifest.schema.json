@@ -102,6 +102,16 @@
         },
         "title": {
           "$ref": "#/$defs/nonEmptyString"
+        },
+        "defaultLocale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "locales": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
         }
       }
     },

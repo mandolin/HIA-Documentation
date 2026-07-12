@@ -45,7 +45,9 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
   "project": {
     "id": "project:mixed",
     "name": "Mixed Project",
-    "title": "Mixed Project Documentation"
+    "title": "Mixed Project Documentation",
+    "defaultLocale": "en",
+    "locales": ["en", "zh-CN"]
   },
   "profiles": [
     {
@@ -66,6 +68,10 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
   ]
 }
 ```
+
+### Project Locales
+
+`project.defaultLocale` and `project.locales` control the initial language and language switcher for a unified project page. The default locale must be included in the declared locale list. Entries without localized fields remain visible through their source summary; entries produced from JSDoc `@lang` data switch their description in place.
 
 ## Input Kinds
 

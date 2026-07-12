@@ -53,7 +53,9 @@ describe("@hia-doc/renderer-html", () => {
       project: {
         id: "project:mixed",
         name: "Mixed Project",
-        title: "Mixed Project Docs"
+        title: "Mixed Project Docs",
+        defaultLocale: "en",
+        locales: ["en", "zh-CN"]
       },
       profiles: [
         { profileId: "jsdoc", profileVersion: "0.1.0-draft" },
@@ -88,6 +90,24 @@ describe("@hia-doc/renderer-html", () => {
           kind: "function",
           view: "js",
           summary: "Builds a user profile summary.",
+          i18n: {
+            enabled: true,
+            model: "hia-text-i18n",
+            modelVersion: "0.1.0",
+            defaultLocale: "en",
+            locales: ["en", "zh-CN"],
+            fields: {
+              description: {
+                fieldPath: "description",
+                kind: "description",
+                defaultLocale: "en",
+                localizedText: {
+                  en: "Builds a user profile summary.",
+                  "zh-CN": "生成用户资料摘要。"
+                }
+              }
+            }
+          },
           profile: { profileId: "jsdoc", profileVersion: "0.1.0-draft" },
           input: { kind: "jsdoc-integration", path: "jsdoc.json", contract: "jsdoc-integration" },
           source: {
@@ -141,12 +161,17 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html"]);
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 3, js: 1, css: 1, html: 1 });
+    expect(result.manifest.initialLocale).toBe("en");
+    expect(result.manifest.locales).toEqual(["en", "zh-CN"]);
     expect(html).toContain("Mixed Project Docs");
     expect(html).toContain("data-hia-project-view=\"js\"");
     expect(html).toContain("data-hia-project-search");
     expect(html).toContain("data-hia-project-search-text=");
     expect(html).toContain("data-hia-project-entry=\"css\"");
     expect(html).toContain("buildProfileSummary");
+    expect(html).toContain("生成用户资料摘要。");
+    expect(html).toContain("data-hia-locale-control");
+    expect(html).toContain("<html lang=\"en\">");
     expect(html).toContain("css-component-style");
     expect(html).toContain("html-component");
     expect(html).toContain("maps/button.docmap.json");

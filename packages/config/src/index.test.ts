@@ -106,7 +106,9 @@ describe("@hia-doc/config", () => {
     const diagnostics = validateHiaProjectManifest({
       schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
       project: {
-        name: "Mixed Project"
+        name: "Mixed Project",
+        defaultLocale: "en",
+        locales: ["en", "zh-CN"]
       },
       profiles: [
         {
@@ -128,6 +130,26 @@ describe("@hia-doc/config", () => {
     });
 
     expect(diagnostics).toEqual([]);
+  });
+
+  it("rejects a project default locale that is not declared", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Locale Project",
+        defaultLocale: "zh-CN",
+        locales: ["en"]
+      },
+      inputs: [
+        {
+          kind: "hia-document",
+          path: "artifacts/basic.hia.json"
+        }
+      ]
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_FIELD_INVALID");
+    expect(hasConfigErrors(diagnostics)).toBe(true);
   });
 
   it("accepts producer-only project manifests", () => {

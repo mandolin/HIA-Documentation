@@ -25,3 +25,5 @@ Project docs manifests use a separate draft contract exported by this package:
 - `validateHiaProjectManifest()`
 
 See `docs/configuration.md` and `docs/contract-index.md` in the repository root for the current config boundary.
+
+For unified project pages, the project manifest can declare `project.defaultLocale` and `project.locales`. The renderer preserves these values in the output manifest and exposes a language switcher when more than one locale is available.

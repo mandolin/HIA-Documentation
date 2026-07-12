@@ -4,6 +4,7 @@ import {
   type HiaDiagnostic,
   type HiaDocument,
   type HiaI18nField,
+  type HiaI18nModel,
   type HiaResolvedText,
   type HiaSourceDefinedIn,
   type HiaSourceFragment,
@@ -43,6 +44,16 @@ export interface RenderProjectInfo {
   id?: string;
   name: string;
   title?: string;
+  /**
+   * 项目页面的默认语言；若未提供则从已声明语言或 `und` 推断。
+   * Default project-page locale; inferred from declared locales or `und` when omitted.
+   */
+  defaultLocale?: string;
+  /**
+   * 项目聚合页中可切换的语言。
+   * Locales that can be switched within the project aggregation page.
+   */
+  locales?: string[];
 }
 
 export interface RenderProjectProfileRef {
@@ -81,6 +92,11 @@ export interface RenderProjectEntry {
   view: RenderProjectView;
   summary?: string;
   signature?: string;
+  /**
+   * 从领域 adapter/core symbol 透传的字段级 i18n；description 会驱动项目页的语言切换。
+   * Field-level i18n forwarded from a domain adapter/core symbol; description drives project-page locale switching.
+   */
+  i18n?: HiaI18nModel;
   profile?: RenderProjectProfileRef;
   input?: RenderProjectInputRef;
   source?: RenderProjectSourceRef;
@@ -203,7 +219,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
-      contents: renderProjectIndexHtml(pageTitle, projectInput),
+      contents: renderProjectIndexHtml(pageTitle, projectInput, options),
       contentType: "text/html; charset=utf-8",
       role: "entry"
     }
@@ -223,7 +239,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   return {
     files,
     diagnostics: projectInput.diagnostics ?? [],
-    manifest: createProjectManifest(projectInput, files, pageTitle)
+    manifest: createProjectManifest(projectInput, files, pageTitle, options)
   };
 }
 
@@ -244,9 +260,15 @@ function createManifest(document: HiaDocument, files: RenderedHtmlFile[], option
   };
 }
 
-function createProjectManifest(projectInput: RenderProjectHtmlInput, files: RenderedHtmlFile[], pageTitle: string): RenderHtmlManifest {
+function createProjectManifest(
+  projectInput: RenderProjectHtmlInput,
+  files: RenderedHtmlFile[],
+  pageTitle: string,
+  options: RenderHtmlOptions
+): RenderHtmlManifest {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const views = collectProjectViews(projectInput.entries);
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
 
   return {
     schemaVersion: HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
@@ -254,8 +276,8 @@ function createProjectManifest(projectInput: RenderProjectHtmlInput, files: Rend
     documentId: projectId,
     title: pageTitle,
     entrypoint: "index.html",
-    initialLocale: "und",
-    locales: ["und"],
+    initialLocale: localeModel.selectedLocale,
+    locales: localeModel.locales,
     files: files.map((file) => ({
       path: file.path,
       role: file.role,
@@ -307,21 +329,28 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
   ].join("");
 }
 
-function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHtmlInput): string {
+function renderProjectIndexHtml(
+  pageTitle: string,
+  projectInput: RenderProjectHtmlInput,
+  options: RenderHtmlOptions
+): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const views = collectProjectViews(projectInput.entries);
   const entryCounts = countEntriesByView(projectInput.entries);
   const navigation = projectInput.entries
     .map((entry) => renderProjectNavItem(entry))
     .join("");
-  const entries = projectInput.entries.map((entry) => renderProjectEntry(entry)).join("");
+  const entries = projectInput.entries
+    .map((entry) => renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale))
+    .join("");
   const profileSummary = renderProjectProfiles(projectInput.profiles ?? []);
   const docSourceMapSummary = renderProjectDocSourceMaps(projectInput.docSourceMaps ?? []);
   const diagnostics = renderProjectDiagnostics(projectInput.diagnostics ?? []);
 
   return [
     "<!doctype html>",
-    "<html lang=\"und\">",
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}">`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -333,6 +362,7 @@ function renderProjectIndexHtml(pageTitle: string, projectInput: RenderProjectHt
     "<div class=\"hia-shell hia-project-shell\">",
     "<aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectName)}</h1>`,
+    renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
     renderProjectViewControl(views, entryCounts),
     renderProjectSearchControl(),
     navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
@@ -381,9 +411,9 @@ function renderProjectNavItem(entry: RenderProjectEntry): string {
   ].join("");
 }
 
-function renderProjectEntry(entry: RenderProjectEntry): string {
+function renderProjectEntry(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
   const signature = entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "";
-  const summary = entry.summary ? `<p>${escapeHtml(entry.summary)}</p>` : "";
+  const summary = renderProjectEntrySummary(entry, locales, selectedLocale);
   const input = entry.input ? renderProjectEntryInput(entry.input) : "";
   const profile = entry.profile ? renderProjectEntryProfile(entry.profile) : "";
   const source = entry.source ? renderProjectEntrySource(entry.source) : "";
@@ -405,6 +435,26 @@ function renderProjectEntry(entry: RenderProjectEntry): string {
     diagnostics,
     "</article>"
   ].join("");
+}
+
+function renderProjectEntrySummary(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
+  const field = entry.i18n?.fields.description;
+
+  if (!field && !entry.summary) {
+    return "";
+  }
+
+  const blocks = locales
+    .map((locale) => renderLocalizedBlock(
+      field,
+      locale,
+      selectedLocale,
+      createI18nResolveOptionsFromModel(entry.i18n),
+      entry.summary ?? ""
+    ))
+    .join("");
+
+  return `<div class="hia-localized-set" data-hia-i18n-field="description">${blocks}</div>`;
 }
 
 function renderProjectEntryInput(input: RenderProjectInputRef): string {
@@ -643,8 +693,14 @@ function createProjectEntrySearchText(entry: RenderProjectEntry): string {
     entry.docSourceMap?.entryId,
     entry.docSourceMap?.sourcePath,
     entry.docSourceMap?.artifactPath,
-    entry.docSourceMap?.artifactSelector
+    entry.docSourceMap?.artifactSelector,
+    ...collectProjectEntryLocalizedText(entry)
   ].filter((item): item is string => typeof item === "string" && item.length > 0).join(" ").toLowerCase();
+}
+
+function collectProjectEntryLocalizedText(entry: RenderProjectEntry): string[] {
+  return Object.values(entry.i18n?.fields ?? {})
+    .flatMap((field) => Object.values(field.localizedText));
 }
 
 function formatProjectViewLabel(view: RenderProjectView): string {
@@ -908,10 +964,40 @@ function normalizeLocales(document: HiaDocument, selectedLocale: string): string
   return locales;
 }
 
+function resolveProjectLocaleModel(
+  projectInput: RenderProjectHtmlInput,
+  requestedLocale: string | undefined
+): { selectedLocale: string; locales: string[] } {
+  const declaredLocales = projectInput.project.locales ?? [];
+  const inferredLocales = projectInput.entries
+    .flatMap((entry) => [
+      ...(entry.i18n?.locales ?? []),
+      ...Object.values(entry.i18n?.fields ?? {}).flatMap((field) => Object.keys(field.localizedText))
+    ]);
+  const defaultLocale = projectInput.project.defaultLocale
+    ?? declaredLocales[0]
+    ?? inferredLocales[0]
+    ?? "und";
+  const selectedLocale = requestedLocale ?? defaultLocale;
+  const locales: string[] = [];
+
+  for (const locale of [selectedLocale, defaultLocale, ...declaredLocales, ...inferredLocales]) {
+    if (locale && !locales.includes(locale)) {
+      locales.push(locale);
+    }
+  }
+
+  return { selectedLocale, locales };
+}
+
 function createI18nResolveOptions(symbol: HiaSymbol) {
+  return createI18nResolveOptionsFromModel(symbol.i18n);
+}
+
+function createI18nResolveOptionsFromModel(model: HiaI18nModel | undefined) {
   return {
-    ...(symbol.i18n?.defaultLocale ? { defaultLocale: symbol.i18n.defaultLocale } : {}),
-    ...(symbol.i18n?.fallbackLocale ? { fallbackLocale: symbol.i18n.fallbackLocale } : {})
+    ...(model?.defaultLocale ? { defaultLocale: model.defaultLocale } : {}),
+    ...(model?.fallbackLocale ? { fallbackLocale: model.fallbackLocale } : {})
   };
 }
 
