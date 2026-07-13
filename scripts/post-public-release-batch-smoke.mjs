@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { assertNpmPackageVersion } from "./lib/npm-registry.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,8 +25,8 @@ async function main() {
 
   try {
     await runNpm(["init", "-y"], tempDir);
-    for (const spec of specs) {
-      await runNpm(["view", spec, "version", `--registry=${registry}`], tempDir);
+    for (const [index, spec] of specs.entries()) {
+      await assertNpmPackageVersion({ registry, ...entries[index] });
       await runNpm(["pack", spec, `--registry=${registry}`, "--pack-destination", tempDir], tempDir);
     }
     await runNpm(["install", "--ignore-scripts", "--no-audit", "--fund=false", `--registry=${registry}`, ...specs], tempDir);

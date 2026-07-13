@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { readNpmPackageVersion } from "./lib/npm-registry.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -126,34 +127,11 @@ function createSkippedOrgStatus() {
 }
 
 async function checkPackageVersion(entry) {
-  const spec = `${entry.name}@${entry.targetVersion}`;
-  const result = await npm(["view", spec, "version", `--registry=${registry}`]);
-
-  if (result.ok) {
-    return {
-      name: entry.name,
-      targetVersion: entry.targetVersion,
-      publishOrder: entry.publishOrder,
-      status: "published",
-      registryVersion: result.stdout.trim()
-    };
-  }
-
-  if (isNotFoundError(result.stderr)) {
-    return {
-      name: entry.name,
-      targetVersion: entry.targetVersion,
-      publishOrder: entry.publishOrder,
-      status: "unpublished"
-    };
-  }
-
   return {
     name: entry.name,
     targetVersion: entry.targetVersion,
     publishOrder: entry.publishOrder,
-    status: "error",
-    reason: trimError(result.stderr)
+    ...(await readNpmPackageVersion({ registry, ...entry }))
   };
 }
 

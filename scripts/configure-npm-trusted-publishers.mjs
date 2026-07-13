@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { assertNpmPackageVersion } from "./lib/npm-registry.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,10 +44,7 @@ async function main() {
 }
 
 async function assertPublished(entry) {
-  const spec = `${entry.name}@${entry.targetVersion}`;
-  const result = await run("npm", ["view", spec, "version", `--registry=${registry}`], { allowFailure: true });
-  assert(result.ok, `${spec}: package must be public before Trusted Publishing can be configured.`);
-  assert(result.stdout.trim() === entry.targetVersion, `${spec}: registry returned an unexpected version.`);
+  await assertNpmPackageVersion({ registry, ...entry });
 }
 
 function formatCommand(entry) {

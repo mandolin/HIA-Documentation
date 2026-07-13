@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { readNpmPackageVersion } from "./lib/npm-registry.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -13,6 +14,8 @@ const args = new Set(process.argv.slice(2));
 const execute = args.has("--publish");
 const resume = args.has("--resume");
 const registry = releasePlan.registry ?? "https://registry.npmjs.org/";
+const registryVisibilityAttempts = 20;
+const registryVisibilityDelayMs = 3_000;
 const entries = [...(releasePlan.packages ?? [])].sort((left, right) =>
   left.publishOrder - right.publishOrder || left.name.localeCompare(right.name)
 );
@@ -52,7 +55,7 @@ async function main() {
     for (const state of pending) {
       const tarball = await packPackage(state.entry, packRoot);
       await run("npm", ["publish", tarball, "--access", "public", "--provenance", `--registry=${registry}`], rootDir);
-      const publishedState = await readRegistryState(state.entry);
+      const publishedState = await waitForRegistryVisibility(state.entry);
       assert(
         publishedState.status === "published",
         `${state.entry.name}: publish command finished but ${state.entry.targetVersion} is not visible from the registry.`
@@ -74,19 +77,36 @@ async function assertPublishReadyManifest(entry) {
 }
 
 async function readRegistryState(entry) {
-  const spec = `${entry.name}@${entry.targetVersion}`;
-  const result = await run("npm", ["view", spec, "version", `--registry=${registry}`], rootDir, { allowFailure: true });
+  const result = await readNpmPackageVersion({ registry, ...entry });
+  return { entry, ...result };
+}
 
-  if (result.ok) {
-    assert(result.stdout.trim() === entry.targetVersion, `${entry.name}: registry returned an unexpected target version ${result.stdout.trim()}.`);
-    return { entry, status: "published" };
+/**
+ * npm publish can succeed before the public registry's read path observes the new version.
+ * npm publish 成功后，公共 registry 的读取路径可能暂时还看不到新版本；此处以有界轮询避免把传播延迟误判为发布失败。
+ */
+async function waitForRegistryVisibility(entry) {
+  let latestState;
+
+  for (let attempt = 1; attempt <= registryVisibilityAttempts; attempt += 1) {
+    latestState = await readRegistryState(entry);
+    if (latestState.status === "published") {
+      return latestState;
+    }
+
+    if (latestState.status === "error") {
+      return latestState;
+    }
+
+    if (attempt < registryVisibilityAttempts) {
+      console.log(
+        `${entry.name}@${entry.targetVersion}: waiting for npm registry visibility (${attempt}/${registryVisibilityAttempts}).`
+      );
+      await sleep(registryVisibilityDelayMs);
+    }
   }
 
-  if (/\bE404\b|404 Not Found|is not in this registry|Not found/i.test(result.stderr)) {
-    return { entry, status: "unpublished" };
-  }
-
-  return { entry, status: "error", reason: trimError(result.stderr || result.stdout) };
+  return latestState;
 }
 
 async function packPackage(entry, packRoot) {
@@ -139,6 +159,10 @@ function printPlan(pending, alreadyPublished) {
 
 function trimError(value) {
   return String(value).trim().split(/\r?\n/).slice(0, 4).join(" ");
+}
+
+function sleep(delayMs) {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
 await main();
