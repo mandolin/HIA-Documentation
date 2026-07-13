@@ -56,11 +56,7 @@ async function smokeImports(tempDir) {
 }
 
 async function runNpm(args, cwd) {
-  const npmCli = process.env.npm_execpath;
-  if (npmCli && !/\.(?:cmd|bat|exe)$/i.test(npmCli)) {
-    return run(process.execPath, [npmCli, ...args], cwd);
-  }
-  return run(npmCli || "npm", args, cwd);
+  return run("npm", args, cwd);
 }
 
 async function run(command, commandArgs, cwd) {

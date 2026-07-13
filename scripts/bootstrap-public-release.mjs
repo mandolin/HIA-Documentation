@@ -46,7 +46,11 @@ async function main() {
   }
 
   assert(process.env.NODE_AUTH_TOKEN, "NODE_AUTH_TOKEN is required only for --publish.");
-  assert(pending.length > 0, "No unpublished target versions remain in this release batch.");
+  if (pending.length === 0) {
+    assert(resume, "No unpublished target versions remain in this release batch.");
+    console.log("Bootstrap resume found every approved target version already public; skipping npm publish and continuing to post-publish verification.");
+    return;
+  }
 
   const packRoot = await mkdtemp(path.join(os.tmpdir(), "hia-npm-bootstrap-"));
   try {
@@ -58,7 +62,7 @@ async function main() {
     await rm(packRoot, { recursive: true, force: true });
   }
 
-  console.log(`Bootstrap publish succeeded: ${pending.length} package(s) are now public at their approved target versions.`);
+  console.log(`Bootstrap publish succeeded: ${pending.length} package(s) were submitted at their approved target versions.`);
 }
 
 async function assertPublishReadyManifest(entry) {
