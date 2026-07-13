@@ -12,7 +12,7 @@ Each repository owns its own workflow and runs commands from its own repository 
 
 The workflows run on pull requests, pushes to `main` and manual `workflow_dispatch` runs.
 
-`main-repo/.github/workflows/schema-pages.yml` is a publication workflow rather than an ordinary validation workflow. It runs on pushes to `main` and manual dispatch, executes the full release gate, deploys the generated schema site through GitHub Pages and verifies the public catalog, canonical schema ids and aliases after deployment.
+`main-repo/.github/workflows/schema-pages.yml` is the single public reference publication workflow rather than an ordinary validation workflow. It runs on pushes to `main` and manual dispatch, executes the release gate, builds the public reference from the explicit satellite allowlist, assembles one Pages artifact with the portal and `/schemas/`, then verifies the deployed portal routes, provenance and canonical schema ids after deployment.
 
 Current release-gate workflows declare read-only repository contents permission:
 
@@ -54,7 +54,7 @@ CI workflows must:
 - Avoid `pull_request_target` unless a dedicated reviewed workflow requires it.
 - Keep GitHub token permissions to the minimum required by the job.
 - Prefer npm Trusted Publishing before adding an automated npm publish job.
-- Keep Pages publication on the `github-pages` environment and verify deployed schema ids before reporting success.
+- Keep Pages publication on the `github-pages` environment, isolate source-read credentials to the build job, and verify deployed portal routes plus schema ids before reporting success.
 
 The current workflows are validation-only and do not consume npm or GitHub publication secrets.
 
@@ -72,6 +72,7 @@ Common failure areas:
 - Dependency installation: check Node.js and the package manager command used by that repository.
 - TypeScript or test failures: fix the underlying build or test failure first.
 - JSDoc Integration smoke: inspect generated output under `dist/release-gate-jsdoc-real`.
+- Reference Pages deployment: inspect `dist/reference-pages`, then verify the `github-pages` environment URL and `reference-build.json` provenance.
 - Package dry-run: check `files`, release metadata, generated example output and tarball contents.
 
 CI must not run commands from the outer workspace container or assume a cross-repository workspace.

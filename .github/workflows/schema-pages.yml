@@ -1,4 +1,4 @@
-name: Schema Pages
+name: HIA Reference Pages
 
 on:
   push:
@@ -8,17 +8,17 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: schema-pages
+  group: hia-reference-pages
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Build schema site
+    name: Build public reference Pages artifact
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
@@ -40,21 +40,112 @@ jobs:
       - name: Run release gate
         run: pnpm run release:gate
 
+      - name: Create read-only source checkout token
+        id: reference_app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.HIA_REFERENCE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.HIA_REFERENCE_APP_PRIVATE_KEY }}
+          owner: mandolin
+
+      - name: Check out hia-jsdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-jsdoc
+          ref: main
+          path: reference/sources/hia-jsdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-htmdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-htmdoc
+          ref: main
+          path: reference/sources/hia-htmdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-cssdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-cssdoc
+          ref: main
+          path: reference/sources/hia-cssdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-sassdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-sassdoc
+          ref: main
+          path: reference/sources/hia-sassdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-pugdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-pugdoc
+          ref: main
+          path: reference/sources/hia-pugdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-tsdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-tsdoc
+          ref: main
+          path: reference/sources/hia-tsdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out hia-vuedoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-vuedoc
+          ref: main
+          path: reference/sources/hia-vuedoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Install selected source dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          for source in reference/sources/*; do
+            npm ci --ignore-scripts --prefix "$source"
+          done
+
+      - name: Build and verify public reference Pages artifact
+        run: |
+          pnpm run reference:build
+          pnpm run reference:check
+          pnpm run reference:pages
+          pnpm run reference:pages:check
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload schema site
+      - name: Upload public reference Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist/schema-pages
+          path: dist/reference-pages
+          include-hidden-files: true
 
   deploy:
-    name: Deploy and verify schema site
+    name: Deploy and verify public reference Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Check out repository
@@ -69,5 +160,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Verify published schemas
-        run: node scripts/check-schema-pages-online.mjs
+      - name: Verify published reference Pages
+        env:
+          HIA_REFERENCE_PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/check-reference-pages-online.mjs

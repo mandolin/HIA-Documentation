@@ -74,14 +74,17 @@ After intentionally changing an owner schema, refresh snapshots with:
 pnpm run schema:sync
 ```
 
-Generate the local Pages artifact with:
+Generate the schema namespace and the combined local Pages artifact with:
 
 ```bash
 pnpm run build
 pnpm run schema:site
+pnpm run reference:build
+pnpm run reference:pages
+pnpm run reference:pages:check
 ```
 
-The `schema-pages.yml` workflow runs the full release gate, deploys `dist/schema-pages`, then verifies every canonical URL, alias and catalog response online. GitHub Pages is configured in workflow mode with HTTPS enforced.
+The `schema-pages.yml` workflow publishes the single `dist/reference-pages` artifact. It copies the generated `/schemas/` namespace byte-for-byte from `dist/schema-pages`, then verifies every canonical URL, alias and catalog response alongside the public documentation routes. GitHub Pages is configured in workflow mode with HTTPS enforced.
 
 ## Publication Status
 

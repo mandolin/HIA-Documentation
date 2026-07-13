@@ -31,4 +31,4 @@ The build writes two localized unified documentation outputs, a source-linkage p
 
 ## Deployment Boundary
 
-This stage intentionally stops at a checked build artifact. W-P14.3 will combine it with the existing `/schemas/` distribution into the single GitHub Pages artifact and add online/rollback verification.
+The checked build is assembled with the existing `/schemas/` distribution into the single GitHub Pages artifact by `pnpm run reference:pages`. The assembler copies only runtime-facing reference files, keeps `/schemas/` byte-identical to the schema build, and writes a sanitized `reference-pages.json` route/provenance manifest. See [Reference Pages](./reference-pages.md) for the deployed route contract and verification commands.

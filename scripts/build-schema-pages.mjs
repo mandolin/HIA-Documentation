@@ -56,6 +56,7 @@ function renderIndex(entries, rootPrefix = "") {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HIA Schema Distribution</title>
+  <link rel="icon" href="data:,">
 </head>
 <body>
   <main>
