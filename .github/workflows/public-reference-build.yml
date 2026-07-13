@@ -43,7 +43,7 @@ jobs:
         id: reference_app_token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.HIA_REFERENCE_APP_CLIENT_ID }}
+          client-id: ${{ vars.HIA_REFERENCE_APP_CLIENT_ID }}
           private-key: ${{ secrets.HIA_REFERENCE_APP_PRIVATE_KEY }}
           owner: mandolin
 
