@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/config",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Project configuration contract and loader for HIA documentation tools.",
   "license": "MIT",
   "repository": {
@@ -22,6 +21,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --root ../.. packages/config/src/index.test.ts"

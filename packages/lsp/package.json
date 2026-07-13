@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/lsp",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Language Server Protocol layer for HIA documents.",
   "license": "MIT",
   "repository": {
@@ -29,6 +28,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "cd ../.. && vitest run packages/lsp/src"

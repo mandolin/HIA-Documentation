@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/schemas",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Machine-readable JSON Schema distribution for HIA documentation contracts.",
   "license": "MIT",
   "repository": {
@@ -30,6 +29,9 @@
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "sync": "node scripts/sync-schema-assets.mjs",

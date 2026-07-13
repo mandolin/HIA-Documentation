@@ -1,0 +1,68 @@
+name: npm Bootstrap Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_bootstrap:
+        description: "Type: bootstrap 13 @hia-doc packages"
+        required: true
+        type: string
+      resume_partial_batch:
+        description: "Resume a verified partial batch only"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-public-bootstrap-0.1.0
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    name: Bootstrap 13 public packages with provenance
+    if: inputs.confirm_bootstrap == 'bootstrap 13 @hia-doc packages'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Install npm publication baseline
+        run: npm install -g npm@^11.15.0
+
+      - name: Verify bootstrap credential exists
+        env:
+          HIA_NPM_BOOTSTRAP_TOKEN: ${{ secrets.HIA_NPM_BOOTSTRAP_TOKEN }}
+        run: |
+          test -n "$HIA_NPM_BOOTSTRAP_TOKEN"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run publish-ready release gate
+        run: pnpm run release:gate:publish-ready
+
+      - name: Bootstrap approved package batch
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.HIA_NPM_BOOTSTRAP_TOKEN }}
+        run: |
+          node scripts/bootstrap-public-release.mjs --publish ${{ inputs.resume_partial_batch && '--resume' || '' }}
+
+      - name: Run clean registry batch smoke
+        run: pnpm run release:postpublish:batch-smoke

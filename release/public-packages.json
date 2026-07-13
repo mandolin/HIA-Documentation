@@ -9,7 +9,7 @@
   "publishToolchain": {
     "nodeVersion": "24.x",
     "minimumNodeVersion": "22.14.0",
-    "minimumNpmVersion": "11.5.1",
+    "minimumNpmVersion": "11.15.0",
     "packCommand": "pnpm --filter <package> pack",
     "publishCommand": "npm publish <tarball> --access public --provenance",
     "trustedPublishing": {
@@ -132,11 +132,12 @@
     }
   ],
   "bootstrapChecklist": [
-    "Confirm npm account access and create or claim the @hia-doc organization/scope.",
-    "Bootstrap the first @hia-doc package under controlled manual approval if npm requires an existing package before Trusted Publishing can be configured.",
-    "Configure npm Trusted Publisher for this GitHub repository and the npm Trusted Publish workflow.",
-    "Flip one package at a time from private 0.0.0 to the target version, pack it with pnpm and publish the tarball through npm with provenance.",
-    "Run registry clean-install and public schema URL smoke after each publish batch."
+    "Confirm npm account access and ownership of the @hia-doc organization/scope.",
+    "Commit and push the explicit 0.1.0/public release manifest to mandolin/HIA-Documentation before dispatching the bootstrap workflow.",
+    "Create a one-day granular npm token limited to the @hia-doc scope with packages/scopes read-write and Bypass 2FA enabled; store it only as the HIA_NPM_BOOTSTRAP_TOKEN GitHub repository secret.",
+    "Dispatch npm-bootstrap-publish.yml on a GitHub-hosted runner with its exact confirmation phrase; it packs and publishes the approved 13-package order with provenance and can resume only when explicitly requested.",
+    "After all packages exist, configure npm Trusted Publisher for mandolin/HIA-Documentation and npm-trusted-publish.yml, then delete HIA_NPM_BOOTSTRAP_TOKEN and revoke the temporary npm token.",
+    "Set each package to require 2FA and disallow tokens, then run registry clean-install and public schema URL smoke."
   ],
   "postPublishSmoke": [
     "npm view <package>@<targetVersion> version --registry=https://registry.npmjs.org/",

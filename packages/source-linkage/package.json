@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/source-linkage",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Doc-source-map indexing and validation helpers for HIA tooling.",
   "license": "MIT",
   "repository": {
@@ -26,6 +25,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --root ../.. packages/source-linkage/src/index.test.ts"

@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Core HIA document model and early validation helpers.",
   "license": "MIT",
   "repository": {
@@ -22,6 +21,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run src/**/*.test.ts"

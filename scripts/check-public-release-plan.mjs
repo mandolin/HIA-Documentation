@@ -5,8 +5,11 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const releasePlanPath = path.join(rootDir, "release/public-packages.json");
 const workflowPath = path.join(rootDir, ".github/workflows/npm-trusted-publish.yml");
+const bootstrapWorkflowPath = path.join(rootDir, ".github/workflows/npm-bootstrap-publish.yml");
+const bootstrapScriptPath = path.join(rootDir, "scripts/bootstrap-public-release.mjs");
 const rootLicense = await readFile(path.join(rootDir, "LICENSE"), "utf8");
 const releasePlan = JSON.parse(await readFile(releasePlanPath, "utf8"));
+const publishReady = process.argv.includes("--publish-ready");
 
 const packageEntries = releasePlan.packages ?? [];
 const candidatesByName = new Map();
@@ -16,7 +19,7 @@ assert(releasePlan.scope === "@hia-doc", "release/public-packages.json: canonica
 assert(releasePlan.registry === "https://registry.npmjs.org/", "release/public-packages.json: registry must remain npmjs.");
 assert(releasePlan.runtimeNodeRange === ">=20.19.0", "release/public-packages.json: runtime Node range drifted.");
 assert(releasePlan.publishToolchain?.nodeVersion === "24.x", "release/public-packages.json: publish job must use Node 24.x.");
-assert(releasePlan.publishToolchain?.minimumNpmVersion === "11.5.1", "release/public-packages.json: Trusted Publishing npm baseline drifted.");
+assert(releasePlan.publishToolchain?.minimumNpmVersion === "11.15.0", "release/public-packages.json: Trusted Publishing npm baseline drifted.");
 
 for (const entry of packageEntries) {
   assert(!candidatesByName.has(entry.name), `release/public-packages.json: duplicate package ${entry.name}.`);
@@ -34,8 +37,14 @@ for (const entry of packageEntries) {
   await readFile(path.join(rootDir, entry.path, "README.md"), "utf8");
 
   assert(packageJson.name === entry.name, `${entry.path}: package name does not match release plan.`);
-  assert(packageJson.version === "0.0.0", `${entry.name}: package.json must stay 0.0.0 until publish approval.`);
-  assert(packageJson.private === true, `${entry.name}: package must stay private until publish approval.`);
+  if (publishReady) {
+    assert(packageJson.version === entry.targetVersion, `${entry.name}: package.json must equal approved target ${entry.targetVersion}.`);
+    assert(packageJson.private !== true, `${entry.name}: package must not remain private during controlled publication.`);
+    assert(packageJson.publishConfig?.access === "public", `${entry.name}: publishConfig.access must explicitly be public.`);
+  } else {
+    assert(packageJson.version === "0.0.0", `${entry.name}: package.json must stay 0.0.0 until publish approval.`);
+    assert(packageJson.private === true, `${entry.name}: package must stay private until publish approval.`);
+  }
   assert(packageJson.license === "MIT", `${entry.name}: package license must be MIT.`);
   assert(packageJson.engines?.node === releasePlan.runtimeNodeRange, `${entry.name}: package engine must match runtime baseline.`);
   assert(packageJson.repository?.url === "git+https://github.com/mandolin/HIA-Documentation.git", `${entry.name}: repository URL drifted.`);
@@ -59,13 +68,29 @@ for (const entry of packageEntries) {
 }
 
 const workflow = await readFile(workflowPath, "utf8");
+const bootstrapWorkflow = await readFile(bootstrapWorkflowPath, "utf8");
+const bootstrapScript = await readFile(bootstrapScriptPath, "utf8");
 assert(workflow.includes("id-token: write"), "npm trusted publish workflow must request id-token: write.");
 assert(workflow.includes("node-version: 24.x"), "npm trusted publish workflow must use Node 24.x.");
-assert(workflow.includes("npm@^11.5.1"), "npm trusted publish workflow must install npm 11.5.1+.");
+assert(workflow.includes("npm@^11.15.0"), "npm trusted publish workflow must install npm 11.15.0+.");
 assert(workflow.includes("--provenance"), "npm trusted publish workflow must publish with provenance.");
 assert(workflow.includes("pnpm --filter"), "npm trusted publish workflow must pack through pnpm to rewrite workspace dependencies.");
+assert(workflow.includes("release:gate:publish-ready"), "npm trusted publish workflow must validate the publish-ready manifest.");
+assert(bootstrapWorkflow.includes("runs-on: ubuntu-latest"), "npm bootstrap workflow must use a GitHub-hosted runner for provenance.");
+assert(bootstrapWorkflow.includes("id-token: write"), "npm bootstrap workflow must request id-token: write for provenance.");
+assert(bootstrapWorkflow.includes("node-version: 24.x"), "npm bootstrap workflow must use Node 24.x.");
+assert(bootstrapWorkflow.includes("npm@^11.15.0"), "npm bootstrap workflow must install npm 11.15.0+.");
+assert(bootstrapWorkflow.includes("HIA_NPM_BOOTSTRAP_TOKEN"), "npm bootstrap workflow must use the dedicated temporary credential secret.");
+assert(bootstrapWorkflow.includes("release:gate:publish-ready"), "npm bootstrap workflow must validate the publish-ready manifest.");
+assert(bootstrapWorkflow.includes("resume_partial_batch"), "npm bootstrap workflow must make partial-batch resume explicit.");
+assert(bootstrapScript.includes("--provenance"), "npm bootstrap script must publish with provenance.");
+assert(bootstrapScript.includes("--resume"), "npm bootstrap script must support explicit partial-batch resume.");
 
-console.log(`Public release plan check passed: ${packageEntries.length} @hia-doc candidate packages are D2-ready and npm publication remains approval-gated.`);
+console.log(
+  publishReady
+    ? `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the explicit first-publication manifest.`
+    : `Public release plan check passed: ${packageEntries.length} @hia-doc candidate packages are D2-ready and npm publication remains approval-gated.`
+);
 
 function listLocalDependencyNames(packageJson) {
   const names = [];

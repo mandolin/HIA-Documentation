@@ -953,7 +953,7 @@ async function runProjectProducers(
     diagnostics.push(...normalizeProducerDiagnostics(result, producerId, index, failureMode === "warn"));
     results.push(createProducerRunResult(producerId, result.status, result.artifacts.length));
 
-    for (const artifact of result.artifacts) {
+    for (const artifact of selectProducerArtifactsForAggregation(result.artifacts)) {
       const runtimeInput = producerArtifactToRuntimeInput(artifact, producerId, producerOutputDir, outputDir, profileRefs);
       if (!runtimeInput) {
         continue;
@@ -976,6 +976,20 @@ async function runProjectProducers(
     runtimeInputs,
     results
   };
+}
+
+/**
+ * 选择供项目页面渲染的 producer artifact；保留所有 artifact 于 producer result，但避免 extraction 与其规范化 HIA document 重复渲染。
+ * Selects producer artifacts for project-page rendering; all artifacts remain in the producer result, while an extraction and its normalized HIA document are not rendered twice.
+ */
+function selectProducerArtifactsForAggregation(artifacts: DocumentationProducerArtifact[]): DocumentationProducerArtifact[] {
+  const hasNormalizedHiaDocument = artifacts.some((artifact) => artifact.kind === "hia-document");
+
+  if (!hasNormalizedHiaDocument) {
+    return artifacts;
+  }
+
+  return artifacts.filter((artifact) => artifact.kind !== "htmdoc-extraction" && artifact.kind !== "cssdoc-extraction");
 }
 
 function createProducerRunResult(

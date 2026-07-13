@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/theme-default",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Default static theme assets for HIA HTML output.",
   "license": "MIT",
   "repository": {
@@ -22,6 +21,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run src/**/*.test.ts"

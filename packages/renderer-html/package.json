@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/renderer-html",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Minimal HTML renderer for HIA documents.",
   "license": "MIT",
   "repository": {
@@ -22,6 +21,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run src/**/*.test.ts"

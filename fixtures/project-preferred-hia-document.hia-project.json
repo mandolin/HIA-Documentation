@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:preferred-hia-document",
+    "name": "Preferred HIA Document Project",
+    "title": "Preferred HIA Document Project Documentation"
+  },
+  "producers": [
+    {
+      "id": "preferred-hia-document-fixture",
+      "module": "producers/preferred-hia-document.producer.mjs",
+      "inputs": [
+        {
+          "kind": "fixture-source",
+          "path": "profile-card.html"
+        }
+      ]
+    }
+  ]
+}

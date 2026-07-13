@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/cli",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Command line entry for the HIA documentation system.",
   "license": "MIT",
   "repository": {
@@ -25,6 +24,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",

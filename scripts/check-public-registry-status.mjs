@@ -90,11 +90,11 @@ async function checkWhoami() {
 }
 
 async function checkOrg() {
-  const result = await npm(["org", "ls", scopeName, `--registry=${registry}`]);
+  const result = await npm(["org", "ls", scopeName, "--json", `--registry=${registry}`]);
   if (result.ok) {
     return {
       status: "accessible",
-      memberCountHint: countNonEmptyLines(result.stdout)
+      memberCountHint: countOrganizationMembers(result.stdout)
     };
   }
 
@@ -205,6 +205,11 @@ function trimError(stderr) {
   return stderr.trim().split(/\r?\n/).slice(0, 4).join(" ");
 }
 
-function countNonEmptyLines(text) {
-  return text.split(/\r?\n/).filter((line) => line.trim().length > 0).length;
+function countOrganizationMembers(text) {
+  try {
+    const members = JSON.parse(text);
+    return Object.keys(members ?? {}).length;
+  } catch {
+    return text.split(/\r?\n/).filter((line) => line.trim().length > 0).length;
+  }
 }

@@ -205,6 +205,41 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("prefers a producer HIA document over its equivalent extraction when aggregating a project", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-preferred-hia-document-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-preferred-hia-document.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        project?: { entryCounts?: Record<string, number> };
+        build?: { inputs?: Array<{ kind: string; source?: string }> };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("Generated 5 file");
+      expect(html.match(/Profile card component\./g)).toHaveLength(1);
+      expect(manifest.project?.entryCounts).toMatchObject({ html: 1, all: 1 });
+      expect(manifest.build?.inputs).toEqual([
+        expect.objectContaining({
+          kind: "hia-document",
+          source: "producer"
+        })
+      ]);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("keeps building project docs when a configured producer fails in warn mode", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-warn-"));
     const outDir = path.join(root, "docs");

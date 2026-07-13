@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/profiles",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Official documentation profile distribution for HIA documentation tools.",
   "license": "MIT",
   "repository": {
@@ -31,6 +30,9 @@
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --root ../.. packages/profiles/src/index.test.ts"

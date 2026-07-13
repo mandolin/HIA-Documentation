@@ -1,7 +1,6 @@
 {
   "name": "@hia-doc/browser-panel",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Static browser panel renderer for HIA source-linked documentation lookup.",
   "license": "MIT",
   "repository": {
@@ -22,6 +21,9 @@
     }
   },
   "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --root ../.. packages/browser-panel/src/index.test.ts"
