@@ -1,0 +1,304 @@
+{
+  "contract": "hia-public-reference-build-definition",
+  "contractVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:hia-public-reference",
+    "name": "HIA Public Reference",
+    "title": "HIA Documentation System Reference",
+    "defaultLocale": "en",
+    "locales": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "profiles": [
+    "htmdoc",
+    "cssdoc",
+    "jsdoc",
+    "doc-source-map",
+    "pug-htmdoc-bridge",
+    "sass-cssdoc-bridge",
+    "ts-jsdoc-bridge"
+  ],
+  "sources": [
+    {
+      "id": "main-repo",
+      "repository": "mandolin/HIA-Documentation",
+      "ref": "main",
+      "workspace": "main"
+    },
+    {
+      "id": "hia-jsdoc",
+      "repository": "mandolin/hia-jsdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-htmdoc",
+      "repository": "mandolin/hia-htmdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-cssdoc",
+      "repository": "mandolin/hia-cssdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-sassdoc",
+      "repository": "mandolin/hia-sassdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-pugdoc",
+      "repository": "mandolin/hia-pugdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-tsdoc",
+      "repository": "mandolin/hia-tsdoc",
+      "ref": "main",
+      "workspace": "source"
+    },
+    {
+      "id": "hia-vuedoc",
+      "repository": "mandolin/hia-vuedoc",
+      "ref": "main",
+      "workspace": "source"
+    }
+  ],
+  "producers": [
+    {
+      "id": "hia-jsdoc-umbrella",
+      "sourceId": "hia-jsdoc",
+      "module": "packages/jsdoc-producer/src/staged.mjs",
+      "inputs": [
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-doc-source-map/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-extra-plugin-registry/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-plugin-hia-bridge/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-preset/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-producer/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-runner/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-spec/src"
+        },
+        {
+          "kind": "javascript-module",
+          "path": "packages/jsdoc-theme-bridge/src"
+        }
+      ],
+      "profileIds": [
+        "jsdoc"
+      ],
+      "options": {
+        "includePattern": ".+\\.(mjs|cjs|js|jsx)$",
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true,
+        "hia": {
+          "i18n": {
+            "enabled": true,
+            "defaultLocale": "en",
+            "fallbackLocale": "en",
+            "locales": [
+              "en",
+              "zh-CN"
+            ]
+          },
+          "source": {
+            "mode": "all"
+          }
+        }
+      }
+    },
+    {
+      "id": "main-repo-plugin-sdk-tsdoc",
+      "sourceId": "main-repo",
+      "moduleSourceId": "hia-tsdoc",
+      "module": "packages/tsdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "typescript-entry",
+          "path": "packages/plugin-sdk/src/index.ts"
+        }
+      ],
+      "profileIds": [
+        "ts-jsdoc-bridge",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitDocSourceMap": true,
+        "ignoreConfig": true,
+        "lib": [
+          "ES2022"
+        ],
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "sourcesContentPolicy": "none",
+        "target": "ES2022",
+        "types": [
+          "node"
+        ],
+        "writeResultManifest": true
+      }
+    },
+    {
+      "id": "htmdoc-basic-html",
+      "sourceId": "hia-htmdoc",
+      "module": "packages/htmdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "html",
+          "path": "fixtures/basic.html",
+          "language": "html"
+        }
+      ],
+      "profileIds": [
+        "htmdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitDocSourceMap": true,
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true
+      }
+    },
+    {
+      "id": "cssdoc-basic-css",
+      "sourceId": "hia-cssdoc",
+      "module": "packages/cssdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "css",
+          "path": "fixtures/basic.css",
+          "language": "css"
+        }
+      ],
+      "profileIds": [
+        "cssdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitDocSourceMap": true,
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true
+      }
+    },
+    {
+      "id": "sassdoc-button-scss",
+      "sourceId": "hia-sassdoc",
+      "module": "packages/sassdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "scss",
+          "path": "fixtures/doc-source-map/sass-css/src/button.scss",
+          "language": "scss"
+        }
+      ],
+      "profileIds": [
+        "sass-cssdoc-bridge",
+        "cssdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitCssSourceMap": true,
+        "emitDocSourceMap": true,
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true
+      }
+    },
+    {
+      "id": "pugdoc-card-page",
+      "sourceId": "hia-pugdoc",
+      "module": "packages/pugdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "pug-entry",
+          "path": "fixtures/doc-source-map/pug-html/src/pages/card.pug"
+        }
+      ],
+      "profileIds": [
+        "pug-htmdoc-bridge",
+        "htmdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitDocSourceMap": true,
+        "pretty": true,
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true
+      }
+    },
+    {
+      "id": "vuedoc-profile-card",
+      "sourceId": "hia-vuedoc",
+      "module": "packages/vuedoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "vue-sfc",
+          "path": "fixtures/doc-source-map/vue-sfc/src/components/ProfileCard.vue",
+          "language": "vue"
+        }
+      ],
+      "profileIds": [
+        "htmdoc",
+        "cssdoc",
+        "doc-source-map"
+      ],
+      "options": {
+        "emitDocSourceMap": true,
+        "sourcesContentPolicy": "none",
+        "writeResultManifest": true
+      }
+    }
+  ],
+  "acceptance": {
+    "minimumEntryCounts": {
+      "all": 70,
+      "js": 35,
+      "css": 20,
+      "html": 13
+    },
+    "minimumDocSourceMapCount": 6,
+    "minimumPanelSourceMapCount": 5,
+    "requiredProducerCount": 7,
+    "requiredLocales": [
+      "en",
+      "zh-CN"
+    ]
+  },
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "sourcePreviewPolicy": "public-whitelisted-excerpt",
+    "workZonePublicInput": false,
+    "forbiddenOutputMarkers": [
+      "work-zone/ai/",
+      "work-zone/dev/",
+      "work-zone/docs/",
+      "ai/codex/",
+      "Github_mandolin",
+      "HIA-Documentation-Sys"
+    ]
+  }
+}
