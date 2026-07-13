@@ -17,6 +17,7 @@
     "onCommand:hia.showOutput",
     "onCommand:hia.buildDocs",
     "onCommand:hia.openPreview",
+    "onCommand:hia.openSourceLinkage",
     "onCommand:hia.validateWorkspace",
     "onCommand:hia.openRelatedLocation",
     "onCommand:hia.showResourceAction",
@@ -44,6 +45,10 @@
       {
         "command": "hia.openPreview",
         "title": "HIA: Open Preview"
+      },
+      {
+        "command": "hia.openSourceLinkage",
+        "title": "HIA: Open Source Linkage"
       },
       {
         "command": "hia.validateWorkspace",
@@ -105,7 +110,7 @@
   "files": ["dist", "README.md", "language-configuration.json", "package.json"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "cd ../.. && vitest run apps/vscode-extension/src/config.test.ts"
+    "test": "cd ../.. && vitest run apps/vscode-extension/src/config.test.ts apps/vscode-extension/src/source-linkage.test.ts"
   },
   "dependencies": {
     "@hia-doc/lsp": "workspace:*",

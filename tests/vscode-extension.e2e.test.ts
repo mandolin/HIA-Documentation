@@ -22,6 +22,7 @@ describe("VS Code extension package", () => {
     expect(manifest.activationEvents).toContain("onCommand:hia.showOutput");
     expect(manifest.activationEvents).toContain("onCommand:hia.buildDocs");
     expect(manifest.activationEvents).toContain("onCommand:hia.openPreview");
+    expect(manifest.activationEvents).toContain("onCommand:hia.openSourceLinkage");
     expect(manifest.activationEvents).toContain("onCommand:hia.validateWorkspace");
     expect(manifest.activationEvents).toContain("onCommand:hia.openRelatedLocation");
     expect(manifest.activationEvents).toContain("onCommand:hia.showResourceAction");
@@ -34,6 +35,7 @@ describe("VS Code extension package", () => {
       "hia.showOutput",
       "hia.buildDocs",
       "hia.openPreview",
+      "hia.openSourceLinkage",
       "hia.validateWorkspace"
     ]);
     expect(Object.keys(manifest.contributes.configuration.properties)).toEqual(expect.arrayContaining([

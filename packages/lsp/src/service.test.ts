@@ -154,6 +154,26 @@ describe("@hia-doc/lsp service", () => {
       rmSync(root, { force: true, recursive: true });
     }
   });
+
+  it("loads the source-linkage host fixture through its real workspace configuration", () => {
+    const root = path.resolve("fixtures/source-linkage-host");
+    const docSourceMapUri = pathToFileURL(path.join(root, "docs", "profile-card.docmap.json")).href;
+    const service = createHiaLspService();
+
+    service.initialize({
+      capabilities: {},
+      processId: null,
+      rootUri: pathToFileURL(root).href
+    });
+
+    expect(service.getWorkspaceSourceMapUris()).toEqual([docSourceMapUri]);
+    expect(service.getManagedDocSourceMapIndex(docSourceMapUri, {
+      symbolId: "html:component:profile-card"
+    })).toMatchObject({
+      matchedEntryCount: 1,
+      status: "available"
+    });
+  });
 });
 
 function readFixture(name: string): string {

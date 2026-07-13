@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:source-linkage-host",
+    "name": "Source Linkage Host Fixture",
+    "title": "Source Linkage Host Fixture"
+  },
+  "inputs": [
+    {
+      "kind": "htmdoc-extraction",
+      "path": "docs/profile-card.htmdoc.json",
+      "domain": "html"
+    },
+    {
+      "kind": "doc-source-map",
+      "path": "docs/profile-card.docmap.json"
+    }
+  ]
+}

@@ -58,6 +58,7 @@ Open the Command Palette and run:
 - `HIA: Validate Workspace`
 - `HIA: Build Docs`
 - `HIA: Open Preview`
+- `HIA: Open Source Linkage`
 
 Expected results:
 
@@ -65,6 +66,20 @@ Expected results:
 - `HIA: Validate Workspace` writes a capability-driven report for the active `.hia.json` document, including diagnostics, resources, authoring locations, resource actions, capability status and unavailable reasons.
 - `HIA: Build Docs` invokes the shared CLI and writes the configured output directory.
 - `HIA: Open Preview` opens the configured preview HTML file in the default browser.
+- `HIA: Open Source Linkage` offers a source-linkage entry followed by native original-source, generated-artifact, documentation-preview and copy-id actions.
+
+## Validate Source Linkage Host
+
+1. In the Extension Development Host, open `fixtures/source-linkage-host/` as the workspace folder.
+2. Run `HIA: Build Docs`; the fixture settings write the generated documentation preview to `temp/docs/`.
+3. Open `docs/profile-card.docmap.json` and run `HIA: Open Source Linkage`.
+4. Select `html:component:profile-card`.
+5. Choose `Open original source: src/profile-card.html`; confirm VS Code opens and selects the documented component source.
+6. Run the command again and choose `Open generated artifact: build/profile-card.html`; confirm VS Code opens the generated HTML artifact.
+7. Run the command once more and choose `Open documentation preview`; confirm the existing preview workflow opens the fixture documentation.
+8. Confirm the HIA output channel records the selected source/generated file paths as workspace-relative paths.
+
+The host only accepts targets that remain inside the selected workspace. An absolute path, UNC path, drive-qualified path or `..` escape is rejected before VS Code attempts to open it.
 
 ## Validate Settings
 

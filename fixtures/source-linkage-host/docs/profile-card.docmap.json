@@ -1,0 +1,82 @@
+{
+  "contract": "doc-source-map",
+  "contractVersion": "0.1.0-draft",
+  "id": "docmap:fixture:profile-card",
+  "producer": {
+    "name": "@hia-doc/source-linkage-host-fixture",
+    "version": "0.1.0"
+  },
+  "artifacts": [
+    {
+      "id": "artifact:html:profile-card",
+      "kind": "generated-html",
+      "path": "build/profile-card.html",
+      "language": "html",
+      "role": "generated"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source:html:profile-card",
+      "kind": "html-source",
+      "path": "src/profile-card.html",
+      "language": "html",
+      "role": "original",
+      "sourcesContentPolicy": "none"
+    }
+  ],
+  "sourceMaps": [],
+  "chains": [
+    {
+      "id": "chain:profile-card",
+      "stages": [
+        {
+          "from": "source:html:profile-card",
+          "to": "artifact:html:profile-card",
+          "transform": "html-format-fixture",
+          "sourceMap": null,
+          "linkage": ["entry:profile-card"]
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "id": "entry:profile-card",
+      "kind": "symbol",
+      "symbolKind": "html-component",
+      "symbolId": "html:component:profile-card",
+      "annotation": {
+        "tag": "component",
+        "name": "ProfileCard"
+      },
+      "sourceRefs": [
+        {
+          "sourceId": "source:html:profile-card",
+          "range": {
+            "start": { "line": 2, "column": 1 },
+            "end": { "line": 5, "column": 11 }
+          },
+          "rangeSource": "parser",
+          "confidence": "high"
+        }
+      ],
+      "artifactRefs": [
+        {
+          "artifactId": "artifact:html:profile-card",
+          "selector": "[data-component=\"ProfileCard\"]",
+          "rangeSource": "adapter",
+          "confidence": "medium"
+        }
+      ],
+      "diagnostics": []
+    }
+  ],
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "allowAbsolutePaths": false,
+    "allowUncPaths": false,
+    "allowPathTraversal": false
+  },
+  "diagnostics": []
+}

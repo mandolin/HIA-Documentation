@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import * as vscode from "vscode";
 import {
   LanguageClient,
@@ -16,9 +17,11 @@ import {
   HIA_CONFIGURATION_SECTION,
   HIA_EXTENSION_NAME,
   HIA_COPY_RESOURCE_KEY_COMMAND,
+  HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_OPEN_PREVIEW_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
+  HIA_OPEN_SOURCE_LINKAGE_COMMAND,
   HIA_OUTPUT_CHANNEL_NAME,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
@@ -49,6 +52,14 @@ import {
   type HiaResourceActionsSummary,
   type HiaResourceIndexSummary
 } from "./config.js";
+import {
+  createHiaSourceLinkageEntryChoices,
+  createHiaSourceLinkageNavigationTargets,
+  resolveHiaSourceLinkageTargetPath,
+  type HiaDocumentSourceMapIndexSummary,
+  type HiaSourceLinkageEntryChoice,
+  type HiaSourceLinkageNavigationTarget
+} from "./source-linkage.js";
 
 let client: LanguageClient | undefined;
 
@@ -146,6 +157,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     await vscode.env.openExternal(vscode.Uri.file(status.previewPath));
     outputChannel.appendLine(`Opened HIA preview: ${status.previewPath}`);
   });
+  const openSourceLinkageCommand = vscode.commands.registerCommand(HIA_OPEN_SOURCE_LINKAGE_COMMAND, async () => {
+    await openHiaSourceLinkage(outputChannel);
+  });
   const validateWorkspaceCommand = vscode.commands.registerCommand(HIA_VALIDATE_WORKSPACE_COMMAND, async () => {
     const editor = vscode.window.activeTextEditor;
 
@@ -225,7 +239,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -514,6 +528,225 @@ async function openHiaRelatedLocation(location: HiaAuthoringLocationSummary, out
     outputChannel.appendLine(`Cannot open HIA related location ${location.uri}: ${message}`);
     void vscode.window.showWarningMessage("Cannot open HIA related location. See HIA output for details.");
   }
+}
+
+/**
+ * 在 VS Code 的原生 picker 中完成 original source、generated artifact 与文档预览的导航。
+ * Navigate original source, generated artifacts and documentation preview through native VS Code pickers.
+ */
+async function openHiaSourceLinkage(outputChannel: vscode.OutputChannel): Promise<void> {
+  if (!client) {
+    void vscode.window.showWarningMessage("HIA language server is not running.");
+    return;
+  }
+
+  const document = await selectHiaDocSourceMapDocument();
+
+  if (!document) {
+    return;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+
+  if (!workspaceFolder) {
+    void vscode.window.showWarningMessage("Open a workspace doc-source-map before using HIA source linkage.");
+    return;
+  }
+
+  await vscode.window.showTextDocument(document, {
+    preserveFocus: true,
+    preview: true
+  });
+  const sourceMapIndex = await requestHiaSourceLinkageIndex(document.uri.toString());
+
+  if (!sourceMapIndex || sourceMapIndex.status !== "available") {
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA source linkage unavailable for ${document.uri.toString()}.`);
+    void vscode.window.showWarningMessage("HIA source linkage is unavailable for this doc-source-map. Check the HIA output.");
+    return;
+  }
+
+  const choices = createHiaSourceLinkageEntryChoices(sourceMapIndex);
+
+  if (choices.length === 0) {
+    void vscode.window.showInformationMessage("This doc-source-map has no navigable documentation entries.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<SourceLinkageEntryQuickPickItem>(
+    choices.map((choice) => ({
+      ...choice,
+      choice
+    })),
+    {
+      placeHolder: "Choose an HIA documentation linkage entry"
+    }
+  );
+
+  if (!selected) {
+    return;
+  }
+
+  const target = await selectHiaSourceLinkageTarget(selected.choice);
+
+  if (!target) {
+    return;
+  }
+
+  if (target.actionKind === "target") {
+    await openHiaSourceLinkageTarget(target.target, workspaceFolder, outputChannel);
+    return;
+  }
+
+  if (target.actionKind === "documentation-preview") {
+    await vscode.commands.executeCommand(HIA_OPEN_PREVIEW_COMMAND);
+    return;
+  }
+
+  await vscode.env.clipboard.writeText(selected.choice.entry.id);
+  outputChannel.appendLine(`Copied HIA source linkage entry id: ${selected.choice.entry.id}`);
+  void vscode.window.showInformationMessage("HIA source linkage entry id copied.");
+}
+
+async function selectHiaDocSourceMapDocument(): Promise<vscode.TextDocument | undefined> {
+  const activeDocument = vscode.window.activeTextEditor?.document;
+
+  if (activeDocument && isHiaDocSourceMapDocument(activeDocument)) {
+    return activeDocument;
+  }
+
+  const candidates = await vscode.workspace.findFiles("**/*.docmap.json", "**/{.git,node_modules}/**", 100);
+
+  if (candidates.length === 0) {
+    void vscode.window.showWarningMessage("No workspace doc-source-map (*.docmap.json) was found.");
+    return undefined;
+  }
+
+  const selected = await vscode.window.showQuickPick<SourceLinkageDocumentQuickPickItem>(
+    candidates.map((uri) => ({
+      label: vscode.workspace.asRelativePath(uri),
+      uri
+    })),
+    {
+      placeHolder: "Choose a workspace doc-source-map"
+    }
+  );
+
+  return selected ? vscode.workspace.openTextDocument(selected.uri) : undefined;
+}
+
+async function requestHiaSourceLinkageIndex(uri: string): Promise<HiaDocumentSourceMapIndexSummary | undefined> {
+  if (!client) {
+    return undefined;
+  }
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const result = await client.sendRequest<HiaDocumentSourceMapIndexSummary>(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST, {
+        uri
+      });
+
+      if (result.status !== "unavailable" || attempt === 4) {
+        return result;
+      }
+    } catch {
+      return undefined;
+    }
+
+    await waitForHiaSourceLinkageIndex();
+  }
+
+  return undefined;
+}
+
+function waitForHiaSourceLinkageIndex(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 100);
+  });
+}
+
+async function selectHiaSourceLinkageTarget(choice: HiaSourceLinkageEntryChoice): Promise<SourceLinkageActionQuickPickItem | undefined> {
+  const navigationItems = createHiaSourceLinkageNavigationTargets(choice.entry).map((target) => ({
+    label: target.label,
+    actionKind: "target" as const,
+    target,
+    ...(target.selector ? { description: target.selector } : {})
+  }));
+  const actions: SourceLinkageActionQuickPickItem[] = [
+    ...navigationItems,
+    {
+      label: "Open documentation preview",
+      description: "Uses the existing HIA: Open Preview command",
+      actionKind: "documentation-preview"
+    },
+    {
+      label: "Copy documentation linkage entry id",
+      description: choice.entry.id,
+      actionKind: "copy-entry-id"
+    }
+  ];
+
+  return vscode.window.showQuickPick(actions, {
+    placeHolder: `Navigate ${choice.label}`
+  });
+}
+
+async function openHiaSourceLinkageTarget(
+  target: HiaSourceLinkageNavigationTarget,
+  workspaceFolder: vscode.WorkspaceFolder,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const resolution = resolveHiaSourceLinkageTargetPath(workspaceFolder.uri.fsPath, target.path);
+
+  if (!resolution.path) {
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA source linkage target rejected (${resolution.reason ?? "target-path-unsafe"}): ${target.path}`);
+    void vscode.window.showWarningMessage("HIA source linkage target is outside the workspace or unsafe. See HIA output.");
+    return;
+  }
+
+  try {
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(resolution.path));
+    const options: vscode.TextDocumentShowOptions = {
+      preview: true
+    };
+
+    if (target.position) {
+      const position = new vscode.Position(Math.max(0, target.position.line - 1), Math.max(0, (target.position.column ?? 1) - 1));
+      options.selection = new vscode.Range(position, position);
+    }
+
+    await vscode.window.showTextDocument(document, options);
+    outputChannel.appendLine(`Opened HIA ${target.kind}: ${path.relative(workspaceFolder.uri.fsPath, resolution.path)}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`Cannot open HIA ${target.kind} ${target.path}: ${message}`);
+    void vscode.window.showWarningMessage("HIA source linkage target is unavailable. See HIA output.");
+  }
+}
+
+function isHiaDocSourceMapDocument(document: vscode.TextDocument): boolean {
+  return document.uri.scheme === "file" && document.uri.fsPath.toLowerCase().endsWith(".docmap.json");
+}
+
+interface SourceLinkageEntryQuickPickItem extends vscode.QuickPickItem {
+  choice: HiaSourceLinkageEntryChoice;
+}
+
+interface SourceLinkageDocumentQuickPickItem extends vscode.QuickPickItem {
+  uri: vscode.Uri;
+}
+
+type SourceLinkageActionQuickPickItem = SourceLinkageNavigationQuickPickItem | SourceLinkageSimpleActionQuickPickItem;
+
+interface SourceLinkageNavigationQuickPickItem extends vscode.QuickPickItem {
+  actionKind: "target";
+  target: HiaSourceLinkageNavigationTarget;
+}
+
+interface SourceLinkageSimpleActionQuickPickItem extends vscode.QuickPickItem {
+  actionKind: "copy-entry-id" | "documentation-preview";
 }
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {

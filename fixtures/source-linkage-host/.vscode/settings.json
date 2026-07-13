@@ -1,0 +1,5 @@
+{
+  "hia.build.config": "hia.config.json",
+  "hia.build.out": "temp/docs",
+  "hia.preview.path": "temp/docs/index.html"
+}

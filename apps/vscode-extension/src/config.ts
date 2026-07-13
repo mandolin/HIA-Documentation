@@ -6,6 +6,7 @@ export const HIA_OUTPUT_CHANNEL_NAME = "HIA Documentation";
 export const HIA_SHOW_OUTPUT_COMMAND = "hia.showOutput";
 export const HIA_BUILD_DOCS_COMMAND = "hia.buildDocs";
 export const HIA_OPEN_PREVIEW_COMMAND = "hia.openPreview";
+export const HIA_OPEN_SOURCE_LINKAGE_COMMAND = "hia.openSourceLinkage";
 export const HIA_VALIDATE_WORKSPACE_COMMAND = "hia.validateWorkspace";
 export const HIA_OPEN_RELATED_LOCATION_COMMAND = "hia.openRelatedLocation";
 export const HIA_SHOW_RESOURCE_ACTION_COMMAND = "hia.showResourceAction";
@@ -432,12 +433,16 @@ export function createHiaDocumentSelector(): HiaDocumentSelectorItem[] {
     {
       scheme: "file",
       pattern: "**/*.hia.json"
+    },
+    {
+      scheme: "file",
+      pattern: "**/*.docmap.json"
     }
   ];
 }
 
 export function createHiaFileWatcherPattern(): string {
-  return "**/*.hia.json";
+  return "**/*.{hia,docmap}.json";
 }
 
 function normalizeOptionalSetting(value: string | undefined): string | undefined {

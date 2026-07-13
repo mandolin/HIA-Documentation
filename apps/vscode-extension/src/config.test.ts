@@ -9,6 +9,7 @@ import {
   HIA_LANGUAGE_ID,
   HIA_OPEN_PREVIEW_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
+  HIA_OPEN_SOURCE_LINKAGE_COMMAND,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
@@ -47,6 +48,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_SHOW_OUTPUT_COMMAND).toBe("hia.showOutput");
     expect(HIA_BUILD_DOCS_COMMAND).toBe("hia.buildDocs");
     expect(HIA_OPEN_PREVIEW_COMMAND).toBe("hia.openPreview");
+    expect(HIA_OPEN_SOURCE_LINKAGE_COMMAND).toBe("hia.openSourceLinkage");
     expect(HIA_VALIDATE_WORKSPACE_COMMAND).toBe("hia.validateWorkspace");
     expect(HIA_OPEN_RELATED_LOCATION_COMMAND).toBe("hia.openRelatedLocation");
     expect(HIA_SHOW_RESOURCE_ACTION_COMMAND).toBe("hia.showResourceAction");
@@ -64,9 +66,13 @@ describe("@hia-doc/vscode-extension config", () => {
       {
         scheme: "file",
         pattern: "**/*.hia.json"
+      },
+      {
+        scheme: "file",
+        pattern: "**/*.docmap.json"
       }
     ]);
-    expect(createHiaFileWatcherPattern()).toBe("**/*.hia.json");
+    expect(createHiaFileWatcherPattern()).toBe("**/*.{hia,docmap}.json");
     expect(resolveDefaultPreviewPath(path.resolve("workspace")).replace(/\\/g, "/")).toMatch(/workspace\/dist\/docs\/index\.html$/);
   });
 

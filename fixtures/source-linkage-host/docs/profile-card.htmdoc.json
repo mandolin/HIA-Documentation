@@ -1,0 +1,33 @@
+{
+  "contract": "hia-htmdoc-extraction",
+  "contractVersion": "0.1.0-draft",
+  "id": "htmdoc:fixture:profile-card",
+  "profile": {
+    "name": "htmdoc",
+    "version": "0.1.0-draft"
+  },
+  "source": {
+    "kind": "html-source",
+    "path": "src/profile-card.html",
+    "language": "html"
+  },
+  "symbols": [
+    {
+      "id": "html:component:profile-card",
+      "kind": "html-component",
+      "name": "ProfileCard",
+      "summary": "A source-linked HTML component fixture.",
+      "source": {
+        "path": "src/profile-card.html",
+        "language": "html",
+        "range": {
+          "start": { "line": 2, "column": 1 },
+          "end": { "line": 5, "column": 11 }
+        },
+        "rangeSource": "parser",
+        "confidence": "high"
+      }
+    }
+  ],
+  "diagnostics": []
+}
