@@ -10,166 +10,632 @@ import {
   type SourceMapOriginalPosition
 } from "@hia-doc/source-linkage";
 
+/**
+ * 浏览器面板 payload contract 的草案版本。
+ * Draft schema version for the browser panel payload contract.
+ */
 export const HIA_BROWSER_PANEL_PAYLOAD_SCHEMA_VERSION = "0.1.0-draft";
+
+/**
+ * 浏览器面板文件清单 contract 的版本。
+ * Schema version for the static browser panel file manifest contract.
+ */
 export const HIA_BROWSER_PANEL_MANIFEST_SCHEMA_VERSION = "0.1.0";
 
+/**
+ * 浏览器面板用于筛选与分组的文档领域。
+ * Documentation domain used by browser panel filtering and grouping.
+ */
 export type BrowserPanelDomain = "js" | "css" | "html" | "other";
 
+/**
+ * 面板 payload 中携带的项目身份信息。
+ * Project identity metadata carried by a browser panel payload.
+ */
 export interface BrowserPanelProjectInfo {
+  /**
+   * 稳定项目 ID；缺省时消费者应回退到名称。
+   * Stable project id; consumers should fall back to the name when omitted.
+   */
   id?: string;
+  /**
+   * 项目显示名称。
+   * Display name for the documented project.
+   */
   name: string;
+  /**
+   * 面板页面标题；缺省时使用项目名称。
+   * Panel page title; defaults to the project name when omitted.
+   */
   title?: string;
 }
 
+/**
+ * 一基准的源码或产物位置。
+ * One-based source or artifact position.
+ */
 export interface BrowserPanelPosition {
+  /**
+   * 一基准列号；未知时省略。
+   * One-based column number; omitted when unknown.
+   */
   column?: number;
+  /**
+   * 一基准行号。
+   * One-based line number.
+   */
   line: number;
 }
 
+/**
+ * 一段源码或产物范围。
+ * Source or artifact range.
+ */
 export interface BrowserPanelRange {
+  /**
+   * 结束位置；省略时范围按起点解释。
+   * End position; when omitted, the range is interpreted as a point.
+   */
   end?: BrowserPanelPosition;
+  /**
+   * 起始位置。
+   * Start position.
+   */
   start: BrowserPanelPosition;
 }
 
+/**
+ * 创建浏览器面板 payload 的纯数据输入。
+ * Pure data input for creating a browser panel payload.
+ */
 export interface CreateBrowserPanelPayloadInput {
+  /**
+   * 已索引的 doc-source-map 输入列表。
+   * Indexed doc-source-map inputs.
+   */
   docSourceMaps: BrowserPanelDocSourceMapInput[];
+  /**
+   * 当前文档项目的身份信息。
+   * Identity metadata for the documented project.
+   */
   project: BrowserPanelProjectInfo;
 }
 
+/**
+ * 单个 doc-source-map 及其可选 ordinary source map 上下文。
+ * A doc-source-map with optional ordinary source map context.
+ */
 export interface BrowserPanelDocSourceMapInput {
+  /**
+   * 已标准化的 doc-source-map 索引。
+   * Normalized doc-source-map index.
+   */
   index: DocSourceMapIndex;
+  /**
+   * 与产物对应的 ordinary source map 索引。
+   * Ordinary source map indexes associated with generated artifacts.
+   */
   ordinarySourceMaps?: BrowserPanelOrdinarySourceMapInput[];
+  /**
+   * doc-source-map 文件路径，用作面板来源标识。
+   * Doc-source-map file path used as the panel source identifier.
+   */
   path: string;
 }
 
+/**
+ * 浏览器面板可查询的 ordinary source map 输入。
+ * Ordinary source map input that the browser panel can query.
+ */
 export interface BrowserPanelOrdinarySourceMapInput {
+  /**
+   * 已标准化的 ordinary source map 索引。
+   * Normalized ordinary source map index.
+   */
   index: OrdinarySourceMapIndex;
+  /**
+   * source map 文件路径。
+   * Source map file path.
+   */
   path: string;
 }
 
+/**
+ * 浏览器面板运行时消费的完整 payload。
+ * Complete payload consumed by the browser panel runtime.
+ */
 export interface BrowserPanelPayload {
+  /**
+   * 从 doc-source-map 继承并标准化后的诊断。
+   * Diagnostics inherited and normalized from doc-source-map inputs.
+   */
   diagnostics: BrowserPanelDiagnostic[];
+  /**
+   * 已汇总的 doc-source-map 列表。
+   * Summarized doc-source-map inputs.
+   */
   docSourceMaps: BrowserPanelDocSourceMap[];
+  /**
+   * 可展示、可打开的文档条目。
+   * Displayable and openable documentation entries.
+   */
   entries: BrowserPanelEntry[];
+  /**
+   * payload 生成器标识。
+   * Payload generator identifier.
+   */
   generator: "@hia-doc/browser-panel";
+  /**
+   * 当前文档项目。
+   * Current documented project.
+   */
   project: BrowserPanelProjectInfo;
+  /**
+   * payload schema 版本。
+   * Payload schema version.
+   */
   schemaVersion: typeof HIA_BROWSER_PANEL_PAYLOAD_SCHEMA_VERSION;
+  /**
+   * 面板列表和状态栏使用的汇总统计。
+   * Summary metrics used by the panel list and status UI.
+   */
   summary: BrowserPanelSummary;
 }
 
+/**
+ * 浏览器面板 payload 的汇总统计。
+ * Summary metrics for a browser panel payload.
+ */
 export interface BrowserPanelSummary {
+  /**
+   * doc-source-map 文件数量。
+   * Number of doc-source-map files.
+   */
   docSourceMapCount: number;
+  /**
+   * 按领域统计的条目数量，包含 all 总数。
+   * Entry counts by domain, including the all total.
+   */
   domainCounts: Record<BrowserPanelDomain | "all", number>;
+  /**
+   * 文档条目总数。
+   * Total number of documentation entries.
+   */
   entryCount: number;
+  /**
+   * 已具备 source-linkage 的条目数量。
+   * Number of entries with source-linkage information.
+   */
   linkedEntryCount: number;
+  /**
+   * 可参与查询的 ordinary source map 数量。
+   * Number of ordinary source maps available for lookup.
+   */
   sourceMapCount: number;
 }
 
+/**
+ * 浏览器面板展示的标准化诊断。
+ * Normalized diagnostic displayed by the browser panel.
+ */
 export interface BrowserPanelDiagnostic {
+  /**
+   * 机器可读诊断代码。
+   * Machine-readable diagnostic code.
+   */
   code: string;
+  /**
+   * 人类可读诊断消息。
+   * Human-readable diagnostic message.
+   */
   message: string;
+  /**
+   * 诊断严重级别。
+   * Diagnostic severity.
+   */
   severity: string;
+  /**
+   * 可选的诊断目标路径。
+   * Optional diagnostic target path.
+   */
   targetPath?: string;
 }
 
+/**
+ * doc-source-map 在浏览器面板中的汇总视图。
+ * Summarized view of a doc-source-map inside the browser panel.
+ */
 export interface BrowserPanelDocSourceMap {
+  /**
+   * 原始 doc-source-map contract 版本。
+   * Original doc-source-map contract version.
+   */
   contractVersion?: string;
+  /**
+   * 该 doc-source-map 内的条目数量。
+   * Number of entries in this doc-source-map.
+   */
   entryCount: number;
+  /**
+   * 该 doc-source-map 内已链接条目数量。
+   * Number of linked entries in this doc-source-map.
+   */
   linkedEntryCount: number;
+  /**
+   * doc-source-map 文件路径。
+   * Doc-source-map file path.
+   */
   path: string;
+  /**
+   * 该 doc-source-map 引用的 ordinary source map 数量。
+   * Number of ordinary source maps referenced by this doc-source-map.
+   */
   sourceMapCount: number;
+  /**
+   * source map 引用与加载状态。
+   * Source map references and load status.
+   */
   sourceMaps: BrowserPanelSourceMapRef[];
+  /**
+   * sourcesContent 隐私策略。
+   * SourcesContent privacy policy.
+   */
   sourcesContentPolicy: string;
+  /**
+   * doc-source-map 解析状态。
+   * Doc-source-map parsing status.
+   */
   status: string;
 }
 
+/**
+ * 浏览器面板展示的 source map 引用。
+ * Source map reference displayed by the browser panel.
+ */
 export interface BrowserPanelSourceMapRef {
+  /**
+   * source map 标识。
+   * Source map identifier.
+   */
   id: string;
+  /**
+   * source map 类型。
+   * Source map kind.
+   */
   kind?: string;
+  /**
+   * source map 关联语言。
+   * Language associated with the source map.
+   */
   language?: string;
+  /**
+   * source map 文件路径。
+   * Source map file path.
+   */
   path?: string;
+  /**
+   * 当前 payload 是否已加载该 source map。
+   * Whether this payload loaded the source map.
+   */
   loaded?: boolean;
 }
 
+/**
+ * 浏览器面板中的单个文档条目。
+ * Single documentation entry in the browser panel.
+ */
 export interface BrowserPanelEntry {
+  /**
+   * 生成产物链接。
+   * Generated artifact links.
+   */
   artifactLinks: BrowserPanelArtifactRef[];
+  /**
+   * 条目来源 doc-source-map 路径。
+   * Path of the doc-source-map that produced this entry.
+   */
   docSourceMapPath: string;
+  /**
+   * 面板筛选使用的领域。
+   * Domain used by panel filters.
+   */
   domain: BrowserPanelDomain;
+  /**
+   * 面板内稳定条目 ID。
+   * Stable entry id within the panel payload.
+   */
   id: string;
+  /**
+   * 原始文档条目类型。
+   * Original documentation entry kind.
+   */
   kind: string;
+  /**
+   * UI 展示标签。
+   * Label displayed in the UI.
+   */
   label: string;
+  /**
+   * ordinary source map 与 doc-source-map 的组合查询结果。
+   * Combined ordinary source map and doc-source-map lookup result.
+   */
   lookup: BrowserPanelEntryLookup;
+  /**
+   * 可交给宿主环境执行的打开请求。
+   * Open requests that can be executed by a host environment.
+   */
   openRequests: BrowserPanelOpenRequest[];
+  /**
+   * 原始源码链接。
+   * Original source links.
+   */
   sourceLinks: BrowserPanelSourceRef[];
+  /**
+   * 上游符号 ID。
+   * Upstream symbol id.
+   */
   symbolId?: string;
+  /**
+   * 上游符号类型。
+   * Upstream symbol kind.
+   */
   symbolKind?: string;
 }
 
+/**
+ * 指向原始源码的引用。
+ * Reference to an original source.
+ */
 export interface BrowserPanelSourceRef {
+  /**
+   * 链接置信度。
+   * Link confidence.
+   */
   confidence?: string;
+  /**
+   * 源码语言。
+   * Source language.
+   */
   language?: string;
+  /**
+   * 源码路径。
+   * Source path.
+   */
   path?: string;
+  /**
+   * 源码范围。
+   * Source range.
+   */
   range?: BrowserPanelRange;
+  /**
+   * 范围来源说明。
+   * Range provenance.
+   */
   rangeSource?: string;
+  /**
+   * doc-source-map 内的源码标识。
+   * Source identifier inside the doc-source-map.
+   */
   sourceId: string;
 }
 
+/**
+ * 指向生成产物的引用。
+ * Reference to a generated artifact.
+ */
 export interface BrowserPanelArtifactRef {
+  /**
+   * doc-source-map 内的产物标识。
+   * Artifact identifier inside the doc-source-map.
+   */
   artifactId: string;
+  /**
+   * 链接置信度。
+   * Link confidence.
+   */
   confidence?: string;
+  /**
+   * 产物语言。
+   * Artifact language.
+   */
   language?: string;
+  /**
+   * 产物路径。
+   * Artifact path.
+   */
   path?: string;
+  /**
+   * 范围来源说明。
+   * Range provenance.
+   */
   rangeSource?: string;
+  /**
+   * 可选选择器，用于 HTML/CSS 类产物定位。
+   * Optional selector for HTML/CSS-like artifact lookup.
+   */
   selector?: string;
 }
 
+/**
+ * 面板条目的 source-linkage 查询结果。
+ * Source-linkage lookup result for a panel entry.
+ */
 export interface BrowserPanelEntryLookup {
+  /**
+   * 生成产物位置。
+   * Generated artifact position.
+   */
   generated?: SourceMapGeneratedPosition;
+  /**
+   * 与查询位置匹配的 doc-source-map 条目 ID。
+   * Doc-source-map entry ids matched by the lookup position.
+   */
   matchedEntryIds: string[];
+  /**
+   * 原始源码位置。
+   * Original source position.
+   */
   original?: SourceMapOriginalPosition;
+  /**
+   * 参与查询的 ordinary source map 路径。
+   * Ordinary source map path used for lookup.
+   */
   sourceMapPath?: string;
+  /**
+   * 查询状态，例如 available、doc-linked 或 unmapped。
+   * Lookup status such as available, doc-linked, or unmapped.
+   */
   status: string;
 }
 
+/**
+ * 宿主环境可执行的打开请求。
+ * Open request that a host environment can execute.
+ */
 export interface BrowserPanelOpenRequest {
+  /**
+   * 面板内稳定请求 ID。
+   * Stable request id within the panel payload.
+   */
   id: string;
+  /**
+   * 请求目标类别。
+   * Request target kind.
+   */
   kind: "generated-artifact" | "original-source";
+  /**
+   * UI 可显示的请求标签。
+   * User-facing request label.
+   */
   label: string;
+  /**
+   * 打开目标。
+   * Open target.
+   */
   target: {
+    /**
+     * 目标文件路径。
+     * Target file path.
+     */
     path: string;
+    /**
+     * 可选目标位置。
+     * Optional target position.
+     */
     position?: BrowserPanelPosition;
   };
+  /**
+   * 宿主命令类型。
+   * Host command type.
+   */
   type: "hia.openGenerated" | "hia.openSource";
 }
 
+/**
+ * 渲染后可写入磁盘的浏览器面板文件。
+ * Rendered browser panel file that can be written to disk.
+ */
 export interface RenderedBrowserPanelFile {
+  /**
+   * 文件内容类型。
+   * File content type.
+   */
   contentType: string;
+  /**
+   * 文件文本内容。
+   * File text contents.
+   */
   contents: string;
+  /**
+   * 相对输出路径。
+   * Relative output path.
+   */
   path: string;
+  /**
+   * 文件在面板输出中的角色。
+   * File role in the panel output.
+   */
   role: "entry" | "manifest" | "payload";
 }
 
+/**
+ * 静态浏览器面板输出清单。
+ * Static browser panel output manifest.
+ */
 export interface BrowserPanelManifest {
+  /**
+   * 面板入口 HTML。
+   * Panel entry HTML.
+   */
   entrypoint: string;
+  /**
+   * 面板输出文件列表。
+   * List of emitted panel files.
+   */
   files: Array<{
+    /**
+     * 文件内容类型。
+     * File content type.
+     */
     contentType: string;
+    /**
+     * 相对输出路径。
+     * Relative output path.
+     */
     path: string;
+    /**
+     * 文件角色。
+     * File role.
+     */
     role: RenderedBrowserPanelFile["role"];
   }>;
+  /**
+   * manifest 生成器标识。
+   * Manifest generator identifier.
+   */
   generator: "@hia-doc/browser-panel";
+  /**
+   * payload 文件路径。
+   * Payload file path.
+   */
   payload: string;
+  /**
+   * 当前文档项目。
+   * Current documented project.
+   */
   project: BrowserPanelProjectInfo;
+  /**
+   * manifest schema 版本。
+   * Manifest schema version.
+   */
   schemaVersion: typeof HIA_BROWSER_PANEL_MANIFEST_SCHEMA_VERSION;
 }
 
+/**
+ * 浏览器面板渲染结果。
+ * Browser panel rendering result.
+ */
 export interface RenderBrowserPanelResult {
+  /**
+   * 应写入磁盘的输出文件。
+   * Output files that should be written to disk.
+   */
   files: RenderedBrowserPanelFile[];
+  /**
+   * 输出文件清单。
+   * Output file manifest.
+   */
   manifest: BrowserPanelManifest;
 }
 
 /**
  * 将 doc-source-map/source-map 查询结果整理成浏览器面板载荷。
  * Build the browser panel payload without reading files, so the same function can serve CLI, DevTools and tests.
+ *
+ * @param input - 标准化后的 doc-source-map、ordinary source map 与项目信息。
+ * Normalized doc-source-map, ordinary source map, and project metadata.
+ * @returns 可序列化的浏览器面板 payload，不执行文件 I/O。
+ * Serializable browser panel payload; this function performs no file I/O.
  */
 export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput): BrowserPanelPayload {
   const docSourceMaps = input.docSourceMaps.map((docMap) => createDocSourceMapSummary(docMap));
@@ -196,6 +662,11 @@ export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput)
 /**
  * 渲染可静态打开的面板文件，同时输出 JSON payload 供未来 DevTools panel 直接复用。
  * Render a standalone browser panel and a JSON payload that a future DevTools panel can consume directly.
+ *
+ * @param payload - 已创建的浏览器面板 payload。
+ * Browser panel payload created by {@link createBrowserPanelPayload}.
+ * @returns HTML 入口、JSON payload 与 manifest 文件。
+ * HTML entry, JSON payload, and manifest files.
  */
 export function renderBrowserPanel(payload: BrowserPanelPayload): RenderBrowserPanelResult {
   const fileMetadata: BrowserPanelManifest["files"] = [
