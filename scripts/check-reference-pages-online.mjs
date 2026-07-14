@@ -48,6 +48,26 @@ async function checkPublication() {
     ["zh-CN/", "HIA Documentation System Reference"],
     ["source-linkage/", "HIA Public Reference Source Linkage"]
   ];
+  if (siteManifest.versioning?.strategy === "current-and-releases") {
+    const release = siteManifest.versioning.releases?.[0];
+    assert(siteManifest.versioning.current?.path === "current/", "Published current reference path drifted.");
+    assert(release?.path, "Published release snapshot path is missing.");
+    routeExpectations.push(
+      ["current/", "HIA Documentation System Reference"],
+      ["current/en/", "HIA Documentation System Reference"],
+      ["current/zh-CN/", "HIA Documentation System Reference"],
+      ["current/source-linkage/", "HIA Public Reference Source Linkage"],
+      [release.path, "HIA Documentation System Reference"],
+      [`${release.path}en/`, "HIA Documentation System Reference"],
+      [`${release.path}zh-CN/`, "HIA Documentation System Reference"],
+      [`${release.path}source-linkage/`, "HIA Public Reference Source Linkage"],
+      ["versions/", "HIA Reference Versions"]
+    );
+
+    const versionIndex = await fetchJson("versions.json");
+    assert(versionIndex.contract === "hia-reference-version-index", "Published version index contract drifted.");
+    assert(versionIndex.versioning?.current?.path === "current/", "Published version index current path drifted.");
+  }
   for (const [route, marker] of routeExpectations) {
     const page = await fetchText(route);
     assert(page.includes(marker), `Published route ${route || "/"} is missing its expected content.`);

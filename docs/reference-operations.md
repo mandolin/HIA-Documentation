@@ -21,6 +21,7 @@ The check verifies:
 - `reference-pages.json` and `reference-build.json` contracts.
 - publication age warning and failure thresholds.
 - route availability for the root, `en`, `zh-CN`, and source-linkage pages.
+- versioned route availability when the published manifest exposes `current-and-releases`.
 - schema catalog, canonical schema URLs, and package-style schema aliases.
 - privacy invariants, including `sourcesContentPolicy: "none"` and WorkZone exclusion.
 - source provenance shape and the current GitHub ref for each allowlisted source repository.
@@ -80,3 +81,9 @@ Do not repair a public reference by manually editing the `gh-pages` artifact. Th
 The public reference build records each allowlisted source repository, ref, and resolved commit in `reference-build.json`.
 
 Source freshness warnings mean the deployed reference was built from an older commit than the current configured ref. The correct remedy is normally a new public reference build, not a manual patch.
+
+## Versioned Layout
+
+When `reference-pages.json` exposes `versioning.strategy: "current-and-releases"`, the operations check also validates `current/`, `versions/`, and the first configured `releases/<id>/` snapshot routes.
+
+Older deployments without the versioning field remain valid for operations checks during rollout; local `reference:pages:check` requires the versioned layout after W-P15.2.

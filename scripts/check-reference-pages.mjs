@@ -33,17 +33,34 @@ async function main() {
   assert(siteManifest.contract === "hia-reference-pages", "Unexpected Reference Pages artifact contract.");
   assert(siteManifest.defaultLocale === "en", "Reference Pages default locale must remain en.");
   assert(Array.isArray(siteManifest.locales) && siteManifest.locales.includes("en") && siteManifest.locales.includes("zh-CN"), "Reference Pages locale inventory drifted.");
+  assert(siteManifest.versioning?.strategy === "current-and-releases", "Reference Pages versioning strategy drifted.");
+  assert(siteManifest.versioning?.current?.path === "current/", "Reference Pages current route drifted.");
+  assert(siteManifest.versioning?.releases?.length === 1, "Reference Pages release snapshot inventory drifted.");
   assert(referenceBuild.contract === "hia-public-reference-build", "Reference Pages provenance is missing the public reference build.");
   assert(referenceBuild.privacy?.status === "pass", "Reference Pages input failed public privacy validation.");
   assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Reference Pages provenance source count drifted.");
   assert(catalog.publicBaseUrl === "https://mandolin.github.io/HIA-Documentation/schemas/", "Schema catalog public base URL drifted.");
+  const releaseId = siteManifest.versioning.releases[0].id;
+  const releaseRoot = `releases/${releaseId}`;
 
   await assertPageContains(outputDir, "index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "source-linkage/"]);
   await assertPageContains(outputDir, "en/index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "../source-linkage/"]);
   await assertPageContains(outputDir, "zh-CN/index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "../schemas/"]);
   await assertPageContains(outputDir, "source-linkage/index.html", ["HIA Public Reference Source Linkage", "hia-reference-site-nav", "browser-panel-payload"]);
+  await assertPageContains(outputDir, "current/index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "../schemas/"]);
+  await assertPageContains(outputDir, "current/en/index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "../../schemas/"]);
+  await assertPageContains(outputDir, "current/zh-CN/index.html", ["HIA Documentation System Reference", "hia-reference-site-nav", "../../schemas/"]);
+  await assertPageContains(outputDir, "current/source-linkage/index.html", ["HIA Public Reference Source Linkage", "hia-reference-site-nav", "browser-panel-payload"]);
+  await assertPageContains(outputDir, `${releaseRoot}/index.html`, ["HIA Documentation System Reference", "hia-reference-site-nav", "../../schemas/"]);
+  await assertPageContains(outputDir, `${releaseRoot}/en/index.html`, ["HIA Documentation System Reference", "hia-reference-site-nav", "../../../schemas/"]);
+  await assertPageContains(outputDir, `${releaseRoot}/zh-CN/index.html`, ["HIA Documentation System Reference", "hia-reference-site-nav", "../../../schemas/"]);
+  await assertPageContains(outputDir, `${releaseRoot}/source-linkage/index.html`, ["HIA Public Reference Source Linkage", "hia-reference-site-nav", "browser-panel-payload"]);
+  await assertPageContains(outputDir, "versions/index.html", ["HIA Reference Versions", "Current", releaseId]);
   await assertFile(path.join(outputDir, "assets", "hia-reference-site.css"), "Reference Pages navigation stylesheet is missing.");
   await assertFile(path.join(outputDir, ".nojekyll"), "Reference Pages .nojekyll marker is missing.");
+  const versionIndex = await readJson(path.join(outputDir, "versions.json"));
+  assert(versionIndex.contract === "hia-reference-version-index", "Reference version index contract drifted.");
+  assert(versionIndex.versioning?.searchPartitions?.length === 4, "Reference version search partition inventory drifted.");
 
   for (const entry of catalog.schemas) {
     const canonicalFile = path.posix.basename(new URL(entry.publicUrl).pathname);

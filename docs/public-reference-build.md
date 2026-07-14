@@ -31,4 +31,4 @@ The build writes two localized unified documentation outputs, a source-linkage p
 
 ## Deployment Boundary
 
-The checked build is assembled with the existing `/schemas/` distribution into the single GitHub Pages artifact by `pnpm run reference:pages`. The assembler copies only runtime-facing reference files, keeps `/schemas/` byte-identical to the schema build, and writes a sanitized `reference-pages.json` route/provenance manifest. See [Reference Pages](./reference-pages.md) for the deployed route contract and verification commands.
+The checked build is assembled with the existing `/schemas/` distribution into the single GitHub Pages artifact by `pnpm run reference:pages`. The assembler copies only runtime-facing reference files, keeps `/schemas/` byte-identical to the schema build, writes a sanitized `reference-pages.json` route/provenance manifest, and emits the W-P15.2 `current/` + `releases/0.1.0-draft/` versioned layout with `versions.json`. See [Reference Pages](./reference-pages.md) for the deployed route contract and verification commands.

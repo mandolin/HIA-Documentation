@@ -32,7 +32,7 @@ async function main() {
 
   checkPagesManifest(pagesManifest, referenceBuild);
   checkReferenceBuild(referenceBuild);
-  await checkRoutes();
+  await checkRoutes(pagesManifest);
   await checkSchemas();
 
   if (!skipSourceFreshness) {
@@ -57,6 +57,11 @@ function checkPagesManifest(siteManifest, referenceBuild) {
   record(siteManifest.privacy?.sourcesContentPolicy === "none", "PAGES_SOURCES_CONTENT_POLICY", "Reference Pages does not embed sourcesContent.", "Reference Pages sourcesContent policy drifted.");
   record(siteManifest.provenance?.sourceCount === definition.sources.length, "PAGES_SOURCE_COUNT", `Reference Pages records ${definition.sources.length} sources.`, "Reference Pages provenance source count drifted.");
   record(siteManifest.provenance?.sourceCount === referenceBuild.sources?.length, "PAGES_BUILD_PROVENANCE", "Reference Pages and reference-build source counts agree.", "Reference Pages and reference-build source counts differ.");
+  if (siteManifest.versioning) {
+    record(siteManifest.versioning.strategy === "current-and-releases", "PAGES_VERSIONING_STRATEGY", "Reference Pages use current-and-releases versioning.", "Reference Pages versioning strategy drifted.");
+    record(siteManifest.versioning.current?.path === "current/", "PAGES_CURRENT_PATH", "Reference Pages current route is stable.", "Reference Pages current route drifted.");
+    record(Array.isArray(siteManifest.versioning.releases) && siteManifest.versioning.releases.length >= 1, "PAGES_RELEASE_INVENTORY", "Reference Pages expose at least one release snapshot.", "Reference Pages release snapshot inventory is missing.");
+  }
 
   const ageHours = getAgeHours(siteManifest.generatedAt);
   record(Number.isFinite(ageHours), "PAGES_GENERATED_AT", "Reference Pages generatedAt is parseable.", "Reference Pages generatedAt is missing or invalid.");
@@ -97,13 +102,31 @@ function checkReferenceBuild(referenceBuild) {
  * 检查用户入口路由仍能返回预期页面标记。
  * Checks that user-facing routes still return expected page markers.
  */
-async function checkRoutes() {
+async function checkRoutes(siteManifest) {
   const routes = [
     ["", "HIA Documentation System Reference"],
     ["en/", "HIA Documentation System Reference"],
     ["zh-CN/", "HIA Documentation System Reference"],
     ["source-linkage/", "HIA Public Reference Source Linkage"]
   ];
+  if (siteManifest.versioning?.strategy === "current-and-releases") {
+    const release = siteManifest.versioning.releases?.[0];
+    routes.push(
+      ["current/", "HIA Documentation System Reference"],
+      ["current/en/", "HIA Documentation System Reference"],
+      ["current/zh-CN/", "HIA Documentation System Reference"],
+      ["current/source-linkage/", "HIA Public Reference Source Linkage"],
+      ["versions/", "HIA Reference Versions"]
+    );
+    if (release?.path) {
+      routes.push(
+        [release.path, "HIA Documentation System Reference"],
+        [`${release.path}en/`, "HIA Documentation System Reference"],
+        [`${release.path}zh-CN/`, "HIA Documentation System Reference"],
+        [`${release.path}source-linkage/`, "HIA Public Reference Source Linkage"]
+      );
+    }
+  }
   for (const [route, marker] of routes) {
     const page = await fetchText(route);
     record(page.includes(marker), `ROUTE_${route || "root"}`, `Route ${route || "/"} contains expected marker.`, `Route ${route || "/"} is missing expected marker.`);
@@ -239,6 +262,9 @@ function parseArguments(args) {
   const parsed = {};
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
+    if (argument === "--") {
+      continue;
+    }
     if (argument === "--base-url" || argument === "--warn-age-hours" || argument === "--max-age-hours") {
       const value = args[index + 1];
       if (!value || value.startsWith("--")) {

@@ -6,6 +6,8 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const defaultReferenceDir = path.join(rootDir, "dist", "public-reference-build");
 const defaultSchemaSiteDir = path.join(rootDir, "dist", "schema-pages");
 const defaultOutputDir = path.join(rootDir, "dist", "reference-pages");
+const defaultReleaseId = "0.1.0-draft";
+const currentDirectory = "current";
 const supportedLocales = ["en", "zh-CN"];
 
 await main();
@@ -19,6 +21,9 @@ async function main() {
   const referenceDir = path.resolve(options.reference ?? defaultReferenceDir);
   const schemaSiteDir = path.resolve(options.schemas ?? defaultSchemaSiteDir);
   const outputDir = path.resolve(options.out ?? defaultOutputDir);
+  const releaseId = options.releaseId ?? defaultReleaseId;
+  assert(/^[A-Za-z0-9._-]+$/.test(releaseId), "Reference Pages release id must be URL-safe.");
+  const releaseDirectory = `releases/${releaseId}`;
 
   await assertDirectory(referenceDir, "Public reference build output is missing");
   await assertDirectory(schemaSiteDir, "Schema Pages build output is missing");
@@ -39,45 +44,16 @@ async function main() {
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
-  // Only runtime-facing files are copied. Producer intermediates stay out of the Pages artifact.
-  await copyVisibleTree(path.join(referenceDir, "en"), outputDir);
-  for (const locale of supportedLocales) {
-    await copyVisibleTree(path.join(referenceDir, locale), path.join(outputDir, locale));
-  }
-  await copyVisibleTree(path.join(referenceDir, "source-linkage"), path.join(outputDir, "source-linkage"));
+  await writeReferenceSnapshot(referenceDir, outputDir, "");
+  await writeReferenceSnapshot(referenceDir, outputDir, currentDirectory);
+  await writeReferenceSnapshot(referenceDir, outputDir, releaseDirectory);
   await copyVisibleTree(path.join(schemaSiteDir, "schemas"), path.join(outputDir, "schemas"));
   await copyFile(path.join(referenceDir, "reference-build.json"), path.join(outputDir, "reference-build.json"));
   await writeFile(path.join(outputDir, ".nojekyll"), "", "utf8");
-  for (const assetRoot of [
-    path.join(outputDir, "assets"),
-    path.join(outputDir, "en", "assets"),
-    path.join(outputDir, "zh-CN", "assets")
-  ]) {
-    await writeReferenceSiteCss(path.join(assetRoot, "hia-reference-site.css"));
-  }
 
-  await decoratePortalPage(path.join(outputDir, "index.html"), createPortalNavigation({
-    rootPrefix: "./",
-    englishPrefix: "en/",
-    chinesePrefix: "zh-CN/",
-    sourceLinkagePrefix: "source-linkage/",
-    schemaPrefix: "schemas/"
-  }));
-  await decoratePortalPage(path.join(outputDir, "en", "index.html"), createPortalNavigation({
-    rootPrefix: "../",
-    englishPrefix: "./",
-    chinesePrefix: "../zh-CN/",
-    sourceLinkagePrefix: "../source-linkage/",
-    schemaPrefix: "../schemas/"
-  }));
-  await decoratePortalPage(path.join(outputDir, "zh-CN", "index.html"), createPortalNavigation({
-    rootPrefix: "../",
-    englishPrefix: "../en/",
-    chinesePrefix: "./",
-    sourceLinkagePrefix: "../source-linkage/",
-    schemaPrefix: "../schemas/"
-  }));
-  await decorateSourceLinkagePage(path.join(outputDir, "source-linkage", "index.html"));
+  const versionIndex = createVersionIndex(releaseId, referenceBuild, schemaCatalog);
+  await writeVersionsIndex(outputDir, versionIndex);
+  await writeFile(path.join(outputDir, "versions.json"), `${JSON.stringify(versionIndex, null, 2)}\n`, "utf8");
 
   const siteManifest = {
     contract: "hia-reference-pages",
@@ -90,8 +66,19 @@ async function main() {
       en: "en/index.html",
       zhCN: "zh-CN/index.html",
       sourceLinkage: "source-linkage/index.html",
-      schemas: "schemas/index.html"
+      schemas: "schemas/index.html",
+      current: "current/index.html",
+      currentEn: "current/en/index.html",
+      currentZhCN: "current/zh-CN/index.html",
+      currentSourceLinkage: "current/source-linkage/index.html",
+      versions: "versions/index.html",
+      releases: "releases/",
+      release: `${releaseDirectory}/index.html`,
+      releaseEn: `${releaseDirectory}/en/index.html`,
+      releaseZhCN: `${releaseDirectory}/zh-CN/index.html`,
+      releaseSourceLinkage: `${releaseDirectory}/source-linkage/index.html`
     },
+    versioning: versionIndex.versioning,
     provenance: {
       referenceBuild: "reference-build.json",
       sourceCount: referenceBuild.sources.length,
@@ -106,7 +93,38 @@ async function main() {
   };
   await writeFile(path.join(outputDir, "reference-pages.json"), `${JSON.stringify(siteManifest, null, 2)}\n`, "utf8");
 
-  console.log(`Reference Pages artifact generated: ${supportedLocales.length} locales, ${schemaCatalog.schemas.length} schemas at ${path.relative(rootDir, outputDir)}.`);
+  console.log(`Reference Pages artifact generated: ${supportedLocales.length} locales, ${schemaCatalog.schemas.length} schemas, 1 release snapshot at ${path.relative(rootDir, outputDir)}.`);
+}
+
+/**
+ * 写入一个 runtime-facing reference snapshot；同一份构建可作为兼容根、current 和 release snapshot。
+ * Writes a runtime-facing reference snapshot; the same build can serve the compatibility root, current, and release snapshot.
+ */
+async function writeReferenceSnapshot(referenceDir, outputDir, snapshotRoot) {
+  const targetRoot = resolveOutputPath(outputDir, snapshotRoot);
+
+  // Only runtime-facing files are copied. Producer intermediates stay out of the Pages artifact.
+  await copyVisibleTree(path.join(referenceDir, "en"), targetRoot);
+  for (const locale of supportedLocales) {
+    await copyVisibleTree(path.join(referenceDir, locale), path.join(targetRoot, locale));
+  }
+  await copyVisibleTree(path.join(referenceDir, "source-linkage"), path.join(targetRoot, "source-linkage"));
+
+  for (const assetRoot of [
+    path.join(targetRoot, "assets"),
+    path.join(targetRoot, "en", "assets"),
+    path.join(targetRoot, "zh-CN", "assets")
+  ]) {
+    await writeReferenceSiteCss(path.join(assetRoot, "hia-reference-site.css"));
+  }
+
+  await decoratePortalPage(resolveOutputPath(outputDir, joinPosix(snapshotRoot, "index.html")), createNavigationForPage(snapshotRoot, snapshotRoot));
+  await decoratePortalPage(resolveOutputPath(outputDir, joinPosix(snapshotRoot, "en/index.html")), createNavigationForPage(joinPosix(snapshotRoot, "en"), snapshotRoot));
+  await decoratePortalPage(resolveOutputPath(outputDir, joinPosix(snapshotRoot, "zh-CN/index.html")), createNavigationForPage(joinPosix(snapshotRoot, "zh-CN"), snapshotRoot));
+  await decorateSourceLinkagePage(
+    resolveOutputPath(outputDir, joinPosix(snapshotRoot, "source-linkage/index.html")),
+    createNavigationForPage(joinPosix(snapshotRoot, "source-linkage"), snapshotRoot)
+  );
 }
 
 /**
@@ -155,18 +173,11 @@ async function decoratePortalPage(filePath, navigation) {
  * 为独立 source-linkage 页面提供返回文档和 schema 的稳定入口。
  * Gives the standalone source-linkage page stable links back to documentation and schemas.
  */
-async function decorateSourceLinkagePage(filePath) {
+async function decorateSourceLinkagePage(filePath, navigation) {
   const original = await readFile(filePath, "utf8");
   assert(original.includes("</head>"), "Source-linkage page has no head terminator.");
   assert(original.includes('<aside class="hia-panel-sidebar">'), "Source-linkage page has no sidebar insertion point.");
 
-  const navigation = createPortalNavigation({
-    rootPrefix: "../",
-    englishPrefix: "../en/",
-    chinesePrefix: "../zh-CN/",
-    sourceLinkagePrefix: "./",
-    schemaPrefix: "../schemas/"
-  });
   const withStyle = original.replace("</head>", '<link rel="stylesheet" href="../assets/hia-reference-site.css"></head>');
   const decorated = withStyle.replace('<aside class="hia-panel-sidebar">', `<aside class="hia-panel-sidebar">${navigation}`);
   await writeFile(filePath, decorated, "utf8");
@@ -180,8 +191,108 @@ function createPortalNavigation(prefixes) {
     `<a href="${prefixes.chinesePrefix}">中文</a>`,
     `<a href="${prefixes.sourceLinkagePrefix}">Source linkage</a>`,
     `<a href="${prefixes.schemaPrefix}">Schemas</a>`,
+    `<a href="${prefixes.currentPrefix}">Current</a>`,
+    `<a href="${prefixes.versionsPrefix}">Versions</a>`,
     "</nav>"
   ].join("");
+}
+
+function createNavigationForPage(pageDir, snapshotRoot) {
+  return createPortalNavigation({
+    rootPrefix: relativeDirectoryLink(pageDir, snapshotRoot),
+    englishPrefix: relativeDirectoryLink(pageDir, joinPosix(snapshotRoot, "en")),
+    chinesePrefix: relativeDirectoryLink(pageDir, joinPosix(snapshotRoot, "zh-CN")),
+    sourceLinkagePrefix: relativeDirectoryLink(pageDir, joinPosix(snapshotRoot, "source-linkage")),
+    schemaPrefix: relativeDirectoryLink(pageDir, "schemas"),
+    currentPrefix: relativeDirectoryLink(pageDir, currentDirectory),
+    versionsPrefix: relativeDirectoryLink(pageDir, "versions")
+  });
+}
+
+async function writeVersionsIndex(outputDir, versionIndex) {
+  const versionsDir = path.join(outputDir, "versions");
+  await mkdir(versionsDir, { recursive: true });
+  await writeFile(path.join(versionsDir, "index.html"), `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HIA Reference Versions</title>
+  <link rel="stylesheet" href="../assets/hia-reference-site.css">
+</head>
+<body>
+  <main class="hia-reference-version-index">
+    <h1>HIA Reference Versions</h1>
+    <nav class="hia-reference-site-nav" aria-label="HIA reference navigation">
+      <a href="../">Overview</a>
+      <a href="../current/">Current</a>
+      <a href="../schemas/">Schemas</a>
+      <a href="../source-linkage/">Source linkage</a>
+    </nav>
+    <section>
+      <h2>Current</h2>
+      <p><a href="../${versionIndex.versioning.current.path}">${versionIndex.versioning.current.label}</a></p>
+    </section>
+    <section>
+      <h2>Release Snapshots</h2>
+      <ul>
+${versionIndex.versioning.releases.map((release) => `        <li><a href="../${release.path}">${release.label}</a></li>`).join("\n")}
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
+`, "utf8");
+}
+
+function createVersionIndex(releaseId, referenceBuild, schemaCatalog) {
+  const releaseDirectory = `releases/${releaseId}/`;
+  return {
+    contract: "hia-reference-version-index",
+    contractVersion: "0.1.0-draft",
+    generatedAt: new Date().toISOString(),
+    versioning: {
+      strategy: "current-and-releases",
+      current: {
+        id: "current",
+        label: "Current",
+        path: `${currentDirectory}/`,
+        source: "reference-build.json"
+      },
+      releases: [
+        {
+          id: releaseId,
+          label: releaseId,
+          path: releaseDirectory,
+          source: "reference-build.json"
+        }
+      ],
+      compatibilityAliases: {
+        root: "current",
+        en: "current/en",
+        zhCN: "current/zh-CN",
+        sourceLinkage: "current/source-linkage"
+      },
+      searchPartitions: [
+        ...supportedLocales.map((locale) => ({
+          id: `current:${locale}`,
+          version: "current",
+          locale,
+          projectIndex: `${currentDirectory}/${locale}/project-index.json`
+        })),
+        ...supportedLocales.map((locale) => ({
+          id: `${releaseId}:${locale}`,
+          version: releaseId,
+          locale,
+          projectIndex: `${releaseDirectory}${locale}/project-index.json`
+        }))
+      ]
+    },
+    provenance: {
+      sourceCount: referenceBuild.sources.length,
+      schemaCount: schemaCatalog.schemas.length
+    }
+  };
 }
 
 async function writeReferenceSiteCss(filePath) {
@@ -197,10 +308,10 @@ function parseArguments(args) {
   const options = {};
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
-    if (argument === "--reference" || argument === "--schemas" || argument === "--out") {
+    if (argument === "--reference" || argument === "--schemas" || argument === "--out" || argument === "--release-id") {
       const value = args[index + 1];
       assert(value && !value.startsWith("--"), `${argument} requires a directory value.`);
-      options[argument.slice(2)] = value;
+      options[toCamel(argument.slice(2))] = value;
       index += 1;
       continue;
     }
@@ -227,4 +338,23 @@ function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function resolveOutputPath(root, relativePath) {
+  return path.join(root, ...relativePath.split("/").filter(Boolean));
+}
+
+function joinPosix(...segments) {
+  return segments.filter(Boolean).join("/");
+}
+
+function relativeDirectoryLink(fromDir, toDir) {
+  const from = fromDir || ".";
+  const to = toDir || ".";
+  const relative = path.posix.relative(from, to);
+  return relative ? `${relative}/` : "./";
+}
+
+function toCamel(value) {
+  return value.replace(/-([a-z])/g, (_, character) => character.toUpperCase());
 }
