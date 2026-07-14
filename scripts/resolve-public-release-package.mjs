@@ -24,6 +24,7 @@ assert(packageJson.engines?.node === releasePlan.runtimeNodeRange, `${entry.name
 // 中英说明：默认只解析候选包；真正发布时额外要求 package.json 已完成版本翻转并解除 private。
 // EN: Normal mode only resolves a candidate package; publish mode also requires the explicit version/private flip.
 if (publishReady) {
+  assert(entry.releaseStatus !== "published", `${entry.name}: releaseStatus is published; choose a patch-candidate package for Trusted Publisher rehearsal.`);
   assert(packageJson.private !== true, `${entry.name}: package is still private; publication must be explicitly approved first.`);
   assert(packageJson.version === entry.targetVersion, `${entry.name}: package version must equal target ${entry.targetVersion}.`);
 }

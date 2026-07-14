@@ -18,3 +18,9 @@ The default theme does not bundle, download or redistribute font files. Its CSS 
 
 - UI text prefers `Inter`, `Noto Sans SC`, `Source Han Sans SC` and `Sarasa Gothic SC`.
 - Code and source locations prefer `Sarasa Mono SC`, `Sarasa Fixed SC`, `Noto Sans Mono CJK SC`, `Source Han Mono SC`, `Cascadia Code`, `JetBrains Mono` and `Fira Code`.
+
+## Release Notes
+
+### 0.1.1
+
+- Rehearses the post-bootstrap npm Trusted Publisher path with a metadata-only patch release.

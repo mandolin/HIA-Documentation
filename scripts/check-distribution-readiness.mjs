@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publishReady = process.argv.includes("--publish-ready");
 const schemaCatalog = JSON.parse(await readFile(path.join(rootDir, "packages/schemas/src/catalog.json"), "utf8"));
+const releasePlan = JSON.parse(await readFile(path.join(rootDir, "release/public-packages.json"), "utf8"));
 const schemaPublicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 const packagePaths = [
   "apps/cli/package.json",
@@ -22,22 +23,21 @@ const packagePaths = [
   "packages/theme-default/package.json"
 ];
 const rootLicense = await readFile(path.join(rootDir, "LICENSE"), "utf8");
+const releaseEntriesByPackagePath = new Map((releasePlan.packages ?? []).map((entry) => [`${entry.path}/package.json`, entry]));
 
 for (const packagePath of packagePaths) {
   const packageJson = JSON.parse(await readFile(path.join(rootDir, packagePath), "utf8"));
+  const releaseEntry = releaseEntriesByPackagePath.get(packagePath);
   const packageDir = path.dirname(packagePath);
   const packageLicense = await readFile(path.join(rootDir, packageDir, "LICENSE"), "utf8");
+  assert(releaseEntry, `${packagePath}: package is missing from release/public-packages.json.`);
   assert(packageJson.name.startsWith("@hia-doc/"), `${packagePath}: expected the canonical @hia-doc workspace scope.`);
+  assert(packageJson.name === releaseEntry.name, `${packagePath}: package name drifted from release plan.`);
   assert(packageJson.license === "MIT", `${packagePath}: expected the approved MIT license metadata.`);
   assert(packageLicense === rootLicense, `${packagePath}: package license drifted from the repository MIT license.`);
-  if (publishReady) {
-    assert(packageJson.version === "0.1.0", `${packagePath}: package version must equal the approved 0.1.0 first-publication target.`);
-    assert(packageJson.private !== true, `${packagePath}: package must not remain private for controlled public publication.`);
-    assert(packageJson.publishConfig?.access === "public", `${packagePath}: publishConfig.access must explicitly be public.`);
-  } else {
-    assert(packageJson.version === "0.0.0", `${packagePath}: package version must remain 0.0.0 before publication approval.`);
-    assert(packageJson.private === true, `${packagePath}: package must remain private while npm publication blockers are open.`);
-  }
+  assert(packageJson.version === releaseEntry.targetVersion, `${packagePath}: package version must match release plan target ${releaseEntry.targetVersion}.`);
+  assert(packageJson.private !== true, `${packagePath}: package must be public after D3 release.`);
+  assert(packageJson.publishConfig?.access === "public", `${packagePath}: publishConfig.access must explicitly be public.`);
 }
 
 const publicLicenseExists = await anyPathExists([
@@ -58,8 +58,8 @@ for (const entry of schemaCatalog.schemas) {
 
 console.log(
   publishReady
-    ? "Distribution readiness check passed: @hia-doc public-release manifests, MIT license and GitHub Pages schema namespace are ready for the approved first publication."
-    : "Distribution readiness check passed: @hia-doc scope, MIT license and GitHub Pages schema namespace are approved; npm publication remains blocked by release-version flip and external npm ownership/Trusted Publisher setup."
+    ? "Distribution readiness check passed: @hia-doc publish-ready manifests, MIT license and GitHub Pages schema namespace match the release train."
+    : "Distribution readiness check passed: @hia-doc public package manifests, MIT license and GitHub Pages schema namespace match the post-D3 release train."
 );
 
 async function anyPathExists(relativePaths) {

@@ -1,6 +1,6 @@
 # Public Package Release Plan
 
-This document defines the first public npm release plan for the `@hia-doc/*` packages owned by `main-repo`.
+This document defines the public npm release plan for the `@hia-doc/*` packages owned by `main-repo`.
 
 The machine-readable source of truth is [`release/public-packages.json`](../release/public-packages.json). The local gate is:
 
@@ -10,36 +10,35 @@ pnpm run distribution:check
 
 ## Current State
 
-The public package identity is prepared but real npm publication is still approval-gated.
+The D3 bootstrap release is complete. All 13 first-publication packages are visible on npm at `0.1.0`, and the next rehearsal target is a low-risk Trusted Publisher patch release.
 
 - Scope: `@hia-doc`.
 - Registry: `https://registry.npmjs.org/`.
 - Repository: `mandolin/HIA-Documentation`.
 - License: MIT.
 - Runtime Node range: `>=20.19.0`.
-- First release target: `0.1.0` for every candidate package.
-- Release candidates: 13 packages.
-- Current package state: private `0.0.0` until a package is explicitly approved for publication.
-
-`npm view @hia-doc/core version --registry=https://registry.npmjs.org/` currently returns `E404`, so the first package is not already published under that name. npm organization/scope ownership still has to be completed before the first real publish.
+- First release version: `0.1.0` for every public package.
+- Patch rehearsal target: `@hia-doc/theme-default@0.1.1`.
+- Current package state: public packages with explicit `publishConfig.access: "public"`.
+- Trusted Publisher: configured for `mandolin/HIA-Documentation` and `.github/workflows/npm-trusted-publish.yml`.
 
 ## Release Candidates
 
-| Order | Package | Kind | Target |
-| --- | --- | --- | --- |
-| 10 | `@hia-doc/core` | owner runtime | `0.1.0` |
-| 20 | `@hia-doc/config` | owner runtime | `0.1.0` |
-| 20 | `@hia-doc/profile` | owner runtime | `0.1.0` |
-| 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` |
-| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.0` |
-| 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` |
-| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.0` |
-| 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` |
-| 40 | `@hia-doc/profiles` | distribution | `0.1.0` |
-| 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` |
-| 50 | `@hia-doc/schemas` | distribution | `0.1.0` |
-| 60 | `@hia-doc/lsp` | tooling runtime | `0.1.0` |
-| 70 | `@hia-doc/cli` | tooling runtime | `0.1.0` |
+| Order | Package | Kind | Target | Status |
+| --- | --- | --- | --- | --- |
+| 10 | `@hia-doc/core` | owner runtime | `0.1.0` | published |
+| 20 | `@hia-doc/config` | owner runtime | `0.1.0` | published |
+| 20 | `@hia-doc/profile` | owner runtime | `0.1.0` | published |
+| 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` | published |
+| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.0` | published |
+| 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` | published |
+| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.1` | patch candidate |
+| 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` | published |
+| 40 | `@hia-doc/profiles` | distribution | `0.1.0` | published |
+| 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` | published |
+| 50 | `@hia-doc/schemas` | distribution | `0.1.0` | published |
+| 60 | `@hia-doc/lsp` | tooling runtime | `0.1.0` | published |
+| 70 | `@hia-doc/cli` | tooling runtime | `0.1.0` | published |
 
 `@hia-doc/vscode-extension` is excluded from this npm train because it should be distributed through VSIX or Marketplace release governance.
 
@@ -68,36 +67,35 @@ It requires:
 - Node 24.x.
 - npm `^11.5.1`.
 - Full `pnpm run release:gate`.
-- `scripts/resolve-public-release-package.mjs <package> --publish-ready`, which refuses to publish while a package is still private `0.0.0`.
+- `scripts/resolve-public-release-package.mjs <package> --publish-ready`, which refuses to publish packages whose release status is already `published`.
 
-## Registry Preflight
+## Registry Checks
 
-W-P12.6 adds a registry status command that does not publish anything:
+The registry status command does not publish anything:
 
 ```bash
 pnpm run release:registry:check
 ```
 
-For the final pre-publish gate, use:
+For authenticated local pre-publish review, use:
 
 ```bash
 pnpm run release:registry:preflight
 ```
 
-The preflight mode requires npm authentication, visible `hia-doc` organization/scope membership and unpublished target versions. If npm auth returns `E401`, D3 publication is blocked until the local npm session and npm-side Trusted Publisher setup are fixed.
+The preflight mode requires npm authentication and visible `hia-doc` organization/scope membership. After D3, already published package targets no longer block preflight; only non-`published` release candidates must be unpublished at their target version.
 
-## Bootstrap Checklist
+## Trusted Publisher Patch Rehearsal
 
-Before the first real public publish:
+For W-P15.3:
 
-1. Confirm the npm account and create or claim the `@hia-doc` organization/scope.
-2. Bootstrap the first package under manual approval if npm requires an existing package before Trusted Publishing can be configured.
-3. Configure npm Trusted Publisher for `mandolin/HIA-Documentation` and workflow filename `npm-trusted-publish.yml`.
-4. Run `pnpm run distribution:check` and `pnpm run release:registry:preflight`.
-5. Flip one package at a time from private `0.0.0` to the target version in publish-order sequence.
-6. Run `pnpm run release:gate`.
-7. Run the manual workflow for the selected package.
-8. Run the post-publish smoke below before continuing to the next package group.
+1. Keep all published packages at their released target versions.
+2. Mark exactly one low-risk package as a patch candidate in `release/public-packages.json`.
+3. Bump that package version and add a release note.
+4. Run `pnpm run release:gate:publish-ready`.
+5. Dispatch `npm-trusted-publish.yml` for the patch candidate.
+6. Run `pnpm run release:postpublish:smoke -- <package> --version <version>`.
+7. After verification, mark the candidate as `published` and update the release plan for the next cycle.
 
 ## Post-Publish Smoke
 

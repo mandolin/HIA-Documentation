@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/theme-default",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Default static theme assets for HIA HTML output.",
   "license": "MIT",
   "repository": {

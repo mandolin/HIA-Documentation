@@ -13,6 +13,7 @@ const publishReady = process.argv.includes("--publish-ready");
 
 const packageEntries = releasePlan.packages ?? [];
 const candidatesByName = new Map();
+const allowedReleaseStatuses = new Set(["published", "patch-candidate", "candidate"]);
 
 assert(releasePlan.schemaVersion === "0.1.0-draft", "release/public-packages.json: unexpected schemaVersion.");
 assert(releasePlan.scope === "@hia-doc", "release/public-packages.json: canonical npm scope must remain @hia-doc.");
@@ -26,7 +27,7 @@ for (const entry of packageEntries) {
   assert(entry.name?.startsWith("@hia-doc/"), `${entry.name}: package must stay in @hia-doc scope.`);
   assert(/^\d+\.\d+\.\d+$/.test(entry.targetVersion ?? ""), `${entry.name}: targetVersion must be npm SemVer without prerelease.`);
   assert(Number.isInteger(entry.publishOrder), `${entry.name}: publishOrder must be an integer.`);
-  assert(entry.releaseStatus === "candidate", `${entry.name}: releaseStatus must remain candidate before publication approval.`);
+  assert(allowedReleaseStatuses.has(entry.releaseStatus), `${entry.name}: releaseStatus must be one of ${[...allowedReleaseStatuses].join(", ")}.`);
   candidatesByName.set(entry.name, entry);
 }
 
@@ -37,14 +38,9 @@ for (const entry of packageEntries) {
   await readFile(path.join(rootDir, entry.path, "README.md"), "utf8");
 
   assert(packageJson.name === entry.name, `${entry.path}: package name does not match release plan.`);
-  if (publishReady) {
-    assert(packageJson.version === entry.targetVersion, `${entry.name}: package.json must equal approved target ${entry.targetVersion}.`);
-    assert(packageJson.private !== true, `${entry.name}: package must not remain private during controlled publication.`);
-    assert(packageJson.publishConfig?.access === "public", `${entry.name}: publishConfig.access must explicitly be public.`);
-  } else {
-    assert(packageJson.version === "0.0.0", `${entry.name}: package.json must stay 0.0.0 until publish approval.`);
-    assert(packageJson.private === true, `${entry.name}: package must stay private until publish approval.`);
-  }
+  assert(packageJson.version === entry.targetVersion, `${entry.name}: package.json must equal release plan target ${entry.targetVersion}.`);
+  assert(packageJson.private !== true, `${entry.name}: package must be public after D3 release.`);
+  assert(packageJson.publishConfig?.access === "public", `${entry.name}: publishConfig.access must explicitly be public.`);
   assert(packageJson.license === "MIT", `${entry.name}: package license must be MIT.`);
   assert(packageJson.engines?.node === releasePlan.runtimeNodeRange, `${entry.name}: package engine must match runtime baseline.`);
   assert(packageJson.repository?.url === "git+https://github.com/mandolin/HIA-Documentation.git", `${entry.name}: repository URL drifted.`);
@@ -88,8 +84,8 @@ assert(bootstrapScript.includes("--resume"), "npm bootstrap script must support 
 
 console.log(
   publishReady
-    ? `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the explicit first-publication manifest.`
-    : `Public release plan check passed: ${packageEntries.length} @hia-doc candidate packages are D2-ready and npm publication remains approval-gated.`
+    ? `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the publish-ready release train.`
+    : `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the post-D3 release train.`
 );
 
 function listLocalDependencyNames(packageJson) {

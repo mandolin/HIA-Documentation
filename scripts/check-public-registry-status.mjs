@@ -59,8 +59,17 @@ if (prepublish) {
   if (org.status !== "accessible") {
     failures.push("npm organization/scope membership check is required for --prepublish");
   }
-  if (summary.counts.published > 0) {
-    failures.push("target versions must be unpublished before first-publication preflight");
+  const publishCandidates = summary.packages.filter((item) => item.releaseStatus !== "published");
+  const alreadyPublishedCandidates = publishCandidates.filter((item) => item.status === "published");
+  const unpublishedCandidates = publishCandidates.filter((item) => item.status === "unpublished");
+  if (alreadyPublishedCandidates.length > 0) {
+    failures.push(`publish candidate target versions must be unpublished: ${alreadyPublishedCandidates.map((item) => `${item.name}@${item.targetVersion}`).join(", ")}`);
+  }
+  if (publishCandidates.length === 0) {
+    failures.push("at least one non-published release candidate is required for --prepublish");
+  }
+  if (unpublishedCandidates.length !== publishCandidates.length) {
+    failures.push("all non-published release candidates must be visible as unpublished target versions");
   }
 }
 
@@ -131,6 +140,7 @@ async function checkPackageVersion(entry) {
     name: entry.name,
     targetVersion: entry.targetVersion,
     publishOrder: entry.publishOrder,
+    releaseStatus: entry.releaseStatus,
     ...(await readNpmPackageVersion({ registry, ...entry }))
   };
 }
