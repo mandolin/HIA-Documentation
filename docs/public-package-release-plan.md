@@ -10,7 +10,7 @@ pnpm run distribution:check
 
 ## Current State
 
-The D3 bootstrap release is complete. All 13 first-publication packages are visible on npm at `0.1.0`, and the next rehearsal target is a low-risk Trusted Publisher patch release.
+The D3 bootstrap release is complete. All 13 first-publication packages are visible on npm at `0.1.0`, and W-P15.3 has verified the post-bootstrap Trusted Publisher path with `@hia-doc/theme-default@0.1.1`.
 
 - Scope: `@hia-doc`.
 - Registry: `https://registry.npmjs.org/`.
@@ -18,7 +18,7 @@ The D3 bootstrap release is complete. All 13 first-publication packages are visi
 - License: MIT.
 - Runtime Node range: `>=20.19.0`.
 - First release version: `0.1.0` for every public package.
-- Patch rehearsal target: `@hia-doc/theme-default@0.1.1`.
+- Latest patch rehearsal: `@hia-doc/theme-default@0.1.1`.
 - Current package state: public packages with explicit `publishConfig.access: "public"`.
 - Trusted Publisher: configured for `mandolin/HIA-Documentation` and `.github/workflows/npm-trusted-publish.yml`.
 
@@ -32,7 +32,7 @@ The D3 bootstrap release is complete. All 13 first-publication packages are visi
 | 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` | published |
 | 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.0` | published |
 | 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` | published |
-| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.1` | patch candidate |
+| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.1` | published |
 | 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` | published |
 | 40 | `@hia-doc/profiles` | distribution | `0.1.0` | published |
 | 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` | published |
@@ -87,7 +87,16 @@ The preflight mode requires npm authentication and visible `hia-doc` organizatio
 
 ## Trusted Publisher Patch Rehearsal
 
-For W-P15.3:
+W-P15.3 published `@hia-doc/theme-default@0.1.1` through `npm-trusted-publish.yml` with npm provenance.
+
+Evidence:
+
+- Workflow run: `https://github.com/mandolin/HIA-Documentation/actions/runs/29340192639`
+- Head SHA: `ef1a9322617dc02a2602c38eb29e1ac3726a4cf5`
+- Registry version: `0.1.1`
+- Post-publish smoke: passed with clean install and ESM import.
+
+For the next patch rehearsal:
 
 1. Keep all published packages at their released target versions.
 2. Mark exactly one low-risk package as a patch candidate in `release/public-packages.json`.

@@ -73,7 +73,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/browser-panel",
