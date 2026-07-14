@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   createBrowserPanelPayload,
   renderBrowserPanel,
@@ -1709,7 +1710,31 @@ function createDefaultIo(): CliIo {
   };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
+/**
+ * 判断当前模块是否是 CLI 入口，并兼容 npm 在 POSIX 平台创建的 `.bin` symlink。
+ * Detects whether this module is the CLI entry point, including npm `.bin` symlinks on POSIX platforms.
+ *
+ * @param moduleUrl 当前模块 URL。
+ * @param argvPath Node 传入的入口脚本路径。
+ * @returns 当前模块是否应执行 CLI 主流程。
+ */
+export function isCliEntrypoint(moduleUrl: string, argvPath: string | undefined): boolean {
+  if (!argvPath) {
+    return false;
+  }
+
+  return normalizeCliEntrypointPath(fileURLToPath(moduleUrl)) === normalizeCliEntrypointPath(argvPath);
+}
+
+function normalizeCliEntrypointPath(filePath: string): string {
+  try {
+    return realpathSync(filePath);
+  } catch {
+    return path.resolve(filePath);
+  }
+}
+
+if (isCliEntrypoint(import.meta.url, process.argv[1])) {
   runCli()
     .then((exitCode) => {
       process.exitCode = exitCode;

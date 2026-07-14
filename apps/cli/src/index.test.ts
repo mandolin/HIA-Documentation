@@ -1,8 +1,9 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { runCli, type CliIo } from "./index.js";
+import { isCliEntrypoint, runCli, type CliIo } from "./index.js";
 
 describe("@hia-doc/cli", () => {
   it("prints help", async () => {
@@ -559,6 +560,29 @@ describe("@hia-doc/cli", () => {
 
     expect(exitCode).toBe(1);
     expect(messages.join("\n")).toContain("[error:HIA_CLI_OPTION_VALUE_MISSING]");
+  });
+
+  it("recognizes npm bin symlinks as CLI entrypoints", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-entrypoint-"));
+    const realEntry = path.join(root, "dist", "index.js");
+    const binDir = path.join(root, ".bin");
+    const symlinkEntry = path.join(binDir, "hia");
+
+    try {
+      await mkdir(path.dirname(realEntry), { recursive: true });
+      await mkdir(binDir, { recursive: true });
+      await writeFile(realEntry, "", "utf8");
+
+      try {
+        await symlink(realEntry, symlinkEntry);
+      } catch {
+        return;
+      }
+
+      expect(isCliEntrypoint(pathToFileURL(realEntry).href, symlinkEntry)).toBe(true);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
   });
 });
 
