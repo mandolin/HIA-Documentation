@@ -241,12 +241,29 @@ function buildLocale({ definition, locale, outputRoot, projectManifestPath, reso
     assert(manifest.project?.entryCounts?.[view] >= minimum, `${locale}: ${view} entry count is below the reviewed floor.`);
   }
   assert((manifest.docSourceMaps?.length ?? 0) >= definition.acceptance.minimumDocSourceMapCount, `${locale}: doc-source-map count is below the reviewed floor.`);
+  assertRequiredEntryIds(definition, localeOutput, locale);
   return {
     locale,
     entryCounts: manifest.project.entryCounts,
     producerCount: manifest.build.producers.length,
     docSourceMapCount: manifest.docSourceMaps.length
   };
+}
+
+/**
+ * 复核 canonical project index 中的关键 CSS/HTML 符号，避免旧 extraction 重复计数移除后门禁只剩数量检查。
+ * Verifies key CSS/HTML symbols in the canonical project index so the gate does not rely only on counts after duplicate extraction entries are removed.
+ */
+function assertRequiredEntryIds(definition, localeOutput, locale) {
+  const requiredEntryIds = definition.acceptance.requiredEntryIds ?? [];
+  assert(Array.isArray(requiredEntryIds) && requiredEntryIds.every((id) => typeof id === "string" && id.length > 0), "Public reference requiredEntryIds must be non-empty strings.");
+  if (requiredEntryIds.length === 0) return;
+
+  const projectIndex = readJson(path.join(localeOutput, "project-index.json"));
+  const actualIds = new Set((projectIndex.entries ?? []).map((entry) => entry.id).filter((id) => typeof id === "string"));
+  for (const entryId of requiredEntryIds) {
+    assert(actualIds.has(entryId), `${locale}: required reference entry is missing: ${entryId}.`);
+  }
 }
 
 function buildSourceLinkagePanel({ definition, outputRoot, resolvedMainRepoRoot, locale }) {

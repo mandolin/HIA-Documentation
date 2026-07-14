@@ -50,9 +50,26 @@ function checkLocale(definition, outputRoot, locale) {
     assert(manifest.project?.entryCounts?.[view] >= minimum, `${locale}: ${view} entry count regressed.`);
   }
   assert((manifest.docSourceMaps?.length ?? 0) >= definition.acceptance.minimumDocSourceMapCount, `${locale}: doc-source-map count regressed.`);
+  assertRequiredEntryIds(definition, localeRoot, locale);
   assert((manifest.build?.producers?.length ?? 0) === definition.acceptance.requiredProducerCount, `${locale}: producer count drifted.`);
   for (const producer of definition.producers) {
     assert(manifest.build.producers.some((summary) => summary.id === producer.id && summary.status === "success"), `${locale}: producer ${producer.id} is not successful.`);
+  }
+}
+
+/**
+ * 复核 canonical project index 中的关键符号，保证 public build floor 跟随去重后的渲染口径仍保有语义锚点。
+ * Checks key symbols in the canonical project index so public build floors keep semantic anchors after render-input deduplication.
+ */
+function assertRequiredEntryIds(definition, localeRoot, locale) {
+  const requiredEntryIds = definition.acceptance.requiredEntryIds ?? [];
+  assert(Array.isArray(requiredEntryIds) && requiredEntryIds.every((id) => typeof id === "string" && id.length > 0), "Public reference requiredEntryIds must be non-empty strings.");
+  if (requiredEntryIds.length === 0) return;
+
+  const projectIndex = readJson(path.join(localeRoot, "project-index.json"));
+  const actualIds = new Set((projectIndex.entries ?? []).map((entry) => entry.id).filter((id) => typeof id === "string"));
+  for (const entryId of requiredEntryIds) {
+    assert(actualIds.has(entryId), `${locale}: required reference entry regressed: ${entryId}.`);
   }
 }
 

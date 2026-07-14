@@ -275,11 +275,29 @@
   ],
   "acceptance": {
     "minimumEntryCounts": {
-      "all": 70,
+      "all": 55,
       "js": 35,
-      "css": 20,
-      "html": 13
+      "css": 10,
+      "html": 6
     },
+    "requiredEntryIds": [
+      "hia-document:attr-component-productcard-title",
+      "hia-document:component-button",
+      "hia-document:component-productcard",
+      "hia-document:component-profilecard",
+      "hia-document:css-component-alert",
+      "hia-document:css-cssprop--alert-color",
+      "hia-document:css-layer-components",
+      "hia-document:css-modifier-alert--warning",
+      "hia-document:css-selector-alert",
+      "hia-document:css-token-color-alert-text",
+      "hia-document:cssprop-profilecard--profile-card-accent",
+      "hia-document:event-profilecard-select",
+      "hia-document:selector-profilecard-profile-card",
+      "hia-document:slot-profilecard-actions",
+      "hia-document:stylehook-profilecard-profile-card",
+      "hia-document:token-color.button.foreground"
+    ],
     "minimumDocSourceMapCount": 6,
     "minimumPanelSourceMapCount": 5,
     "requiredProducerCount": 7,
