@@ -1,0 +1,57 @@
+name: Reference operations
+
+on:
+  schedule:
+    - cron: "41 4 * * *"
+  workflow_dispatch:
+    inputs:
+      require-fresh-sources:
+        description: "Fail when a published source commit is behind its configured ref."
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reference-operations
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    name: Monitor public reference
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.20.2
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check public reference operations
+        env:
+          HIA_REFERENCE_MAX_AGE_HOURS: "168"
+          HIA_REFERENCE_WARN_AGE_HOURS: "48"
+        run: |
+          if [ "${{ github.event.inputs.require-fresh-sources || 'false' }}" = "true" ]; then
+            pnpm run reference:ops:check -- --require-fresh-sources
+          else
+            pnpm run reference:ops:check
+          fi
