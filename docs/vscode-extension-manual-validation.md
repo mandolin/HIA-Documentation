@@ -70,6 +70,15 @@ Expected results:
 
 ## Validate Source Linkage Host
 
+Before opening VS Code, prepare the fixture and runtime evidence file:
+
+```bash
+pnpm run build
+pnpm run vscode:source-linkage:evidence
+```
+
+The script writes `dist/vscode-source-linkage-runtime-evidence/evidence.json`. It records the VS Code CLI version, rebuilt fixture preview, indexed doc-source-map summary, expected navigation targets and an isolated Extension Development Host launch command.
+
 1. In the Extension Development Host, open `fixtures/source-linkage-host/` as the workspace folder.
 2. Run `HIA: Build Docs`; the fixture settings write the generated documentation preview to `temp/docs/`.
 3. Open `docs/profile-card.docmap.json` and run `HIA: Open Source Linkage`.

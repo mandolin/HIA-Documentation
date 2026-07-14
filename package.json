@@ -31,6 +31,7 @@
     "reference:pages:check": "node scripts/check-reference-pages.mjs",
     "reference:pages:online": "node scripts/check-reference-pages-online.mjs",
     "reference:ops:check": "node scripts/check-reference-operations.mjs",
+    "vscode:source-linkage:evidence": "node scripts/prepare-vscode-source-linkage-runtime.mjs",
     "schema:check": "node scripts/check-schema-contracts.mjs",
     "schema:site": "node scripts/build-schema-pages.mjs",
     "schema:site:online": "node scripts/check-schema-pages-online.mjs",
