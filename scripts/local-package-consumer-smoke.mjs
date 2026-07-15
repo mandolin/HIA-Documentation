@@ -59,8 +59,8 @@ async function main() {
       "--registry=" + registry,
       ...localTarballs,
       "jsdoc@4.0.5",
-      "@mandolin/jsdoc-plugin-hia-sys@0.1.0",
-      "@mandolin/jsdoc-theme-hia@0.1.0"
+      "@mandolin/jsdoc-plugin-hia-sys@0.1.1",
+      "@mandolin/jsdoc-theme-hia@0.1.1"
     ], rootDir);
 
     runNode(["node_modules/@hia-doc/htmdoc-runner/src/cli.mjs", "--config", "htmdoc.config.json"], probeRoot);

@@ -259,8 +259,8 @@ function installPackages() {
     "--ignore-scripts",
     "--registry=https://registry.npmjs.org/",
     "jsdoc@4.0.5",
-    "@mandolin/jsdoc-plugin-hia-sys@0.1.0",
-    "@mandolin/jsdoc-theme-hia@0.1.0"
+    "@mandolin/jsdoc-plugin-hia-sys@0.1.1",
+    "@mandolin/jsdoc-theme-hia@0.1.1"
   ]);
 }
 
@@ -295,8 +295,8 @@ function verifyInstalledPackages() {
   const pluginPkg = readJson(path.join(projectRoot, "node_modules/@mandolin/jsdoc-plugin-hia-sys/package.json"));
   const themePkg = readJson(path.join(projectRoot, "node_modules/@mandolin/jsdoc-theme-hia/package.json"));
 
-  assert.equal(pluginPkg.version, "0.1.0");
-  assert.equal(themePkg.version, "0.1.0");
+  assert.equal(pluginPkg.version, "0.1.1");
+  assert.equal(themePkg.version, "0.1.1");
 }
 
 function verifyStandaloneOutput() {
