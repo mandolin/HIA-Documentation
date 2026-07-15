@@ -173,6 +173,7 @@ describe("@hia-doc/renderer-html", () => {
     const navigationIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
       contract?: string;
       contractVersion?: string;
+      groups?: Array<{ kind: string; label: string; entryCount: number; views: string[] }>;
       entries?: Array<{ id: string; source?: { preview?: unknown } }>;
     };
     expect(result.diagnostics).toEqual([]);
@@ -190,7 +191,11 @@ describe("@hia-doc/renderer-html", () => {
     expect(navigationIndex.contractVersion).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION);
     expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "dotnet:portal-menu", "html:alert", "js:build"]);
     expect(navigationIndex.entries?.find((entry) => entry.id === "js:build")?.source?.preview).toBeUndefined();
+    expect(navigationIndex.groups).toContainEqual({ id: "kind:dotnet-type", kind: "kind", label: "dotnet-type", entryCount: 1, views: ["dotnet"] });
+    expect(navigationIndex.groups).toContainEqual({ id: "source-root:src", kind: "source-root", label: "src", entryCount: 4, views: ["js", "css", "html", "dotnet"] });
     expect(html).toContain("Mixed Project Docs");
+    expect(html).toContain("Groups");
+    expect(html).toContain("Source Roots");
     expect(html).toContain("data-hia-project-view=\"js\"");
     expect(html).toContain("data-hia-project-search");
     expect(html).toContain("data-hia-project-search-text=");

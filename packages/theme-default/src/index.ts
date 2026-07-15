@@ -317,6 +317,29 @@ a {
   padding-left: 1rem;
 }
 
+.hia-project-groups h3 {
+  color: var(--hia-muted);
+  font-size: .82rem;
+  margin: .75rem 0 .25rem;
+}
+
+.hia-project-group-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.hia-project-group-list li {
+  align-items: baseline;
+  display: flex;
+  gap: .75rem;
+  justify-content: space-between;
+}
+
+.hia-project-group-list strong {
+  color: var(--hia-muted);
+  font-size: .78rem;
+}
+
 .hia-project-empty {
   color: var(--hia-muted);
   padding: 1rem;

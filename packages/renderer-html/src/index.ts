@@ -222,8 +222,23 @@ export interface RenderProjectNavigationIndex {
     views: RenderProjectView[];
   };
   entries: RenderProjectNavigationEntry[];
+  groups: RenderProjectNavigationGroup[];
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
+}
+
+export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "source-root";
+
+/**
+ * 大型项目导航索引中的轻量分组统计，用于门户、侧栏和后续大项目导航策略。
+ * Lightweight group statistics in the large-project navigation index for portals, sidebars, and future navigation strategies.
+ */
+export interface RenderProjectNavigationGroup {
+  id: string;
+  kind: RenderProjectNavigationGroupKind;
+  label: string;
+  entryCount: number;
+  views: RenderProjectView[];
 }
 
 /**
@@ -406,6 +421,7 @@ function createProjectNavigationIndex(
         ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {})
       }))
       .sort(compareProjectNavigationEntries),
+    groups: collectProjectNavigationGroups(projectInput.entries),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
     docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps)
   };
@@ -476,6 +492,7 @@ function renderProjectIndexHtml(
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const views = collectProjectViews(projectInput.entries);
   const entryCounts = countEntriesByView(projectInput.entries);
+  const groups = collectProjectNavigationGroups(projectInput.entries);
   const navigation = projectInput.entries
     .map((entry) => renderProjectNavItem(entry))
     .join("");
@@ -503,6 +520,7 @@ function renderProjectIndexHtml(
     renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
     renderProjectViewControl(views, entryCounts),
     renderProjectSearchControl(),
+    renderProjectGroupSummary(groups),
     navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
     profileSummary,
     docSourceMapSummary,
@@ -535,6 +553,31 @@ function renderProjectSearchControl(): string {
     "<input type=\"search\" data-hia-project-search placeholder=\"Name, kind, source, selector\">",
     "</label>"
   ].join("");
+}
+
+function renderProjectGroupSummary(groups: RenderProjectNavigationGroup[]): string {
+  if (groups.length === 0) {
+    return "";
+  }
+
+  const sections = ([
+    ["kind", "Kinds"],
+    ["profile-layer", "Profile Layers"],
+    ["source-root", "Source Roots"]
+  ] as const)
+    .map(([kind, label]) => {
+      const items = groups
+        .filter((group) => group.kind === kind)
+        .sort(compareProjectNavigationGroups)
+        .slice(0, 12)
+        .map((group) => `<li><span>${escapeHtml(group.label)}</span><strong>${escapeHtml(String(group.entryCount))}</strong></li>`)
+        .join("");
+
+      return items ? `<section><h3>${escapeHtml(label)}</h3><ul class="hia-project-group-list">${items}</ul></section>` : "";
+    })
+    .join("");
+
+  return sections ? `<section class="hia-project-summary hia-project-groups"><h2>Groups</h2>${sections}</section>` : "";
 }
 
 function renderProjectNavItem(entry: RenderProjectEntry): string {
@@ -788,10 +831,92 @@ function renderProjectViewScript(): string {
   ].join("");
 }
 
+const PROJECT_VIEW_ORDER: readonly RenderProjectView[] = ["all", "js", "css", "html", "dotnet", "other"];
+
+function collectProjectNavigationGroups(entries: RenderProjectEntry[]): RenderProjectNavigationGroup[] {
+  return [
+    ...collectProjectNavigationGroupsBy(entries, "kind", (entry) => entry.kind || "unknown-kind"),
+    ...collectProjectNavigationGroupsBy(entries, "profile-layer", (entry) => entry.profile?.layer || entry.profile?.profileId || "unknown-profile"),
+    ...collectProjectNavigationGroupsBy(entries, "source-root", (entry) => getProjectSourceRoot(entry.source?.path))
+  ].sort(compareProjectNavigationGroups);
+}
+
+function collectProjectNavigationGroupsBy(
+  entries: RenderProjectEntry[],
+  kind: RenderProjectNavigationGroupKind,
+  keyFactory: (entry: RenderProjectEntry) => string
+): RenderProjectNavigationGroup[] {
+  const groups = new Map<string, { entryCount: number; views: Set<RenderProjectView> }>();
+
+  for (const entry of entries) {
+    const label = keyFactory(entry);
+    const current = groups.get(label) ?? { entryCount: 0, views: new Set<RenderProjectView>() };
+    current.entryCount += 1;
+    current.views.add(entry.view);
+    groups.set(label, current);
+  }
+
+  return [...groups.entries()].map(([label, group]) => ({
+    id: `${kind}:${slugProjectGroupLabel(label)}`,
+    kind,
+    label,
+    entryCount: group.entryCount,
+    views: sortProjectViews([...group.views])
+  }));
+}
+
+function getProjectSourceRoot(sourcePath: string | undefined): string {
+  if (!sourcePath) {
+    return "unknown-source";
+  }
+
+  const normalized = sourcePath.replaceAll("\\", "/");
+  const firstSegment = normalized.split("/").find((segment) => segment.length > 0);
+  return firstSegment || "unknown-source";
+}
+
+function compareProjectNavigationGroups(left: RenderProjectNavigationGroup, right: RenderProjectNavigationGroup): number {
+  const kindOrder = compareStableNumber(projectGroupKindOrder(left.kind), projectGroupKindOrder(right.kind));
+  if (kindOrder !== 0) {
+    return kindOrder;
+  }
+
+  const countOrder = compareStableNumber(right.entryCount, left.entryCount);
+  if (countOrder !== 0) {
+    return countOrder;
+  }
+
+  return compareStableText(left.label, right.label);
+}
+
+function projectGroupKindOrder(kind: RenderProjectNavigationGroupKind): number {
+  if (kind === "kind") {
+    return 0;
+  }
+
+  if (kind === "profile-layer") {
+    return 1;
+  }
+
+  return 2;
+}
+
+function compareStableNumber(left: number, right: number): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function slugProjectGroupLabel(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-|-$/g, "") || "group";
+}
+
+function sortProjectViews(views: RenderProjectView[]): RenderProjectView[] {
+  return views.sort((left, right) => PROJECT_VIEW_ORDER.indexOf(left) - PROJECT_VIEW_ORDER.indexOf(right));
+}
+
 function collectProjectViews(entries: RenderProjectEntry[]): RenderProjectView[] {
   const views: RenderProjectView[] = ["all"];
 
-  for (const view of ["js", "css", "html", "dotnet", "other"] as const) {
+  for (const view of PROJECT_VIEW_ORDER.filter((view) => view !== "all")) {
     if (entries.some((entry) => entry.view === view)) {
       views.push(view);
     }
