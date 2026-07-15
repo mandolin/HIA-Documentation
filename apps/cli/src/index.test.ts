@@ -155,6 +155,67 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("builds a .NET unified project page from a DotNetDoc HIA document", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-dotnet-project-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-dotnet.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const navigationIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        entries: Array<{ id: string; view: string; input?: { path?: string }; source?: { path?: string; language?: string } }>;
+      };
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        project?: {
+          views: string[];
+          entryCounts: Record<string, number>;
+        };
+        build?: {
+          inputs: Array<{ kind: string; path: string; profile?: { profileId: string; layer?: string } }>;
+        };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(messages.join("\n")).toContain("Generated 5 file");
+      expect(html).toContain("DotNet Project Fixture Documentation");
+      expect(html).toContain("data-hia-project-view=\"dotnet\"");
+      expect(html).toContain("data-hia-project-entry=\"dotnet\"");
+      expect(html).toContain(".NET");
+      expect(html).toContain("PortalMenu");
+      expect(html).toContain("dotnet-type");
+      expect(html).toContain("dotnet-method");
+      expect(html).toContain("src/Portal.Components/Navigation/PortalMenu.cs:8");
+      expect(manifest.project?.views).toEqual(["all", "dotnet"]);
+      expect(manifest.project?.entryCounts).toMatchObject({ all: 2, dotnet: 2 });
+      expect(manifest.build?.inputs).toEqual([
+        {
+          kind: "hia-document",
+          path: "project-dotnet.hia.json",
+          profile: {
+            profileId: "dotnetdoc",
+            profileVersion: "0.1.0-draft",
+            layer: "dotnet"
+          },
+          source: "manifest"
+        }
+      ]);
+      expect(navigationIndex.entries).toHaveLength(2);
+      expect(navigationIndex.entries.every((entry) => entry.view === "dotnet")).toBe(true);
+      expect(navigationIndex.entries.every((entry) => entry.input?.path === "project-dotnet.hia.json")).toBe(true);
+      expect(navigationIndex.entries.every((entry) => entry.source?.language === "csharp")).toBe(true);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("runs configured producers before building a unified project page", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-project-"));
     const outDir = path.join(root, "docs");

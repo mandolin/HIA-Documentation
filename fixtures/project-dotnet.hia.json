@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "dotnetdoc:fixture:Portal.Components",
+  "title": "Portal.Components API",
+  "defaultLocale": "en",
+  "locales": ["en", "zh-CN"],
+  "nodes": [
+    {
+      "id": "root",
+      "kind": "root",
+      "title": "Portal.Components API",
+      "symbolIds": [
+        "dotnet:t:portal.components.navigation.portalmenu",
+        "dotnet:m:portal.components.navigation.portalmenu.render-system.string"
+      ]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "dotnet:t:portal.components.navigation.portalmenu",
+      "kind": "dotnet-type",
+      "name": "PortalMenu",
+      "summary": "Represents a portal navigation menu.",
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.2.0",
+        "mode": "link",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/Portal.Components/Navigation/PortalMenu.cs",
+          "language": "csharp",
+          "position": { "line": 8, "column": 5 },
+          "range": {
+            "start": { "line": 8, "column": 5 },
+            "end": { "line": 29, "column": 6 }
+          },
+          "link": { "enabled": false, "openMode": "same-tab" }
+        },
+        "primaryBlock": null,
+        "references": [],
+        "fragments": [],
+        "diagnostics": []
+      },
+      "diagnostics": [],
+      "metadata": {
+        "dotnetdoc": {
+          "memberName": "T:Portal.Components.Navigation.PortalMenu"
+        }
+      }
+    },
+    {
+      "id": "dotnet:m:portal.components.navigation.portalmenu.render-system.string",
+      "kind": "dotnet-method",
+      "name": "Render",
+      "summary": "Renders tenant-specific navigation markup.",
+      "signature": "M:Portal.Components.Navigation.PortalMenu.Render(System.String)",
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.2.0",
+        "mode": "link",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/Portal.Components/Navigation/PortalMenu.cs",
+          "language": "csharp",
+          "position": { "line": 17, "column": 9 },
+          "range": {
+            "start": { "line": 17, "column": 9 },
+            "end": { "line": 28, "column": 10 }
+          },
+          "link": { "enabled": false, "openMode": "same-tab" }
+        },
+        "primaryBlock": null,
+        "references": [],
+        "fragments": [],
+        "diagnostics": []
+      },
+      "diagnostics": [],
+      "metadata": {
+        "dotnetdoc": {
+          "memberName": "M:Portal.Components.Navigation.PortalMenu.Render(System.String)",
+          "parameters": [
+            {
+              "name": "tenantId",
+              "summary": "Tenant identifier used to select visible menu items."
+            }
+          ],
+          "returns": "HTML fragment for the tenant menu."
+        }
+      }
+    }
+  ],
+  "diagnostics": [],
+  "metadata": {
+    "sourceContract": "dotnetdoc-csharp-source-extraction",
+    "sourceContractVersion": "0.1.0-draft",
+    "bridgeBoundary": "dotnetdoc-adapter"
+  }
+}

@@ -1366,6 +1366,10 @@ function inferProjectView(kind: string, inputKind?: string): RenderProjectView {
     return "html";
   }
 
+  if (kind.startsWith("dotnet-")) {
+    return "dotnet";
+  }
+
   return "other";
 }
 

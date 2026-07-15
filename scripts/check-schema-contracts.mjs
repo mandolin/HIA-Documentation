@@ -81,17 +81,18 @@ assert(
   "Project manifest schema must allow inputs or producers."
 );
 
-const projectManifest = await readJson("fixtures/project-mixed.hia-project.json");
-const projectDiagnostics = validateHiaProjectManifest(projectManifest, { targetPath: "fixtures/project-mixed.hia-project.json" });
-assert(projectDiagnostics.length === 0, `Project manifest fixture has diagnostics: ${JSON.stringify(projectDiagnostics, null, 2)}`);
+const projectManifestFixturePaths = [
+  "fixtures/project-mixed.hia-project.json",
+  "fixtures/project-producer.hia-project.json",
+  "fixtures/project-producer-warn.hia-project.json",
+  "fixtures/project-dotnet.hia-project.json"
+];
 
-const producerProjectManifest = await readJson("fixtures/project-producer.hia-project.json");
-const producerProjectDiagnostics = validateHiaProjectManifest(producerProjectManifest, { targetPath: "fixtures/project-producer.hia-project.json" });
-assert(producerProjectDiagnostics.length === 0, `Producer project manifest fixture has diagnostics: ${JSON.stringify(producerProjectDiagnostics, null, 2)}`);
-
-const warnProducerProjectManifest = await readJson("fixtures/project-producer-warn.hia-project.json");
-const warnProducerProjectDiagnostics = validateHiaProjectManifest(warnProducerProjectManifest, { targetPath: "fixtures/project-producer-warn.hia-project.json" });
-assert(warnProducerProjectDiagnostics.length === 0, `Warn producer project manifest fixture has diagnostics: ${JSON.stringify(warnProducerProjectDiagnostics, null, 2)}`);
+for (const fixturePath of projectManifestFixturePaths) {
+  const fixtureManifest = await readJson(fixturePath);
+  const fixtureDiagnostics = validateHiaProjectManifest(fixtureManifest, { targetPath: fixturePath });
+  assert(fixtureDiagnostics.length === 0, `Project manifest fixture ${fixturePath} has diagnostics: ${JSON.stringify(fixtureDiagnostics, null, 2)}`);
+}
 
 assert(HIA_PROFILE_JSON_SCHEMA.$id === HIA_PROFILE_SCHEMA_ID, "Profile schema id drifted.");
 assert(HIA_PROFILE_JSON_SCHEMA.properties.schemaVersion.const === HIA_PROFILE_SCHEMA_VERSION, "Profile schemaVersion const drifted.");
@@ -169,4 +170,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: 3 project manifests, 1 producer descriptor/result, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

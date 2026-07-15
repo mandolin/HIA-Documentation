@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:dotnet-fixture",
+    "name": "DotNet Project Fixture",
+    "title": "DotNet Project Fixture Documentation",
+    "defaultLocale": "en",
+    "locales": ["en", "zh-CN"]
+  },
+  "inputs": [
+    {
+      "kind": "hia-document",
+      "path": "project-dotnet.hia.json",
+      "domain": "dotnet",
+      "profile": {
+        "profileId": "dotnetdoc",
+        "profileVersion": "0.1.0-draft",
+        "layer": "dotnet"
+      }
+    }
+  ]
+}
