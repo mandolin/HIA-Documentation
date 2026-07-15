@@ -50,7 +50,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.manifest.initialLocale).toBe("en-US");
   });
 
-  it("renders a unified project page with JS CSS and HTML views", () => {
+  it("renders a unified project page with JS CSS HTML and .NET views", () => {
     const result = renderProjectHtmlDocument({
       project: {
         id: "project:mixed",
@@ -155,6 +155,16 @@ describe("@hia-doc/renderer-html", () => {
             artifactSelector: "[data-component=\"Alert\"]",
             artifactConfidence: "medium"
           }
+        },
+        {
+          id: "dotnet:portal-menu",
+          name: "PortalMenu",
+          kind: "dotnet-type",
+          view: "dotnet",
+          summary: "Represents a portal navigation menu.",
+          profile: { profileId: "dotnetdoc", profileVersion: "0.1.0-draft" },
+          input: { kind: "hia-document", path: "Portal.Components.hia.json", contract: "dotnetdoc-csharp-source-extraction" },
+          source: { path: "src/PortalMenu.cs", language: "csharp", range: { start: { line: 8 }, end: { line: 29 } } }
         }
       ]
     });
@@ -166,25 +176,30 @@ describe("@hia-doc/renderer-html", () => {
       entries?: Array<{ id: string; source?: { preview?: unknown } }>;
     };
     expect(result.diagnostics).toEqual([]);
-    expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html"]);
-    expect(result.manifest.project?.entryCounts).toMatchObject({ all: 3, js: 1, css: 1, html: 1 });
+    expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html", "dotnet"]);
+    expect(result.manifest.project?.entryCounts).toMatchObject({ all: 4, js: 1, css: 1, html: 1, dotnet: 1 });
     expect(result.manifest.initialLocale).toBe("en");
     expect(result.manifest.locales).toEqual(["en", "zh-CN"]);
     expect(result.manifest.project?.navigationIndex).toEqual({
       contract: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
       contractVersion: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
-      entryCount: 3,
+      entryCount: 4,
       path: "project-index.json"
     });
     expect(navigationIndex.contract).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT);
     expect(navigationIndex.contractVersion).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION);
-    expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "html:alert", "js:build"]);
+    expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "dotnet:portal-menu", "html:alert", "js:build"]);
     expect(navigationIndex.entries?.find((entry) => entry.id === "js:build")?.source?.preview).toBeUndefined();
     expect(html).toContain("Mixed Project Docs");
     expect(html).toContain("data-hia-project-view=\"js\"");
     expect(html).toContain("data-hia-project-search");
     expect(html).toContain("data-hia-project-search-text=");
     expect(html).toContain("data-hia-project-entry=\"css\"");
+    expect(html).toContain("data-hia-project-view=\"dotnet\"");
+    expect(html).toContain("data-hia-project-entry=\"dotnet\"");
+    expect(html).toContain(".NET");
+    expect(html).toContain("PortalMenu");
+    expect(html).toContain("dotnet-type");
     expect(html).toContain("buildProfileSummary");
     expect(html).toContain("生成用户资料摘要。");
     expect(html).toContain("data-hia-locale-control");

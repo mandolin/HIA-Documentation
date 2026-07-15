@@ -244,6 +244,7 @@
             "js",
             "css",
             "html",
+            "dotnet",
             "other"
           ]
         },

@@ -5,7 +5,7 @@ import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@h
 export const HIA_PROJECT_MANIFEST_SCHEMA_VERSION = "0.1.0-draft";
 export const HIA_PROJECT_MANIFEST_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json";
 export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map"] as const;
-export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "other"] as const;
+export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "dotnet", "other"] as const;
 
 export type HiaProjectManifestInputKind = typeof HIA_PROJECT_MANIFEST_INPUT_KINDS[number];
 export type HiaProjectManifestDomain = typeof HIA_PROJECT_MANIFEST_DOMAINS[number];

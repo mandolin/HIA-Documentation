@@ -125,6 +125,15 @@ describe("@hia-doc/config", () => {
             profileId: "cssdoc",
             profileVersion: "0.1.0-draft"
           }
+        },
+        {
+          kind: "hia-document",
+          path: "artifacts/Portal.Components.hia.json",
+          domain: "dotnet",
+          profile: {
+            profileId: "dotnetdoc",
+            profileVersion: "0.1.0-draft"
+          }
         }
       ]
     });

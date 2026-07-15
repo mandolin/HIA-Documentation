@@ -40,7 +40,7 @@ export interface RenderHtmlOptions {
   includeThemeAssets?: boolean;
 }
 
-export type RenderProjectView = "all" | "js" | "css" | "html" | "other";
+export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "other";
 
 export interface RenderProjectHtmlInput {
   project: RenderProjectInfo;
@@ -791,7 +791,7 @@ function renderProjectViewScript(): string {
 function collectProjectViews(entries: RenderProjectEntry[]): RenderProjectView[] {
   const views: RenderProjectView[] = ["all"];
 
-  for (const view of ["js", "css", "html", "other"] as const) {
+  for (const view of ["js", "css", "html", "dotnet", "other"] as const) {
     if (entries.some((entry) => entry.view === view)) {
       views.push(view);
     }
@@ -852,6 +852,10 @@ function formatProjectViewLabel(view: RenderProjectView): string {
 
   if (view === "html") {
     return "HTML";
+  }
+
+  if (view === "dotnet") {
+    return ".NET";
   }
 
   if (view === "all") {
