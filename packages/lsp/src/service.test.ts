@@ -102,8 +102,10 @@ describe("@hia-doc/lsp service", () => {
       processId: null,
       rootUri: "file:///workspace"
     });
-    service.openDocument(uri, JSON.stringify(createProjectIndexFixture()), "json", 1);
+    const document = service.openDocument(uri, JSON.stringify(createProjectIndexFixture()), "json", 1);
 
+    expect(document.diagnostics).toEqual([]);
+    expect(service.validateManagedDocument(uri)).toEqual([]);
     expect(service.getManagedProjectRelationGraph(uri)).toMatchObject({
       contract: "hia-project-relation-graph",
       contractVersion: "0.1.0-draft",

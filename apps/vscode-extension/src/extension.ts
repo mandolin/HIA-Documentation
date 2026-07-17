@@ -20,9 +20,11 @@ import {
   HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_OPEN_PREVIEW_COMMAND,
+  HIA_OPEN_PROJECT_RELATIONS_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
   HIA_OPEN_SOURCE_LINKAGE_COMMAND,
   HIA_OUTPUT_CHANNEL_NAME,
+  HIA_PROJECT_RELATION_GRAPH_REQUEST,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
@@ -52,6 +54,13 @@ import {
   type HiaResourceActionsSummary,
   type HiaResourceIndexSummary
 } from "./config.js";
+import {
+  createHiaProjectRelationChoices,
+  createHiaProjectRelationNavigationTargets,
+  type HiaProjectRelationChoice,
+  type HiaProjectRelationGraphSummary,
+  type HiaProjectRelationNavigationTarget
+} from "./project-relations.js";
 import {
   createHiaSourceLinkageEntryChoices,
   createHiaSourceLinkageNavigationTargets,
@@ -160,6 +169,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const openSourceLinkageCommand = vscode.commands.registerCommand(HIA_OPEN_SOURCE_LINKAGE_COMMAND, async () => {
     await openHiaSourceLinkage(outputChannel);
   });
+  const openProjectRelationsCommand = vscode.commands.registerCommand(HIA_OPEN_PROJECT_RELATIONS_COMMAND, async () => {
+    await openHiaProjectRelations(outputChannel);
+  });
   const validateWorkspaceCommand = vscode.commands.registerCommand(HIA_VALIDATE_WORKSPACE_COMMAND, async () => {
     const editor = vscode.window.activeTextEditor;
 
@@ -239,7 +251,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -608,6 +620,104 @@ async function openHiaSourceLinkage(outputChannel: vscode.OutputChannel): Promis
   void vscode.window.showInformationMessage("HIA source linkage entry id copied.");
 }
 
+/**
+ * 在 VS Code 的原生 picker 中消费项目级 relation graph。
+ * Consume project-level relation graph data through native VS Code pickers.
+ */
+async function openHiaProjectRelations(outputChannel: vscode.OutputChannel): Promise<void> {
+  if (!client) {
+    void vscode.window.showWarningMessage("HIA language server is not running.");
+    return;
+  }
+
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open a workspace folder before using HIA project relations.");
+    return;
+  }
+
+  const document = await selectHiaProjectIndexDocument(workspaceRoot, getHiaCommandSettings());
+
+  if (!document) {
+    return;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+
+  if (!workspaceFolder) {
+    void vscode.window.showWarningMessage("Open a workspace project-index.json before using HIA project relations.");
+    return;
+  }
+
+  await vscode.window.showTextDocument(document, {
+    preserveFocus: true,
+    preview: true
+  });
+  const graph = await requestHiaProjectRelationGraph(document.uri.toString());
+
+  if (!graph || graph.status !== "available") {
+    const reason = graph?.unavailableReason || "project-relation-graph-unavailable";
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA project relation graph unavailable for ${document.uri.toString()}: ${reason}`);
+    void vscode.window.showWarningMessage(`HIA project relations are unavailable: ${reason}.`);
+    return;
+  }
+
+  const choices = createHiaProjectRelationChoices(graph);
+
+  if (choices.length === 0) {
+    void vscode.window.showInformationMessage("This project relation graph has no navigable relations.");
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine(`HIA project relations: ${graph.relationCount ?? choices.length} relation(s), ${graph.nodeCount ?? graph.nodes?.length ?? 0} node(s).`);
+
+  const selected = await vscode.window.showQuickPick<ProjectRelationQuickPickItem>(
+    choices.map((choice) => ({
+      ...choice,
+      choice
+    })),
+    {
+      placeHolder: "Choose an HIA project relation"
+    }
+  );
+
+  if (!selected) {
+    return;
+  }
+
+  const target = await selectHiaProjectRelationTarget(selected.choice);
+
+  if (!target) {
+    return;
+  }
+
+  if (target.actionKind === "target") {
+    await openHiaProjectRelationTarget(target.target, workspaceFolder, outputChannel);
+    return;
+  }
+
+  if (target.actionKind === "documentation-preview") {
+    await vscode.commands.executeCommand(HIA_OPEN_PREVIEW_COMMAND);
+    return;
+  }
+
+  const value = target.actionKind === "copy-entry-id"
+    ? selected.choice.relation.entryId
+    : selected.choice.relation.id;
+
+  if (!value) {
+    void vscode.window.showWarningMessage("HIA project relation value is unavailable.");
+    return;
+  }
+
+  await vscode.env.clipboard.writeText(value);
+  outputChannel.appendLine(`Copied HIA project relation value: ${value}`);
+  void vscode.window.showInformationMessage("HIA project relation value copied.");
+}
+
 async function selectHiaDocSourceMapDocument(): Promise<vscode.TextDocument | undefined> {
   const activeDocument = vscode.window.activeTextEditor?.document;
 
@@ -635,6 +745,42 @@ async function selectHiaDocSourceMapDocument(): Promise<vscode.TextDocument | un
   return selected ? vscode.workspace.openTextDocument(selected.uri) : undefined;
 }
 
+async function selectHiaProjectIndexDocument(
+  workspaceRoot: string,
+  settings: HiaCommandSettings
+): Promise<vscode.TextDocument | undefined> {
+  const activeDocument = vscode.window.activeTextEditor?.document;
+
+  if (activeDocument && isHiaProjectIndexDocument(activeDocument)) {
+    return activeDocument;
+  }
+
+  const defaultProjectIndexPath = path.resolve(workspaceRoot, settings.out, "project-index.json");
+
+  if (await tryStat(defaultProjectIndexPath)) {
+    return vscode.workspace.openTextDocument(vscode.Uri.file(defaultProjectIndexPath));
+  }
+
+  const candidates = await vscode.workspace.findFiles("**/project-index.json", "**/{.git,node_modules}/**", 100);
+
+  if (candidates.length === 0) {
+    void vscode.window.showWarningMessage("No workspace project-index.json was found. Run HIA: Build Docs first.");
+    return undefined;
+  }
+
+  const selected = await vscode.window.showQuickPick<ProjectIndexDocumentQuickPickItem>(
+    candidates.map((uri) => ({
+      label: vscode.workspace.asRelativePath(uri),
+      uri
+    })),
+    {
+      placeHolder: "Choose an HIA project-index.json"
+    }
+  );
+
+  return selected ? vscode.workspace.openTextDocument(selected.uri) : undefined;
+}
+
 async function requestHiaSourceLinkageIndex(uri: string): Promise<HiaDocumentSourceMapIndexSummary | undefined> {
   if (!client) {
     return undefined;
@@ -653,13 +799,37 @@ async function requestHiaSourceLinkageIndex(uri: string): Promise<HiaDocumentSou
       return undefined;
     }
 
-    await waitForHiaSourceLinkageIndex();
+    await waitForHiaHostIndex();
   }
 
   return undefined;
 }
 
-function waitForHiaSourceLinkageIndex(): Promise<void> {
+async function requestHiaProjectRelationGraph(uri: string): Promise<HiaProjectRelationGraphSummary | undefined> {
+  if (!client) {
+    return undefined;
+  }
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const result = await client.sendRequest<HiaProjectRelationGraphSummary>(HIA_PROJECT_RELATION_GRAPH_REQUEST, {
+        uri
+      });
+
+      if (result.status !== "unavailable" || attempt === 4) {
+        return result;
+      }
+    } catch {
+      return undefined;
+    }
+
+    await waitForHiaHostIndex();
+  }
+
+  return undefined;
+}
+
+function waitForHiaHostIndex(): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, 100);
   });
@@ -685,6 +855,40 @@ async function selectHiaSourceLinkageTarget(choice: HiaSourceLinkageEntryChoice)
       actionKind: "copy-entry-id"
     }
   ];
+
+  return vscode.window.showQuickPick(actions, {
+    placeHolder: `Navigate ${choice.label}`
+  });
+}
+
+async function selectHiaProjectRelationTarget(choice: HiaProjectRelationChoice): Promise<ProjectRelationActionQuickPickItem | undefined> {
+  const navigationItems = createHiaProjectRelationNavigationTargets(choice).map((target) => ({
+    label: target.label,
+    actionKind: "target" as const,
+    target,
+    description: target.position ? `line ${target.position.line}` : target.node.kind
+  }));
+  const actions: ProjectRelationActionQuickPickItem[] = [
+    ...navigationItems,
+    {
+      label: "Open documentation preview",
+      description: "Uses the existing HIA: Open Preview command",
+      actionKind: "documentation-preview"
+    },
+    {
+      label: "Copy project relation id",
+      description: choice.relation.id,
+      actionKind: "copy-relation-id"
+    }
+  ];
+
+  if (choice.relation.entryId) {
+    actions.push({
+      label: "Copy documentation entry id",
+      description: choice.relation.entryId,
+      actionKind: "copy-entry-id"
+    });
+  }
 
   return vscode.window.showQuickPick(actions, {
     placeHolder: `Navigate ${choice.label}`
@@ -726,8 +930,47 @@ async function openHiaSourceLinkageTarget(
   }
 }
 
+async function openHiaProjectRelationTarget(
+  target: HiaProjectRelationNavigationTarget,
+  workspaceFolder: vscode.WorkspaceFolder,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const resolution = resolveHiaSourceLinkageTargetPath(workspaceFolder.uri.fsPath, target.path);
+
+  if (!resolution.path) {
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA project relation target rejected (${resolution.reason ?? "target-path-unsafe"}): ${target.path}`);
+    void vscode.window.showWarningMessage("HIA project relation target is outside the workspace or unsafe. See HIA output.");
+    return;
+  }
+
+  try {
+    const document = await vscode.workspace.openTextDocument(vscode.Uri.file(resolution.path));
+    const options: vscode.TextDocumentShowOptions = {
+      preview: true
+    };
+
+    if (target.position) {
+      const position = new vscode.Position(Math.max(0, target.position.line - 1), Math.max(0, (target.position.column ?? 1) - 1));
+      options.selection = new vscode.Range(position, position);
+    }
+
+    await vscode.window.showTextDocument(document, options);
+    outputChannel.appendLine(`Opened HIA project relation ${target.node.kind}: ${path.relative(workspaceFolder.uri.fsPath, resolution.path)}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`Cannot open HIA project relation ${target.path}: ${message}`);
+    void vscode.window.showWarningMessage("HIA project relation target is unavailable. See HIA output.");
+  }
+}
+
 function isHiaDocSourceMapDocument(document: vscode.TextDocument): boolean {
   return document.uri.scheme === "file" && document.uri.fsPath.toLowerCase().endsWith(".docmap.json");
+}
+
+function isHiaProjectIndexDocument(document: vscode.TextDocument): boolean {
+  return document.uri.scheme === "file" && path.basename(document.uri.fsPath).toLowerCase() === "project-index.json";
 }
 
 interface SourceLinkageEntryQuickPickItem extends vscode.QuickPickItem {
@@ -735,6 +978,10 @@ interface SourceLinkageEntryQuickPickItem extends vscode.QuickPickItem {
 }
 
 interface SourceLinkageDocumentQuickPickItem extends vscode.QuickPickItem {
+  uri: vscode.Uri;
+}
+
+interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {
   uri: vscode.Uri;
 }
 
@@ -747,6 +994,21 @@ interface SourceLinkageNavigationQuickPickItem extends vscode.QuickPickItem {
 
 interface SourceLinkageSimpleActionQuickPickItem extends vscode.QuickPickItem {
   actionKind: "copy-entry-id" | "documentation-preview";
+}
+
+interface ProjectRelationQuickPickItem extends vscode.QuickPickItem {
+  choice: HiaProjectRelationChoice;
+}
+
+type ProjectRelationActionQuickPickItem = ProjectRelationNavigationQuickPickItem | ProjectRelationSimpleActionQuickPickItem;
+
+interface ProjectRelationNavigationQuickPickItem extends vscode.QuickPickItem {
+  actionKind: "target";
+  target: HiaProjectRelationNavigationTarget;
+}
+
+interface ProjectRelationSimpleActionQuickPickItem extends vscode.QuickPickItem {
+  actionKind: "copy-entry-id" | "copy-relation-id" | "documentation-preview";
 }
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {

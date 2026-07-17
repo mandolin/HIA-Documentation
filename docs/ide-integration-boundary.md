@@ -46,9 +46,9 @@ The VS Code extension is the first IDE shell. It provides:
 - build, preview and validation commands;
 - related-location quick fixes;
 - resource action quick fixes;
+- project relation graph navigation through `hia/projectRelationGraph`;
 - generated HTML preview opening;
 - project manifest build setting pass-through.
-- project relation graph request constants for future visible navigation.
 
 The VS Code extension is a presentation and command layer. It does not parse JSDoc, generate HTML, or duplicate core/LSP diagnostics.
 

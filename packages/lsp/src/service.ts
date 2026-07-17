@@ -131,6 +131,8 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
     const projectRelationGraph = createProjectRelationGraphFromParsed(uri, parsed);
     const diagnostics = docSourceMapIndex
       ? createDocSourceMapDiagnostics(docSourceMapIndex)
+      : projectRelationGraph
+        ? []
       : validateTextDocumentWithResourceIndex(document, resourceIndex);
 
     const managedDocument: HiaLspManagedDocument = {
@@ -155,9 +157,14 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
   function validateTextDocument(document: TextDocument): Diagnostic[] {
     const parsed = parseJsonText(document.getText());
     const docSourceMapIndex = createDocSourceMapIndexFromParsed(document.uri, parsed);
+    const projectRelationGraph = createProjectRelationGraphFromParsed(document.uri, parsed);
 
     if (docSourceMapIndex) {
       return createDocSourceMapDiagnostics(docSourceMapIndex);
+    }
+
+    if (projectRelationGraph) {
+      return [];
     }
 
     return validateTextDocumentWithResourceIndex(
