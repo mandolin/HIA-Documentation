@@ -4,6 +4,8 @@ import {
   HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
   HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
   HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
+  HIA_PROJECT_RELATION_GRAPH_CONTRACT,
+  HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
   renderHtmlDocument,
   renderProjectHtmlDocument
 } from "./index.js";
@@ -175,6 +177,13 @@ describe("@hia-doc/renderer-html", () => {
       contractVersion?: string;
       groups?: Array<{ kind: string; label: string; entryCount: number; views: string[] }>;
       entries?: Array<{ id: string; source?: { preview?: unknown } }>;
+      relationGraph?: {
+        contract?: string;
+        contractVersion?: string;
+        nodeCount?: number;
+        relationCount?: number;
+        relations?: Array<{ kind: string; from: string; to: string; label: string }>;
+      };
     };
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html", "dotnet"]);
@@ -187,8 +196,29 @@ describe("@hia-doc/renderer-html", () => {
       entryCount: 4,
       path: "project-index.json"
     });
+    expect(result.manifest.project?.relationGraph).toEqual({
+      contract: HIA_PROJECT_RELATION_GRAPH_CONTRACT,
+      contractVersion: HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
+      nodeCount: 9,
+      relationCount: 5,
+      path: "project-index.json"
+    });
     expect(navigationIndex.contract).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT);
     expect(navigationIndex.contractVersion).toBe(HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION);
+    expect(navigationIndex.relationGraph?.contract).toBe(HIA_PROJECT_RELATION_GRAPH_CONTRACT);
+    expect(navigationIndex.relationGraph?.contractVersion).toBe(HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION);
+    expect(navigationIndex.relationGraph?.nodeCount).toBe(9);
+    expect(navigationIndex.relationGraph?.relationCount).toBe(5);
+    expect(navigationIndex.relationGraph?.relations).toContainEqual(expect.objectContaining({
+      kind: "documents-generated-artifact",
+      from: "entry:html:alert",
+      to: "artifact:dist/alert.html"
+    }));
+    expect(navigationIndex.relationGraph?.relations).toContainEqual(expect.objectContaining({
+      kind: "semantic-member",
+      from: "entry:dotnet:portal-menu",
+      to: "source:src/PortalMenu.cs"
+    }));
     expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "dotnet:portal-menu", "html:alert", "js:build"]);
     expect(navigationIndex.entries?.find((entry) => entry.id === "js:build")?.source?.preview).toBeUndefined();
     expect(navigationIndex.groups).toContainEqual({ id: "kind:dotnet-type", kind: "kind", label: "dotnet-type", entryCount: 1, views: ["dotnet"] });
@@ -219,6 +249,12 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("function buildProfileSummary(profile)");
     expect(html).toContain("https://example.test/src/profile.js#L12");
     expect(html).toContain("Doc Source Map");
+    expect(html).toContain("Relations");
+    expect(html).toContain("documents-source");
+    expect(html).toContain("documents-generated-artifact");
+    expect(html).toContain("semantic-member");
+    expect(html).toContain("Source: src/alert.html");
+    expect(html).toContain("Generated: dist/alert.html");
     expect(html).toContain("data-hia-open-request=\"source\"");
     expect(html).toContain("data-hia-open-request=\"generated\"");
     expect(html).toContain("entry:html:alert");

@@ -177,7 +177,9 @@ Project aggregation mode can also be configured through `hia.config.json`:
 In project mode, the output manifest includes:
 
 - `project.navigationIndex`: the `hia-project-navigation-index@0.1.0-draft` reference for `project-index.json`.
+- `project.relationGraph`: the `hia-project-relation-graph@0.1.0-draft` summary reference when the rendered project has source, generated-artifact, endpoint or semantic relations.
 - `project-index.json`: deterministic, presentation-neutral entry metadata for static portals and search. It carries stable entry ids, views, public source/doc-source-map references and localized descriptions, but excludes inline source previews. `index.html` remains the complete source-linked detail surface.
+- `project-index.json.relationGraph`: complete first-round relation graph data derived by the renderer from project entries, source metadata and doc-source-map references. Project manifests do not need to declare this graph yet.
 
 - `build.mode = "project"`;
 - `build.inputs`;

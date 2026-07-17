@@ -26,6 +26,16 @@ export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT = "hia-project-navigation-ind
  * First draft version of the project navigation index; independent from the renderer manifest file-list version.
  */
 export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION = "0.1.0-draft";
+/**
+ * 项目级关系图的中性 contract 名称；用于表达文档入口、源码、生成物与宿主能力之间的关系。
+ * Neutral project-level relation-graph contract for documentation entries, sources, generated artifacts, and host capabilities.
+ */
+export const HIA_PROJECT_RELATION_GRAPH_CONTRACT = "hia-project-relation-graph";
+/**
+ * 项目级关系图的首个草案版本；后续 IDE/DevTools host 会按此 contract 做能力协商。
+ * First draft version of the project relation graph; future IDE/DevTools hosts negotiate capabilities against this contract.
+ */
+export const HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION = "0.1.0-draft";
 
 export interface RenderedHtmlFile {
   path: string;
@@ -47,6 +57,7 @@ export interface RenderProjectHtmlInput {
   entries: RenderProjectEntry[];
   profiles?: RenderProjectProfileRef[];
   docSourceMaps?: RenderProjectDocSourceMapRef[];
+  relationGraph?: RenderProjectRelationGraph;
   diagnostics?: HiaDiagnostic[];
 }
 
@@ -93,6 +104,56 @@ export interface RenderProjectSourceMapRef {
   kind?: string;
   language?: string;
   path?: string;
+}
+
+export type RenderProjectRelationNodeKind = "entry" | "source" | "artifact" | "endpoint";
+
+export type RenderProjectRelationKind =
+  | "documents-source"
+  | "documents-generated-artifact"
+  | "documents-endpoint"
+  | "exposes-api"
+  | "semantic-member";
+
+/**
+ * 统一项目页与外部宿主共同消费的轻量关系图。
+ * Lightweight relation graph shared by the unified project page and external hosts.
+ */
+export interface RenderProjectRelationGraph {
+  contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
+  contractVersion: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION;
+  nodeCount: number;
+  relationCount: number;
+  nodes: RenderProjectRelationNode[];
+  relations: RenderProjectRelation[];
+}
+
+/**
+ * relation graph 中的稳定节点；节点可以代表文档入口、源码、生成物或运行时端点。
+ * Stable node in the relation graph; it can represent a documentation entry, source, generated artifact, or runtime endpoint.
+ */
+export interface RenderProjectRelationNode {
+  id: string;
+  kind: RenderProjectRelationNodeKind;
+  label: string;
+  entryId?: string;
+  path?: string;
+  view?: RenderProjectView;
+}
+
+/**
+ * relation graph 中的一条方向关系；第一轮仅表达统一页面和宿主导航需要的最小关系。
+ * Directed relation in the graph; the first slice covers the minimal relationships needed by unified pages and host navigation.
+ */
+export interface RenderProjectRelation {
+  id: string;
+  kind: RenderProjectRelationKind;
+  from: string;
+  to: string;
+  label: string;
+  confidence?: string;
+  entryId?: string;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface RenderProjectEntry {
@@ -185,6 +246,7 @@ export interface RenderHtmlManifest {
     navigationIndex?: RenderProjectNavigationIndexRef;
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
+    relationGraph?: RenderProjectRelationGraphRef;
   };
 }
 
@@ -202,6 +264,18 @@ export interface RenderProjectNavigationIndexRef {
   contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
   contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
   entryCount: number;
+  path: string;
+}
+
+/**
+ * renderer manifest 中 relation graph 的摘要引用，避免主 manifest 直接内嵌完整图。
+ * Summary reference to the relation graph in the renderer manifest, avoiding full graph embedding in the main manifest.
+ */
+export interface RenderProjectRelationGraphRef {
+  contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
+  contractVersion: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION;
+  nodeCount: number;
+  relationCount: number;
   path: string;
 }
 
@@ -225,6 +299,7 @@ export interface RenderProjectNavigationIndex {
   groups: RenderProjectNavigationGroup[];
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
+  relationGraph?: RenderProjectRelationGraph;
 }
 
 export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "source-root";
@@ -291,13 +366,14 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
 }
 
 export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
-  const pageTitle = options.title ?? projectInput.project.title ?? projectInput.project.name;
+  const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
+  const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
-  const navigationIndex = createProjectNavigationIndex(projectInput, pageTitle, options);
+  const navigationIndex = createProjectNavigationIndex(normalizedProjectInput, pageTitle, options);
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
-      contents: renderProjectIndexHtml(pageTitle, projectInput, options),
+      contents: renderProjectIndexHtml(pageTitle, normalizedProjectInput, options),
       contentType: "text/html; charset=utf-8",
       role: "entry"
     },
@@ -322,8 +398,8 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
 
   return {
     files,
-    diagnostics: projectInput.diagnostics ?? [],
-    manifest: createProjectManifest(projectInput, files, pageTitle, options, navigationIndex)
+    diagnostics: normalizedProjectInput.diagnostics ?? [],
+    manifest: createProjectManifest(normalizedProjectInput, files, pageTitle, options, navigationIndex)
   };
 }
 
@@ -380,7 +456,18 @@ function createProjectManifest(
         path: "project-index.json"
       },
       ...(projectInput.profiles && projectInput.profiles.length > 0 ? { profiles: projectInput.profiles } : {}),
-      ...(projectInput.docSourceMaps && projectInput.docSourceMaps.length > 0 ? { docSourceMaps: projectInput.docSourceMaps } : {})
+      ...(projectInput.docSourceMaps && projectInput.docSourceMaps.length > 0 ? { docSourceMaps: projectInput.docSourceMaps } : {}),
+      ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
+        ? {
+            relationGraph: {
+              contract: projectInput.relationGraph.contract,
+              contractVersion: projectInput.relationGraph.contractVersion,
+              nodeCount: projectInput.relationGraph.nodeCount,
+              relationCount: projectInput.relationGraph.relationCount,
+              path: "project-index.json"
+            }
+          }
+        : {})
     }
   };
 }
@@ -423,7 +510,10 @@ function createProjectNavigationIndex(
       .sort(compareProjectNavigationEntries),
     groups: collectProjectNavigationGroups(projectInput.entries),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
-    docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps)
+    docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps),
+    ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
+      ? { relationGraph: projectInput.relationGraph }
+      : {})
   };
 }
 
@@ -501,6 +591,8 @@ function renderProjectIndexHtml(
     .join("");
   const profileSummary = renderProjectProfiles(projectInput.profiles ?? []);
   const docSourceMapSummary = renderProjectDocSourceMaps(projectInput.docSourceMaps ?? []);
+  const relationGraphSummary = renderProjectRelationGraphSummary(projectInput.relationGraph);
+  const relationGraph = renderProjectRelationGraph(projectInput.relationGraph);
   const diagnostics = renderProjectDiagnostics(projectInput.diagnostics ?? []);
 
   return [
@@ -524,9 +616,11 @@ function renderProjectIndexHtml(
     navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
     profileSummary,
     docSourceMapSummary,
+    relationGraphSummary,
     diagnostics,
     "</aside>",
     "<main class=\"hia-main hia-project-main\">",
+    relationGraph,
     entries || "<p>No project documentation entries.</p>",
     "<p class=\"hia-project-empty\" data-hia-project-empty hidden>No entries match the current filters.</p>",
     "</main>",
@@ -770,6 +864,66 @@ function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[
   return `<section class="hia-project-summary"><h2>Doc Source Maps</h2><ul>${items}</ul></section>`;
 }
 
+function renderProjectRelationGraphSummary(relationGraph: RenderProjectRelationGraph | undefined): string {
+  if (!relationGraph || relationGraph.relationCount === 0) {
+    return "";
+  }
+
+  const items = [
+    `<li><span>Nodes</span><strong>${escapeHtml(String(relationGraph.nodeCount))}</strong></li>`,
+    `<li><span>Relations</span><strong>${escapeHtml(String(relationGraph.relationCount))}</strong></li>`,
+    `<li><span>Contract</span><strong>${escapeHtml(relationGraph.contractVersion)}</strong></li>`
+  ].join("");
+
+  return `<section class="hia-project-summary hia-project-relations-summary"><h2>Relations</h2><ul class="hia-project-group-list">${items}</ul></section>`;
+}
+
+function renderProjectRelationGraph(relationGraph: RenderProjectRelationGraph | undefined): string {
+  if (!relationGraph || relationGraph.relationCount === 0) {
+    return "";
+  }
+
+  const nodesById = new Map(relationGraph.nodes.map((node) => [node.id, node]));
+  const items = relationGraph.relations
+    .map((relation) => renderProjectRelation(relation, nodesById))
+    .join("");
+
+  return [
+    "<section class=\"hia-symbol hia-project-relations\">",
+    "<h2>Relations</h2>",
+    `<p>${escapeHtml(String(relationGraph.relationCount))} relation(s), ${escapeHtml(String(relationGraph.nodeCount))} node(s).</p>`,
+    `<ul class="hia-project-relation-list">${items}</ul>`,
+    "</section>"
+  ].join("");
+}
+
+function renderProjectRelation(
+  relation: RenderProjectRelation,
+  nodesById: Map<string, RenderProjectRelationNode>
+): string {
+  const from = nodesById.get(relation.from);
+  const to = nodesById.get(relation.to);
+  const confidence = relation.confidence ? `, confidence=${relation.confidence}` : "";
+  const metadata = relation.metadata
+    ? Object.entries(relation.metadata)
+        .map(([key, value]) => `${key}=${String(value)}`)
+        .join(", ")
+    : "";
+  const detail = [
+    `${from?.label ?? relation.from} -> ${to?.label ?? relation.to}`,
+    confidence,
+    metadata ? `, ${metadata}` : ""
+  ].join("");
+
+  return [
+    "<li>",
+    `<span class="hia-kind">${escapeHtml(relation.kind)}</span> `,
+    `<strong>${escapeHtml(relation.label)}</strong>`,
+    `<small>${escapeHtml(detail)}</small>`,
+    "</li>"
+  ].join("");
+}
+
 function renderProjectDiagnostics(diagnostics: HiaDiagnostic[]): string {
   if (diagnostics.length === 0) {
     return "";
@@ -829,6 +983,238 @@ function renderProjectViewScript(): string {
     "})();",
     "</script>"
   ].join("");
+}
+
+function normalizeProjectRelationGraphInput(projectInput: RenderProjectHtmlInput): RenderProjectHtmlInput {
+  if (projectInput.relationGraph) {
+    return {
+      ...projectInput,
+      relationGraph: normalizeProjectRelationGraph(projectInput.relationGraph)
+    };
+  }
+
+  const relationGraph = createProjectRelationGraph(projectInput.entries);
+
+  return relationGraph.relationCount > 0
+    ? { ...projectInput, relationGraph }
+    : projectInput;
+}
+
+function normalizeProjectRelationGraph(relationGraph: RenderProjectRelationGraph): RenderProjectRelationGraph {
+  const nodes = [...relationGraph.nodes].sort(compareProjectRelationNodes);
+  const relations = [...relationGraph.relations].sort(compareProjectRelations);
+
+  return {
+    contract: HIA_PROJECT_RELATION_GRAPH_CONTRACT,
+    contractVersion: HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
+    nodeCount: nodes.length,
+    relationCount: relations.length,
+    nodes,
+    relations
+  };
+}
+
+function createProjectRelationGraph(entries: RenderProjectEntry[]): RenderProjectRelationGraph {
+  const nodes = new Map<string, RenderProjectRelationNode>();
+  const relations = new Map<string, RenderProjectRelation>();
+
+  for (const entry of entries) {
+    const entryNodeId = createProjectEntryRelationNodeId(entry.id);
+    addProjectRelationNode(nodes, {
+      id: entryNodeId,
+      kind: "entry",
+      label: entry.name,
+      entryId: entry.id,
+      view: entry.view
+    });
+
+    addProjectSourceRelation(nodes, relations, entry, entry.source?.path, entry.source?.confidence, {
+      language: entry.source?.language ?? null,
+      rangeStartLine: entry.source?.range?.start.line ?? null,
+      rangeEndLine: entry.source?.range?.end?.line ?? null,
+      rangeSource: entry.source?.rangeSource ?? null
+    });
+
+    addProjectSourceRelation(nodes, relations, entry, entry.docSourceMap?.sourcePath, entry.docSourceMap?.sourceConfidence, {
+      manifest: entry.docSourceMap?.path ?? null,
+      rangeStartLine: entry.docSourceMap?.sourceRange?.start.line ?? null,
+      rangeEndLine: entry.docSourceMap?.sourceRange?.end?.line ?? null,
+      rangeSource: entry.docSourceMap?.sourceRangeSource ?? null
+    });
+
+    addProjectArtifactRelation(nodes, relations, entry);
+    addProjectEndpointRelation(nodes, relations, entry);
+  }
+
+  const graph: RenderProjectRelationGraph = {
+    contract: HIA_PROJECT_RELATION_GRAPH_CONTRACT,
+    contractVersion: HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
+    nodeCount: nodes.size,
+    relationCount: relations.size,
+    nodes: [...nodes.values()],
+    relations: [...relations.values()]
+  };
+
+  return normalizeProjectRelationGraph(graph);
+}
+
+function addProjectSourceRelation(
+  nodes: Map<string, RenderProjectRelationNode>,
+  relations: Map<string, RenderProjectRelation>,
+  entry: RenderProjectEntry,
+  sourcePath: string | undefined,
+  confidence: string | undefined,
+  metadata: Record<string, string | number | boolean | null | undefined>
+): void {
+  if (!sourcePath) {
+    return;
+  }
+
+  const entryNodeId = createProjectEntryRelationNodeId(entry.id);
+  const sourceNodeId = createProjectPathRelationNodeId("source", sourcePath);
+  addProjectRelationNode(nodes, {
+    id: sourceNodeId,
+    kind: "source",
+    label: sourcePath,
+    path: sourcePath
+  });
+  const compactMetadata = compactProjectRelationMetadata(metadata);
+  addProjectRelation(relations, {
+    id: createProjectRelationId(inferProjectSourceRelationKind(entry), entryNodeId, sourceNodeId),
+    kind: inferProjectSourceRelationKind(entry),
+    from: entryNodeId,
+    to: sourceNodeId,
+    label: `Source: ${sourcePath}`,
+    ...(confidence ? { confidence } : {}),
+    entryId: entry.id,
+    ...(compactMetadata ? { metadata: compactMetadata } : {})
+  });
+}
+
+function addProjectArtifactRelation(
+  nodes: Map<string, RenderProjectRelationNode>,
+  relations: Map<string, RenderProjectRelation>,
+  entry: RenderProjectEntry
+): void {
+  if (!entry.docSourceMap?.artifactPath) {
+    return;
+  }
+
+  const entryNodeId = createProjectEntryRelationNodeId(entry.id);
+  const artifactNodeId = createProjectPathRelationNodeId("artifact", entry.docSourceMap.artifactPath);
+  addProjectRelationNode(nodes, {
+    id: artifactNodeId,
+    kind: "artifact",
+    label: entry.docSourceMap.artifactPath,
+    path: entry.docSourceMap.artifactPath
+  });
+  const compactMetadata = compactProjectRelationMetadata({
+    manifest: entry.docSourceMap.path,
+    selector: entry.docSourceMap.artifactSelector ?? null
+  });
+  addProjectRelation(relations, {
+    id: createProjectRelationId("documents-generated-artifact", entryNodeId, artifactNodeId),
+    kind: "documents-generated-artifact",
+    from: entryNodeId,
+    to: artifactNodeId,
+    label: `Generated: ${entry.docSourceMap.artifactPath}`,
+    ...(entry.docSourceMap.artifactConfidence ? { confidence: entry.docSourceMap.artifactConfidence } : {}),
+    entryId: entry.id,
+    ...(compactMetadata ? { metadata: compactMetadata } : {})
+  });
+}
+
+function addProjectEndpointRelation(
+  nodes: Map<string, RenderProjectRelationNode>,
+  relations: Map<string, RenderProjectRelation>,
+  entry: RenderProjectEntry
+): void {
+  if (entry.kind !== "aspnet-endpoint" && !entry.kind.startsWith("aspnet-")) {
+    return;
+  }
+
+  const entryNodeId = createProjectEntryRelationNodeId(entry.id);
+  const endpointNodeId = `endpoint:${entry.id}`;
+  addProjectRelationNode(nodes, {
+    id: endpointNodeId,
+    kind: "endpoint",
+    label: entry.name,
+    entryId: entry.id,
+    view: entry.view
+  });
+  addProjectRelation(relations, {
+    id: createProjectRelationId("documents-endpoint", entryNodeId, endpointNodeId),
+    kind: "documents-endpoint",
+    from: entryNodeId,
+    to: endpointNodeId,
+    label: `Endpoint: ${entry.name}`,
+    entryId: entry.id
+  });
+}
+
+function addProjectRelationNode(
+  nodes: Map<string, RenderProjectRelationNode>,
+  node: RenderProjectRelationNode
+): void {
+  if (!nodes.has(node.id)) {
+    nodes.set(node.id, node);
+  }
+}
+
+function addProjectRelation(
+  relations: Map<string, RenderProjectRelation>,
+  relation: RenderProjectRelation
+): void {
+  const current = relations.get(relation.id);
+  if (!current) {
+    relations.set(relation.id, relation);
+    return;
+  }
+
+  if (!current.confidence && relation.confidence) {
+    relations.set(relation.id, { ...current, confidence: relation.confidence });
+  }
+}
+
+function inferProjectSourceRelationKind(entry: RenderProjectEntry): RenderProjectRelationKind {
+  if (entry.kind.startsWith("dotnet-")) {
+    return "semantic-member";
+  }
+
+  if (entry.kind === "vue-exposed-api") {
+    return "exposes-api";
+  }
+
+  return "documents-source";
+}
+
+function createProjectEntryRelationNodeId(entryId: string): string {
+  return `entry:${entryId}`;
+}
+
+function createProjectPathRelationNodeId(kind: "source" | "artifact", path: string): string {
+  return `${kind}:${path.replaceAll("\\", "/")}`;
+}
+
+function createProjectRelationId(kind: RenderProjectRelationKind, from: string, to: string): string {
+  return `${kind}:${from}->${to}`;
+}
+
+function compactProjectRelationMetadata(
+  metadata: Record<string, string | number | boolean | null | undefined>
+): Record<string, string | number | boolean | null> | undefined {
+  const entries = Object.entries(metadata)
+    .filter((entry): entry is [string, string | number | boolean] => entry[1] !== undefined && entry[1] !== null);
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+function compareProjectRelationNodes(left: RenderProjectRelationNode, right: RenderProjectRelationNode): number {
+  return compareStableText(left.id, right.id);
+}
+
+function compareProjectRelations(left: RenderProjectRelation, right: RenderProjectRelation): number {
+  return compareStableText(left.id, right.id);
 }
 
 const PROJECT_VIEW_ORDER: readonly RenderProjectView[] = ["all", "js", "css", "html", "dotnet", "other"];

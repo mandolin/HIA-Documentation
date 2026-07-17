@@ -340,6 +340,25 @@ a {
   font-size: .78rem;
 }
 
+.hia-project-relation-list {
+  display: grid;
+  gap: .5rem;
+  list-style: none;
+  padding-left: 0;
+}
+
+.hia-project-relation-list li {
+  border-top: 1px solid var(--hia-border);
+  display: grid;
+  gap: .2rem;
+  padding-top: .5rem;
+}
+
+.hia-project-relation-list small {
+  color: var(--hia-muted);
+  overflow-wrap: anywhere;
+}
+
 .hia-project-empty {
   color: var(--hia-muted);
   padding: 1rem;

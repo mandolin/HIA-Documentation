@@ -51,6 +51,7 @@ The page should include:
 - an `HTML` view with HTMDoc extraction entries;
 - profile summary;
 - doc-source-map summary with linked entry counts;
+- a `Relations` summary and relation graph section derived from source/doc-source-map metadata;
 - a `Doc Source Map` section on the HTML `Alert` entry.
 - project view buttons styled by the default theme and updating `aria-pressed` as views change.
 
@@ -83,6 +84,8 @@ The manifest should include:
 ```
 
 `project-index.json` is a deterministic `hia-project-navigation-index@0.1.0-draft` artifact for static portals and search. It records stable entry identifiers and public navigation metadata, but intentionally excludes inline source previews. The unified `index.html` remains the complete source-linked detail surface.
+
+The same `project-index.json` also carries the first-round `hia-project-relation-graph@0.1.0-draft` data. The graph is derived from entries, source references and doc-source-map references so that future portals, IDE hosts and DevTools hosts can consume the same source/generated-artifact relationship model without scraping the HTML page.
 
 ## Verify Path Privacy
 
