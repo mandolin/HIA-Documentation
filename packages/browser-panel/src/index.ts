@@ -99,6 +99,11 @@ export interface CreateBrowserPanelPayloadInput {
    * Identity metadata for the documented project.
    */
   project: BrowserPanelProjectInfo;
+  /**
+   * 可选的项目级 relation graph。
+   * Optional project-level relation graph.
+   */
+  relationGraph?: BrowserPanelRelationGraphInput;
 }
 
 /**
@@ -171,6 +176,11 @@ export interface BrowserPanelPayload {
    */
   project: BrowserPanelProjectInfo;
   /**
+   * 可选的项目级关系图，供 Browser/DevTools host 选择 relation/source/generated artifact。
+   * Optional project-level relation graph used by Browser/DevTools hosts to select relations, sources and generated artifacts.
+   */
+  relationGraph?: BrowserPanelRelationGraph;
+  /**
    * payload schema 版本。
    * Payload schema version.
    */
@@ -208,10 +218,103 @@ export interface BrowserPanelSummary {
    */
   linkedEntryCount: number;
   /**
+   * relation graph 节点数量。
+   * Number of relation graph nodes.
+   */
+  relationNodeCount: number;
+  /**
+   * relation graph 关系数量。
+   * Number of relation graph relations.
+   */
+  relationCount: number;
+  /**
    * 可参与查询的 ordinary source map 数量。
    * Number of ordinary source maps available for lookup.
    */
   sourceMapCount: number;
+}
+
+/**
+ * 浏览器面板接收的 relation graph 输入。
+ * Relation graph input accepted by the browser panel.
+ */
+export interface BrowserPanelRelationGraphInput {
+  contract?: string;
+  contractVersion?: string;
+  nodeCount?: number;
+  nodes?: BrowserPanelRelationNodeInput[];
+  relationCount?: number;
+  relations?: BrowserPanelRelationInput[];
+}
+
+/**
+ * relation graph 节点输入。
+ * Relation graph node input.
+ */
+export interface BrowserPanelRelationNodeInput {
+  entryId?: string;
+  id?: string;
+  kind?: string;
+  label?: string;
+  path?: string;
+  view?: string;
+}
+
+/**
+ * relation graph 关系输入。
+ * Relation graph relation input.
+ */
+export interface BrowserPanelRelationInput {
+  confidence?: string;
+  entryId?: string;
+  from?: string;
+  id?: string;
+  kind?: string;
+  label?: string;
+  metadata?: Record<string, string | number | boolean | null>;
+  to?: string;
+}
+
+/**
+ * 浏览器面板 payload 中的 relation graph。
+ * Relation graph carried by the browser panel payload.
+ */
+export interface BrowserPanelRelationGraph {
+  contract?: string;
+  contractVersion?: string;
+  nodeCount: number;
+  nodes: BrowserPanelRelationNode[];
+  relationCount: number;
+  relations: BrowserPanelRelation[];
+}
+
+/**
+ * 浏览器面板 payload 中的 relation graph 节点。
+ * Relation graph node carried by the browser panel payload.
+ */
+export interface BrowserPanelRelationNode {
+  entryId?: string;
+  id: string;
+  kind: string;
+  label: string;
+  path?: string;
+  view?: string;
+}
+
+/**
+ * 浏览器面板 payload 中的 relation graph 关系。
+ * Relation graph relation carried by the browser panel payload.
+ */
+export interface BrowserPanelRelation {
+  confidence?: string;
+  entryId?: string;
+  from: string;
+  id: string;
+  kind: string;
+  label: string;
+  metadata?: Record<string, string | number | boolean | null>;
+  openRequests: BrowserPanelOpenRequest[];
+  to: string;
 }
 
 /**
@@ -502,7 +605,7 @@ export interface BrowserPanelOpenRequest {
    * 请求目标类别。
    * Request target kind.
    */
-  kind: "generated-artifact" | "original-source";
+  kind: "documentation-entry" | "generated-artifact" | "original-source";
   /**
    * UI 可显示的请求标签。
    * User-facing request label.
@@ -514,21 +617,36 @@ export interface BrowserPanelOpenRequest {
    */
   target: {
     /**
+     * 可选 documentation entry ID。
+     * Optional documentation entry id.
+     */
+    entryId?: string;
+    /**
      * 目标文件路径。
      * Target file path.
      */
-    path: string;
+    path?: string;
+    /**
+     * 可选 relation ID。
+     * Optional relation id.
+     */
+    relationId?: string;
     /**
      * 可选目标位置。
      * Optional target position.
      */
     position?: BrowserPanelPosition;
+    /**
+     * 可选 DOM/CSS selector。
+     * Optional DOM/CSS selector.
+     */
+    selector?: string;
   };
   /**
    * 宿主命令类型。
    * Host command type.
    */
-  type: "hia.openGenerated" | "hia.openSource";
+  type: "hia.openDocumentationEntry" | "hia.openGenerated" | "hia.openSource";
 }
 
 /**
@@ -641,6 +759,7 @@ export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput)
   const docSourceMaps = input.docSourceMaps.map((docMap) => createDocSourceMapSummary(docMap));
   const entries = input.docSourceMaps.flatMap((docMap) => createBrowserPanelEntries(docMap));
   const diagnostics = input.docSourceMaps.flatMap((docMap) => normalizeDiagnostics(docMap.index.diagnostics));
+  const relationGraph = createBrowserPanelRelationGraph(input.relationGraph);
 
   return {
     diagnostics,
@@ -648,12 +767,15 @@ export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput)
     entries,
     generator: "@hia-doc/browser-panel",
     project: input.project,
+    ...(relationGraph ? { relationGraph } : {}),
     schemaVersion: HIA_BROWSER_PANEL_PAYLOAD_SCHEMA_VERSION,
     summary: {
       docSourceMapCount: docSourceMaps.length,
       domainCounts: countEntriesByDomain(entries),
       entryCount: entries.length,
       linkedEntryCount: entries.filter((entry) => entry.lookup.status === "available" || entry.lookup.status === "doc-linked").length,
+      relationCount: relationGraph?.relationCount ?? 0,
+      relationNodeCount: relationGraph?.nodeCount ?? 0,
       sourceMapCount: docSourceMaps.reduce((total, docMap) => total + docMap.sourceMapCount, 0)
     }
   };
@@ -854,6 +976,196 @@ function createOpenRequests(entryId: string, lookup: BrowserPanelEntryLookup): B
   return requests;
 }
 
+function createBrowserPanelRelationGraph(input: BrowserPanelRelationGraphInput | undefined): BrowserPanelRelationGraph | undefined {
+  if (!input) {
+    return undefined;
+  }
+
+  const nodes = (input.nodes ?? []).map(normalizeRelationNode).filter(isRelationNode);
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const relations = (input.relations ?? [])
+    .map((relation) => normalizeRelation(relation, nodesById))
+    .filter(isRelation);
+
+  if (relations.length === 0) {
+    return undefined;
+  }
+
+  return {
+    ...(input.contract ? { contract: input.contract } : {}),
+    ...(input.contractVersion ? { contractVersion: input.contractVersion } : {}),
+    nodeCount: input.nodeCount ?? nodes.length,
+    nodes,
+    relationCount: input.relationCount ?? relations.length,
+    relations
+  };
+}
+
+function normalizeRelationNode(input: BrowserPanelRelationNodeInput): BrowserPanelRelationNode | undefined {
+  if (!input.id || !input.kind || !input.label) {
+    return undefined;
+  }
+
+  return {
+    ...(input.entryId ? { entryId: input.entryId } : {}),
+    id: input.id,
+    kind: input.kind,
+    label: input.label,
+    ...(input.path ? { path: normalizePath(input.path) } : {}),
+    ...(input.view ? { view: input.view } : {})
+  };
+}
+
+function normalizeRelation(
+  input: BrowserPanelRelationInput,
+  nodesById: Map<string, BrowserPanelRelationNode>
+): BrowserPanelRelation | undefined {
+  if (!input.from || !input.id || !input.kind || !input.to) {
+    return undefined;
+  }
+
+  const label = input.label ?? input.id;
+  const relationBase = {
+    ...(input.confidence ? { confidence: input.confidence } : {}),
+    ...(input.entryId ? { entryId: input.entryId } : {}),
+    from: input.from,
+    id: input.id,
+    kind: input.kind,
+    label,
+    ...(input.metadata ? { metadata: input.metadata } : {}),
+    to: input.to
+  };
+  const openRequests = createRelationOpenRequests(relationBase, nodesById);
+
+  return {
+    ...relationBase,
+    openRequests
+  };
+}
+
+function isRelationNode(value: BrowserPanelRelationNode | undefined): value is BrowserPanelRelationNode {
+  return Boolean(value);
+}
+
+function isRelation(value: BrowserPanelRelation | undefined): value is BrowserPanelRelation {
+  return Boolean(value);
+}
+
+function createRelationOpenRequests(
+  relation: Omit<BrowserPanelRelation, "openRequests">,
+  nodesById: Map<string, BrowserPanelRelationNode>
+): BrowserPanelOpenRequest[] {
+  const requests: BrowserPanelOpenRequest[] = [];
+  const fromNode = nodesById.get(relation.from);
+  const toNode = nodesById.get(relation.to);
+  const entryId = relation.entryId ?? fromNode?.entryId ?? toNode?.entryId;
+
+  if (entryId) {
+    requests.push({
+      id: `${relation.id}:open-entry`,
+      kind: "documentation-entry",
+      label: `Open documentation entry ${entryId}`,
+      target: {
+        entryId,
+        relationId: relation.id
+      },
+      type: "hia.openDocumentationEntry"
+    });
+  }
+
+  for (const node of [fromNode, toNode]) {
+    const request = createRelationNodeOpenRequest(relation, node);
+
+    if (request) {
+      requests.push(request);
+    }
+  }
+
+  return dedupeOpenRequests(requests);
+}
+
+function createRelationNodeOpenRequest(
+  relation: Omit<BrowserPanelRelation, "openRequests">,
+  node: BrowserPanelRelationNode | undefined
+): BrowserPanelOpenRequest | undefined {
+  if (!node?.path) {
+    return undefined;
+  }
+
+  if (node.kind === "source") {
+    const position = getRelationSourcePosition(relation.metadata);
+
+    return {
+      id: `${relation.id}:open-source:${slug(node.id)}`,
+      kind: "original-source",
+      label: `Open source ${formatPositionLabel(node.path, position)}`,
+      target: {
+        path: node.path,
+        relationId: relation.id,
+        ...(position ? { position } : {})
+      },
+      type: "hia.openSource"
+    };
+  }
+
+  if (node.kind === "artifact") {
+    const selector = getStringMetadata(relation.metadata, "selector");
+
+    return {
+      id: `${relation.id}:open-generated:${slug(node.id)}`,
+      kind: "generated-artifact",
+      label: `Open generated ${node.path}`,
+      target: {
+        path: node.path,
+        relationId: relation.id,
+        ...(selector ? { selector } : {})
+      },
+      type: "hia.openGenerated"
+    };
+  }
+
+  return undefined;
+}
+
+function getRelationSourcePosition(metadata: BrowserPanelRelation["metadata"]): BrowserPanelPosition | undefined {
+  const line = getPositiveNumberMetadata(metadata, "rangeStartLine");
+  const column = getPositiveNumberMetadata(metadata, "rangeStartColumn");
+
+  if (!line) {
+    return undefined;
+  }
+
+  return {
+    line,
+    ...(column ? { column } : {})
+  };
+}
+
+function getPositiveNumberMetadata(metadata: BrowserPanelRelation["metadata"], key: string): number | undefined {
+  const value = metadata?.[key];
+
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function getStringMetadata(metadata: BrowserPanelRelation["metadata"], key: string): string | undefined {
+  const value = metadata?.[key];
+
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function dedupeOpenRequests(requests: BrowserPanelOpenRequest[]): BrowserPanelOpenRequest[] {
+  const seen = new Set<string>();
+
+  return requests.filter((request) => {
+    if (seen.has(request.id)) {
+      return false;
+    }
+
+    seen.add(request.id);
+    return true;
+  });
+}
+
 function normalizeSourceLink(link: DocSourceMapSourceLink): BrowserPanelSourceRef {
   return {
     sourceId: link.sourceId,
@@ -934,7 +1246,7 @@ function renderPanelHtml(payload: BrowserPanelPayload): string {
     "<div class=\"hia-browser-panel\" data-hia-browser-panel>",
     "<aside class=\"hia-panel-sidebar\">",
     `<h1>${escapeHtml(title)}</h1>`,
-    `<p class=\"hia-panel-kicker\">${escapeHtml(payload.summary.entryCount.toString())} source-linked entr${payload.summary.entryCount === 1 ? "y" : "ies"}</p>`,
+    `<p class=\"hia-panel-kicker\">${escapeHtml(payload.summary.entryCount.toString())} source-linked entr${payload.summary.entryCount === 1 ? "y" : "ies"} · ${escapeHtml(payload.summary.relationCount.toString())} relation${payload.summary.relationCount === 1 ? "" : "s"}</p>`,
     "<div class=\"hia-panel-filters\" role=\"group\" aria-label=\"Documentation domain filters\">",
     "<button type=\"button\" data-hia-domain=\"all\">All</button>",
     "<button type=\"button\" data-hia-domain=\"js\">JS</button>",
@@ -943,6 +1255,10 @@ function renderPanelHtml(payload: BrowserPanelPayload): string {
     "</div>",
     "<label class=\"hia-panel-search\"><span>Search</span><input type=\"search\" data-hia-search></label>",
     "<ol class=\"hia-panel-list\" data-hia-entry-list></ol>",
+    "<section class=\"hia-panel-relations\" data-hia-relation-section>",
+    "<h2>Relations</h2>",
+    "<ol class=\"hia-panel-list\" data-hia-relation-list></ol>",
+    "</section>",
     "</aside>",
     "<main class=\"hia-panel-detail\" data-hia-entry-detail></main>",
     "</div>",
@@ -993,6 +1309,7 @@ button,input{font:inherit}
 .hia-browser-panel{display:grid;grid-template-columns:minmax(260px,340px) 1fr;min-height:100vh}
 .hia-panel-sidebar{background:#ffffff;border-right:1px solid #d9e0ea;padding:20px;display:flex;flex-direction:column;gap:16px}
 .hia-panel-sidebar h1{font-size:20px;line-height:1.25;margin:0;color:#0f172a}
+.hia-panel-sidebar h2{font-size:13px;line-height:1.25;margin:0;color:#334155;text-transform:uppercase;letter-spacing:.04em}
 .hia-panel-kicker{margin:0;color:#506177;font-size:13px}
 .hia-panel-filters{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .hia-panel-filters button{border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;padding:7px 8px;color:#1f2937;cursor:pointer}
@@ -1002,6 +1319,7 @@ button,input{font:inherit}
 .hia-panel-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;overflow:auto}
 .hia-panel-list button{width:100%;text-align:left;border:1px solid #d9e0ea;border-radius:8px;background:#fff;padding:10px;display:grid;gap:4px;cursor:pointer}
 .hia-panel-list button[aria-current=true]{border-color:#0f766e;box-shadow:0 0 0 2px rgba(15,118,110,.15)}
+.hia-panel-relations{display:grid;gap:8px;border-top:1px solid #e5e7eb;padding-top:12px;min-height:0}
 .hia-entry-title{font-weight:700;color:#111827}
 .hia-entry-meta{font-size:12px;color:#64748b}
 .hia-panel-detail{padding:28px;display:grid;align-content:start;gap:18px}
@@ -1025,14 +1343,20 @@ const PANEL_SCRIPT = `
 (() => {
   const payload = JSON.parse(document.getElementById("hia-browser-panel-payload").textContent || "{}");
   const list = document.querySelector("[data-hia-entry-list]");
+  const relationList = document.querySelector("[data-hia-relation-list]");
+  const relationSection = document.querySelector("[data-hia-relation-section]");
   const detail = document.querySelector("[data-hia-entry-detail]");
   const search = document.querySelector("[data-hia-search]");
   const buttons = Array.from(document.querySelectorAll("[data-hia-domain]"));
+  const relationGraph = payload.relationGraph || { nodes: [], relations: [] };
+  const relationNodesById = new Map((relationGraph.nodes || []).map((node) => [node.id, node]));
   let activeDomain = "all";
+  let selectedKind = "entry";
   let selectedId = payload.entries[0]?.id || "";
+  let selectedRelationId = relationGraph.relations[0]?.id || "";
 
   function formatPosition(target) {
-    if (!target?.path) return "";
+    if (!target?.path) return target?.entryId ? "entry " + target.entryId : "";
     const position = target.position;
     return position ? target.path + ":" + position.line + (position.column ? ":" + position.column : "") : target.path;
   }
@@ -1046,14 +1370,37 @@ const PANEL_SCRIPT = `
     });
   }
 
+  function visibleRelations() {
+    const query = (search.value || "").toLowerCase();
+    return (relationGraph.relations || []).filter((relation) => {
+      const fromNode = relationNodesById.get(relation.from);
+      const toNode = relationNodesById.get(relation.to);
+      const text = [relation.label, relation.kind, relation.id, relation.entryId, fromNode?.label, toNode?.label].filter(Boolean).join(" ").toLowerCase();
+      return !query || text.includes(query);
+    });
+  }
+
   function renderList() {
     const entries = visibleEntries();
-    if (!entries.some((entry) => entry.id === selectedId)) selectedId = entries[0]?.id || "";
-    list.innerHTML = entries.map((entry) => '<li><button type="button" data-entry-id="' + entry.id + '" aria-current="' + String(entry.id === selectedId) + '"><span class="hia-entry-title">' + escapeHtml(entry.label) + '</span><span class="hia-entry-meta">' + escapeHtml(entry.domain.toUpperCase() + " / " + entry.kind + " / " + entry.lookup.status) + '</span></button></li>').join("");
-    for (const button of list.querySelectorAll("button")) button.addEventListener("click", () => { selectedId = button.dataset.entryId || ""; render(); });
+    if (selectedKind === "entry" && !entries.some((entry) => entry.id === selectedId)) selectedId = entries[0]?.id || "";
+    list.innerHTML = entries.map((entry) => '<li><button type="button" data-entry-id="' + entry.id + '" aria-current="' + String(selectedKind === "entry" && entry.id === selectedId) + '"><span class="hia-entry-title">' + escapeHtml(entry.label) + '</span><span class="hia-entry-meta">' + escapeHtml(entry.domain.toUpperCase() + " / " + entry.kind + " / " + entry.lookup.status) + '</span></button></li>').join("");
+    for (const button of list.querySelectorAll("button")) button.addEventListener("click", () => { selectedKind = "entry"; selectedId = button.dataset.entryId || ""; render(); });
+  }
+
+  function renderRelationList() {
+    const relations = visibleRelations();
+    if (!relationSection || !relationList) return;
+    relationSection.hidden = relations.length === 0;
+    if (selectedKind === "relation" && !relations.some((relation) => relation.id === selectedRelationId)) selectedRelationId = relations[0]?.id || "";
+    relationList.innerHTML = relations.map((relation) => '<li><button type="button" data-relation-id="' + relation.id + '" aria-current="' + String(selectedKind === "relation" && relation.id === selectedRelationId) + '"><span class="hia-entry-title">' + escapeHtml(relation.label) + '</span><span class="hia-entry-meta">' + escapeHtml(relation.kind + (relation.confidence ? " / " + relation.confidence : "")) + '</span></button></li>').join("");
+    for (const button of relationList.querySelectorAll("button")) button.addEventListener("click", () => { selectedKind = "relation"; selectedRelationId = button.dataset.relationId || ""; render(); });
   }
 
   function renderDetail() {
+    if (selectedKind === "relation") {
+      renderRelationDetail();
+      return;
+    }
     const entry = payload.entries.find((candidate) => candidate.id === selectedId);
     if (!entry) {
       detail.innerHTML = '<p class="hia-empty">No source-linked entry selected.</p>';
@@ -1061,18 +1408,43 @@ const PANEL_SCRIPT = `
     }
     const source = entry.lookup.original ? formatPosition({ path: entry.lookup.original.sourcePath, position: entry.lookup.original.position }) : "";
     const generated = entry.lookup.generated ? formatPosition({ path: entry.lookup.generated.artifactPath, position: entry.lookup.generated.position }) : "";
-    const openButtons = entry.openRequests.map((request) => '<button type="button" data-open-request="' + request.id + '">' + escapeHtml(request.label) + '</button>').join("");
-    detail.innerHTML = '<article class="hia-detail-card"><h2>' + escapeHtml(entry.label) + '</h2><div class="hia-badge-row"><span class="hia-badge">' + escapeHtml(entry.domain.toUpperCase()) + '</span><span class="hia-badge">' + escapeHtml(entry.kind) + '</span><span class="hia-badge">' + escapeHtml(entry.lookup.status) + '</span></div><section class="hia-section"><h3>Source Linkage</h3><dl class="hia-kv"><dt>Original</dt><dd>' + escapeHtml(source || "unmapped") + '</dd><dt>Generated</dt><dd>' + escapeHtml(generated || "unmapped") + '</dd><dt>Source Map</dt><dd>' + escapeHtml(entry.lookup.sourceMapPath || "none") + '</dd><dt>Doc Map</dt><dd>' + escapeHtml(entry.docSourceMapPath) + '</dd></dl></section><section class="hia-section"><h3>Open Requests</h3><div class="hia-open-list">' + (openButtons || '<span class="hia-empty">No open request available.</span>') + '</div></section></article>';
-    for (const button of detail.querySelectorAll("[data-open-request]")) {
+    detail.innerHTML = '<article class="hia-detail-card"><h2>' + escapeHtml(entry.label) + '</h2><div class="hia-badge-row"><span class="hia-badge">' + escapeHtml(entry.domain.toUpperCase()) + '</span><span class="hia-badge">' + escapeHtml(entry.kind) + '</span><span class="hia-badge">' + escapeHtml(entry.lookup.status) + '</span></div><section class="hia-section"><h3>Source Linkage</h3><dl class="hia-kv"><dt>Original</dt><dd>' + escapeHtml(source || "unmapped") + '</dd><dt>Generated</dt><dd>' + escapeHtml(generated || "unmapped") + '</dd><dt>Source Map</dt><dd>' + escapeHtml(entry.lookup.sourceMapPath || "none") + '</dd><dt>Doc Map</dt><dd>' + escapeHtml(entry.docSourceMapPath) + '</dd></dl></section><section class="hia-section"><h3>Open Requests</h3><div class="hia-open-list">' + renderOpenButtons(entry.openRequests) + '</div></section></article>';
+    bindOpenRequestButtons(detail, entry.openRequests);
+  }
+
+  function renderRelationDetail() {
+    const relation = (relationGraph.relations || []).find((candidate) => candidate.id === selectedRelationId);
+    if (!relation) {
+      detail.innerHTML = '<p class="hia-empty">No project relation selected.</p>';
+      return;
+    }
+    const fromNode = relationNodesById.get(relation.from);
+    const toNode = relationNodesById.get(relation.to);
+    detail.innerHTML = '<article class="hia-detail-card"><h2>' + escapeHtml(relation.label) + '</h2><div class="hia-badge-row"><span class="hia-badge">' + escapeHtml(relation.kind) + '</span>' + (relation.confidence ? '<span class="hia-badge">' + escapeHtml(relation.confidence) + '</span>' : '') + '</div><section class="hia-section"><h3>Relation</h3><dl class="hia-kv"><dt>From</dt><dd>' + escapeHtml(formatNode(fromNode, relation.from)) + '</dd><dt>To</dt><dd>' + escapeHtml(formatNode(toNode, relation.to)) + '</dd><dt>Entry</dt><dd>' + escapeHtml(relation.entryId || "none") + '</dd><dt>ID</dt><dd>' + escapeHtml(relation.id) + '</dd></dl></section><section class="hia-section"><h3>Open Requests</h3><div class="hia-open-list">' + renderOpenButtons(relation.openRequests || []) + '</div></section></article>';
+    bindOpenRequestButtons(detail, relation.openRequests || []);
+  }
+
+  function renderOpenButtons(requests) {
+    return requests.map((request) => '<button type="button" data-open-request="' + request.id + '">' + escapeHtml(request.label) + '</button>').join("") || '<span class="hia-empty">No open request available.</span>';
+  }
+
+  function bindOpenRequestButtons(root, requests) {
+    for (const button of root.querySelectorAll("[data-open-request]")) {
       button.addEventListener("click", () => {
-        const request = entry.openRequests.find((candidate) => candidate.id === button.dataset.openRequest);
+        const request = requests.find((candidate) => candidate.id === button.dataset.openRequest);
         window.postMessage({ type: "hia.browserPanel.openRequest", request }, window.location.origin);
       });
     }
   }
 
+  function formatNode(node, fallback) {
+    if (!node) return fallback;
+    return node.label + " (" + node.kind + ")" + (node.path ? " " + node.path : "");
+  }
+
   function render() {
     renderList();
+    renderRelationList();
     renderDetail();
     for (const button of buttons) button.setAttribute("aria-pressed", String(button.dataset.hiaDomain === activeDomain));
   }

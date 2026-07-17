@@ -8,12 +8,13 @@ The package turns `doc-source-map` indexes and ordinary source map lookup indexe
 - a standalone `index.html` panel
 - a small output manifest
 
-The generated HTML can be opened as a local page today. Its payload shape is intentionally close to a future DevTools panel message boundary, so browser extensions can consume the same data without reimplementing source-linkage logic.
+The generated HTML can be opened as a local page today. Its payload shape is intentionally close to a future DevTools panel message boundary, so browser extensions can consume the same data without reimplementing source-linkage or project relation logic.
 
 ## Current Scope
 
 - Renders project-level doc-source-map entries.
 - Shows original source and generated artifact positions when ordinary source maps are available.
+- Optionally carries `project-index.json.relationGraph` so hosts can choose documentation entries, relations, source files and generated artifacts without scraping generated HTML.
 - Emits open-request payloads instead of directly controlling editors or DevTools.
 - Does not read files or discover source maps; callers provide validated indexes.
 

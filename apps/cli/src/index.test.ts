@@ -419,6 +419,56 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("attaches project relation graph payload to the static browser panel", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-browser-panel-relations-"));
+    const docsDir = path.join(root, "docs");
+    const outDir = path.join(root, "browser-panel");
+    const messages: string[] = [];
+
+    try {
+      const docsExitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-mixed.hia-project.json",
+        "--out",
+        docsDir
+      ], createTestIo(messages));
+      const panelExitCode = await runCli([
+        "browser",
+        "panel",
+        "--project-manifest",
+        "fixtures/project-mixed.hia-project.json",
+        "--project-index",
+        path.join(docsDir, "project-index.json"),
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const payload = JSON.parse(await readFile(path.join(outDir, "browser-panel-payload.json"), "utf8")) as {
+        relationGraph?: {
+          relationCount: number;
+          relations: Array<{
+            kind: string;
+            openRequests: Array<{ type: string }>;
+          }>;
+        };
+        summary: { relationCount: number; relationNodeCount: number };
+      };
+
+      expect(docsExitCode).toBe(0);
+      expect(panelExitCode).toBe(0);
+      expect(html).toContain("data-hia-relation-list");
+      expect(payload.summary.relationCount).toBeGreaterThan(0);
+      expect(payload.summary.relationNodeCount).toBeGreaterThan(0);
+      expect(payload.relationGraph?.relationCount).toBeGreaterThan(0);
+      expect(payload.relationGraph?.relations.some((relation) => relation.kind === "documents-generated-artifact")).toBe(true);
+      expect(payload.relationGraph?.relations.flatMap((relation) => relation.openRequests.map((request) => request.type))).toContain("hia.openDocumentationEntry");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("resolves producer output-relative ordinary source maps from nested doc-source-map artifacts", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-browser-panel-producer-"));
     const producerArtifactDirectory = path.join(root, "producer", "artifacts");

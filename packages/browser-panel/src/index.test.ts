@@ -77,6 +77,70 @@ describe("@hia-doc/browser-panel", () => {
     expect(rendered.files[0]?.contents).toContain("ts:function:renderProfileCard");
     expect(rendered.files[1]?.contents).toContain("\"@hia-doc/browser-panel\"");
   });
+
+  it("adds project relation graph payload and relation open requests", () => {
+    const payload = createBrowserPanelPayload({
+      project: {
+        id: "project:mixed",
+        name: "Mixed Project"
+      },
+      docSourceMaps: [],
+      relationGraph: {
+        contract: "hia-project-relation-graph",
+        contractVersion: "0.1.0-draft",
+        nodeCount: 2,
+        relationCount: 1,
+        nodes: [
+          {
+            id: "entry:html:alert",
+            kind: "entry",
+            label: "Alert",
+            entryId: "html:alert",
+            view: "html"
+          },
+          {
+            id: "artifact:dist/alert.html",
+            kind: "artifact",
+            label: "dist/alert.html",
+            path: "dist/alert.html"
+          }
+        ],
+        relations: [
+          {
+            id: "documents-generated-artifact:entry:html:alert->artifact:dist/alert.html",
+            kind: "documents-generated-artifact",
+            from: "entry:html:alert",
+            to: "artifact:dist/alert.html",
+            label: "Generated: dist/alert.html",
+            confidence: "medium",
+            entryId: "html:alert",
+            metadata: {
+              selector: "[data-component=\"Alert\"]"
+            }
+          }
+        ]
+      }
+    });
+    const rendered = renderBrowserPanel(payload);
+
+    expect(payload.summary).toMatchObject({
+      relationCount: 1,
+      relationNodeCount: 2
+    });
+    expect(payload.relationGraph?.relations[0]?.openRequests.map((request) => request.type)).toEqual([
+      "hia.openDocumentationEntry",
+      "hia.openGenerated"
+    ]);
+    expect(payload.relationGraph?.relations[0]?.openRequests[1]).toMatchObject({
+      kind: "generated-artifact",
+      target: {
+        path: "dist/alert.html",
+        selector: "[data-component=\"Alert\"]"
+      }
+    });
+    expect(rendered.files[0]?.contents).toContain("data-hia-relation-list");
+    expect(rendered.files[1]?.contents).toContain("\"relationGraph\"");
+  });
 });
 
 function readFixture(name: string): unknown {

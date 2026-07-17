@@ -9,7 +9,8 @@ import {
   renderBrowserPanel,
   type BrowserPanelDocSourceMapInput,
   type BrowserPanelOrdinarySourceMapInput,
-  type BrowserPanelProjectInfo
+  type BrowserPanelProjectInfo,
+  type BrowserPanelRelationGraphInput
 } from "@hia-doc/browser-panel";
 import {
   hasConfigErrors,
@@ -67,7 +68,7 @@ const HELP_TEXT = `HIA Documentation CLI
 Usage:
   hia --help
   hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
-  hia browser panel [--config <file>] [--project-manifest <file>] [--out <dir>]
+  hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
   docs build      Generate HTML documentation from a HIA document fixture.
@@ -80,6 +81,8 @@ Options:
                       JSDoc HIA Integration JSON file to convert before rendering.
   --project-manifest <file>
                       Project docs manifest that aggregates JSDoc, CSSDoc, HTMDoc and doc-source-map artifacts.
+  --project-index <file>
+                      Generated project-index.json used to attach relation graph payload data to the browser panel.
   --out <dir>         Output directory. Defaults to dist/docs.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
@@ -243,7 +246,7 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
 }
 
 async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--project-manifest", "--out"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--project-manifest", "--project-index", "--out"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -274,6 +277,12 @@ async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
     io.cwd,
     configResult.baseDir
   );
+  const projectIndexPath = resolveOptionalConfiguredPath(
+    readOption(argv, "--project-index"),
+    undefined,
+    io.cwd,
+    configResult.baseDir
+  );
 
   if (!projectManifestPath) {
     reportDiagnostics([
@@ -294,6 +303,9 @@ async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
   }
 
   const panelDocSourceMaps = await loadBrowserPanelDocSourceMaps(manifestResult.manifest, projectManifestPath, io);
+  const relationGraphResult = projectIndexPath
+    ? await loadBrowserPanelProjectRelationGraph(projectIndexPath, io)
+    : {};
 
   if (panelDocSourceMaps.length === 0) {
     reportDiagnostics([
@@ -307,9 +319,14 @@ async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
     return 1;
   }
 
+  if (relationGraphResult.failed) {
+    return 1;
+  }
+
   const payload = createBrowserPanelPayload({
     project: createBrowserPanelProjectInfo(manifestResult.manifest),
-    docSourceMaps: panelDocSourceMaps
+    docSourceMaps: panelDocSourceMaps,
+    ...(relationGraphResult.relationGraph ? { relationGraph: relationGraphResult.relationGraph } : {})
   });
   const rendered = renderBrowserPanel(payload);
 
@@ -583,6 +600,50 @@ async function loadBrowserPanelDocSourceMaps(
   }
 
   return docSourceMaps;
+}
+
+async function loadBrowserPanelProjectRelationGraph(
+  projectIndexPath: string,
+  io: CliIo
+): Promise<{ failed?: boolean; relationGraph?: BrowserPanelRelationGraphInput }> {
+  try {
+    const projectIndex = JSON.parse(await readFile(projectIndexPath, "utf8")) as unknown;
+
+    if (!isRecord(projectIndex) || !isRecord(projectIndex.relationGraph)) {
+      reportDiagnostics([
+        createCliDiagnostic(
+          "HIA_CLI_BROWSER_PROJECT_RELATION_GRAPH_MISSING",
+          `project-index.json does not contain relationGraph: ${projectIndexPath}.`,
+          "warning",
+          projectIndexPath,
+          {
+            projectIndexPath
+          }
+        )
+      ], io);
+      return {};
+    }
+
+    return {
+      relationGraph: projectIndex.relationGraph as BrowserPanelRelationGraphInput
+    };
+  } catch (error) {
+    reportDiagnostics([
+      createCliDiagnostic(
+        error instanceof SyntaxError ? "HIA_CLI_BROWSER_PROJECT_INDEX_PARSE_FAILED" : "HIA_CLI_BROWSER_PROJECT_INDEX_READ_FAILED",
+        `${projectIndexPath} - ${errorMessage(error)}`,
+        "error",
+        projectIndexPath,
+        {
+          projectIndexPath
+        }
+      )
+    ], io);
+
+    return {
+      failed: true
+    };
+  }
 }
 
 async function loadBrowserPanelOrdinarySourceMaps(
