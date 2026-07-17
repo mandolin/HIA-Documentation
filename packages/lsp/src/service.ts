@@ -57,6 +57,10 @@ import {
 } from "./authoring.js";
 import { analyzeHiaDocumentText } from "./diagnostics.js";
 import {
+  createHiaProjectRelationGraphResult,
+  type HiaProjectRelationGraphResult
+} from "./project-relations.js";
+import {
   createEmptyHiaResourceIndex,
   createHiaResourceIndex,
   type HiaLspResourceIndex
@@ -69,6 +73,7 @@ import {
 export interface HiaLspManagedDocument {
   docSourceMapIndex?: DocSourceMapIndex;
   diagnostics: Diagnostic[];
+  projectRelationGraph?: HiaProjectRelationGraphResult;
   resourceIndex: HiaLspResourceIndex;
   text: string;
   uri: string;
@@ -97,8 +102,10 @@ export interface HiaLspService {
   getHover(uri: string, position?: Position): Hover | null;
   getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult;
   getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult;
+  getManagedProjectRelationGraph(uri: string): HiaProjectRelationGraphResult;
   getManagedResourceIndex(uri: string): HiaLspResourceIndex;
   getResourceActions(uri: string): HiaDocumentResourceActionsResult;
+  getWorkspaceProjectRelationGraphUris(): readonly string[];
   getWorkspaceSourceMapUris(): readonly string[];
   getWorkspaceRoots(): readonly string[];
   reloadWorkspaceRuntime(): void;
@@ -111,6 +118,7 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
   const profileStateLocked = Boolean(options.profileSet || options.profiles);
   let profileState = createProfileState(options);
   let workspaceDocSourceMapIndexes = new Map<string, DocSourceMapIndex>();
+  let workspaceProjectRelationGraphs = new Map<string, HiaProjectRelationGraphResult>();
   let initialized = false;
   let shutdownRequested = false;
   let workspaceRoots: string[] = [];
@@ -120,6 +128,7 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
     const parsed = parseJsonText(text);
     const resourceIndex = createResourceIndexFromParsed(uri, parsed);
     const docSourceMapIndex = createDocSourceMapIndexFromParsed(uri, parsed);
+    const projectRelationGraph = createProjectRelationGraphFromParsed(uri, parsed);
     const diagnostics = docSourceMapIndex
       ? createDocSourceMapDiagnostics(docSourceMapIndex)
       : validateTextDocumentWithResourceIndex(document, resourceIndex);
@@ -134,6 +143,10 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
 
     if (docSourceMapIndex) {
       managedDocument.docSourceMapIndex = docSourceMapIndex;
+    }
+
+    if (projectRelationGraph) {
+      managedDocument.projectRelationGraph = projectRelationGraph;
     }
 
     return managedDocument;
@@ -252,11 +265,19 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
         uri
       });
     },
+    getManagedProjectRelationGraph(uri: string): HiaProjectRelationGraphResult {
+      return documents.get(uri)?.projectRelationGraph
+        ?? workspaceProjectRelationGraphs.get(uri)
+        ?? createHiaProjectRelationGraphResult({ uri });
+    },
     getManagedResourceIndex(uri: string): HiaLspResourceIndex {
       return documents.get(uri)?.resourceIndex ?? createEmptyHiaResourceIndex({ uri });
     },
     getResourceActions(uri: string): HiaDocumentResourceActionsResult {
       return createHiaResourceActions(createAuthoringContext(uri));
+    },
+    getWorkspaceProjectRelationGraphUris(): readonly string[] {
+      return [...workspaceProjectRelationGraphs.keys()].sort();
     },
     getWorkspaceSourceMapUris(): readonly string[] {
       return [...workspaceDocSourceMapIndexes.keys()].sort();
@@ -278,6 +299,7 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
       loadProfiles: !profileStateLocked
     });
     workspaceDocSourceMapIndexes = workspaceRuntime.docSourceMapIndexes;
+    workspaceProjectRelationGraphs = workspaceRuntime.projectRelationGraphs;
 
     if (!profileStateLocked && workspaceRuntime.profiles.length > 0) {
       profileState = createProfileState({
@@ -320,9 +342,11 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
 function loadWorkspaceRuntime(workspaceRoots: readonly string[], options: { loadProfiles: boolean }): {
   docSourceMapIndexes: Map<string, DocSourceMapIndex>;
   profiles: HiaDocumentationProfile[];
+  projectRelationGraphs: Map<string, HiaProjectRelationGraphResult>;
 } {
   const docSourceMapIndexes = new Map<string, DocSourceMapIndex>();
   const profiles: HiaDocumentationProfile[] = [];
+  const projectRelationGraphs = new Map<string, HiaProjectRelationGraphResult>();
 
   for (const workspaceRootUri of workspaceRoots) {
     const workspaceRoot = fileUriToPath(workspaceRootUri);
@@ -346,6 +370,14 @@ function loadWorkspaceRuntime(workspaceRoots: readonly string[], options: { load
     }
 
     const manifestBaseDir = path.dirname(projectManifestPath);
+    const outputRoot = path.resolve(path.dirname(configPath), config.docs.output ?? "dist/docs");
+    const projectIndexPath = path.join(outputRoot, "project-index.json");
+    const projectIndex = readJsonIfExists(projectIndexPath);
+
+    if (projectIndex) {
+      const uri = pathToFileURL(projectIndexPath).href;
+      projectRelationGraphs.set(uri, createHiaProjectRelationGraphResult({ projectIndex, uri }));
+    }
 
     if (options.loadProfiles) {
       profiles.push(...loadProjectProfiles(projectManifest, manifestBaseDir));
@@ -370,7 +402,8 @@ function loadWorkspaceRuntime(workspaceRoots: readonly string[], options: { load
 
   return {
     docSourceMapIndexes,
-    profiles
+    profiles,
+    projectRelationGraphs
   };
 }
 
@@ -461,6 +494,19 @@ function createDocSourceMapIndexFromParsed(uri: string, parsed: unknown): DocSou
   return undefined;
 }
 
+function createProjectRelationGraphFromParsed(uri: string, parsed: unknown): HiaProjectRelationGraphResult | undefined {
+  if (!isProjectIndexLike(parsed)) {
+    return undefined;
+  }
+
+  const result = createHiaProjectRelationGraphResult({
+    projectIndex: parsed,
+    uri
+  });
+
+  return result.status === "available" ? result : undefined;
+}
+
 function createDocSourceMapDiagnostics(index: DocSourceMapIndex): Diagnostic[] {
   return index.diagnostics.map((diagnostic) => ({
     code: diagnostic.code,
@@ -502,6 +548,11 @@ function isDocSourceMapLike(value: unknown): value is Record<string, unknown> {
   return typeof value === "object"
     && value !== null
     && (value as { contract?: unknown }).contract === DOC_SOURCE_MAP_CONTRACT;
+}
+
+function isProjectIndexLike(value: unknown): value is Record<string, unknown> {
+  return isRecord(value)
+    && value.contract === "hia-project-navigation-index";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

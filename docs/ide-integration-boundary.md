@@ -27,11 +27,12 @@ HIA-specific data is available through custom requests under the `hia/` namespac
 
 - `hia/documentResourceIndex`
 - `hia/documentSourceMapIndex`
+- `hia/projectRelationGraph`
 - `hia/ideCapabilities`
 - `hia/documentAuthoringLocations`
 - `hia/resourceActions`
 
-Custom request responses are IDE-neutral view models derived from managed core documents or `doc-source-map` manifests. They should not be written back into the core document IR.
+Custom request responses are IDE-neutral view models derived from managed core documents, `doc-source-map` manifests or renderer `project-index.json` output. They should not be written back into the core document IR.
 
 When a documentation profile set is available, `hia/ideCapabilities`, completion and hover may include profile-derived tag and diagnostic information. IDE shells should display that data as returned by the LSP and should not implement their own profile registry logic.
 
@@ -45,8 +46,9 @@ The VS Code extension is the first IDE shell. It provides:
 - build, preview and validation commands;
 - related-location quick fixes;
 - resource action quick fixes;
-- generated HTML preview opening.
+- generated HTML preview opening;
 - project manifest build setting pass-through.
+- project relation graph request constants for future visible navigation.
 
 The VS Code extension is a presentation and command layer. It does not parse JSDoc, generate HTML, or duplicate core/LSP diagnostics.
 

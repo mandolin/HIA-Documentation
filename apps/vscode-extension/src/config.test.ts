@@ -10,6 +10,7 @@ import {
   HIA_OPEN_PREVIEW_COMMAND,
   HIA_OPEN_RELATED_LOCATION_COMMAND,
   HIA_OPEN_SOURCE_LINKAGE_COMMAND,
+  HIA_PROJECT_RELATION_GRAPH_REQUEST,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
@@ -55,6 +56,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
+    expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
     expect(HIA_IDE_CAPABILITIES_REQUEST).toBe("hia/ideCapabilities");
     expect(HIA_AUTHORING_LOCATIONS_REQUEST).toBe("hia/documentAuthoringLocations");
     expect(HIA_RESOURCE_ACTIONS_REQUEST).toBe("hia/resourceActions");

@@ -24,6 +24,10 @@ import {
   HIA_LSP_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
   type HiaDocumentSourceMapIndexParams
 } from "./source-linkage.js";
+import {
+  HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST,
+  type HiaProjectRelationGraphParams
+} from "./project-relations.js";
 
 export interface StartHiaLspServerOptions {
   connection?: Connection;
@@ -49,6 +53,10 @@ export function startHiaLspServer(options: StartHiaLspServerOptions = {}): Conne
 
   connection.onRequest(HIA_LSP_DOCUMENT_SOURCE_MAP_INDEX_REQUEST, (params: HiaDocumentSourceMapIndexParams) => {
     return service.getManagedDocSourceMapIndex(params.uri, params.query);
+  });
+
+  connection.onRequest(HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST, (params: HiaProjectRelationGraphParams) => {
+    return service.getManagedProjectRelationGraph(params.uri);
   });
 
   connection.onRequest(HIA_LSP_IDE_CAPABILITIES_REQUEST, (params: HiaIdeCapabilitiesParams) => {

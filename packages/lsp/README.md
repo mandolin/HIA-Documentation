@@ -24,6 +24,10 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
   - symbol/source/artifact query;
   - workspace `hia.config.json` plus project manifest loading for configured `doc-source-map` inputs;
   - watched-file reload hook for workspace runtime refresh.
+- Project relation graph view over managed `project-index.json` documents:
+  - entry/source/generated/endpoint relation graph projection;
+  - workspace `hia.config.json` plus `docs.output/project-index.json` loading;
+  - unavailable fallback when a project index or relation graph is missing.
 - Authoring capability surface:
   - custom capability request;
   - custom authoring location request;
@@ -42,6 +46,7 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 - Node LSP transport entry for future VS Code integration.
 - Custom request: `hia/documentResourceIndex`.
 - Custom request: `hia/documentSourceMapIndex`.
+- Custom request: `hia/projectRelationGraph`.
 - Custom request: `hia/ideCapabilities`.
 - Custom request: `hia/documentAuthoringLocations`.
 - Custom request: `hia/resourceActions`.
@@ -51,6 +56,8 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 The LSP resource index is an IDE view model derived from core documents. It is not written back into the core document IR.
 
 The LSP source-linkage index is an IDE view model derived from `doc-source-map` manifests and `@hia-doc/source-linkage`. It is a query surface for navigation; it does not execute producers or mutate project manifests.
+
+The LSP project relation graph is an IDE view model derived from renderer `project-index.json` output. It exposes project-level entry/source/generated/endpoint relations for host navigation; it does not parse renderer HTML, embed source previews or run producers.
 
 Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 

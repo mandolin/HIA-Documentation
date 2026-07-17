@@ -93,15 +93,51 @@ describe("@hia-doc/lsp service", () => {
     });
   });
 
+  it("manages project relation graph documents", () => {
+    const service = createHiaLspService();
+    const uri = "file:///workspace/dist/docs/project-index.json";
+
+    service.initialize({
+      capabilities: {},
+      processId: null,
+      rootUri: "file:///workspace"
+    });
+    service.openDocument(uri, JSON.stringify(createProjectIndexFixture()), "json", 1);
+
+    expect(service.getManagedProjectRelationGraph(uri)).toMatchObject({
+      contract: "hia-project-relation-graph",
+      contractVersion: "0.1.0-draft",
+      nodeCount: 2,
+      project: {
+        id: "project:mixed",
+        name: "Mixed Project"
+      },
+      relationCount: 1,
+      status: "available",
+      uri
+    });
+    expect(service.getManagedProjectRelationGraph(uri).relations[0]).toMatchObject({
+      from: "entry:html:alert",
+      kind: "documents-generated-artifact",
+      to: "artifact:dist/alert.html"
+    });
+    expect(service.getManagedProjectRelationGraph("file:///workspace/missing/project-index.json")).toMatchObject({
+      status: "unavailable",
+      unavailableReason: "project-index-missing"
+    });
+  });
+
   it("loads workspace project doc-source-map inputs and profiles from HIA config", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "hia-lsp-workspace-"));
 
     try {
       mkdirSync(path.join(root, "docs"), { recursive: true });
+      mkdirSync(path.join(root, "dist", "docs"), { recursive: true });
       mkdirSync(path.join(root, "profiles"), { recursive: true });
       writeFileSync(path.join(root, "hia.config.json"), JSON.stringify({
         schemaVersion: "0.1.0",
         docs: {
+          output: "dist/docs",
           projectManifest: "project.hia-project.json"
         }
       }), "utf8");
@@ -128,9 +164,11 @@ describe("@hia-doc/lsp service", () => {
       }), "utf8");
       writeFileSync(path.join(root, "profiles", "doc-source-map.profile.json"), readFixture("project-mixed-profiles/doc-source-map.profile.json"), "utf8");
       writeFileSync(path.join(root, "docs", "alert.docmap.json"), readFixture("project-mixed-alert.docmap.json"), "utf8");
+      writeFileSync(path.join(root, "dist", "docs", "project-index.json"), JSON.stringify(createProjectIndexFixture()), "utf8");
 
       const service = createHiaLspService();
       const docSourceMapUri = pathToFileURL(path.join(root, "docs", "alert.docmap.json")).href;
+      const projectIndexUri = pathToFileURL(path.join(root, "dist", "docs", "project-index.json")).href;
       service.initialize({
         capabilities: {},
         processId: null,
@@ -138,7 +176,12 @@ describe("@hia-doc/lsp service", () => {
       });
 
       expect(service.getWorkspaceSourceMapUris()).toEqual([docSourceMapUri]);
+      expect(service.getWorkspaceProjectRelationGraphUris()).toEqual([projectIndexUri]);
       expect(service.getManagedDocSourceMapIndex(docSourceMapUri, { symbolId: "html:component:alert" }).matchedEntryCount).toBe(1);
+      expect(service.getManagedProjectRelationGraph(projectIndexUri)).toMatchObject({
+        relationCount: 1,
+        status: "available"
+      });
       expect(service.getIdeCapabilities(docSourceMapUri).profiles.map((profile) => profile.profileId)).toEqual(["doc-source-map"]);
 
       writeFileSync(
@@ -178,4 +221,58 @@ describe("@hia-doc/lsp service", () => {
 
 function readFixture(name: string): string {
   return readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8");
+}
+
+function createProjectIndexFixture() {
+  return {
+    contract: "hia-project-navigation-index",
+    contractVersion: "0.1.0-draft",
+    project: {
+      defaultLocale: "en",
+      id: "project:mixed",
+      locales: ["en"],
+      name: "Mixed Project",
+      title: "Mixed Project Documentation",
+      views: ["all", "html"]
+    },
+    entries: [],
+    groups: [],
+    profiles: [],
+    docSourceMaps: [],
+    relationGraph: {
+      contract: "hia-project-relation-graph",
+      contractVersion: "0.1.0-draft",
+      nodeCount: 2,
+      relationCount: 1,
+      nodes: [
+        {
+          id: "entry:html:alert",
+          kind: "entry",
+          label: "Alert",
+          entryId: "html:alert",
+          view: "html"
+        },
+        {
+          id: "artifact:dist/alert.html",
+          kind: "artifact",
+          label: "dist/alert.html",
+          path: "dist/alert.html"
+        }
+      ],
+      relations: [
+        {
+          id: "documents-generated-artifact:entry:html:alert->artifact:dist/alert.html",
+          kind: "documents-generated-artifact",
+          from: "entry:html:alert",
+          to: "artifact:dist/alert.html",
+          label: "Generated: dist/alert.html",
+          confidence: "medium",
+          entryId: "html:alert",
+          metadata: {
+            selector: "[data-component=\"Alert\"]"
+          }
+        }
+      ]
+    }
+  };
 }

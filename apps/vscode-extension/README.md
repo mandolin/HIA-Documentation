@@ -27,6 +27,8 @@ VS Code is the first IDE shell for HIA Documentation. Other IDE integrations sho
 
 `HIA: Build Docs` delegates to the shared CLI and reads `hia.build.*` workspace settings, including project manifest builds. `HIA: Open Preview` reads the generated manifest when available, opens the manifest entrypoint, and warns when the preview may be stale. `HIA: Open Source Linkage` consumes `hia/documentSourceMapIndex` and uses native VS Code pickers to navigate original source, generated artifact or the existing documentation preview. It does not execute producers, parse ordinary source maps, embed `sourcesContent`, or open targets outside the workspace. `HIA: Validate Workspace` asks the LSP server for capability, profile, resource index, authoring location and resource action data, then writes a validation report to the HIA output channel.
 
+The extension also exposes the shared `hia/projectRelationGraph` request constant for the next visible relation-navigation slice. The command UI for that request is intentionally deferred until the host workflow can consume the LSP view model without parsing generated HTML.
+
 The extension does not parse JSDoc, generate HTML directly, or duplicate core diagnostics.
 
 ## Settings
