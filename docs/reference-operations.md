@@ -23,7 +23,7 @@ The check verifies:
 - route availability for the root, `en`, `zh-CN`, and source-linkage pages.
 - versioned route availability when the published manifest exposes `current-and-releases`.
 - schema catalog, canonical schema URLs, and package-style schema aliases.
-- privacy invariants, including `sourcesContentPolicy: "none"` and WorkZone exclusion.
+- privacy invariants, including `sourcesContentPolicy: "none"` and private workspace exclusion.
 - source provenance shape and the current GitHub ref for each allowlisted source repository.
 
 By default, source ref drift is reported as a warning because satellite repositories can advance before the next public reference deployment. To make stale sources fail the run, use:

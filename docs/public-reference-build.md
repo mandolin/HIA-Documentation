@@ -1,6 +1,6 @@
 # Public Reference Build
 
-The public reference build assembles the first-party HIA documentation artifacts from an explicit source allowlist. It is the W-P14.2 build boundary used by the remote GitHub Actions gate; it does not deploy GitHub Pages or read the private WorkZone.
+The public reference build assembles the first-party HIA documentation artifacts from an explicit source allowlist. It is the W-P14.2 build boundary used by the remote GitHub Actions gate; it does not deploy GitHub Pages or read private workspace materials.
 
 ## Source Boundary
 
@@ -27,7 +27,7 @@ mise exec -- node scripts/build-public-reference.mjs --workspace-root .. --main-
 mise exec -- node scripts/check-public-reference-build.mjs --out dist/public-reference-build
 ```
 
-The build writes two localized unified documentation outputs, a source-linkage panel, and `reference-build.json`. The latter contains only repository/ref/resolved-SHA provenance, definition identity, aggregate counts, and privacy status. It never includes credentials, local absolute paths, WorkZone data, or embedded source contents.
+The build writes two localized unified documentation outputs, a source-linkage panel, and `reference-build.json`. The latter contains only repository/ref/resolved-SHA provenance, definition identity, aggregate counts, and privacy status. It never includes credentials, local absolute paths, private workspace data, or embedded source contents.
 
 The entry floors use the canonical project render input: when one producer result contains both a raw `htmdoc-extraction` or `cssdoc-extraction` artifact and an equivalent normalized `hia-document`, the unified reference renders the `hia-document` entry. Raw extraction artifacts remain available in producer output for debugging, schema checks, and source-map traceability, but they are not double-counted as public navigation entries. The build also checks required canonical CSS/HTML entry IDs so this deduplicated floor still catches real symbol loss.
 

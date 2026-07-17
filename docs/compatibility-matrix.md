@@ -74,7 +74,7 @@ The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an expli
 | New external dependency | `docs/dependency-review-template.md`, `docs/dependency-license-audit.md`, `scripts/check-dependency-license-audit.mjs`, then `pnpm run license:audit`. |
 | Fixture or generated output governance | `pnpm run governance:check`. |
 | Project manifest or renderer output change | CLI/renderer tests plus generated output path-leak checks. |
-| Profile draft change | profile runtime tests and profile draft check in WorkZone. |
+| Profile draft change | profile runtime tests and the internal profile draft governance check. |
 | Profile migration guidance change | public docs review plus profile runtime tests when tag status changes. |
 | User-visible CLI/renderer/IDE workflow change | `docs/user-acceptance-checklist.md` plus targeted tests and `pnpm run release:gate`. |
 
