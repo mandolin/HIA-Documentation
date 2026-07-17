@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HIA Documentation</title>
+    <link rel="stylesheet" href="./panel.css">
+  </head>
+  <body>
+    <main class="shell" data-hia-devtools-panel>
+      <header class="toolbar">
+        <h1>HIA Documentation</h1>
+        <label class="file-button">
+          <input type="file" accept="application/json,.json" data-hia-payload-file>
+          Load payload
+        </label>
+      </header>
+
+      <section class="summary" data-hia-summary></section>
+
+      <section class="workspace">
+        <nav class="relation-list" data-hia-relation-list></nav>
+        <article class="detail" data-hia-detail></article>
+      </section>
+
+      <section class="open-log" data-hia-open-log></section>
+    </main>
+    <script type="module" src="./panel.js"></script>
+  </body>
+</html>

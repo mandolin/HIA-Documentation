@@ -1,0 +1,22 @@
+{
+  "name": "@hia-doc/devtools-extension",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Local unpacked Chrome DevTools panel shell for HIA documentation payloads.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "README.md",
+    "devtools.html",
+    "devtools.js",
+    "manifest.json",
+    "panel-core.js",
+    "panel.css",
+    "panel.html",
+    "panel.js"
+  ],
+  "scripts": {
+    "check": "node ../../scripts/check-devtools-extension.mjs"
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,189 @@
+:root {
+  color-scheme: light dark;
+  --accent: #0f766e;
+  --border: #cbd5e1;
+  --muted: #64748b;
+  --surface: #f8fafc;
+  --text: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --border: #334155;
+    --muted: #94a3b8;
+    --surface: #111827;
+    --text: #e5e7eb;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: canvas;
+  color: var(--text);
+  font: 12px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.shell {
+  min-width: 320px;
+}
+
+.toolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 8px 10px;
+}
+
+.toolbar h1 {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0;
+}
+
+.file-button {
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.file-button input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.summary {
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
+  padding: 8px 10px;
+}
+
+.metric {
+  min-width: 0;
+}
+
+.metric span {
+  color: var(--muted);
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.metric strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+  min-height: 360px;
+}
+
+.relation-list {
+  border-right: 1px solid var(--border);
+  max-height: calc(100vh - 128px);
+  overflow: auto;
+}
+
+.relation-button {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.relation-button:hover,
+.relation-button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.relation-button strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.relation-button span {
+  color: var(--muted);
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  max-height: calc(100vh - 128px);
+  overflow: auto;
+  padding: 10px;
+}
+
+.detail h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.kv {
+  display: grid;
+  gap: 6px 10px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0 0 12px;
+}
+
+.kv dt {
+  color: var(--muted);
+}
+
+.kv dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.open-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.open-list button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  min-height: 28px;
+  padding: 4px 8px;
+}
+
+.open-log {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  min-height: 30px;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+}
+
+.empty {
+  color: var(--muted);
+  padding: 12px 10px;
+}

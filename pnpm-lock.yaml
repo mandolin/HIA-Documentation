@@ -48,6 +48,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/source-linkage
 
+  apps/devtools-extension: {}
+
   apps/vscode-extension:
     dependencies:
       '@hia-doc/lsp':
