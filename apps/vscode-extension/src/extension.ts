@@ -55,8 +55,10 @@ import {
   type HiaResourceIndexSummary
 } from "./config.js";
 import {
+  createHiaProjectRelationActionChoices,
   createHiaProjectRelationChoices,
-  createHiaProjectRelationNavigationTargets,
+  createHiaProjectRelationRuntimeReport,
+  type HiaProjectRelationActionChoice,
   type HiaProjectRelationChoice,
   type HiaProjectRelationGraphSummary,
   type HiaProjectRelationNavigationTarget
@@ -672,7 +674,10 @@ async function openHiaProjectRelations(outputChannel: vscode.OutputChannel): Pro
   }
 
   outputChannel.show(true);
-  outputChannel.appendLine(`HIA project relations: ${graph.relationCount ?? choices.length} relation(s), ${graph.nodeCount ?? graph.nodes?.length ?? 0} node(s).`);
+  outputChannel.appendLine("HIA project relations:");
+  for (const line of createHiaProjectRelationRuntimeReport(graph)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
 
   const selected = await vscode.window.showQuickPick<ProjectRelationQuickPickItem>(
     choices.map((choice) => ({
@@ -862,37 +867,12 @@ async function selectHiaSourceLinkageTarget(choice: HiaSourceLinkageEntryChoice)
 }
 
 async function selectHiaProjectRelationTarget(choice: HiaProjectRelationChoice): Promise<ProjectRelationActionQuickPickItem | undefined> {
-  const navigationItems = createHiaProjectRelationNavigationTargets(choice).map((target) => ({
-    label: target.label,
-    actionKind: "target" as const,
-    target,
-    description: target.position ? `line ${target.position.line}` : target.node.kind
-  }));
-  const actions: ProjectRelationActionQuickPickItem[] = [
-    ...navigationItems,
+  return vscode.window.showQuickPick<ProjectRelationActionQuickPickItem>(
+    createHiaProjectRelationActionChoices(choice),
     {
-      label: "Open documentation preview",
-      description: "Uses the existing HIA: Open Preview command",
-      actionKind: "documentation-preview"
-    },
-    {
-      label: "Copy project relation id",
-      description: choice.relation.id,
-      actionKind: "copy-relation-id"
+      placeHolder: `Navigate ${choice.label}`
     }
-  ];
-
-  if (choice.relation.entryId) {
-    actions.push({
-      label: "Copy documentation entry id",
-      description: choice.relation.entryId,
-      actionKind: "copy-entry-id"
-    });
-  }
-
-  return vscode.window.showQuickPick(actions, {
-    placeHolder: `Navigate ${choice.label}`
-  });
+  );
 }
 
 async function openHiaSourceLinkageTarget(
@@ -1000,16 +980,7 @@ interface ProjectRelationQuickPickItem extends vscode.QuickPickItem {
   choice: HiaProjectRelationChoice;
 }
 
-type ProjectRelationActionQuickPickItem = ProjectRelationNavigationQuickPickItem | ProjectRelationSimpleActionQuickPickItem;
-
-interface ProjectRelationNavigationQuickPickItem extends vscode.QuickPickItem {
-  actionKind: "target";
-  target: HiaProjectRelationNavigationTarget;
-}
-
-interface ProjectRelationSimpleActionQuickPickItem extends vscode.QuickPickItem {
-  actionKind: "copy-entry-id" | "copy-relation-id" | "documentation-preview";
-}
+type ProjectRelationActionQuickPickItem = HiaProjectRelationActionChoice & vscode.QuickPickItem;
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {
   outputChannel.show(true);
