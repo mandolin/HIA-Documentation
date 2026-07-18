@@ -140,7 +140,7 @@
     {
       "id": "hia-aspnetportal",
       "purpose": "ASP.NET/C# endpoint and component documentation navigation",
-      "targetRepositoryPolicy": "notification-only"
+      "targetRepositoryPolicy": "read-only-maintainer-notify"
     }
   ],
   "privacy": {

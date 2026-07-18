@@ -1,0 +1,36 @@
+{
+  "name": "@hia-doc/generic-docline",
+  "version": "0.1.0",
+  "description": "Config-driven generic documentation fallback scanner and producer for HIA.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/generic-docline"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "cd ../.. && vitest run packages/generic-docline/src"
+  },
+  "dependencies": {
+    "@hia-doc/core": "workspace:*",
+    "@hia-doc/plugin-sdk": "workspace:*"
+  },
+  "sideEffects": false
+}

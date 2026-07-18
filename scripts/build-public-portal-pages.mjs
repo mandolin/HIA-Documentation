@@ -347,7 +347,7 @@ async function writeAdoptionPages({ data, labels, locale, outputDir, publicDocs 
     body: [
       '<main class="portal-shell" data-hia-public-portal-adoption-policy>',
       `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.adoption)}</p><h1>${escapeHtml(labels.policy)}</h1><p>${escapeHtml(labels.policyLead)}</p></header>`,
-      `<section class="portal-section"><h2>${escapeHtml(labels.targetPolicy)}</h2><dl class="portal-meta"><dt>${escapeHtml(labels.readOnly)}</dt><dd>${escapeHtml(String(policy.targetRepositoriesReadOnly))}</dd><dt>${escapeHtml(labels.notificationOnly)}</dt><dd>${escapeHtml(String(policy.notificationOnly))}</dd><dt>${escapeHtml(labels.notifyPath)}</dt><dd><code>${escapeHtml(policy.notifyPathPattern)}</code></dd><dt>${escapeHtml(labels.sourcesContentPolicy)}</dt><dd><code>${escapeHtml(policy.sourcesContentPolicy)}</code></dd></dl></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.targetPolicy)}</h2><dl class="portal-meta"><dt>${escapeHtml(labels.readOnly)}</dt><dd>${escapeHtml(String(policy.targetRepositoriesReadOnly))}</dd><dt>${escapeHtml(labels.notificationOnly)}</dt><dd>${escapeHtml(String(policy.notificationOnly))}</dd><dt>${escapeHtml(labels.notificationMode)}</dt><dd><code>${escapeHtml(policy.notificationMode)}</code></dd><dt>${escapeHtml(labels.notifyPath)}</dt><dd><code>${escapeHtml(policy.notifyPathPattern)}</code></dd><dt>${escapeHtml(labels.sourcesContentPolicy)}</dt><dd><code>${escapeHtml(policy.sourcesContentPolicy)}</code></dd></dl></section>`,
       "</main>"
     ].join("")
   });
@@ -1048,7 +1048,8 @@ function getLabels(locale) {
     policyLead: zh ? "公开采用策略保护目标仓库自主吸收节奏。" : "The public adoption policy preserves target-project control over integration timing.",
     targetPolicy: zh ? "目标仓库策略" : "Target Policy",
     readOnly: zh ? "只读" : "Read-only",
-    notificationOnly: zh ? "仅通知" : "Notification-only",
+    notificationOnly: zh ? "通知策略" : "Notification policy",
+    notificationMode: zh ? "通知模式" : "Notification mode",
     notifyPath: zh ? "通知路径" : "Notify path",
     sourcesContentPolicy: "sourcesContent",
     operationsStatus: zh ? "运维状态" : "Operations Status",

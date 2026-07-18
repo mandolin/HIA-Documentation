@@ -50,6 +50,8 @@ importers:
 
   apps/devtools-extension: {}
 
+  apps/visual-studio-extension: {}
+
   apps/vscode-extension:
     dependencies:
       '@hia-doc/lsp':
@@ -76,6 +78,15 @@ importers:
         version: link:../core
 
   packages/core: {}
+
+  packages/generic-docline:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@hia-doc/plugin-sdk':
+        specifier: workspace:*
+        version: link:../plugin-sdk
 
   packages/lsp:
     dependencies:

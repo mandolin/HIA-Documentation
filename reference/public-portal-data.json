@@ -681,7 +681,8 @@
     "targetPolicy": {
       "targetRepositoriesReadOnly": true,
       "notificationOnly": true,
-      "notifyPathPattern": "dev/notify/{YYYYMMDD}-{title}.md",
+      "notificationMode": "maintainer-pull-notify",
+      "notifyPathPattern": "maintainer-notify-log/{YYYY-MM-DD}/{YYYYMMDD}-{title}.md",
       "sourcesContentPolicy": "none"
     },
     "recipes": [
@@ -725,7 +726,7 @@
         "publicNarrative": {
           "problem": "A TypeScript project needs standalone documentation extraction and a path into unified HIA output without committing generated private source content.",
           "solution": "Use @hia-doc/tsdoc-runner for target-project extraction, then feed the produced artifacts into HIA project aggregation when the project wants unified HTML output.",
-          "currentBoundary": "The evidence is read-only and notification-driven; the target repository decides whether to absorb candidate config or CI."
+          "currentBoundary": "The evidence is read-only and maintainer-notification-driven; the target repository decides whether to pull and absorb candidate config or CI."
         },
         "publicEvidence": {
           "artifactCount": 12,
@@ -741,7 +742,7 @@
           "sourcesContentEmbedded": false
         },
         "recipeId": "tsdoc-target-project-minimum",
-        "nextAction": "Convert the read-only candidate into a public quickstart and, if the target project opts in, send a dev/notify notice instead of editing target files directly."
+        "nextAction": "Convert the read-only candidate into a public quickstart and, if the target project opts in, write a maintainer-side notify message instead of editing target files directly."
       },
       {
         "id": "aspnetportal-dotnetdoc",

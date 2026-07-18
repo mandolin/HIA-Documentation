@@ -125,8 +125,9 @@ function validateAdoption(data) {
   const packageNames = new Set(data.ecosystem.docLines.flatMap((line) => line.packages.map((packageRow) => packageRow.name)));
   assert(data.adoption.targetPolicy?.targetRepositoriesReadOnly === true, "Adoption target policy must remain read-only.");
   assert(data.adoption.targetPolicy?.notificationOnly === true, "Adoption target policy must remain notification-only.");
+  assert(data.adoption.targetPolicy?.notificationMode === "maintainer-pull-notify", "Adoption notification mode drifted.");
   assert(data.adoption.targetPolicy?.sourcesContentPolicy === "none", "Adoption policy must not embed source content.");
-  assert(data.adoption.targetPolicy?.notifyPathPattern === "dev/notify/{YYYYMMDD}-{title}.md", "Adoption notify path pattern drifted.");
+  assert(data.adoption.targetPolicy?.notifyPathPattern === "maintainer-notify-log/{YYYY-MM-DD}/{YYYYMMDD}-{title}.md", "Adoption notify path pattern drifted.");
   assert(Array.isArray(data.adoption.recipes) && data.adoption.recipes.length === 2, "Adoption recipe count drifted.");
   assert(Array.isArray(data.adoption.cases) && data.adoption.cases.length === 2, "Adoption case count drifted.");
 

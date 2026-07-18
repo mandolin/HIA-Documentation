@@ -122,4 +122,4 @@ The first command should not find embedded source text when `sourcesContentPolic
 
 ## Target Repository Policy
 
-For target projects that are not owned by the current HIA workspace, keep the repository read-only. If the target should adopt this setup, write a notification document under `dev/notify/{YYYYMMDD}-{title}.md` and let the target project decide when to copy the config, dependencies and CI steps.
+For target projects that are not owned by the current HIA workspace, keep the repository read-only. If the target should adopt this setup, write a maintainer-side notification message organized by date and let the target project pull the notice when it is ready to copy the config, dependencies and CI steps.

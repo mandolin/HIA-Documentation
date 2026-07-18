@@ -7,6 +7,7 @@
     { "path": "./packages/profiles" },
     { "path": "./packages/plugin-sdk" },
     { "path": "./packages/parser-jsdoc" },
+    { "path": "./packages/generic-docline" },
     { "path": "./packages/source-linkage" },
     { "path": "./packages/browser-panel" },
     { "path": "./packages/schemas" },
