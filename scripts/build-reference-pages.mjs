@@ -131,7 +131,7 @@ async function mergePublicPortalPages(portalPagesDir, outputDir) {
   await copyVisibleTree(path.join(portalPagesDir, "assets"), path.join(outputDir, "assets"));
 
   for (const locale of supportedLocales) {
-    for (const segment of ["packages", "doc-lines", "adoption", "operations", "docs", "search"]) {
+    for (const segment of ["packages", "doc-lines", "adoption", "operations", "hosts", "docs", "search"]) {
       await copyVisibleTree(path.join(portalPagesDir, locale, segment), path.join(outputDir, locale, segment));
     }
   }

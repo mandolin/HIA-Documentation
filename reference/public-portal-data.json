@@ -845,6 +845,118 @@
       }
     ]
   },
+  "hostAnchors": {
+    "status": "host-productization-input",
+    "summary": "HIA host surfaces reuse the same project index, relation graph, source-linkage query, and structured open request contracts so IDE, DevTools, browser-panel, and AI-assisted authoring can share one documentation context.",
+    "principles": [
+      "The portal describes host capabilities without claiming marketplace-ready or fully confirmed GUI behavior.",
+      "Host surfaces consume generated public artifacts and sanitized relation metadata instead of parsing private workspace notes.",
+      "AI-assisted authoring should use explicit source-linked context, locale contracts, diagnostics, and reviewable edits."
+    ],
+    "concepts": [
+      {
+        "id": "relation-graph",
+        "title": "Project Relation Graph",
+        "summary": "A generated graph that connects documentation entries, source ranges, generated artifacts, semantic members, and framework endpoints."
+      },
+      {
+        "id": "source-linkage",
+        "title": "Source Linkage",
+        "summary": "A query boundary for moving between documentation symbols, original files, generated artifacts, ordinary source maps, and doc-source-map manifests."
+      },
+      {
+        "id": "open-request",
+        "title": "Structured Open Request",
+        "summary": "A host-neutral request shape for opening source, generated artifacts, documentation entries, or previews in the user's chosen tool."
+      }
+    ],
+    "surfaces": [
+      {
+        "id": "lsp",
+        "title": "Language Server Protocol",
+        "maturity": "implemented-boundary",
+        "entryPoint": "hia/projectRelationGraph and hia/documentSourceMapIndex requests",
+        "currentEvidence": [
+          "workspace project-index loading",
+          "opened project-index loading",
+          "source-linkage index query"
+        ],
+        "currentBoundary": "Profile-defined rule execution and richer project status views remain planned.",
+        "nextPublicMilestone": "Use the relation graph request as the common service layer for IDE and editor adapters."
+      },
+      {
+        "id": "vscode",
+        "title": "VS Code",
+        "maturity": "host-candidate",
+        "entryPoint": "HIA: Open Project Relations command",
+        "currentEvidence": [
+          "relation picker helper",
+          "source/generated/docs target report",
+          "prepared target-project runtime evidence"
+        ],
+        "currentBoundary": "Visible Extension Development Host confirmation is still required before calling this complete.",
+        "nextPublicMilestone": "Turn prepared runtime evidence into visible navigation confirmation and user-facing status surfaces."
+      },
+      {
+        "id": "browser-panel",
+        "title": "Browser Panel",
+        "maturity": "implemented-boundary",
+        "entryPoint": "hia browser panel --project-index",
+        "currentEvidence": [
+          "relation graph payload",
+          "source-linkage payload",
+          "structured open request message"
+        ],
+        "currentBoundary": "The panel is a local reference surface, not a browser store extension.",
+        "nextPublicMilestone": "Keep it as a stable payload contract for DevTools and portal previews."
+      },
+      {
+        "id": "devtools",
+        "title": "Browser DevTools",
+        "maturity": "local-shell",
+        "entryPoint": "Manifest V3 DevTools panel shell",
+        "currentEvidence": [
+          "HIA panel creation",
+          "browser-panel payload rendering",
+          "structured open request handoff"
+        ],
+        "currentBoundary": "No content script overlay or native source opener is claimed in the current public state.",
+        "nextPublicMilestone": "Promote the shell into a productized DevTools bridge after W-P29 host hardening."
+      },
+      {
+        "id": "multi-ide",
+        "title": "Multi-IDE Boundary",
+        "maturity": "compatibility-boundary",
+        "entryPoint": "host capability matrix",
+        "currentEvidence": [
+          "VS Code mapping",
+          "Browser DevTools boundary",
+          "Visual Studio hybrid route",
+          "JetBrains and Neovim adapter notes"
+        ],
+        "currentBoundary": "Visual Studio, JetBrains, and Neovim adapters are planned boundaries rather than shipped plugins.",
+        "nextPublicMilestone": "Start Visual Studio as a dedicated .NET-oriented host project and keep LSP as the shared base."
+      }
+    ],
+    "aiAssistedAuthoring": {
+      "title": "AI-Assisted Documentation Authoring",
+      "status": "workflow-candidate",
+      "summary": "The long-term workflow is to let AI find documentation gaps, propose bilingual comments, update translations, and explain source-linked context while human authors keep review control in IDE and DevTools surfaces.",
+      "workflowSteps": [
+        "Index project entries, relation graph nodes, diagnostics, and locale metadata.",
+        "Select bounded source-linked context for the requested documentation task.",
+        "Generate or revise documentation comments and translations as reviewable candidates.",
+        "Run profile, privacy, bilingual, route, and source-linkage gates before accepting changes."
+      ],
+      "guardrails": [
+        "No embedded sourcesContent by default.",
+        "No hidden private workspace input in public artifacts.",
+        "No direct target-repository modification without opt-in.",
+        "No language-core vendor prefix when a standard-level name is appropriate."
+      ],
+      "nextPublicMilestone": "Connect the workflow to W-P29 IDE/DevTools host productization and later generic language abstraction."
+    }
+  },
   "publicDocs": {
     "sourceMode": "derive-from-main-repo-docs",
     "minimumDocumentCount": 30,
@@ -903,6 +1015,13 @@
       "releases": "{locale}/operations/releases.html",
       "versions": "{locale}/operations/versions.html",
       "search": "{locale}/search/operations.html"
+    },
+    "hosts": {
+      "index": "{locale}/hosts/index.html",
+      "sourceLinkage": "{locale}/hosts/source-linkage.html",
+      "ideDevtools": "{locale}/hosts/ide-devtools.html",
+      "aiAssistedAuthoring": "{locale}/hosts/ai-assisted-authoring.html",
+      "search": "{locale}/search/hosts.html"
     }
   }
 }

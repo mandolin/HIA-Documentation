@@ -33,6 +33,7 @@ function main() {
   validateManifest(data, manifest, publicDocs);
   validateRequiredFiles(data, outputDir, searchIndex, publicDocs);
   validateLinks(outputDir);
+  validateRenderedPublicDocs(data, outputDir, publicDocs);
   validatePrivacy(outputDir);
 
   console.log(`Public portal pages check passed: ${manifest.locales.length} locale(s), ${manifest.counts.packageRows} package row(s), ${searchIndex.locales.reduce((total, locale) => total + locale.entryCount, 0)} search entry instance(s).`);
@@ -52,6 +53,8 @@ function validateManifest(data, manifest, publicDocs) {
   assert(manifest.counts.adoptionCases === data.adoption.cases.length, "Adoption case count drifted.");
   assert(manifest.counts.adoptionRecipes === data.adoption.recipes.length, "Adoption recipe count drifted.");
   assert(manifest.counts.operationsRouteGroups === data.operations.routeGroups.length, "Operations route group count drifted.");
+  assert(manifest.counts.hostSurfaces === data.hostAnchors.surfaces.length, "Host surface count drifted.");
+  assert(manifest.counts.hostConcepts === data.hostAnchors.concepts.length, "Host concept count drifted.");
   assert(manifest.counts.publicDocCategories === data.publicDocs.categories.length, "Public docs category count drifted.");
   assert(manifest.counts.publicDocs === publicDocs.length, "Public docs entry count drifted.");
 }
@@ -72,11 +75,18 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
     }
     assertFileContains(outputDir, `${locale}/adoption/index.html`, "data-hia-public-portal-adoption");
     assertFileContains(outputDir, `${locale}/operations/index.html`, "data-hia-public-portal-operations");
+    assertFileContains(outputDir, `${locale}/hosts/index.html`, "data-hia-public-portal-hosts");
+    assertFileContains(outputDir, `${locale}/hosts/source-linkage.html`, "data-hia-public-portal-host-source-linkage");
+    assertFileContains(outputDir, `${locale}/hosts/ide-devtools.html`, "data-hia-public-portal-host-ide-devtools");
+    assertFileContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring");
     assertFileContains(outputDir, `${locale}/docs/index.html`, "data-hia-public-portal-docs");
     for (const document of publicDocs) {
       assertFileContains(outputDir, `${locale}/${document.route}`, "data-hia-public-portal-docs-entry");
+      assertFileContains(outputDir, `${locale}/${document.route}`, "data-hia-public-docs-rendered");
     }
     assertFileContains(outputDir, `${locale}/search/index.html`, "data-hia-public-portal-search");
+    assertFileContains(outputDir, `${locale}/search/hosts.html`, "data-hia-public-portal-search-hosts");
+    assertFileContains(outputDir, `${locale}/search/docs.html`, "data-hia-public-portal-search-docs");
     const localeSearch = searchLocales.get(locale);
     assert(localeSearch?.entryCount === expectedSearchEntryCount(data, publicDocs), `${locale}: search entry count drifted.`);
     assert(localeSearch.entries.length === localeSearch.entryCount, `${locale}: search entry length drifted.`);
@@ -98,13 +108,19 @@ function collectLocalePageList(data, locale, publicDocs) {
     `${locale}/operations/monitor.html`,
     `${locale}/operations/releases.html`,
     `${locale}/operations/versions.html`,
+    `${locale}/hosts/index.html`,
+    `${locale}/hosts/source-linkage.html`,
+    `${locale}/hosts/ide-devtools.html`,
+    `${locale}/hosts/ai-assisted-authoring.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
     ...publicDocs.map((document) => `${locale}/${document.route}`),
     `${locale}/search/index.html`,
     `${locale}/search/ecosystem.html`,
     `${locale}/search/adoption.html`,
-    `${locale}/search/operations.html`
+    `${locale}/search/operations.html`,
+    `${locale}/search/hosts.html`,
+    `${locale}/search/docs.html`
   ];
 }
 
@@ -137,6 +153,28 @@ function validatePrivacy(outputDir) {
   }
 }
 
+function validateRenderedPublicDocs(data, outputDir, publicDocs) {
+  const unsafePatterns = [
+    /<script\b/i,
+    /<iframe\b/i,
+    /<object\b/i,
+    /<embed\b/i,
+    /<style\b/i,
+    /\son[a-z]+\s*=/i,
+    /\b(?:href|src)\s*=\s*["']\s*javascript:/i
+  ];
+  for (const locale of data.project.locales) {
+    for (const document of publicDocs) {
+      const relativePath = `${locale}/${document.route}`;
+      const html = readFileSync(path.join(outputDir, ...relativePath.split("/")), "utf8");
+      assert(/data-hia-public-docs-rendered>[\s\S]*<(?:p|h2|h3|ul|ol|pre|div class="portal-table-wrap")\b/.test(html), `${relativePath}: rendered public docs content is empty.`);
+      for (const pattern of unsafePatterns) {
+        assert(!pattern.test(html), `${relativePath}: rendered public docs content contains an unsafe HTML pattern ${pattern}.`);
+      }
+    }
+  }
+}
+
 function expectedPackageRows(data) {
   return data.ecosystem.corePackages.names.length + data.ecosystem.docLines.reduce((total, line) => total + line.packages.length, 0);
 }
@@ -147,6 +185,9 @@ function expectedSearchEntryCount(data, publicDocs) {
     + data.adoption.cases.length
     + data.adoption.recipes.length
     + data.operations.routeGroups.length
+    + data.hostAnchors.concepts.length
+    + data.hostAnchors.surfaces.length
+    + 1
     + data.publicDocs.categories.length
     + publicDocs.length;
 }

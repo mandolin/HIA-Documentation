@@ -38,6 +38,7 @@ async function main() {
     await writeEcosystemPages(localeContext);
     await writeAdoptionPages(localeContext);
     await writeOperationsPages(localeContext);
+    await writeHostPages(localeContext);
     await writePublicDocsPages(localeContext);
     const search = await writeSearchPages(localeContext);
     searchLocales.push(search);
@@ -72,6 +73,8 @@ async function main() {
       adoptionCases: data.adoption.cases.length,
       adoptionRecipes: data.adoption.recipes.length,
       operationsRouteGroups: data.operations.routeGroups.length,
+      hostSurfaces: data.hostAnchors.surfaces.length,
+      hostConcepts: data.hostAnchors.concepts.length,
       publicDocCategories: data.publicDocs.categories.length,
       publicDocs: publicDocs.length
     },
@@ -135,6 +138,8 @@ async function collectPublicDocuments(data) {
     const category = inferCategory(entry.name, contents, categoryIds);
     documents.push({
       fileName: entry.name,
+      sourceKey: `docs/${entry.name}`,
+      contents,
       title: readMarkdownTitle(contents) ?? baseName,
       summary: readMarkdownSummary(contents),
       category,
@@ -164,12 +169,31 @@ async function writeRootIndex(outputDir, data) {
   });
 }
 
-async function writeLocaleHome({ data, labels, locale, outputDir }) {
+async function writeLocaleHome({ data, labels, locale, outputDir, packageRows, publicDocs }) {
   const filePath = `${locale}/index.html`;
+  const metrics = [
+    [labels.metricPackages, packageRows.length],
+    [labels.metricDocLines, data.ecosystem.docLines.length],
+    [labels.metricPublicDocs, publicDocs.length],
+    [labels.metricHostSurfaces, data.hostAnchors.surfaces.length]
+  ].map(([label, value]) => `<li><strong>${escapeHtml(String(value))}</strong><span>${escapeHtml(label)}</span></li>`).join("");
+  const sectionCards = [
+    [`packages/index.html`, labels.packages, labels.packagesLead],
+    [`doc-lines/index.html`, labels.docLines, labels.docLinesLead],
+    [`adoption/index.html`, labels.adoption, labels.adoptionLead],
+    [`operations/index.html`, labels.operations, labels.operationsLead],
+    [`hosts/index.html`, labels.hosts, labels.hostsLead],
+    [`docs/index.html`, labels.publicDocs, labels.publicDocsLead]
+  ].map(([href, title, lead]) => `<li><a href="${escapeHtml(href)}">${escapeHtml(title)}</a><span>${escapeHtml(lead)}</span></li>`).join("");
+  const hostCards = data.hostAnchors.surfaces
+    .map((surface) => `<li><a href="hosts/ide-devtools.html#${escapeHtml(surface.id)}"><strong>${escapeHtml(surface.title)}</strong></a><span>${escapeHtml(surface.entryPoint)}</span><em>${escapeHtml(surface.maturity)}</em></li>`)
+    .join("");
   const body = [
     '<main class="portal-shell" data-hia-public-portal-locale>',
     `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.kicker)}</p><h1>${escapeHtml(labels.portal)}</h1><p>${escapeHtml(labels.portalLead)}</p></header>`,
-    `<section class="portal-section"><h2>${escapeHtml(labels.sections)}</h2><ul class="portal-card-list"><li><a href="packages/index.html">${escapeHtml(labels.packages)}</a><span>${escapeHtml(labels.packagesLead)}</span></li><li><a href="doc-lines/index.html">${escapeHtml(labels.docLines)}</a><span>${escapeHtml(labels.docLinesLead)}</span></li><li><a href="adoption/index.html">${escapeHtml(labels.adoption)}</a><span>${escapeHtml(labels.adoptionLead)}</span></li><li><a href="operations/index.html">${escapeHtml(labels.operations)}</a><span>${escapeHtml(labels.operationsLead)}</span></li><li><a href="docs/index.html">${escapeHtml(labels.publicDocs)}</a><span>${escapeHtml(labels.publicDocsLead)}</span></li></ul></section>`,
+    `<section class="portal-section portal-section-quiet"><h2>${escapeHtml(labels.currentPublicReference)}</h2><ul class="portal-metrics">${metrics}</ul></section>`,
+    `<section class="portal-section"><h2>${escapeHtml(labels.sections)}</h2><ul class="portal-card-list">${sectionCards}</ul></section>`,
+    `<section class="portal-section" data-hia-public-portal-host-home><div class="portal-section-heading"><h2>${escapeHtml(labels.hostAnchors)}</h2><a href="hosts/index.html">${escapeHtml(labels.openHosts)}</a></div><p>${escapeHtml(data.hostAnchors.summary)}</p><ul class="portal-card-list">${hostCards}</ul></section>`,
     "</main>"
   ].join("");
   await writePage({ outputDir, filePath, locale, title: labels.portal, body });
@@ -352,7 +376,89 @@ async function writeOperationsPages({ data, labels, locale, outputDir }) {
   });
 }
 
+async function writeHostPages({ data, labels, locale, outputDir }) {
+  const conceptCards = data.hostAnchors.concepts
+    .map((concept) => `<li><a href="source-linkage.html#${escapeHtml(concept.id)}"><strong>${escapeHtml(concept.title)}</strong></a><span>${escapeHtml(concept.summary)}</span></li>`)
+    .join("");
+  const surfaceCards = data.hostAnchors.surfaces
+    .map((surface) => `<li><a href="ide-devtools.html#${escapeHtml(surface.id)}"><strong>${escapeHtml(surface.title)}</strong></a><span>${escapeHtml(surface.entryPoint)}</span><em>${escapeHtml(surface.maturity)}</em></li>`)
+    .join("");
+  const principleItems = data.hostAnchors.principles
+    .map((principle) => `<li>${escapeHtml(principle)}</li>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/hosts/index.html`,
+    locale,
+    title: labels.hosts,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-hosts>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.hosts)}</h1><p>${escapeHtml(data.hostAnchors.summary)}</p></header>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.hostConcepts)}</h2><ul class="portal-card-list">${conceptCards}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.hostSurfaces)}</h2><ul class="portal-card-list">${surfaceCards}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.publicBoundaries)}</h2><ul class="portal-list">${principleItems}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.aiAssistedAuthoring)}</h2><p>${escapeHtml(data.hostAnchors.aiAssistedAuthoring.summary)}</p><p><a href="ai-assisted-authoring.html">${escapeHtml(labels.openAiWorkflow)}</a></p></section>`,
+      "</main>"
+    ].join("")
+  });
+
+  const conceptSections = data.hostAnchors.concepts
+    .map((concept) => `<section class="portal-section" id="${escapeHtml(concept.id)}"><h2>${escapeHtml(concept.title)}</h2><p>${escapeHtml(concept.summary)}</p></section>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/hosts/source-linkage.html`,
+    locale,
+    title: labels.sourceLinkage,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-host-source-linkage>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.sourceLinkage)}</h1><p>${escapeHtml(labels.sourceLinkageLead)}</p></header>`,
+      conceptSections,
+      "</main>"
+    ].join("")
+  });
+
+  const surfaceSections = data.hostAnchors.surfaces
+    .map((surface) => `<section class="portal-section" id="${escapeHtml(surface.id)}"><h2>${escapeHtml(surface.title)}</h2><dl class="portal-meta"><dt>${escapeHtml(labels.maturity)}</dt><dd>${escapeHtml(surface.maturity)}</dd><dt>${escapeHtml(labels.entryPoint)}</dt><dd>${escapeHtml(surface.entryPoint)}</dd><dt>${escapeHtml(labels.currentEvidence)}</dt><dd>${escapeHtml(surface.currentEvidence.join(", "))}</dd><dt>${escapeHtml(labels.currentBoundary)}</dt><dd>${escapeHtml(surface.currentBoundary)}</dd><dt>${escapeHtml(labels.nextPublicMilestone)}</dt><dd>${escapeHtml(surface.nextPublicMilestone)}</dd></dl></section>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/hosts/ide-devtools.html`,
+    locale,
+    title: labels.ideDevtools,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-host-ide-devtools>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.ideDevtools)}</h1><p>${escapeHtml(labels.ideDevtoolsLead)}</p></header>`,
+      surfaceSections,
+      "</main>"
+    ].join("")
+  });
+
+  const workflow = data.hostAnchors.aiAssistedAuthoring;
+  const workflowSteps = workflow.workflowSteps
+    .map((step) => `<li>${escapeHtml(step)}</li>`)
+    .join("");
+  const guardrails = workflow.guardrails
+    .map((guardrail) => `<li>${escapeHtml(guardrail)}</li>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/hosts/ai-assisted-authoring.html`,
+    locale,
+    title: workflow.title,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-ai-authoring>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(workflow.title)}</h1><p>${escapeHtml(workflow.summary)}</p></header>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.workflow)}</h2><ol class="portal-list portal-ordered-list">${workflowSteps}</ol></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.guardrails)}</h2><ul class="portal-list">${guardrails}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.nextPublicMilestone)}</h2><p>${escapeHtml(workflow.nextPublicMilestone)}</p></section>`,
+      "</main>"
+    ].join("")
+  });
+}
+
 async function writePublicDocsPages({ data, labels, locale, outputDir, publicDocs }) {
+  const documentRoutes = createPublicDocRouteMap(publicDocs);
   const docsByCategory = new Map();
   for (const category of data.publicDocs.categories) {
     docsByCategory.set(category.id, publicDocs.filter((document) => document.category === category.id).sort((left, right) => compareStableText(left.title, right.title)));
@@ -395,6 +501,12 @@ async function writePublicDocsPages({ data, labels, locale, outputDir, publicDoc
 
   for (const document of publicDocs) {
     const category = data.publicDocs.categories.find((item) => item.id === document.category);
+    const markdownHtml = renderMarkdownDocument(document.contents, {
+      document,
+      documentRoutes,
+      fromFile: `${locale}/${document.route}`,
+      locale
+    });
     await writePage({
       outputDir,
       filePath: `${locale}/${document.route}`,
@@ -404,6 +516,7 @@ async function writePublicDocsPages({ data, labels, locale, outputDir, publicDoc
         '<main class="portal-shell" data-hia-public-portal-docs-entry>',
         `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(category?.title ?? labels.publicDocs)}</p><h1>${escapeHtml(document.title)}</h1><p>${escapeHtml(document.summary)}</p></header>`,
         `<section class="portal-section"><h2>${escapeHtml(labels.sourceDocument)}</h2><p><code>${escapeHtml(document.fileName)}</code></p></section>`,
+        `<section class="portal-section portal-doc-content" data-hia-public-docs-rendered>${markdownHtml}</section>`,
         "</main>"
       ].join("")
     });
@@ -461,6 +574,24 @@ async function writeSearchPages(context) {
       description: `${group.status} / ${group.minimumPathCount}`,
       route: `${locale}/operations/index.html`
     })),
+    ...data.hostAnchors.concepts.map((concept) => ({
+      section: "hosts",
+      title: concept.title,
+      description: concept.summary,
+      route: `${locale}/hosts/source-linkage.html#${concept.id}`
+    })),
+    ...data.hostAnchors.surfaces.map((surface) => ({
+      section: "hosts",
+      title: surface.title,
+      description: `${surface.maturity} / ${surface.entryPoint}`,
+      route: `${locale}/hosts/ide-devtools.html#${surface.id}`
+    })),
+    {
+      section: "hosts",
+      title: data.hostAnchors.aiAssistedAuthoring.title,
+      description: data.hostAnchors.aiAssistedAuthoring.summary,
+      route: `${locale}/hosts/ai-assisted-authoring.html`
+    },
     ...data.publicDocs.categories.map((category) => ({
       section: "public-docs",
       title: category.title,
@@ -490,13 +621,18 @@ async function writeSearchPages(context) {
     body: [
       '<main class="portal-shell" data-hia-public-portal-search>',
       `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.portal)}</p><h1>${escapeHtml(labels.search)}</h1><p>${escapeHtml(labels.searchLead)}</p></header>`,
+      `<section class="portal-section portal-section-quiet"><h2>${escapeHtml(labels.searchSections)}</h2><ul class="portal-chip-list"><li><a href="ecosystem.html">${escapeHtml(labels.ecosystem)}</a></li><li><a href="adoption.html">${escapeHtml(labels.adoption)}</a></li><li><a href="operations.html">${escapeHtml(labels.operations)}</a></li><li><a href="hosts.html">${escapeHtml(labels.hosts)}</a></li><li><a href="docs.html">${escapeHtml(labels.publicDocs)}</a></li></ul></section>`,
       `<section class="portal-section"><ul class="portal-list">${searchList}</ul></section>`,
       "</main>"
     ].join("")
   });
 
-  for (const section of ["ecosystem", "adoption", "operations"]) {
-    const sectionEntries = entries.filter((entry) => section === "ecosystem" ? ["packages", "doc-lines"].includes(entry.section) : entry.section === section);
+  for (const section of ["ecosystem", "adoption", "operations", "hosts", "docs"]) {
+    const sectionEntries = entries.filter((entry) => {
+      if (section === "ecosystem") return ["packages", "doc-lines"].includes(entry.section);
+      if (section === "docs") return entry.section === "public-docs";
+      return entry.section === section;
+    });
     await writePage({
       outputDir,
       filePath: `${locale}/search/${section}.html`,
@@ -534,13 +670,19 @@ function collectLocalePageList(data, locale, publicDocs = []) {
     `${locale}/operations/monitor.html`,
     `${locale}/operations/releases.html`,
     `${locale}/operations/versions.html`,
+    `${locale}/hosts/index.html`,
+    `${locale}/hosts/source-linkage.html`,
+    `${locale}/hosts/ide-devtools.html`,
+    `${locale}/hosts/ai-assisted-authoring.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
     ...publicDocs.map((document) => `${locale}/${document.route}`),
     `${locale}/search/index.html`,
     `${locale}/search/ecosystem.html`,
     `${locale}/search/adoption.html`,
-    `${locale}/search/operations.html`
+    `${locale}/search/operations.html`,
+    `${locale}/search/hosts.html`,
+    `${locale}/search/docs.html`
   ];
 }
 
@@ -570,6 +712,7 @@ function createNavigation(filePath, locale) {
     [labelsForNav(locale).docLines, `${locale}/doc-lines/index.html`],
     [labelsForNav(locale).adoption, `${locale}/adoption/index.html`],
     [labelsForNav(locale).operations, `${locale}/operations/index.html`],
+    [labelsForNav(locale).hosts, `${locale}/hosts/index.html`],
     [labelsForNav(locale).docs, `${locale}/docs/index.html`],
     [labelsForNav(locale).search, `${locale}/search/index.html`]
   ];
@@ -593,10 +736,21 @@ h1 { font-size: 32px; line-height: 1.15; margin: 0 0 10px; }
 h2 { font-size: 20px; margin: 0 0 14px; }
 p { margin: 0 0 12px; }
 .portal-section { background: var(--portal-panel); border: 1px solid var(--portal-line); border-radius: 8px; margin: 16px 0; padding: 18px; }
+.portal-section-quiet { background: #fbfdfc; }
+.portal-section-heading { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; margin-bottom: 10px; }
+.portal-section-heading h2 { margin: 0; }
 .portal-card-list, .portal-list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
 .portal-card-list { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .portal-card-list li, .portal-list li { border: 1px solid var(--portal-line); border-radius: 8px; display: grid; gap: 4px; padding: 12px; }
 .portal-card-list span, .portal-list span, .portal-card-list em { color: var(--portal-muted); font-style: normal; }
+.portal-ordered-list { list-style: decimal inside; }
+.portal-metrics { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); list-style: none; margin: 0; padding: 0; }
+.portal-metrics li { border-left: 3px solid var(--portal-accent); display: grid; gap: 2px; padding: 8px 10px; }
+.portal-metrics strong { font-size: 24px; line-height: 1; }
+.portal-metrics span { color: var(--portal-muted); font-size: 13px; }
+.portal-chip-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.portal-chip-list a { border: 1px solid var(--portal-line); border-radius: 999px; display: inline-flex; padding: 6px 10px; text-decoration: none; }
+.portal-chip-list a:focus-visible, .portal-chip-list a:hover { background: #e5f3f0; border-color: var(--portal-accent); outline: none; }
 .portal-meta { display: grid; gap: 8px 16px; grid-template-columns: minmax(140px, max-content) 1fr; margin: 0; }
 .portal-meta dt { color: var(--portal-muted); font-weight: 700; }
 .portal-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
@@ -604,6 +758,16 @@ p { margin: 0 0 12px; }
 table { border-collapse: collapse; min-width: 720px; width: 100%; }
 th, td { border-bottom: 1px solid var(--portal-line); padding: 9px 10px; text-align: left; vertical-align: top; }
 th { background: #eef5f3; }
+.portal-doc-content { display: grid; gap: 12px; }
+.portal-doc-content h2, .portal-doc-content h3, .portal-doc-content h4, .portal-doc-content h5, .portal-doc-content h6 { margin: 14px 0 2px; }
+.portal-doc-content h3 { font-size: 18px; }
+.portal-doc-content h4, .portal-doc-content h5, .portal-doc-content h6 { font-size: 16px; }
+.portal-doc-content pre { background: #142326; border-radius: 8px; color: #e6f3ef; margin: 0; overflow-x: auto; padding: 14px; }
+.portal-doc-content pre code { color: inherit; font-size: 13px; }
+.portal-doc-content blockquote { border-left: 3px solid var(--portal-accent); color: var(--portal-muted); margin: 0; padding: 8px 12px; }
+.portal-doc-content ul, .portal-doc-content ol { margin: 0; padding-left: 22px; }
+.portal-doc-content li { margin: 4px 0; }
+.portal-doc-content table { min-width: 640px; }
 @media (max-width: 720px) { h1 { font-size: 26px; } .portal-meta { grid-template-columns: 1fr; } .portal-nav { position: static; } }
 `);
 }
@@ -614,6 +778,11 @@ function getLabels(locale) {
     kicker: "HIA Documentation System",
     portal: zh ? "HIA 公共门户" : "HIA Public Portal",
     portalLead: zh ? "公开 reference 元数据、生态状态、采用指南和运维概览。" : "Public reference metadata, ecosystem status, adoption guidance and operations overview.",
+    currentPublicReference: zh ? "当前公开 reference" : "Current Public Reference",
+    metricPackages: zh ? "包条目" : "package rows",
+    metricDocLines: zh ? "文档化线条" : "doc lines",
+    metricPublicDocs: zh ? "公开文档" : "public docs",
+    metricHostSurfaces: zh ? "宿主表面" : "host surfaces",
     sections: zh ? "入口" : "Sections",
     ecosystem: zh ? "生态" : "Ecosystem",
     packages: zh ? "包" : "Packages",
@@ -624,6 +793,24 @@ function getLabels(locale) {
     adoptionLead: zh ? "目标项目采用案例与最小 recipe。" : "Target-project adoption cases and minimum recipes.",
     operations: zh ? "运维" : "Operations",
     operationsLead: zh ? "公开 reference 的部署、监控、版本与发布状态。" : "Deployment, monitor, versioning and release status for the public reference.",
+    hosts: zh ? "宿主" : "Hosts",
+    hostsLead: zh ? "IDE、DevTools、browser panel、relation graph 和 AI 辅助写作入口。" : "IDE, DevTools, browser panel, relation graph and AI-assisted authoring entry points.",
+    hostAnchors: zh ? "IDE/DevTools 锚点" : "IDE/DevTools Anchors",
+    openHosts: zh ? "打开宿主入口" : "Open host anchors",
+    hostConcepts: zh ? "核心概念" : "Core Concepts",
+    hostSurfaces: zh ? "宿主表面" : "Host Surfaces",
+    publicBoundaries: zh ? "公开边界" : "Public Boundaries",
+    aiAssistedAuthoring: zh ? "AI 辅助文档写作" : "AI-Assisted Documentation Authoring",
+    openAiWorkflow: zh ? "查看 AI 辅助流程" : "Open AI workflow",
+    sourceLinkage: zh ? "源码联动" : "Source Linkage",
+    sourceLinkageLead: zh ? "HIA 使用 relation graph、doc-source-map、普通 source map 与结构化 open request 来连接文档、源码和生成物。" : "HIA connects documentation, original source, generated artifacts, ordinary source maps and doc-source-map manifests through relation graph and structured open requests.",
+    ideDevtools: zh ? "IDE 与 DevTools" : "IDE And DevTools",
+    ideDevtoolsLead: zh ? "当前宿主能力以 LSP、VS Code helper、browser panel、DevTools shell 和多 IDE 边界为公开候选。" : "Current host capability is represented by LSP, VS Code helper, browser panel, DevTools shell and multi-IDE boundaries.",
+    entryPoint: zh ? "入口" : "Entry Point",
+    currentEvidence: zh ? "当前证据" : "Current Evidence",
+    currentBoundary: zh ? "当前边界" : "Current Boundary",
+    workflow: zh ? "流程" : "Workflow",
+    guardrails: zh ? "护栏" : "Guardrails",
     publicDocs: zh ? "公开文档" : "Public Docs",
     publicDocsLead: zh ? "公开文档分类、翻译优先级和导航准备度。" : "Public documentation categories, translation priority and navigation readiness.",
     publicDocsCategoryLead: zh ? "该分类由公开文档元数据派生，详细条目将在后续构建阶段补齐。" : "This category is derived from public documentation metadata; detailed entries will be filled by a later build stage.",
@@ -676,7 +863,8 @@ function getLabels(locale) {
     entries: zh ? "条目" : "Entries",
     sourceDocument: zh ? "源文档" : "Source Document",
     search: zh ? "搜索" : "Search",
-    searchLead: zh ? "统一搜索索引的静态预览。" : "Static preview of the unified search index."
+    searchLead: zh ? "统一搜索索引的静态预览。" : "Static preview of the unified search index.",
+    searchSections: zh ? "搜索分组" : "Search Sections"
   };
 }
 
@@ -688,6 +876,7 @@ function labelsForNav(locale) {
     docLines: labels.docLines,
     adoption: labels.adoption,
     operations: labels.operations,
+    hosts: labels.hosts,
     docs: labels.publicDocs,
     search: labels.search
   };
@@ -764,6 +953,215 @@ function normalizeMarkdownInline(value) {
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .trim();
+}
+
+/**
+ * 渲染公开 Markdown 文档的安全子集；原始 HTML 会被转义而非直接注入。
+ * Renders a safe public Markdown subset; raw HTML is escaped instead of injected.
+ */
+// Renders only the public-safe Markdown subset used by generated reference pages.
+// 仅渲染公开参考页允许的 Markdown 子集；原始 HTML 始终按文本转义。
+function renderMarkdownDocument(contents, context) {
+  const lines = contents.replace(/\r\n?/g, "\n").split("\n");
+  const output = [];
+  const headingSlugs = new Map();
+  let index = 0;
+  let skippedFirstTitle = false;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    const fenceMatch = trimmed.match(/^```([A-Za-z0-9_-]+)?\s*$/);
+    if (fenceMatch) {
+      const language = fenceMatch[1] ?? "";
+      const codeLines = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      const languageAttr = language ? ` data-language="${escapeHtml(language)}"` : "";
+      output.push(`<pre><code${languageAttr}>${escapePublicMarkdown(codeLines.join("\n"))}</code></pre>`);
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const level = Math.min(6, Math.max(2, headingMatch[1].length));
+      const text = headingMatch[2].replace(/\s+#+\s*$/, "");
+      if (!skippedFirstTitle && headingMatch[1].length === 1) {
+        skippedFirstTitle = true;
+        index += 1;
+        continue;
+      }
+      const id = createHeadingId(text, headingSlugs);
+      output.push(`<h${level} id="${escapeHtml(id)}">${renderMarkdownInline(text, context)}</h${level}>`);
+      index += 1;
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      const tableLines = [lines[index], lines[index + 1]];
+      index += 2;
+      while (index < lines.length && lines[index].includes("|") && lines[index].trim()) {
+        tableLines.push(lines[index]);
+        index += 1;
+      }
+      output.push(renderMarkdownTable(tableLines, context));
+      continue;
+    }
+
+    const listMatch = trimmed.match(/^([-*+]|\d+\.)\s+(.+)$/);
+    if (listMatch) {
+      const ordered = /^\d+\./.test(listMatch[1]);
+      const tag = ordered ? "ol" : "ul";
+      const items = [];
+      while (index < lines.length) {
+        const current = lines[index].trim();
+        const currentMatch = current.match(/^([-*+]|\d+\.)\s+(.+)$/);
+        if (!currentMatch || /^\d+\./.test(currentMatch[1]) !== ordered) break;
+        items.push(`<li>${renderMarkdownInline(currentMatch[2], context)}</li>`);
+        index += 1;
+      }
+      output.push(`<${tag}>${items.join("")}</${tag}>`);
+      continue;
+    }
+
+    if (trimmed.startsWith(">")) {
+      const quoteLines = [];
+      while (index < lines.length && lines[index].trim().startsWith(">")) {
+        quoteLines.push(lines[index].trim().replace(/^>\s?/, ""));
+        index += 1;
+      }
+      output.push(`<blockquote>${renderMarkdownParagraph(quoteLines, context)}</blockquote>`);
+      continue;
+    }
+
+    const paragraphLines = [];
+    while (index < lines.length && lines[index].trim() && !isBlockStart(lines, index)) {
+      paragraphLines.push(lines[index].trim());
+      index += 1;
+    }
+    output.push(renderMarkdownParagraph(paragraphLines, context));
+  }
+
+  return output.join("");
+}
+
+function renderMarkdownParagraph(lines, context) {
+  return `<p>${renderMarkdownInline(lines.join(" "), context)}</p>`;
+}
+
+function renderMarkdownTable(lines, context) {
+  const headerCells = splitMarkdownTableRow(lines[0]);
+  const bodyRows = lines.slice(2).map(splitMarkdownTableRow);
+  const header = headerCells.map((cell) => `<th>${renderMarkdownInline(cell, context)}</th>`).join("");
+  const body = bodyRows
+    .map((row) => `<tr>${row.map((cell) => `<td>${renderMarkdownInline(cell, context)}</td>`).join("")}</tr>`)
+    .join("");
+  return `<div class="portal-table-wrap"><table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function renderMarkdownInline(value, context) {
+  const segments = value.split(/(`[^`]*`)/g);
+  return segments.map((segment) => {
+    if (segment.startsWith("`") && segment.endsWith("`")) {
+      return `<code>${escapeHtml(segment.slice(1, -1))}</code>`;
+    }
+    return renderMarkdownTextWithLinks(segment, context);
+  }).join("");
+}
+
+function renderMarkdownTextWithLinks(value, context) {
+  let output = "";
+  let lastIndex = 0;
+  const linkPattern = /\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  for (const match of value.matchAll(linkPattern)) {
+    output += renderMarkdownEmphasis(value.slice(lastIndex, match.index));
+    const label = renderMarkdownEmphasis(match[1]);
+    const href = resolveMarkdownHref(match[2], context);
+    output += href ? `<a href="${escapeHtml(href)}">${label}</a>` : label;
+    lastIndex = match.index + match[0].length;
+  }
+  output += renderMarkdownEmphasis(value.slice(lastIndex));
+  return output;
+}
+
+function renderMarkdownEmphasis(value) {
+  return escapePublicMarkdown(value)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function escapePublicMarkdown(value) {
+  return escapeHtml(redactAbsolutePaths(value));
+}
+
+function redactAbsolutePaths(value) {
+  return String(value)
+    .replace(/(^|[^A-Za-z0-9+.-])[A-Za-z]:[\\/][^\s"',)<>]*/g, "$1[redacted-absolute-path]")
+    .replace(/\/home\/runner\/[^\s"',)<>]*/g, "[redacted-runner-path]");
+}
+
+function resolveMarkdownHref(rawHref, context) {
+  const [targetPart, hashPart] = rawHref.split("#", 2);
+  const hash = hashPart ? `#${toHeadingHash(hashPart)}` : "";
+  if (!targetPart) return hash || null;
+  if (/^(?:https?:|mailto:)/i.test(targetPart)) return `${targetPart}${hash}`;
+  if (/^(?:[A-Za-z][A-Za-z0-9+.-]*:|\/\/|\/|\\)/.test(targetPart) || targetPart.includes("\\")) return null;
+
+  const sourceDirectory = path.posix.dirname(context.document.sourceKey);
+  const normalized = path.posix.normalize(path.posix.join(sourceDirectory, targetPart));
+  if (normalized.startsWith("../") || normalized === "..") return null;
+  if (normalized.startsWith("docs/") && normalized.endsWith(".md")) {
+    const route = context.documentRoutes.get(normalized);
+    return route ? `${relativeHref(context.fromFile, `${context.locale}/${route}`)}${hash}` : null;
+  }
+  return `https://github.com/mandolin/HIA-Documentation/blob/main/${encodeURI(normalized)}${hash}`;
+}
+
+function createPublicDocRouteMap(publicDocs) {
+  return new Map(publicDocs.map((document) => [document.sourceKey, document.route]));
+}
+
+function isBlockStart(lines, index) {
+  const trimmed = lines[index].trim();
+  return trimmed.startsWith("```")
+    || /^(#{1,6})\s+/.test(trimmed)
+    || /^([-*+]|\d+\.)\s+/.test(trimmed)
+    || trimmed.startsWith(">")
+    || isTableStart(lines, index);
+}
+
+function isTableStart(lines, index) {
+  if (index + 1 >= lines.length) return false;
+  return lines[index].includes("|") && isTableSeparator(lines[index + 1]);
+}
+
+function isTableSeparator(line) {
+  const cells = splitMarkdownTableRow(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function splitMarkdownTableRow(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+function createHeadingId(text, slugs) {
+  const base = toRouteToken(normalizeMarkdownInline(text)) || "section";
+  const count = slugs.get(base) ?? 0;
+  slugs.set(base, count + 1);
+  return count === 0 ? base : `${base}-${count + 1}`;
+}
+
+function toHeadingHash(value) {
+  return value.replace(/[^A-Za-z0-9_-]/g, "");
 }
 
 function toRouteToken(value) {

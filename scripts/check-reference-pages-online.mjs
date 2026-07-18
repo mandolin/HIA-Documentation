@@ -97,12 +97,19 @@ async function checkPublication() {
       [`${locale}/operations/status.html`, "data-hia-public-portal-operations-status", "portal-nav"],
       [`${locale}/operations/monitor.html`, "data-hia-public-portal-operations-monitor", "portal-nav"],
       [`${locale}/operations/versions.html`, "data-hia-public-portal-operations-versions", "portal-nav"],
+      [`${locale}/hosts/`, "data-hia-public-portal-hosts", "portal-nav"],
+      [`${locale}/hosts/source-linkage.html`, "data-hia-public-portal-host-source-linkage", "portal-nav"],
+      [`${locale}/hosts/ide-devtools.html`, "data-hia-public-portal-host-ide-devtools", "portal-nav"],
+      [`${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring", "portal-nav"],
       [`${locale}/docs/`, "data-hia-public-portal-docs", "portal-nav"],
       [`${locale}/docs/categories/configuration.html`, "data-hia-public-portal-docs-category", "portal-nav"],
+      [`${locale}/docs/reference/reference-pages--077ce10c88.html`, "data-hia-public-docs-rendered", "portal-nav"],
       [`${locale}/search/`, "data-hia-public-portal-search", "portal-nav"],
       [`${locale}/search/ecosystem.html`, "data-hia-public-portal-search-ecosystem", "portal-nav"],
       [`${locale}/search/adoption.html`, "data-hia-public-portal-search-adoption", "portal-nav"],
-      [`${locale}/search/operations.html`, "data-hia-public-portal-search-operations", "portal-nav"]
+      [`${locale}/search/operations.html`, "data-hia-public-portal-search-operations", "portal-nav"],
+      [`${locale}/search/hosts.html`, "data-hia-public-portal-search-hosts", "portal-nav"],
+      [`${locale}/search/docs.html`, "data-hia-public-portal-search-docs", "portal-nav"]
     );
     const searchLocale = portalSearchIndex.locales.find((entry) => entry.locale === locale);
     assert(searchLocale?.entryCount > 0 && searchLocale.entries?.length === searchLocale.entryCount, `${locale}: published public portal search index drifted.`);

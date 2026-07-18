@@ -70,8 +70,14 @@ async function main() {
     await assertPageContains(outputDir, `${locale}/doc-lines/index.html`, ["data-hia-public-portal-doc-lines", "TSDoc"]);
     await assertPageContains(outputDir, `${locale}/adoption/index.html`, ["data-hia-public-portal-adoption", "read-only"]);
     await assertPageContains(outputDir, `${locale}/operations/index.html`, ["data-hia-public-portal-operations", "legacy-reference-pages"]);
+    await assertPageContains(outputDir, `${locale}/hosts/index.html`, ["data-hia-public-portal-hosts", "Project Relation Graph"]);
+    await assertPageContains(outputDir, `${locale}/hosts/source-linkage.html`, ["data-hia-public-portal-host-source-linkage", "Structured Open Request"]);
+    await assertPageContains(outputDir, `${locale}/hosts/ide-devtools.html`, ["data-hia-public-portal-host-ide-devtools", "VS Code"]);
+    await assertPageContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, ["data-hia-public-portal-ai-authoring", "AI-Assisted Documentation Authoring"]);
     await assertPageContains(outputDir, `${locale}/docs/index.html`, ["data-hia-public-portal-docs", "Configuration"]);
+    await assertPageContains(outputDir, `${locale}/docs/reference/reference-pages--077ce10c88.html`, ["data-hia-public-docs-rendered", "Public Routes"]);
     await assertPageContains(outputDir, `${locale}/search/index.html`, ["data-hia-public-portal-search"]);
+    await assertPageContains(outputDir, `${locale}/search/hosts.html`, ["data-hia-public-portal-search-hosts", "Language Server Protocol"]);
     const searchLocale = portalSearchIndex.locales.find((entry) => entry.locale === locale);
     assert(searchLocale?.entryCount > 0 && searchLocale.entries?.length === searchLocale.entryCount, `${locale}: public portal search index drifted.`);
   }

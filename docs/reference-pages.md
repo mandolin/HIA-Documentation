@@ -8,7 +8,7 @@ https://mandolin.github.io/HIA-Documentation/
 
 The site combines first-party documentation generated from the explicit public source allowlist with the canonical JSON Schema namespace. It keeps compatibility routes at the site root and also exposes a first versioned layout through `current/` and `releases/`.
 
-The artifact also includes generated public portal pages for ecosystem discovery, adoption guidance, operations status and public documentation navigation. These pages are assembled from reviewed public metadata before the final Pages artifact is written.
+The artifact also includes generated public portal pages for ecosystem discovery, adoption guidance, operations status, IDE/DevTools host anchors and public documentation navigation. These pages are assembled from reviewed public metadata before the final Pages artifact is written.
 
 ## Public Routes
 
@@ -30,13 +30,23 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/en/doc-lines/` | English documentation line index. |
 | `/en/adoption/` | English adoption cases and recipes. |
 | `/en/operations/` | English operations status, monitor and versioning overview. |
+| `/en/hosts/` | English IDE/DevTools host anchor overview. |
+| `/en/hosts/source-linkage.html` | English source-linkage and relation graph concept page. |
+| `/en/hosts/ide-devtools.html` | English host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
+| `/en/hosts/ai-assisted-authoring.html` | English AI-assisted documentation authoring workflow candidate. |
 | `/en/docs/` | English public documentation navigation categories. |
+| `/en/docs/reference/<document>.html` | English public documentation detail page rendered from the safe Markdown subset. |
 | `/en/search/` | English public portal search preview. |
 | `/zh-CN/packages/` | Chinese ecosystem package matrix. |
 | `/zh-CN/doc-lines/` | Chinese documentation line index. |
 | `/zh-CN/adoption/` | Chinese adoption cases and recipes. |
 | `/zh-CN/operations/` | Chinese operations status, monitor and versioning overview. |
+| `/zh-CN/hosts/` | Chinese IDE/DevTools host anchor overview. |
+| `/zh-CN/hosts/source-linkage.html` | Chinese source-linkage and relation graph concept page. |
+| `/zh-CN/hosts/ide-devtools.html` | Chinese host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
+| `/zh-CN/hosts/ai-assisted-authoring.html` | Chinese AI-assisted documentation authoring workflow candidate. |
 | `/zh-CN/docs/` | Chinese public documentation navigation categories. |
+| `/zh-CN/docs/reference/<document>.html` | Chinese public documentation detail page rendered from the safe Markdown subset. |
 | `/zh-CN/search/` | Chinese public portal search preview. |
 | `/reference-build.json` | Sanitized source repository, ref and resolved-SHA provenance. |
 | `/public-portal-pages.json` | Sanitized generated portal page manifest. |
@@ -72,7 +82,7 @@ mise exec -- pnpm run reference:pages
 mise exec -- pnpm run reference:pages:check
 ```
 
-`reference:pages` regenerates the public portal pages before assembling the final artifact. `reference:pages:check` rejects missing routes, incomplete provenance, altered schema files, broken public portal links, hidden producer intermediates, embedded source content, private workspace markers and local absolute paths.
+`reference:pages` regenerates the public portal pages before assembling the final artifact. `reference:pages:check` rejects missing routes, incomplete provenance, altered schema files, broken public portal links, unsafe rendered documentation HTML, hidden producer intermediates, embedded source content, private workspace markers and local absolute paths.
 
 ## Publication Security
 

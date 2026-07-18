@@ -34,11 +34,12 @@ function main() {
   validateEcosystem(data, publicPackages, profileCatalog, schemaCatalog);
   validateAdoption(data);
   validateOperations(data);
+  validateHostAnchors(data);
   validatePublicDocs(data);
   validateRoutes(data);
 
   const packageRows = data.ecosystem.corePackages.names.length + data.ecosystem.docLines.reduce((total, line) => total + line.packages.length, 0);
-  console.log(`Public portal data check passed: ${data.ecosystem.docLines.length} doc line(s), ${packageRows} package row(s), ${data.adoption.cases.length} adoption case(s).`);
+  console.log(`Public portal data check passed: ${data.ecosystem.docLines.length} doc line(s), ${packageRows} package row(s), ${data.adoption.cases.length} adoption case(s), ${data.hostAnchors.surfaces.length} host surface(s).`);
 }
 
 function validateContract(data) {
@@ -157,6 +158,33 @@ function validateOperations(data) {
   assertEqualSets(["generated-adoption-pages", "generated-ecosystem-pages", "generated-operations-pages", "legacy-reference-pages", "portal-route-set"], operations.routeGroups.map((group) => group.id), "Operations route group inventory");
 }
 
+function validateHostAnchors(data) {
+  const anchors = data.hostAnchors;
+  assert(anchors?.status === "host-productization-input", "Host anchor status drifted.");
+  assert(typeof anchors.summary === "string" && anchors.summary.includes("relation graph"), "Host anchors must summarize the relation graph boundary.");
+  assert(Array.isArray(anchors.principles) && anchors.principles.length >= 3, "Host anchors must declare public principles.");
+  assertEqualSets(["open-request", "relation-graph", "source-linkage"], anchors.concepts.map((concept) => concept.id), "Host concept inventory");
+  for (const concept of anchors.concepts) {
+    assert(typeof concept.title === "string" && concept.title.length > 0, `Host concept ${concept.id} must have a title.`);
+    assert(typeof concept.summary === "string" && concept.summary.length > 0, `Host concept ${concept.id} must have a summary.`);
+  }
+
+  const allowedMaturity = new Set(["compatibility-boundary", "host-candidate", "implemented-boundary", "local-shell"]);
+  assertEqualSets(["browser-panel", "devtools", "lsp", "multi-ide", "vscode"], anchors.surfaces.map((surface) => surface.id), "Host surface inventory");
+  for (const surface of anchors.surfaces) {
+    assert(allowedMaturity.has(surface.maturity), `Host surface ${surface.id} has an unknown maturity.`);
+    assert(typeof surface.entryPoint === "string" && surface.entryPoint.length > 0, `Host surface ${surface.id} must declare an entry point.`);
+    assert(Array.isArray(surface.currentEvidence) && surface.currentEvidence.length >= 2, `Host surface ${surface.id} must carry public evidence summary.`);
+    assert(typeof surface.currentBoundary === "string" && surface.currentBoundary.length > 0, `Host surface ${surface.id} must declare current boundary.`);
+    assert(typeof surface.nextPublicMilestone === "string" && surface.nextPublicMilestone.length > 0, `Host surface ${surface.id} must declare next milestone.`);
+  }
+
+  const workflow = anchors.aiAssistedAuthoring;
+  assert(workflow?.status === "workflow-candidate", "AI-assisted authoring status drifted.");
+  assert(Array.isArray(workflow.workflowSteps) && workflow.workflowSteps.length >= 4, "AI-assisted authoring workflow must have at least four steps.");
+  assert(Array.isArray(workflow.guardrails) && workflow.guardrails.length >= 4, "AI-assisted authoring guardrails must have at least four items.");
+}
+
 function validatePublicDocs(data) {
   const publicDocs = data.publicDocs;
   assert(publicDocs?.sourceMode === "derive-from-main-repo-docs", "Public docs source mode drifted.");
@@ -169,7 +197,8 @@ function validateRoutes(data) {
   const routeValues = [
     ...Object.values(data.pageRoutes.ecosystem),
     ...Object.values(data.pageRoutes.adoption),
-    ...Object.values(data.pageRoutes.operations)
+    ...Object.values(data.pageRoutes.operations),
+    ...Object.values(data.pageRoutes.hosts)
   ];
   assert(routeValues.length === new Set(routeValues).size, "Public portal route patterns must be unique.");
   for (const route of routeValues) {
