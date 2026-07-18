@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const portalDataPath = path.join(mainRepoRoot, "reference", "public-portal-data.json");
+const publicDocsRoot = path.join(mainRepoRoot, "docs");
 const releasePackagesPath = path.join(mainRepoRoot, "release", "public-packages.json");
 const profileCatalogPath = path.join(mainRepoRoot, "packages", "profiles", "src", "catalog.json");
 const schemaCatalogPath = path.join(mainRepoRoot, "packages", "schemas", "src", "catalog.json");
@@ -132,6 +133,8 @@ function validateAdoption(data) {
     assert(docLineIds.has(recipe.docLineId), `Recipe ${recipe.id} references an unknown doc line.`);
     assert(packageNames.has(recipe.minimumRunnerPackage), `Recipe ${recipe.id} references an unknown runner package.`);
     assert(/^\d+\.\d+\.\d+$/.test(recipe.minimumRunnerVersion), `Recipe ${recipe.id} runner version must be semver-like.`);
+    assert(/^[a-z0-9][a-z0-9-]*\.md$/.test(recipe.quickstartDocument ?? ""), `Recipe ${recipe.id} must reference a public quickstart document.`);
+    assert(existsSync(path.join(publicDocsRoot, recipe.quickstartDocument)), `Recipe ${recipe.id} quickstart document is missing.`);
   }
 
   for (const adoptionCase of data.adoption.cases) {
@@ -188,7 +191,7 @@ function validateHostAnchors(data) {
 function validatePublicDocs(data) {
   const publicDocs = data.publicDocs;
   assert(publicDocs?.sourceMode === "derive-from-main-repo-docs", "Public docs source mode drifted.");
-  assert(publicDocs.minimumDocumentCount >= 29, "Public docs minimum document count regressed.");
+  assert(publicDocs.minimumDocumentCount >= 32, "Public docs minimum document count regressed.");
   assert(publicDocs.highPriorityTranslationBacklogCount <= publicDocs.translationBacklogCount, "High-priority translation backlog cannot exceed total backlog.");
   assertEqualSets(["configuration", "contracts", "governance", "guide", "operations", "release", "tooling"], publicDocs.categories.map((category) => category.id), "Public docs category inventory");
 }

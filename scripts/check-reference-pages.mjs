@@ -76,6 +76,8 @@ async function main() {
     await assertPageContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, ["data-hia-public-portal-ai-authoring", "AI-Assisted Documentation Authoring"]);
     await assertPageContains(outputDir, `${locale}/docs/index.html`, ["data-hia-public-portal-docs", "Configuration"]);
     await assertPageContains(outputDir, `${locale}/docs/reference/reference-pages--077ce10c88.html`, ["data-hia-public-docs-rendered", "Public Routes"]);
+    await assertPageContains(outputDir, `${locale}/docs/reference/tsdoc-quickstart--40de72c37e.html`, ["data-hia-public-docs-rendered", "@hia-doc/tsdoc-runner"]);
+    await assertPageContains(outputDir, `${locale}/docs/reference/dotnetdoc-quickstart--cefba20162.html`, ["data-hia-public-docs-rendered", "@hia-doc/dotnetdoc-runner"]);
     await assertPageContains(outputDir, `${locale}/search/index.html`, ["data-hia-public-portal-search"]);
     await assertPageContains(outputDir, `${locale}/search/hosts.html`, ["data-hia-public-portal-search-hosts", "Language Server Protocol"]);
     const searchLocale = portalSearchIndex.locales.find((entry) => entry.locale === locale);

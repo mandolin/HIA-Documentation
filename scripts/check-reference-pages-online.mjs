@@ -104,6 +104,8 @@ async function checkPublication() {
       [`${locale}/docs/`, "data-hia-public-portal-docs", "portal-nav"],
       [`${locale}/docs/categories/configuration.html`, "data-hia-public-portal-docs-category", "portal-nav"],
       [`${locale}/docs/reference/reference-pages--077ce10c88.html`, "data-hia-public-docs-rendered", "portal-nav"],
+      [`${locale}/docs/reference/tsdoc-quickstart--40de72c37e.html`, "data-hia-public-docs-rendered", "portal-nav"],
+      [`${locale}/docs/reference/dotnetdoc-quickstart--cefba20162.html`, "data-hia-public-docs-rendered", "portal-nav"],
       [`${locale}/search/`, "data-hia-public-portal-search", "portal-nav"],
       [`${locale}/search/ecosystem.html`, "data-hia-public-portal-search-ecosystem", "portal-nav"],
       [`${locale}/search/adoption.html`, "data-hia-public-portal-search-adoption", "portal-nav"],

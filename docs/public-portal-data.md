@@ -23,9 +23,11 @@ pnpm run reference:portal:check
 
 The generated public documentation detail pages render a constrained Markdown subset: headings, paragraphs, lists, tables, fenced code, blockquotes, inline code, emphasis and safe links. Raw HTML is escaped, not injected.
 
+Adoption recipes may reference a `quickstartDocument` file name from `main-repo/docs/`. The page builder resolves that file name to the generated public docs detail route, so adoption pages can link to quickstarts without storing local paths.
+
 ## Boundary
 
-The file is public input. It may include package names, public repository identifiers, maturity labels, public documentation categories, host-surface maturity summaries, route patterns, and summarized adoption evidence.
+The file is public input. It may include package names, public repository identifiers, maturity labels, public documentation categories, host-surface maturity summaries, route patterns, summarized adoption evidence and public quickstart document file names.
 
 It must not include local filesystem paths, non-public coordination notes, internal evidence file locations, selected source file lists, generated source contents, or absolute runner paths. The checker rejects these fields and markers before the data can be used by the reference build.
 

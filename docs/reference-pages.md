@@ -29,6 +29,7 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/en/packages/` | English ecosystem package matrix. |
 | `/en/doc-lines/` | English documentation line index. |
 | `/en/adoption/` | English adoption cases and recipes. |
+| `/en/adoption/recipes/<recipe>.html` | English adoption recipe page with a public quickstart link when available. |
 | `/en/operations/` | English operations status, monitor and versioning overview. |
 | `/en/hosts/` | English IDE/DevTools host anchor overview. |
 | `/en/hosts/source-linkage.html` | English source-linkage and relation graph concept page. |
@@ -40,6 +41,7 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/zh-CN/packages/` | Chinese ecosystem package matrix. |
 | `/zh-CN/doc-lines/` | Chinese documentation line index. |
 | `/zh-CN/adoption/` | Chinese adoption cases and recipes. |
+| `/zh-CN/adoption/recipes/<recipe>.html` | Chinese adoption recipe page with a public quickstart link when available. |
 | `/zh-CN/operations/` | Chinese operations status, monitor and versioning overview. |
 | `/zh-CN/hosts/` | Chinese IDE/DevTools host anchor overview. |
 | `/zh-CN/hosts/source-linkage.html` | Chinese source-linkage and relation graph concept page. |

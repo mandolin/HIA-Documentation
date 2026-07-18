@@ -690,14 +690,16 @@
         "docLineId": "tsdoc",
         "minimumRunnerPackage": "@hia-doc/tsdoc-runner",
         "minimumRunnerVersion": "0.1.2",
-        "summary": "Install the TSDoc runner, extract selected TypeScript entries, and keep generated artifacts out of source-control decisions until the target project opts in."
+        "summary": "Install the TSDoc runner, extract selected TypeScript entries, and keep generated artifacts out of source-control decisions until the target project opts in.",
+        "quickstartDocument": "tsdoc-quickstart.md"
       },
       {
         "id": "dotnetdoc-target-project-minimum",
         "docLineId": "dotnetdoc",
         "minimumRunnerPackage": "@hia-doc/dotnetdoc-runner",
         "minimumRunnerVersion": "0.1.1",
-        "summary": "Start from compiler XML documentation, add optional source/ASP.NET surface inputs, and feed artifacts into HIA unified output when needed."
+        "summary": "Start from compiler XML documentation, add optional source/ASP.NET surface inputs, and feed artifacts into HIA unified output when needed.",
+        "quickstartDocument": "dotnetdoc-quickstart.md"
       }
     ],
     "cases": [
@@ -959,10 +961,10 @@
   },
   "publicDocs": {
     "sourceMode": "derive-from-main-repo-docs",
-    "minimumDocumentCount": 30,
+    "minimumDocumentCount": 32,
     "summaryBacklogCount": 5,
-    "translationBacklogCount": 30,
-    "highPriorityTranslationBacklogCount": 18,
+    "translationBacklogCount": 32,
+    "highPriorityTranslationBacklogCount": 20,
     "categories": [
       {
         "id": "configuration",

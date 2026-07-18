@@ -63,6 +63,7 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
   assertFileContains(outputDir, "index.html", "data-hia-public-portal-root");
   assertFileContains(outputDir, "assets/hia-public-portal.css", ":root");
   const searchLocales = new Map(searchIndex.locales.map((locale) => [locale.locale, locale]));
+  const publicDocRoutes = new Map(publicDocs.map((document) => [document.fileName, document.route]));
   for (const locale of data.project.locales) {
     const files = collectLocalePageList(data, locale, publicDocs);
     for (const file of files) {
@@ -83,6 +84,12 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
     for (const document of publicDocs) {
       assertFileContains(outputDir, `${locale}/${document.route}`, "data-hia-public-portal-docs-entry");
       assertFileContains(outputDir, `${locale}/${document.route}`, "data-hia-public-docs-rendered");
+    }
+    for (const recipe of data.adoption.recipes) {
+      const quickstartRoute = publicDocRoutes.get(recipe.quickstartDocument);
+      assert(quickstartRoute, `${recipe.id}: quickstart document is not present in public docs.`);
+      assertFileContains(outputDir, `${locale}/adoption/recipes/${recipe.id}.html`, relativeHref(`${locale}/adoption/recipes/${recipe.id}.html`, `${locale}/${quickstartRoute}`));
+      assertFileContains(outputDir, `${locale}/${quickstartRoute}`, recipe.minimumRunnerPackage);
     }
     assertFileContains(outputDir, `${locale}/search/index.html`, "data-hia-public-portal-search");
     assertFileContains(outputDir, `${locale}/search/hosts.html`, "data-hia-public-portal-search-hosts");
@@ -215,7 +222,8 @@ function collectPublicDocuments(data) {
 function inferCategory(fileName, contents, categoryIds) {
   const value = `${fileName}\n${contents}`;
   const selected = (() => {
-    if (/reference[- ]operations|reference[- ]pages|public[- ]reference|public[- ]portal|pages artifact|github pages|ci|gate|acceptance/i.test(value)) return "operations";
+    if (/^ci\.md$/i.test(fileName)) return "operations";
+    if (/reference[- ]operations|reference[- ]pages|public[- ]reference|public[- ]portal|pages artifact|github pages|\bgate\b|\bacceptance\b/i.test(value)) return "operations";
     if (/schema|profile|contract|fixture|manifest/i.test(fileName)) return "contracts";
     if (/release|version|compat|migration|public-package/i.test(fileName)) return "release";
     if (/security|dependency|license|governance|review-template/i.test(fileName)) return "governance";
@@ -253,6 +261,11 @@ function normalizeMarkdownInline(value) {
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .trim();
+}
+
+function relativeHref(fromFile, targetFile) {
+  const relativePath = path.posix.relative(path.posix.dirname(fromFile), targetFile);
+  return relativePath || path.posix.basename(targetFile);
 }
 
 function toRouteToken(value) {

@@ -258,13 +258,18 @@ async function writeEcosystemPages(context) {
   }
 }
 
-async function writeAdoptionPages({ data, labels, locale, outputDir }) {
+async function writeAdoptionPages({ data, labels, locale, outputDir, publicDocs }) {
   const docLines = new Map(data.ecosystem.docLines.map((line) => [line.id, line]));
+  const publicDocRoutes = new Map(publicDocs.map((document) => [document.fileName, document.route]));
   const caseCards = data.adoption.cases
     .map((entry) => `<li><a href="${escapeHtml(`cases/${entry.id}.html`)}"><strong>${escapeHtml(entry.title)}</strong></a><span>${escapeHtml(`${entry.targetProject} / ${docLines.get(entry.docLineId)?.title ?? entry.docLineId}`)}</span><em>${escapeHtml(entry.targetRepoPolicy)}</em></li>`)
     .join("");
   const recipeItems = data.adoption.recipes
-    .map((entry) => `<li><a href="${escapeHtml(`recipes/${entry.id}.html`)}">${escapeHtml(entry.id)}</a><span>${escapeHtml(`${entry.minimumRunnerPackage}@${entry.minimumRunnerVersion}`)}</span></li>`)
+    .map((entry) => {
+      const quickstartRoute = publicDocRoutes.get(entry.quickstartDocument);
+      assert(quickstartRoute, `Recipe ${entry.id} references an unknown quickstart document.`);
+      return `<li><a href="${escapeHtml(`recipes/${entry.id}.html`)}">${escapeHtml(entry.id)}</a><span>${escapeHtml(`${entry.minimumRunnerPackage}@${entry.minimumRunnerVersion}`)}</span><a href="${escapeHtml(relativeHref(`${locale}/adoption/index.html`, `${locale}/${quickstartRoute}`))}">${escapeHtml(labels.openQuickstart)}</a></li>`;
+    })
     .join("");
   await writePage({
     outputDir,
@@ -308,6 +313,8 @@ async function writeAdoptionPages({ data, labels, locale, outputDir }) {
   }
 
   for (const recipe of data.adoption.recipes) {
+    const quickstartRoute = publicDocRoutes.get(recipe.quickstartDocument);
+    assert(quickstartRoute, `Recipe ${recipe.id} references an unknown quickstart document.`);
     await writePage({
       outputDir,
       filePath: `${locale}/adoption/recipes/${recipe.id}.html`,
@@ -318,6 +325,7 @@ async function writeAdoptionPages({ data, labels, locale, outputDir }) {
         `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.recipe)}</p><h1>${escapeHtml(recipe.id)}</h1><p><code>${escapeHtml(`${recipe.minimumRunnerPackage}@${recipe.minimumRunnerVersion}`)}</code></p></header>`,
         `<section class="portal-section"><h2>${escapeHtml(labels.summary)}</h2><p>${escapeHtml(recipe.summary)}</p></section>`,
         `<section class="portal-section"><h2>${escapeHtml(labels.minimumRunner)}</h2><p><code>${escapeHtml(`${recipe.minimumRunnerPackage}@^${recipe.minimumRunnerVersion}`)}</code></p></section>`,
+        `<section class="portal-section"><h2>${escapeHtml(labels.quickstart)}</h2><p><a href="${escapeHtml(relativeHref(`${locale}/adoption/recipes/${recipe.id}.html`, `${locale}/${quickstartRoute}`))}">${escapeHtml(labels.openQuickstart)}</a></p></section>`,
         "</main>"
       ].join("")
     });
@@ -841,6 +849,8 @@ function getLabels(locale) {
     evidence: zh ? "证据摘要" : "Evidence Summary",
     nextAction: zh ? "下一步" : "Next Action",
     recipe: "Recipe",
+    quickstart: zh ? "快速开始" : "Quickstart",
+    openQuickstart: zh ? "打开快速开始" : "Open quickstart",
     summary: zh ? "摘要" : "Summary",
     minimumRunner: zh ? "最小 runner" : "Minimum Runner",
     policyLead: zh ? "公开采用策略保护目标仓库自主吸收节奏。" : "The public adoption policy preserves target-project control over integration timing.",
@@ -915,7 +925,8 @@ function formatLocaleName(locale) {
 function inferCategory(fileName, contents, categoryIds) {
   const value = `${fileName}\n${contents}`;
   const selected = (() => {
-    if (/reference[- ]operations|reference[- ]pages|public[- ]reference|public[- ]portal|pages artifact|github pages|ci|gate|acceptance/i.test(value)) return "operations";
+    if (/^ci\.md$/i.test(fileName)) return "operations";
+    if (/reference[- ]operations|reference[- ]pages|public[- ]reference|public[- ]portal|pages artifact|github pages|\bgate\b|\bacceptance\b/i.test(value)) return "operations";
     if (/schema|profile|contract|fixture|manifest/i.test(fileName)) return "contracts";
     if (/release|version|compat|migration|public-package/i.test(fileName)) return "release";
     if (/security|dependency|license|governance|review-template/i.test(fileName)) return "governance";
