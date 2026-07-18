@@ -1,6 +1,13 @@
 import type {
+  Diagnostic,
   Range
 } from "vscode-languageserver/node.js";
+import type {
+  HiaDiagnostic,
+  HiaDocument,
+  HiaSourceRange,
+  HiaSymbol
+} from "@hia-doc/core";
 import {
   createHiaResourceActions,
   type HiaLspAuthoringContext,
@@ -33,7 +40,12 @@ export interface HiaDocumentationEditProposalsParams {
 
 export type HiaDocumentationEditProposalsStatus = "available" | "unavailable";
 export type HiaDocumentationEditProposalStatus = "review-required" | "blocked";
-export type HiaDocumentationEditProposalKind = "missing-locale-stub";
+export type HiaDocumentationEditProposalKind =
+  | "missing-locale-stub"
+  | "missing-documentation"
+  | "missing-translation"
+  | "profile-rule-suggestion"
+  | "generic-docline-diagnostic";
 export type HiaDocumentationEditProposalUnavailableReason =
   | "document-not-open"
   | "proposal-source-empty";
@@ -102,7 +114,7 @@ export interface HiaDocumentationEditProposalOrigin {
   diagnosticCodes: string[];
   resourceActionId?: string;
   resourceActionKind?: string;
-  source: "resource-action";
+  source: "document-symbol" | "document-diagnostic" | "profile-diagnostic" | "resource-action";
 }
 
 /**
@@ -110,16 +122,42 @@ export interface HiaDocumentationEditProposalOrigin {
  * Target location metadata for a proposal.
  */
 export interface HiaDocumentationEditProposalTarget {
+  diagnosticCode?: string;
   fieldPath?: string;
   key?: string;
   locale?: string;
   path?: string;
   range?: Range;
+  relativePath?: string;
   resourcePath?: string;
   resourcePointer?: string;
   symbolId?: string;
   symbolName?: string;
+  targetPath?: string;
   targetUri?: string;
+}
+
+/**
+ * Public-safe diagnostic summary attached to a review proposal.
+ *
+ * 中文：附加到 review proposal 的公开安全诊断摘要。
+ */
+export interface HiaDocumentationEditProposalDiagnostic {
+  code: string;
+  message: string;
+  severity: string;
+  path?: string;
+  targetPath?: string;
+}
+
+/**
+ * Public-safe suggestion metadata for hosts and AI reviewers.
+ *
+ * 中文：供宿主和 AI 审查者消费的公开安全建议元数据。
+ */
+export interface HiaDocumentationEditProposalSuggestion {
+  category: "missing-documentation" | "missing-translation" | "profile-rule" | "generic-docline";
+  recommendedAction: string;
 }
 
 /**
@@ -127,12 +165,14 @@ export interface HiaDocumentationEditProposalTarget {
  * Reviewable edit proposal for a missing-locale stub.
  */
 export interface HiaDocumentationEditProposal {
+  diagnostic?: HiaDocumentationEditProposalDiagnostic;
   id: string;
   kind: HiaDocumentationEditProposalKind;
   origin: HiaDocumentationEditProposalOrigin;
   privacy: HiaDocumentationEditProposalPrivacy;
   review: HiaDocumentationEditProposalWorkflow;
   status: HiaDocumentationEditProposalStatus;
+  suggestion?: HiaDocumentationEditProposalSuggestion;
   target: HiaDocumentationEditProposalTarget;
   title: string;
   unavailableReason?: HiaDocumentationEditProposalUnavailableReason | string;
@@ -188,8 +228,15 @@ export function createHiaDocumentationEditProposals(options: {
     };
   }
 
+  const parsedDocument = parseHiaDocument(context.document.text);
   const resourceActions = createHiaResourceActions(context).actions;
-  const proposals = resourceActions.flatMap((action) => createProposalFromResourceAction(action, privacy, workflow));
+  const proposals = [
+    ...resourceActions.flatMap((action) => createProposalFromResourceAction(action, privacy, workflow)),
+    ...createMissingDocumentationProposals(parsedDocument, privacy, workflow),
+    ...createMissingTranslationDiagnosticProposals(context.document.diagnostics, resourceActions, privacy, workflow),
+    ...createGenericDocLineDiagnosticProposals(parsedDocument, privacy, workflow),
+    ...createProfileRuleSuggestionProposals(context.profileDiagnostics ?? [], privacy, workflow)
+  ];
 
   return {
     contract: HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
@@ -235,6 +282,168 @@ function createProposalFromResourceAction(
   };
 
   return [proposal];
+}
+
+function createMissingDocumentationProposals(
+  document: HiaDocument | undefined,
+  privacy: HiaDocumentationEditProposalPrivacy,
+  workflow: HiaDocumentationEditProposalWorkflow
+): HiaDocumentationEditProposal[] {
+  if (!document) {
+    return [];
+  }
+
+  return document.symbols
+    .filter(isMissingDocumentationSymbol)
+    .map((symbol) => {
+      const source = getSymbolSourceTarget(symbol);
+      const target: HiaDocumentationEditProposalTarget = {
+        ...(source?.range ? { range: toLspRange(source.range) } : {}),
+        ...(source?.relativePath ? { relativePath: source.relativePath } : {}),
+        symbolId: symbol.id,
+        symbolName: symbol.name
+      };
+
+      return {
+        diagnostic: {
+          code: "HIA_AI_MISSING_DOCUMENTATION",
+          message: `Symbol ${symbol.name} has no summary or i18n documentation field.`,
+          severity: "warning"
+        },
+        id: `reviewable:missing-documentation:${symbol.id}`,
+        kind: "missing-documentation",
+        origin: {
+          capability: HIA_DOCUMENTATION_EDIT_PROPOSAL_CAPABILITY,
+          diagnosticCodes: ["HIA_AI_MISSING_DOCUMENTATION"],
+          source: "document-symbol"
+        },
+        privacy,
+        review: workflow,
+        status: "review-required",
+        suggestion: {
+          category: "missing-documentation",
+          recommendedAction: "Draft or review public documentation for this symbol before writing it to source."
+        },
+        target,
+        title: `Review missing documentation for ${symbol.name}`,
+        workspaceEditBoundary: "proposal-only"
+      } satisfies HiaDocumentationEditProposal;
+    });
+}
+
+function createMissingTranslationDiagnosticProposals(
+  diagnostics: readonly Diagnostic[],
+  resourceActions: readonly HiaLspResourceAction[],
+  privacy: HiaDocumentationEditProposalPrivacy,
+  workflow: HiaDocumentationEditProposalWorkflow
+): HiaDocumentationEditProposal[] {
+  const covered = new Set(
+    resourceActions
+      .filter((action) => action.kind === "create-missing-locale-stub")
+      .map((action) => createTranslationKey(action.symbolId, action.fieldPath, action.locale))
+  );
+
+  return diagnostics
+    .filter((diagnostic) => String(diagnostic.code) === HiaLspDiagnosticCode.I18nLocaleMissing)
+    .flatMap((diagnostic, index) => {
+      const data = isRecord(diagnostic.data) ? diagnostic.data : {};
+      const symbolId = getString(data.symbolId);
+      const fieldPath = getString(data.fieldPath);
+      const locale = getString(data.locale);
+      if (covered.has(createTranslationKey(symbolId, fieldPath, locale))) {
+        return [];
+      }
+
+      return [{
+        diagnostic: createDiagnosticSummary(diagnostic),
+        id: `reviewable:missing-translation:${index}:${symbolId ?? "unknown"}:${fieldPath ?? "field"}:${locale ?? "locale"}`,
+        kind: "missing-translation",
+        origin: {
+          capability: HIA_DOCUMENTATION_EDIT_PROPOSAL_CAPABILITY,
+          diagnosticCodes: [HiaLspDiagnosticCode.I18nLocaleMissing],
+          source: "document-diagnostic"
+        },
+        privacy,
+        review: workflow,
+        status: "review-required",
+        suggestion: {
+          category: "missing-translation",
+          recommendedAction: "Draft or review the missing localized text in the appropriate locale resource."
+        },
+        target: {
+          ...(diagnostic.range ? { range: diagnostic.range } : {}),
+          ...(fieldPath ? { fieldPath } : {}),
+          ...(locale ? { locale } : {}),
+          ...(symbolId ? { symbolId } : {})
+        },
+        title: `Review missing ${locale ?? "locale"} translation`,
+        workspaceEditBoundary: "proposal-only"
+      } satisfies HiaDocumentationEditProposal];
+    });
+}
+
+function createGenericDocLineDiagnosticProposals(
+  document: HiaDocument | undefined,
+  privacy: HiaDocumentationEditProposalPrivacy,
+  workflow: HiaDocumentationEditProposalWorkflow
+): HiaDocumentationEditProposal[] {
+  return (document?.diagnostics ?? [])
+    .filter((diagnostic) => diagnostic.code.startsWith("HIA_GENERIC_DOCLINE_"))
+    .map((diagnostic, index) => ({
+      diagnostic: createCoreDiagnosticSummary(diagnostic),
+      id: `reviewable:generic-docline:${index}:${diagnostic.code}`,
+      kind: "generic-docline-diagnostic",
+      origin: {
+        capability: HIA_DOCUMENTATION_EDIT_PROPOSAL_CAPABILITY,
+        diagnosticCodes: [diagnostic.code],
+        source: "document-diagnostic"
+      },
+      privacy,
+      review: workflow,
+      status: diagnostic.severity === "error" ? "blocked" : "review-required",
+      suggestion: {
+        category: "generic-docline",
+        recommendedAction: "Review the generic doc-line configuration or add documentation at the reported target."
+      },
+      target: {
+        diagnosticCode: diagnostic.code,
+        ...(diagnostic.path ? { path: diagnostic.path } : {}),
+        ...(diagnostic.targetPath ? { targetPath: diagnostic.targetPath } : {})
+      },
+      title: `Review generic doc-line diagnostic ${diagnostic.code}`,
+      workspaceEditBoundary: "proposal-only"
+    }));
+}
+
+function createProfileRuleSuggestionProposals(
+  diagnostics: readonly HiaDiagnostic[],
+  privacy: HiaDocumentationEditProposalPrivacy,
+  workflow: HiaDocumentationEditProposalWorkflow
+): HiaDocumentationEditProposal[] {
+  return diagnostics.map((diagnostic, index) => ({
+    diagnostic: createCoreDiagnosticSummary(diagnostic),
+    id: `reviewable:profile-rule:${index}:${diagnostic.code}`,
+    kind: "profile-rule-suggestion",
+    origin: {
+      capability: HIA_DOCUMENTATION_EDIT_PROPOSAL_CAPABILITY,
+      diagnosticCodes: [diagnostic.code],
+      source: "profile-diagnostic"
+    },
+    privacy,
+    review: workflow,
+    status: diagnostic.severity === "error" ? "blocked" : "review-required",
+    suggestion: {
+      category: "profile-rule",
+      recommendedAction: "Review the profile rule diagnostic and decide whether documentation or profile configuration needs an update."
+    },
+    target: {
+      diagnosticCode: diagnostic.code,
+      ...(diagnostic.path ? { path: diagnostic.path } : {}),
+      ...(diagnostic.targetPath ? { targetPath: diagnostic.targetPath } : {})
+    },
+    title: `Review profile rule suggestion ${diagnostic.code}`,
+    workspaceEditBoundary: "proposal-only"
+  }));
 }
 
 function createProposalTarget(action: HiaLspResourceAction): HiaDocumentationEditProposalTarget {
@@ -291,6 +500,105 @@ function createDocumentContext(context: HiaLspAuthoringContext): HiaDocumentatio
     sourceReferenceCount: index?.sourceReferences.length ?? 0,
     ...(index?.title ? { title: index.title } : {})
   };
+}
+
+function parseHiaDocument(text: string): HiaDocument | undefined {
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    return isHiaDocument(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isHiaDocument(value: unknown): value is HiaDocument {
+  return isRecord(value)
+    && Array.isArray(value.symbols)
+    && Array.isArray(value.nodes)
+    && typeof value.id === "string";
+}
+
+function isMissingDocumentationSymbol(symbol: HiaSymbol): boolean {
+  const hasSummary = Boolean(symbol.summary?.trim());
+  const hasI18nFields = Boolean(symbol.i18n?.fields && Object.keys(symbol.i18n.fields).length > 0);
+  const hasSourceTarget = Boolean(getSymbolSourceTarget(symbol));
+  return hasSourceTarget && !hasSummary && !hasI18nFields;
+}
+
+function getSymbolSourceTarget(symbol: HiaSymbol): { range?: HiaSourceRange; relativePath?: string } | undefined {
+  const definedIn = symbol.source?.definedIn;
+  if (definedIn) {
+    return {
+      ...(definedIn.range ? { range: definedIn.range } : {}),
+      ...(definedIn.relativePath ? { relativePath: definedIn.relativePath } : {})
+    };
+  }
+
+  const primaryBlock = symbol.source?.primaryBlock;
+  if (primaryBlock) {
+    return {
+      ...(primaryBlock.range ? { range: primaryBlock.range } : {}),
+      ...(primaryBlock.relativePath ? { relativePath: primaryBlock.relativePath } : {})
+    };
+  }
+
+  const fragment = symbol.source?.fragments?.[0];
+  if (fragment) {
+    return {
+      ...(fragment.range ? { range: fragment.range } : {}),
+      ...(fragment.relativePath ? { relativePath: fragment.relativePath } : {})
+    };
+  }
+
+  return undefined;
+}
+
+function toLspRange(range: HiaSourceRange): Range {
+  return {
+    start: {
+      line: Math.max(0, range.start.line - 1),
+      character: Math.max(0, (range.start.column ?? 1) - 1)
+    },
+    end: {
+      line: Math.max(0, range.end.line - 1),
+      character: Math.max(0, (range.end.column ?? 1) - 1)
+    }
+  };
+}
+
+function createTranslationKey(symbolId: string | undefined, fieldPath: string | undefined, locale: string | undefined): string {
+  return `${symbolId ?? ""}:${fieldPath ?? ""}:${locale ?? ""}`;
+}
+
+function createDiagnosticSummary(diagnostic: Diagnostic): HiaDocumentationEditProposalDiagnostic {
+  return {
+    code: String(diagnostic.code ?? "HIA_LSP_DIAGNOSTIC"),
+    message: diagnostic.message,
+    severity: String(diagnostic.severity ?? "unknown")
+  };
+}
+
+function createCoreDiagnosticSummary(diagnostic: HiaDiagnostic): HiaDocumentationEditProposalDiagnostic {
+  const summary: HiaDocumentationEditProposalDiagnostic = {
+    code: diagnostic.code,
+    message: diagnostic.message,
+    severity: diagnostic.severity
+  };
+  if (diagnostic.path) {
+    summary.path = diagnostic.path;
+  }
+  if (diagnostic.targetPath) {
+    summary.targetPath = diagnostic.targetPath;
+  }
+  return summary;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
 function createPrivacyBoundary(): HiaDocumentationEditProposalPrivacy {

@@ -91,6 +91,7 @@ IDE shells must not write resource files from the current preflight data. Applyi
 The first AI-assisted authoring loop is proposal-only:
 
 - derive proposals from managed HIA documents, diagnostics and resource action preflight data;
+- cover missing-locale stubs, missing documentation, missing translation diagnostics, profile-rule suggestions and generic doc-line diagnostics as reviewable proposal kinds;
 - summarize document, locale, source-linkage and project-relation context without source bodies;
 - require human review before any write;
 - let hosts offer review, open target, copy proposal or cancel actions;

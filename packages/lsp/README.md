@@ -73,6 +73,8 @@ The LSP project relation graph is an IDE view model derived from renderer `proje
 
 `hia/documentationEditProposals` returns `hia-documentation-edit-proposals@0.1.0-draft`. The first slice turns missing-locale resource preflight data into reviewable proposals for host or AI-assisted authoring flows. It intentionally returns public-safe context, `sourcesContentPolicy: none`, `allowsAutomaticWrites: false` and `requiresHumanReview: true`.
 
+The proposal model also carries additive proposal kinds for missing documentation, missing translation diagnostics, profile-rule suggestions and generic doc-line diagnostics. These kinds are target and diagnostic summaries for review workflows only; they still do not contain private source bodies or directly applicable `WorkspaceEdit` payloads.
+
 Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 
 See `docs/contract-index.md`, `docs/ide-integration-boundary.md` and the IDE/LSP capability contract for the current boundary between core documents, diagnostics, authoring capabilities and IDE views.

@@ -21,7 +21,16 @@ await main();
  * Prepares reproducible evidence for AI-assisted authoring proposals.
  */
 async function main() {
-  const service = createHiaLspService();
+  const service = createHiaLspService({
+    profileDiagnostics: [
+      {
+        code: "HIA_PROFILE_RULE_UNKNOWN_TAG",
+        message: "Profile tag rule requires review.",
+        severity: "warning",
+        targetPath: "profiles/cssdoc.json"
+      }
+    ]
+  });
   const uri = "file:///workspace/fixtures/ai-authoring-proposals.hia.json";
   const document = createProposalFixture();
 
@@ -45,7 +54,13 @@ async function main() {
   assert.equal(result.contract, HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT);
   assert.equal(result.contractVersion, HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION);
   assert.equal(result.status, "available");
-  assert.equal(result.proposalCount, 1);
+  assert.equal(result.proposalCount, 4);
+  assert.deepEqual(result.proposals.map((proposal) => proposal.kind).sort(), [
+    "generic-docline-diagnostic",
+    "missing-documentation",
+    "missing-locale-stub",
+    "profile-rule-suggestion"
+  ]);
   assert.equal(result.privacy.contextPolicy, "public-safe");
   assert.equal(result.privacy.sourcesContentPolicy, "none");
   assert.equal(result.privacy.includesSourceContent, false);
@@ -93,6 +108,14 @@ function createProposalFixture() {
     title: "AI Authoring Proposals Fixture",
     defaultLocale: "zh-CN",
     locales: ["zh-CN", "en"],
+    diagnostics: [
+      {
+        code: "HIA_GENERIC_DOCLINE_MISSING_DOC",
+        message: "Generic doc-line scanner found a missing documentation anchor.",
+        severity: "warning",
+        targetPath: "src/sample.toy"
+      }
+    ],
     symbols: [
       {
         id: "function:renderProfile",
@@ -127,6 +150,28 @@ function createProposalFixture() {
               missingLocales: ["en"]
             }
           }
+        }
+      },
+      {
+        id: "toy:helper",
+        kind: "generic-function",
+        name: "helper",
+        source: {
+          mode: "link",
+          model: "hia-source",
+          modelVersion: "0.2.0",
+          definedIn: {
+            kind: "defined-in",
+            language: "toy",
+            relativePath: "src/sample.toy",
+            range: {
+              start: { line: 12, column: 1 },
+              end: { line: 12, column: 14 }
+            },
+            position: { line: 12, column: 1 }
+          },
+          diagnostics: [],
+          fragments: []
         }
       }
     ]
