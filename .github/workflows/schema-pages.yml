@@ -123,7 +123,9 @@ jobs:
         run: |
           pnpm run reference:build
           pnpm run reference:check
+          pnpm run reference:portal:data:check
           pnpm run reference:pages
+          pnpm run reference:portal:check
           pnpm run reference:pages:check
 
       - name: Configure Pages

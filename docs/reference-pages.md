@@ -8,6 +8,8 @@ https://mandolin.github.io/HIA-Documentation/
 
 The site combines first-party documentation generated from the explicit public source allowlist with the canonical JSON Schema namespace. It keeps compatibility routes at the site root and also exposes a first versioned layout through `current/` and `releases/`.
 
+The artifact also includes generated public portal pages for ecosystem discovery, adoption guidance, operations status and public documentation navigation. These pages are assembled from reviewed public metadata before the final Pages artifact is written.
+
 ## Public Routes
 
 | Route | Purpose |
@@ -24,7 +26,20 @@ The site combines first-party documentation generated from the explicit public s
 | `/versions/` | Human-readable version index. |
 | `/versions.json` | Machine-readable version index with search partitions. |
 | `/schemas/` | Existing canonical schema catalog and schema URLs. |
+| `/en/packages/` | English ecosystem package matrix. |
+| `/en/doc-lines/` | English documentation line index. |
+| `/en/adoption/` | English adoption cases and recipes. |
+| `/en/operations/` | English operations status, monitor and versioning overview. |
+| `/en/docs/` | English public documentation navigation categories. |
+| `/en/search/` | English public portal search preview. |
+| `/zh-CN/packages/` | Chinese ecosystem package matrix. |
+| `/zh-CN/doc-lines/` | Chinese documentation line index. |
+| `/zh-CN/adoption/` | Chinese adoption cases and recipes. |
+| `/zh-CN/operations/` | Chinese operations status, monitor and versioning overview. |
+| `/zh-CN/docs/` | Chinese public documentation navigation categories. |
+| `/zh-CN/search/` | Chinese public portal search preview. |
 | `/reference-build.json` | Sanitized source repository, ref and resolved-SHA provenance. |
+| `/public-portal-pages.json` | Sanitized generated portal page manifest. |
 | `/reference-pages.json` | Static route, locale, schema and privacy manifest. |
 
 The `/schemas/` namespace is copied byte-for-byte from the generated schema distribution. Existing canonical `$id` URLs and unversioned retrieval aliases remain valid.
@@ -51,14 +66,16 @@ mise exec -- pnpm run build
 mise exec -- node scripts/build-schema-pages.mjs
 mise exec -- node scripts/build-public-reference.mjs --workspace-root .. --main-repo-root . --sources-root ../HIA --out dist/public-reference-build
 mise exec -- pnpm run reference:check
+mise exec -- pnpm run reference:portal:data:check
+mise exec -- pnpm run reference:portal:check
 mise exec -- pnpm run reference:pages
 mise exec -- pnpm run reference:pages:check
 ```
 
-`reference:pages:check` rejects missing routes, incomplete provenance, altered schema files, hidden producer intermediates, embedded source content, private workspace markers and local absolute paths.
+`reference:pages` regenerates the public portal pages before assembling the final artifact. `reference:pages:check` rejects missing routes, incomplete provenance, altered schema files, broken public portal links, hidden producer intermediates, embedded source content, private workspace markers and local absolute paths.
 
 ## Publication Security
 
 The `schema-pages.yml` workflow is the only workflow that deploys this Pages site. Its build job receives only `contents: read` and uses the read-only HIA Reference Builder GitHub App token only while checking out the seven allowlisted satellites. The deploy job does not check out satellites or access the App token; it receives only the GitHub Pages deployment permissions required by `actions/deploy-pages`.
 
-After deployment, `reference:pages:online` checks the public routes, the version index when present, the sanitized provenance manifests, the catalog, every canonical schema URL and each package-style schema alias. `reference:ops:check` adds publication age, source freshness and operational failure classification.
+After deployment, `reference:pages:online` checks the public routes, generated portal routes, the version index when present, the sanitized provenance manifests, the catalog, every canonical schema URL and each package-style schema alias. Use `node scripts/check-reference-pages-online.mjs --report-only` when comparing an older deployment before a refreshed artifact is live. `reference:ops:check` adds publication age, source freshness and operational failure classification.

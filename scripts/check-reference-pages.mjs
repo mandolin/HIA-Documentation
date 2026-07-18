@@ -29,6 +29,8 @@ async function main() {
 
   const siteManifest = await readJson(path.join(outputDir, "reference-pages.json"));
   const referenceBuild = await readJson(path.join(outputDir, "reference-build.json"));
+  const portalPages = await readJson(path.join(outputDir, "public-portal-pages.json"));
+  const portalSearchIndex = await readJson(path.join(outputDir, "assets", "public-portal-search-index.json"));
   const catalog = await readJson(path.join(outputDir, "schemas", "catalog.json"));
   assert(siteManifest.contract === "hia-reference-pages", "Unexpected Reference Pages artifact contract.");
   assert(siteManifest.defaultLocale === "en", "Reference Pages default locale must remain en.");
@@ -39,6 +41,11 @@ async function main() {
   assert(referenceBuild.contract === "hia-public-reference-build", "Reference Pages provenance is missing the public reference build.");
   assert(referenceBuild.privacy?.status === "pass", "Reference Pages input failed public privacy validation.");
   assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Reference Pages provenance source count drifted.");
+  assert(portalPages.contract === "hia-public-portal-pages", "Reference Pages public portal manifest is missing or invalid.");
+  assert(portalPages.privacy?.status === "pass" && portalPages.privacy?.sourcesContentPolicy === "none", "Reference Pages public portal privacy contract drifted.");
+  assert(siteManifest.routes?.publicPortalPages === "public-portal-pages.json", "Reference Pages public portal manifest route is missing.");
+  assert(siteManifest.routes?.publicPortalSearchIndex === "assets/public-portal-search-index.json", "Reference Pages public portal search route is missing.");
+  assert(siteManifest.compatibleMerge?.strategy === "preserve-reference-pages-and-merge-public-portal-routes", "Reference Pages compatible merge strategy drifted.");
   assert(catalog.publicBaseUrl === "https://mandolin.github.io/HIA-Documentation/schemas/", "Schema catalog public base URL drifted.");
   const releaseId = siteManifest.versioning.releases[0].id;
   const releaseRoot = `releases/${releaseId}`;
@@ -56,6 +63,18 @@ async function main() {
   await assertPageContains(outputDir, `${releaseRoot}/zh-CN/index.html`, ["HIA Documentation System Reference", "hia-reference-site-nav", "../../../schemas/"]);
   await assertPageContains(outputDir, `${releaseRoot}/source-linkage/index.html`, ["HIA Public Reference Source Linkage", "hia-reference-site-nav", "browser-panel-payload"]);
   await assertPageContains(outputDir, "versions/index.html", ["HIA Reference Versions", "Current", releaseId]);
+  await assertFile(path.join(outputDir, "assets", "hia-public-portal.css"), "Public portal stylesheet is missing.");
+  assert(portalSearchIndex.contract === "hia-public-portal-search-index", "Public portal search index contract drifted.");
+  for (const locale of siteManifest.locales) {
+    await assertPageContains(outputDir, `${locale}/packages/index.html`, ["data-hia-public-portal-packages", "@hia-doc/core"]);
+    await assertPageContains(outputDir, `${locale}/doc-lines/index.html`, ["data-hia-public-portal-doc-lines", "TSDoc"]);
+    await assertPageContains(outputDir, `${locale}/adoption/index.html`, ["data-hia-public-portal-adoption", "read-only"]);
+    await assertPageContains(outputDir, `${locale}/operations/index.html`, ["data-hia-public-portal-operations", "legacy-reference-pages"]);
+    await assertPageContains(outputDir, `${locale}/docs/index.html`, ["data-hia-public-portal-docs", "Configuration"]);
+    await assertPageContains(outputDir, `${locale}/search/index.html`, ["data-hia-public-portal-search"]);
+    const searchLocale = portalSearchIndex.locales.find((entry) => entry.locale === locale);
+    assert(searchLocale?.entryCount > 0 && searchLocale.entries?.length === searchLocale.entryCount, `${locale}: public portal search index drifted.`);
+  }
   await assertFile(path.join(outputDir, "assets", "hia-reference-site.css"), "Reference Pages navigation stylesheet is missing.");
   await assertFile(path.join(outputDir, ".nojekyll"), "Reference Pages .nojekyll marker is missing.");
   const versionIndex = await readJson(path.join(outputDir, "versions.json"));

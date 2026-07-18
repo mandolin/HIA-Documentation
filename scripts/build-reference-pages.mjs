@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultReferenceDir = path.join(rootDir, "dist", "public-reference-build");
 const defaultSchemaSiteDir = path.join(rootDir, "dist", "schema-pages");
+const defaultPortalPagesDir = path.join(rootDir, "dist", "public-portal-pages");
 const defaultOutputDir = path.join(rootDir, "dist", "reference-pages");
 const defaultReleaseId = "0.1.0-draft";
 const currentDirectory = "current";
@@ -20,6 +21,7 @@ async function main() {
   const options = parseArguments(process.argv.slice(2));
   const referenceDir = path.resolve(options.reference ?? defaultReferenceDir);
   const schemaSiteDir = path.resolve(options.schemas ?? defaultSchemaSiteDir);
+  const portalPagesDir = path.resolve(options.portalPages ?? defaultPortalPagesDir);
   const outputDir = path.resolve(options.out ?? defaultOutputDir);
   const releaseId = options.releaseId ?? defaultReleaseId;
   assert(/^[A-Za-z0-9._-]+$/.test(releaseId), "Reference Pages release id must be URL-safe.");
@@ -28,13 +30,17 @@ async function main() {
   await assertDirectory(referenceDir, "Public reference build output is missing");
   await assertDirectory(schemaSiteDir, "Schema Pages build output is missing");
   await assertDirectory(path.join(schemaSiteDir, "schemas"), "Schema Pages namespace is missing");
+  await assertDirectory(portalPagesDir, "Public portal pages output is missing");
 
   const referenceBuild = await readJson(path.join(referenceDir, "reference-build.json"));
   const schemaCatalog = await readJson(path.join(schemaSiteDir, "schemas", "catalog.json"));
+  const portalPages = await readJson(path.join(portalPagesDir, "public-portal-pages.json"));
   assert(referenceBuild.contract === "hia-public-reference-build", "Unexpected public reference build contract.");
   assert(referenceBuild.privacy?.status === "pass", "Public reference build did not pass its privacy boundary.");
   assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Public reference provenance is incomplete.");
   assert(schemaCatalog.publicBaseUrl === "https://mandolin.github.io/HIA-Documentation/schemas/", "Unexpected schema Pages base URL.");
+  assert(portalPages.contract === "hia-public-portal-pages", "Unexpected public portal pages contract.");
+  assert(portalPages.privacy?.status === "pass" && portalPages.privacy?.sourcesContentPolicy === "none", "Public portal pages did not pass privacy validation.");
 
   for (const locale of supportedLocales) {
     await assertFile(path.join(referenceDir, locale, "index.html"), `Public reference locale is missing: ${locale}`);
@@ -47,6 +53,7 @@ async function main() {
   await writeReferenceSnapshot(referenceDir, outputDir, "");
   await writeReferenceSnapshot(referenceDir, outputDir, currentDirectory);
   await writeReferenceSnapshot(referenceDir, outputDir, releaseDirectory);
+  await mergePublicPortalPages(portalPagesDir, outputDir);
   await copyVisibleTree(path.join(schemaSiteDir, "schemas"), path.join(outputDir, "schemas"));
   await copyFile(path.join(referenceDir, "reference-build.json"), path.join(outputDir, "reference-build.json"));
   await writeFile(path.join(outputDir, ".nojekyll"), "", "utf8");
@@ -76,14 +83,33 @@ async function main() {
       release: `${releaseDirectory}/index.html`,
       releaseEn: `${releaseDirectory}/en/index.html`,
       releaseZhCN: `${releaseDirectory}/zh-CN/index.html`,
-      releaseSourceLinkage: `${releaseDirectory}/source-linkage/index.html`
+      releaseSourceLinkage: `${releaseDirectory}/source-linkage/index.html`,
+      publicPortalPages: "public-portal-pages.json",
+      publicPortalSearchIndex: "assets/public-portal-search-index.json"
     },
     versioning: versionIndex.versioning,
     provenance: {
       referenceBuild: "reference-build.json",
       sourceCount: referenceBuild.sources.length,
       schemaCatalog: "schemas/catalog.json",
-      schemaCount: schemaCatalog.schemas.length
+      schemaCount: schemaCatalog.schemas.length,
+      publicPortalPages: "public-portal-pages.json",
+      publicPortalPageCount: portalPages.locales.reduce((total, locale) => total + locale.pages, 0)
+    },
+    compatibleMerge: {
+      contract: "hia-compatible-reference-pages-merge",
+      contractVersion: "0.1.0-draft",
+      strategy: "preserve-reference-pages-and-merge-public-portal-routes",
+      preservedRouteClasses: ["root aliases", "current snapshot", "release snapshot", "schemas namespace", "versions index", "source-linkage"],
+      mergedRouteSets: {
+        publicPortal: {
+          contract: portalPages.contract,
+          contractVersion: portalPages.contractVersion,
+          manifest: "public-portal-pages.json",
+          searchIndex: "assets/public-portal-search-index.json",
+          localeCount: portalPages.locales.length
+        }
+      }
     },
     privacy: {
       sourcesContentPolicy: referenceBuild.privacy.sourcesContentPolicy,
@@ -94,6 +120,21 @@ async function main() {
   await writeFile(path.join(outputDir, "reference-pages.json"), `${JSON.stringify(siteManifest, null, 2)}\n`, "utf8");
 
   console.log(`Reference Pages artifact generated: ${supportedLocales.length} locales, ${schemaCatalog.schemas.length} schemas, 1 release snapshot at ${path.relative(rootDir, outputDir)}.`);
+}
+
+/**
+ * 合并公开门户生成页，但保留旧 reference root/current/release/source-linkage 入口。
+ * Merges generated public portal pages while preserving legacy reference root/current/release/source-linkage entries.
+ */
+async function mergePublicPortalPages(portalPagesDir, outputDir) {
+  await copyFile(path.join(portalPagesDir, "public-portal-pages.json"), path.join(outputDir, "public-portal-pages.json"));
+  await copyVisibleTree(path.join(portalPagesDir, "assets"), path.join(outputDir, "assets"));
+
+  for (const locale of supportedLocales) {
+    for (const segment of ["packages", "doc-lines", "adoption", "operations", "docs", "search"]) {
+      await copyVisibleTree(path.join(portalPagesDir, locale, segment), path.join(outputDir, locale, segment));
+    }
+  }
 }
 
 /**
@@ -308,7 +349,7 @@ function parseArguments(args) {
   const options = {};
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
-    if (argument === "--reference" || argument === "--schemas" || argument === "--out" || argument === "--release-id") {
+    if (argument === "--reference" || argument === "--schemas" || argument === "--portal-pages" || argument === "--out" || argument === "--release-id") {
       const value = args[index + 1];
       assert(value && !value.startsWith("--"), `${argument} requires a directory value.`);
       options[toCamel(argument.slice(2))] = value;

@@ -1,0 +1,908 @@
+{
+  "contract": "hia-public-portal-data",
+  "contractVersion": "0.1.0-draft",
+  "updated": "2026-07-18",
+  "project": {
+    "id": "project:hia-public-reference",
+    "title": "HIA Documentation System Reference",
+    "defaultLocale": "en",
+    "locales": [
+      "en",
+      "zh-CN"
+    ],
+    "baseUrl": "https://mandolin.github.io/HIA-Documentation/",
+    "repository": "mandolin/HIA-Documentation"
+  },
+  "dataPolicy": {
+    "sourceBoundary": "checked-in-public-curated-data",
+    "workZonePublicInput": false,
+    "sourcesContentPolicy": "none",
+    "allowedSourceKinds": [
+      "checked-in-public-data",
+      "package-manifest",
+      "profile-catalog",
+      "schema-catalog",
+      "public-reference-build",
+      "public-docs"
+    ],
+    "forbiddenFieldNames": [
+      "path",
+      "source",
+      "selectedInputs",
+      "workspace",
+      "localPath",
+      "filesystemPath",
+      "privateNotes",
+      "internalPlan"
+    ],
+    "forbiddenMarkerPolicy": "private-workspace-and-local-runner-markers"
+  },
+  "maturityScale": [
+    {
+      "id": "published-consumable",
+      "label": "Published Consumable",
+      "meaning": "Package set can be consumed from npm and can serve both standalone and HIA integration scenarios."
+    },
+    {
+      "id": "bridge-consumable",
+      "label": "Bridge Consumable",
+      "meaning": "A published bridge or legacy-compatible package exists, while the unified doc-line umbrella remains in workspace incubation."
+    },
+    {
+      "id": "local-consumable",
+      "label": "Local Consumable",
+      "meaning": "Local packages and fixtures can be consumed by HIA gates, but the public release path is not complete."
+    },
+    {
+      "id": "workspace-incubation",
+      "label": "Workspace Incubation",
+      "meaning": "The doc line has package boundaries and baseline code, but packages remain private or versioned as 0.0.0."
+    }
+  ],
+  "ecosystem": {
+    "corePackages": {
+      "scope": "@hia-doc",
+      "releaseStatus": "published",
+      "minimumCount": 13,
+      "names": [
+        "@hia-doc/core",
+        "@hia-doc/config",
+        "@hia-doc/profile",
+        "@hia-doc/parser-jsdoc",
+        "@hia-doc/plugin-sdk",
+        "@hia-doc/source-linkage",
+        "@hia-doc/theme-default",
+        "@hia-doc/browser-panel",
+        "@hia-doc/profiles",
+        "@hia-doc/renderer-html",
+        "@hia-doc/schemas",
+        "@hia-doc/lsp",
+        "@hia-doc/cli"
+      ]
+    },
+    "profiles": {
+      "minimumCount": 7,
+      "ids": [
+        "cssdoc",
+        "doc-source-map",
+        "htmdoc",
+        "jsdoc",
+        "pug-htmdoc-bridge",
+        "sass-cssdoc-bridge",
+        "ts-jsdoc-bridge"
+      ]
+    },
+    "schemas": {
+      "minimumCount": 6,
+      "keys": [
+        "documentation-profile",
+        "documentation-producer",
+        "documentation-producer-result",
+        "doc-source-map",
+        "hia-document",
+        "project-manifest"
+      ]
+    },
+    "docLines": [
+      {
+        "id": "jsdoc",
+        "title": "JSDoc",
+        "domain": "JavaScript source documentation",
+        "repository": "mandolin/hia-jsdoc",
+        "maturity": "bridge-consumable",
+        "standaloneMode": "Use the published JSDoc plugin/theme pair today; the hia-jsdoc umbrella packages remain workspace-private.",
+        "hiaIntegrationMode": "JSDoc output is adapted through parser-jsdoc and HIA producer contracts.",
+        "primaryInputs": [
+          "JavaScript source",
+          "JSDoc comments"
+        ],
+        "primaryOutputs": [
+          "HIA document",
+          "JSDoc bridge artifact",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "jsdoc",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/jsdoc-spec",
+            "role": "spec",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-runner",
+            "role": "runner",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-producer",
+            "role": "producer",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-plugin-hia-bridge",
+            "role": "adapter",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-theme-bridge",
+            "role": "theme-bridge",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-preset",
+            "role": "preset",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/jsdoc-extra-plugin-registry",
+            "role": "extension-registry",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@mandolin/jsdoc-plugin-hia-sys",
+            "role": "published-jsdoc-plugin",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@mandolin/jsdoc-theme-hia",
+            "role": "published-jsdoc-theme",
+            "releaseChannel": "npm-published"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc JSDoc package-set fixture",
+          "published @mandolin JSDoc plugin/theme smoke"
+        ],
+        "nextPublicMilestone": "Publish or otherwise publicize the @hia-doc/hia-jsdoc umbrella package set after preset and plugin registry hardening."
+      },
+      {
+        "id": "tsdoc",
+        "title": "TSDoc",
+        "domain": "TypeScript source documentation",
+        "repository": "mandolin/hia-tsdoc",
+        "maturity": "published-consumable",
+        "standaloneMode": "Use @hia-doc/tsdoc-runner to extract TypeScript documentation without embedding sourcesContent by default.",
+        "hiaIntegrationMode": "Use @hia-doc/tsdoc-producer through the HIA project manifest producer pipeline.",
+        "primaryInputs": [
+          "TypeScript source",
+          "TSDoc/JSDoc-compatible comments"
+        ],
+        "primaryOutputs": [
+          "HIA document",
+          "JSDoc bridge artifact",
+          "doc-source-map",
+          "ordinary source map summary"
+        ],
+        "profileIds": [
+          "ts-jsdoc-bridge",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/tsdoc-spec",
+            "role": "spec",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/tsdoc-runner",
+            "role": "runner",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/tsdoc-producer",
+            "role": "producer",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/ts-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/ts-doc-adapter",
+            "role": "adapter",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/ts-jsdoc-bridge",
+            "role": "bridge",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/ts-to-js-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "npm-published"
+          }
+        ],
+        "adoptionEvidence": [
+          "UnicodeArtJs real npm runner probes",
+          "HIA self-doc TypeScript producer"
+        ],
+        "nextPublicMilestone": "Turn target-project recipes into public quickstarts and keep registry smoke in release gates."
+      },
+      {
+        "id": "dotnetdoc",
+        "title": "DotNetDoc",
+        "domain": ".NET XML documentation and C# source linkage",
+        "repository": "mandolin/hia-dotnetdoc",
+        "maturity": "published-consumable",
+        "standaloneMode": "Use @hia-doc/dotnetdoc-runner over .NET XML documentation output and source relation inputs.",
+        "hiaIntegrationMode": "Use @hia-doc/dotnetdoc-producer through the HIA project manifest producer pipeline.",
+        "primaryInputs": [
+          ".NET XML documentation",
+          "C# source files",
+          "compiler member ids"
+        ],
+        "primaryOutputs": [
+          "HIA document",
+          "dotnetdoc extraction artifact",
+          "doc-source-map/source relation"
+        ],
+        "profileIds": [
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/dotnetdoc-spec",
+            "role": "spec",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/dotnetdoc-runner",
+            "role": "runner",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/dotnetdoc-producer",
+            "role": "producer",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/dotnet-xml-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/dotnet-source-extractor",
+            "role": "source-extractor",
+            "releaseChannel": "npm-published"
+          },
+          {
+            "name": "@hia-doc/dotnetdoc-adapter",
+            "role": "adapter",
+            "releaseChannel": "npm-published"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA-ASPNETPortal target-project gate evidence",
+          "published DotNetDoc npm package set"
+        ],
+        "nextPublicMilestone": "Add Roslyn/direct-source extraction path while retaining XML documentation as the stable baseline."
+      },
+      {
+        "id": "htmdoc",
+        "title": "HTMDoc",
+        "domain": "HTML fragments and component-oriented markup",
+        "repository": "mandolin/hia-htmdoc",
+        "maturity": "workspace-incubation",
+        "standaloneMode": "Local runner/extractor package boundaries exist but remain private workspace packages.",
+        "hiaIntegrationMode": "HTMDoc producer participates in HIA self-doc gates through explicit producer configuration.",
+        "primaryInputs": [
+          "HTML source",
+          "component annotations",
+          "CEM bridge inputs"
+        ],
+        "primaryOutputs": [
+          "HTML documentation artifact",
+          "HIA document",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "htmdoc",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/htmdoc-spec",
+            "role": "spec",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/htmdoc-runner",
+            "role": "runner",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/htmdoc-producer",
+            "role": "producer",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/html-parser",
+            "role": "parser",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/html-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/html-doc-adapter",
+            "role": "adapter",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/html-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/cem-adapter",
+            "role": "bridge",
+            "releaseChannel": "workspace-private"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc HTMDoc producer fixture"
+        ],
+        "nextPublicMilestone": "Promote core runner/spec packages from private workspace to local-consumable release candidates."
+      },
+      {
+        "id": "cssdoc",
+        "title": "CSSDoc",
+        "domain": "CSS selectors, components, properties and design tokens",
+        "repository": "mandolin/hia-cssdoc",
+        "maturity": "workspace-incubation",
+        "standaloneMode": "Local runner/extractor package boundaries exist but remain private workspace packages.",
+        "hiaIntegrationMode": "CSSDoc producer participates in HIA self-doc gates through explicit producer configuration.",
+        "primaryInputs": [
+          "CSS source",
+          "CSSDoc comments",
+          "selectors",
+          "custom properties",
+          "design-token bridge inputs"
+        ],
+        "primaryOutputs": [
+          "CSS documentation artifact",
+          "HIA document",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "cssdoc",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/cssdoc-spec",
+            "role": "spec",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/cssdoc-runner",
+            "role": "runner",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/cssdoc-producer",
+            "role": "producer",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/css-parser",
+            "role": "parser",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/css-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/css-doc-adapter",
+            "role": "adapter",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/css-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/design-token-bridge",
+            "role": "bridge",
+            "releaseChannel": "workspace-private"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc CSSDoc producer fixture"
+        ],
+        "nextPublicMilestone": "Stabilize CSSDoc spec surface and decide first public package release train."
+      },
+      {
+        "id": "pugdoc",
+        "title": "PugDoc",
+        "domain": "Pug templates and generated HTML documentation linkage",
+        "repository": "mandolin/hia-pugdoc",
+        "maturity": "workspace-incubation",
+        "standaloneMode": "Local Pug extractor/runner package boundaries exist but remain private workspace packages.",
+        "hiaIntegrationMode": "PugDoc bridges generated HTML semantics into HTMDoc/HIA producer artifacts.",
+        "primaryInputs": [
+          "Pug templates",
+          "generated HTML relation",
+          "include/extends/block fixtures"
+        ],
+        "primaryOutputs": [
+          "Pug documentation artifact",
+          "HTMDoc bridge artifact",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "pug-htmdoc-bridge",
+          "htmdoc",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/pugdoc-spec",
+            "role": "spec",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pugdoc-runner",
+            "role": "runner",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pugdoc-producer",
+            "role": "producer",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pug-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pug-doc-adapter",
+            "role": "adapter",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pug-to-html-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/pug-htmdoc-bridge",
+            "role": "bridge",
+            "releaseChannel": "workspace-private"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc PugDoc producer fixture"
+        ],
+        "nextPublicMilestone": "Move include/extends/block coverage from fixture evidence into release candidate gates."
+      },
+      {
+        "id": "sassdoc",
+        "title": "SassDoc",
+        "domain": "Sass sources and generated CSS documentation linkage",
+        "repository": "mandolin/hia-sassdoc",
+        "maturity": "workspace-incubation",
+        "standaloneMode": "Local Sass extractor/runner package boundaries exist but remain private workspace packages.",
+        "hiaIntegrationMode": "SassDoc bridges generated CSS semantics into CSSDoc/HIA producer artifacts.",
+        "primaryInputs": [
+          "Sass source",
+          "generated CSS relation",
+          "CSSDoc bridge annotations"
+        ],
+        "primaryOutputs": [
+          "Sass documentation artifact",
+          "CSSDoc bridge artifact",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "sass-cssdoc-bridge",
+          "cssdoc",
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/sassdoc-spec",
+            "role": "spec",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sassdoc-runner",
+            "role": "runner",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sassdoc-producer",
+            "role": "producer",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sass-doc-extractor",
+            "role": "extractor",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sass-doc-adapter",
+            "role": "adapter",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sass-to-css-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "workspace-private"
+          },
+          {
+            "name": "@hia-doc/sass-cssdoc-bridge",
+            "role": "bridge",
+            "releaseChannel": "workspace-private"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc SassDoc producer fixture"
+        ],
+        "nextPublicMilestone": "Stabilize Sass/CSSDoc bridge fixtures before public release candidate packaging."
+      },
+      {
+        "id": "vuedoc",
+        "title": "VueDoc",
+        "domain": "Vue SFC framework documentation bridge",
+        "repository": "mandolin/hia-vuedoc",
+        "maturity": "local-consumable",
+        "standaloneMode": "Local Vue SFC runner and producer packages exist as non-private 0.0.0 candidates.",
+        "hiaIntegrationMode": "VueDoc producer models SFC template/script/style relations as a framework bridge over HTMDoc/CSSDoc/TSDoc concepts.",
+        "primaryInputs": [
+          "Vue SFC",
+          "template/script/style blocks",
+          "generated framework relation metadata"
+        ],
+        "primaryOutputs": [
+          "Vue SFC documentation artifact",
+          "framework bridge artifact",
+          "doc-source-map"
+        ],
+        "profileIds": [
+          "doc-source-map"
+        ],
+        "schemaKeys": [
+          "hia-document",
+          "documentation-producer-result",
+          "doc-source-map"
+        ],
+        "packages": [
+          {
+            "name": "@hia-doc/vuedoc-spec",
+            "role": "spec",
+            "releaseChannel": "local-unpublished"
+          },
+          {
+            "name": "@hia-doc/vuedoc-runner",
+            "role": "runner",
+            "releaseChannel": "local-unpublished"
+          },
+          {
+            "name": "@hia-doc/vuedoc-producer",
+            "role": "producer",
+            "releaseChannel": "local-unpublished"
+          },
+          {
+            "name": "@hia-doc/vue-sfc-extractor",
+            "role": "extractor",
+            "releaseChannel": "local-unpublished"
+          },
+          {
+            "name": "@hia-doc/vue-sfc-doc-source-map",
+            "role": "source-map",
+            "releaseChannel": "local-unpublished"
+          },
+          {
+            "name": "@hia-doc/vue-sfc-bridge",
+            "role": "bridge",
+            "releaseChannel": "local-unpublished"
+          }
+        ],
+        "adoptionEvidence": [
+          "HIA self-doc Vue SFC producer fixture"
+        ],
+        "nextPublicMilestone": "Choose whether VueDoc P1 is released before or after broader framework bridge hardening."
+      }
+    ]
+  },
+  "adoption": {
+    "targetPolicy": {
+      "targetRepositoriesReadOnly": true,
+      "notificationOnly": true,
+      "notifyPathPattern": "dev/notify/{YYYYMMDD}-{title}.md",
+      "sourcesContentPolicy": "none"
+    },
+    "recipes": [
+      {
+        "id": "tsdoc-target-project-minimum",
+        "docLineId": "tsdoc",
+        "minimumRunnerPackage": "@hia-doc/tsdoc-runner",
+        "minimumRunnerVersion": "0.1.2",
+        "summary": "Install the TSDoc runner, extract selected TypeScript entries, and keep generated artifacts out of source-control decisions until the target project opts in."
+      },
+      {
+        "id": "dotnetdoc-target-project-minimum",
+        "docLineId": "dotnetdoc",
+        "minimumRunnerPackage": "@hia-doc/dotnetdoc-runner",
+        "minimumRunnerVersion": "0.1.1",
+        "summary": "Start from compiler XML documentation, add optional source/ASP.NET surface inputs, and feed artifacts into HIA unified output when needed."
+      }
+    ],
+    "cases": [
+      {
+        "id": "unicodeartjs-tsdoc",
+        "title": "UnicodeArtJs TypeScript Documentation Adoption",
+        "targetProject": "UnicodeArtJs",
+        "targetRepoPolicy": "read-only-notify-only",
+        "docLineId": "tsdoc",
+        "maturityRequired": "published-consumable",
+        "primaryPackages": [
+          {
+            "name": "@hia-doc/tsdoc-runner",
+            "version": "0.1.2",
+            "role": "standalone-runner"
+          },
+          {
+            "name": "@hia-doc/tsdoc-producer",
+            "version": "0.1.2",
+            "role": "hia-producer"
+          }
+        ],
+        "publicNarrative": {
+          "problem": "A TypeScript project needs standalone documentation extraction and a path into unified HIA output without committing generated private source content.",
+          "solution": "Use @hia-doc/tsdoc-runner for target-project extraction, then feed the produced artifacts into HIA project aggregation when the project wants unified HTML output.",
+          "currentBoundary": "The evidence is read-only and notification-driven; the target repository decides whether to absorb candidate config or CI."
+        },
+        "publicEvidence": {
+          "artifactCount": 12,
+          "runtimeSymbols": 7,
+          "typeOnlySymbols": 8,
+          "relationGraphNodes": 18,
+          "relationGraphRelations": 16,
+          "hostSurfaces": [
+            "lsp",
+            "vscode-helper",
+            "browser-panel"
+          ],
+          "sourcesContentEmbedded": false
+        },
+        "recipeId": "tsdoc-target-project-minimum",
+        "nextAction": "Convert the read-only candidate into a public quickstart and, if the target project opts in, send a dev/notify notice instead of editing target files directly."
+      },
+      {
+        "id": "aspnetportal-dotnetdoc",
+        "title": "HIA-ASPNETPortal .NET Documentation Adoption",
+        "targetProject": "HIA-ASPNETPortal",
+        "targetRepoPolicy": "read-only-notify-only",
+        "docLineId": "dotnetdoc",
+        "maturityRequired": "published-consumable",
+        "primaryPackages": [
+          {
+            "name": "@hia-doc/dotnetdoc-runner",
+            "version": "0.1.1",
+            "role": "standalone-runner"
+          },
+          {
+            "name": "@hia-doc/dotnetdoc-producer",
+            "version": "0.1.1",
+            "role": "hia-producer"
+          }
+        ],
+        "publicNarrative": {
+          "problem": "A .NET Framework/Web Forms project needs API documentation, XML documentation intake, source relation, and endpoint surface evidence without requiring immediate source modifications.",
+          "solution": "Use @hia-doc/dotnetdoc-runner over compiler XML documentation and optional source/ASP.NET surface inputs, then feed artifacts into HIA unified output.",
+          "currentBoundary": "XML documentation is the stable baseline; Roslyn/source and ASP.NET endpoint bridges continue to deepen in later cycles."
+        },
+        "publicEvidence": {
+          "assemblyCount": 4,
+          "memberCount": 1300,
+          "hiaSymbolCount": 1300,
+          "inputCount": 55,
+          "aspnetSurfaceInputCount": 48,
+          "artifactCount": 111,
+          "endpointCount": 48,
+          "routableEndpointCount": 29,
+          "sourceRelationCount": 37,
+          "relationGraphNodes": 1650,
+          "relationGraphRelations": 1595,
+          "hostSurfaces": [
+            "lsp",
+            "vscode-helper",
+            "browser-panel"
+          ],
+          "sourcesContentEmbedded": false
+        },
+        "recipeId": "dotnetdoc-target-project-minimum",
+        "nextAction": "Prepare a public .NET quickstart that starts with XML documentation and clearly marks Roslyn/source and ASP.NET endpoint bridges as progressive enhancements."
+      }
+    ]
+  },
+  "operations": {
+    "publicReference": {
+      "baseUrl": "https://mandolin.github.io/HIA-Documentation/",
+      "deployment": "github-pages",
+      "currentVersion": "current",
+      "sourceRepository": "mandolin/HIA-Documentation",
+      "status": "single-current-public-candidate"
+    },
+    "monitor": {
+      "minimumProbePathCount": 18,
+      "onlineSmokeMode": "manual-or-scheduled",
+      "defaultCheckMode": "offline-contract",
+      "expectedStatus": 200
+    },
+    "versioning": {
+      "strategy": "single-current-before-history",
+      "versionSelectorStatus": "planned",
+      "releaseHistoryStatus": "planned",
+      "canonicalSchemaPreservation": "required",
+      "rollbackPolicyStatus": "planned"
+    },
+    "releaseHistory": [
+      {
+        "id": "current",
+        "status": "public-candidate",
+        "notes": "Current deployed public reference candidate. Historical multi-version navigation is not yet enabled."
+      }
+    ],
+    "routeGroups": [
+      {
+        "id": "legacy-reference-pages",
+        "status": "preserve",
+        "minimumPathCount": 7
+      },
+      {
+        "id": "portal-route-set",
+        "status": "pending-compatible-merge",
+        "minimumPathCount": 18
+      },
+      {
+        "id": "generated-ecosystem-pages",
+        "status": "public-data-ready",
+        "minimumPathCount": 7
+      },
+      {
+        "id": "generated-adoption-pages",
+        "status": "public-data-ready",
+        "minimumPathCount": 7
+      },
+      {
+        "id": "generated-operations-pages",
+        "status": "public-data-ready",
+        "minimumPathCount": 13
+      }
+    ]
+  },
+  "publicDocs": {
+    "sourceMode": "derive-from-main-repo-docs",
+    "minimumDocumentCount": 30,
+    "summaryBacklogCount": 5,
+    "translationBacklogCount": 30,
+    "highPriorityTranslationBacklogCount": 18,
+    "categories": [
+      {
+        "id": "configuration",
+        "title": "Configuration"
+      },
+      {
+        "id": "contracts",
+        "title": "Contracts"
+      },
+      {
+        "id": "governance",
+        "title": "Governance"
+      },
+      {
+        "id": "guide",
+        "title": "Guide"
+      },
+      {
+        "id": "operations",
+        "title": "Operations"
+      },
+      {
+        "id": "release",
+        "title": "Release"
+      },
+      {
+        "id": "tooling",
+        "title": "Tooling"
+      }
+    ]
+  },
+  "pageRoutes": {
+    "ecosystem": {
+      "packages": "{locale}/packages/index.html",
+      "docLines": "{locale}/doc-lines/index.html",
+      "docLineDetail": "{locale}/doc-lines/{docLineId}.html",
+      "search": "{locale}/search/ecosystem.html"
+    },
+    "adoption": {
+      "index": "{locale}/adoption/index.html",
+      "caseDetail": "{locale}/adoption/cases/{caseId}.html",
+      "recipeDetail": "{locale}/adoption/recipes/{recipeId}.html",
+      "policy": "{locale}/adoption/policy.html",
+      "search": "{locale}/search/adoption.html"
+    },
+    "operations": {
+      "index": "{locale}/operations/index.html",
+      "status": "{locale}/operations/status.html",
+      "monitor": "{locale}/operations/monitor.html",
+      "releases": "{locale}/operations/releases.html",
+      "versions": "{locale}/operations/versions.html",
+      "search": "{locale}/search/operations.html"
+    }
+  }
+}
