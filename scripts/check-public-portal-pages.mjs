@@ -57,6 +57,9 @@ function validateManifest(data, manifest, publicDocs) {
   assert(manifest.counts.hostConcepts === data.hostAnchors.concepts.length, "Host concept count drifted.");
   assert(manifest.counts.hostContracts === data.hostAnchors.artifactContracts.length, "Host artifact contract count drifted.");
   assert(manifest.counts.hostEvidenceRows === data.hostAnchors.evidenceMatrix.length, "Host evidence row count drifted.");
+  assert(manifest.counts.feedbackIssueTemplates === data.feedback.issueTemplates.length, "Feedback issue template count drifted.");
+  assert(manifest.counts.feedbackCompatibilityNotes === data.feedback.compatibilityNotes.length, "Feedback compatibility note count drifted.");
+  assert(manifest.counts.feedbackD4Candidates === data.feedback.d4CandidateBacklog.length, "Feedback D4 candidate count drifted.");
   assert(manifest.counts.publicDocCategories === data.publicDocs.categories.length, "Public docs category count drifted.");
   assert(manifest.counts.publicDocs === publicDocs.length, "Public docs entry count drifted.");
 }
@@ -85,6 +88,13 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
     assertFileContains(outputDir, `${locale}/hosts/evidence.html`, "Project Relation Graph");
     assertFileContains(outputDir, `${locale}/hosts/evidence.html`, "project-relation-graph");
     assertFileContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring");
+    assertFileContains(outputDir, `${locale}/feedback/index.html`, "data-hia-public-portal-feedback");
+    assertFileContains(outputDir, `${locale}/feedback/compatibility.html`, "data-hia-public-portal-feedback-compatibility");
+    assertFileContains(outputDir, `${locale}/feedback/compatibility.html`, "maturity-labels");
+    assertFileContains(outputDir, `${locale}/feedback/templates.html`, "data-hia-public-portal-feedback-templates");
+    assertFileContains(outputDir, `${locale}/feedback/templates.html`, "hia-portal-feedback.yml");
+    assertFileContains(outputDir, `${locale}/feedback/d4-candidates.html`, "data-hia-public-portal-feedback-d4-candidates");
+    assertFileContains(outputDir, `${locale}/feedback/d4-candidates.html`, "public-third-party-consumer");
     assertFileContains(outputDir, `${locale}/docs/index.html`, "data-hia-public-portal-docs");
     for (const document of publicDocs) {
       assertFileContains(outputDir, `${locale}/${document.route}`, "data-hia-public-portal-docs-entry");
@@ -98,6 +108,7 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
     }
     assertFileContains(outputDir, `${locale}/search/index.html`, "data-hia-public-portal-search");
     assertFileContains(outputDir, `${locale}/search/hosts.html`, "data-hia-public-portal-search-hosts");
+    assertFileContains(outputDir, `${locale}/search/feedback.html`, "data-hia-public-portal-search-feedback");
     assertFileContains(outputDir, `${locale}/search/docs.html`, "data-hia-public-portal-search-docs");
     const localeSearch = searchLocales.get(locale);
     assert(localeSearch?.entryCount === expectedSearchEntryCount(data, publicDocs), `${locale}: search entry count drifted.`);
@@ -125,6 +136,10 @@ function collectLocalePageList(data, locale, publicDocs) {
     `${locale}/hosts/ide-devtools.html`,
     `${locale}/hosts/evidence.html`,
     `${locale}/hosts/ai-assisted-authoring.html`,
+    `${locale}/feedback/index.html`,
+    `${locale}/feedback/compatibility.html`,
+    `${locale}/feedback/templates.html`,
+    `${locale}/feedback/d4-candidates.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
     ...publicDocs.map((document) => `${locale}/${document.route}`),
@@ -133,6 +148,7 @@ function collectLocalePageList(data, locale, publicDocs) {
     `${locale}/search/adoption.html`,
     `${locale}/search/operations.html`,
     `${locale}/search/hosts.html`,
+    `${locale}/search/feedback.html`,
     `${locale}/search/docs.html`
   ];
 }
@@ -203,6 +219,10 @@ function expectedSearchEntryCount(data, publicDocs) {
     + data.hostAnchors.artifactContracts.length
     + 1
     + 1
+    + 1
+    + data.feedback.issueTemplates.length
+    + data.feedback.compatibilityNotes.length
+    + data.feedback.d4CandidateBacklog.length
     + data.publicDocs.categories.length
     + publicDocs.length;
 }

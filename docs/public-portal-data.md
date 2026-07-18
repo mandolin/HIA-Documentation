@@ -1,6 +1,6 @@
 # Public Portal Data
 
-The public portal data file defines the curated, publishable metadata that may be used by the HIA reference Pages build for ecosystem, adoption, operations, host-surface and documentation navigation pages.
+The public portal data file defines the curated, publishable metadata that may be used by the HIA reference Pages build for ecosystem, adoption, operations, host-surface, feedback and documentation navigation pages.
 
 File:
 
@@ -27,7 +27,7 @@ Adoption recipes may reference a `quickstartDocument` file name from `main-repo/
 
 ## Boundary
 
-The file is public input. It may include package names, public repository identifiers, maturity labels, public documentation categories, host-surface maturity summaries, route patterns, summarized adoption evidence and public quickstart document file names.
+The file is public input. It may include package names, public repository identifiers, maturity labels, public documentation categories, host-surface maturity summaries, feedback issue-template identifiers, compatibility notes, D4 candidate backlog summaries, route patterns, summarized adoption evidence and public quickstart document file names.
 
 It must not include local filesystem paths, non-public coordination notes, internal evidence file locations, selected source file lists, generated source contents, or absolute runner paths. The checker rejects these fields and markers before the data can be used by the reference build.
 
@@ -35,7 +35,7 @@ It must not include local filesystem paths, non-public coordination notes, inter
 
 `reference/public-reference-build.definition.json` controls the source allowlist for first-party documentation generation.
 
-`reference/public-portal-data.json` controls the public portal metadata that can be rendered around the generated reference output, including IDE/DevTools host anchors that are backed by public relation-graph, source-linkage, structured open-request and host evidence matrix contracts.
+`reference/public-portal-data.json` controls the public portal metadata that can be rendered around the generated reference output, including IDE/DevTools host anchors that are backed by public relation-graph, source-linkage, structured open-request and host evidence matrix contracts, plus public-safe feedback and compatibility surfaces.
 
 Keeping these files separate lets the build preserve the existing schema and reference contracts while adding ecosystem and adoption pages through a reviewed public data surface.
 

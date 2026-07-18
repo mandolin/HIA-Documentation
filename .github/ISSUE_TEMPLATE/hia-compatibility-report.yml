@@ -1,0 +1,71 @@
+name: HIA compatibility or adoption report
+description: Report a doc-line, package, runner, producer, IDE, or DevTools compatibility finding.
+title: "[Compatibility]: "
+labels:
+  - hia-feedback
+  - compatibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for public compatibility findings. If your target project is private, summarize the environment and attach only sanitized public-safe excerpts.
+  - type: dropdown
+    id: doc-line
+    attributes:
+      label: Documentation line
+      options:
+        - JSDoc
+        - TSDoc
+        - DotNetDoc
+        - HTMDoc
+        - CSSDoc
+        - PugDoc
+        - SassDoc
+        - VueDoc
+        - Other or generic HIA integration
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - Standalone runner
+        - HIA producer/manifest integration
+        - Unified HTML/reference output
+        - Source linkage / doc-source-map
+        - LSP
+        - VS Code
+        - Browser panel or DevTools
+        - Package installation or release
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: Package and version
+      placeholder: "@hia-doc/tsdoc-runner@0.1.2"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node/.NET/tool versions, package manager, browser or IDE version when relevant.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide a minimal public-safe reproduction or command sequence.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Public-safe evidence
+      description: Paste logs, output summaries, or links that do not expose private source content.
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I did not include private source code, private paths, credentials, or embedded `sourcesContent`.
+          required: true

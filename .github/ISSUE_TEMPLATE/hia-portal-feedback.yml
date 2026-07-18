@@ -1,0 +1,54 @@
+name: HIA public portal feedback
+description: Report navigation, documentation, search, or public reference portal feedback.
+title: "[Portal feedback]: "
+labels:
+  - hia-feedback
+  - portal
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve the HIA public reference. Please do not include private source code, private repository paths, credentials, or generated artifacts that contain `sourcesContent`.
+  - type: input
+    id: public-url
+    attributes:
+      label: Public URL
+      description: Link to the public page or route involved.
+      placeholder: https://mandolin.github.io/HIA-Documentation/en/
+    validations:
+      required: true
+  - type: dropdown
+    id: feedback-area
+    attributes:
+      label: Feedback area
+      options:
+        - Public docs
+        - Ecosystem/package matrix
+        - Adoption quickstart
+        - Operations/status
+        - IDE/DevTools host anchor
+        - Search/navigation
+        - Other public portal surface
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What did you observe?
+      description: Describe the current behavior or content.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: Describe the expected content, route, or behavior.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      options:
+        - label: I did not include private source code, private paths, credentials, or embedded `sourcesContent`.
+          required: true

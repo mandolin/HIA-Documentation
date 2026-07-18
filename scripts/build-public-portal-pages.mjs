@@ -39,6 +39,7 @@ async function main() {
     await writeAdoptionPages(localeContext);
     await writeOperationsPages(localeContext);
     await writeHostPages(localeContext);
+    await writeFeedbackPages(localeContext);
     await writePublicDocsPages(localeContext);
     const search = await writeSearchPages(localeContext);
     searchLocales.push(search);
@@ -77,6 +78,9 @@ async function main() {
       hostConcepts: data.hostAnchors.concepts.length,
       hostContracts: data.hostAnchors.artifactContracts.length,
       hostEvidenceRows: data.hostAnchors.evidenceMatrix.length,
+      feedbackIssueTemplates: data.feedback.issueTemplates.length,
+      feedbackCompatibilityNotes: data.feedback.compatibilityNotes.length,
+      feedbackD4Candidates: data.feedback.d4CandidateBacklog.length,
       publicDocCategories: data.publicDocs.categories.length,
       publicDocs: publicDocs.length
     },
@@ -185,6 +189,7 @@ async function writeLocaleHome({ data, labels, locale, outputDir, packageRows, p
     [`adoption/index.html`, labels.adoption, labels.adoptionLead],
     [`operations/index.html`, labels.operations, labels.operationsLead],
     [`hosts/index.html`, labels.hosts, labels.hostsLead],
+    [`feedback/index.html`, labels.feedback, labels.feedbackLead],
     [`docs/index.html`, labels.publicDocs, labels.publicDocsLead]
   ].map(([href, title, lead]) => `<li><a href="${escapeHtml(href)}">${escapeHtml(title)}</a><span>${escapeHtml(lead)}</span></li>`).join("");
   const hostCards = data.hostAnchors.surfaces
@@ -501,6 +506,85 @@ async function writeHostPages({ data, labels, locale, outputDir }) {
   });
 }
 
+async function writeFeedbackPages({ data, labels, locale, outputDir }) {
+  const feedback = data.feedback;
+  const boundaryItems = feedback.publicBoundaries
+    .map((boundary) => `<li>${escapeHtml(boundary)}</li>`)
+    .join("");
+  const templateCards = feedback.issueTemplates
+    .map((template) => `<li><a href="templates.html#${escapeHtml(template.id)}"><strong>${escapeHtml(template.title)}</strong></a><span>${escapeHtml(template.useFor.join(", "))}</span><em>${escapeHtml(template.publicTemplate)}</em></li>`)
+    .join("");
+  const compatibilityCards = feedback.compatibilityNotes
+    .map((note) => `<li><a href="compatibility.html#${escapeHtml(note.id)}"><strong>${escapeHtml(note.title)}</strong></a><span>${escapeHtml(note.summary)}</span><em>${escapeHtml(note.appliesTo.join(", "))}</em></li>`)
+    .join("");
+  const d4Cards = feedback.d4CandidateBacklog
+    .map((candidate) => `<li><a href="d4-candidates.html#${escapeHtml(candidate.id)}"><strong>${escapeHtml(candidate.title)}</strong></a><span>${escapeHtml(candidate.status)}</span><em>${escapeHtml(candidate.evidenceNeeded.join(", "))}</em></li>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/feedback/index.html`,
+    locale,
+    title: labels.feedback,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-feedback>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.feedback)}</p><h1>${escapeHtml(labels.feedback)}</h1><p>${escapeHtml(feedback.summary)}</p></header>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.publicBoundaries)}</h2><ul class="portal-list">${boundaryItems}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.feedbackIssueTemplates)}</h2><ul class="portal-card-list">${templateCards}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.compatibilityNotes)}</h2><ul class="portal-card-list">${compatibilityCards}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.d4CandidateBacklog)}</h2><ul class="portal-card-list">${d4Cards}</ul></section>`,
+      "</main>"
+    ].join("")
+  });
+
+  const templateSections = feedback.issueTemplates
+    .map((template) => `<section class="portal-section" id="${escapeHtml(template.id)}"><h2>${escapeHtml(template.title)}</h2><dl class="portal-meta"><dt>${escapeHtml(labels.publicTemplate)}</dt><dd><code>${escapeHtml(template.publicTemplate)}</code></dd><dt>${escapeHtml(labels.useFor)}</dt><dd>${escapeHtml(template.useFor.join(", "))}</dd><dt>${escapeHtml(labels.requiredEvidence)}</dt><dd>${escapeHtml(template.requiredEvidence.join(", "))}</dd><dt>${escapeHtml(labels.notFor)}</dt><dd>${escapeHtml(template.notFor)}</dd></dl></section>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/feedback/templates.html`,
+    locale,
+    title: labels.feedbackIssueTemplates,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-feedback-templates>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.feedback)}</p><h1>${escapeHtml(labels.feedbackIssueTemplates)}</h1><p>${escapeHtml(labels.publicSafeEvidence)}</p></header>`,
+      templateSections,
+      "</main>"
+    ].join("")
+  });
+
+  const compatibilitySections = feedback.compatibilityNotes
+    .map((note) => `<section class="portal-section" id="${escapeHtml(note.id)}"><h2>${escapeHtml(note.title)}</h2><p>${escapeHtml(note.summary)}</p><dl class="portal-meta"><dt>${escapeHtml(labels.appliesTo)}</dt><dd>${escapeHtml(note.appliesTo.join(", "))}</dd><dt>${escapeHtml(labels.currentBoundary)}</dt><dd>${escapeHtml(note.currentBoundary)}</dd></dl></section>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/feedback/compatibility.html`,
+    locale,
+    title: labels.compatibilityNotes,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-feedback-compatibility>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.feedback)}</p><h1>${escapeHtml(labels.compatibilityNotes)}</h1><p>${escapeHtml(labels.compatibilityLead)}</p></header>`,
+      compatibilitySections,
+      "</main>"
+    ].join("")
+  });
+
+  const candidateRows = feedback.d4CandidateBacklog
+    .map((candidate) => `<tr id="${escapeHtml(candidate.id)}"><td>${escapeHtml(candidate.title)}</td><td>${escapeHtml(candidate.status)}</td><td>${escapeHtml(candidate.evidenceNeeded.join(", "))}</td><td>${escapeHtml(candidate.currentBoundary)}</td></tr>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/feedback/d4-candidates.html`,
+    locale,
+    title: labels.d4CandidateBacklog,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-feedback-d4-candidates>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.feedback)}</p><h1>${escapeHtml(labels.d4CandidateBacklog)}</h1><p>${escapeHtml(labels.d4CandidateLead)}</p></header>`,
+      `<section class="portal-section"><div class="portal-table-wrap"><table><thead><tr><th>${escapeHtml(labels.candidate)}</th><th>${escapeHtml(labels.d4Status)}</th><th>${escapeHtml(labels.evidenceNeeded)}</th><th>${escapeHtml(labels.currentBoundary)}</th></tr></thead><tbody>${candidateRows}</tbody></table></div></section>`,
+      "</main>"
+    ].join("")
+  });
+}
+
 async function writePublicDocsPages({ data, labels, locale, outputDir, publicDocs }) {
   const documentRoutes = createPublicDocRouteMap(publicDocs);
   const docsByCategory = new Map();
@@ -648,6 +732,30 @@ async function writeSearchPages(context) {
       description: data.hostAnchors.aiAssistedAuthoring.summary,
       route: `${locale}/hosts/ai-assisted-authoring.html`
     },
+    {
+      section: "feedback",
+      title: labels.feedback,
+      description: data.feedback.summary,
+      route: `${locale}/feedback/index.html`
+    },
+    ...data.feedback.issueTemplates.map((template) => ({
+      section: "feedback",
+      title: template.title,
+      description: `${template.publicTemplate} / ${template.useFor.join(", ")}`,
+      route: `${locale}/feedback/templates.html#${template.id}`
+    })),
+    ...data.feedback.compatibilityNotes.map((note) => ({
+      section: "feedback",
+      title: note.title,
+      description: `${note.appliesTo.join(", ")} / ${note.currentBoundary}`,
+      route: `${locale}/feedback/compatibility.html#${note.id}`
+    })),
+    ...data.feedback.d4CandidateBacklog.map((candidate) => ({
+      section: "feedback",
+      title: candidate.title,
+      description: `${candidate.status} / ${candidate.evidenceNeeded.join(", ")}`,
+      route: `${locale}/feedback/d4-candidates.html#${candidate.id}`
+    })),
     ...data.publicDocs.categories.map((category) => ({
       section: "public-docs",
       title: category.title,
@@ -677,13 +785,13 @@ async function writeSearchPages(context) {
     body: [
       '<main class="portal-shell" data-hia-public-portal-search>',
       `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.portal)}</p><h1>${escapeHtml(labels.search)}</h1><p>${escapeHtml(labels.searchLead)}</p></header>`,
-      `<section class="portal-section portal-section-quiet"><h2>${escapeHtml(labels.searchSections)}</h2><ul class="portal-chip-list"><li><a href="ecosystem.html">${escapeHtml(labels.ecosystem)}</a></li><li><a href="adoption.html">${escapeHtml(labels.adoption)}</a></li><li><a href="operations.html">${escapeHtml(labels.operations)}</a></li><li><a href="hosts.html">${escapeHtml(labels.hosts)}</a></li><li><a href="docs.html">${escapeHtml(labels.publicDocs)}</a></li></ul></section>`,
+      `<section class="portal-section portal-section-quiet"><h2>${escapeHtml(labels.searchSections)}</h2><ul class="portal-chip-list"><li><a href="ecosystem.html">${escapeHtml(labels.ecosystem)}</a></li><li><a href="adoption.html">${escapeHtml(labels.adoption)}</a></li><li><a href="operations.html">${escapeHtml(labels.operations)}</a></li><li><a href="hosts.html">${escapeHtml(labels.hosts)}</a></li><li><a href="feedback.html">${escapeHtml(labels.feedback)}</a></li><li><a href="docs.html">${escapeHtml(labels.publicDocs)}</a></li></ul></section>`,
       `<section class="portal-section"><ul class="portal-list">${searchList}</ul></section>`,
       "</main>"
     ].join("")
   });
 
-  for (const section of ["ecosystem", "adoption", "operations", "hosts", "docs"]) {
+  for (const section of ["ecosystem", "adoption", "operations", "hosts", "feedback", "docs"]) {
     const sectionEntries = entries.filter((entry) => {
       if (section === "ecosystem") return ["packages", "doc-lines"].includes(entry.section);
       if (section === "docs") return entry.section === "public-docs";
@@ -731,6 +839,10 @@ function collectLocalePageList(data, locale, publicDocs = []) {
     `${locale}/hosts/ide-devtools.html`,
     `${locale}/hosts/evidence.html`,
     `${locale}/hosts/ai-assisted-authoring.html`,
+    `${locale}/feedback/index.html`,
+    `${locale}/feedback/compatibility.html`,
+    `${locale}/feedback/templates.html`,
+    `${locale}/feedback/d4-candidates.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
     ...publicDocs.map((document) => `${locale}/${document.route}`),
@@ -739,6 +851,7 @@ function collectLocalePageList(data, locale, publicDocs = []) {
     `${locale}/search/adoption.html`,
     `${locale}/search/operations.html`,
     `${locale}/search/hosts.html`,
+    `${locale}/search/feedback.html`,
     `${locale}/search/docs.html`
   ];
 }
@@ -770,6 +883,7 @@ function createNavigation(filePath, locale) {
     [labelsForNav(locale).adoption, `${locale}/adoption/index.html`],
     [labelsForNav(locale).operations, `${locale}/operations/index.html`],
     [labelsForNav(locale).hosts, `${locale}/hosts/index.html`],
+    [labelsForNav(locale).feedback, `${locale}/feedback/index.html`],
     [labelsForNav(locale).docs, `${locale}/docs/index.html`],
     [labelsForNav(locale).search, `${locale}/search/index.html`]
   ];
@@ -852,6 +966,8 @@ function getLabels(locale) {
     operationsLead: zh ? "公开 reference 的部署、监控、版本与发布状态。" : "Deployment, monitor, versioning and release status for the public reference.",
     hosts: zh ? "宿主" : "Hosts",
     hostsLead: zh ? "IDE、DevTools、browser panel、relation graph 和 AI 辅助写作入口。" : "IDE, DevTools, browser panel, relation graph and AI-assisted authoring entry points.",
+    feedback: zh ? "反馈" : "Feedback",
+    feedbackLead: zh ? "公开反馈、兼容性说明和 D4 候选证据准备。" : "Public feedback, compatibility notes and D4 candidate evidence preparation.",
     hostAnchors: zh ? "IDE/DevTools 锚点" : "IDE/DevTools Anchors",
     openHosts: zh ? "打开宿主入口" : "Open host anchors",
     hostConcepts: zh ? "核心概念" : "Core Concepts",
@@ -877,6 +993,20 @@ function getLabels(locale) {
     notClaimed: zh ? "不宣称" : "Not Claimed",
     compatibilityMatrix: zh ? "兼容矩阵" : "Compatibility Matrix",
     wP29Inputs: zh ? "W-P29 输入" : "W-P29 Inputs",
+    feedbackIssueTemplates: zh ? "反馈 issue 模板" : "Feedback Issue Templates",
+    publicTemplate: zh ? "公开模板" : "Public Template",
+    useFor: zh ? "适用场景" : "Use For",
+    requiredEvidence: zh ? "所需证据" : "Required Evidence",
+    notFor: zh ? "不适用" : "Not For",
+    publicSafeEvidence: zh ? "只提交公开安全证据：公开 URL、包版本、环境摘要、可复现命令和脱敏日志。" : "Submit only public-safe evidence: public URLs, package versions, environment summaries, reproducible commands and sanitized logs.",
+    compatibilityNotes: zh ? "兼容性说明" : "Compatibility Notes",
+    compatibilityLead: zh ? "这些说明限定成熟度、版本、隐私和宿主能力声明的适用边界。" : "These notes constrain maturity, version, privacy and host capability claims.",
+    appliesTo: zh ? "适用于" : "Applies To",
+    d4CandidateBacklog: zh ? "D4 候选 backlog" : "D4 Candidate Backlog",
+    d4CandidateLead: zh ? "这些条目是外部采用证据的准备清单，不等同于 D4 已完成。" : "These items are a preparation checklist for external adoption evidence, not a claim that D4 is complete.",
+    candidate: zh ? "候选项" : "Candidate",
+    d4Status: zh ? "D4 状态" : "D4 Status",
+    evidenceNeeded: zh ? "所需证据" : "Evidence Needed",
     currentEvidence: zh ? "当前证据" : "Current Evidence",
     currentBoundary: zh ? "当前边界" : "Current Boundary",
     workflow: zh ? "流程" : "Workflow",
@@ -949,6 +1079,7 @@ function labelsForNav(locale) {
     adoption: labels.adoption,
     operations: labels.operations,
     hosts: labels.hosts,
+    feedback: labels.feedback,
     docs: labels.publicDocs,
     search: labels.search
   };

@@ -36,9 +36,14 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/en/hosts/ide-devtools.html` | English host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
 | `/en/hosts/evidence.html` | English host evidence matrix for artifact contracts, supported flows and explicit non-claims. |
 | `/en/hosts/ai-assisted-authoring.html` | English AI-assisted documentation authoring workflow candidate. |
+| `/en/feedback/` | English public-safe feedback overview. |
+| `/en/feedback/compatibility.html` | English compatibility notes for maturity, versions, privacy and host claims. |
+| `/en/feedback/templates.html` | English issue-template guidance for public-safe portal and compatibility reports. |
+| `/en/feedback/d4-candidates.html` | English D4 external-adoption candidate backlog. |
 | `/en/docs/` | English public documentation navigation categories. |
 | `/en/docs/reference/<document>.html` | English public documentation detail page rendered from the safe Markdown subset. |
 | `/en/search/` | English public portal search preview. |
+| `/en/search/feedback.html` | English feedback search partition. |
 | `/zh-CN/packages/` | Chinese ecosystem package matrix. |
 | `/zh-CN/doc-lines/` | Chinese documentation line index. |
 | `/zh-CN/adoption/` | Chinese adoption cases and recipes. |
@@ -49,9 +54,14 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/zh-CN/hosts/ide-devtools.html` | Chinese host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
 | `/zh-CN/hosts/evidence.html` | Chinese host evidence matrix for artifact contracts, supported flows and explicit non-claims. |
 | `/zh-CN/hosts/ai-assisted-authoring.html` | Chinese AI-assisted documentation authoring workflow candidate. |
+| `/zh-CN/feedback/` | Chinese public-safe feedback overview. |
+| `/zh-CN/feedback/compatibility.html` | Chinese compatibility notes for maturity, versions, privacy and host claims. |
+| `/zh-CN/feedback/templates.html` | Chinese issue-template guidance for public-safe portal and compatibility reports. |
+| `/zh-CN/feedback/d4-candidates.html` | Chinese D4 external-adoption candidate backlog. |
 | `/zh-CN/docs/` | Chinese public documentation navigation categories. |
 | `/zh-CN/docs/reference/<document>.html` | Chinese public documentation detail page rendered from the safe Markdown subset. |
 | `/zh-CN/search/` | Chinese public portal search preview. |
+| `/zh-CN/search/feedback.html` | Chinese feedback search partition. |
 | `/reference-build.json` | Sanitized source repository, ref and resolved-SHA provenance. |
 | `/public-portal-pages.json` | Sanitized generated portal page manifest. |
 | `/reference-pages.json` | Static route, locale, schema and privacy manifest. |

@@ -1115,6 +1115,147 @@
       "Connect AI-assisted authoring to source-linked diagnostics and reviewable edit proposals."
     ]
   },
+  "feedback": {
+    "status": "d4-prep",
+    "summary": "Feedback surfaces collect public-safe portal, compatibility, adoption, package and host findings without treating them as completed external ecosystem adoption.",
+    "publicBoundaries": [
+      "Feedback must use public URLs, package names, versions, public-safe environment summaries and sanitized logs.",
+      "Private source code, private repository paths, credentials and embedded sourcesContent are out of scope for public issues.",
+      "A D4 candidate needs a repeatable public-safe consumer record before it can be counted as external adoption evidence."
+    ],
+    "issueTemplates": [
+      {
+        "id": "portal-feedback",
+        "title": "Public Portal Feedback",
+        "publicTemplate": ".github/ISSUE_TEMPLATE/hia-portal-feedback.yml",
+        "useFor": [
+          "navigation gaps",
+          "public documentation rendering",
+          "search result grouping",
+          "portal route issues"
+        ],
+        "requiredEvidence": [
+          "public URL",
+          "observed behavior",
+          "expected behavior",
+          "privacy confirmation"
+        ],
+        "notFor": "Private project debugging or requests that require modifying a target repository."
+      },
+      {
+        "id": "compatibility-report",
+        "title": "Compatibility Or Adoption Report",
+        "publicTemplate": ".github/ISSUE_TEMPLATE/hia-compatibility-report.yml",
+        "useFor": [
+          "doc-line runner compatibility",
+          "producer integration findings",
+          "source-linkage findings",
+          "IDE or DevTools host compatibility"
+        ],
+        "requiredEvidence": [
+          "doc line or surface",
+          "package and version when relevant",
+          "public-safe reproduction steps",
+          "sanitized output summary"
+        ],
+        "notFor": "Publishing credentials, private source excerpts, or unsanitized build artifacts."
+      }
+    ],
+    "compatibilityNotes": [
+      {
+        "id": "maturity-labels",
+        "title": "Maturity Labels Are Evidence Scoped",
+        "appliesTo": [
+          "doc-lines",
+          "packages",
+          "adoption"
+        ],
+        "summary": "A published-consumable doc line means its package set can be consumed from npm for a reviewed scenario; it does not imply complete language coverage.",
+        "currentBoundary": "Maturity labels describe the current public evidence floor, not a permanent compatibility guarantee."
+      },
+      {
+        "id": "runner-version-policy",
+        "title": "Runner Versions Must Stay Explicit",
+        "appliesTo": [
+          "quickstarts",
+          "recipes",
+          "target-project-smoke"
+        ],
+        "summary": "Adoption recipes should name the minimum runner or producer version used by the evidence, so target projects can reproduce the same contract.",
+        "currentBoundary": "Floating latest installs are acceptable for experiments but not sufficient for D4 evidence."
+      },
+      {
+        "id": "source-content-privacy",
+        "title": "Source Content Privacy Remains Default",
+        "appliesTo": [
+          "doc-source-map",
+          "unified-output",
+          "issue-evidence"
+        ],
+        "summary": "Documentation source maps and public portal evidence should omit sourcesContent unless a project explicitly opts into a stricter private workflow.",
+        "currentBoundary": "Public feedback should use sanitized snippets, counts, URLs and package versions instead of private source payloads."
+      },
+      {
+        "id": "host-capability-boundary",
+        "title": "Host Capability Claims Stay Surface Specific",
+        "appliesTo": [
+          "lsp",
+          "vscode",
+          "browser-panel",
+          "devtools",
+          "multi-ide"
+        ],
+        "summary": "A relation graph or structured open request proves data availability for a host; it does not prove every GUI can open every target until that host has runtime evidence.",
+        "currentBoundary": "Host compatibility findings must identify the exact surface and supported flow involved."
+      }
+    ],
+    "d4CandidateBacklog": [
+      {
+        "id": "public-third-party-consumer",
+        "title": "Public Third-Party Consumer",
+        "status": "candidate-needed",
+        "evidenceNeeded": [
+          "a public project or branch outside the HIA repository set",
+          "repeatable commands using published packages",
+          "public-safe output summary without sourcesContent"
+        ],
+        "currentBoundary": "Current target-project evidence is useful but still curated by the HIA workspace process."
+      },
+      {
+        "id": "published-package-repeatability",
+        "title": "Published Package Repeatability",
+        "status": "internal-evidence",
+        "evidenceNeeded": [
+          "npm package version",
+          "isolated install or packed consumer smoke",
+          "documented output artifact count"
+        ],
+        "currentBoundary": "TSDoc and DotNetDoc have published-package smoke; broader doc lines still need the same public repeatability floor."
+      },
+      {
+        "id": "feedback-loop",
+        "title": "Public Feedback Loop",
+        "status": "prepared",
+        "evidenceNeeded": [
+          "issue forms available in the public repository",
+          "portal route explaining public-safe evidence",
+          "triage labels or equivalent maintainer workflow"
+        ],
+        "currentBoundary": "Issue templates and portal pages prepare the loop; they do not prove external feedback volume."
+      },
+      {
+        "id": "host-consumer-feedback",
+        "title": "Host Consumer Feedback",
+        "status": "candidate-needed",
+        "evidenceNeeded": [
+          "host surface identifier",
+          "relation graph or open-request payload involved",
+          "visible runtime or public-safe reproduction"
+        ],
+        "currentBoundary": "W-P28.5 exposes host evidence anchors; W-P29 must productize host runtime before stronger claims."
+      }
+    ]
+  },
   "publicDocs": {
     "sourceMode": "derive-from-main-repo-docs",
     "minimumDocumentCount": 32,
@@ -1181,6 +1322,13 @@
       "aiAssistedAuthoring": "{locale}/hosts/ai-assisted-authoring.html",
       "search": "{locale}/search/hosts.html",
       "evidence": "{locale}/hosts/evidence.html"
+    },
+    "feedback": {
+      "index": "{locale}/feedback/index.html",
+      "compatibility": "{locale}/feedback/compatibility.html",
+      "templates": "{locale}/feedback/templates.html",
+      "d4Candidates": "{locale}/feedback/d4-candidates.html",
+      "search": "{locale}/search/feedback.html"
     }
   }
 }

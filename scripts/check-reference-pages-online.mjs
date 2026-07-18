@@ -102,6 +102,10 @@ async function checkPublication() {
       [`${locale}/hosts/ide-devtools.html`, "data-hia-public-portal-host-ide-devtools", "portal-nav"],
       [`${locale}/hosts/evidence.html`, "data-hia-public-portal-host-evidence", "portal-nav"],
       [`${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring", "portal-nav"],
+      [`${locale}/feedback/`, "data-hia-public-portal-feedback", "portal-nav"],
+      [`${locale}/feedback/compatibility.html`, "data-hia-public-portal-feedback-compatibility", "portal-nav"],
+      [`${locale}/feedback/templates.html`, "data-hia-public-portal-feedback-templates", "portal-nav"],
+      [`${locale}/feedback/d4-candidates.html`, "data-hia-public-portal-feedback-d4-candidates", "portal-nav"],
       [`${locale}/docs/`, "data-hia-public-portal-docs", "portal-nav"],
       [`${locale}/docs/categories/configuration.html`, "data-hia-public-portal-docs-category", "portal-nav"],
       [`${locale}/docs/reference/reference-pages--077ce10c88.html`, "data-hia-public-docs-rendered", "portal-nav"],
@@ -112,6 +116,7 @@ async function checkPublication() {
       [`${locale}/search/adoption.html`, "data-hia-public-portal-search-adoption", "portal-nav"],
       [`${locale}/search/operations.html`, "data-hia-public-portal-search-operations", "portal-nav"],
       [`${locale}/search/hosts.html`, "data-hia-public-portal-search-hosts", "portal-nav"],
+      [`${locale}/search/feedback.html`, "data-hia-public-portal-search-feedback", "portal-nav"],
       [`${locale}/search/docs.html`, "data-hia-public-portal-search-docs", "portal-nav"]
     );
     const searchLocale = portalSearchIndex.locales.find((entry) => entry.locale === locale);

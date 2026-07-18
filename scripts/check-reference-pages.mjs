@@ -75,6 +75,10 @@ async function main() {
     await assertPageContains(outputDir, `${locale}/hosts/ide-devtools.html`, ["data-hia-public-portal-host-ide-devtools", "VS Code"]);
     await assertPageContains(outputDir, `${locale}/hosts/evidence.html`, ["data-hia-public-portal-host-evidence", "project-relation-graph"]);
     await assertPageContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, ["data-hia-public-portal-ai-authoring", "AI-Assisted Documentation Authoring"]);
+    await assertPageContains(outputDir, `${locale}/feedback/index.html`, ["data-hia-public-portal-feedback", "public-safe"]);
+    await assertPageContains(outputDir, `${locale}/feedback/compatibility.html`, ["data-hia-public-portal-feedback-compatibility", "maturity-labels"]);
+    await assertPageContains(outputDir, `${locale}/feedback/templates.html`, ["data-hia-public-portal-feedback-templates", "hia-portal-feedback.yml"]);
+    await assertPageContains(outputDir, `${locale}/feedback/d4-candidates.html`, ["data-hia-public-portal-feedback-d4-candidates", "public-third-party-consumer"]);
     await assertPageContains(outputDir, `${locale}/docs/index.html`, ["data-hia-public-portal-docs", "Configuration"]);
     await assertPageContains(outputDir, `${locale}/docs/reference/reference-pages--077ce10c88.html`, ["data-hia-public-docs-rendered", "Public Routes"]);
     await assertPageContains(outputDir, `${locale}/docs/reference/tsdoc-quickstart--40de72c37e.html`, ["data-hia-public-docs-rendered", "@hia-doc/tsdoc-runner"]);

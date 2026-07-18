@@ -36,6 +36,7 @@ function main() {
   validateAdoption(data);
   validateOperations(data);
   validateHostAnchors(data);
+  validateFeedback(data);
   validatePublicDocs(data);
   validateRoutes(data);
 
@@ -208,6 +209,40 @@ function validateHostAnchors(data) {
   assert(Array.isArray(workflow.guardrails) && workflow.guardrails.length >= 4, "AI-assisted authoring guardrails must have at least four items.");
 }
 
+function validateFeedback(data) {
+  const feedback = data.feedback;
+  assert(feedback?.status === "d4-prep", "Feedback status drifted.");
+  assert(typeof feedback.summary === "string" && feedback.summary.includes("public-safe"), "Feedback summary must describe the public-safe boundary.");
+  assert(Array.isArray(feedback.publicBoundaries) && feedback.publicBoundaries.length >= 3, "Feedback must declare public boundaries.");
+
+  assertEqualSets(["compatibility-report", "portal-feedback"], feedback.issueTemplates.map((template) => template.id), "Feedback issue template inventory");
+  for (const template of feedback.issueTemplates) {
+    assert(typeof template.title === "string" && template.title.length > 0, `Feedback template ${template.id} must have a title.`);
+    assert(/^\.github\/ISSUE_TEMPLATE\/hia-[a-z0-9-]+\.yml$/.test(template.publicTemplate), `Feedback template ${template.id} must reference a public issue template.`);
+    assert(existsSync(path.join(mainRepoRoot, ...template.publicTemplate.split("/"))), `Feedback template ${template.id} file is missing.`);
+    assert(Array.isArray(template.useFor) && template.useFor.length >= 3, `Feedback template ${template.id} must describe use cases.`);
+    assert(Array.isArray(template.requiredEvidence) && template.requiredEvidence.length >= 3, `Feedback template ${template.id} must describe required evidence.`);
+    assert(typeof template.notFor === "string" && template.notFor.length > 0, `Feedback template ${template.id} must declare non-goals.`);
+  }
+
+  assertEqualSets(["host-capability-boundary", "maturity-labels", "runner-version-policy", "source-content-privacy"], feedback.compatibilityNotes.map((note) => note.id), "Feedback compatibility note inventory");
+  for (const note of feedback.compatibilityNotes) {
+    assert(typeof note.title === "string" && note.title.length > 0, `Compatibility note ${note.id} must have a title.`);
+    assert(Array.isArray(note.appliesTo) && note.appliesTo.length >= 2, `Compatibility note ${note.id} must declare appliesTo.`);
+    assert(typeof note.summary === "string" && note.summary.length > 0, `Compatibility note ${note.id} must have a summary.`);
+    assert(typeof note.currentBoundary === "string" && note.currentBoundary.length > 0, `Compatibility note ${note.id} must declare current boundary.`);
+  }
+
+  const allowedStatuses = new Set(["candidate-needed", "internal-evidence", "prepared"]);
+  assertEqualSets(["feedback-loop", "host-consumer-feedback", "public-third-party-consumer", "published-package-repeatability"], feedback.d4CandidateBacklog.map((candidate) => candidate.id), "Feedback D4 candidate inventory");
+  for (const candidate of feedback.d4CandidateBacklog) {
+    assert(typeof candidate.title === "string" && candidate.title.length > 0, `D4 candidate ${candidate.id} must have a title.`);
+    assert(allowedStatuses.has(candidate.status), `D4 candidate ${candidate.id} has an unknown status.`);
+    assert(Array.isArray(candidate.evidenceNeeded) && candidate.evidenceNeeded.length >= 2, `D4 candidate ${candidate.id} must declare required evidence.`);
+    assert(typeof candidate.currentBoundary === "string" && candidate.currentBoundary.length > 0, `D4 candidate ${candidate.id} must declare current boundary.`);
+  }
+}
+
 function validatePublicDocs(data) {
   const publicDocs = data.publicDocs;
   assert(publicDocs?.sourceMode === "derive-from-main-repo-docs", "Public docs source mode drifted.");
@@ -221,7 +256,8 @@ function validateRoutes(data) {
     ...Object.values(data.pageRoutes.ecosystem),
     ...Object.values(data.pageRoutes.adoption),
     ...Object.values(data.pageRoutes.operations),
-    ...Object.values(data.pageRoutes.hosts)
+    ...Object.values(data.pageRoutes.hosts),
+    ...Object.values(data.pageRoutes.feedback)
   ];
   assert(routeValues.length === new Set(routeValues).size, "Public portal route patterns must be unique.");
   for (const route of routeValues) {
