@@ -1,0 +1,17 @@
+{
+  "name": "@hia-doc/visual-studio-extension",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Visual Studio extension skeleton and host contract mapping for HIA Documentation.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "README.md",
+    "host-contract.json",
+    "package.json"
+  ],
+  "scripts": {
+    "check": "node ../../scripts/check-visual-studio-extension.mjs"
+  },
+  "sideEffects": false
+}

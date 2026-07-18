@@ -1,4 +1,5 @@
 import {
+  createHiaDevToolsInspectedWindowBridgeExpression,
   createHiaDevToolsOpenRequestMessage,
   createHiaDevToolsPanelViewModel,
   getHiaDevToolsRelationDetail
@@ -145,9 +146,29 @@ function createOpenRequestButton(request, relationId, index) {
     });
 
     window.postMessage(message, window.location.origin);
-    renderOpenLog(`${message.type}: ${requestType}`);
+    renderOpenLog(`${message.type}: ${requestType}; local message emitted.`);
+    dispatchOpenRequestToInspectedWindow(message, requestType);
   });
   return button;
+}
+
+function dispatchOpenRequestToInspectedWindow(message, requestType) {
+  const inspectedWindow = globalThis.chrome?.devtools?.inspectedWindow;
+
+  if (!inspectedWindow?.eval) {
+    renderOpenLog(`${message.type}: ${requestType}; inspectedWindow bridge unavailable.`);
+    return;
+  }
+
+  inspectedWindow.eval(createHiaDevToolsInspectedWindowBridgeExpression(message), (result, exceptionInfo) => {
+    if (exceptionInfo?.isException || exceptionInfo?.isError) {
+      renderOpenLog(`${message.type}: ${requestType}; inspectedWindow bridge failed: ${formatBridgeException(exceptionInfo)}`);
+      return;
+    }
+
+    const status = typeof result?.status === "string" ? result.status : "dispatched";
+    renderOpenLog(`${message.type}: ${requestType}; inspectedWindow bridge ${status}.`);
+  });
 }
 
 function renderOpenLog(message) {
@@ -168,4 +189,16 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;");
+}
+
+function formatBridgeException(exceptionInfo) {
+  if (typeof exceptionInfo?.description === "string" && exceptionInfo.description.length > 0) {
+    return exceptionInfo.description;
+  }
+
+  if (typeof exceptionInfo?.value === "string" && exceptionInfo.value.length > 0) {
+    return exceptionInfo.value;
+  }
+
+  return "unknown bridge error";
 }

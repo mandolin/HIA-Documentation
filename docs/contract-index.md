@@ -17,6 +17,9 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
 | Project navigation index | `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION` | `0.1.0-draft` |
+| LSP host result metadata | `HIA_LSP_HOST_RESULT_CONTRACT_VERSION` | `0.1.0-draft` |
+| LSP documentation edit proposals | `HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION` | `0.1.0-draft` |
+| Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
 | JSDoc adapter bridge | `JSDOC_ADAPTER_CORE_BRIDGE_VERSION` | `0.1.0` |
@@ -41,7 +44,10 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Project navigation index | `@hia-doc/renderer-html` | Presentation-neutral project entry index for static portals and search; it excludes inline source previews. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
+| LSP host result metadata | `@hia-doc/lsp` | Additive metadata on selected `hia/*` custom request responses for request version, capability, result source and empty-state handling. |
+| LSP documentation edit proposals | `@hia-doc/lsp` | Public-safe, reviewable proposal view model for AI-assisted authoring. It does not carry private source text or directly applicable WorkspaceEdit output. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
+| Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
 
 ## Fixtures
@@ -74,6 +80,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Project docs manifests are explicit aggregation manifests. They should reference language extraction artifacts instead of making the CLI parse source languages directly.
 - Documentation producers are explicitly configured wrappers around standalone doc-line APIs; core and the plugin SDK do not depend on language satellite packages.
 - LSP resource index data is derived from core documents and should not be written back into core documents.
+- LSP host result metadata is additive and should guide host fallback behavior; it does not replace the request-specific payload.
+- LSP documentation edit proposals are review targets, not edits to apply automatically. They must keep `sourcesContentPolicy: none`, `allowsAutomaticWrites: false` and `requiresHumanReview: true` until a later WorkspaceEdit contract is explicitly defined.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 

@@ -61,6 +61,13 @@ import {
   type HiaProjectRelationGraphResult
 } from "./project-relations.js";
 import {
+  createHiaDocumentationEditProposals,
+  type HiaDocumentationEditProposalsResult
+} from "./documentation-edit-proposals.js";
+import type {
+  HiaLspHostResultSource
+} from "./host-contract.js";
+import {
   createEmptyHiaResourceIndex,
   createHiaResourceIndex,
   type HiaLspResourceIndex
@@ -101,6 +108,7 @@ export interface HiaLspService {
   getFoldingRanges(uri: string): FoldingRange[];
   getHover(uri: string, position?: Position): Hover | null;
   getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult;
+  getDocumentationEditProposals(uri: string): HiaDocumentationEditProposalsResult;
   getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult;
   getManagedProjectRelationGraph(uri: string): HiaProjectRelationGraphResult;
   getManagedResourceIndex(uri: string): HiaLspResourceIndex;
@@ -263,19 +271,33 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
     getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult {
       return createHiaIdeCapabilities(createAuthoringContext(uri));
     },
+    getDocumentationEditProposals(uri: string): HiaDocumentationEditProposalsResult {
+      const document = documents.get(uri);
+
+      return createHiaDocumentationEditProposals({
+        context: createAuthoringContext(uri),
+        source: document ? "managed-document" : "none"
+      });
+    },
     getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult {
-      const index = documents.get(uri)?.docSourceMapIndex ?? workspaceDocSourceMapIndexes.get(uri);
+      const managedIndex = documents.get(uri)?.docSourceMapIndex;
+      const workspaceIndex = workspaceDocSourceMapIndexes.get(uri);
+      const index = managedIndex ?? workspaceIndex;
 
       return createHiaDocumentSourceMapIndexResult({
         ...(index ? { index } : {}),
         ...(query ? { query } : {}),
+        source: getHostResultSource(managedIndex, workspaceIndex),
         uri
       });
     },
     getManagedProjectRelationGraph(uri: string): HiaProjectRelationGraphResult {
-      return documents.get(uri)?.projectRelationGraph
-        ?? workspaceProjectRelationGraphs.get(uri)
-        ?? createHiaProjectRelationGraphResult({ uri });
+      const managedGraph = documents.get(uri)?.projectRelationGraph;
+      const workspaceGraph = workspaceProjectRelationGraphs.get(uri);
+
+      return managedGraph
+        ?? workspaceGraph
+        ?? createHiaProjectRelationGraphResult({ source: "none", uri });
     },
     getManagedResourceIndex(uri: string): HiaLspResourceIndex {
       return documents.get(uri)?.resourceIndex ?? createEmptyHiaResourceIndex({ uri });
@@ -383,7 +405,11 @@ function loadWorkspaceRuntime(workspaceRoots: readonly string[], options: { load
 
     if (projectIndex) {
       const uri = pathToFileURL(projectIndexPath).href;
-      projectRelationGraphs.set(uri, createHiaProjectRelationGraphResult({ projectIndex, uri }));
+      projectRelationGraphs.set(uri, createHiaProjectRelationGraphResult({
+        projectIndex,
+        source: "workspace-runtime",
+        uri
+      }));
     }
 
     if (options.loadProfiles) {
@@ -506,12 +532,26 @@ function createProjectRelationGraphFromParsed(uri: string, parsed: unknown): Hia
     return undefined;
   }
 
-  const result = createHiaProjectRelationGraphResult({
+  return createHiaProjectRelationGraphResult({
     projectIndex: parsed,
+    source: "managed-document",
     uri
   });
+}
 
-  return result.status === "available" ? result : undefined;
+function getHostResultSource(
+  managedValue: unknown,
+  workspaceValue: unknown
+): HiaLspHostResultSource {
+  if (managedValue) {
+    return "managed-document";
+  }
+
+  if (workspaceValue) {
+    return "workspace-runtime";
+  }
+
+  return "none";
 }
 
 function createDocSourceMapDiagnostics(index: DocSourceMapIndex): Diagnostic[] {

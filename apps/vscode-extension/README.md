@@ -30,6 +30,15 @@ VS Code is the first IDE shell for HIA Documentation. Other IDE integrations sho
 
 The extension does not parse JSDoc, generate HTML directly, or duplicate core diagnostics.
 
+## Runtime Evidence
+
+From the repository root, run `pnpm run build` before preparing runtime evidence fixtures.
+
+- `pnpm run vscode:source-linkage:evidence` prepares `dist/vscode-source-linkage-runtime-evidence/evidence.json`.
+- `pnpm run vscode:project-relations:evidence` prepares `dist/vscode-project-relations-runtime-evidence/evidence.json`.
+
+Each evidence file includes an Extension Development Host launch command and the manual checks for the matching command path. The project-relations evidence verifies the `hia/projectRelationGraph` picker path, relation output report, source navigation, generated artifact navigation, documentation preview action, copy actions and workspace-boundary guard.
+
 ## Settings
 
 | Setting | Default | Purpose |

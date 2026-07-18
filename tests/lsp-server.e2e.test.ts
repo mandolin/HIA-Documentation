@@ -137,6 +137,36 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
+      id: 6,
+      method: "hia/documentationEditProposals",
+      params: {
+        uri: "file:///workspace/basic.hia.json"
+      }
+    });
+
+    const editProposalsResponse = await client.waitFor((message) => message.id === 6);
+    expect(editProposalsResponse.result).toMatchObject({
+      uri: "file:///workspace/basic.hia.json",
+      contract: "hia-documentation-edit-proposals",
+      host: {
+        capability: "hia.documentationEditProposal",
+        request: {
+          method: "hia/documentationEditProposals",
+          version: "0.1.0-draft"
+        },
+        source: "managed-document"
+      },
+      privacy: {
+        allowsAutomaticWrites: false,
+        includesSourceContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      },
+      proposalCount: expect.any(Number)
+    });
+
+    client.send({
+      jsonrpc: "2.0",
       method: "textDocument/didOpen",
       params: {
         textDocument: {
@@ -150,7 +180,7 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
-      id: 6,
+      id: 7,
       method: "hia/documentSourceMapIndex",
       params: {
         uri: "file:///workspace/project-mixed-alert.docmap.json",
@@ -160,10 +190,19 @@ describe("LSP server stdio", () => {
       }
     });
 
-    const sourceMapIndexResponse = await client.waitFor((message) => message.id === 6);
+    const sourceMapIndexResponse = await client.waitFor((message) => message.id === 7);
     expect(sourceMapIndexResponse.result).toMatchObject({
       uri: "file:///workspace/project-mixed-alert.docmap.json",
       status: "available",
+      host: {
+        capability: "hia.sourceLinkage.query",
+        contract: "hia-lsp-host-result",
+        request: {
+          method: "hia/documentSourceMapIndex",
+          version: "0.1.0-draft"
+        },
+        source: "managed-document"
+      },
       matchedEntryCount: 1,
       entries: [
         expect.objectContaining({
@@ -175,7 +214,7 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
-      id: 7,
+      id: 8,
       method: "textDocument/completion",
       params: {
         textDocument: {
@@ -188,7 +227,7 @@ describe("LSP server stdio", () => {
       }
     });
 
-    const completionResponse = await client.waitFor((message) => message.id === 7);
+    const completionResponse = await client.waitFor((message) => message.id === 8);
     expect(completionResponse.result).toEqual(expect.arrayContaining([
       expect.objectContaining({
         label: "zh-CN"
@@ -197,12 +236,12 @@ describe("LSP server stdio", () => {
 
     client.send({
       jsonrpc: "2.0",
-      id: 8,
+      id: 9,
       method: "shutdown",
       params: null
     });
 
-    const shutdownResponse = await client.waitFor((message) => message.id === 8);
+    const shutdownResponse = await client.waitFor((message) => message.id === 9);
     expect(shutdownResponse.result).toBeNull();
 
     client.send({

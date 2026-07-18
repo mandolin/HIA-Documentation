@@ -34,6 +34,9 @@ import {
   HiaLspDiagnosticCode
 } from "./diagnostics.js";
 import type {
+  HiaProjectRelationGraphResult
+} from "./project-relations.js";
+import type {
   HiaLspMissingLocaleLocation,
   HiaLspResourceIndex
 } from "./resources.js";
@@ -56,6 +59,8 @@ export const HiaIdeCapabilityId = {
   DefinitionResource: "hia.definition.resource",
   DefinitionSource: "hia.definition.source",
   SourceLinkageQuery: "hia.sourceLinkage.query",
+  ProjectRelationGraphQuery: "hia.projectRelationGraph.query",
+  DocumentationEditProposal: "hia.documentationEditProposal",
   FoldingDocument: "hia.folding.document",
   ProfileRegistry: "hia.profile.registry",
   DiagnosticsProfile: "hia.diagnostics.profile",
@@ -128,6 +133,7 @@ export interface HiaDocumentResourceActionsResult {
 export interface HiaLspAuthoringDocument {
   docSourceMapIndex?: DocSourceMapIndex;
   diagnostics: Diagnostic[];
+  projectRelationGraph?: HiaProjectRelationGraphResult;
   resourceIndex: HiaLspResourceIndex;
   text: string;
   uri: string;
@@ -287,6 +293,8 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         (index?.sourceBlocks.length ?? 0) + (index?.sourceFragments.length ?? 0)
       ),
       sourceLinkageCapability(hasDocument, docSourceMapIndex),
+      projectRelationGraphCapability(hasDocument, document?.projectRelationGraph),
+      dataBackedCapability(HiaIdeCapabilityId.DocumentationEditProposal, "lsp", hasDocument, index?.missingLocales.length ?? 0),
       implementedCapability(HiaIdeCapabilityId.FoldingDocument, "lsp", hasDocument),
       dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceOpen, "lsp", hasDocument, openableResourceLocations),
       dataBackedCapability(HiaIdeCapabilityId.CodeActionResourceStub, "lsp", hasDocument, index?.missingLocales.length ?? 0),
@@ -327,6 +335,53 @@ function sourceLinkageCapability(hasDocument: boolean, index: DocSourceMapIndex 
 
   return {
     id: HiaIdeCapabilityId.SourceLinkageQuery,
+    owner: "lsp",
+    status: "available"
+  };
+}
+
+function projectRelationGraphCapability(
+  hasDocument: boolean,
+  graph: HiaProjectRelationGraphResult | undefined
+): HiaIdeCapability {
+  if (!hasDocument) {
+    return {
+      id: HiaIdeCapabilityId.ProjectRelationGraphQuery,
+      owner: "lsp",
+      status: "unsupported",
+      reason: "document-not-open"
+    };
+  }
+
+  if (!graph) {
+    return {
+      id: HiaIdeCapabilityId.ProjectRelationGraphQuery,
+      owner: "lsp",
+      status: "unsupported",
+      reason: "project-index-not-open"
+    };
+  }
+
+  if (graph.status !== "available") {
+    return {
+      id: HiaIdeCapabilityId.ProjectRelationGraphQuery,
+      owner: "lsp",
+      status: "unsupported",
+      reason: graph.unavailableReason ?? "project-relation-graph-unavailable"
+    };
+  }
+
+  if (graph.relationCount === 0) {
+    return {
+      id: HiaIdeCapabilityId.ProjectRelationGraphQuery,
+      owner: "lsp",
+      status: "partial",
+      reason: "relation-graph-empty"
+    };
+  }
+
+  return {
+    id: HiaIdeCapabilityId.ProjectRelationGraphQuery,
     owner: "lsp",
     status: "available"
   };

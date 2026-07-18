@@ -1,4 +1,8 @@
 export const HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE = "hia.browserPanel.openRequest";
+export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT = "hia-devtools-open-request-bridge";
+export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION = "0.1.0-draft";
+export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE = "hia:devtools-open-request";
+export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY = "devtools.inspectedWindow.eval-window-event";
 export const HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE = "hia-devtools-panel";
 
 /**
@@ -50,6 +54,58 @@ export function createHiaDevToolsOpenRequestMessage(request, metadata = {}) {
     source: HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE,
     type: HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE
   };
+}
+
+/**
+ * 创建 DevTools panel 到 inspected page 的零权限 bridge envelope。
+ * Create a zero-permission bridge envelope from the DevTools panel to the inspected page.
+ *
+ * @lang zh-CN 该 envelope 只携带结构化 open request，不携带源码内容，也不要求 host permissions。
+ * @lang en The envelope carries only structured open request data, embeds no source content, and requires no host permissions.
+ *
+ * @param {ReturnType<typeof createHiaDevToolsOpenRequestMessage>} message Structured open request message created by the panel.
+ * @returns {{
+ *   capabilities: { contentScriptRequired: boolean; hostPermissionsRequired: boolean; inspectedWindowEval: boolean; returnsPageData: boolean };
+ *   contract: string;
+ *   contractVersion: string;
+ *   eventType: string;
+ *   message: unknown;
+ *   source: string;
+ *   strategy: string;
+ * }}
+ */
+export function createHiaDevToolsOpenRequestBridgeEnvelope(message) {
+  return {
+    capabilities: {
+      contentScriptRequired: false,
+      hostPermissionsRequired: false,
+      inspectedWindowEval: true,
+      returnsPageData: false
+    },
+    contract: HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
+    contractVersion: HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
+    eventType: HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
+    message: cloneJsonValue(message),
+    source: HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE,
+    strategy: HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY
+  };
+}
+
+/**
+ * 生成 `chrome.devtools.inspectedWindow.eval` 可执行的 inspected page event bridge 表达式。
+ * Create an inspected-page event bridge expression executable through `chrome.devtools.inspectedWindow.eval`.
+ *
+ * @lang zh-CN 表达式只 dispatch 一个 `CustomEvent` 并返回 JSON-safe ack；DevTools 侧不得信任 inspected page 返回的扩展数据。
+ * @lang en The expression only dispatches a `CustomEvent` and returns a JSON-safe acknowledgement; DevTools code must not trust extended data returned by the inspected page.
+ *
+ * @param {ReturnType<typeof createHiaDevToolsOpenRequestMessage>} message Structured open request message created by the panel.
+ * @returns {string} JavaScript expression evaluated in the inspected page.
+ */
+export function createHiaDevToolsInspectedWindowBridgeExpression(message) {
+  const envelope = createHiaDevToolsOpenRequestBridgeEnvelope(message);
+  const serialized = JSON.stringify(envelope);
+
+  return `(() => { const envelope = ${serialized}; window.dispatchEvent(new CustomEvent(envelope.eventType, { detail: envelope })); return { contract: envelope.contract, eventType: envelope.eventType, requestType: envelope.message && envelope.message.request && envelope.message.request.type || null, status: "dispatched", strategy: envelope.strategy }; })();`;
 }
 
 /**
@@ -124,6 +180,16 @@ function formatNode(node, fallback) {
 
 function arrayValue(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function cloneJsonValue(value) {
+  try {
+    const serialized = JSON.stringify(value);
+
+    return typeof serialized === "string" ? JSON.parse(serialized) : null;
+  } catch {
+    return null;
+  }
 }
 
 function numberValue(value) {

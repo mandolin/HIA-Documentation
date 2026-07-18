@@ -9,6 +9,12 @@ const evidencePath = path.join(rootDir, "dist", "devtools-extension-check.json")
 
 const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
+  HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
+  HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
+  HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
+  HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY,
+  createHiaDevToolsInspectedWindowBridgeExpression,
+  createHiaDevToolsOpenRequestBridgeEnvelope,
   createHiaDevToolsOpenRequestMessage,
   createHiaDevToolsPanelViewModel,
   getHiaDevToolsRelationDetail
@@ -29,6 +35,8 @@ async function main() {
   const message = createHiaDevToolsOpenRequestMessage(detail?.openRequests[0], {
     relationId: detail?.relation.id
   });
+  const bridgeEnvelope = createHiaDevToolsOpenRequestBridgeEnvelope(message);
+  const bridgeExpression = createHiaDevToolsInspectedWindowBridgeExpression(message);
 
   assert.equal(manifest.manifest_version, 3, "DevTools extension must use Manifest V3.");
   assert.equal(manifest.devtools_page, "devtools.html", "Manifest must declare a local devtools_page.");
@@ -42,6 +50,19 @@ async function main() {
   assert.equal(detail?.toLabel, "src/api.ts", "Relation detail must resolve the to node path.");
   assert.equal(message.type, HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE, "Open request message type must match the browser-panel contract.");
   assert.equal(message.metadata.relationId, "documents-source:entry:api->source:src/api.ts", "Open request message must retain relation metadata.");
+  assert.equal(bridgeEnvelope.contract, HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT, "Bridge envelope must use the stable DevTools bridge contract.");
+  assert.equal(bridgeEnvelope.contractVersion, HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION, "Bridge envelope must expose the bridge contract version.");
+  assert.equal(bridgeEnvelope.eventType, HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE, "Bridge envelope must expose the inspected-page event type.");
+  assert.equal(bridgeEnvelope.strategy, HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY, "Bridge envelope must record the inspectedWindow strategy.");
+  assert.deepEqual(bridgeEnvelope.capabilities, {
+    contentScriptRequired: false,
+    hostPermissionsRequired: false,
+    inspectedWindowEval: true,
+    returnsPageData: false
+  }, "Bridge envelope must preserve the zero-permission first-slice boundary.");
+  assert.match(bridgeExpression, /window\.dispatchEvent\(new CustomEvent/u, "Bridge expression must dispatch a DOM event in the inspected page.");
+  assert.match(bridgeExpression, new RegExp(HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE, "u"), "Bridge expression must carry the HIA DevTools event type.");
+  assert.doesNotMatch(JSON.stringify(bridgeEnvelope), /sourcesContent/u, "Bridge envelope must not carry embedded source content.");
 
   await mkdir(path.dirname(evidencePath), { recursive: true });
   await writeFile(evidencePath, `${JSON.stringify({
@@ -55,6 +76,13 @@ async function main() {
       hostPermissions: manifest.host_permissions
     },
     panel: {
+      bridge: {
+        contract: bridgeEnvelope.contract,
+        contractVersion: bridgeEnvelope.contractVersion,
+        eventType: bridgeEnvelope.eventType,
+        strategy: bridgeEnvelope.strategy,
+        capabilities: bridgeEnvelope.capabilities
+      },
       entryCount: panel.summary.entryCount,
       relationCount: panel.summary.relationCount,
       relationNodeCount: panel.summary.relationNodeCount,

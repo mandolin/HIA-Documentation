@@ -78,9 +78,29 @@ describe("@hia-doc/lsp service", () => {
     expect(document.diagnostics).toEqual([]);
     expect(fullIndex).toMatchObject({
       entryCount: 1,
+      host: {
+        capability: "hia.sourceLinkage.query",
+        contract: "hia-lsp-host-result",
+        contractVersion: "0.1.0-draft",
+        request: {
+          method: "hia/documentSourceMapIndex",
+          version: "0.1.0-draft"
+        },
+        source: "managed-document"
+      },
       matchedEntryCount: 1,
       status: "available",
       uri
+    });
+    expect(service.getManagedDocSourceMapIndex(uri, {
+      symbolId: "html:component:missing"
+    })).toMatchObject({
+      host: {
+        emptyState: "query-no-match",
+        source: "managed-document"
+      },
+      matchedEntryCount: 0,
+      status: "available"
     });
     expect(symbolIndex.entries.map((entry) => entry.id)).toEqual(["entry:html:alert"]);
     expect(sourceIndex.entries[0]?.sourceLinks[0]).toMatchObject({
@@ -90,6 +110,14 @@ describe("@hia-doc/lsp service", () => {
     expect(capability).toMatchObject({
       id: "hia.sourceLinkage.query",
       status: "available"
+    });
+    expect(service.getManagedDocSourceMapIndex("file:///workspace/missing.docmap.json")).toMatchObject({
+      host: {
+        emptyState: "not-loaded",
+        source: "none"
+      },
+      status: "unavailable",
+      unavailableReason: "doc-source-map-missing"
     });
   });
 
@@ -109,6 +137,16 @@ describe("@hia-doc/lsp service", () => {
     expect(service.getManagedProjectRelationGraph(uri)).toMatchObject({
       contract: "hia-project-relation-graph",
       contractVersion: "0.1.0-draft",
+      host: {
+        capability: "hia.projectRelationGraph.query",
+        contract: "hia-lsp-host-result",
+        contractVersion: "0.1.0-draft",
+        request: {
+          method: "hia/projectRelationGraph",
+          version: "0.1.0-draft"
+        },
+        source: "managed-document"
+      },
       nodeCount: 2,
       project: {
         id: "project:mixed",
@@ -126,6 +164,30 @@ describe("@hia-doc/lsp service", () => {
     expect(service.getManagedProjectRelationGraph("file:///workspace/missing/project-index.json")).toMatchObject({
       status: "unavailable",
       unavailableReason: "project-index-missing"
+    });
+    expect(service.getIdeCapabilities(uri).capabilities.find((item) => item.id === HiaIdeCapabilityId.ProjectRelationGraphQuery)).toMatchObject({
+      status: "available"
+    });
+
+    const missingGraphUri = "file:///workspace/dist/docs/project-index-without-graph.json";
+    service.openDocument(missingGraphUri, JSON.stringify({
+      contract: "hia-project-navigation-index",
+      contractVersion: "0.1.0-draft",
+      entries: [],
+      groups: []
+    }), "json", 1);
+
+    expect(service.getManagedProjectRelationGraph(missingGraphUri)).toMatchObject({
+      host: {
+        emptyState: "not-loaded",
+        source: "managed-document"
+      },
+      status: "unavailable",
+      unavailableReason: "project-relation-graph-missing"
+    });
+    expect(service.getIdeCapabilities(missingGraphUri).capabilities.find((item) => item.id === HiaIdeCapabilityId.ProjectRelationGraphQuery)).toMatchObject({
+      reason: "project-relation-graph-missing",
+      status: "unsupported"
     });
   });
 
@@ -179,8 +241,16 @@ describe("@hia-doc/lsp service", () => {
 
       expect(service.getWorkspaceSourceMapUris()).toEqual([docSourceMapUri]);
       expect(service.getWorkspaceProjectRelationGraphUris()).toEqual([projectIndexUri]);
-      expect(service.getManagedDocSourceMapIndex(docSourceMapUri, { symbolId: "html:component:alert" }).matchedEntryCount).toBe(1);
+      expect(service.getManagedDocSourceMapIndex(docSourceMapUri, { symbolId: "html:component:alert" })).toMatchObject({
+        host: {
+          source: "workspace-runtime"
+        },
+        matchedEntryCount: 1
+      });
       expect(service.getManagedProjectRelationGraph(projectIndexUri)).toMatchObject({
+        host: {
+          source: "workspace-runtime"
+        },
         relationCount: 1,
         status: "available"
       });

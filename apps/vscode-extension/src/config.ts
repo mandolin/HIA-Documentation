@@ -26,6 +26,7 @@ export const HIA_PROJECT_RELATION_GRAPH_REQUEST = "hia/projectRelationGraph";
 export const HIA_IDE_CAPABILITIES_REQUEST = "hia/ideCapabilities";
 export const HIA_AUTHORING_LOCATIONS_REQUEST = "hia/documentAuthoringLocations";
 export const HIA_RESOURCE_ACTIONS_REQUEST = "hia/resourceActions";
+export const HIA_DOCUMENTATION_EDIT_PROPOSALS_REQUEST = "hia/documentationEditProposals";
 
 export interface HiaDocumentSelectorItem {
   language?: string;
@@ -139,6 +140,38 @@ export interface HiaResourceActionSummary {
 
 export interface HiaResourceActionsSummary {
   actions?: HiaResourceActionSummary[];
+  uri?: string;
+}
+
+export interface HiaDocumentationEditProposalPrivacySummary {
+  allowsAutomaticWrites?: boolean;
+  contextPolicy?: string;
+  includesSourceContent?: boolean;
+  requiresHumanReview?: boolean;
+  sourcesContentPolicy?: string;
+}
+
+export interface HiaDocumentationEditProposalSummary {
+  id?: string;
+  kind?: string;
+  privacy?: HiaDocumentationEditProposalPrivacySummary;
+  status?: string;
+  target?: {
+    locale?: string;
+    resourcePath?: string;
+    resourcePointer?: string;
+    symbolId?: string;
+    targetUri?: string;
+  };
+  title?: string;
+  unavailableReason?: string;
+}
+
+export interface HiaDocumentationEditProposalsSummary {
+  privacy?: HiaDocumentationEditProposalPrivacySummary;
+  proposalCount?: number;
+  proposals?: HiaDocumentationEditProposalSummary[];
+  status?: string;
   uri?: string;
 }
 

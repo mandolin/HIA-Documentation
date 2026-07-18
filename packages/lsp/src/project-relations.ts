@@ -1,8 +1,16 @@
+import {
+  createHiaLspHostResultMeta,
+  type HiaLspHostResultMeta,
+  type HiaLspHostResultSource
+} from "./host-contract.js";
+
 /**
  * 项目级 relation graph 的 LSP custom request 名称。
  * LSP custom request name for project-level relation graph data.
  */
 export const HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST = "hia/projectRelationGraph";
+export const HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST_VERSION = "0.1.0-draft";
+export const HIA_LSP_PROJECT_RELATION_GRAPH_QUERY_CAPABILITY = "hia.projectRelationGraph.query";
 
 /**
  * LSP relation graph 请求的加载状态。
@@ -33,6 +41,7 @@ export interface HiaProjectRelationGraphParams {
 export interface HiaProjectRelationGraphResult {
   contract?: string;
   contractVersion?: string;
+  host: HiaLspHostResultMeta;
   nodeCount: number;
   nodes: HiaProjectRelationNode[];
   project?: HiaProjectRelationProjectInfo;
@@ -90,18 +99,20 @@ export interface HiaProjectRelation {
  */
 export function createHiaProjectRelationGraphResult(options: {
   projectIndex?: unknown;
+  source?: HiaLspHostResultSource;
   uri: string;
 }): HiaProjectRelationGraphResult {
   const projectIndex = asRecord(options.projectIndex);
+  const source = options.source ?? (projectIndex ? "managed-document" : "none");
 
   if (!projectIndex) {
-    return createUnavailableProjectRelationGraphResult(options.uri, "project-index-missing");
+    return createUnavailableProjectRelationGraphResult(options.uri, "project-index-missing", source);
   }
 
   const relationGraph = asRecord(projectIndex.relationGraph);
 
   if (!relationGraph) {
-    return createUnavailableProjectRelationGraphResult(options.uri, "project-relation-graph-missing");
+    return createUnavailableProjectRelationGraphResult(options.uri, "project-relation-graph-missing", source);
   }
 
   const nodes = arrayValue(relationGraph.nodes).map(createProjectRelationNode).filter(isProjectRelationNode);
@@ -113,6 +124,13 @@ export function createHiaProjectRelationGraphResult(options: {
   return {
     ...(contract ? { contract } : {}),
     ...(contractVersion ? { contractVersion } : {}),
+    host: createHiaLspHostResultMeta({
+      capability: HIA_LSP_PROJECT_RELATION_GRAPH_QUERY_CAPABILITY,
+      ...(relations.length === 0 ? { emptyState: "relation-graph-empty" } : {}),
+      method: HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST,
+      source,
+      version: HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST_VERSION
+    }),
     nodeCount: numberValue(relationGraph.nodeCount) ?? nodes.length,
     nodes,
     ...(project ? { project } : {}),
@@ -125,9 +143,17 @@ export function createHiaProjectRelationGraphResult(options: {
 
 function createUnavailableProjectRelationGraphResult(
   uri: string,
-  unavailableReason: HiaProjectRelationGraphUnavailableReason
+  unavailableReason: HiaProjectRelationGraphUnavailableReason,
+  source: HiaLspHostResultSource
 ): HiaProjectRelationGraphResult {
   return {
+    host: createHiaLspHostResultMeta({
+      capability: HIA_LSP_PROJECT_RELATION_GRAPH_QUERY_CAPABILITY,
+      emptyState: "not-loaded",
+      method: HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST,
+      source,
+      version: HIA_LSP_PROJECT_RELATION_GRAPH_REQUEST_VERSION
+    }),
     nodeCount: 0,
     nodes: [],
     relationCount: 0,

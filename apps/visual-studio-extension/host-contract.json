@@ -1,0 +1,154 @@
+{
+  "contract": "hia-visual-studio-host-skeleton",
+  "contractVersion": "0.1.0-draft",
+  "status": "skeleton",
+  "appDirectory": "apps/visual-studio-extension",
+  "host": {
+    "displayName": "HIA Documentation Visual Studio",
+    "kind": "visual-studio-extension",
+    "model": "hybrid",
+    "primaryRoute": "VisualStudio.Extensibility command and tool-window shell with a Visual Studio LSP client",
+    "targetIde": "Visual Studio"
+  },
+  "runtime": {
+    "languageServer": {
+      "package": "@hia-doc/lsp",
+      "transport": "stdio",
+      "workspaceRelativePath": "packages/lsp/dist/node.js"
+    },
+    "cli": {
+      "package": "@hia-doc/cli",
+      "workspaceRelativePath": "apps/cli/dist/index.js"
+    }
+  },
+  "surfaces": [
+    {
+      "id": "hia-vs-lsp-client",
+      "kind": "language-server-client",
+      "owns": [
+        "Visual Studio language-client registration",
+        "standard LSP diagnostics, completion, hover, definition and folding presentation"
+      ],
+      "consumes": [
+        "initialize",
+        "textDocument/publishDiagnostics",
+        "textDocument/completion",
+        "textDocument/hover",
+        "textDocument/definition",
+        "textDocument/foldingRange"
+      ]
+    },
+    {
+      "id": "hia-vs-relation-tool-window",
+      "kind": "tool-window",
+      "owns": [
+        "relation graph tree and detail presentation",
+        "source-linkage result presentation",
+        "host fallback and empty-state messages"
+      ],
+      "consumes": [
+        "hia/ideCapabilities",
+        "hia/documentSourceMapIndex",
+        "hia/projectRelationGraph",
+        "hia/resourceActions",
+        "hia/documentationEditProposals"
+      ]
+    },
+    {
+      "id": "hia-vs-commands",
+      "kind": "command",
+      "owns": [
+        "build docs command",
+        "open preview command",
+        "validate workspace command",
+        "open source or generated artifact command"
+      ],
+      "delegatesTo": [
+        "@hia-doc/cli",
+        "@hia-doc/lsp",
+        "Visual Studio shell APIs"
+      ]
+    }
+  ],
+  "customRequests": [
+    {
+      "method": "hia/ideCapabilities",
+      "purpose": "Read host capability availability before showing commands or tool-window states."
+    },
+    {
+      "capability": "hia.sourceLinkage.query",
+      "method": "hia/documentSourceMapIndex",
+      "requiresHostMetadata": true,
+      "version": "0.1.0-draft"
+    },
+    {
+      "capability": "hia.projectRelationGraph.query",
+      "method": "hia/projectRelationGraph",
+      "requiresHostMetadata": true,
+      "version": "0.1.0-draft"
+    },
+    {
+      "method": "hia/resourceActions",
+      "purpose": "Read open/copy/preflight actions without letting the Visual Studio host write project files directly."
+    },
+    {
+      "capability": "hia.documentationEditProposal",
+      "method": "hia/documentationEditProposals",
+      "purpose": "Read public-safe reviewable documentation edit proposals for human review workflows.",
+      "requiresHostMetadata": true,
+      "version": "0.1.0-draft"
+    }
+  ],
+  "hostResultMetadata": {
+    "contract": "hia-lsp-host-result",
+    "contractVersion": "0.1.0-draft",
+    "requiredFields": [
+      "contract",
+      "contractVersion",
+      "request.method",
+      "request.version",
+      "capability",
+      "source"
+    ],
+    "supportedEmptyStates": [
+      "not-loaded",
+      "query-no-match",
+      "relation-graph-empty",
+      "source-data-empty"
+    ],
+    "supportedSources": [
+      "managed-document",
+      "workspace-runtime",
+      "none"
+    ]
+  },
+  "structuredOpenRequests": [
+    {
+      "type": "hia.openSource",
+      "visualStudioAction": "Open a workspace-relative source file and optional position."
+    },
+    {
+      "type": "hia.openGenerated",
+      "visualStudioAction": "Open a generated artifact inside the workspace."
+    },
+    {
+      "type": "hia.openDocumentationEntry",
+      "visualStudioAction": "Open generated documentation or focus the matching entry when the host view supports it."
+    }
+  ],
+  "targetScenarios": [
+    {
+      "id": "hia-aspnetportal",
+      "purpose": "ASP.NET/C# endpoint and component documentation navigation",
+      "targetRepositoryPolicy": "notification-only"
+    }
+  ],
+  "privacy": {
+    "allowAbsolutePathsInHostPayload": false,
+    "allowTargetRepositoryMutation": false,
+    "embedsSourcesContent": false,
+    "requiresHumanReviewForEditProposals": true,
+    "parsesGeneratedHtml": false,
+    "runsDocumentationProducers": false
+  }
+}

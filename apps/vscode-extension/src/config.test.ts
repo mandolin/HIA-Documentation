@@ -4,6 +4,7 @@ import {
   HIA_BUILD_DOCS_COMMAND,
   HIA_AUTHORING_LOCATIONS_REQUEST,
   HIA_COPY_RESOURCE_KEY_COMMAND,
+  HIA_DOCUMENTATION_EDIT_PROPOSALS_REQUEST,
   HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_LANGUAGE_ID,
@@ -62,6 +63,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_IDE_CAPABILITIES_REQUEST).toBe("hia/ideCapabilities");
     expect(HIA_AUTHORING_LOCATIONS_REQUEST).toBe("hia/documentAuthoringLocations");
     expect(HIA_RESOURCE_ACTIONS_REQUEST).toBe("hia/resourceActions");
+    expect(HIA_DOCUMENTATION_EDIT_PROPOSALS_REQUEST).toBe("hia/documentationEditProposals");
     expect(createHiaDocumentSelector()).toEqual([
       {
         scheme: "file",
