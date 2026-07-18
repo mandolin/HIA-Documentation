@@ -55,6 +55,8 @@ function validateManifest(data, manifest, publicDocs) {
   assert(manifest.counts.operationsRouteGroups === data.operations.routeGroups.length, "Operations route group count drifted.");
   assert(manifest.counts.hostSurfaces === data.hostAnchors.surfaces.length, "Host surface count drifted.");
   assert(manifest.counts.hostConcepts === data.hostAnchors.concepts.length, "Host concept count drifted.");
+  assert(manifest.counts.hostContracts === data.hostAnchors.artifactContracts.length, "Host artifact contract count drifted.");
+  assert(manifest.counts.hostEvidenceRows === data.hostAnchors.evidenceMatrix.length, "Host evidence row count drifted.");
   assert(manifest.counts.publicDocCategories === data.publicDocs.categories.length, "Public docs category count drifted.");
   assert(manifest.counts.publicDocs === publicDocs.length, "Public docs entry count drifted.");
 }
@@ -79,6 +81,9 @@ function validateRequiredFiles(data, outputDir, searchIndex, publicDocs) {
     assertFileContains(outputDir, `${locale}/hosts/index.html`, "data-hia-public-portal-hosts");
     assertFileContains(outputDir, `${locale}/hosts/source-linkage.html`, "data-hia-public-portal-host-source-linkage");
     assertFileContains(outputDir, `${locale}/hosts/ide-devtools.html`, "data-hia-public-portal-host-ide-devtools");
+    assertFileContains(outputDir, `${locale}/hosts/evidence.html`, "data-hia-public-portal-host-evidence");
+    assertFileContains(outputDir, `${locale}/hosts/evidence.html`, "Project Relation Graph");
+    assertFileContains(outputDir, `${locale}/hosts/evidence.html`, "project-relation-graph");
     assertFileContains(outputDir, `${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring");
     assertFileContains(outputDir, `${locale}/docs/index.html`, "data-hia-public-portal-docs");
     for (const document of publicDocs) {
@@ -118,6 +123,7 @@ function collectLocalePageList(data, locale, publicDocs) {
     `${locale}/hosts/index.html`,
     `${locale}/hosts/source-linkage.html`,
     `${locale}/hosts/ide-devtools.html`,
+    `${locale}/hosts/evidence.html`,
     `${locale}/hosts/ai-assisted-authoring.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
@@ -194,6 +200,8 @@ function expectedSearchEntryCount(data, publicDocs) {
     + data.operations.routeGroups.length
     + data.hostAnchors.concepts.length
     + data.hostAnchors.surfaces.length
+    + data.hostAnchors.artifactContracts.length
+    + 1
     + 1
     + data.publicDocs.categories.length
     + publicDocs.length;

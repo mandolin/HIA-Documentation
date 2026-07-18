@@ -957,7 +957,163 @@
         "No language-core vendor prefix when a standard-level name is appropriate."
       ],
       "nextPublicMilestone": "Connect the workflow to W-P29 IDE/DevTools host productization and later generic language abstraction."
-    }
+    },
+    "artifactContracts": [
+      {
+        "id": "project-index",
+        "title": "Project Index",
+        "publicArtifact": "project-index.json",
+        "role": "Unified project navigation, search metadata, locale metadata, and relation graph carrier.",
+        "consumedBy": [
+          "lsp",
+          "vscode",
+          "browser-panel",
+          "devtools"
+        ],
+        "currentBoundary": "The index is generated output; hosts should consume it as data, not scrape renderer HTML."
+      },
+      {
+        "id": "project-relation-graph",
+        "title": "Project Relation Graph",
+        "publicArtifact": "project-index.json.relationGraph",
+        "role": "Connects entries, source ranges, generated artifacts, semantic members, and framework endpoints.",
+        "consumedBy": [
+          "lsp",
+          "vscode",
+          "browser-panel",
+          "devtools",
+          "multi-ide"
+        ],
+        "currentBoundary": "The graph is a navigation model, not a guarantee that every host can open every target today."
+      },
+      {
+        "id": "doc-source-map",
+        "title": "Documentation Source Map",
+        "publicArtifact": "*.docmap.json",
+        "role": "Maps documentation entries back to original source and generated artifacts without embedding source text by default.",
+        "consumedBy": [
+          "lsp",
+          "vscode",
+          "browser-panel",
+          "devtools",
+          "multi-ide"
+        ],
+        "currentBoundary": "sourcesContent remains none unless a project explicitly opts into a stricter private workflow."
+      },
+      {
+        "id": "structured-open-request",
+        "title": "Structured Open Request",
+        "publicArtifact": "hia.browserPanel.openRequest",
+        "role": "Host-neutral message for opening source, generated artifacts, documentation entries, or previews.",
+        "consumedBy": [
+          "vscode",
+          "browser-panel",
+          "devtools",
+          "multi-ide"
+        ],
+        "currentBoundary": "The request describes intent; each host decides how much native navigation it can safely provide."
+      },
+      {
+        "id": "browser-panel-payload",
+        "title": "Browser Panel Payload",
+        "publicArtifact": "browser-panel-payload.json",
+        "role": "Static browser-facing relation graph, source-linkage, and open-request preview payload.",
+        "consumedBy": [
+          "browser-panel",
+          "devtools"
+        ],
+        "currentBoundary": "This remains a local/reference payload and is not a public browser store extension package."
+      }
+    ],
+    "evidenceMatrix": [
+      {
+        "surfaceId": "lsp",
+        "consumes": [
+          "project-index",
+          "project-relation-graph",
+          "doc-source-map"
+        ],
+        "supports": [
+          "relation graph request",
+          "source-linkage index request",
+          "workspace/opened project-index loading"
+        ],
+        "publicEvidence": "W-P22.5 target host evidence validated UnicodeArtJs and HIA-ASPNETPortal project-index consumption through LSP boundaries.",
+        "notClaimed": "No direct editor UI, marketplace package, or profile rule execution is claimed by the LSP boundary alone."
+      },
+      {
+        "surfaceId": "vscode",
+        "consumes": [
+          "project-index",
+          "project-relation-graph",
+          "doc-source-map",
+          "structured-open-request"
+        ],
+        "supports": [
+          "relation picker",
+          "source/generated/docs target report",
+          "copyable relation/open request payload"
+        ],
+        "publicEvidence": "W-P23.2 prepared Extension Development Host evidence covers relation choices and open target reports for target project artifacts.",
+        "notClaimed": "Visible Extension Development Host confirmation and packaged extension release are still future productization work."
+      },
+      {
+        "surfaceId": "browser-panel",
+        "consumes": [
+          "project-index",
+          "project-relation-graph",
+          "doc-source-map",
+          "structured-open-request",
+          "browser-panel-payload"
+        ],
+        "supports": [
+          "static relation list",
+          "detail pane",
+          "structured open request message"
+        ],
+        "publicEvidence": "W-P22.4 and W-P22.5 validated browser-panel payload generation and target project relation graph consumption.",
+        "notClaimed": "It does not claim native file opening, content-script overlay, or browser store distribution."
+      },
+      {
+        "surfaceId": "devtools",
+        "consumes": [
+          "project-index",
+          "project-relation-graph",
+          "structured-open-request",
+          "browser-panel-payload"
+        ],
+        "supports": [
+          "Manifest V3 DevTools shell",
+          "HIA panel",
+          "relation list/detail preview"
+        ],
+        "publicEvidence": "W-P23.3 added a local unpacked DevTools shell that renders browser-panel payload relation data.",
+        "notClaimed": "No content-script overlay, source panel integration, or Chrome Web Store release is claimed."
+      },
+      {
+        "surfaceId": "multi-ide",
+        "consumes": [
+          "project-index",
+          "project-relation-graph",
+          "doc-source-map",
+          "structured-open-request"
+        ],
+        "supports": [
+          "capability boundary matrix",
+          "Visual Studio hybrid route",
+          "JetBrains/Neovim adapter notes"
+        ],
+        "publicEvidence": "W-P23.5 established the multi-IDE compatibility boundary and the Visual Studio hybrid route.",
+        "notClaimed": "Visual Studio, JetBrains, and Neovim adapters are planned host projects, not shipped plugins."
+      }
+    ],
+    "wP29Inputs": [
+      "Confirm visible VS Code Extension Development Host navigation with real target artifacts.",
+      "Productize the DevTools panel shell while preserving browser-panel payload compatibility.",
+      "Turn LSP relation graph requests into the shared host service layer for editor adapters.",
+      "Start Visual Studio host planning as a .NET-oriented dedicated project without blocking LSP reuse.",
+      "Connect AI-assisted authoring to source-linked diagnostics and reviewable edit proposals."
+    ]
   },
   "publicDocs": {
     "sourceMode": "derive-from-main-repo-docs",
@@ -1023,7 +1179,8 @@
       "sourceLinkage": "{locale}/hosts/source-linkage.html",
       "ideDevtools": "{locale}/hosts/ide-devtools.html",
       "aiAssistedAuthoring": "{locale}/hosts/ai-assisted-authoring.html",
-      "search": "{locale}/search/hosts.html"
+      "search": "{locale}/search/hosts.html",
+      "evidence": "{locale}/hosts/evidence.html"
     }
   }
 }

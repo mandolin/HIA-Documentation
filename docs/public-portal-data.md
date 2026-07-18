@@ -35,7 +35,7 @@ It must not include local filesystem paths, non-public coordination notes, inter
 
 `reference/public-reference-build.definition.json` controls the source allowlist for first-party documentation generation.
 
-`reference/public-portal-data.json` controls the public portal metadata that can be rendered around the generated reference output, including IDE/DevTools host anchors that are backed by public relation-graph and source-linkage contracts.
+`reference/public-portal-data.json` controls the public portal metadata that can be rendered around the generated reference output, including IDE/DevTools host anchors that are backed by public relation-graph, source-linkage, structured open-request and host evidence matrix contracts.
 
 Keeping these files separate lets the build preserve the existing schema and reference contracts while adding ecosystem and adoption pages through a reviewed public data surface.
 

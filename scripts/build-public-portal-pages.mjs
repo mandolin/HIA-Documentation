@@ -75,6 +75,8 @@ async function main() {
       operationsRouteGroups: data.operations.routeGroups.length,
       hostSurfaces: data.hostAnchors.surfaces.length,
       hostConcepts: data.hostAnchors.concepts.length,
+      hostContracts: data.hostAnchors.artifactContracts.length,
+      hostEvidenceRows: data.hostAnchors.evidenceMatrix.length,
       publicDocCategories: data.publicDocs.categories.length,
       publicDocs: publicDocs.length
     },
@@ -385,11 +387,15 @@ async function writeOperationsPages({ data, labels, locale, outputDir }) {
 }
 
 async function writeHostPages({ data, labels, locale, outputDir }) {
+  const surfaceTitles = new Map(data.hostAnchors.surfaces.map((surface) => [surface.id, surface.title]));
   const conceptCards = data.hostAnchors.concepts
     .map((concept) => `<li><a href="source-linkage.html#${escapeHtml(concept.id)}"><strong>${escapeHtml(concept.title)}</strong></a><span>${escapeHtml(concept.summary)}</span></li>`)
     .join("");
   const surfaceCards = data.hostAnchors.surfaces
     .map((surface) => `<li><a href="ide-devtools.html#${escapeHtml(surface.id)}"><strong>${escapeHtml(surface.title)}</strong></a><span>${escapeHtml(surface.entryPoint)}</span><em>${escapeHtml(surface.maturity)}</em></li>`)
+    .join("");
+  const contractCards = data.hostAnchors.artifactContracts
+    .map((contract) => `<li><a href="evidence.html#${escapeHtml(contract.id)}"><strong>${escapeHtml(contract.title)}</strong></a><span>${escapeHtml(contract.role)}</span><em>${escapeHtml(contract.publicArtifact)}</em></li>`)
     .join("");
   const principleItems = data.hostAnchors.principles
     .map((principle) => `<li>${escapeHtml(principle)}</li>`)
@@ -404,6 +410,7 @@ async function writeHostPages({ data, labels, locale, outputDir }) {
       `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.hosts)}</h1><p>${escapeHtml(data.hostAnchors.summary)}</p></header>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.hostConcepts)}</h2><ul class="portal-card-list">${conceptCards}</ul></section>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.hostSurfaces)}</h2><ul class="portal-card-list">${surfaceCards}</ul></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.hostEvidenceMatrix)}</h2><ul class="portal-card-list">${contractCards}</ul><p><a href="evidence.html">${escapeHtml(labels.openHostEvidence)}</a></p></section>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.publicBoundaries)}</h2><ul class="portal-list">${principleItems}</ul></section>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.aiAssistedAuthoring)}</h2><p>${escapeHtml(data.hostAnchors.aiAssistedAuthoring.summary)}</p><p><a href="ai-assisted-authoring.html">${escapeHtml(labels.openAiWorkflow)}</a></p></section>`,
       "</main>"
@@ -412,6 +419,9 @@ async function writeHostPages({ data, labels, locale, outputDir }) {
 
   const conceptSections = data.hostAnchors.concepts
     .map((concept) => `<section class="portal-section" id="${escapeHtml(concept.id)}"><h2>${escapeHtml(concept.title)}</h2><p>${escapeHtml(concept.summary)}</p></section>`)
+    .join("");
+  const contractSections = data.hostAnchors.artifactContracts
+    .map((contract) => `<section class="portal-section" id="${escapeHtml(contract.id)}"><h2>${escapeHtml(contract.title)}</h2><dl class="portal-meta"><dt>${escapeHtml(labels.publicArtifact)}</dt><dd><code>${escapeHtml(contract.publicArtifact)}</code></dd><dt>${escapeHtml(labels.role)}</dt><dd>${escapeHtml(contract.role)}</dd><dt>${escapeHtml(labels.consumedBy)}</dt><dd>${escapeHtml(contract.consumedBy.map((id) => surfaceTitles.get(id) ?? id).join(", "))}</dd><dt>${escapeHtml(labels.currentBoundary)}</dt><dd>${escapeHtml(contract.currentBoundary)}</dd></dl></section>`)
     .join("");
   await writePage({
     outputDir,
@@ -422,6 +432,8 @@ async function writeHostPages({ data, labels, locale, outputDir }) {
       '<main class="portal-shell" data-hia-public-portal-host-source-linkage>',
       `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.sourceLinkage)}</h1><p>${escapeHtml(labels.sourceLinkageLead)}</p></header>`,
       conceptSections,
+      `<section class="portal-section"><h2>${escapeHtml(labels.hostArtifactContracts)}</h2><p>${escapeHtml(labels.hostArtifactContractsLead)}</p></section>`,
+      contractSections,
       "</main>"
     ].join("")
   });
@@ -460,6 +472,30 @@ async function writeHostPages({ data, labels, locale, outputDir }) {
       `<section class="portal-section"><h2>${escapeHtml(labels.workflow)}</h2><ol class="portal-list portal-ordered-list">${workflowSteps}</ol></section>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.guardrails)}</h2><ul class="portal-list">${guardrails}</ul></section>`,
       `<section class="portal-section"><h2>${escapeHtml(labels.nextPublicMilestone)}</h2><p>${escapeHtml(workflow.nextPublicMilestone)}</p></section>`,
+      "</main>"
+    ].join("")
+  });
+
+  const evidenceRows = data.hostAnchors.evidenceMatrix
+    .map((row) => `<tr id="${escapeHtml(row.surfaceId)}"><td>${escapeHtml(surfaceTitles.get(row.surfaceId) ?? row.surfaceId)}</td><td>${escapeHtml(row.consumes.join(", "))}</td><td>${escapeHtml(row.supports.join(", "))}</td><td>${escapeHtml(row.publicEvidence)}</td><td>${escapeHtml(row.notClaimed)}</td></tr>`)
+    .join("");
+  const contractRows = data.hostAnchors.artifactContracts
+    .map((contract) => `<tr id="${escapeHtml(contract.id)}"><td>${escapeHtml(contract.title)}</td><td><code>${escapeHtml(contract.publicArtifact)}</code></td><td>${escapeHtml(contract.role)}</td><td>${escapeHtml(contract.currentBoundary)}</td></tr>`)
+    .join("");
+  const inputItems = data.hostAnchors.wP29Inputs
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join("");
+  await writePage({
+    outputDir,
+    filePath: `${locale}/hosts/evidence.html`,
+    locale,
+    title: labels.hostEvidenceMatrix,
+    body: [
+      '<main class="portal-shell" data-hia-public-portal-host-evidence>',
+      `<header class="portal-hero"><p class="portal-kicker">${escapeHtml(labels.hosts)}</p><h1>${escapeHtml(labels.hostEvidenceMatrix)}</h1><p>${escapeHtml(labels.hostEvidenceLead)}</p></header>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.hostArtifactContracts)}</h2><div class="portal-table-wrap"><table><thead><tr><th>${escapeHtml(labels.hostArtifactContracts)}</th><th>${escapeHtml(labels.publicArtifact)}</th><th>${escapeHtml(labels.role)}</th><th>${escapeHtml(labels.currentBoundary)}</th></tr></thead><tbody>${contractRows}</tbody></table></div></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.compatibilityMatrix)}</h2><div class="portal-table-wrap"><table><thead><tr><th>${escapeHtml(labels.hostSurface)}</th><th>${escapeHtml(labels.consumedContracts)}</th><th>${escapeHtml(labels.supportedFlow)}</th><th>${escapeHtml(labels.evidence)}</th><th>${escapeHtml(labels.notClaimed)}</th></tr></thead><tbody>${evidenceRows}</tbody></table></div></section>`,
+      `<section class="portal-section"><h2>${escapeHtml(labels.wP29Inputs)}</h2><ol class="portal-list portal-ordered-list">${inputItems}</ol></section>`,
       "</main>"
     ].join("")
   });
@@ -594,6 +630,18 @@ async function writeSearchPages(context) {
       description: `${surface.maturity} / ${surface.entryPoint}`,
       route: `${locale}/hosts/ide-devtools.html#${surface.id}`
     })),
+    ...data.hostAnchors.artifactContracts.map((contract) => ({
+      section: "hosts",
+      title: contract.title,
+      description: `${contract.publicArtifact} / ${contract.role}`,
+      route: `${locale}/hosts/evidence.html#${contract.id}`
+    })),
+    {
+      section: "hosts",
+      title: labels.hostEvidenceMatrix,
+      description: labels.hostEvidenceLead,
+      route: `${locale}/hosts/evidence.html`
+    },
     {
       section: "hosts",
       title: data.hostAnchors.aiAssistedAuthoring.title,
@@ -681,6 +729,7 @@ function collectLocalePageList(data, locale, publicDocs = []) {
     `${locale}/hosts/index.html`,
     `${locale}/hosts/source-linkage.html`,
     `${locale}/hosts/ide-devtools.html`,
+    `${locale}/hosts/evidence.html`,
     `${locale}/hosts/ai-assisted-authoring.html`,
     `${locale}/docs/index.html`,
     ...data.publicDocs.categories.map((category) => `${locale}/docs/categories/${category.id}.html`),
@@ -807,6 +856,12 @@ function getLabels(locale) {
     openHosts: zh ? "打开宿主入口" : "Open host anchors",
     hostConcepts: zh ? "核心概念" : "Core Concepts",
     hostSurfaces: zh ? "宿主表面" : "Host Surfaces",
+    hostSurface: zh ? "宿主表面" : "Host Surface",
+    hostArtifactContracts: zh ? "宿主 artifact contract" : "Host Artifact Contracts",
+    hostArtifactContractsLead: zh ? "这些公开 artifact 是 IDE、DevTools、browser panel 和 LSP 共享文档上下文的基础。" : "These public artifacts form the shared documentation context for IDE, DevTools, browser panel and LSP hosts.",
+    hostEvidenceMatrix: zh ? "宿主证据矩阵" : "Host Evidence Matrix",
+    hostEvidenceLead: zh ? "矩阵说明每个宿主消费哪些公开 artifact、当前支持哪些流程，以及明确不宣称的能力。" : "This matrix explains which public artifacts each host consumes, what flow it currently supports and what it explicitly does not claim.",
+    openHostEvidence: zh ? "查看宿主证据矩阵" : "Open host evidence matrix",
     publicBoundaries: zh ? "公开边界" : "Public Boundaries",
     aiAssistedAuthoring: zh ? "AI 辅助文档写作" : "AI-Assisted Documentation Authoring",
     openAiWorkflow: zh ? "查看 AI 辅助流程" : "Open AI workflow",
@@ -815,6 +870,13 @@ function getLabels(locale) {
     ideDevtools: zh ? "IDE 与 DevTools" : "IDE And DevTools",
     ideDevtoolsLead: zh ? "当前宿主能力以 LSP、VS Code helper、browser panel、DevTools shell 和多 IDE 边界为公开候选。" : "Current host capability is represented by LSP, VS Code helper, browser panel, DevTools shell and multi-IDE boundaries.",
     entryPoint: zh ? "入口" : "Entry Point",
+    publicArtifact: zh ? "公开 artifact" : "Public Artifact",
+    consumedBy: zh ? "消费方" : "Consumed By",
+    consumedContracts: zh ? "消费的 contract" : "Consumed Contracts",
+    supportedFlow: zh ? "支持流程" : "Supported Flow",
+    notClaimed: zh ? "不宣称" : "Not Claimed",
+    compatibilityMatrix: zh ? "兼容矩阵" : "Compatibility Matrix",
+    wP29Inputs: zh ? "W-P29 输入" : "W-P29 Inputs",
     currentEvidence: zh ? "当前证据" : "Current Evidence",
     currentBoundary: zh ? "当前边界" : "Current Boundary",
     workflow: zh ? "流程" : "Workflow",

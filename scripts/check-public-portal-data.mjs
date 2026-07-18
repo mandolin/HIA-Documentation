@@ -174,6 +174,7 @@ function validateHostAnchors(data) {
 
   const allowedMaturity = new Set(["compatibility-boundary", "host-candidate", "implemented-boundary", "local-shell"]);
   assertEqualSets(["browser-panel", "devtools", "lsp", "multi-ide", "vscode"], anchors.surfaces.map((surface) => surface.id), "Host surface inventory");
+  const surfaceIds = new Set(anchors.surfaces.map((surface) => surface.id));
   for (const surface of anchors.surfaces) {
     assert(allowedMaturity.has(surface.maturity), `Host surface ${surface.id} has an unknown maturity.`);
     assert(typeof surface.entryPoint === "string" && surface.entryPoint.length > 0, `Host surface ${surface.id} must declare an entry point.`);
@@ -181,6 +182,25 @@ function validateHostAnchors(data) {
     assert(typeof surface.currentBoundary === "string" && surface.currentBoundary.length > 0, `Host surface ${surface.id} must declare current boundary.`);
     assert(typeof surface.nextPublicMilestone === "string" && surface.nextPublicMilestone.length > 0, `Host surface ${surface.id} must declare next milestone.`);
   }
+
+  assertEqualSets(["browser-panel-payload", "doc-source-map", "project-index", "project-relation-graph", "structured-open-request"], anchors.artifactContracts.map((contract) => contract.id), "Host artifact contract inventory");
+  for (const contract of anchors.artifactContracts) {
+    assert(typeof contract.publicArtifact === "string" && contract.publicArtifact.length > 0, `Host contract ${contract.id} must declare a public artifact.`);
+    assert(typeof contract.role === "string" && contract.role.length > 0, `Host contract ${contract.id} must declare a role.`);
+    assert(Array.isArray(contract.consumedBy) && contract.consumedBy.every((id) => surfaceIds.has(id)), `Host contract ${contract.id} references an unknown host surface.`);
+    assert(typeof contract.currentBoundary === "string" && contract.currentBoundary.length > 0, `Host contract ${contract.id} must declare current boundary.`);
+  }
+
+  assertEqualSets([...surfaceIds], anchors.evidenceMatrix.map((row) => row.surfaceId), "Host evidence matrix inventory");
+  const contractIds = new Set(anchors.artifactContracts.map((contract) => contract.id));
+  for (const row of anchors.evidenceMatrix) {
+    assert(Array.isArray(row.consumes) && row.consumes.every((id) => contractIds.has(id)), `Host evidence row ${row.surfaceId} references an unknown contract.`);
+    assert(Array.isArray(row.supports) && row.supports.length >= 2, `Host evidence row ${row.surfaceId} must declare supported flows.`);
+    assert(typeof row.publicEvidence === "string" && row.publicEvidence.length > 0, `Host evidence row ${row.surfaceId} must declare public evidence.`);
+    assert(typeof row.notClaimed === "string" && row.notClaimed.length > 0, `Host evidence row ${row.surfaceId} must declare not-claimed boundary.`);
+  }
+
+  assert(Array.isArray(anchors.wP29Inputs) && anchors.wP29Inputs.length >= 4, "Host anchors must carry W-P29 inputs.");
 
   const workflow = anchors.aiAssistedAuthoring;
   assert(workflow?.status === "workflow-candidate", "AI-assisted authoring status drifted.");

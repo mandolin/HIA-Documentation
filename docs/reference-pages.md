@@ -34,6 +34,7 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/en/hosts/` | English IDE/DevTools host anchor overview. |
 | `/en/hosts/source-linkage.html` | English source-linkage and relation graph concept page. |
 | `/en/hosts/ide-devtools.html` | English host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
+| `/en/hosts/evidence.html` | English host evidence matrix for artifact contracts, supported flows and explicit non-claims. |
 | `/en/hosts/ai-assisted-authoring.html` | English AI-assisted documentation authoring workflow candidate. |
 | `/en/docs/` | English public documentation navigation categories. |
 | `/en/docs/reference/<document>.html` | English public documentation detail page rendered from the safe Markdown subset. |
@@ -46,6 +47,7 @@ The artifact also includes generated public portal pages for ecosystem discovery
 | `/zh-CN/hosts/` | Chinese IDE/DevTools host anchor overview. |
 | `/zh-CN/hosts/source-linkage.html` | Chinese source-linkage and relation graph concept page. |
 | `/zh-CN/hosts/ide-devtools.html` | Chinese host surface matrix for LSP, VS Code, browser panel, DevTools and multi-IDE boundaries. |
+| `/zh-CN/hosts/evidence.html` | Chinese host evidence matrix for artifact contracts, supported flows and explicit non-claims. |
 | `/zh-CN/hosts/ai-assisted-authoring.html` | Chinese AI-assisted documentation authoring workflow candidate. |
 | `/zh-CN/docs/` | Chinese public documentation navigation categories. |
 | `/zh-CN/docs/reference/<document>.html` | Chinese public documentation detail page rendered from the safe Markdown subset. |

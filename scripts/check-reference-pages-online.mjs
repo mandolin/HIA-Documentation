@@ -100,6 +100,7 @@ async function checkPublication() {
       [`${locale}/hosts/`, "data-hia-public-portal-hosts", "portal-nav"],
       [`${locale}/hosts/source-linkage.html`, "data-hia-public-portal-host-source-linkage", "portal-nav"],
       [`${locale}/hosts/ide-devtools.html`, "data-hia-public-portal-host-ide-devtools", "portal-nav"],
+      [`${locale}/hosts/evidence.html`, "data-hia-public-portal-host-evidence", "portal-nav"],
       [`${locale}/hosts/ai-assisted-authoring.html`, "data-hia-public-portal-ai-authoring", "portal-nav"],
       [`${locale}/docs/`, "data-hia-public-portal-docs", "portal-nav"],
       [`${locale}/docs/categories/configuration.html`, "data-hia-public-portal-docs-category", "portal-nav"],
