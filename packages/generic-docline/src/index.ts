@@ -372,18 +372,7 @@ export function genericDocLineToHiaDocument(
           }
         },
         diagnostics: [],
-        fragments: symbol.source.docRange
-          ? [{
-              confidence: symbol.source.confidence,
-              content: "",
-              id: `${symbol.id}:doc-block`,
-              kind: "source-fragment",
-              language: symbol.languageId,
-              range: toHiaRange(symbol.source.docRange),
-              rangeSource: "heuristic",
-              relativePath: symbol.source.relativePath
-            }]
-          : [],
+        fragments: [],
         mode: "link",
         model: HIA_SOURCE_MODEL,
         modelVersion: HIA_SOURCE_MODEL_VERSION,
