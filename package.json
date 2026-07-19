@@ -41,6 +41,7 @@
     "ai-authoring:evidence": "node scripts/prepare-ai-authoring-proposals-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
+    "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
     "wp29:host:evidence": "pnpm run build && pnpm run vscode:source-linkage:evidence && pnpm run vscode:project-relations:evidence && pnpm run devtools:check && pnpm run visual-studio:check && pnpm run ai-authoring:evidence",
     "schema:check": "node scripts/check-schema-contracts.mjs",
     "schema:site": "node scripts/build-schema-pages.mjs",
