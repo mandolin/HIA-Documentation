@@ -26,6 +26,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "check": "pnpm run build && pnpm run test",
+    "contract:check": "cd ../.. && vitest run packages/generic-docline/src/index.test.ts",
     "test": "cd ../.. && vitest run packages/generic-docline/src"
   },
   "dependencies": {
