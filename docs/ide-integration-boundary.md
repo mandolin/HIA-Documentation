@@ -39,6 +39,8 @@ Custom request responses are IDE-neutral view models derived from managed core d
 
 `hia/documentationEditProposals` uses the same host metadata pattern and returns `hia-documentation-edit-proposals@0.1.0-draft`. It is the first AI-assisted authoring boundary: the LSP may expose public-safe context, diagnostics, relation/source-linkage summaries and reviewable proposal targets, but it must not expose private source text, embed `sourcesContent`, or return directly applicable edits.
 
+Proposal payloads may include additive `unifiedContext` when the LSP can match the proposal target against workspace `doc-source-map` inputs and renderer `project-index.json` relation data. Hosts should treat this as navigation context for review panels: matched project entries, source-map entries and relation summaries are useful for opening unified documentation or related source/generated artifacts, but they are not write instructions and must not be converted into automatic edits.
+
 When a documentation profile set is available, `hia/ideCapabilities`, completion and hover may include profile-derived tag and diagnostic information. IDE shells should display that data as returned by the LSP and should not implement their own profile registry logic.
 
 ## VS Code Baseline
@@ -93,6 +95,7 @@ The first AI-assisted authoring loop is proposal-only:
 - derive proposals from managed HIA documents, diagnostics and resource action preflight data;
 - cover missing-locale stubs, missing documentation, missing translation diagnostics, profile-rule suggestions and generic doc-line diagnostics as reviewable proposal kinds;
 - summarize document, locale, source-linkage and project-relation context without source bodies;
+- include bounded unified output context when project entries, doc-source-map entries or relation graph metadata can be matched;
 - require human review before any write;
 - let hosts offer review, open target, copy proposal or cancel actions;
 - deny auto-apply and write-without-review behavior.

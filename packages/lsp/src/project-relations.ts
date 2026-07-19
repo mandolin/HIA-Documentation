@@ -41,6 +41,8 @@ export interface HiaProjectRelationGraphParams {
 export interface HiaProjectRelationGraphResult {
   contract?: string;
   contractVersion?: string;
+  entries: HiaProjectRelationEntry[];
+  entryCount: number;
   host: HiaLspHostResultMeta;
   nodeCount: number;
   nodes: HiaProjectRelationNode[];
@@ -63,6 +65,22 @@ export interface HiaProjectRelationProjectInfo {
   name?: string;
   title?: string;
   views?: string[];
+}
+
+/**
+ * project-index 中可与 proposal/source-map 对齐的公开入口摘要。
+ * Public project-index entry summary that can be aligned with proposals and source maps.
+ */
+export interface HiaProjectRelationEntry {
+  artifactPath?: string;
+  docSourceMapEntryId?: string;
+  docSourceMapPath?: string;
+  id: string;
+  kind: string;
+  name: string;
+  sourcePath?: string;
+  symbolId?: string;
+  view?: string;
 }
 
 /**
@@ -115,6 +133,7 @@ export function createHiaProjectRelationGraphResult(options: {
     return createUnavailableProjectRelationGraphResult(options.uri, "project-relation-graph-missing", source);
   }
 
+  const entries = arrayValue(projectIndex.entries).map(createProjectRelationEntry).filter(isProjectRelationEntry);
   const nodes = arrayValue(relationGraph.nodes).map(createProjectRelationNode).filter(isProjectRelationNode);
   const relations = arrayValue(relationGraph.relations).map(createProjectRelation).filter(isProjectRelation);
   const project = createProjectInfo(projectIndex.project);
@@ -124,6 +143,8 @@ export function createHiaProjectRelationGraphResult(options: {
   return {
     ...(contract ? { contract } : {}),
     ...(contractVersion ? { contractVersion } : {}),
+    entries,
+    entryCount: entries.length,
     host: createHiaLspHostResultMeta({
       capability: HIA_LSP_PROJECT_RELATION_GRAPH_QUERY_CAPABILITY,
       ...(relations.length === 0 ? { emptyState: "relation-graph-empty" } : {}),
@@ -147,6 +168,8 @@ function createUnavailableProjectRelationGraphResult(
   source: HiaLspHostResultSource
 ): HiaProjectRelationGraphResult {
   return {
+    entries: [],
+    entryCount: 0,
     host: createHiaLspHostResultMeta({
       capability: HIA_LSP_PROJECT_RELATION_GRAPH_QUERY_CAPABILITY,
       emptyState: "not-loaded",
@@ -162,6 +185,57 @@ function createUnavailableProjectRelationGraphResult(
     unavailableReason,
     uri
   };
+}
+
+function createProjectRelationEntry(value: unknown): HiaProjectRelationEntry | undefined {
+  const entry = asRecord(value);
+  const id = stringValue(entry?.id);
+  const kind = stringValue(entry?.kind);
+  const name = stringValue(entry?.name);
+
+  if (!id || !kind || !name) {
+    return undefined;
+  }
+
+  const docSourceMap = asRecord(entry?.docSourceMap);
+  const source = asRecord(entry?.source);
+  const item: HiaProjectRelationEntry = {
+    id,
+    kind,
+    name
+  };
+  const artifactPath = stringValue(docSourceMap?.artifactPath);
+  const docSourceMapEntryId = stringValue(docSourceMap?.entryId);
+  const docSourceMapPath = stringValue(docSourceMap?.path);
+  const sourcePath = stringValue(source?.path) ?? stringValue(docSourceMap?.sourcePath);
+  const symbolId = stringValue(entry?.symbolId);
+  const view = stringValue(entry?.view);
+
+  if (artifactPath) {
+    item.artifactPath = artifactPath;
+  }
+
+  if (docSourceMapEntryId) {
+    item.docSourceMapEntryId = docSourceMapEntryId;
+  }
+
+  if (docSourceMapPath) {
+    item.docSourceMapPath = docSourceMapPath;
+  }
+
+  if (sourcePath) {
+    item.sourcePath = sourcePath;
+  }
+
+  if (symbolId) {
+    item.symbolId = symbolId;
+  }
+
+  if (view) {
+    item.view = view;
+  }
+
+  return item;
 }
 
 function createProjectInfo(value: unknown): HiaProjectRelationProjectInfo | undefined {
@@ -263,6 +337,10 @@ function createRelationMetadata(value: unknown): Record<string, string | number 
 }
 
 function isProjectRelationNode(value: HiaProjectRelationNode | undefined): value is HiaProjectRelationNode {
+  return Boolean(value);
+}
+
+function isProjectRelationEntry(value: HiaProjectRelationEntry | undefined): value is HiaProjectRelationEntry {
   return Boolean(value);
 }
 

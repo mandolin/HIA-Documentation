@@ -157,13 +157,25 @@ export interface HiaDocumentationEditProposalSummary {
   privacy?: HiaDocumentationEditProposalPrivacySummary;
   status?: string;
   target?: {
+    diagnosticCode?: string;
+    fieldPath?: string;
     locale?: string;
+    relativePath?: string;
     resourcePath?: string;
     resourcePointer?: string;
     symbolId?: string;
+    symbolName?: string;
+    targetPath?: string;
     targetUri?: string;
   };
   title?: string;
+  unifiedContext?: {
+    docSourceMapEntries?: unknown[];
+    matchedBy?: string[];
+    projectEntries?: unknown[];
+    relations?: unknown[];
+    status?: string;
+  };
   unavailableReason?: string;
 }
 

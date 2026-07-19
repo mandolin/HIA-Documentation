@@ -49,6 +49,7 @@ The diagnostics core consumes `@hia-doc/core` documents. Language-specific data,
 - Reviewable documentation edit proposals for AI-assisted authoring:
   - derived from existing diagnostics and resource action preflight data;
   - public-safe context only;
+  - additive unified output context for matched project entries, doc-source-map entries and relation metadata;
   - no embedded `sourcesContent`;
   - no directly applicable WorkspaceEdit;
   - explicit human review/confirm/cancel boundary for IDE hosts.
@@ -74,6 +75,8 @@ The LSP project relation graph is an IDE view model derived from renderer `proje
 `hia/documentationEditProposals` returns `hia-documentation-edit-proposals@0.1.0-draft`. The first slice turns missing-locale resource preflight data into reviewable proposals for host or AI-assisted authoring flows. It intentionally returns public-safe context, `sourcesContentPolicy: none`, `allowsAutomaticWrites: false` and `requiresHumanReview: true`.
 
 The proposal model also carries additive proposal kinds for missing documentation, missing translation diagnostics, profile-rule suggestions and generic doc-line diagnostics. These kinds are target and diagnostic summaries for review workflows only; they still do not contain private source bodies or directly applicable `WorkspaceEdit` payloads.
+
+When workspace runtime data is available, each proposal may include additive `unifiedContext`. This bounded context can point to matched project navigation entries, `doc-source-map` entries and relation graph metadata so IDE or AI review panels can open the surrounding unified documentation context. It carries identifiers, relative paths, ranges and relation metadata only; it must not carry source bodies or embedded `sourcesContent`.
 
 Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 

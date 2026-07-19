@@ -339,8 +339,10 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
 
   function createAuthoringContext(uri: string) {
     const context: {
+      docSourceMapIndexes?: DocSourceMapIndex[];
       profileDiagnostics?: HiaDiagnostic[];
       profileSet?: HiaProfileSet;
+      projectRelationGraphs?: HiaProjectRelationGraphResult[];
       uri: string;
       workspaceRoots: string[];
     } = {
@@ -348,6 +350,8 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
       workspaceRoots
     };
     const document = documents.get(uri);
+    const docSourceMapIndexes = [...workspaceDocSourceMapIndexes.values()];
+    const projectRelationGraphs = [...workspaceProjectRelationGraphs.values()];
 
     if (profileState.profileSet) {
       context.profileSet = profileState.profileSet;
@@ -355,6 +359,14 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
 
     if (profileState.profileDiagnostics.length > 0) {
       context.profileDiagnostics = profileState.profileDiagnostics;
+    }
+
+    if (docSourceMapIndexes.length > 0) {
+      context.docSourceMapIndexes = docSourceMapIndexes;
+    }
+
+    if (projectRelationGraphs.length > 0) {
+      context.projectRelationGraphs = projectRelationGraphs;
     }
 
     if (document) {

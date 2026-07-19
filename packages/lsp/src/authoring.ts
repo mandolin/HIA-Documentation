@@ -141,8 +141,10 @@ export interface HiaLspAuthoringDocument {
 
 export interface HiaLspAuthoringContext {
   document?: HiaLspAuthoringDocument;
+  docSourceMapIndexes?: readonly DocSourceMapIndex[];
   profileDiagnostics?: HiaDiagnostic[];
   profileSet?: HiaProfileSet;
+  projectRelationGraphs?: readonly HiaProjectRelationGraphResult[];
   uri: string;
   workspaceRoots: readonly string[];
 }

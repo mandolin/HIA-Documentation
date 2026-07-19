@@ -8,6 +8,12 @@ import type {
   HiaSourceRange,
   HiaSymbol
 } from "@hia-doc/core";
+import type {
+  DocSourceMapArtifactLink,
+  DocSourceMapIndex,
+  DocSourceMapIndexedEntry,
+  DocSourceMapSourceLink
+} from "@hia-doc/source-linkage";
 import {
   createHiaResourceActions,
   type HiaLspAuthoringContext,
@@ -19,6 +25,12 @@ import {
   type HiaLspHostResultSource
 } from "./host-contract.js";
 import { HiaLspDiagnosticCode } from "./diagnostics.js";
+import type {
+  HiaProjectRelation,
+  HiaProjectRelationEntry,
+  HiaProjectRelationGraphResult,
+  HiaProjectRelationNode
+} from "./project-relations.js";
 
 /**
  * AI 辅助文档修复候选的 LSP custom request 名称。
@@ -161,6 +173,81 @@ export interface HiaDocumentationEditProposalSuggestion {
 }
 
 /**
+ * 统一输出上下文桥；只携带公开安全的导航、source-map 与 relation 元数据。
+ * Unified output context bridge; carries only public-safe navigation, source-map and relation metadata.
+ */
+export interface HiaDocumentationEditProposalUnifiedContext {
+  docSourceMapEntries?: HiaDocumentationEditProposalDocSourceMapEntryContext[];
+  matchedBy: string[];
+  projectEntries?: HiaDocumentationEditProposalProjectEntryContext[];
+  relations?: HiaDocumentationEditProposalRelationMatchContext[];
+  status: "matched";
+}
+
+export interface HiaDocumentationEditProposalProjectEntryContext {
+  artifactPath?: string;
+  docSourceMapEntryId?: string;
+  docSourceMapPath?: string;
+  entryId: string;
+  kind: string;
+  name: string;
+  projectId?: string;
+  sourcePath?: string;
+  symbolId?: string;
+  view?: string;
+}
+
+export interface HiaDocumentationEditProposalDocSourceMapEntryContext {
+  artifactLinks: HiaDocumentationEditProposalArtifactLinkContext[];
+  diagnostics: string[];
+  entryId: string;
+  kind: string;
+  manifestId?: string;
+  manifestPath?: string;
+  sourceLinks: HiaDocumentationEditProposalSourceLinkContext[];
+  symbolId?: string;
+  symbolKind?: string;
+}
+
+export interface HiaDocumentationEditProposalSourceLinkContext {
+  confidence?: string;
+  language?: string;
+  path?: string;
+  range?: HiaSourceRange;
+  rangeSource?: string;
+  sourceId: string;
+}
+
+export interface HiaDocumentationEditProposalArtifactLinkContext {
+  artifactId: string;
+  confidence?: string;
+  language?: string;
+  path?: string;
+  rangeSource?: string;
+  selector?: string;
+}
+
+export interface HiaDocumentationEditProposalRelationMatchContext {
+  confidence?: string;
+  entryId?: string;
+  from: HiaDocumentationEditProposalRelationNodeContext;
+  id: string;
+  kind: string;
+  label: string;
+  metadata?: Record<string, string | number | boolean | null>;
+  to: HiaDocumentationEditProposalRelationNodeContext;
+}
+
+export interface HiaDocumentationEditProposalRelationNodeContext {
+  entryId?: string;
+  id: string;
+  kind?: string;
+  label?: string;
+  path?: string;
+  view?: string;
+}
+
+/**
  * 缺失 locale stub 的可审查编辑候选。
  * Reviewable edit proposal for a missing-locale stub.
  */
@@ -175,6 +262,7 @@ export interface HiaDocumentationEditProposal {
   suggestion?: HiaDocumentationEditProposalSuggestion;
   target: HiaDocumentationEditProposalTarget;
   title: string;
+  unifiedContext?: HiaDocumentationEditProposalUnifiedContext;
   unavailableReason?: HiaDocumentationEditProposalUnavailableReason | string;
   workspaceEditBoundary?: string;
 }
@@ -230,13 +318,13 @@ export function createHiaDocumentationEditProposals(options: {
 
   const parsedDocument = parseHiaDocument(context.document.text);
   const resourceActions = createHiaResourceActions(context).actions;
-  const proposals = [
+  const proposals = attachUnifiedContexts([
     ...resourceActions.flatMap((action) => createProposalFromResourceAction(action, privacy, workflow)),
     ...createMissingDocumentationProposals(parsedDocument, privacy, workflow),
     ...createMissingTranslationDiagnosticProposals(context.document.diagnostics, resourceActions, privacy, workflow),
     ...createGenericDocLineDiagnosticProposals(parsedDocument, privacy, workflow),
     ...createProfileRuleSuggestionProposals(context.profileDiagnostics ?? [], privacy, workflow)
-  ];
+  ], context);
 
   return {
     contract: HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
@@ -463,10 +551,406 @@ function createProposalTarget(action: HiaLspResourceAction): HiaDocumentationEdi
   return target;
 }
 
+const MAX_UNIFIED_CONTEXT_ENTRIES = 5;
+const MAX_UNIFIED_CONTEXT_RELATIONS = 10;
+
+function attachUnifiedContexts(
+  proposals: HiaDocumentationEditProposal[],
+  context: HiaLspAuthoringContext
+): HiaDocumentationEditProposal[] {
+  return proposals.map((proposal) => {
+    const unifiedContext = createUnifiedContext(context, proposal.target);
+    return unifiedContext ? { ...proposal, unifiedContext } : proposal;
+  });
+}
+
+function createUnifiedContext(
+  context: HiaLspAuthoringContext,
+  target: HiaDocumentationEditProposalTarget
+): HiaDocumentationEditProposalUnifiedContext | undefined {
+  const matchHints = new Set<string>();
+  const docSourceMapEntries = collectDocSourceMapEntryContexts(context, target, matchHints);
+  const projectEntries = collectProjectEntryContexts(context, target, docSourceMapEntries, matchHints);
+  const relations = collectRelationContexts(context, projectEntries);
+
+  if (relations.length > 0) {
+    matchHints.add("project-relation");
+  }
+
+  if (docSourceMapEntries.length === 0 && projectEntries.length === 0 && relations.length === 0) {
+    return undefined;
+  }
+
+  const unifiedContext: HiaDocumentationEditProposalUnifiedContext = {
+    matchedBy: [...matchHints].sort(),
+    status: "matched"
+  };
+
+  if (docSourceMapEntries.length > 0) {
+    unifiedContext.docSourceMapEntries = docSourceMapEntries.slice(0, MAX_UNIFIED_CONTEXT_ENTRIES);
+  }
+
+  if (projectEntries.length > 0) {
+    unifiedContext.projectEntries = projectEntries.slice(0, MAX_UNIFIED_CONTEXT_ENTRIES);
+  }
+
+  if (relations.length > 0) {
+    unifiedContext.relations = relations.slice(0, MAX_UNIFIED_CONTEXT_RELATIONS);
+  }
+
+  return unifiedContext;
+}
+
+function collectDocSourceMapEntryContexts(
+  context: HiaLspAuthoringContext,
+  target: HiaDocumentationEditProposalTarget,
+  matchHints: Set<string>
+): HiaDocumentationEditProposalDocSourceMapEntryContext[] {
+  const indexes = collectDocSourceMapIndexes(context);
+  const entries: HiaDocumentationEditProposalDocSourceMapEntryContext[] = [];
+  const seen = new Set<string>();
+
+  for (const index of indexes) {
+    for (const entry of index.entries) {
+      const matchedBy = getDocSourceMapEntryMatchHints(entry, target);
+      if (matchedBy.length === 0) {
+        continue;
+      }
+
+      const key = `${index.id ?? index.path ?? "doc-source-map"}:${entry.id}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      matchedBy.forEach((hint) => matchHints.add(hint));
+      entries.push(createDocSourceMapEntryContext(index, entry));
+    }
+  }
+
+  return entries;
+}
+
+function collectProjectEntryContexts(
+  context: HiaLspAuthoringContext,
+  target: HiaDocumentationEditProposalTarget,
+  docSourceMapEntries: readonly HiaDocumentationEditProposalDocSourceMapEntryContext[],
+  matchHints: Set<string>
+): HiaDocumentationEditProposalProjectEntryContext[] {
+  const graphs = collectProjectRelationGraphs(context);
+  const docSourceMapEntryIds = new Set(docSourceMapEntries.map((entry) => entry.entryId));
+  const entries: HiaDocumentationEditProposalProjectEntryContext[] = [];
+  const seen = new Set<string>();
+
+  for (const graph of graphs) {
+    for (const entry of graph.entries) {
+      const matchedBy = getProjectEntryMatchHints(entry, target, docSourceMapEntryIds);
+      if (matchedBy.length === 0) {
+        continue;
+      }
+
+      const key = `${graph.project?.id ?? graph.uri}:${entry.id}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      matchedBy.forEach((hint) => matchHints.add(hint));
+      entries.push(createProjectEntryContext(graph, entry));
+    }
+  }
+
+  return entries;
+}
+
+function collectRelationContexts(
+  context: HiaLspAuthoringContext,
+  projectEntries: readonly HiaDocumentationEditProposalProjectEntryContext[]
+): HiaDocumentationEditProposalRelationMatchContext[] {
+  if (projectEntries.length === 0) {
+    return [];
+  }
+
+  const projectEntryIds = new Set(projectEntries.map((entry) => entry.entryId));
+  const graphs = collectProjectRelationGraphs(context);
+  const relations: HiaDocumentationEditProposalRelationMatchContext[] = [];
+  const seen = new Set<string>();
+
+  for (const graph of graphs) {
+    const nodes = new Map(graph.nodes.map((node) => [node.id, node]));
+    for (const relation of graph.relations) {
+      if (!matchesProjectEntryRelation(relation, nodes, projectEntryIds)) {
+        continue;
+      }
+
+      const key = `${graph.project?.id ?? graph.uri}:${relation.id}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      relations.push(createRelationMatchContext(relation, nodes));
+    }
+  }
+
+  return relations;
+}
+
+function collectDocSourceMapIndexes(context: HiaLspAuthoringContext): DocSourceMapIndex[] {
+  const indexes: DocSourceMapIndex[] = [];
+  if (context.document?.docSourceMapIndex) {
+    indexes.push(context.document.docSourceMapIndex);
+  }
+  indexes.push(...(context.docSourceMapIndexes ?? []));
+  return indexes;
+}
+
+function collectProjectRelationGraphs(context: HiaLspAuthoringContext): HiaProjectRelationGraphResult[] {
+  const graphs: HiaProjectRelationGraphResult[] = [];
+  if (context.document?.projectRelationGraph) {
+    graphs.push(context.document.projectRelationGraph);
+  }
+  graphs.push(...(context.projectRelationGraphs ?? []));
+  return graphs.filter((graph) => graph.status === "available");
+}
+
+function getDocSourceMapEntryMatchHints(
+  entry: DocSourceMapIndexedEntry,
+  target: HiaDocumentationEditProposalTarget
+): string[] {
+  const hints: string[] = [];
+  const targetPath = getTargetLookupPath(target);
+
+  if (target.symbolId && entry.symbolId === target.symbolId) {
+    hints.push("symbolId");
+  }
+
+  if (targetPath && entry.sourceLinks.some((link) => pathsEqual(link.path, targetPath))) {
+    hints.push("sourcePath");
+  }
+
+  if (targetPath && entry.artifactLinks.some((link) => pathsEqual(link.path, targetPath))) {
+    hints.push("artifactPath");
+  }
+
+  return hints;
+}
+
+function getProjectEntryMatchHints(
+  entry: HiaProjectRelationEntry,
+  target: HiaDocumentationEditProposalTarget,
+  docSourceMapEntryIds: Set<string>
+): string[] {
+  const hints: string[] = [];
+  const targetPath = getTargetLookupPath(target);
+
+  if (target.symbolId && entry.symbolId === target.symbolId) {
+    hints.push("project-entry-symbolId");
+  }
+
+  if (entry.docSourceMapEntryId && docSourceMapEntryIds.has(entry.docSourceMapEntryId)) {
+    hints.push("doc-source-map-entry");
+  }
+
+  if (targetPath && pathsEqual(entry.sourcePath, targetPath)) {
+    hints.push("project-entry-sourcePath");
+  }
+
+  if (targetPath && pathsEqual(entry.artifactPath, targetPath)) {
+    hints.push("project-entry-artifactPath");
+  }
+
+  return hints;
+}
+
+function createDocSourceMapEntryContext(
+  index: DocSourceMapIndex,
+  entry: DocSourceMapIndexedEntry
+): HiaDocumentationEditProposalDocSourceMapEntryContext {
+  const context: HiaDocumentationEditProposalDocSourceMapEntryContext = {
+    artifactLinks: entry.artifactLinks.map(createArtifactLinkContext),
+    diagnostics: [...entry.diagnostics],
+    entryId: entry.id,
+    kind: entry.kind,
+    sourceLinks: entry.sourceLinks.map(createSourceLinkContext)
+  };
+
+  if (index.id) {
+    context.manifestId = index.id;
+  }
+
+  if (index.path && !index.path.startsWith("file://")) {
+    context.manifestPath = index.path;
+  }
+
+  if (entry.symbolId) {
+    context.symbolId = entry.symbolId;
+  }
+
+  if (entry.symbolKind) {
+    context.symbolKind = entry.symbolKind;
+  }
+
+  return context;
+}
+
+function createProjectEntryContext(
+  graph: HiaProjectRelationGraphResult,
+  entry: HiaProjectRelationEntry
+): HiaDocumentationEditProposalProjectEntryContext {
+  const context: HiaDocumentationEditProposalProjectEntryContext = {
+    entryId: entry.id,
+    kind: entry.kind,
+    name: entry.name
+  };
+
+  if (entry.artifactPath) {
+    context.artifactPath = entry.artifactPath;
+  }
+
+  if (entry.docSourceMapEntryId) {
+    context.docSourceMapEntryId = entry.docSourceMapEntryId;
+  }
+
+  if (entry.docSourceMapPath) {
+    context.docSourceMapPath = entry.docSourceMapPath;
+  }
+
+  if (graph.project?.id) {
+    context.projectId = graph.project.id;
+  }
+
+  if (entry.sourcePath) {
+    context.sourcePath = entry.sourcePath;
+  }
+
+  if (entry.symbolId) {
+    context.symbolId = entry.symbolId;
+  }
+
+  if (entry.view) {
+    context.view = entry.view;
+  }
+
+  return context;
+}
+
+function createSourceLinkContext(link: DocSourceMapSourceLink): HiaDocumentationEditProposalSourceLinkContext {
+  return {
+    ...(link.confidence ? { confidence: link.confidence } : {}),
+    ...(link.language ? { language: link.language } : {}),
+    ...(link.path ? { path: link.path } : {}),
+    ...(link.range ? { range: link.range } : {}),
+    ...(link.rangeSource ? { rangeSource: link.rangeSource } : {}),
+    sourceId: link.sourceId
+  };
+}
+
+function createArtifactLinkContext(link: DocSourceMapArtifactLink): HiaDocumentationEditProposalArtifactLinkContext {
+  return {
+    artifactId: link.artifactId,
+    ...(link.confidence ? { confidence: link.confidence } : {}),
+    ...(link.language ? { language: link.language } : {}),
+    ...(link.path ? { path: link.path } : {}),
+    ...(link.rangeSource ? { rangeSource: link.rangeSource } : {}),
+    ...(link.selector ? { selector: link.selector } : {})
+  };
+}
+
+function matchesProjectEntryRelation(
+  relation: HiaProjectRelation,
+  nodes: Map<string, HiaProjectRelationNode>,
+  projectEntryIds: Set<string>
+): boolean {
+  if (relation.entryId && projectEntryIds.has(relation.entryId)) {
+    return true;
+  }
+
+  const from = nodes.get(relation.from);
+  const to = nodes.get(relation.to);
+  return Boolean(
+    from?.entryId && projectEntryIds.has(from.entryId)
+    || to?.entryId && projectEntryIds.has(to.entryId)
+  );
+}
+
+function createRelationMatchContext(
+  relation: HiaProjectRelation,
+  nodes: Map<string, HiaProjectRelationNode>
+): HiaDocumentationEditProposalRelationMatchContext {
+  const context: HiaDocumentationEditProposalRelationMatchContext = {
+    from: createRelationNodeContext(relation.from, nodes.get(relation.from)),
+    id: relation.id,
+    kind: relation.kind,
+    label: relation.label,
+    to: createRelationNodeContext(relation.to, nodes.get(relation.to))
+  };
+
+  if (relation.confidence) {
+    context.confidence = relation.confidence;
+  }
+
+  if (relation.entryId) {
+    context.entryId = relation.entryId;
+  }
+
+  if (relation.metadata) {
+    context.metadata = relation.metadata;
+  }
+
+  return context;
+}
+
+function createRelationNodeContext(
+  id: string,
+  node: HiaProjectRelationNode | undefined
+): HiaDocumentationEditProposalRelationNodeContext {
+  const context: HiaDocumentationEditProposalRelationNodeContext = {
+    id
+  };
+
+  if (node?.entryId) {
+    context.entryId = node.entryId;
+  }
+
+  if (node?.kind) {
+    context.kind = node.kind;
+  }
+
+  if (node?.label) {
+    context.label = node.label;
+  }
+
+  if (node?.path) {
+    context.path = node.path;
+  }
+
+  if (node?.view) {
+    context.view = node.view;
+  }
+
+  return context;
+}
+
+function getTargetLookupPath(target: HiaDocumentationEditProposalTarget): string | undefined {
+  return normalizeLookupPath(target.relativePath ?? target.resourcePath ?? target.targetPath ?? target.path);
+}
+
+function pathsEqual(left: string | undefined, right: string): boolean {
+  const normalizedLeft = normalizeLookupPath(left);
+  const normalizedRight = normalizeLookupPath(right);
+  return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+}
+
+function normalizeLookupPath(value: string | undefined): string | undefined {
+  const normalized = value?.replaceAll("\\", "/").replace(/^\.\//, "");
+  return normalized && !normalized.startsWith("file://") ? normalized : undefined;
+}
+
 function createDocumentContext(context: HiaLspAuthoringContext): HiaDocumentationEditProposalDocumentContext {
   const index = context.document?.resourceIndex;
-  const docSourceMap = context.document?.docSourceMapIndex;
-  const projectRelations = context.document?.projectRelationGraph;
+  const docSourceMap = context.document?.docSourceMapIndex ?? context.docSourceMapIndexes?.[0];
+  const projectRelations = context.document?.projectRelationGraph ?? context.projectRelationGraphs?.[0];
 
   return {
     ...(index?.defaultLocale ? { defaultLocale: index.defaultLocale } : {}),

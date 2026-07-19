@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createHiaDocument } from "@hia-doc/core";
 import {
@@ -256,6 +260,144 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
     expect(serialized).not.toContain("function helper");
     expect(serialized).not.toContain("WorkspaceEdit");
   });
+
+  it("bridges proposals to workspace unified entries, doc-source-map and relation metadata", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "hia-lsp-proposal-context-"));
+
+    try {
+      mkdirSync(path.join(root, "docs"), { recursive: true });
+      mkdirSync(path.join(root, "dist", "docs"), { recursive: true });
+      writeFileSync(path.join(root, "hia.config.json"), JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          output: "dist/docs",
+          projectManifest: "project.hia-project.json"
+        }
+      }), "utf8");
+      writeFileSync(path.join(root, "project.hia-project.json"), JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: {
+          id: "project:proposal-context",
+          name: "Proposal Context Fixture"
+        },
+        inputs: [
+          {
+            kind: "doc-source-map",
+            path: "docs/profile-card.docmap.json"
+          }
+        ]
+      }), "utf8");
+      writeFileSync(path.join(root, "docs", "profile-card.docmap.json"), readFixture("source-linkage-host/docs/profile-card.docmap.json"), "utf8");
+      writeFileSync(path.join(root, "dist", "docs", "project-index.json"), readFixture("source-linkage-host/temp/docs/project-index.json"), "utf8");
+
+      const service = createHiaLspService();
+      const documentUri = pathToFileURL(path.join(root, "docs", "profile-card.hia.json")).href;
+      const document = createHiaDocument({
+        id: "fixture.lsp.proposal-context",
+        title: "Proposal Context Fixture",
+        defaultLocale: "en",
+        locales: ["en"],
+        symbols: [
+          {
+            id: "html:component:profile-card",
+            kind: "html-component",
+            name: "ProfileCard",
+            source: {
+              mode: "link",
+              model: "hia-source",
+              modelVersion: "0.2.0",
+              definedIn: {
+                kind: "defined-in",
+                language: "html",
+                relativePath: "src/profile-card.html",
+                range: {
+                  start: { line: 2, column: 1 },
+                  end: { line: 5, column: 11 }
+                },
+                position: { line: 2, column: 1 }
+              },
+              diagnostics: [],
+              fragments: []
+            }
+          }
+        ]
+      });
+
+      service.initialize({
+        capabilities: {},
+        processId: null,
+        rootUri: pathToFileURL(root).href
+      });
+      service.openDocument(documentUri, JSON.stringify(document), "hia", 1);
+
+      const result = service.getDocumentationEditProposals(documentUri);
+      const proposal = result.proposals.find((item) => item.kind === "missing-documentation");
+      const serialized = JSON.stringify(result);
+
+      expect(result.context?.docSourceMap).toMatchObject({
+        entryCount: 1,
+        linkedEntryCount: 1,
+        sourcesContentPolicy: "none",
+        status: "available"
+      });
+      expect(result.context?.projectRelations).toMatchObject({
+        nodeCount: 3,
+        relationCount: 2,
+        status: "available"
+      });
+      expect(proposal?.unifiedContext).toMatchObject({
+        matchedBy: expect.arrayContaining([
+          "doc-source-map-entry",
+          "project-entry-symbolId",
+          "project-relation",
+          "symbolId"
+        ]),
+        docSourceMapEntries: [
+          expect.objectContaining({
+            entryId: "entry:profile-card",
+            manifestId: "docmap:fixture:profile-card",
+            sourceLinks: [
+              expect.objectContaining({
+                path: "src/profile-card.html",
+                rangeSource: "parser"
+              })
+            ],
+            artifactLinks: [
+              expect.objectContaining({
+                path: "build/profile-card.html",
+                selector: "[data-component=\"ProfileCard\"]"
+              })
+            ]
+          })
+        ],
+        projectEntries: [
+          expect.objectContaining({
+            docSourceMapEntryId: "entry:profile-card",
+            docSourceMapPath: "docs/profile-card.docmap.json",
+            entryId: "htmdoc-extraction:html-component-profile-card",
+            sourcePath: "src/profile-card.html",
+            symbolId: "html:component:profile-card"
+          })
+        ],
+        relations: expect.arrayContaining([
+          expect.objectContaining({
+            entryId: "htmdoc-extraction:html-component-profile-card",
+            kind: "documents-source"
+          }),
+          expect.objectContaining({
+            entryId: "htmdoc-extraction:html-component-profile-card",
+            kind: "documents-generated-artifact"
+          })
+        ]),
+        status: "matched"
+      });
+      expect(serialized).not.toContain("\"sourcesContent\":");
+      expect(serialized).not.toContain("<article");
+      expect(serialized).not.toContain("WorkspaceEdit");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
 });
 
 function createInitializedService(options: Parameters<typeof createHiaLspService>[0] = {}) {
@@ -272,4 +414,8 @@ function createInitializedService(options: Parameters<typeof createHiaLspService
     ]
   });
   return service;
+}
+
+function readFixture(name: string): string {
+  return readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8");
 }
