@@ -139,6 +139,19 @@ importers:
         specifier: workspace:*
         version: link:../provider-sdk
 
+  packages/provider-runner:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@hia-doc/provider-sdk':
+        specifier: workspace:*
+        version: link:../provider-sdk
+    devDependencies:
+      '@hia-doc/provider-mock':
+        specifier: workspace:*
+        version: link:../provider-mock
+
   packages/provider-sdk:
     dependencies:
       '@hia-doc/core':

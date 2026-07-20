@@ -8,6 +8,7 @@
     { "path": "./packages/plugin-sdk" },
     { "path": "./packages/provider-sdk" },
     { "path": "./packages/provider-mock" },
+    { "path": "./packages/provider-runner" },
     { "path": "./packages/parser-jsdoc" },
     { "path": "./packages/generic-docline" },
     { "path": "./packages/source-linkage" },

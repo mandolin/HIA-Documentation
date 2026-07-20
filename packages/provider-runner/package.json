@@ -1,0 +1,39 @@
+{
+  "name": "@hia-doc/provider-runner",
+  "version": "0.1.0",
+  "description": "Local review-only provider runner for HIA documentation workflows.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mandolin/HIA-Documentation.git",
+    "directory": "packages/provider-runner"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --root ../.. packages/provider-runner/src/index.test.ts"
+  },
+  "dependencies": {
+    "@hia-doc/core": "workspace:*",
+    "@hia-doc/provider-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@hia-doc/provider-mock": "workspace:*"
+  },
+  "sideEffects": false
+}

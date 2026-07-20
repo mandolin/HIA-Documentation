@@ -32,6 +32,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Provider boundary audit evidence | `scripts/prepare-wp35-provider-boundary-audit.mjs` | `0.1.0-draft` |
 | Provider adapter interface evidence | `scripts/prepare-wp35-provider-adapter-evidence.mjs` | `0.1.0-draft` |
 | Deterministic mock provider evidence | `scripts/prepare-wp35-provider-mock-evidence.mjs` | `0.1.0-draft` |
+| Local provider runner evidence | `scripts/prepare-wp35-provider-runner-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -55,6 +56,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Documentation producer | `@hia-doc/plugin-sdk` | Owns descriptor/request/result types, schemas, semantic validation and single-run execution helper; it does not load modules or orchestrate builds. |
 | HIA provider adapter | `@hia-doc/provider-sdk` | Owns review-only provider descriptor/request/result types, schemas, semantic validation and execution guard. Providers may return proposals and metadata, but not direct edits, source bodies, tool calls or target repository mutations. |
 | HIA deterministic mock provider | `@hia-doc/provider-mock` | First offline provider implementation for host/runner/evidence tests. It produces stable review-only draft text and metadata without API keys, network calls, source bodies or direct edits. |
+| HIA local provider runner | `@hia-doc/provider-runner` | Converts bounded review payloads into provider-safe requests and returns provider output as review payload augmentation. It does not produce WorkspaceEdit data, source bodies, tool calls or target repository mutations. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project navigation index | `@hia-doc/renderer-html` | Presentation-neutral project entry index for static portals and search; it excludes inline source previews. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
@@ -69,6 +71,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Provider boundary audit evidence | `main-repo` scripts | W-P35 audit evidence for provider-neutral, review-only integration before any real provider API, tool execution or checked apply implementation. |
 | Provider adapter interface evidence | `main-repo` scripts | W-P35 evidence proving the provider SDK accepts safe fixtures and rejects unsafe capabilities, source-body inputs and direct edit outputs before deterministic mock providers are implemented. |
 | Deterministic mock provider evidence | `main-repo` scripts | W-P35 evidence proving the first provider implementation is offline, deterministic, review-only and mediated by `@hia-doc/provider-sdk`. |
+| Local provider runner evidence | `main-repo` scripts | W-P35 evidence proving provider output can be routed back into review payload augmentation without source bodies, WorkspaceEdit objects or target repository mutation. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -113,6 +116,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Provider boundary audit evidence records the provider-neutral safety baseline. It must not require API keys, perform external provider calls, expose source bodies, execute tools or grant write authority.
 - Provider adapter interfaces are review-only. `@hia-doc/provider-sdk` validators must reject source-body request payloads, direct edit result objects, provider tool execution, provider workspace writes, target repository mutation and `sourcesContent`.
 - Deterministic mock providers are test providers. They must remain offline, reproducible and review-only, and must not be treated as authorization to implement checked apply or real provider network calls.
+- Local provider runners are mediation layers. They may convert review payloads to provider-safe requests and return augmentation data, but must not convert provider output into direct apply data or mutate source/target repositories.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
