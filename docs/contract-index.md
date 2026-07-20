@@ -15,6 +15,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
+| HIA provider descriptor/request/result | `HIA_PROVIDER_*_CONTRACT_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
 | Project navigation index | `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION` | `0.1.0-draft` |
 | LSP host result metadata | `HIA_LSP_HOST_RESULT_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -29,6 +30,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target project dry-run evidence | `scripts/prepare-wp34-target-dry-run-evidence.mjs` | `0.1.0-draft` |
 | Apply contract closeout provider inputs | `scripts/prepare-wp34-closeout-provider-inputs.mjs` | `0.1.0-draft` |
 | Provider boundary audit evidence | `scripts/prepare-wp35-provider-boundary-audit.mjs` | `0.1.0-draft` |
+| Provider adapter interface evidence | `scripts/prepare-wp35-provider-adapter-evidence.mjs` | `0.1.0-draft` |
+| Deterministic mock provider evidence | `scripts/prepare-wp35-provider-mock-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -50,6 +53,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
 | Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
 | Documentation producer | `@hia-doc/plugin-sdk` | Owns descriptor/request/result types, schemas, semantic validation and single-run execution helper; it does not load modules or orchestrate builds. |
+| HIA provider adapter | `@hia-doc/provider-sdk` | Owns review-only provider descriptor/request/result types, schemas, semantic validation and execution guard. Providers may return proposals and metadata, but not direct edits, source bodies, tool calls or target repository mutations. |
+| HIA deterministic mock provider | `@hia-doc/provider-mock` | First offline provider implementation for host/runner/evidence tests. It produces stable review-only draft text and metadata without API keys, network calls, source bodies or direct edits. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project navigation index | `@hia-doc/renderer-html` | Presentation-neutral project entry index for static portals and search; it excludes inline source previews. |
 | Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
@@ -62,6 +67,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target project dry-run evidence | `main-repo` scripts | Target-facing W-P34 evidence that maps review/diff/preflight inputs to known project scenarios without exposing absolute paths or mutating target repositories. |
 | Apply contract closeout provider inputs | `main-repo` scripts | W-P34 closeout evidence that proves provider integration may consume bounded review inputs only, while direct writes and checked apply remain deferred. |
 | Provider boundary audit evidence | `main-repo` scripts | W-P35 audit evidence for provider-neutral, review-only integration before any real provider API, tool execution or checked apply implementation. |
+| Provider adapter interface evidence | `main-repo` scripts | W-P35 evidence proving the provider SDK accepts safe fixtures and rejects unsafe capabilities, source-body inputs and direct edit outputs before deterministic mock providers are implemented. |
+| Deterministic mock provider evidence | `main-repo` scripts | W-P35 evidence proving the first provider implementation is offline, deterministic, review-only and mediated by `@hia-doc/provider-sdk`. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -104,6 +111,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Target project dry-run evidence may name target project labels and documentation needs, but it must redact local target paths, avoid source bodies, avoid `sourcesContent` and perform no target repository mutation.
 - Apply contract closeout provider-input evidence allows provider integration to start only as review-input / review-output. It must continue denying direct workspace writes, direct edit objects, target mutation and human-review bypass.
 - Provider boundary audit evidence records the provider-neutral safety baseline. It must not require API keys, perform external provider calls, expose source bodies, execute tools or grant write authority.
+- Provider adapter interfaces are review-only. `@hia-doc/provider-sdk` validators must reject source-body request payloads, direct edit result objects, provider tool execution, provider workspace writes, target repository mutation and `sourcesContent`.
+- Deterministic mock providers are test providers. They must remain offline, reproducible and review-only, and must not be treated as authorization to implement checked apply or real provider network calls.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 

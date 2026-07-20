@@ -6,6 +6,8 @@
     { "path": "./packages/profile" },
     { "path": "./packages/profiles" },
     { "path": "./packages/plugin-sdk" },
+    { "path": "./packages/provider-sdk" },
+    { "path": "./packages/provider-mock" },
     { "path": "./packages/parser-jsdoc" },
     { "path": "./packages/generic-docline" },
     { "path": "./packages/source-linkage" },

@@ -133,6 +133,18 @@ importers:
         specifier: workspace:*
         version: link:../profile
 
+  packages/provider-mock:
+    dependencies:
+      '@hia-doc/provider-sdk':
+        specifier: workspace:*
+        version: link:../provider-sdk
+
+  packages/provider-sdk:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/renderer-html:
     dependencies:
       '@hia-doc/core':
