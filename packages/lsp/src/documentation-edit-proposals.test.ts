@@ -600,7 +600,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         ]
       }), "utf8");
       writeFileSync(path.join(root, "docs", "profile-card.docmap.json"), readFixture("source-linkage-host/docs/profile-card.docmap.json"), "utf8");
-      writeFileSync(path.join(root, "dist", "docs", "project-index.json"), readFixture("source-linkage-host/temp/docs/project-index.json"), "utf8");
+      writeFileSync(path.join(root, "dist", "docs", "project-index.json"), JSON.stringify(createProfileCardProjectIndexFixture()), "utf8");
 
       const service = createHiaLspService();
       const documentUri = pathToFileURL(path.join(root, "docs", "profile-card.hia.json")).href;
@@ -810,4 +810,138 @@ function createInitializedService(options: Parameters<typeof createHiaLspService
 
 function readFixture(name: string): string {
   return readFileSync(new URL(`../../../fixtures/${name}`, import.meta.url), "utf8");
+}
+
+function createProfileCardProjectIndexFixture() {
+  return {
+    contract: "hia-project-navigation-index",
+    contractVersion: "0.1.0-draft",
+    project: {
+      defaultLocale: "und",
+      id: "project:source-linkage-host",
+      locales: ["und"],
+      name: "Source Linkage Host Fixture",
+      title: "Source Linkage Host Fixture",
+      views: ["all", "html"]
+    },
+    entries: [
+      {
+        id: "htmdoc-extraction:html-component-profile-card",
+        name: "ProfileCard",
+        kind: "html-component",
+        view: "html",
+        summary: "A source-linked HTML component fixture.",
+        source: {
+          path: "src/profile-card.html",
+          language: "html",
+          range: {
+            start: {
+              line: 2,
+              column: 1
+            },
+            end: {
+              line: 5,
+              column: 11
+            }
+          },
+          rangeSource: "parser",
+          confidence: "high"
+        },
+        symbolId: "html:component:profile-card",
+        docSourceMap: {
+          path: "docs/profile-card.docmap.json",
+          entryId: "entry:profile-card",
+          sourcePath: "src/profile-card.html",
+          sourceRange: {
+            start: {
+              line: 2,
+              column: 1
+            },
+            end: {
+              line: 5,
+              column: 11
+            }
+          },
+          sourceRangeSource: "parser",
+          sourceConfidence: "high",
+          artifactPath: "build/profile-card.html",
+          artifactSelector: "[data-component=\"ProfileCard\"]",
+          artifactConfidence: "medium"
+        }
+      }
+    ],
+    groups: [],
+    profiles: [],
+    docSourceMaps: [
+      {
+        path: "docs/profile-card.docmap.json",
+        contractVersion: "0.1.0-draft",
+        artifactCount: 1,
+        entryCount: 1,
+        linkedEntryCount: 1,
+        sourceCount: 1,
+        sourceMapCount: 0,
+        sourcesContentPolicy: "none",
+        status: "available",
+        unresolvedEntryCount: 0
+      }
+    ],
+    relationGraph: {
+      contract: "hia-project-relation-graph",
+      contractVersion: "0.1.0-draft",
+      nodeCount: 3,
+      relationCount: 2,
+      nodes: [
+        {
+          id: "artifact:build/profile-card.html",
+          kind: "artifact",
+          label: "build/profile-card.html",
+          path: "build/profile-card.html"
+        },
+        {
+          id: "entry:htmdoc-extraction:html-component-profile-card",
+          kind: "entry",
+          label: "ProfileCard",
+          entryId: "htmdoc-extraction:html-component-profile-card",
+          view: "html"
+        },
+        {
+          id: "source:src/profile-card.html",
+          kind: "source",
+          label: "src/profile-card.html",
+          path: "src/profile-card.html"
+        }
+      ],
+      relations: [
+        {
+          id: "documents-generated-artifact:entry:htmdoc-extraction:html-component-profile-card->artifact:build/profile-card.html",
+          kind: "documents-generated-artifact",
+          from: "entry:htmdoc-extraction:html-component-profile-card",
+          to: "artifact:build/profile-card.html",
+          label: "Generated: build/profile-card.html",
+          confidence: "medium",
+          entryId: "htmdoc-extraction:html-component-profile-card",
+          metadata: {
+            manifest: "docs/profile-card.docmap.json",
+            selector: "[data-component=\"ProfileCard\"]"
+          }
+        },
+        {
+          id: "documents-source:entry:htmdoc-extraction:html-component-profile-card->source:src/profile-card.html",
+          kind: "documents-source",
+          from: "entry:htmdoc-extraction:html-component-profile-card",
+          to: "source:src/profile-card.html",
+          label: "Source: src/profile-card.html",
+          confidence: "high",
+          entryId: "htmdoc-extraction:html-component-profile-card",
+          metadata: {
+            language: "html",
+            rangeStartLine: 2,
+            rangeEndLine: 5,
+            rangeSource: "parser"
+          }
+        }
+      ]
+    }
+  };
 }
