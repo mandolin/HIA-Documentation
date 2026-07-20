@@ -57,6 +57,7 @@
     "wp35:provider-mock:evidence": "pnpm run wp35:provider-adapter:evidence && pnpm run build && pnpm --filter @hia-doc/provider-mock test && node scripts/prepare-wp35-provider-mock-evidence.mjs",
     "wp35:provider-runner:evidence": "pnpm run wp35:provider-mock:evidence && pnpm run build && pnpm --filter @hia-doc/provider-runner test && node scripts/prepare-wp35-provider-runner-evidence.mjs",
     "wp35:host-review:evidence": "pnpm run wp35:provider-runner:evidence && pnpm run build && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp35-host-review-provider-evidence.mjs",
+    "wp35:target-self-doc:evidence": "pnpm run wp35:host-review:evidence && node scripts/prepare-wp35-target-self-doc-provider-dry-run-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
