@@ -66,6 +66,9 @@ async function main() {
       surfaceId: reviewSurface.surface.id,
       payloadContract: reviewSurface.surface.payloadContract,
       editCandidateContract: reviewSurface.surface.editCandidateContract,
+      editDiffPreviewContract: reviewSurface.surface.editDiffPreviewContract,
+      editApplyPreflightContract: reviewSurface.surface.editApplyPreflightContract,
+      applyPreview: reviewSurface.applyPreview,
       viewCount: reviewSurface.views.length,
       actionCount: reviewSurface.actions.length,
       disabledApply: reviewSurface.actions.some((action) => action.id === "apply-candidate" && action.available === false),
@@ -124,6 +127,15 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.surface?.primaryRequest, "hia/documentationEditProposals", "Visual Studio review surface must consume the review proposal request.");
   assert.equal(reviewSurface?.surface?.payloadContract, "hia-documentation-review-payload@0.1.0-draft", "Visual Studio review surface must pin review payload.");
   assert.equal(reviewSurface?.surface?.editCandidateContract, "hia-documentation-edit-candidate@0.1.0-draft", "Visual Studio review surface must pin edit candidate preview.");
+  assert.equal(reviewSurface?.surface?.editDiffPreviewContract, "hia-documentation-edit-diff-preview@0.1.0-draft", "Visual Studio review surface must pin edit diff preview.");
+  assert.equal(reviewSurface?.surface?.editApplyPreflightContract, "hia-documentation-edit-apply-preflight@0.1.0-draft", "Visual Studio review surface must pin edit apply preflight.");
+  assert.equal(reviewSurface?.applyPreview?.status, "input-ready", "Visual Studio review surface must expose apply-preview input readiness.");
+  assert.equal(reviewSurface?.applyPreview?.inputMode, "preflight-preview-only", "Visual Studio review surface must keep apply preview preflight-only.");
+  assert.equal(reviewSurface?.applyPreview?.checkedApplyAvailable, false, "Visual Studio review surface must not claim checked apply.");
+  assert.equal(reviewSurface?.applyPreview?.hostFileReadAvailable, false, "Visual Studio review surface must not claim host file reads.");
+  assert.equal(reviewSurface?.applyPreview?.workspaceWriteAvailable, false, "Visual Studio review surface must not claim workspace writes.");
+  assert.equal(reviewSurface?.applyPreview?.targetRepositoryMutation, false, "Visual Studio review surface must not mutate target repositories.");
+  assert.ok(Array.isArray(reviewSurface?.applyPreview?.requiredFields) && reviewSurface.applyPreview.requiredFields.includes("item.editCandidate.applyPreflight.targetFiles"), "Visual Studio review surface must require apply preflight target files.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");

@@ -9,7 +9,25 @@
     "primaryRequest": "hia/documentationEditProposals",
     "payloadContract": "hia-documentation-review-payload@0.1.0-draft",
     "editCandidateContract": "hia-documentation-edit-candidate@0.1.0-draft",
+    "editDiffPreviewContract": "hia-documentation-edit-diff-preview@0.1.0-draft",
+    "editApplyPreflightContract": "hia-documentation-edit-apply-preflight@0.1.0-draft",
     "hostResultContract": "hia-lsp-host-result@0.1.0-draft"
+  },
+  "applyPreview": {
+    "status": "input-ready",
+    "inputMode": "preflight-preview-only",
+    "checkedApplyAvailable": false,
+    "hostFileReadAvailable": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "requiredFields": [
+      "item.editCandidate.applyPreflight.status",
+      "item.editCandidate.applyPreflight.conflictStatus",
+      "item.editCandidate.applyPreflight.requiresFileRead",
+      "item.editCandidate.applyPreflight.requiresConflictCheck",
+      "item.editCandidate.applyPreflight.targetFiles",
+      "item.editCandidate.applyPreflight.rollback"
+    ]
   },
   "views": [
     {
@@ -44,7 +62,13 @@
         "item.editCandidate.contract",
         "item.editCandidate.status",
         "item.editCandidate.target",
-        "item.editCandidate.preview"
+        "item.editCandidate.preview",
+        "item.editCandidate.diffPreview.status",
+        "item.editCandidate.diffPreview.operations",
+        "item.editCandidate.diffPreview.safety",
+        "item.editCandidate.applyPreflight.status",
+        "item.editCandidate.applyPreflight.conflictStatus",
+        "item.editCandidate.applyPreflight.rollback"
       ]
     }
   ],
@@ -69,7 +93,7 @@
     },
     {
       "id": "apply-candidate",
-      "hostAction": "Disabled until a later WorkspaceEdit/apply contract exists.",
+      "hostAction": "Disabled until checked apply confirmation exists.",
       "available": false,
       "mutatesTargetRepository": false,
       "requiresHumanReview": true

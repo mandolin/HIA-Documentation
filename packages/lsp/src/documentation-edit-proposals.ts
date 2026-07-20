@@ -47,6 +47,10 @@ export const HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT = "hia-documentation-draft-te
 export const HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT = "hia-documentation-edit-candidate";
 export const HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION = "0.1.0-draft";
+export const HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT = "hia-documentation-edit-apply-preflight";
+export const HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION = "0.1.0-draft";
+export const HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT = "hia-documentation-edit-diff-preview";
+export const HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT = "hia-documentation-review-payload";
 export const HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION = "0.1.0-draft";
 
@@ -370,6 +374,124 @@ export interface HiaDocumentationEditCandidatePreview {
   textFormat: HiaDocumentationEditProposalDraftTextFormat;
 }
 
+export type HiaDocumentationEditDiffPreviewStatus = "preview-only" | "unavailable";
+export type HiaDocumentationEditDiffPreviewFormat = "semantic-patch-preview";
+export type HiaDocumentationEditDiffPreviewOperationKind =
+  | "add-locale-entry"
+  | "copy-only"
+  | "insert-source-docline";
+
+export interface HiaDocumentationEditDiffPreviewSafety {
+  directApply: false;
+  executable: false;
+  hostWrite: false;
+  includesSourceContent: false;
+  requiresConflictCheck: boolean;
+  requiresFileRead: boolean;
+  requiresHumanReview: true;
+  sourcesContentPolicy: "none";
+}
+
+export interface HiaDocumentationEditDiffPreviewOperation {
+  fieldPath?: string;
+  locale?: string;
+  op: HiaDocumentationEditDiffPreviewOperationKind;
+  path?: string;
+  pointer?: string;
+  symbolId?: string;
+  textFormat: HiaDocumentationEditProposalDraftTextFormat;
+  valuePreview?: string;
+}
+
+/**
+ * 人工确认前的语义 diff/patch 预览。
+ * Semantic diff/patch preview before human approval.
+ *
+ * @lang zh-CN 该结构只描述“将来可能编辑什么”，不包含可执行 workspace edit、source body 或自动写入许可。
+ * @lang en This shape only describes what may be edited later; it carries no executable workspace edit, source body, or automatic-write permission.
+ */
+export interface HiaDocumentationEditDiffPreview {
+  contract: typeof HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT;
+  contractVersion: typeof HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION;
+  id: string;
+  limitations: string[];
+  operations: HiaDocumentationEditDiffPreviewOperation[];
+  previewFormat: HiaDocumentationEditDiffPreviewFormat;
+  proposalId: string;
+  safety: HiaDocumentationEditDiffPreviewSafety;
+  status: HiaDocumentationEditDiffPreviewStatus;
+  targetKind: HiaDocumentationEditCandidateKind;
+  unavailableReason?: string;
+}
+
+export type HiaDocumentationEditApplyPreflightStatus = "requires-host-check" | "not-applicable";
+export type HiaDocumentationEditApplyPreflightConflictStatus = "not-checked" | "not-applicable";
+export type HiaDocumentationEditApplyPreflightTargetRole =
+  | "external-resource"
+  | "none"
+  | "source-docline";
+
+export interface HiaDocumentationEditApplyPreflightFileVersion {
+  contentHashStatus: "not-computed" | "not-applicable";
+  required: boolean;
+  source: "host-file-read" | "not-applicable";
+  status: "not-read" | "not-applicable";
+}
+
+export interface HiaDocumentationEditApplyPreflightConflict {
+  blocking: boolean;
+  expectedBaseVersion: "unknown" | "not-applicable";
+  requiresFileRead: boolean;
+  status: HiaDocumentationEditApplyPreflightConflictStatus;
+}
+
+export interface HiaDocumentationEditApplyPreflightRollback {
+  recordRequired: boolean;
+  scope: "none" | "source-file" | "target-resource-file";
+  strategy: "host-undo" | "not-applicable";
+}
+
+export interface HiaDocumentationEditApplyPreflightFormatting {
+  formatter: "json-resource-merge-required" | "language-adapter-required" | "not-applicable";
+  indentation: "preserve" | "not-applicable";
+  lineEnding: "preserve" | "not-applicable";
+}
+
+export interface HiaDocumentationEditApplyPreflightTargetFile {
+  conflict: HiaDocumentationEditApplyPreflightConflict;
+  fieldPath?: string;
+  fileVersion: HiaDocumentationEditApplyPreflightFileVersion;
+  formatting: HiaDocumentationEditApplyPreflightFormatting;
+  locale?: string;
+  path?: string;
+  pointer?: string;
+  role: HiaDocumentationEditApplyPreflightTargetRole;
+  rollback: HiaDocumentationEditApplyPreflightRollback;
+  symbolId?: string;
+}
+
+/**
+ * 人工确认 apply 之前必须由宿主完成的预检元数据。
+ * Host-side preflight metadata required before any human-approved apply.
+ *
+ * @lang zh-CN 该结构仍不是可执行编辑；它只记录文件版本、冲突检查和回滚记录的最低要求。
+ * @lang en This shape is still not an executable edit; it records the minimum file-version, conflict-check and rollback-record requirements.
+ */
+export interface HiaDocumentationEditApplyPreflight {
+  conflictStatus: HiaDocumentationEditApplyPreflightConflictStatus;
+  contract: typeof HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT;
+  contractVersion: typeof HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION;
+  id: string;
+  limitations: string[];
+  proposalId: string;
+  requiresConflictCheck: boolean;
+  requiresFileRead: boolean;
+  rollback: HiaDocumentationEditApplyPreflightRollback;
+  status: HiaDocumentationEditApplyPreflightStatus;
+  targetFiles: HiaDocumentationEditApplyPreflightTargetFile[];
+  targetKind: HiaDocumentationEditCandidateKind;
+}
+
 /**
  * 人工确认前只读展示的文档化编辑候选。
  * Read-only documentation edit candidate shown before human approval.
@@ -379,8 +501,10 @@ export interface HiaDocumentationEditCandidatePreview {
  */
 export interface HiaDocumentationEditCandidate {
   applyMode: "manual-copy" | "host-preview-only";
+  applyPreflight: HiaDocumentationEditApplyPreflight;
   contract: typeof HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT;
   contractVersion: typeof HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION;
+  diffPreview: HiaDocumentationEditDiffPreview;
   id: string;
   kind: HiaDocumentationEditCandidateKind;
   preview?: HiaDocumentationEditCandidatePreview;
@@ -1326,12 +1450,16 @@ function createReviewPayloadEditCandidate(proposal: HiaDocumentationEditProposal
   const status: HiaDocumentationEditCandidateStatus = proposal.status === "review-required" && hasDraft
     ? "preview-only"
     : "unavailable";
+  const kind = selectEditCandidateKind(proposal);
+  const diffPreview = createEditCandidateDiffPreview(proposal, kind, status);
   const candidate: HiaDocumentationEditCandidate = {
     applyMode: hasDraft ? "host-preview-only" : "manual-copy",
+    applyPreflight: createEditCandidateApplyPreflight(proposal, kind, diffPreview),
     contract: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
     contractVersion: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+    diffPreview,
     id: `candidate:${sanitizeContextId(proposal.id)}`,
-    kind: selectEditCandidateKind(proposal),
+    kind,
     proposalId: sanitizeContextId(proposal.id),
     safety: {
       allowsAutomaticWrites: false,
@@ -1362,6 +1490,224 @@ function createReviewPayloadEditCandidate(proposal: HiaDocumentationEditProposal
   }
 
   return candidate;
+}
+
+function createEditCandidateDiffPreview(
+  proposal: HiaDocumentationEditProposal,
+  kind: HiaDocumentationEditCandidateKind,
+  candidateStatus: HiaDocumentationEditCandidateStatus
+): HiaDocumentationEditDiffPreview {
+  const operation = candidateStatus === "preview-only" ? createEditDiffPreviewOperation(proposal, kind) : undefined;
+  const status: HiaDocumentationEditDiffPreviewStatus = operation ? "preview-only" : "unavailable";
+  const requiresTargetFileRead = status === "preview-only"
+    && (kind === "external-resource-locale-entry" || kind === "source-docline-draft");
+
+  return {
+    contract: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+    contractVersion: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION,
+    id: `diff-preview:${sanitizeContextId(proposal.id)}`,
+    limitations: createEditDiffPreviewLimitations(proposal, kind, status),
+    operations: operation ? [operation] : [],
+    previewFormat: "semantic-patch-preview",
+    proposalId: sanitizeContextId(proposal.id),
+    safety: {
+      directApply: false,
+      executable: false,
+      hostWrite: false,
+      includesSourceContent: false,
+      requiresConflictCheck: requiresTargetFileRead,
+      requiresFileRead: requiresTargetFileRead,
+      requiresHumanReview: true,
+      sourcesContentPolicy: "none"
+    },
+    status,
+    targetKind: kind,
+    ...(status === "unavailable" ? { unavailableReason: proposal.unavailableReason || "semantic-diff-preview-unavailable" } : {})
+  };
+}
+
+function createEditDiffPreviewOperation(
+  proposal: HiaDocumentationEditProposal,
+  kind: HiaDocumentationEditCandidateKind
+): HiaDocumentationEditDiffPreviewOperation | undefined {
+  if (!proposal.draft || kind === "copy-only") {
+    return undefined;
+  }
+
+  if (kind === "external-resource-locale-entry") {
+    const path = proposal.target.resourcePath ?? proposal.target.targetPath;
+    const pointer = proposal.target.resourcePointer;
+
+    if (!path || !pointer) {
+      return undefined;
+    }
+
+    return {
+      ...(proposal.target.fieldPath ? { fieldPath: proposal.target.fieldPath } : {}),
+      ...(proposal.target.locale ? { locale: proposal.target.locale } : {}),
+      op: "add-locale-entry",
+      path,
+      pointer,
+      ...(proposal.target.symbolId ? { symbolId: proposal.target.symbolId } : {}),
+      textFormat: proposal.draft.textFormat,
+      valuePreview: proposal.draft.text
+    };
+  }
+
+  const path = proposal.target.relativePath ?? proposal.target.targetPath ?? proposal.target.path;
+
+  if (!path && !proposal.target.symbolId) {
+    return undefined;
+  }
+
+  return {
+    ...(proposal.target.fieldPath ? { fieldPath: proposal.target.fieldPath } : {}),
+    op: "insert-source-docline",
+    ...(path ? { path } : {}),
+    ...(proposal.target.symbolId ? { symbolId: proposal.target.symbolId } : {}),
+    textFormat: proposal.draft.textFormat,
+    valuePreview: proposal.draft.text
+  };
+}
+
+function createEditDiffPreviewLimitations(
+  proposal: HiaDocumentationEditProposal,
+  kind: HiaDocumentationEditCandidateKind,
+  status: HiaDocumentationEditDiffPreviewStatus
+): string[] {
+  return uniqueStrings([
+    "not-a-workspace-edit",
+    "no-executable-operations",
+    "no-source-content",
+    status === "preview-only" ? "requires-human-review" : "semantic-operation-unavailable",
+    status === "preview-only" ? "conflict-check-not-yet-run" : undefined,
+    status === "preview-only" ? "file-version-not-yet-bound" : undefined,
+    kind === "source-docline-draft" ? "source-formatter-not-selected" : undefined,
+    kind === "copy-only" ? "copy-only" : undefined,
+    proposal.workspaceEditBoundary === "external-resource-only" ? "external-resource-only" : undefined
+  ].filter((value): value is string => typeof value === "string" && value.length > 0));
+}
+
+function createEditCandidateApplyPreflight(
+  proposal: HiaDocumentationEditProposal,
+  kind: HiaDocumentationEditCandidateKind,
+  diffPreview: HiaDocumentationEditDiffPreview
+): HiaDocumentationEditApplyPreflight {
+  const requiresHostCheck = diffPreview.status === "preview-only" && diffPreview.operations.length > 0;
+  const targetFiles = requiresHostCheck
+    ? diffPreview.operations.map((operation) => createApplyPreflightTargetFile(operation, kind))
+    : [];
+  const rollback = createApplyPreflightRollback(kind, requiresHostCheck);
+
+  return {
+    conflictStatus: requiresHostCheck ? "not-checked" : "not-applicable",
+    contract: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT,
+    contractVersion: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION,
+    id: `apply-preflight:${sanitizeContextId(proposal.id)}`,
+    limitations: createApplyPreflightLimitations(kind, requiresHostCheck),
+    proposalId: sanitizeContextId(proposal.id),
+    requiresConflictCheck: requiresHostCheck,
+    requiresFileRead: requiresHostCheck,
+    rollback,
+    status: requiresHostCheck ? "requires-host-check" : "not-applicable",
+    targetFiles,
+    targetKind: kind
+  };
+}
+
+function createApplyPreflightTargetFile(
+  operation: HiaDocumentationEditDiffPreviewOperation,
+  kind: HiaDocumentationEditCandidateKind
+): HiaDocumentationEditApplyPreflightTargetFile {
+  const role: HiaDocumentationEditApplyPreflightTargetRole = kind === "external-resource-locale-entry"
+    ? "external-resource"
+    : "source-docline";
+
+  return {
+    conflict: {
+      blocking: true,
+      expectedBaseVersion: "unknown",
+      requiresFileRead: true,
+      status: "not-checked"
+    },
+    ...(operation.fieldPath ? { fieldPath: operation.fieldPath } : {}),
+    fileVersion: {
+      contentHashStatus: "not-computed",
+      required: true,
+      source: "host-file-read",
+      status: "not-read"
+    },
+    formatting: createApplyPreflightFormatting(kind),
+    ...(operation.locale ? { locale: operation.locale } : {}),
+    ...(operation.path ? { path: operation.path } : {}),
+    ...(operation.pointer ? { pointer: operation.pointer } : {}),
+    role,
+    rollback: createApplyPreflightRollback(kind, true),
+    ...(operation.symbolId ? { symbolId: operation.symbolId } : {})
+  };
+}
+
+function createApplyPreflightFormatting(
+  kind: HiaDocumentationEditCandidateKind
+): HiaDocumentationEditApplyPreflightFormatting {
+  if (kind === "external-resource-locale-entry") {
+    return {
+      formatter: "json-resource-merge-required",
+      indentation: "preserve",
+      lineEnding: "preserve"
+    };
+  }
+
+  if (kind === "source-docline-draft") {
+    return {
+      formatter: "language-adapter-required",
+      indentation: "preserve",
+      lineEnding: "preserve"
+    };
+  }
+
+  return {
+    formatter: "not-applicable",
+    indentation: "not-applicable",
+    lineEnding: "not-applicable"
+  };
+}
+
+function createApplyPreflightRollback(
+  kind: HiaDocumentationEditCandidateKind,
+  required: boolean
+): HiaDocumentationEditApplyPreflightRollback {
+  if (!required) {
+    return {
+      recordRequired: false,
+      scope: "none",
+      strategy: "not-applicable"
+    };
+  }
+
+  return {
+    recordRequired: true,
+    scope: kind === "external-resource-locale-entry" ? "target-resource-file" : "source-file",
+    strategy: "host-undo"
+  };
+}
+
+function createApplyPreflightLimitations(
+  kind: HiaDocumentationEditCandidateKind,
+  requiresHostCheck: boolean
+): string[] {
+  return uniqueStrings([
+    "not-a-workspace-edit",
+    "no-executable-operations",
+    "human-approval-required",
+    requiresHostCheck ? "host-file-read-required" : "apply-not-applicable",
+    requiresHostCheck ? "file-version-not-read" : undefined,
+    requiresHostCheck ? "conflict-status-not-checked" : undefined,
+    requiresHostCheck ? "rollback-record-required-before-apply" : undefined,
+    kind === "source-docline-draft" ? "language-adapter-formatting-required" : undefined,
+    kind === "external-resource-locale-entry" ? "json-resource-merge-required" : undefined,
+    kind === "copy-only" ? "copy-only" : undefined
+  ].filter((value): value is string => typeof value === "string" && value.length > 0));
 }
 
 function selectEditCandidateKind(proposal: HiaDocumentationEditProposal): HiaDocumentationEditCandidateKind {

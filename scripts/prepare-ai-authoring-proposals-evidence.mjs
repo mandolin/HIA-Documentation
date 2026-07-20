@@ -8,8 +8,12 @@ import {
   HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
   HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
   HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
@@ -144,6 +148,34 @@ async function main() {
   assert.equal(missingLocaleReviewItem?.editCandidate.safety.directApply, false);
   assert.equal(missingLocaleReviewItem?.editCandidate.safety.hostWrite, false);
   assert.equal(missingLocaleReviewItem?.editCandidate.safety.includesSourceContent, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.contract, HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.contractVersion, HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.status, "requires-host-check");
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.conflictStatus, "not-checked");
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.requiresFileRead, true);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.requiresConflictCheck, true);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.rollback.strategy, "host-undo");
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.rollback.recordRequired, true);
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.targetFiles[0]?.fileVersion.status, "not-read");
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.targetFiles[0]?.conflict.status, "not-checked");
+  assert.equal(missingLocaleReviewItem?.editCandidate.applyPreflight.targetFiles[0]?.rollback.strategy, "host-undo");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.contract, HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.contractVersion, HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.previewFormat, "semantic-patch-preview");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.status, "preview-only");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.targetKind, "external-resource-locale-entry");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.executable, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.directApply, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.hostWrite, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.includesSourceContent, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.requiresFileRead, true);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.requiresConflictCheck, true);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.safety.sourcesContentPolicy, "none");
+  assert.deepEqual(missingLocaleReviewItem?.editCandidate.diffPreview.operations.map((operation) => operation.op), ["add-locale-entry"]);
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.operations[0]?.path, "i18n/profile.hia-i18n.json");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.operations[0]?.pointer, "/en/profile.render.description");
+  assert.equal(missingLocaleReviewItem?.editCandidate.diffPreview.operations[0]?.valuePreview, "TODO(en): Review localized description text for renderProfile.");
+  assert.ok(missingLocaleReviewItem?.editCandidate.diffPreview.limitations.includes("not-a-workspace-edit"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_TARGET_LOCALE_DRAFT_PRESENT" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_FIELD_LEVEL_I18N_TARGET" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_MISSING_LOCALE" && check.status === "pass"));
@@ -183,6 +215,19 @@ async function main() {
   assert.equal(missingDocumentationReviewItem?.draft?.draftKind, "documentation-stub");
   assert.equal(missingDocumentationReviewItem?.editCandidate.kind, "source-docline-draft");
   assert.equal(missingDocumentationReviewItem?.editCandidate.status, "preview-only");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.status, "preview-only");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.targetKind, "source-docline-draft");
+  assert.deepEqual(missingDocumentationReviewItem?.editCandidate.diffPreview.operations.map((operation) => operation.op), ["insert-source-docline"]);
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.operations[0]?.path, "src/sample.toy");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.operations[0]?.symbolId, "toy:helper");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.safety.executable, false);
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.safety.requiresFileRead, true);
+  assert.equal(missingDocumentationReviewItem?.editCandidate.diffPreview.safety.requiresConflictCheck, true);
+  assert.equal(missingDocumentationReviewItem?.editCandidate.applyPreflight.status, "requires-host-check");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.applyPreflight.conflictStatus, "not-checked");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.applyPreflight.rollback.scope, "source-file");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.applyPreflight.targetFiles[0]?.fileVersion.status, "not-read");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.applyPreflight.targetFiles[0]?.formatting.formatter, "language-adapter-required");
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_BILINGUAL_DRAFT_LOCALES" && check.status === "pass"));
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY" && check.status === "pass"));
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_TRUTH_BOUNDARY" && check.status === "warning"));
@@ -198,6 +243,18 @@ async function main() {
   assert(!/[A-Za-z]:[\\/]/u.test(reviewPayloadSerialized), "Review payload must not expose drive-letter absolute paths.");
   assert(!reviewPayloadSerialized.includes("work-zone"), "Review payload must not expose private WorkZone paths.");
   const proposalsWithDrafts = result.proposals.filter((proposal) => proposal.draft);
+  const reviewItems = result.reviewPayload.items;
+  const editCandidates = reviewItems.map((item) => item.editCandidate).filter(Boolean);
+  const diffPreviews = editCandidates.map((candidate) => candidate.diffPreview).filter(Boolean);
+  const applyPreflights = editCandidates.map((candidate) => candidate.applyPreflight).filter(Boolean);
+  const directEditObjectCount = countDirectEditObjects(result);
+  assert.equal(diffPreviews.length, editCandidates.length);
+  assert.equal(diffPreviews.filter((preview) => preview.status === "preview-only").length, 2);
+  assert.equal(diffPreviews.flatMap((preview) => preview.operations).length, 2);
+  assert.equal(applyPreflights.length, editCandidates.length);
+  assert.equal(applyPreflights.filter((preflight) => preflight.status === "requires-host-check").length, 2);
+  assert.equal(applyPreflights.flatMap((preflight) => preflight.targetFiles).length, 2);
+  assert.equal(directEditObjectCount, 0);
 
   const evidence = {
     contract: "hia-ai-authoring-proposals-runtime-evidence",
@@ -215,8 +272,17 @@ async function main() {
       aiContextPackageSourceExcerptPolicy: result.aiContextPackage.privacy.sourceExcerptPolicy.mode,
       contextPackageIncludesAbsolutePaths: false,
       draftCount: result.draftCount,
+      directEditObjectCount,
+      diffPreviewCount: diffPreviews.length,
+      diffPreviewOperationCount: diffPreviews.flatMap((preview) => preview.operations).length,
+      editApplyPreflightContract: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT,
+      editApplyPreflightContractVersion: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION,
+      editApplyPreflightCount: applyPreflights.length,
+      editApplyPreflightHostCheckCount: applyPreflights.filter((preflight) => preflight.status === "requires-host-check").length,
       draftsAllowAutomaticWrites: proposalsWithDrafts.some((proposal) => proposal.draft.allowsAutomaticWrites !== false),
       draftsUseSourceBody: proposalsWithDrafts.some((proposal) => proposal.draft.usesSourceBody !== false),
+      editDiffPreviewContract: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+      editDiffPreviewContractVersion: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION,
       includesSourceContent: false,
       localeQualityBlockedCount: result.reviewPayload.localeQuality.checkSummary.blocked,
       localeQualityCanonicalJsOutput: result.reviewPayload.localeQuality.canonicalJsOutput,
@@ -531,4 +597,39 @@ function createProposalProjectIndexFixture() {
       ]
     }
   };
+}
+
+function countDirectEditObjects(value) {
+  let count = 0;
+  walkJson(value, (node) => {
+    if (!isRecord(node)) {
+      return;
+    }
+
+    if (Object.hasOwn(node, "workspaceEdit") || Object.hasOwn(node, "documentChanges") || Object.hasOwn(node, "changes")) {
+      count += 1;
+    }
+  });
+  return count;
+}
+
+function walkJson(value, visitor) {
+  visitor(value);
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      walkJson(item, visitor);
+    }
+    return;
+  }
+
+  if (isRecord(value)) {
+    for (const item of Object.values(value)) {
+      walkJson(item, visitor);
+    }
+  }
+}
+
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

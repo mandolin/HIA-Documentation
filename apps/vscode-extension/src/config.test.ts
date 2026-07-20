@@ -336,8 +336,82 @@ describe("@hia-doc/vscode-extension config", () => {
             },
             editCandidate: {
               applyMode: "host-preview-only",
+              applyPreflight: {
+                conflictStatus: "not-checked",
+                contract: "hia-documentation-edit-apply-preflight",
+                contractVersion: "0.1.0-draft",
+                id: "apply-preflight:1",
+                limitations: [
+                  "host-file-read-required",
+                  "conflict-status-not-checked"
+                ],
+                proposalId: "proposal:1",
+                requiresConflictCheck: true,
+                requiresFileRead: true,
+                rollback: {
+                  recordRequired: true,
+                  scope: "target-resource-file",
+                  strategy: "host-undo"
+                },
+                status: "requires-host-check",
+                targetFiles: [
+                  {
+                    conflict: {
+                      blocking: true,
+                      expectedBaseVersion: "unknown",
+                      requiresFileRead: true,
+                      status: "not-checked"
+                    },
+                    fileVersion: {
+                      contentHashStatus: "not-computed",
+                      required: true,
+                      source: "host-file-read",
+                      status: "not-read"
+                    },
+                    path: "i18n/profile.hia-i18n.json",
+                    pointer: "/en/profile.description",
+                    role: "external-resource"
+                  }
+                ],
+                targetKind: "external-resource-locale-entry"
+              },
               contract: "hia-documentation-edit-candidate",
               contractVersion: "0.1.0-draft",
+              diffPreview: {
+                contract: "hia-documentation-edit-diff-preview",
+                contractVersion: "0.1.0-draft",
+                id: "diff-preview:1",
+                limitations: [
+                  "not-a-workspace-edit",
+                  "conflict-check-not-yet-run"
+                ],
+                operations: [
+                  {
+                    fieldPath: "description",
+                    locale: "en",
+                    op: "add-locale-entry",
+                    path: "i18n/profile.hia-i18n.json",
+                    pointer: "/en/profile.description",
+                    symbolId: "symbol:profile",
+                    textFormat: "plain-text",
+                    valuePreview: "English draft."
+                  }
+                ],
+                previewFormat: "semantic-patch-preview",
+                proposalId: "proposal:1",
+                safety: {
+                  directApply: false,
+                  executable: false,
+                  hostWrite: false,
+                  includesSourceContent: false,
+                  requiresConflictCheck: true,
+                  requiresFileRead: true,
+                  requiresHumanReview: true,
+                  sourcesContentPolicy: "none"
+                },
+                status: "preview-only",
+                targetKind: "external-resource-locale-entry"
+              },
               id: "candidate:1",
               kind: "external-resource-locale-entry",
               preview: {
@@ -430,10 +504,14 @@ describe("@hia-doc/vscode-extension config", () => {
     });
     expect(choices[0]?.detail).toContain("docs/profile.hia.json Profile description locale:en");
     expect(choices[0]?.detail).toContain("edit preview");
+    expect(choices[0]?.detail).toContain("diff preview");
+    expect(choices[0]?.detail).toContain("host preflight");
     expect(choices[0]?.detail).toContain("action:copy draft");
     expect(itemReport).toContain("Proposal: proposal:1");
     expect(itemReport).toContain("Kind: missing-locale-stub");
     expect(itemReport).toContain("Edit candidate: preview-only (external-resource-locale-entry)");
+    expect(itemReport).toContain("Diff preview: preview-only (external-resource-locale-entry)");
+    expect(itemReport).toContain("Apply preflight: requires-host-check (conflict:not-checked)");
     expect(itemReport).toContain("Action hints: copyDraft=yes, editPreview=yes, openContext=yes, apply=no");
     expect(getHiaDocumentationReviewDraftText(reviewPayload.reviewPayload?.items?.[0] ?? {})).toBe("English draft.");
   });

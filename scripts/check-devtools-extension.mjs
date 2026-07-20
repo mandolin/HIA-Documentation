@@ -56,9 +56,23 @@ async function main() {
   assert.equal(panel.review.summary.itemCount, 1, "Review surface must preserve review item count.");
   assert.equal(panel.review.draftCount, 1, "Review surface must preserve draft count.");
   assert.equal(panel.review.privacy.includesSourceContent, false, "Review surface must not include source content.");
+  assert.equal(panel.review.applyPreview.status, "input-ready", "Review surface must expose apply-preview input readiness.");
+  assert.equal(panel.review.applyPreview.applyAvailable, false, "Review surface must keep apply unavailable.");
+  assert.equal(panel.review.applyPreview.checkedApply, false, "Review surface must not claim checked apply.");
+  assert.equal(panel.review.applyPreview.hostFileRead, false, "Review surface must not claim host file reads.");
+  assert.equal(panel.review.applyPreview.hostWrite, false, "Review surface must not claim host writes.");
+  assert.equal(panel.review.applyPreview.targetRepositoryMutation, false, "Review surface must not mutate target repositories.");
+  assert.equal(panel.review.applyPreview.hostCheckPreflightCount, 1, "Review surface must summarize host-check preflight inputs.");
+  assert.equal(panel.review.applyPreview.targetFileCount, 1, "Review surface must summarize apply-preview target files.");
   assert.equal(reviewDetail?.actionHints.applyAvailable, false, "Review surface must keep apply unavailable.");
   assert.equal(reviewDetail?.editCandidate.status, "preview-only", "Review surface must expose candidate preview status.");
   assert.equal(reviewDetail?.editCandidate.kind, "source-docline-draft", "Review surface must expose candidate kind.");
+  assert.equal(reviewDetail?.editCandidate.diffPreview.status, "preview-only", "Review surface must expose diff preview status.");
+  assert.equal(reviewDetail?.editCandidate.diffPreview.executable, false, "Review surface diff preview must be non-executable.");
+  assert.equal(reviewDetail?.editCandidate.diffPreview.operationCount, 1, "Review surface must expose semantic diff operations.");
+  assert.equal(reviewDetail?.editCandidate.applyPreflight.status, "requires-host-check", "Review surface must expose apply preflight status.");
+  assert.equal(reviewDetail?.editCandidate.applyPreflight.conflictStatus, "not-checked", "Review surface must expose conflict status.");
+  assert.equal(reviewDetail?.editCandidate.applyPreflight.rollbackStrategy, "host-undo", "Review surface must expose rollback strategy.");
   assert.equal(detail?.fromLabel, "API", "Relation detail must resolve the from node label.");
   assert.equal(detail?.toLabel, "src/api.ts", "Relation detail must resolve the to node path.");
   assert.equal(message.type, HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE, "Open request message type must match the browser-panel contract.");
@@ -102,11 +116,16 @@ async function main() {
       openRequestType: message.type,
       reviewSurface: {
         applyAvailableCount: panel.review.items.filter((item) => item.actionHints.applyAvailable === true).length,
+        applyPreview: panel.review.applyPreview,
         contract: panel.review.contract,
         contractVersion: panel.review.contractVersion,
         draftCount: panel.review.draftCount,
         itemCount: panel.review.summary.itemCount,
         payloadContract: panel.review.payloadContract,
+        applyPreflightHostCheckCount: panel.review.items.filter((item) => item.editCandidate.applyPreflight.status === "requires-host-check").length,
+        applyPreflightTargetFileCount: panel.review.items.flatMap((item) => Array.from({ length: item.editCandidate.applyPreflight.targetFileCount })).length,
+        diffPreviewCount: panel.review.items.filter((item) => item.editCandidate.diffPreview.status === "preview-only").length,
+        diffPreviewOperationCount: panel.review.items.flatMap((item) => item.editCandidate.diffPreview.operations).length,
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
         privacy: panel.review.privacy
       }
@@ -196,6 +215,90 @@ function createFixturePayload() {
           },
           editCandidate: {
             applyMode: "host-preview-only",
+            applyPreflight: {
+              conflictStatus: "not-checked",
+              contract: "hia-documentation-edit-apply-preflight",
+              contractVersion: "0.1.0-draft",
+              id: "apply-preflight:proposal:api-doc",
+              limitations: [
+                "host-file-read-required",
+                "file-version-not-read",
+                "conflict-status-not-checked",
+                "rollback-record-required-before-apply"
+              ],
+              proposalId: "proposal:api-doc",
+              requiresConflictCheck: true,
+              requiresFileRead: true,
+              rollback: {
+                recordRequired: true,
+                scope: "source-file",
+                strategy: "host-undo"
+              },
+              status: "requires-host-check",
+              targetFiles: [
+                {
+                  conflict: {
+                    blocking: true,
+                    expectedBaseVersion: "unknown",
+                    requiresFileRead: true,
+                    status: "not-checked"
+                  },
+                  fileVersion: {
+                    contentHashStatus: "not-computed",
+                    required: true,
+                    source: "host-file-read",
+                    status: "not-read"
+                  },
+                  formatting: {
+                    formatter: "language-adapter-required",
+                    indentation: "preserve",
+                    lineEnding: "preserve"
+                  },
+                  path: "src/api.ts",
+                  role: "source-docline",
+                  rollback: {
+                    recordRequired: true,
+                    scope: "source-file",
+                    strategy: "host-undo"
+                  },
+                  symbolId: "symbol:api"
+                }
+              ],
+              targetKind: "source-docline-draft"
+            },
+            diffPreview: {
+              contract: "hia-documentation-edit-diff-preview",
+              contractVersion: "0.1.0-draft",
+              id: "diff-preview:proposal:api-doc",
+              limitations: [
+                "not-a-workspace-edit",
+                "conflict-check-not-yet-run",
+                "source-formatter-not-selected"
+              ],
+              operations: [
+                {
+                  op: "insert-source-docline",
+                  path: "src/api.ts",
+                  symbolId: "symbol:api",
+                  textFormat: "plain-text",
+                  valuePreview: "TODO: Review API documentation."
+                }
+              ],
+              previewFormat: "semantic-patch-preview",
+              proposalId: "proposal:api-doc",
+              safety: {
+                directApply: false,
+                executable: false,
+                hostWrite: false,
+                includesSourceContent: false,
+                requiresConflictCheck: true,
+                requiresFileRead: true,
+                requiresHumanReview: true,
+                sourcesContentPolicy: "none"
+              },
+              status: "preview-only",
+              targetKind: "source-docline-draft"
+            },
             kind: "source-docline-draft",
             preview: {
               previewKind: "draft-text",

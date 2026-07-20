@@ -80,7 +80,8 @@ function renderSummary() {
     ["Entries", state.model.summary.entryCount],
     ["Relations", state.model.summary.relationCount],
     ["Review", state.model.review.summary.itemCount],
-    ["Drafts", state.model.review.draftCount]
+    ["Drafts", state.model.review.draftCount],
+    ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -208,7 +209,7 @@ function renderReviewDetail() {
     createReviewActionButton("Copy proposal id", item.proposalId, "proposal id")
   );
   preview.className = "candidate-preview";
-  preview.textContent = item.editCandidate.previewText || item.draftText || "Preview text unavailable.";
+  preview.textContent = formatReviewCandidatePreview(item);
 
   article.innerHTML = `
     <h2>${escapeHtml(item.title)}</h2>
@@ -220,11 +221,34 @@ function renderReviewDetail() {
       <dt>Proposal</dt><dd>${escapeHtml(item.proposalId)}</dd>
       <dt>Quality</dt><dd>${escapeHtml(`pass:${item.quality.pass} warning:${item.quality.warning} blocked:${item.quality.blocked}`)}</dd>
       <dt>Candidate</dt><dd>${escapeHtml(`${item.editCandidate.status} / ${item.editCandidate.kind}`)}</dd>
+      <dt>Diff</dt><dd>${escapeHtml(`${item.editCandidate.diffPreview.status} / ${item.editCandidate.diffPreview.targetKind} / operations:${item.editCandidate.diffPreview.operationCount}`)}</dd>
+      <dt>Preflight</dt><dd>${escapeHtml(`${item.editCandidate.applyPreflight.status} / conflict:${item.editCandidate.applyPreflight.conflictStatus}`)}</dd>
       <dt>Apply</dt><dd>disabled</dd>
     </dl>
   `;
   article.append(actions, preview);
   elements.detail.replaceChildren(article);
+}
+
+function formatReviewCandidatePreview(item) {
+  const lines = [
+    item.editCandidate.previewText || item.draftText || "Preview text unavailable.",
+    "",
+    `Diff preview: ${item.editCandidate.diffPreview.status} / ${item.editCandidate.diffPreview.targetKind}`,
+    `Executable: ${item.editCandidate.diffPreview.executable ? "yes" : "no"}`,
+    `Requires file read: ${item.editCandidate.diffPreview.requiresFileRead ? "yes" : "no"}`,
+    `Requires conflict check: ${item.editCandidate.diffPreview.requiresConflictCheck ? "yes" : "no"}`,
+    `Apply preflight: ${item.editCandidate.applyPreflight.status}`,
+    `Preflight target files: ${item.editCandidate.applyPreflight.targetFileCount}`,
+    `Preflight rollback: ${item.editCandidate.applyPreflight.rollbackStrategy}${item.editCandidate.applyPreflight.rollbackRecordRequired ? " (record required)" : ""}`
+  ];
+
+  for (const operation of item.editCandidate.diffPreview.operations) {
+    lines.push(`Operation: ${operation.op}`);
+    lines.push(`Target: ${operation.path || "not included"} ${operation.pointer || ""}`.trim());
+  }
+
+  return lines.join("\n");
 }
 
 function createOpenRequestButton(request, relationId, index) {

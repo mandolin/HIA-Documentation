@@ -49,13 +49,14 @@ export function createHiaDevToolsPanelViewModel(payload) {
  * @param {unknown} payload Browser-panel payload, AI-authoring evidence, or direct `hia-documentation-review-payload`.
  * @returns {{
  *   actionPolicy: { allowedActions: string[]; deniedActions: string[] };
+ *   applyPreview: { applyAvailable: boolean; candidateCount: number; checkedApply: boolean; conflictStatus: string; hostCheckPreflightCount: number; hostFileRead: boolean; hostWrite: boolean; rollbackRecordRequiredCount: number; status: string; targetFileCount: number; targetRepositoryMutation: boolean };
  *   contract: string;
  *   contractVersion: string;
  *   draftCount: number;
  *   items: Array<{
  *     actionHints: Record<string, unknown>;
  *     draftText?: string;
- *     editCandidate: { applyMode: string; kind: string; previewText?: string; status: string; workspaceEditBoundary: string };
+ *     editCandidate: { applyMode: string; applyPreflight: { conflictStatus: string; requiresConflictCheck: boolean; requiresFileRead: boolean; rollbackStrategy: string; status: string; targetFileCount: number }; diffPreview: { executable: boolean; operationCount: number; operations: unknown[]; requiresConflictCheck: boolean; requiresFileRead: boolean; status: string; targetKind: string }; kind: string; previewText?: string; status: string; workspaceEditBoundary: string };
  *     id: string;
  *     kind: string;
  *     proposalId: string;
@@ -82,6 +83,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       allowedActions: stringArray(actionPolicy.allowedActions),
       deniedActions: stringArray(actionPolicy.deniedActions)
     },
+    applyPreview: createDevToolsApplyPreviewSummary(items),
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
     contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
     draftCount: numberValue(reviewPayload?.draftCount) ?? items.filter((item) => Boolean(item.draftText)).length,
@@ -98,6 +100,26 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       itemCount: numberValue(summary.itemCount) ?? items.length,
       reviewRequiredCount: numberValue(summary.reviewRequiredCount) ?? items.filter((item) => item.status === "review-required").length
     }
+  };
+}
+
+function createDevToolsApplyPreviewSummary(items) {
+  const preflights = items.map((item) => item.editCandidate.applyPreflight);
+  const hostCheckPreflightCount = preflights.filter((preflight) => preflight.status === "requires-host-check").length;
+  const targetFileCount = preflights.reduce((sum, preflight) => sum + preflight.targetFileCount, 0);
+
+  return {
+    applyAvailable: false,
+    candidateCount: items.length,
+    checkedApply: false,
+    conflictStatus: hostCheckPreflightCount > 0 ? "not-checked" : "not-applicable",
+    hostCheckPreflightCount,
+    hostFileRead: false,
+    hostWrite: false,
+    rollbackRecordRequiredCount: preflights.filter((preflight) => preflight.rollbackRecordRequired).length,
+    status: hostCheckPreflightCount > 0 ? "input-ready" : "not-applicable",
+    targetFileCount,
+    targetRepositoryMutation: false
   };
 }
 
@@ -256,13 +278,62 @@ function normalizeReviewItem(value) {
 
 function normalizeEditCandidate(value) {
   const preview = isRecord(value.preview) ? value.preview : {};
+  const diffPreview = normalizeEditDiffPreview(value.diffPreview);
+  const applyPreflight = normalizeEditApplyPreflight(value.applyPreflight);
 
   return {
     applyMode: stringValue(value.applyMode) ?? "manual-copy",
+    applyPreflight,
+    diffPreview,
     kind: stringValue(value.kind) ?? "copy-only",
     ...(stringValue(preview.text) ? { previewText: stringValue(preview.text) } : {}),
     status: stringValue(value.status) ?? "unavailable",
     workspaceEditBoundary: stringValue(value.workspaceEditBoundary) ?? "review-only"
+  };
+}
+
+function normalizeEditApplyPreflight(value) {
+  const preflight = isRecord(value) ? value : {};
+  const rollback = isRecord(preflight.rollback) ? preflight.rollback : {};
+
+  return {
+    conflictStatus: stringValue(preflight.conflictStatus) ?? "not-applicable",
+    requiresConflictCheck: booleanValue(preflight.requiresConflictCheck) ?? false,
+    requiresFileRead: booleanValue(preflight.requiresFileRead) ?? false,
+    rollbackRecordRequired: booleanValue(rollback.recordRequired) ?? false,
+    rollbackStrategy: stringValue(rollback.strategy) ?? "not-applicable",
+    status: stringValue(preflight.status) ?? "not-applicable",
+    targetFileCount: arrayValue(preflight.targetFiles).length
+  };
+}
+
+function normalizeEditDiffPreview(value) {
+  const diffPreview = isRecord(value) ? value : {};
+  const safety = isRecord(diffPreview.safety) ? diffPreview.safety : {};
+  const operations = arrayValue(diffPreview.operations).map(normalizeEditDiffOperation);
+
+  return {
+    executable: booleanValue(safety.executable) ?? false,
+    operationCount: operations.length,
+    operations,
+    requiresConflictCheck: booleanValue(safety.requiresConflictCheck) ?? false,
+    requiresFileRead: booleanValue(safety.requiresFileRead) ?? false,
+    status: stringValue(diffPreview.status) ?? "unavailable",
+    targetKind: stringValue(diffPreview.targetKind) ?? "copy-only"
+  };
+}
+
+function normalizeEditDiffOperation(value) {
+  const operation = isRecord(value) ? value : {};
+
+  return {
+    ...(stringValue(operation.fieldPath) ? { fieldPath: stringValue(operation.fieldPath) } : {}),
+    ...(stringValue(operation.locale) ? { locale: stringValue(operation.locale) } : {}),
+    op: stringValue(operation.op) ?? "unknown",
+    ...(stringValue(operation.path) ? { path: stringValue(operation.path) } : {}),
+    ...(stringValue(operation.pointer) ? { pointer: stringValue(operation.pointer) } : {}),
+    ...(stringValue(operation.symbolId) ? { symbolId: stringValue(operation.symbolId) } : {}),
+    ...(stringValue(operation.textFormat) ? { textFormat: stringValue(operation.textFormat) } : {})
   };
 }
 

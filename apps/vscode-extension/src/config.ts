@@ -353,13 +353,103 @@ export interface HiaDocumentationReviewPayloadItemSummary {
 }
 
 /**
+ * Review payload 中的只读 semantic diff preview 摘要。
+ * Read-only semantic diff preview summary carried by a review payload.
+ */
+export interface HiaDocumentationEditDiffPreviewSummary {
+  contract?: string;
+  contractVersion?: string;
+  id?: string;
+  limitations?: string[];
+  operations?: Array<{
+    fieldPath?: string;
+    locale?: string;
+    op?: string;
+    path?: string;
+    pointer?: string;
+    symbolId?: string;
+    textFormat?: string;
+    valuePreview?: string;
+  }>;
+  previewFormat?: string;
+  proposalId?: string;
+  safety?: {
+    directApply?: boolean;
+    executable?: boolean;
+    hostWrite?: boolean;
+    includesSourceContent?: boolean;
+    requiresConflictCheck?: boolean;
+    requiresFileRead?: boolean;
+    requiresHumanReview?: boolean;
+    sourcesContentPolicy?: string;
+  };
+  status?: string;
+  targetKind?: string;
+  unavailableReason?: string;
+}
+
+/**
+ * Review payload 中的 apply 前预检摘要。
+ * Apply preflight summary carried by a review payload before any write is allowed.
+ */
+export interface HiaDocumentationEditApplyPreflightSummary {
+  conflictStatus?: string;
+  contract?: string;
+  contractVersion?: string;
+  id?: string;
+  limitations?: string[];
+  proposalId?: string;
+  requiresConflictCheck?: boolean;
+  requiresFileRead?: boolean;
+  rollback?: {
+    recordRequired?: boolean;
+    scope?: string;
+    strategy?: string;
+  };
+  status?: string;
+  targetFiles?: Array<{
+    conflict?: {
+      blocking?: boolean;
+      expectedBaseVersion?: string;
+      requiresFileRead?: boolean;
+      status?: string;
+    };
+    fieldPath?: string;
+    fileVersion?: {
+      contentHashStatus?: string;
+      required?: boolean;
+      source?: string;
+      status?: string;
+    };
+    formatting?: {
+      formatter?: string;
+      indentation?: string;
+      lineEnding?: string;
+    };
+    locale?: string;
+    path?: string;
+    pointer?: string;
+    role?: string;
+    rollback?: {
+      recordRequired?: boolean;
+      scope?: string;
+      strategy?: string;
+    };
+    symbolId?: string;
+  }>;
+  targetKind?: string;
+}
+
+/**
  * Review payload 中的只读 edit candidate 摘要。
  * Read-only edit candidate summary carried by a review payload.
  */
 export interface HiaDocumentationEditCandidateSummary {
   applyMode?: string;
+  applyPreflight?: HiaDocumentationEditApplyPreflightSummary;
   contract?: string;
   contractVersion?: string;
+  diffPreview?: HiaDocumentationEditDiffPreviewSummary;
   id?: string;
   kind?: string;
   preview?: {
@@ -689,6 +779,8 @@ export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentati
     const quality = summarizeReviewQuality(item);
     const action = item.actionHints?.copyDraftAvailable ? "copy draft" : "review";
     const editCandidate = item.actionHints?.editCandidatePreviewAvailable ? "edit preview" : undefined;
+    const diffPreview = item.editCandidate?.diffPreview?.status === "preview-only" ? "diff preview" : undefined;
+    const applyPreflight = item.editCandidate?.applyPreflight?.status === "requires-host-check" ? "host preflight" : undefined;
 
     return {
       item,
@@ -696,7 +788,7 @@ export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentati
       description: [item.kind, item.status, item.risk?.level ? `risk:${item.risk.level}` : undefined]
         .filter(isNonEmptyString)
         .join(" | "),
-      detail: [target, quality, editCandidate, `action:${action}`]
+      detail: [target, quality, editCandidate, diffPreview, applyPreflight, `action:${action}`]
         .filter(isNonEmptyString)
         .join(" | ")
     };
@@ -718,6 +810,8 @@ export function createHiaDocumentationReviewItemReport(item: HiaDocumentationRev
     `Target: ${summarizeReviewTarget(item) || "unknown"}`,
     `Draft: ${item.draft ? item.draft.draftKind || "available" : "none"}`,
     `Edit candidate: ${item.editCandidate?.status || "none"}${item.editCandidate?.kind ? ` (${item.editCandidate.kind})` : ""}`,
+    `Diff preview: ${item.editCandidate?.diffPreview?.status || "none"}${item.editCandidate?.diffPreview?.targetKind ? ` (${item.editCandidate.diffPreview.targetKind})` : ""}`,
+    `Apply preflight: ${item.editCandidate?.applyPreflight?.status || "none"}${item.editCandidate?.applyPreflight?.conflictStatus ? ` (conflict:${item.editCandidate.applyPreflight.conflictStatus})` : ""}`,
     `Context links: docSourceMap=${item.contextLinks?.docSourceMapEntryCount ?? 0}, project=${item.contextLinks?.projectEntryCount ?? 0}, relations=${item.contextLinks?.relationCount ?? 0}`,
     `Action hints: copyDraft=${item.actionHints?.copyDraftAvailable ? "yes" : "no"}, editPreview=${item.actionHints?.editCandidatePreviewAvailable ? "yes" : "no"}, openContext=${item.actionHints?.openContextAvailable ? "yes" : "no"}, apply=${item.actionHints?.applyAvailable ? "yes" : "no"}`,
     `Quality checks: ${formatCounts(qualityCounts)}`,

@@ -992,8 +992,16 @@ async function selectHiaDocumentationReviewAction(
       item
     },
     {
+      label: "Show apply preflight preview",
+      description: item.editCandidate?.applyPreflight?.status === "requires-host-check"
+        ? `${item.editCandidate.applyPreflight.conflictStatus || "conflict unknown"}; target files:${item.editCandidate.applyPreflight.targetFiles?.length ?? 0}`
+        : "preflight not applicable",
+      actionKind: "show-apply-preflight",
+      item
+    },
+    {
       label: "Apply edit",
-      description: "disabled until human-approved apply contract lands",
+      description: "disabled until checked apply confirmation lands",
       actionKind: "apply-unavailable",
       item
     }
@@ -1040,9 +1048,14 @@ async function selectHiaDocumentationReviewAction(
     return;
   }
 
+  if (selected.actionKind === "show-apply-preflight") {
+    showHiaDocumentationApplyPreflightPreview(item, outputChannel);
+    return;
+  }
+
   outputChannel.show(true);
   outputChannel.appendLine("HIA documentation apply action is unavailable in this review-only slice.");
-  void vscode.window.showInformationMessage("HIA documentation apply is disabled until the human-approved apply contract is implemented.");
+  void vscode.window.showInformationMessage("HIA documentation apply is disabled until checked apply confirmation is implemented.");
 }
 
 async function openHiaSourceLinkageTarget(
@@ -1139,6 +1152,7 @@ type DocumentationReviewActionKind =
   | "apply-unavailable"
   | "copy-draft"
   | "copy-proposal-id"
+  | "show-apply-preflight"
   | "show-context"
   | "show-edit-candidate"
   | "show-details";
@@ -1229,9 +1243,21 @@ function showHiaDocumentationReviewEditCandidate(item: HiaDocumentationReviewPay
   outputChannel.appendLine(`- Direct apply: ${candidate.safety?.directApply ? "enabled" : "disabled"}`);
   outputChannel.appendLine(`- Host write: ${candidate.safety?.hostWrite ? "enabled" : "disabled"}`);
   outputChannel.appendLine(`- Source content: ${candidate.safety?.includesSourceContent ? "included" : "not included"}`);
+  outputChannel.appendLine(`- Diff preview: ${candidate.diffPreview?.status || "none"}${candidate.diffPreview?.targetKind ? ` (${candidate.diffPreview.targetKind})` : ""}`);
+  outputChannel.appendLine(`- Diff executable: ${candidate.diffPreview?.safety?.executable ? "yes" : "no"}`);
+  outputChannel.appendLine(`- Diff requires file read: ${candidate.diffPreview?.safety?.requiresFileRead ? "yes" : "no"}`);
+  outputChannel.appendLine(`- Diff requires conflict check: ${candidate.diffPreview?.safety?.requiresConflictCheck ? "yes" : "no"}`);
+  outputChannel.appendLine(`- Apply preflight: ${candidate.applyPreflight?.status || "none"}`);
+  outputChannel.appendLine(`- Preflight conflict: ${candidate.applyPreflight?.conflictStatus || "not available"}`);
+  outputChannel.appendLine(`- Preflight rollback: ${candidate.applyPreflight?.rollback?.strategy || "not available"}${candidate.applyPreflight?.rollback?.recordRequired ? " (record required)" : ""}`);
   outputChannel.appendLine(`- Target resource: ${candidate.target?.resourcePath || "not included"}`);
   outputChannel.appendLine(`- Target pointer: ${candidate.target?.resourcePointer || "not included"}`);
   outputChannel.appendLine(`- Target source: ${candidate.target?.relativePath || "not included"}`);
+
+  for (const operation of candidate.diffPreview?.operations || []) {
+    outputChannel.appendLine(`- Diff operation: ${operation.op || "unknown"}`);
+    outputChannel.appendLine(`  path=${operation.path || "not included"} pointer=${operation.pointer || "not included"} symbol=${operation.symbolId || "not included"}`);
+  }
 
   if (candidate.preview?.text) {
     outputChannel.appendLine("- Preview text:");
@@ -1241,6 +1267,41 @@ function showHiaDocumentationReviewEditCandidate(item: HiaDocumentationReviewPay
   }
 
   void vscode.window.showInformationMessage("HIA documentation edit candidate preview written to output.");
+}
+
+function showHiaDocumentationApplyPreflightPreview(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+  const preflight = item.editCandidate?.applyPreflight;
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation apply preflight preview:");
+
+  if (!preflight) {
+    outputChannel.appendLine("- Preflight: unavailable");
+    void vscode.window.showWarningMessage("This HIA documentation proposal has no apply preflight preview.");
+    return;
+  }
+
+  outputChannel.appendLine(`- Proposal: ${item.proposalId || item.id || "unknown"}`);
+  outputChannel.appendLine(`- Status: ${preflight.status || "unknown"}`);
+  outputChannel.appendLine(`- Target kind: ${preflight.targetKind || item.editCandidate?.kind || "unknown"}`);
+  outputChannel.appendLine(`- Conflict status: ${preflight.conflictStatus || "unknown"}`);
+  outputChannel.appendLine(`- Requires file read: ${preflight.requiresFileRead ? "yes" : "no"}`);
+  outputChannel.appendLine(`- Requires conflict check: ${preflight.requiresConflictCheck ? "yes" : "no"}`);
+  outputChannel.appendLine(`- Rollback: ${preflight.rollback?.strategy || "not available"}${preflight.rollback?.recordRequired ? " (record required)" : ""}`);
+  outputChannel.appendLine("- Direct apply: disabled");
+  outputChannel.appendLine("- Workspace write: disabled");
+  outputChannel.appendLine("- Source bodies: not shown by the VS Code preflight preview.");
+
+  for (const targetFile of preflight.targetFiles || []) {
+    outputChannel.appendLine(`- Target file: ${targetFile.path || "not included"}`);
+    outputChannel.appendLine(`  role=${targetFile.role || "unknown"} pointer=${targetFile.pointer || "not included"} symbol=${targetFile.symbolId || "not included"}`);
+    outputChannel.appendLine(`  fileVersion=${targetFile.fileVersion?.status || "unknown"} contentHash=${targetFile.fileVersion?.contentHashStatus || "unknown"}`);
+    outputChannel.appendLine(`  conflict=${targetFile.conflict?.status || "unknown"} blocking=${targetFile.conflict?.blocking ? "yes" : "no"}`);
+    outputChannel.appendLine(`  formatter=${targetFile.formatting?.formatter || "unknown"} lineEnding=${targetFile.formatting?.lineEnding || "unknown"} indentation=${targetFile.formatting?.indentation || "unknown"}`);
+    outputChannel.appendLine(`  rollback=${targetFile.rollback?.strategy || "unknown"}${targetFile.rollback?.recordRequired ? " (record required)" : ""}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA documentation apply preflight preview written to output. Apply remains disabled.");
 }
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {

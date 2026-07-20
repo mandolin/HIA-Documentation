@@ -19,6 +19,13 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Project navigation index | `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION` | `0.1.0-draft` |
 | LSP host result metadata | `HIA_LSP_HOST_RESULT_CONTRACT_VERSION` | `0.1.0-draft` |
 | LSP documentation edit proposals | `HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION` | `0.1.0-draft` |
+| LSP documentation edit apply preflight | `HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION` | `0.1.0-draft` |
+| LSP documentation edit diff preview | `HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION` | `0.1.0-draft` |
+| Apply boundary audit evidence | `scripts/prepare-wp34-apply-boundary-audit.mjs` | `0.1.0-draft` |
+| Edit diff preview evidence | `scripts/prepare-wp34-diff-preview-evidence.mjs` | `0.1.0-draft` |
+| Edit apply preflight evidence | `scripts/prepare-wp34-apply-preflight-evidence.mjs` | `0.1.0-draft` |
+| VS Code apply preview evidence | `scripts/prepare-wp34-vscode-apply-preview-evidence.mjs` | `0.1.0-draft` |
+| Host apply preview evidence | `scripts/prepare-wp34-host-apply-preview-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -46,6 +53,9 @@ This page summarizes the first stable contract baseline implemented in this mono
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
 | LSP host result metadata | `@hia-doc/lsp` | Additive metadata on selected `hia/*` custom request responses for request version, capability, result source and empty-state handling. |
 | LSP documentation edit proposals | `@hia-doc/lsp` | Public-safe, reviewable proposal view model for AI-assisted authoring. It does not carry private source text or directly applicable WorkspaceEdit output. |
+| LSP documentation edit apply preflight | `@hia-doc/lsp` | Host-side preflight metadata for file-version, conflict and rollback checks required before any future human-approved apply. It is not executable. |
+| LSP documentation edit diff preview | `@hia-doc/lsp` | Semantic patch-preview metadata nested under edit candidates. It describes intended operations, but is non-executable and not a WorkspaceEdit. |
+| Apply boundary audit evidence | `main-repo` scripts | W-P34 audit evidence tying review payloads, edit candidates, resource preflight and host surfaces together before any writable apply contract is designed. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -82,6 +92,9 @@ This page summarizes the first stable contract baseline implemented in this mono
 - LSP resource index data is derived from core documents and should not be written back into core documents.
 - LSP host result metadata is additive and should guide host fallback behavior; it does not replace the request-specific payload.
 - LSP documentation edit proposals are review targets, not edits to apply automatically. They must keep `sourcesContentPolicy: none`, `allowsAutomaticWrites: false` and `requiresHumanReview: true` until a later WorkspaceEdit contract is explicitly defined.
+- LSP documentation edit apply preflight records required host checks only. `status: requires-host-check` still means file versions are not read, conflicts are not checked and rollback records must be created before any later apply.
+- LSP documentation edit diff previews are semantic previews only. They must set `executable: false`, exclude source bodies, omit direct `workspaceEdit`/`documentChanges` objects and defer file-version/conflict checks to the apply metadata phase.
+- Apply boundary audit evidence is a readiness and guardrail artifact. It may summarize edit-candidate and resource-preflight metadata, but it must not expose absolute paths, source bodies, `sourcesContent` or directly applicable edit objects.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 

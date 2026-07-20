@@ -9,8 +9,12 @@ import {
   HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
   HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
   HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
@@ -262,8 +266,94 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
             targetLocale: "en"
           }),
           editCandidate: expect.objectContaining({
+            applyPreflight: expect.objectContaining({
+              conflictStatus: "not-checked",
+              contract: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT,
+              contractVersion: HIA_DOCUMENTATION_EDIT_APPLY_PREFLIGHT_CONTRACT_VERSION,
+              limitations: expect.arrayContaining([
+                "host-file-read-required",
+                "file-version-not-read",
+                "conflict-status-not-checked",
+                "rollback-record-required-before-apply"
+              ]),
+              requiresConflictCheck: true,
+              requiresFileRead: true,
+              rollback: {
+                recordRequired: true,
+                scope: "target-resource-file",
+                strategy: "host-undo"
+              },
+              status: "requires-host-check",
+              targetFiles: [
+                expect.objectContaining({
+                  conflict: {
+                    blocking: true,
+                    expectedBaseVersion: "unknown",
+                    requiresFileRead: true,
+                    status: "not-checked"
+                  },
+                  fieldPath: "description",
+                  fileVersion: {
+                    contentHashStatus: "not-computed",
+                    required: true,
+                    source: "host-file-read",
+                    status: "not-read"
+                  },
+                  formatting: {
+                    formatter: "json-resource-merge-required",
+                    indentation: "preserve",
+                    lineEnding: "preserve"
+                  },
+                  locale: "en",
+                  path: "i18n/profile.hia-i18n.json",
+                  pointer: "/en/profile.render.description",
+                  role: "external-resource",
+                  rollback: {
+                    recordRequired: true,
+                    scope: "target-resource-file",
+                    strategy: "host-undo"
+                  },
+                  symbolId: "function:renderProfile"
+                })
+              ],
+              targetKind: "external-resource-locale-entry"
+            }),
             contract: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
             contractVersion: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+            diffPreview: expect.objectContaining({
+              contract: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+              contractVersion: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT_VERSION,
+              limitations: expect.arrayContaining([
+                "not-a-workspace-edit",
+                "conflict-check-not-yet-run",
+                "external-resource-only"
+              ]),
+              operations: [
+                expect.objectContaining({
+                  fieldPath: "description",
+                  locale: "en",
+                  op: "add-locale-entry",
+                  path: "i18n/profile.hia-i18n.json",
+                  pointer: "/en/profile.render.description",
+                  symbolId: "function:renderProfile",
+                  textFormat: "plain-text",
+                  valuePreview: "TODO(en): Review localized description text for renderProfile."
+                })
+              ],
+              previewFormat: "semantic-patch-preview",
+              safety: {
+                directApply: false,
+                executable: false,
+                hostWrite: false,
+                includesSourceContent: false,
+                requiresConflictCheck: true,
+                requiresFileRead: true,
+                requiresHumanReview: true,
+                sourcesContentPolicy: "none"
+              },
+              status: "preview-only",
+              targetKind: "external-resource-locale-entry"
+            }),
             kind: "external-resource-locale-entry",
             preview: expect.objectContaining({
               previewKind: "draft-text",
@@ -507,6 +597,17 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
           primaryAction: "review"
         }),
         editCandidate: expect.objectContaining({
+          applyPreflight: expect.objectContaining({
+            conflictStatus: "not-applicable",
+            status: "not-applicable",
+            targetFiles: []
+          }),
+          diffPreview: expect.objectContaining({
+            limitations: expect.arrayContaining(["copy-only", "semantic-operation-unavailable"]),
+            operations: [],
+            status: "unavailable",
+            targetKind: "copy-only"
+          }),
           kind: "copy-only",
           status: "unavailable"
         }),
@@ -524,6 +625,54 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         }),
         draft: expect.objectContaining({
           draftKind: "documentation-stub"
+        }),
+        editCandidate: expect.objectContaining({
+          applyPreflight: expect.objectContaining({
+            conflictStatus: "not-checked",
+            rollback: {
+              recordRequired: true,
+              scope: "source-file",
+              strategy: "host-undo"
+            },
+            status: "requires-host-check",
+            targetFiles: [
+              expect.objectContaining({
+                conflict: expect.objectContaining({
+                  status: "not-checked"
+                }),
+                fileVersion: expect.objectContaining({
+                  status: "not-read"
+                }),
+                formatting: {
+                  formatter: "language-adapter-required",
+                  indentation: "preserve",
+                  lineEnding: "preserve"
+                },
+                path: "src/sample.toy",
+                role: "source-docline",
+                symbolId: "toy:helper"
+              })
+            ]
+          }),
+          diffPreview: expect.objectContaining({
+            contract: HIA_DOCUMENTATION_EDIT_DIFF_PREVIEW_CONTRACT,
+            operations: [
+              expect.objectContaining({
+                op: "insert-source-docline",
+                path: "src/sample.toy",
+                symbolId: "toy:helper",
+                textFormat: "plain-text",
+                valuePreview: "TODO: Review documentation draft for generic-function helper."
+              })
+            ],
+            safety: expect.objectContaining({
+              executable: false,
+              requiresConflictCheck: true,
+              requiresFileRead: true
+            }),
+            status: "preview-only",
+            targetKind: "source-docline-draft"
+          })
         }),
         kind: "missing-documentation"
       }),
