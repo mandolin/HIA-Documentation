@@ -52,6 +52,7 @@
     "wp34:host-apply-preview:evidence": "pnpm run wp34:vscode-apply-preview:evidence && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp34-host-apply-preview-evidence.mjs",
     "wp34:target-dry-run:evidence": "pnpm run wp34:host-apply-preview:evidence && node scripts/prepare-wp34-target-dry-run-evidence.mjs",
     "wp34:closeout:evidence": "pnpm run wp34:target-dry-run:evidence && node scripts/prepare-wp34-closeout-provider-inputs.mjs",
+    "wp35:provider-boundary:audit": "pnpm run wp34:closeout:evidence && pnpm run ai-authoring:evidence && node scripts/prepare-wp35-provider-boundary-audit.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
