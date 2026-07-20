@@ -4,8 +4,14 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHiaDocument } from "../packages/core/dist/index.js";
 import {
+  HIA_AI_CONTEXT_PACKAGE_CONTRACT,
+  HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
+  HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
+  HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION,
   HIA_LSP_DOCUMENTATION_EDIT_PROPOSALS_REQUEST
 } from "../packages/lsp/dist/documentation-edit-proposals.js";
 import { createHiaLspService } from "../packages/lsp/dist/service.js";
@@ -58,6 +64,7 @@ async function main() {
   assert.equal(result.contractVersion, HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION);
   assert.equal(result.status, "available");
   assert.equal(result.proposalCount, 4);
+  assert.equal(result.draftCount, 2);
   assert.deepEqual(result.proposals.map((proposal) => proposal.kind).sort(), [
     "generic-docline-diagnostic",
     "missing-documentation",
@@ -69,14 +76,79 @@ async function main() {
   assert.equal(result.privacy.includesSourceContent, false);
   assert.equal(result.privacy.allowsAutomaticWrites, false);
   assert.equal(result.privacy.requiresHumanReview, true);
+  assert.equal(result.aiContextPackage.contract, HIA_AI_CONTEXT_PACKAGE_CONTRACT);
+  assert.equal(result.aiContextPackage.contractVersion, HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION);
+  assert.equal(result.aiContextPackage.privacy.includesSourceContent, false);
+  assert.equal(result.aiContextPackage.privacy.includesSourceExcerpt, false);
+  assert.equal(result.aiContextPackage.privacy.sourcesContentPolicy, "none");
+  assert.equal(result.aiContextPackage.privacy.sourceExcerptPolicy.mode, "none");
+  assert.equal(result.aiContextPackage.selectionPolicy.sourceExcerptPolicy.mode, "none");
+  assert.equal(result.aiContextPackage.integrity.status, "pass");
+  assert.equal(result.aiContextPackage.proposalCount, result.proposalCount);
+  assert.equal(result.reviewPayload.contract, HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT);
+  assert.equal(result.reviewPayload.contractVersion, HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION);
+  assert.equal(result.reviewPayload.payloadKind, "host-neutral-review-panel");
+  assert.equal(result.reviewPayload.proposalCount, result.proposalCount);
+  assert.equal(result.reviewPayload.draftCount, result.draftCount);
+  assert.equal(result.reviewPayload.integrity.status, "pass");
+  assert.equal(result.reviewPayload.privacy.includesSourceContent, false);
+  assert.equal(result.reviewPayload.privacy.sourcesContentPolicy, "none");
+  assert.equal(result.reviewPayload.privacy.allowsAutomaticWrites, false);
+  assert.equal(result.reviewPayload.privacy.requiresHumanReview, true);
+  assert.equal(result.reviewPayload.privacy.allowsTargetRepositoryMutation, false);
+  assert.equal(result.reviewPayload.summary.itemCount, 4);
+  assert.equal(result.reviewPayload.summary.draftCount, 2);
+  assert.equal(result.reviewPayload.summary.qualityCheckCount, 33);
+  assert.equal(result.reviewPayload.summary.qualityWarningCount, 3);
+  assert.equal(result.reviewPayload.summary.qualityBlockedCount, 0);
+  assert.equal(result.reviewPayload.localeQuality.canonicalJsOutput, "@lang/<lang>");
+  assert.equal(result.reviewPayload.localeQuality.legacyLocaleTagsPolicy, "compat-input-only");
+  assert.equal(result.reviewPayload.localeQuality.sourceDocumentScope, "source-document");
+  assert.equal(result.reviewPayload.localeQuality.sourceDocumentTruth, "HiaI18nModel.fields");
+  assert.equal(result.reviewPayload.localeQuality.staleLocaleStatus, "not-evaluated");
+  assert.deepEqual(result.reviewPayload.localeQuality.policyLocales, ["en", "zh-CN"]);
+  assert.equal(result.reviewPayload.localeQuality.checkSummary.pass, 30);
+  assert.equal(result.reviewPayload.localeQuality.checkSummary.warning, 3);
+  assert.equal(result.reviewPayload.localeQuality.checkSummary.blocked, 0);
   assert.equal(result.host.capability, "hia.documentationEditProposal");
   assert.equal(result.host.source, "managed-document");
   assert.equal(result.proposals[0]?.status, "review-required");
   assert.equal(result.proposals[0]?.workspaceEditBoundary, "external-resource-only");
   assert.equal(result.context.docSourceMap.entryCount, 1);
   assert.equal(result.context.projectRelations.relationCount, 2);
+  const missingLocaleProposal = result.proposals.find((proposal) => proposal.kind === "missing-locale-stub");
+  assert.equal(missingLocaleProposal?.draft?.contract, HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT);
+  assert.equal(missingLocaleProposal?.draft?.contractVersion, HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION);
+  assert.equal(missingLocaleProposal?.draft?.draftKind, "translation-stub");
+  assert.equal(missingLocaleProposal?.draft?.targetLocale, "en");
+  assert.equal(missingLocaleProposal?.draft?.fieldPath, "description");
+  assert.equal(missingLocaleProposal?.draft?.generationBasis, "public-metadata-only");
+  assert.equal(missingLocaleProposal?.draft?.privacy.includesSourceBody, false);
+  assert.equal(missingLocaleProposal?.draft?.privacy.sourcesContentPolicy, "none");
+  assert.equal(missingLocaleProposal?.draft?.usesSourceBody, false);
+  assert.equal(missingLocaleProposal?.draft?.allowsAutomaticWrites, false);
+  assert.equal(missingLocaleProposal?.draft?.requiresHumanReview, true);
+  const missingLocaleReviewItem = result.reviewPayload.items.find((item) => item.kind === "missing-locale-stub");
+  assert.equal(missingLocaleReviewItem?.actionHints.copyDraftAvailable, true);
+  assert.equal(missingLocaleReviewItem?.actionHints.applyAvailable, false);
+  assert.equal(missingLocaleReviewItem?.actionHints.openContextAvailable, true);
+  assert.equal(missingLocaleReviewItem?.risk.level, "low");
+  assert.equal(missingLocaleReviewItem?.draft?.draftKind, "translation-stub");
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_TARGET_LOCALE_DRAFT_PRESENT" && check.status === "pass"));
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_FIELD_LEVEL_I18N_TARGET" && check.status === "pass"));
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_MISSING_LOCALE" && check.status === "pass"));
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_CANONICAL_LOCALE_OUTPUT_BOUNDARY" && check.status === "pass"));
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_STALE_LOCALE_STATUS" && check.status === "warning"));
   const missingDocumentationProposal = result.proposals.find((proposal) => proposal.kind === "missing-documentation");
   assert.ok(missingDocumentationProposal?.unifiedContext, "Missing-documentation proposal should carry unified context.");
+  assert.equal(missingDocumentationProposal.draft?.contract, HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT);
+  assert.equal(missingDocumentationProposal.draft?.contractVersion, HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION);
+  assert.equal(missingDocumentationProposal.draft?.draftKind, "documentation-stub");
+  assert.equal(missingDocumentationProposal.draft?.generationBasis, "public-metadata-only");
+  assert.equal(missingDocumentationProposal.draft?.privacy.includesSourceBody, false);
+  assert.equal(missingDocumentationProposal.draft?.usesSourceBody, false);
+  assert.equal(missingDocumentationProposal.draft?.allowsAutomaticWrites, false);
+  assert.equal(missingDocumentationProposal.draft?.requiresHumanReview, true);
   assert.deepEqual(missingDocumentationProposal.unifiedContext.matchedBy.sort(), [
     "doc-source-map-entry",
     "project-entry-symbolId",
@@ -88,8 +160,29 @@ async function main() {
   assert.equal(missingDocumentationProposal.unifiedContext.docSourceMapEntries?.[0]?.entryId, "entry:toy:helper");
   assert.equal(missingDocumentationProposal.unifiedContext.projectEntries?.[0]?.entryId, "generic-docline:toy-helper");
   assert.equal(missingDocumentationProposal.unifiedContext.relations?.length, 2);
+  assert.equal(missingDocumentationProposal.aiContextPackageRef?.contract, HIA_AI_CONTEXT_PACKAGE_CONTRACT);
+  assert.equal(missingDocumentationProposal.aiContextPackageRef?.packageId, result.aiContextPackage.id);
+  assert.equal(missingDocumentationProposal.aiContextPackageRef?.sourceExcerptPolicy, "none");
+  const missingDocumentationReviewItem = result.reviewPayload.items.find((item) => item.kind === "missing-documentation");
+  assert.equal(missingDocumentationReviewItem?.actionHints.copyDraftAvailable, true);
+  assert.equal(missingDocumentationReviewItem?.contextLinks.docSourceMapEntryCount, 1);
+  assert.equal(missingDocumentationReviewItem?.contextLinks.projectEntryCount, 1);
+  assert.equal(missingDocumentationReviewItem?.contextLinks.relationCount, 2);
+  assert.equal(missingDocumentationReviewItem?.draft?.draftKind, "documentation-stub");
+  assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_BILINGUAL_DRAFT_LOCALES" && check.status === "pass"));
+  assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_TRUTH_BOUNDARY" && check.status === "warning"));
+  assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_STALE_LOCALE_STATUS" && check.status === "warning"));
   assert(!serialized.includes("\"sourcesContent\":"), "AI authoring evidence must not embed sourcesContent.");
   assert(!serialized.includes("渲染用户资料"), "AI authoring evidence must not embed source/default text bodies.");
+  const contextPackageSerialized = JSON.stringify(result.aiContextPackage);
+  assert(!contextPackageSerialized.includes("file://"), "AI context package must redact file URLs.");
+  assert(!/[A-Za-z]:[\\/]/u.test(contextPackageSerialized), "AI context package must not expose drive-letter absolute paths.");
+  assert(!contextPackageSerialized.includes("work-zone"), "AI context package must not expose private WorkZone paths.");
+  const reviewPayloadSerialized = JSON.stringify(result.reviewPayload);
+  assert(!reviewPayloadSerialized.includes("file://"), "Review payload must redact file URLs.");
+  assert(!/[A-Za-z]:[\\/]/u.test(reviewPayloadSerialized), "Review payload must not expose drive-letter absolute paths.");
+  assert(!reviewPayloadSerialized.includes("work-zone"), "Review payload must not expose private WorkZone paths.");
+  const proposalsWithDrafts = result.proposals.filter((proposal) => proposal.draft);
 
   const evidence = {
     contract: "hia-ai-authoring-proposals-runtime-evidence",
@@ -103,7 +196,21 @@ async function main() {
     result,
     privacyChecks: {
       allowsAutomaticWrites: false,
+      aiContextPackageIntegrity: result.aiContextPackage.integrity.status,
+      aiContextPackageSourceExcerptPolicy: result.aiContextPackage.privacy.sourceExcerptPolicy.mode,
+      contextPackageIncludesAbsolutePaths: false,
+      draftCount: result.draftCount,
+      draftsAllowAutomaticWrites: proposalsWithDrafts.some((proposal) => proposal.draft.allowsAutomaticWrites !== false),
+      draftsUseSourceBody: proposalsWithDrafts.some((proposal) => proposal.draft.usesSourceBody !== false),
       includesSourceContent: false,
+      localeQualityBlockedCount: result.reviewPayload.localeQuality.checkSummary.blocked,
+      localeQualityCanonicalJsOutput: result.reviewPayload.localeQuality.canonicalJsOutput,
+      localeQualitySourceDocumentTruth: result.reviewPayload.localeQuality.sourceDocumentTruth,
+      localeQualityWarningCount: result.reviewPayload.localeQuality.checkSummary.warning,
+      reviewPayloadIncludesAbsolutePaths: false,
+      reviewPayloadIntegrity: result.reviewPayload.integrity.status,
+      reviewPayloadItemCount: result.reviewPayload.summary.itemCount,
+      reviewPayloadQualityCheckCount: result.reviewPayload.summary.qualityCheckCount,
       sourcesContentPolicy: "none",
       targetRepositoryMutation: false
     },
@@ -111,6 +218,8 @@ async function main() {
       "Confirm an IDE host presents proposal review before any write.",
       "Confirm opening the target resource stays inside the active workspace.",
       "Confirm proposal copy text does not include private source bodies.",
+      "Confirm draft text stays review-only and is not applied as a WorkspaceEdit.",
+      "Confirm locale quality warnings are reviewed before drafting @lang / <lang> source output.",
       "Confirm unifiedContext points to project-index entry, doc-source-map entry and relation metadata only.",
       "Confirm cancelling a proposal leaves the workspace unchanged."
     ]

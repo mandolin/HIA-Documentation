@@ -5,8 +5,14 @@ import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createHiaDocument } from "@hia-doc/core";
 import {
+  HIA_AI_CONTEXT_PACKAGE_CONTRACT,
+  HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
+  HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
+  HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION,
   HIA_LSP_DOCUMENTATION_EDIT_PROPOSALS_REQUEST
 } from "./documentation-edit-proposals.js";
 import { createHiaLspService } from "./service.js";
@@ -20,6 +26,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
     expect(result).toMatchObject({
       contract: HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
       contractVersion: HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
+      draftCount: 0,
       host: {
         capability: "hia.documentationEditProposal",
         emptyState: "not-loaded",
@@ -41,6 +48,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
       status: "unavailable",
       unavailableReason: "document-not-open"
     });
+    expect(result.reviewPayload).toBeUndefined();
   });
 
   it("creates reviewable missing-locale proposals without source contents or direct workspace edits", () => {
@@ -123,9 +131,35 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         requiresHumanReview: true,
         sourcesContentPolicy: "none"
       },
+      draftCount: 1,
       proposalCount: 1,
       proposals: [
         expect.objectContaining({
+          aiContextPackageRef: expect.objectContaining({
+            contract: HIA_AI_CONTEXT_PACKAGE_CONTRACT,
+            contractVersion: HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
+            includesSourceContent: false,
+            sourceExcerptPolicy: "none"
+          }),
+          draft: expect.objectContaining({
+            allowsAutomaticWrites: false,
+            contract: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
+            contractVersion: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+            draftKind: "translation-stub",
+            fieldPath: "description",
+            generationBasis: "public-metadata-only",
+            localeDrafts: {
+              en: "TODO(en): Review localized description text for renderProfile."
+            },
+            privacy: {
+              includesSourceBody: false,
+              sourcesContentPolicy: "none"
+            },
+            requiresHumanReview: true,
+            targetLocale: "en",
+            textFormat: "plain-text",
+            usesSourceBody: false
+          }),
           kind: "missing-locale-stub",
           origin: expect.objectContaining({
             diagnosticCodes: ["HIA_LSP_I18N_LOCALE_MISSING"]
@@ -148,6 +182,165 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         defaultAction: "review"
       }
     });
+    expect(result.aiContextPackage).toMatchObject({
+      contract: HIA_AI_CONTEXT_PACKAGE_CONTRACT,
+      contractVersion: HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
+      integrity: {
+        diagnostics: [],
+        status: "pass"
+      },
+      localeState: {
+        defaultLocale: "zh-CN",
+        localeCount: 2,
+        missingLocaleCount: 1
+      },
+      privacy: {
+        allowsAbsolutePaths: false,
+        allowsPrivateWorkspacePaths: false,
+        allowsTargetRepositoryMutation: false,
+        includesSourceContent: false,
+        includesSourceExcerpt: false,
+        sourcesContentPolicy: "none"
+      },
+      proposalCount: 1,
+      request: {
+        method: "hia/documentationEditProposals",
+        uriPolicy: "redacted",
+        version: "0.1.0-draft"
+      },
+      selectionPolicy: {
+        contextPolicy: "public-safe",
+        sourceExcerptPolicy: {
+          includesSourceBody: false,
+          maxExcerptCharacters: 0,
+          mode: "none",
+          optInRequired: true
+        }
+      }
+    });
+    expect(result.reviewPayload).toMatchObject({
+      actionPolicy: {
+        defaultAction: "review",
+        deniedActions: expect.arrayContaining(["auto-apply", "apply-workspace-edit"])
+      },
+      aiContextPackage: {
+        contract: HIA_AI_CONTEXT_PACKAGE_CONTRACT,
+        integrityStatus: "pass",
+        packageId: result.aiContextPackage?.id,
+        sourceExcerptPolicy: "none"
+      },
+      contract: HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
+      contractVersion: HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION,
+      draftCount: 1,
+      integrity: {
+        diagnostics: [],
+        status: "pass"
+      },
+      items: [
+        expect.objectContaining({
+          actionHints: expect.objectContaining({
+            applyAvailable: false,
+            copyDraftAvailable: true,
+            openContextAvailable: true,
+            openTargetAvailable: true,
+            primaryAction: "review"
+          }),
+          contextLinks: expect.objectContaining({
+            aiContextPackageRef: expect.objectContaining({
+              packageId: result.aiContextPackage?.id,
+              sourceExcerptPolicy: "none"
+            })
+          }),
+          draft: expect.objectContaining({
+            contract: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
+            draftKind: "translation-stub",
+            targetLocale: "en"
+          }),
+          kind: "missing-locale-stub",
+          qualityChecks: expect.arrayContaining([
+            expect.objectContaining({
+              code: "HIA_REVIEW_TARGET_LOCALE_DRAFT_PRESENT",
+              status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_SOURCE_DOCUMENT_MISSING_LOCALE",
+              status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_FIELD_LEVEL_I18N_TARGET",
+              status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_CANONICAL_LOCALE_OUTPUT_BOUNDARY",
+              status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_STALE_LOCALE_STATUS",
+              status: "warning"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_DRAFT_REVIEW_ONLY",
+              status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_NO_AUTOMATIC_WRITE",
+              status: "pass"
+            })
+          ]),
+          risk: {
+            level: "low",
+            reasons: ["human-review-required", "no-automatic-write"]
+          },
+          target: expect.objectContaining({
+            locale: "en",
+            resourcePath: "i18n/profile.hia-i18n.json",
+            resourcePointer: "/en/profile.render.description",
+            symbolId: "function:renderProfile"
+          })
+        })
+      ],
+      localeQuality: {
+        canonicalJsOutput: "@lang/<lang>",
+        checkSummary: {
+          blocked: 0,
+          pass: 9,
+          warning: 1
+        },
+        defaultLocale: "zh-CN",
+        documentLocales: ["zh-CN", "en"],
+        legacyLocaleTagsPolicy: "compat-input-only",
+        missingLocaleCount: 1,
+        policyLocales: ["en", "zh-CN"],
+        sourceDocumentScope: "source-document",
+        sourceDocumentTruth: "HiaI18nModel.fields",
+        staleLocaleStatus: "not-evaluated"
+      },
+      payloadKind: "host-neutral-review-panel",
+      privacy: {
+        allowsAutomaticWrites: false,
+        allowsTargetRepositoryMutation: false,
+        contextPolicy: "public-safe",
+        includesDraftText: true,
+        includesSourceContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      },
+      proposalCount: 1,
+      summary: {
+        blockedCount: 0,
+        draftCount: 1,
+        itemCount: 1,
+        qualityBlockedCount: 0,
+        qualityCheckCount: 10,
+        qualityWarningCount: 1,
+        reviewRequiredCount: 1,
+        unifiedContextCount: 0
+      }
+    });
+    expect(JSON.stringify(result.aiContextPackage)).not.toContain("file://");
+    expect(JSON.stringify(result.aiContextPackage)).not.toMatch(/[A-Za-z]:[\\/]/u);
+    expect(JSON.stringify(result.reviewPayload)).not.toContain("file://");
+    expect(JSON.stringify(result.reviewPayload)).not.toMatch(/[A-Za-z]:[\\/]/u);
     expect(serialized).not.toContain("\"sourcesContent\":");
     expect(serialized).not.toContain("渲染用户资料");
     expect(serialized).not.toContain("WorkspaceEdit");
@@ -208,15 +401,131 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
 
     const result = service.getDocumentationEditProposals(uri);
     const serialized = JSON.stringify(result);
+    const packageSerialized = JSON.stringify(result.aiContextPackage);
 
     expect(result.proposalCount).toBe(3);
+    expect(result.draftCount).toBe(1);
+    expect(result.aiContextPackage).toMatchObject({
+      contract: "hia-ai-context-package",
+      integrity: {
+        status: "pass"
+      },
+      privacy: {
+        includesSourceContent: false,
+        includesSourceExcerpt: false,
+        sourceExcerptPolicy: {
+          mode: "none"
+        }
+      },
+      proposalCount: 3
+    });
+    expect(result.aiContextPackage?.proposalContexts.map((context) => context.kind).sort()).toEqual([
+      "generic-docline-diagnostic",
+      "missing-documentation",
+      "profile-rule-suggestion"
+    ]);
     expect(result.proposals.map((proposal) => proposal.kind).sort()).toEqual([
       "generic-docline-diagnostic",
       "missing-documentation",
       "profile-rule-suggestion"
     ]);
+    expect(result.reviewPayload).toMatchObject({
+      contract: HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
+      draftCount: 1,
+      integrity: {
+        status: "pass"
+      },
+      proposalCount: 3,
+      localeQuality: {
+        checkSummary: {
+          blocked: 0,
+          pass: 21,
+          warning: 2
+        },
+        documentLocales: ["en"],
+        policyLocales: ["en", "zh-CN"],
+        sourceDocumentTruth: "HiaI18nModel.fields",
+        staleLocaleStatus: "not-evaluated"
+      },
+      summary: {
+        blockedCount: 0,
+        draftCount: 1,
+        itemCount: 3,
+        qualityBlockedCount: 0,
+        qualityCheckCount: 23,
+        qualityWarningCount: 2,
+        reviewRequiredCount: 3,
+        unifiedContextCount: 0
+      }
+    });
+    expect(result.reviewPayload?.items.map((item) => item.kind).sort()).toEqual([
+      "generic-docline-diagnostic",
+      "missing-documentation",
+      "profile-rule-suggestion"
+    ]);
+    expect(result.reviewPayload?.items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        actionHints: expect.objectContaining({
+          applyAvailable: false,
+          copyDraftAvailable: false,
+          primaryAction: "review"
+        }),
+        kind: "generic-docline-diagnostic",
+        qualityChecks: expect.arrayContaining([
+          expect.objectContaining({
+            code: "HIA_REVIEW_SUGGESTION_ONLY",
+            status: "pass"
+          })
+        ])
+      }),
+      expect.objectContaining({
+        actionHints: expect.objectContaining({
+          copyDraftAvailable: true
+        }),
+        draft: expect.objectContaining({
+          draftKind: "documentation-stub"
+        }),
+        kind: "missing-documentation"
+      }),
+      expect.objectContaining({
+        kind: "missing-documentation",
+        qualityChecks: expect.arrayContaining([
+          expect.objectContaining({
+            code: "HIA_REVIEW_BILINGUAL_DRAFT_LOCALES",
+            status: "pass"
+          }),
+          expect.objectContaining({
+            code: "HIA_REVIEW_SOURCE_DOCUMENT_TRUTH_BOUNDARY",
+            status: "warning"
+          }),
+          expect.objectContaining({
+            code: "HIA_REVIEW_STALE_LOCALE_STATUS",
+            status: "warning"
+          })
+        ])
+      })
+    ]));
     expect(result.proposals).toEqual(expect.arrayContaining([
       expect.objectContaining({
+        draft: expect.objectContaining({
+          allowsAutomaticWrites: false,
+          contract: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
+          contractVersion: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+          draftKind: "documentation-stub",
+          generationBasis: "public-metadata-only",
+          localeDrafts: {
+            en: "TODO: Document generic-function helper.",
+            "zh-CN": "TODO: 补充 generic-function helper 的文档说明。"
+          },
+          privacy: {
+            includesSourceBody: false,
+            sourcesContentPolicy: "none"
+          },
+          requiresHumanReview: true,
+          text: "TODO: Review documentation draft for generic-function helper.",
+          textFormat: "plain-text",
+          usesSourceBody: false
+        }),
         kind: "missing-documentation",
         origin: expect.objectContaining({
           source: "document-symbol"
@@ -257,8 +566,11 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
       })
     ]));
     expect(serialized).not.toContain("\"sourcesContent\":");
-    expect(serialized).not.toContain("function helper");
+    expect(serialized).not.toContain("function helper()");
     expect(serialized).not.toContain("WorkspaceEdit");
+    expect(packageSerialized).not.toContain("file://");
+    expect(packageSerialized).not.toMatch(/[A-Za-z]:[\\/]/u);
+    expect(packageSerialized).not.toContain("work-zone");
   });
 
   it("bridges proposals to workspace unified entries, doc-source-map and relation metadata", () => {
@@ -391,9 +703,89 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         ]),
         status: "matched"
       });
+      expect(result.aiContextPackage).toMatchObject({
+        contract: "hia-ai-context-package",
+        integrity: {
+          status: "pass"
+        },
+        privacy: {
+          includesSourceContent: false,
+          sourceExcerptPolicy: {
+            mode: "none"
+          }
+        },
+        proposalContexts: [
+          expect.objectContaining({
+            kind: "missing-documentation",
+            target: expect.objectContaining({
+              relativePath: "src/profile-card.html",
+              symbolId: "html:component:profile-card"
+            }),
+            unifiedContext: expect.objectContaining({
+              status: "matched"
+            })
+          })
+        ]
+      });
+      expect(proposal?.aiContextPackageRef).toMatchObject({
+        contract: "hia-ai-context-package",
+        includesSourceContent: false,
+        packageId: result.aiContextPackage?.id,
+        sourceExcerptPolicy: "none"
+      });
+      expect(result.reviewPayload).toMatchObject({
+        contract: HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
+        integrity: {
+          status: "pass"
+        },
+        summary: {
+          draftCount: 1,
+          itemCount: 1,
+          unifiedContextCount: 1
+        },
+        items: [
+          expect.objectContaining({
+            actionHints: expect.objectContaining({
+              applyAvailable: false,
+              copyDraftAvailable: true,
+              openContextAvailable: true,
+              openTargetAvailable: true
+            }),
+            contextLinks: expect.objectContaining({
+              docSourceMapEntryCount: 1,
+              projectEntryCount: 1,
+              relationCount: 2,
+              docSourceMapEntries: [
+                expect.objectContaining({
+                  entryId: "entry:profile-card",
+                  manifestId: "docmap:fixture:profile-card"
+                })
+              ],
+              projectEntries: [
+                expect.objectContaining({
+                  entryId: "htmdoc-extraction:html-component-profile-card",
+                  sourcePath: "src/profile-card.html"
+                })
+              ],
+              relations: expect.arrayContaining([
+                expect.objectContaining({
+                  kind: "documents-source"
+                })
+              ])
+            }),
+            kind: "missing-documentation",
+            target: expect.objectContaining({
+              relativePath: "src/profile-card.html",
+              symbolId: "html:component:profile-card"
+            })
+          })
+        ]
+      });
       expect(serialized).not.toContain("\"sourcesContent\":");
       expect(serialized).not.toContain("<article");
       expect(serialized).not.toContain("WorkspaceEdit");
+      expect(JSON.stringify(result.aiContextPackage)).not.toContain("file://");
+      expect(JSON.stringify(result.reviewPayload)).not.toContain("file://");
     } finally {
       rmSync(root, { force: true, recursive: true });
     }

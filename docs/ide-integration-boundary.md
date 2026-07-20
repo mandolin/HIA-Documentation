@@ -41,6 +41,10 @@ Custom request responses are IDE-neutral view models derived from managed core d
 
 Proposal payloads may include additive `unifiedContext` when the LSP can match the proposal target against workspace `doc-source-map` inputs and renderer `project-index.json` relation data. Hosts should treat this as navigation context for review panels: matched project entries, source-map entries and relation summaries are useful for opening unified documentation or related source/generated artifacts, but they are not write instructions and must not be converted into automatic edits.
 
+Proposal responses may also include additive `hia-documentation-review-payload@0.1.0-draft`. This host-neutral payload organizes review items, draft text, risk labels, quality checks, context links and action hints for IDE, DevTools, Visual Studio or CLI review surfaces. It intentionally omits file URLs, source bodies and directly applicable edit data; hosts should resolve navigation inside their own workspace boundary and keep all writes behind explicit review/apply flows.
+
+Review payload quality checks include a first-round locale gate. Hosts can surface missing-locale confirmation, target-locale draft coverage, source-document truth (`HiaI18nModel.fields`), canonical JS output guidance (`@lang` / inline `<lang>`) and stale-locale warnings without treating them as automatic write instructions.
+
 When a documentation profile set is available, `hia/ideCapabilities`, completion and hover may include profile-derived tag and diagnostic information. IDE shells should display that data as returned by the LSP and should not implement their own profile registry logic.
 
 ## VS Code Baseline

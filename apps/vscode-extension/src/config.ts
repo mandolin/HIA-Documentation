@@ -151,7 +151,41 @@ export interface HiaDocumentationEditProposalPrivacySummary {
   sourcesContentPolicy?: string;
 }
 
+/**
+ * Review-only draft text summary exposed by the LSP proposal contract.
+ *
+ * 中文：LSP proposal contract 暴露的仅供审查草稿文本摘要。
+ */
+export interface HiaDocumentationEditProposalDraftSummary {
+  allowsAutomaticWrites?: boolean;
+  contract?: string;
+  contractVersion?: string;
+  draftKind?: string;
+  fieldPath?: string;
+  generationBasis?: string;
+  localeDrafts?: Record<string, string>;
+  privacy?: {
+    includesSourceBody?: boolean;
+    sourcesContentPolicy?: string;
+  };
+  qualityNotes?: string[];
+  requiresHumanReview?: boolean;
+  targetLocale?: string;
+  text?: string;
+  textFormat?: string;
+  usesSourceBody?: boolean;
+}
+
 export interface HiaDocumentationEditProposalSummary {
+  aiContextPackageRef?: {
+    contract?: string;
+    contractVersion?: string;
+    includesSourceContent?: boolean;
+    packageId?: string;
+    proposalContextId?: string;
+    sourceExcerptPolicy?: string;
+  };
+  draft?: HiaDocumentationEditProposalDraftSummary;
   id?: string;
   kind?: string;
   privacy?: HiaDocumentationEditProposalPrivacySummary;
@@ -179,10 +213,116 @@ export interface HiaDocumentationEditProposalSummary {
   unavailableReason?: string;
 }
 
+export interface HiaAiContextPackageSummary {
+  contract?: string;
+  contractVersion?: string;
+  integrity?: {
+    diagnostics?: unknown[];
+    status?: string;
+  };
+  privacy?: {
+    allowsAbsolutePaths?: boolean;
+    allowsPrivateWorkspacePaths?: boolean;
+    allowsTargetRepositoryMutation?: boolean;
+    includesSourceContent?: boolean;
+    includesSourceExcerpt?: boolean;
+    sourcesContentPolicy?: string;
+  };
+  proposalContexts?: unknown[];
+  proposalCount?: number;
+  selectionPolicy?: {
+    contextPolicy?: string;
+    sourceExcerptPolicy?: {
+      mode?: string;
+    };
+  };
+}
+
+export interface HiaDocumentationReviewPayloadSummary {
+  actionPolicy?: {
+    allowedActions?: string[];
+    defaultAction?: string;
+    deniedActions?: string[];
+  };
+  contract?: string;
+  contractVersion?: string;
+  draftCount?: number;
+  integrity?: {
+    diagnostics?: unknown[];
+    status?: string;
+  };
+  items?: Array<{
+    actionHints?: {
+      allowedActions?: string[];
+      applyAvailable?: boolean;
+      copyDraftAvailable?: boolean;
+      deniedActions?: string[];
+      openContextAvailable?: boolean;
+      openTargetAvailable?: boolean;
+      primaryAction?: string;
+    };
+    contextLinks?: {
+      docSourceMapEntryCount?: number;
+      projectEntryCount?: number;
+      relationCount?: number;
+    };
+    draft?: HiaDocumentationEditProposalDraftSummary;
+    id?: string;
+    kind?: string;
+    qualityChecks?: unknown[];
+    risk?: {
+      level?: string;
+      reasons?: string[];
+    };
+    status?: string;
+    title?: string;
+  }>;
+  payloadKind?: string;
+  privacy?: {
+    allowsAutomaticWrites?: boolean;
+    allowsTargetRepositoryMutation?: boolean;
+    contextPolicy?: string;
+    includesDraftText?: boolean;
+    includesSourceContent?: boolean;
+    requiresHumanReview?: boolean;
+    sourcesContentPolicy?: string;
+  };
+  proposalCount?: number;
+  summary?: {
+    blockedCount?: number;
+    draftCount?: number;
+    itemCount?: number;
+    qualityBlockedCount?: number;
+    qualityCheckCount?: number;
+    qualityWarningCount?: number;
+    reviewRequiredCount?: number;
+    unifiedContextCount?: number;
+  };
+  localeQuality?: {
+    canonicalJsOutput?: string;
+    checkSummary?: {
+      blocked?: number;
+      pass?: number;
+      warning?: number;
+    };
+    defaultLocale?: string;
+    documentLocales?: string[];
+    legacyLocaleTagsPolicy?: string;
+    missingLocaleCount?: number;
+    policyLocales?: string[];
+    sourceDocumentScope?: string;
+    sourceDocumentTruth?: string;
+    staleLocaleStatus?: string;
+  };
+}
+
 export interface HiaDocumentationEditProposalsSummary {
+  aiContextPackage?: HiaAiContextPackageSummary;
+  draftCount?: number;
   privacy?: HiaDocumentationEditProposalPrivacySummary;
   proposalCount?: number;
   proposals?: HiaDocumentationEditProposalSummary[];
+  reviewPayload?: HiaDocumentationReviewPayloadSummary;
   status?: string;
   uri?: string;
 }

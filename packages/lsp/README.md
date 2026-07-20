@@ -78,6 +78,14 @@ The proposal model also carries additive proposal kinds for missing documentatio
 
 When workspace runtime data is available, each proposal may include additive `unifiedContext`. This bounded context can point to matched project navigation entries, `doc-source-map` entries and relation graph metadata so IDE or AI review panels can open the surrounding unified documentation context. It carries identifiers, relative paths, ranges and relation metadata only; it must not carry source bodies or embedded `sourcesContent`.
 
+W-P32 adds an additive `hia-ai-context-package@0.1.0-draft` envelope to the same result. The context package is provider-independent and host-neutral: it deduplicates document summary, diagnostics, locale state, proposal targets, doc-source-map entries, project entries and relation summaries for AI-assisted review. Its default source excerpt policy is `none`; the package redacts request URIs, avoids file URLs and drive-letter paths, reports privacy integrity diagnostics, and still does not contain `sourcesContent` or source bodies.
+
+Each missing-documentation or missing-translation proposal may also carry additive `hia-documentation-draft-text@0.1.0-draft`. Draft text is generated from public metadata only, uses `sourcesContentPolicy: none`, marks `usesSourceBody: false`, and keeps `allowsAutomaticWrites: false`. Hosts must present it as review-only text, not as a directly applicable edit.
+
+W-P32.4 adds an additive `hia-documentation-review-payload@0.1.0-draft` envelope. It is a host-neutral review panel input that groups proposal items, draft text, context links, quality checks, risk labels and action hints. The payload intentionally omits file URLs and directly applicable edit data; hosts can use proposal ids and relative target/context metadata to resolve navigation inside their own trust boundary.
+
+The review payload also reports first-round locale quality checks. It records `HiaI18nModel.fields` as the source-document truth, reports policy locales `en` / `zh-CN`, verifies target-locale draft coverage and blocks legacy `@hiaText` / `@hiaBlock` in new draft output. Stale-locale detection is currently a warning because it needs source revision or translation freshness metadata.
+
 Profile data is supplied as a normalized `@hia-doc/profile` runtime set. The LSP consumes profile tags, diagnostics and capability metadata, but it does not load language source files or redefine profile semantics.
 
 See `docs/contract-index.md`, `docs/ide-integration-boundary.md` and the IDE/LSP capability contract for the current boundary between core documents, diagnostics, authoring capabilities and IDE views.
