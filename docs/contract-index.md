@@ -39,6 +39,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real provider governance baseline evidence | `scripts/prepare-wp36-real-provider-governance-audit.mjs` | `0.1.0-draft` |
 | Provider registry installation policy evidence | `scripts/prepare-wp36-provider-registry-installation-policy.mjs` | `0.1.0-draft` |
 | Secret storage boundary evidence | `scripts/prepare-wp36-secret-storage-boundary.mjs` | `0.1.0-draft` |
+| Network mediation consent evidence | `scripts/prepare-wp36-network-mediation-consent.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -84,6 +85,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real provider governance baseline evidence | `main-repo` scripts | W-P36 evidence defining mandatory gates for real provider registry, secret storage, network consent, audit logs, source excerpt opt-in and checked-apply separation. |
 | Provider registry installation policy evidence | `main-repo` scripts | W-P36 evidence defining provider registry entries, explicit installation defaults, license/provenance requirements and remote-provider blocked status before secret/network gates pass. |
 | Secret storage boundary evidence | `main-repo` scripts | W-P36 evidence defining host-managed provider secret references, redaction, lifecycle, audit and release gates without serializing secret values. |
+| Network mediation consent evidence | `main-repo` scripts | W-P36 evidence defining host-mediated remote provider network envelopes, consent scopes, destination allowlists, redacted audit metadata and refusal/rate-limit handling without performing external calls. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -134,6 +136,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Real provider governance baseline evidence must keep secrets behind host-managed storage, default network to disabled, require user consent and audit records for external calls, and preserve provider output as review-only augmentation.
 - Provider registry installation policy evidence must require explicit provider selection, permissive license/provenance records, disabled-by-default installation and remote-provider blocking until secret storage and network consent gates pass.
 - Secret storage boundary evidence may serialize secret references and host capability metadata, but must not serialize provider credential values in repositories, evidence, logs, requests or results.
+- Network mediation consent evidence must keep direct provider network disabled, require host mediation and scoped consent, and produce only redacted audit/provenance metadata before any later safe invocation dry-run.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
