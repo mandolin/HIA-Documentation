@@ -37,6 +37,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target/self-doc provider dry-run evidence | `scripts/prepare-wp35-target-self-doc-provider-dry-run-evidence.mjs` | `0.1.0-draft` |
 | Provider integration closeout checked-apply inputs | `scripts/prepare-wp35-closeout-checked-apply-inputs.mjs` | `0.1.0-draft` |
 | Real provider governance baseline evidence | `scripts/prepare-wp36-real-provider-governance-audit.mjs` | `0.1.0-draft` |
+| Provider registry installation policy evidence | `scripts/prepare-wp36-provider-registry-installation-policy.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -80,6 +81,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target/self-doc provider dry-run evidence | `main-repo` scripts | W-P35 evidence proving deterministic provider review output can be routed to HIA self-documentation and known target-project scenarios without source bodies, API keys, network calls or repository mutation. |
 | Provider integration closeout checked-apply inputs | `main-repo` scripts | W-P35 closeout evidence that records provider integration as review-only complete and turns real provider execution plus checked apply into explicit downstream planning inputs. |
 | Real provider governance baseline evidence | `main-repo` scripts | W-P36 evidence defining mandatory gates for real provider registry, secret storage, network consent, audit logs, source excerpt opt-in and checked-apply separation. |
+| Provider registry installation policy evidence | `main-repo` scripts | W-P36 evidence defining provider registry entries, explicit installation defaults, license/provenance requirements and remote-provider blocked status before secret/network gates pass. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -128,6 +130,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Target/self-doc provider dry-run evidence may declare HIA self-documentation and target-project scenarios, but it must redact local paths, avoid source bodies, avoid `sourcesContent`, avoid API keys/network access and perform no repository mutation.
 - Provider integration closeout evidence may mark provider review-only infrastructure complete, but it must keep real provider invocation, secret storage, network mediation and checked apply as explicit downstream inputs.
 - Real provider governance baseline evidence must keep secrets behind host-managed storage, default network to disabled, require user consent and audit records for external calls, and preserve provider output as review-only augmentation.
+- Provider registry installation policy evidence must require explicit provider selection, permissive license/provenance records, disabled-by-default installation and remote-provider blocking until secret storage and network consent gates pass.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
