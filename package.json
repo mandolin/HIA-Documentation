@@ -44,6 +44,7 @@
     "wp32:review-payload:evidence": "pnpm run build && pnpm run ai-authoring:evidence",
     "wp32:locale-quality:evidence": "pnpm run build && pnpm run ai-authoring:evidence",
     "wp32:readiness:evidence": "pnpm run build && pnpm run ai-authoring:evidence && node scripts/prepare-wp32-readiness-evidence.mjs",
+    "wp33:host-review:evidence": "pnpm run build && pnpm run ai-authoring:evidence && pnpm run vscode:source-linkage:evidence && pnpm run vscode:project-relations:evidence && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp33-host-review-readiness-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
