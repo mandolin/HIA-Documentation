@@ -35,6 +35,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Local provider runner evidence | `scripts/prepare-wp35-provider-runner-evidence.mjs` | `0.1.0-draft` |
 | Host review provider evidence | `scripts/prepare-wp35-host-review-provider-evidence.mjs` | `0.1.0-draft` |
 | Target/self-doc provider dry-run evidence | `scripts/prepare-wp35-target-self-doc-provider-dry-run-evidence.mjs` | `0.1.0-draft` |
+| Provider integration closeout checked-apply inputs | `scripts/prepare-wp35-closeout-checked-apply-inputs.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -76,6 +77,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Local provider runner evidence | `main-repo` scripts | W-P35 evidence proving provider output can be routed back into review payload augmentation without source bodies, WorkspaceEdit objects or target repository mutation. |
 | Host review provider evidence | `main-repo` scripts | W-P35 evidence proving VS Code, DevTools and Visual Studio review surfaces can display provider augmentation while apply/write authority remains disabled. |
 | Target/self-doc provider dry-run evidence | `main-repo` scripts | W-P35 evidence proving deterministic provider review output can be routed to HIA self-documentation and known target-project scenarios without source bodies, API keys, network calls or repository mutation. |
+| Provider integration closeout checked-apply inputs | `main-repo` scripts | W-P35 closeout evidence that records provider integration as review-only complete and turns real provider execution plus checked apply into explicit downstream planning inputs. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -122,6 +124,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Deterministic mock providers are test providers. They must remain offline, reproducible and review-only, and must not be treated as authorization to implement checked apply or real provider network calls.
 - Local provider runners are mediation layers. They may convert review payloads to provider-safe requests and return augmentation data, but must not convert provider output into direct apply data or mutate source/target repositories.
 - Target/self-doc provider dry-run evidence may declare HIA self-documentation and target-project scenarios, but it must redact local paths, avoid source bodies, avoid `sourcesContent`, avoid API keys/network access and perform no repository mutation.
+- Provider integration closeout evidence may mark provider review-only infrastructure complete, but it must keep real provider invocation, secret storage, network mediation and checked apply as explicit downstream inputs.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
