@@ -41,6 +41,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Secret storage boundary evidence | `scripts/prepare-wp36-secret-storage-boundary.mjs` | `0.1.0-draft` |
 | Network mediation consent evidence | `scripts/prepare-wp36-network-mediation-consent.mjs` | `0.1.0-draft` |
 | Source excerpt privacy gate evidence | `scripts/prepare-wp36-source-excerpt-privacy-gate.mjs` | `0.1.0-draft` |
+| Safe invocation dry-run evidence | `scripts/prepare-wp36-safe-invocation-dry-run.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -88,6 +89,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Secret storage boundary evidence | `main-repo` scripts | W-P36 evidence defining host-managed provider secret references, redaction, lifecycle, audit and release gates without serializing secret values. |
 | Network mediation consent evidence | `main-repo` scripts | W-P36 evidence defining host-mediated remote provider network envelopes, consent scopes, destination allowlists, redacted audit metadata and refusal/rate-limit handling without performing external calls. |
 | Source excerpt privacy gate evidence | `main-repo` scripts | W-P36 evidence defining default-deny source excerpt policy, bounded opt-in profiles, redaction/release gates and reference-only evidence before safe invocation dry-run. |
+| Safe invocation dry-run evidence | `main-repo` scripts | W-P36 evidence executing the deterministic mock provider through the local runner while keeping remote provider calls blocked, review-only and source/secret/write-free. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -140,6 +142,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Secret storage boundary evidence may serialize secret references and host capability metadata, but must not serialize provider credential values in repositories, evidence, logs, requests or results.
 - Network mediation consent evidence must keep direct provider network disabled, require host mediation and scoped consent, and produce only redacted audit/provenance metadata before any later safe invocation dry-run.
 - Source excerpt privacy gate evidence must keep source excerpts default-denied, bounded by explicit opt-in, and reference-only in evidence; source bodies, full files and `sourcesContent` remain forbidden.
+- Safe invocation dry-run evidence may execute deterministic/local providers through the runner, but must keep remote/API providers blocked, produce only review augmentation and deny source bodies, secrets, direct edits, tools and writes.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
