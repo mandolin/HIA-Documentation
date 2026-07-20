@@ -26,6 +26,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Edit apply preflight evidence | `scripts/prepare-wp34-apply-preflight-evidence.mjs` | `0.1.0-draft` |
 | VS Code apply preview evidence | `scripts/prepare-wp34-vscode-apply-preview-evidence.mjs` | `0.1.0-draft` |
 | Host apply preview evidence | `scripts/prepare-wp34-host-apply-preview-evidence.mjs` | `0.1.0-draft` |
+| Target project dry-run evidence | `scripts/prepare-wp34-target-dry-run-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -56,6 +57,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | LSP documentation edit apply preflight | `@hia-doc/lsp` | Host-side preflight metadata for file-version, conflict and rollback checks required before any future human-approved apply. It is not executable. |
 | LSP documentation edit diff preview | `@hia-doc/lsp` | Semantic patch-preview metadata nested under edit candidates. It describes intended operations, but is non-executable and not a WorkspaceEdit. |
 | Apply boundary audit evidence | `main-repo` scripts | W-P34 audit evidence tying review payloads, edit candidates, resource preflight and host surfaces together before any writable apply contract is designed. |
+| Target project dry-run evidence | `main-repo` scripts | Target-facing W-P34 evidence that maps review/diff/preflight inputs to known project scenarios without exposing absolute paths or mutating target repositories. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -95,6 +97,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - LSP documentation edit apply preflight records required host checks only. `status: requires-host-check` still means file versions are not read, conflicts are not checked and rollback records must be created before any later apply.
 - LSP documentation edit diff previews are semantic previews only. They must set `executable: false`, exclude source bodies, omit direct `workspaceEdit`/`documentChanges` objects and defer file-version/conflict checks to the apply metadata phase.
 - Apply boundary audit evidence is a readiness and guardrail artifact. It may summarize edit-candidate and resource-preflight metadata, but it must not expose absolute paths, source bodies, `sourcesContent` or directly applicable edit objects.
+- Target project dry-run evidence may name target project labels and documentation needs, but it must redact local target paths, avoid source bodies, avoid `sourcesContent` and perform no target repository mutation.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
