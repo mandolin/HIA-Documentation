@@ -8,6 +8,7 @@ const outputRoot = path.join(rootDir, "dist", "wp33-host-review-readiness-eviden
 const evidencePath = path.join(outputRoot, "evidence.json");
 const inputPaths = {
   aiAuthoring: path.join(rootDir, "dist", "ai-authoring-proposals-evidence", "evidence.json"),
+  vscodeManifest: path.join(rootDir, "apps", "vscode-extension", "package.json"),
   vscodeSourceLinkage: path.join(rootDir, "dist", "vscode-source-linkage-runtime-evidence", "evidence.json"),
   vscodeProjectRelations: path.join(rootDir, "dist", "vscode-project-relations-runtime-evidence", "evidence.json"),
   devtools: path.join(rootDir, "dist", "devtools-extension-check.json"),
@@ -24,6 +25,7 @@ await main();
  */
 async function main() {
   const aiAuthoring = await readJson(inputPaths.aiAuthoring);
+  const vscodeManifest = await readJson(inputPaths.vscodeManifest);
   const vscodeSourceLinkage = await readJson(inputPaths.vscodeSourceLinkage);
   const vscodeProjectRelations = await readJson(inputPaths.vscodeProjectRelations);
   const devtools = await readJson(inputPaths.devtools);
@@ -34,6 +36,7 @@ async function main() {
   const hostRows = [
     createVsCodeHostRow({
       reviewPayload,
+      vscodeManifest,
       sourceLinkage: vscodeSourceLinkage,
       projectRelations: vscodeProjectRelations
     }),
@@ -60,6 +63,7 @@ async function main() {
     status: hardFailures.length === 0 ? "ready-for-visible-review-ui-first-slice" : "blocked",
     sourceEvidence: {
       aiAuthoring: normalizePath(inputPaths.aiAuthoring),
+      vscodeManifest: normalizePath(inputPaths.vscodeManifest),
       vscodeSourceLinkage: normalizePath(inputPaths.vscodeSourceLinkage),
       vscodeProjectRelations: normalizePath(inputPaths.vscodeProjectRelations),
       devtools: normalizePath(inputPaths.devtools),
@@ -81,24 +85,9 @@ async function main() {
     hosts: hostRows,
     nextImplementationOrder: [
       {
-        phase: "W-P33.2",
-        hostId: "vscode-extension",
-        reason: "VS Code already has TypeScript summary types and command-palette host plumbing; it is the lowest-friction visible review list."
-      },
-      {
-        phase: "W-P33.3",
-        hostId: "language-aware-authoring",
-        reason: "Completion and hover can reuse the same language-marker contract across VS Code, DevTools and Visual Studio."
-      },
-      {
-        phase: "W-P33.5",
-        hostId: "devtools-extension",
-        reason: "DevTools has a zero-permission open-request bridge but still needs a dedicated review surface."
-      },
-      {
-        phase: "W-P33.6",
-        hostId: "visual-studio-extension",
-        reason: "Visual Studio is contract-ready and important for DotNetDoc, but still skeleton-level for visible UX."
+        phase: "W-P33.7",
+        hostId: "cycle-closeout",
+        reason: "VS Code, DevTools and Visual Studio now have first visible review input surfaces; closeout should record apply-contract and runtime confirmation inputs."
       }
     ],
     manualChecks: [
@@ -123,7 +112,7 @@ async function readJson(filePath) {
   return JSON.parse(await readFile(filePath, "utf8"));
 }
 
-function createVsCodeHostRow({ reviewPayload, sourceLinkage, projectRelations }) {
+function createVsCodeHostRow({ reviewPayload, vscodeManifest, sourceLinkage, projectRelations }) {
   const checks = [
     check("WP33_VSCODE_REVIEW_PAYLOAD_AVAILABLE", reviewPayload?.contract === "hia-documentation-review-payload", {
       expected: "hia-documentation-review-payload",
@@ -145,7 +134,10 @@ function createVsCodeHostRow({ reviewPayload, sourceLinkage, projectRelations })
       expected: true,
       actual: summarizeApplyAvailability(reviewPayload)
     }),
-    gap("WP33_VSCODE_VISIBLE_REVIEW_LIST_NOT_YET_IMPLEMENTED", "VS Code has host plumbing and typed summaries, but W-P33.2 still needs the visible command-palette/review-list slice.")
+    check("WP33_VSCODE_VISIBLE_REVIEW_COMMAND", hasVsCodeCommand(vscodeManifest, "hia.reviewDocumentationProposals"), {
+      expected: "hia.reviewDocumentationProposals",
+      actual: listVsCodeCommands(vscodeManifest)
+    })
   ];
 
   return {
@@ -168,6 +160,7 @@ function createVsCodeHostRow({ reviewPayload, sourceLinkage, projectRelations })
       projectRelationsCandidate: projectRelations?.projectRelations?.relationCount > 0,
       applyCandidate: false,
       requiresHumanReview: true,
+      visibleReviewList: true,
       requiresManualRuntimeConfirmation: true
     },
     checks
@@ -192,13 +185,20 @@ function createDevToolsHostRow({ reviewPayload, devtools }) {
       expected: true,
       actual: summarizeApplyAvailability(reviewPayload)
     }),
-    gap("WP33_DEVTOOLS_REVIEW_SURFACE_NOT_YET_IMPLEMENTED", "DevTools has an open-request bridge but still needs a dedicated read-only review panel surface.")
+    check("WP33_DEVTOOLS_REVIEW_SURFACE_AVAILABLE", devtools?.panel?.reviewSurface?.contract === "hia-devtools-review-surface", {
+      expected: "hia-devtools-review-surface",
+      actual: devtools?.panel?.reviewSurface?.contract
+    }),
+    check("WP33_DEVTOOLS_REVIEW_SURFACE_APPLY_DISABLED", devtools?.panel?.reviewSurface?.applyAvailableCount === 0, {
+      expected: 0,
+      actual: devtools?.panel?.reviewSurface?.applyAvailableCount
+    })
   ];
 
   return {
     id: "devtools-extension",
     hostKind: "browser-devtools-extension",
-    readiness: "contract-ready-review-surface-gap",
+    readiness: "ready-for-first-visible-review-slice",
     suggestedPhase: "W-P33.5",
     consumedContracts: [
       "hia-documentation-review-payload@0.1.0-draft",
@@ -212,6 +212,7 @@ function createDevToolsHostRow({ reviewPayload, devtools }) {
       projectRelationsCandidate: true,
       applyCandidate: false,
       requiresHumanReview: true,
+      visibleReviewList: true,
       requiresManualRuntimeConfirmation: true
     },
     checks
@@ -220,6 +221,7 @@ function createDevToolsHostRow({ reviewPayload, devtools }) {
 
 function createVisualStudioHostRow({ reviewPayload, visualStudio }) {
   const documentationRequest = (visualStudio?.requests ?? []).find((request) => request.method === "hia/documentationEditProposals");
+  const reviewSurface = visualStudio?.reviewSurface;
   const checks = [
     check("WP33_VISUAL_STUDIO_REVIEW_PAYLOAD_AVAILABLE", reviewPayload?.contract === "hia-documentation-review-payload", {
       expected: "hia-documentation-review-payload",
@@ -241,18 +243,26 @@ function createVisualStudioHostRow({ reviewPayload, visualStudio }) {
       expected: true,
       actual: summarizeApplyAvailability(reviewPayload)
     }),
-    gap("WP33_VISUAL_STUDIO_VISIBLE_UX_NOT_YET_IMPLEMENTED", "Visual Studio is contract-ready and important for DotNetDoc, but the extension is still a skeleton.")
+    check("WP33_VISUAL_STUDIO_REVIEW_SURFACE_AVAILABLE", reviewSurface?.contract === "hia-visual-studio-review-surface", {
+      expected: "hia-visual-studio-review-surface",
+      actual: reviewSurface?.contract
+    }),
+    check("WP33_VISUAL_STUDIO_REVIEW_SURFACE_APPLY_DISABLED", reviewSurface?.disabledApply === true, {
+      expected: true,
+      actual: reviewSurface?.disabledApply
+    })
   ];
 
   return {
     id: "visual-studio-extension",
     hostKind: "ide-extension",
-    readiness: "contract-ready-skeleton",
+    readiness: "ready-for-first-visible-review-slice",
     suggestedPhase: "W-P33.6",
     consumedContracts: [
       "hia-documentation-review-payload@0.1.0-draft",
       "hia-lsp-host-result@0.1.0-draft",
-      "hia-visual-studio-host-skeleton@0.1.0-draft"
+      "hia-visual-studio-host-skeleton@0.1.0-draft",
+      "hia-visual-studio-review-surface@0.1.0-draft"
     ],
     capabilities: {
       reviewListCandidate: true,
@@ -262,6 +272,7 @@ function createVisualStudioHostRow({ reviewPayload, visualStudio }) {
       projectRelationsCandidate: true,
       applyCandidate: false,
       requiresHumanReview: true,
+      visibleReviewList: true,
       requiresManualRuntimeConfirmation: true
     },
     checks
@@ -331,6 +342,22 @@ function summarizeApplyAvailability(reviewPayload) {
 
 function reviewItems(reviewPayload) {
   return Array.isArray(reviewPayload?.items) ? reviewPayload.items : [];
+}
+
+function hasVsCodeCommand(manifest, commandId) {
+  return listVsCodeCommands(manifest).includes(commandId);
+}
+
+function listVsCodeCommands(manifest) {
+  const commands = manifest?.contributes?.commands;
+
+  if (!Array.isArray(commands)) {
+    return [];
+  }
+
+  return commands
+    .map((command) => command?.command)
+    .filter((command) => typeof command === "string" && command.length > 0);
 }
 
 function normalizePath(filePath) {

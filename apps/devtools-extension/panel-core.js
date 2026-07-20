@@ -4,6 +4,8 @@ export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE = "hia:devtools-open-request";
 export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY = "devtools.inspectedWindow.eval-window-event";
 export const HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE = "hia-devtools-panel";
+export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT = "hia-devtools-review-surface";
+export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION = "0.1.0-draft";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -14,6 +16,7 @@ export const HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE = "hia-devtools-panel";
  *   entries: Array<{ id: string; kind: string; label: string; openRequests: unknown[] }>;
  *   nodes: Array<{ id: string; kind: string; label: string; path?: string }>;
  *   relations: Array<{ id: string; kind: string; label: string; from: string; to: string; openRequests: unknown[] }>;
+ *   review: ReturnType<typeof createHiaDevToolsReviewSurfaceViewModel>;
  *   summary: { entryCount: number; linkedEntryCount: number; relationCount: number; relationNodeCount: number };
  * }}
  */
@@ -29,11 +32,71 @@ export function createHiaDevToolsPanelViewModel(payload) {
     entries,
     nodes,
     relations,
+    review: createHiaDevToolsReviewSurfaceViewModel(input),
     summary: {
       entryCount: numberValue(summary.entryCount) ?? entries.length,
       linkedEntryCount: numberValue(summary.linkedEntryCount) ?? entries.filter((entry) => entry.openRequests.length > 0).length,
       relationCount: numberValue(summary.relationCount) ?? relations.length,
       relationNodeCount: numberValue(summary.relationNodeCount) ?? nodes.length
+    }
+  };
+}
+
+/**
+ * 将 HIA review payload 规整为 DevTools 可渲染的只读 review surface。
+ * Normalize an HIA review payload into a DevTools-renderable read-only review surface.
+ *
+ * @param {unknown} payload Browser-panel payload, AI-authoring evidence, or direct `hia-documentation-review-payload`.
+ * @returns {{
+ *   actionPolicy: { allowedActions: string[]; deniedActions: string[] };
+ *   contract: string;
+ *   contractVersion: string;
+ *   draftCount: number;
+ *   items: Array<{
+ *     actionHints: Record<string, unknown>;
+ *     draftText?: string;
+ *     editCandidate: { applyMode: string; kind: string; previewText?: string; status: string; workspaceEditBoundary: string };
+ *     id: string;
+ *     kind: string;
+ *     proposalId: string;
+ *     quality: { blocked: number; pass: number; warning: number };
+ *     riskLevel: string;
+ *     status: string;
+ *     targetLabel: string;
+ *     title: string;
+ *   }>;
+ *   payloadContract?: string;
+ *   privacy: { allowsAutomaticWrites: boolean; includesSourceContent: boolean; requiresHumanReview: boolean; sourcesContentPolicy: string };
+ *   summary: { itemCount: number; reviewRequiredCount: number; blockedCount: number };
+ * }}
+ */
+export function createHiaDevToolsReviewSurfaceViewModel(payload) {
+  const reviewPayload = selectReviewPayload(payload);
+  const items = arrayValue(reviewPayload?.items).map(normalizeReviewItem);
+  const summary = isRecord(reviewPayload?.summary) ? reviewPayload.summary : {};
+  const privacy = isRecord(reviewPayload?.privacy) ? reviewPayload.privacy : {};
+  const actionPolicy = isRecord(reviewPayload?.actionPolicy) ? reviewPayload.actionPolicy : {};
+
+  return {
+    actionPolicy: {
+      allowedActions: stringArray(actionPolicy.allowedActions),
+      deniedActions: stringArray(actionPolicy.deniedActions)
+    },
+    contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
+    contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
+    draftCount: numberValue(reviewPayload?.draftCount) ?? items.filter((item) => Boolean(item.draftText)).length,
+    items,
+    ...(stringValue(reviewPayload?.contract) ? { payloadContract: stringValue(reviewPayload.contract) } : {}),
+    privacy: {
+      allowsAutomaticWrites: booleanValue(privacy.allowsAutomaticWrites) ?? false,
+      includesSourceContent: booleanValue(privacy.includesSourceContent) ?? false,
+      requiresHumanReview: booleanValue(privacy.requiresHumanReview) ?? true,
+      sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none"
+    },
+    summary: {
+      blockedCount: numberValue(summary.blockedCount) ?? items.filter((item) => item.status === "blocked").length,
+      itemCount: numberValue(summary.itemCount) ?? items.length,
+      reviewRequiredCount: numberValue(summary.reviewRequiredCount) ?? items.filter((item) => item.status === "review-required").length
     }
   };
 }
@@ -135,6 +198,87 @@ export function getHiaDevToolsRelationDetail(model, relationId) {
   };
 }
 
+/**
+ * 读取 DevTools review item detail，不执行任何写入动作。
+ * Read a DevTools review item detail without executing any write action.
+ *
+ * @param {ReturnType<typeof createHiaDevToolsPanelViewModel>} model DevTools panel view model.
+ * @param {string} itemId Review item id.
+ * @returns {ReturnType<typeof normalizeReviewItem> | undefined}
+ */
+export function getHiaDevToolsReviewDetail(model, itemId) {
+  return model.review.items.find((candidate) => candidate.id === itemId);
+}
+
+function selectReviewPayload(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (input.contract === "hia-documentation-review-payload") {
+    return input;
+  }
+
+  if (isRecord(input.reviewPayload)) {
+    return input.reviewPayload;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.reviewPayload)) {
+    return input.result.reviewPayload;
+  }
+
+  return undefined;
+}
+
+function normalizeReviewItem(value) {
+  const item = isRecord(value) ? value : {};
+  const actionHints = isRecord(item.actionHints) ? item.actionHints : {};
+  const draft = isRecord(item.draft) ? item.draft : {};
+  const editCandidate = isRecord(item.editCandidate) ? item.editCandidate : {};
+  const qualityChecks = arrayValue(item.qualityChecks);
+
+  return {
+    actionHints: cloneJsonValue(actionHints) ?? {},
+    ...(stringValue(draft.text) ? { draftText: stringValue(draft.text) } : {}),
+    editCandidate: normalizeEditCandidate(editCandidate),
+    id: stringValue(item.id) ?? stringValue(item.proposalId) ?? "review-item:unknown",
+    kind: stringValue(item.kind) ?? "review-item",
+    proposalId: stringValue(item.proposalId) ?? stringValue(item.id) ?? "proposal:unknown",
+    quality: {
+      blocked: qualityChecks.filter((check) => isRecord(check) && check.status === "blocked").length,
+      pass: qualityChecks.filter((check) => isRecord(check) && check.status === "pass").length,
+      warning: qualityChecks.filter((check) => isRecord(check) && check.status === "warning").length
+    },
+    riskLevel: stringValue(isRecord(item.risk) ? item.risk.level : undefined) ?? "unknown",
+    status: stringValue(item.status) ?? "unknown",
+    targetLabel: formatReviewTarget(item.target),
+    title: stringValue(item.title) ?? stringValue(item.proposalId) ?? "HIA documentation proposal"
+  };
+}
+
+function normalizeEditCandidate(value) {
+  const preview = isRecord(value.preview) ? value.preview : {};
+
+  return {
+    applyMode: stringValue(value.applyMode) ?? "manual-copy",
+    kind: stringValue(value.kind) ?? "copy-only",
+    ...(stringValue(preview.text) ? { previewText: stringValue(preview.text) } : {}),
+    status: stringValue(value.status) ?? "unavailable",
+    workspaceEditBoundary: stringValue(value.workspaceEditBoundary) ?? "review-only"
+  };
+}
+
+function formatReviewTarget(value) {
+  const target = isRecord(value) ? value : {};
+
+  return [
+    stringValue(target.relativePath) ?? stringValue(target.resourcePath) ?? stringValue(target.targetPath),
+    stringValue(target.symbolName) ?? stringValue(target.symbolId),
+    stringValue(target.fieldPath),
+    stringValue(target.locale) ? `locale:${stringValue(target.locale)}` : undefined
+  ]
+    .filter((item) => typeof item === "string" && item.length > 0)
+    .join(" ") || "target unavailable";
+}
+
 function normalizeEntry(value) {
   const entry = isRecord(value) ? value : {};
 
@@ -196,8 +340,16 @@ function numberValue(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function booleanValue(value) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
 function stringValue(value) {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function stringArray(value) {
+  return arrayValue(value).filter((item) => typeof item === "string" && item.length > 0);
 }
 
 function isRecord(value) {

@@ -55,6 +55,23 @@
       ]
     },
     {
+      "id": "hia-vs-review-tool-window",
+      "kind": "tool-window",
+      "owns": [
+        "documentation proposal list and detail presentation",
+        "draft text copy action",
+        "read-only edit candidate preview",
+        "locale-quality and language-marker review hints"
+      ],
+      "consumes": [
+        "hia/documentationEditProposals",
+        "hia-documentation-review-payload@0.1.0-draft",
+        "hia-documentation-edit-candidate@0.1.0-draft",
+        "hia-lsp-host-result@0.1.0-draft"
+      ],
+      "applySupport": "disabled-until-human-approved-workspace-edit-contract"
+    },
+    {
       "id": "hia-vs-commands",
       "kind": "command",
       "owns": [
@@ -147,6 +164,7 @@
     "allowAbsolutePathsInHostPayload": false,
     "allowTargetRepositoryMutation": false,
     "embedsSourcesContent": false,
+    "allowsAutomaticApply": false,
     "requiresHumanReviewForEditProposals": true,
     "parsesGeneratedHtml": false,
     "runsDocumentationProducers": false

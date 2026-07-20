@@ -13,10 +13,13 @@ const {
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY,
+  HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
+  HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
   createHiaDevToolsInspectedWindowBridgeExpression,
   createHiaDevToolsOpenRequestBridgeEnvelope,
   createHiaDevToolsOpenRequestMessage,
   createHiaDevToolsPanelViewModel,
+  getHiaDevToolsReviewDetail,
   getHiaDevToolsRelationDetail
 } = await import(pathToFileURL(path.join(extensionRoot, "panel-core.js")).href);
 
@@ -32,6 +35,7 @@ async function main() {
   const panelHtml = await readFile(path.join(extensionRoot, "panel.html"), "utf8");
   const panel = createHiaDevToolsPanelViewModel(createFixturePayload());
   const detail = getHiaDevToolsRelationDetail(panel, "documents-source:entry:api->source:src/api.ts");
+  const reviewDetail = getHiaDevToolsReviewDetail(panel, "review-item:proposal:api-doc");
   const message = createHiaDevToolsOpenRequestMessage(detail?.openRequests[0], {
     relationId: detail?.relation.id
   });
@@ -46,6 +50,15 @@ async function main() {
   assert.match(panelHtml, /<script type="module" src="\.\/panel\.js"><\/script>/u, "Panel page must load a local module script.");
   assert.equal(panel.summary.entryCount, 1, "Fixture entry count must be preserved.");
   assert.equal(panel.summary.relationCount, 1, "Fixture relation count must be preserved.");
+  assert.equal(panel.review.contract, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT, "Review surface must expose a stable DevTools contract.");
+  assert.equal(panel.review.contractVersion, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION, "Review surface must expose the contract version.");
+  assert.equal(panel.review.payloadContract, "hia-documentation-review-payload", "Review surface must consume the review payload contract.");
+  assert.equal(panel.review.summary.itemCount, 1, "Review surface must preserve review item count.");
+  assert.equal(panel.review.draftCount, 1, "Review surface must preserve draft count.");
+  assert.equal(panel.review.privacy.includesSourceContent, false, "Review surface must not include source content.");
+  assert.equal(reviewDetail?.actionHints.applyAvailable, false, "Review surface must keep apply unavailable.");
+  assert.equal(reviewDetail?.editCandidate.status, "preview-only", "Review surface must expose candidate preview status.");
+  assert.equal(reviewDetail?.editCandidate.kind, "source-docline-draft", "Review surface must expose candidate kind.");
   assert.equal(detail?.fromLabel, "API", "Relation detail must resolve the from node label.");
   assert.equal(detail?.toLabel, "src/api.ts", "Relation detail must resolve the to node path.");
   assert.equal(message.type, HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE, "Open request message type must match the browser-panel contract.");
@@ -86,7 +99,17 @@ async function main() {
       entryCount: panel.summary.entryCount,
       relationCount: panel.summary.relationCount,
       relationNodeCount: panel.summary.relationNodeCount,
-      openRequestType: message.type
+      openRequestType: message.type,
+      reviewSurface: {
+        applyAvailableCount: panel.review.items.filter((item) => item.actionHints.applyAvailable === true).length,
+        contract: panel.review.contract,
+        contractVersion: panel.review.contractVersion,
+        draftCount: panel.review.draftCount,
+        itemCount: panel.review.summary.itemCount,
+        payloadContract: panel.review.payloadContract,
+        previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
+        privacy: panel.review.privacy
+      }
     }
   }, null, 2)}\n`, "utf8");
   console.log(`DevTools extension check passed at ${path.relative(rootDir, evidencePath).replaceAll("\\", "/")}`);
@@ -144,6 +167,87 @@ function createFixturePayload() {
           to: "source:src/api.ts"
         }
       ]
+    },
+    reviewPayload: {
+      actionPolicy: {
+        allowedActions: ["review", "copy-draft", "preview-edit-candidate"],
+        deniedActions: ["apply-workspace-edit"]
+      },
+      contract: "hia-documentation-review-payload",
+      contractVersion: "0.1.0-draft",
+      draftCount: 1,
+      items: [
+        {
+          actionHints: {
+            applyAvailable: false,
+            copyDraftAvailable: true,
+            editCandidatePreviewAvailable: true,
+            openContextAvailable: true
+          },
+          contextLinks: {
+            docSourceMapEntryCount: 1,
+            projectEntryCount: 1,
+            relationCount: 1
+          },
+          draft: {
+            draftKind: "documentation-stub",
+            text: "TODO: Review API documentation.",
+            textFormat: "plain-text"
+          },
+          editCandidate: {
+            applyMode: "host-preview-only",
+            kind: "source-docline-draft",
+            preview: {
+              previewKind: "draft-text",
+              text: "TODO: Review API documentation.",
+              textFormat: "plain-text"
+            },
+            safety: {
+              allowsAutomaticWrites: false,
+              directApply: false,
+              hostWrite: false,
+              includesSourceContent: false,
+              requiresHumanReview: true,
+              rollback: "not-applicable",
+              sourcesContentPolicy: "none"
+            },
+            status: "preview-only",
+            target: {
+              relativePath: "src/api.ts",
+              symbolName: "API"
+            },
+            workspaceEditBoundary: "proposal-only"
+          },
+          id: "review-item:proposal:api-doc",
+          kind: "missing-documentation",
+          proposalId: "proposal:api-doc",
+          qualityChecks: [
+            { code: "HIA_REVIEW_NO_AUTOMATIC_WRITE", status: "pass" },
+            { code: "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY", status: "pass" }
+          ],
+          risk: {
+            level: "low"
+          },
+          status: "review-required",
+          target: {
+            relativePath: "src/api.ts",
+            symbolName: "API"
+          },
+          title: "Review API documentation"
+        }
+      ],
+      privacy: {
+        allowsAutomaticWrites: false,
+        includesSourceContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      },
+      summary: {
+        blockedCount: 0,
+        draftCount: 1,
+        itemCount: 1,
+        reviewRequiredCount: 1
+      }
     }
   };
 }

@@ -8,6 +8,7 @@
   "files": [
     "README.md",
     "host-contract.json",
+    "review-surface.json",
     "package.json"
   ],
   "scripts": {

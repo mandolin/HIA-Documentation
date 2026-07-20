@@ -1,0 +1,106 @@
+{
+  "contract": "hia-visual-studio-review-surface",
+  "contractVersion": "0.1.0-draft",
+  "status": "input-candidate",
+  "surface": {
+    "id": "hia-vs-review-tool-window",
+    "displayName": "HIA Documentation Review",
+    "kind": "tool-window",
+    "primaryRequest": "hia/documentationEditProposals",
+    "payloadContract": "hia-documentation-review-payload@0.1.0-draft",
+    "editCandidateContract": "hia-documentation-edit-candidate@0.1.0-draft",
+    "hostResultContract": "hia-lsp-host-result@0.1.0-draft"
+  },
+  "views": [
+    {
+      "id": "review-list",
+      "title": "Review List",
+      "purpose": "Show proposal status, risk, target label and locale-quality counts without exposing source content.",
+      "requiredFields": [
+        "item.id",
+        "item.kind",
+        "item.status",
+        "item.risk",
+        "item.target.label",
+        "item.actionHints"
+      ]
+    },
+    {
+      "id": "review-detail",
+      "title": "Review Detail",
+      "purpose": "Show proposal text, draft text and AI context reference for human review.",
+      "requiredFields": [
+        "item.proposalId",
+        "item.proposal.summary",
+        "item.draft.text",
+        "item.aiContextRef"
+      ]
+    },
+    {
+      "id": "candidate-preview",
+      "title": "Edit Candidate Preview",
+      "purpose": "Show read-only edit candidate metadata before any future apply workflow is designed.",
+      "requiredFields": [
+        "item.editCandidate.contract",
+        "item.editCandidate.status",
+        "item.editCandidate.target",
+        "item.editCandidate.preview"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "copy-draft",
+      "hostAction": "Copy selected draft text to clipboard after human review.",
+      "mutatesTargetRepository": false,
+      "requiresHumanReview": true
+    },
+    {
+      "id": "copy-proposal-id",
+      "hostAction": "Copy selected proposal id for issue, PR or AI handoff notes.",
+      "mutatesTargetRepository": false,
+      "requiresHumanReview": false
+    },
+    {
+      "id": "open-context",
+      "hostAction": "Open a workspace-relative source, generated artifact or documentation entry through structured open requests.",
+      "mutatesTargetRepository": false,
+      "requiresHumanReview": false
+    },
+    {
+      "id": "apply-candidate",
+      "hostAction": "Disabled until a later WorkspaceEdit/apply contract exists.",
+      "available": false,
+      "mutatesTargetRepository": false,
+      "requiresHumanReview": true
+    }
+  ],
+  "languageAuthoringHints": {
+    "canonicalMarkers": [
+      "@lang",
+      "<lang>",
+      "<l>"
+    ],
+    "dotnetXmlMarkers": [
+      "<lang>",
+      "<l>"
+    ],
+    "sourceDocumentTruth": "HiaI18nModel.fields",
+    "notes": "Visual Studio should display language-marker completion and hover data from @hia-doc/lsp instead of inventing host-only markers."
+  },
+  "targetScenarios": [
+    {
+      "id": "hia-aspnetportal",
+      "purpose": "Review DotNetDoc and ASP.NET documentation proposals in Visual Studio without modifying the target repository.",
+      "sourcePolicy": "workspace-relative-only",
+      "targetRepositoryPolicy": "central-notify-read-only"
+    }
+  ],
+  "privacy": {
+    "allowAbsolutePathsInHostPayload": false,
+    "allowTargetRepositoryMutation": false,
+    "embedsSourcesContent": false,
+    "allowsAutomaticApply": false,
+    "requiresHumanReviewForEditProposals": true
+  }
+}

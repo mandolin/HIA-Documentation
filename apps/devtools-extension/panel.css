@@ -92,19 +92,41 @@ input {
   font-weight: 700;
 }
 
+.view-tabs {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+}
+
+.view-tabs button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  min-height: 28px;
+  padding: 4px 10px;
+}
+
+.view-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: var(--accent);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
   min-height: 360px;
 }
 
-.relation-list {
+.side-list {
   border-right: 1px solid var(--border);
-  max-height: calc(100vh - 128px);
+  max-height: calc(100vh - 164px);
   overflow: auto;
 }
 
-.relation-button {
+.list-button {
   background: transparent;
   border: 0;
   border-bottom: 1px solid var(--border);
@@ -116,24 +138,24 @@ input {
   width: 100%;
 }
 
-.relation-button:hover,
-.relation-button[aria-selected="true"] {
+.list-button:hover,
+.list-button[aria-selected="true"] {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.relation-button strong {
+.list-button strong {
   display: block;
   overflow-wrap: anywhere;
 }
 
-.relation-button span {
+.list-button span {
   color: var(--muted);
   display: block;
   overflow-wrap: anywhere;
 }
 
 .detail {
-  max-height: calc(100vh - 128px);
+  max-height: calc(100vh - 164px);
   overflow: auto;
   padding: 10px;
 }
@@ -173,6 +195,23 @@ input {
   cursor: pointer;
   min-height: 28px;
   padding: 4px 8px;
+}
+
+.open-list button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.candidate-preview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: inherit;
+  margin: 12px 0 0;
+  max-height: 180px;
+  overflow: auto;
+  padding: 8px;
+  white-space: pre-wrap;
 }
 
 .open-log {

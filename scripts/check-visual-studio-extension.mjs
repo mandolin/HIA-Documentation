@@ -8,6 +8,7 @@ const appRoot = path.join(rootDir, "apps", "visual-studio-extension");
 const packagePath = path.join(appRoot, "package.json");
 const readmePath = path.join(appRoot, "README.md");
 const hostContractPath = path.join(appRoot, "host-contract.json");
+const reviewSurfacePath = path.join(appRoot, "review-surface.json");
 const evidencePath = path.join(rootDir, "dist", "visual-studio-extension-check.json");
 
 await main();
@@ -20,6 +21,7 @@ async function main() {
   const packageJson = JSON.parse(await readFile(packagePath, "utf8"));
   const readme = await readFile(readmePath, "utf8");
   const contract = JSON.parse(await readFile(hostContractPath, "utf8"));
+  const reviewSurface = JSON.parse(await readFile(reviewSurfacePath, "utf8"));
 
   assert.equal(packageJson.name, "@hia-doc/visual-studio-extension", "Visual Studio host package name must be stable.");
   assert.equal(packageJson.private, true, "Visual Studio skeleton must not be publishable yet.");
@@ -34,10 +36,12 @@ async function main() {
   assert.equal(contract.runtime?.cli?.package, "@hia-doc/cli", "Visual Studio host must delegate builds to @hia-doc/cli.");
   assertRequiredMethods(contract.customRequests);
   assertHostResultMetadata(contract.hostResultMetadata);
+  assertReviewSurface(contract, reviewSurface);
   assertPrivacy(contract.privacy);
   assert.match(readme, /VisualStudio\.Extensibility/u, "README must name the VisualStudio.Extensibility route.");
   assert.match(readme, /@hia-doc\/lsp/u, "README must name the LSP dependency boundary.");
   assert.match(readme, /does not parse language source/u, "README must preserve the no-parser host boundary.");
+  assert.match(readme, /review-surface\.json/u, "README must document the Visual Studio review surface input.");
 
   await mkdir(path.dirname(evidencePath), { recursive: true });
   await writeFile(evidencePath, `${JSON.stringify({
@@ -55,6 +59,19 @@ async function main() {
       targetIde: contract.host.targetIde
     },
     hostResultMetadata: contract.hostResultMetadata,
+    reviewSurface: {
+      contract: reviewSurface.contract,
+      contractVersion: reviewSurface.contractVersion,
+      status: reviewSurface.status,
+      surfaceId: reviewSurface.surface.id,
+      payloadContract: reviewSurface.surface.payloadContract,
+      editCandidateContract: reviewSurface.surface.editCandidateContract,
+      viewCount: reviewSurface.views.length,
+      actionCount: reviewSurface.actions.length,
+      disabledApply: reviewSurface.actions.some((action) => action.id === "apply-candidate" && action.available === false),
+      languageMarkers: reviewSurface.languageAuthoringHints.canonicalMarkers,
+      targetScenarios: reviewSurface.targetScenarios.map((scenario) => scenario.id)
+    },
     privacy: contract.privacy,
     requests: contract.customRequests.map((request) => ({
       capability: request.capability,
@@ -93,10 +110,70 @@ function assertHostResultMetadata(metadata) {
   assert.ok(metadata?.supportedEmptyStates?.includes("relation-graph-empty"), "Visual Studio host must recognize relation graph empty state.");
 }
 
+/**
+ * 校验 Visual Studio review tool-window 的只读输入契约。
+ * Validate the read-only input contract for the Visual Studio review tool window.
+ *
+ * @param {object} contract Host skeleton contract.
+ * @param {object} reviewSurface Review-surface input contract.
+ * @returns {void}
+ */
+function assertReviewSurface(contract, reviewSurface) {
+  assert.equal(reviewSurface?.contract, "hia-visual-studio-review-surface", "Visual Studio review surface contract must be explicit.");
+  assert.equal(reviewSurface?.contractVersion, "0.1.0-draft", "Visual Studio review surface version must be explicit.");
+  assert.equal(reviewSurface?.surface?.primaryRequest, "hia/documentationEditProposals", "Visual Studio review surface must consume the review proposal request.");
+  assert.equal(reviewSurface?.surface?.payloadContract, "hia-documentation-review-payload@0.1.0-draft", "Visual Studio review surface must pin review payload.");
+  assert.equal(reviewSurface?.surface?.editCandidateContract, "hia-documentation-edit-candidate@0.1.0-draft", "Visual Studio review surface must pin edit candidate preview.");
+  assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
+  assertSurfaceView(reviewSurface, "review-list");
+  assertSurfaceView(reviewSurface, "review-detail");
+  assertSurfaceView(reviewSurface, "candidate-preview");
+  assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
+  assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });
+  assertAction(reviewSurface, "apply-candidate", {
+    available: false,
+    mutatesTargetRepository: false,
+    requiresHumanReview: true
+  });
+  assert.deepEqual(reviewSurface?.languageAuthoringHints?.canonicalMarkers, [
+    "@lang",
+    "<lang>",
+    "<l>"
+  ], "Visual Studio language authoring hints must use canonical markers.");
+  assert.ok(reviewSurface?.targetScenarios?.some((scenario) => scenario.id === "hia-aspnetportal"), "Visual Studio review surface must keep the HIA-ASPNETPortal scenario visible.");
+  assert.equal(reviewSurface?.privacy?.allowTargetRepositoryMutation, false, "Visual Studio review surface must not mutate target repositories.");
+  assert.equal(reviewSurface?.privacy?.embedsSourcesContent, false, "Visual Studio review surface must not embed source contents.");
+  assert.equal(reviewSurface?.privacy?.allowsAutomaticApply, false, "Visual Studio review surface must not allow automatic apply.");
+}
+
+function hasSurface(contract, surfaceId) {
+  return Array.isArray(contract?.surfaces) && contract.surfaces.some((surface) => surface.id === surfaceId);
+}
+
+function assertSurfaceView(reviewSurface, viewId) {
+  assert.ok(
+    Array.isArray(reviewSurface?.views) && reviewSurface.views.some((view) => view.id === viewId && Array.isArray(view.requiredFields) && view.requiredFields.length > 0),
+    `Visual Studio review surface must define ${viewId}.`
+  );
+}
+
+function assertAction(reviewSurface, actionId, expected) {
+  const action = Array.isArray(reviewSurface?.actions)
+    ? reviewSurface.actions.find((candidate) => candidate.id === actionId)
+    : undefined;
+
+  assert.ok(action, `Visual Studio review surface must define ${actionId}.`);
+
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(action[key], value, `Visual Studio review action ${actionId} must set ${key}.`);
+  }
+}
+
 function assertPrivacy(privacy) {
   assert.equal(privacy?.allowAbsolutePathsInHostPayload, false, "Visual Studio host payloads must avoid absolute paths.");
   assert.equal(privacy?.allowTargetRepositoryMutation, false, "Visual Studio host must not mutate target repositories in this skeleton.");
   assert.equal(privacy?.embedsSourcesContent, false, "Visual Studio host must not embed source contents.");
+  assert.equal(privacy?.allowsAutomaticApply, false, "Visual Studio host must not auto-apply edit candidates.");
   assert.equal(privacy?.requiresHumanReviewForEditProposals, true, "Visual Studio host must require human review for edit proposals.");
   assert.equal(privacy?.parsesGeneratedHtml, false, "Visual Studio host must not parse generated HTML.");
   assert.equal(privacy?.runsDocumentationProducers, false, "Visual Studio host must not run producers.");
