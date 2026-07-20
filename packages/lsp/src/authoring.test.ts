@@ -29,6 +29,8 @@ describe("@hia-doc/lsp authoring", () => {
     expect(byId.get(HiaIdeCapabilityId.ResourceIndex)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CompletionI18n)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CompletionSource)?.status).toBe("partial");
+    expect(byId.get(HiaIdeCapabilityId.CompletionLanguageMarker)?.status).toBe("available");
+    expect(byId.get(HiaIdeCapabilityId.HoverLanguageMarker)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CodeActionResourceOpen)?.status).toBe("available");
     expect(byId.get(HiaIdeCapabilityId.CodeActionResourceStub)?.status).toBe("partial");
   });
@@ -46,6 +48,9 @@ describe("@hia-doc/lsp authoring", () => {
     expect(labels).toContain("profile.render.description");
     expect(labels).toContain("profile.render.params.profile");
     expect(labels).toContain("i18n/profile.hia-i18n.json");
+    expect(labels).toContain("@lang");
+    expect(labels).toContain("<lang>");
+    expect(labels).toContain("<l>");
   });
 
   it("creates source completion and definition locations from source references", () => {
@@ -108,6 +113,10 @@ describe("@hia-doc/lsp authoring", () => {
     expect(hover?.contents).toMatchObject({
       kind: "markdown",
       value: expect.stringContaining("HIA Basic Fixture")
+    });
+    expect(hover?.contents).toMatchObject({
+      kind: "markdown",
+      value: expect.stringContaining("Language markers: `@lang`, `<lang>`, `<l>`")
     });
     expect(foldingRanges.length).toBeGreaterThan(0);
     expect(foldingRanges).toEqual(expect.arrayContaining([

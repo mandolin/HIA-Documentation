@@ -12,6 +12,12 @@ export const HIA_VALIDATE_WORKSPACE_COMMAND = "hia.validateWorkspace";
 export const HIA_OPEN_RELATED_LOCATION_COMMAND = "hia.openRelatedLocation";
 export const HIA_SHOW_RESOURCE_ACTION_COMMAND = "hia.showResourceAction";
 export const HIA_COPY_RESOURCE_KEY_COMMAND = "hia.copyResourceKey";
+/**
+ * VS Code review-only command id for visible documentation proposal review.
+ *
+ * 中文：VS Code 中用于打开文档化 proposal 人工审查入口的只读命令标识。
+ */
+export const HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND = "hia.reviewDocumentationProposals";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -251,32 +257,7 @@ export interface HiaDocumentationReviewPayloadSummary {
     diagnostics?: unknown[];
     status?: string;
   };
-  items?: Array<{
-    actionHints?: {
-      allowedActions?: string[];
-      applyAvailable?: boolean;
-      copyDraftAvailable?: boolean;
-      deniedActions?: string[];
-      openContextAvailable?: boolean;
-      openTargetAvailable?: boolean;
-      primaryAction?: string;
-    };
-    contextLinks?: {
-      docSourceMapEntryCount?: number;
-      projectEntryCount?: number;
-      relationCount?: number;
-    };
-    draft?: HiaDocumentationEditProposalDraftSummary;
-    id?: string;
-    kind?: string;
-    qualityChecks?: unknown[];
-    risk?: {
-      level?: string;
-      reasons?: string[];
-    };
-    status?: string;
-    title?: string;
-  }>;
+  items?: HiaDocumentationReviewPayloadItemSummary[];
   payloadKind?: string;
   privacy?: {
     allowsAutomaticWrites?: boolean;
@@ -314,6 +295,112 @@ export interface HiaDocumentationReviewPayloadSummary {
     sourceDocumentTruth?: string;
     staleLocaleStatus?: string;
   };
+}
+
+/**
+ * 单个 documentation proposal 的 host-visible 审查摘要。
+ * Host-visible review summary for one documentation proposal.
+ *
+ * 中文：该结构只携带 target metadata、draft 摘要、quality/risk/action hints，不承载可直接写入的 workspace edit。
+ * English: This shape carries target metadata, draft summary, quality/risk/action hints, and no directly writable workspace edit.
+ */
+export interface HiaDocumentationReviewPayloadItemSummary {
+  actionHints?: {
+    allowedActions?: string[];
+    applyAvailable?: boolean;
+    copyDraftAvailable?: boolean;
+    deniedActions?: string[];
+    editCandidateAvailable?: boolean;
+    editCandidatePreviewAvailable?: boolean;
+    openContextAvailable?: boolean;
+    openTargetAvailable?: boolean;
+    primaryAction?: string;
+  };
+  contextLinks?: {
+    docSourceMapEntryCount?: number;
+    projectEntryCount?: number;
+    relationCount?: number;
+  };
+  draft?: HiaDocumentationEditProposalDraftSummary;
+  editCandidate?: HiaDocumentationEditCandidateSummary;
+  id?: string;
+  kind?: string;
+  proposalId?: string;
+  qualityChecks?: Array<{
+    code?: string;
+    message?: string;
+    status?: string;
+  }>;
+  risk?: {
+    level?: string;
+    reasons?: string[];
+  };
+  status?: string;
+  target?: {
+    diagnosticCode?: string;
+    fieldPath?: string;
+    locale?: string;
+    relativePath?: string;
+    resourcePath?: string;
+    resourcePointer?: string;
+    symbolId?: string;
+    symbolName?: string;
+    targetPath?: string;
+    targetUri?: string;
+  };
+  title?: string;
+  workspaceEditBoundary?: string;
+}
+
+/**
+ * Review payload 中的只读 edit candidate 摘要。
+ * Read-only edit candidate summary carried by a review payload.
+ */
+export interface HiaDocumentationEditCandidateSummary {
+  applyMode?: string;
+  contract?: string;
+  contractVersion?: string;
+  id?: string;
+  kind?: string;
+  preview?: {
+    previewKind?: string;
+    text?: string;
+    textFormat?: string;
+  };
+  proposalId?: string;
+  safety?: {
+    allowsAutomaticWrites?: boolean;
+    directApply?: boolean;
+    hostWrite?: boolean;
+    includesSourceContent?: boolean;
+    requiresHumanReview?: boolean;
+    rollback?: string;
+    sourcesContentPolicy?: string;
+  };
+  status?: string;
+  target?: {
+    fieldPath?: string;
+    locale?: string;
+    relativePath?: string;
+    resourcePath?: string;
+    resourcePointer?: string;
+    symbolId?: string;
+    symbolName?: string;
+    targetPath?: string;
+  };
+  unavailableReason?: string;
+  workspaceEditBoundary?: string;
+}
+
+/**
+ * VS Code QuickPick 可直接展示的 review item 选择项。
+ * Review item choice that can be shown directly by a VS Code QuickPick.
+ */
+export interface HiaDocumentationReviewItemChoice {
+  description?: string;
+  detail?: string;
+  item: HiaDocumentationReviewPayloadItemSummary;
+  label: string;
 }
 
 export interface HiaDocumentationEditProposalsSummary {
@@ -556,6 +643,119 @@ export function createHiaResourceActionReport(action: HiaResourceActionSummary):
   return lines;
 }
 
+/**
+ * 创建 VS Code 可见 review list 的总体摘要，保持 review-only 与 no-source-body 边界可见。
+ * Create the visible VS Code review-list summary while keeping review-only and no-source-body boundaries visible.
+ */
+export function createHiaDocumentationReviewReport(input: HiaDocumentationEditProposalsSummary): string[] {
+  const payload = input.reviewPayload;
+  const summary = payload?.summary;
+  const localeQuality = payload?.localeQuality;
+  const privacy = payload?.privacy ?? input.privacy;
+  const lines = [
+    `Status: ${input.status || "unknown"}`,
+    `Proposals: ${input.proposalCount ?? payload?.proposalCount ?? 0}`,
+    `Review items: ${summary?.itemCount ?? payload?.items?.length ?? 0}`,
+    `Drafts: ${input.draftCount ?? payload?.draftCount ?? summary?.draftCount ?? 0}`,
+    `Quality warnings: ${summary?.qualityWarningCount ?? localeQuality?.checkSummary?.warning ?? 0}`,
+    `Quality blocked: ${summary?.qualityBlockedCount ?? localeQuality?.checkSummary?.blocked ?? 0}`,
+    `Source content: ${privacy?.includesSourceContent ? "included" : "not included"}`,
+    `Sources content policy: ${privacy?.sourcesContentPolicy || "none"}`,
+    `Automatic writes: ${privacy?.allowsAutomaticWrites ? "enabled" : "disabled"}`,
+    `Human review: ${privacy?.requiresHumanReview ? "required" : "not confirmed"}`
+  ];
+
+  if (localeQuality) {
+    lines.push(`Locale truth: ${localeQuality.sourceDocumentTruth || "unknown"}`);
+    lines.push(`Canonical JS output: ${localeQuality.canonicalJsOutput || "unknown"}`);
+    lines.push(`Policy locales: ${(localeQuality.policyLocales || []).join(", ") || "none"}`);
+  }
+
+  if (payload?.actionPolicy) {
+    lines.push(`Allowed actions: ${(payload.actionPolicy.allowedActions || []).join(", ") || "none"}`);
+    lines.push(`Denied actions: ${(payload.actionPolicy.deniedActions || []).join(", ") || "none"}`);
+  }
+
+  return lines;
+}
+
+/**
+ * 将 host-neutral review payload 转成 VS Code QuickPick item。
+ * Convert a host-neutral review payload into VS Code QuickPick-friendly item summaries.
+ */
+export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentationReviewPayloadSummary): HiaDocumentationReviewItemChoice[] {
+  return (payload?.items || []).map((item, index) => {
+    const target = summarizeReviewTarget(item);
+    const quality = summarizeReviewQuality(item);
+    const action = item.actionHints?.copyDraftAvailable ? "copy draft" : "review";
+    const editCandidate = item.actionHints?.editCandidatePreviewAvailable ? "edit preview" : undefined;
+
+    return {
+      item,
+      label: item.title || item.proposalId || item.id || `Review item ${index + 1}`,
+      description: [item.kind, item.status, item.risk?.level ? `risk:${item.risk.level}` : undefined]
+        .filter(isNonEmptyString)
+        .join(" | "),
+      detail: [target, quality, editCandidate, `action:${action}`]
+        .filter(isNonEmptyString)
+        .join(" | ")
+    };
+  });
+}
+
+/**
+ * 创建单个 review item 的可读详情报告。
+ * Creates a readable detail report for a single review item.
+ */
+export function createHiaDocumentationReviewItemReport(item: HiaDocumentationReviewPayloadItemSummary): string[] {
+  const qualityCounts = countBy((item.qualityChecks || []).map((check) => check.status || "unknown"));
+  const lines = [
+    `Title: ${item.title || item.proposalId || item.id || "HIA documentation proposal"}`,
+    `Proposal: ${item.proposalId || item.id || "unknown"}`,
+    `Kind: ${item.kind || "unknown"}`,
+    `Status: ${item.status || "unknown"}`,
+    `Risk: ${item.risk?.level || "unknown"}`,
+    `Target: ${summarizeReviewTarget(item) || "unknown"}`,
+    `Draft: ${item.draft ? item.draft.draftKind || "available" : "none"}`,
+    `Edit candidate: ${item.editCandidate?.status || "none"}${item.editCandidate?.kind ? ` (${item.editCandidate.kind})` : ""}`,
+    `Context links: docSourceMap=${item.contextLinks?.docSourceMapEntryCount ?? 0}, project=${item.contextLinks?.projectEntryCount ?? 0}, relations=${item.contextLinks?.relationCount ?? 0}`,
+    `Action hints: copyDraft=${item.actionHints?.copyDraftAvailable ? "yes" : "no"}, editPreview=${item.actionHints?.editCandidatePreviewAvailable ? "yes" : "no"}, openContext=${item.actionHints?.openContextAvailable ? "yes" : "no"}, apply=${item.actionHints?.applyAvailable ? "yes" : "no"}`,
+    `Quality checks: ${formatCounts(qualityCounts)}`,
+    `Workspace edit boundary: ${item.workspaceEditBoundary || "not available"}`
+  ];
+
+  for (const reason of item.risk?.reasons || []) {
+    lines.push(`Risk reason: ${reason}`);
+  }
+
+  for (const check of item.qualityChecks || []) {
+    lines.push(`Quality ${check.status || "unknown"}: ${check.code || "unknown"}${check.message ? ` - ${check.message}` : ""}`);
+  }
+
+  return lines;
+}
+
+/**
+ * 取出可复制的 review draft 文本，优先使用 plain text，其次合并 localeDrafts。
+ * Gets copyable review draft text, preferring plain text and falling back to merged localeDrafts.
+ */
+export function getHiaDocumentationReviewDraftText(item: HiaDocumentationReviewPayloadItemSummary): string | undefined {
+  if (item.draft?.text && item.draft.text.trim()) {
+    return item.draft.text;
+  }
+
+  const localeDrafts = Object.entries(item.draft?.localeDrafts || {})
+    .filter(([, text]) => text.trim().length > 0);
+
+  if (localeDrafts.length === 0) {
+    return undefined;
+  }
+
+  return localeDrafts
+    .map(([locale, text]) => `[${locale}]\n${text}`)
+    .join("\n\n");
+}
+
 export function createHiaPreviewReport(input: HiaPreviewStatusReportInput): string[] {
   const status = input.previewExists
     ? input.staleReason ? "stale" : "ready"
@@ -589,6 +789,29 @@ export function createHiaPreviewReport(input: HiaPreviewStatusReportInput): stri
   }
 
   return lines;
+}
+
+function summarizeReviewTarget(item: HiaDocumentationReviewPayloadItemSummary): string | undefined {
+  const target = item.target;
+
+  if (!target) {
+    return undefined;
+  }
+
+  return [
+    target.relativePath,
+    target.symbolName || target.symbolId,
+    target.fieldPath,
+    target.locale ? `locale:${target.locale}` : undefined,
+    target.diagnosticCode
+  ]
+    .filter(isNonEmptyString)
+    .join(" ");
+}
+
+function summarizeReviewQuality(item: HiaDocumentationReviewPayloadItemSummary): string | undefined {
+  const counts = countBy((item.qualityChecks || []).map((check) => check.status || "unknown"));
+  return counts.size > 0 ? `quality:${formatCounts(counts)}` : undefined;
 }
 
 export function getHiaPreviewStaleReason(input: {

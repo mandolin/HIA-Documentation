@@ -10,6 +10,7 @@ import type {
 } from "vscode-languageserver/node.js";
 import {
   CompletionItemKind,
+  InsertTextFormat,
   MarkupKind
 } from "vscode-languageserver/node.js";
 import type {
@@ -53,9 +54,11 @@ export const HiaIdeCapabilityId = {
   CompletionI18n: "hia.completion.i18n",
   CompletionSource: "hia.completion.source",
   CompletionProfileTag: "hia.completion.profileTag",
+  CompletionLanguageMarker: "hia.completion.languageMarker",
   HoverSymbol: "hia.hover.symbol",
   HoverResource: "hia.hover.resource",
   HoverProfile: "hia.hover.profile",
+  HoverLanguageMarker: "hia.hover.languageMarker",
   DefinitionResource: "hia.definition.resource",
   DefinitionSource: "hia.definition.source",
   SourceLinkageQuery: "hia.sourceLinkage.query",
@@ -279,6 +282,7 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         (index?.sourceReferences.length ?? 0) + (index?.sourceFragments.length ?? 0) + (index?.sourceBlocks.length ?? 0)
       ),
       dataBackedCapability(HiaIdeCapabilityId.CompletionProfileTag, "lsp", hasProfiles, profileTagCount, "profile-data-empty"),
+      implementedCapability(HiaIdeCapabilityId.CompletionLanguageMarker, "lsp", hasDocument),
       implementedCapability(HiaIdeCapabilityId.HoverSymbol, "lsp", hasDocument),
       dataBackedCapability(
         HiaIdeCapabilityId.HoverResource,
@@ -287,6 +291,7 @@ export function createHiaIdeCapabilities(context: HiaLspAuthoringContext): HiaId
         (index?.i18nKeys.length ?? 0) + (index?.i18nResources.length ?? 0) + (index?.sourceReferences.length ?? 0)
       ),
       dataBackedCapability(HiaIdeCapabilityId.HoverProfile, "lsp", hasProfiles, profileSummaries.length, "profile-data-empty"),
+      implementedCapability(HiaIdeCapabilityId.HoverLanguageMarker, "lsp", hasDocument),
       dataBackedCapability(HiaIdeCapabilityId.DefinitionResource, "lsp", hasDocument, index?.i18nResources.length ?? 0),
       dataBackedCapability(
         HiaIdeCapabilityId.DefinitionSource,
@@ -748,6 +753,7 @@ export function createHiaCompletionItems(context: HiaLspAuthoringContext, _posit
     });
   }
 
+  pushLanguageMarkerCompletions(items, seen, index.locales);
   pushProfileTagCompletions(items, seen, context.profileSet);
 
   return items;
@@ -772,7 +778,9 @@ export function createHiaHover(context: HiaLspAuthoringContext, _position?: Posi
     `- I18n keys: ${index.i18nKeys.length}`,
     `- Missing locales: ${index.missingLocales.length}`,
     `- Source references: ${index.sourceReferences.length}`,
-    `- Source blocks: ${index.sourceBlocks.length}`
+    `- Source blocks: ${index.sourceBlocks.length}`,
+    `- Language markers: \`@lang\`, \`<lang>\`, \`<l>\``,
+    `- Locale marker truth: \`HiaI18nModel.fields\``
   ];
   const profileSummaries = createProfileSummaries(context.profileSet);
 
@@ -1580,6 +1588,63 @@ function pushCompletion(items: CompletionItem[], seen: Set<string>, key: string,
   items.push(item);
 }
 
+/**
+ * 提供跨 doc-line 的 canonical locale marker 补全。
+ * Provides completions for canonical cross doc-line locale markers.
+ *
+ * 中文：这些 marker 是语言核心层标记，不使用 HIA 厂商前缀；source-document truth 仍是 `HiaI18nModel.fields`。
+ * English: These markers are language-level forms without an HIA vendor prefix; the source-document truth remains `HiaI18nModel.fields`.
+ */
+function pushLanguageMarkerCompletions(items: CompletionItem[], seen: Set<string>, locales: readonly string[]): void {
+  const primaryLocale = selectPrimaryCompletionLocale(locales);
+
+  pushCompletion(items, seen, "language-marker:@lang", {
+    label: "@lang",
+    kind: CompletionItemKind.Snippet,
+    detail: "Canonical symbol-level locale marker",
+    documentation: createLanguageMarkerDocumentation("block"),
+    insertText: `@lang ${primaryLocale} \${1:Localized description.}`,
+    insertTextFormat: InsertTextFormat.Snippet,
+    data: {
+      capability: HiaIdeCapabilityId.CompletionLanguageMarker,
+      source: "language-marker",
+      marker: "@lang",
+      target: "symbol-description",
+      sourceDocumentTruth: "HiaI18nModel.fields"
+    }
+  });
+  pushCompletion(items, seen, "language-marker:<lang>", {
+    label: "<lang>",
+    kind: CompletionItemKind.Snippet,
+    detail: "Canonical inline locale segment container",
+    documentation: createLanguageMarkerDocumentation("inline"),
+    insertText: `<lang><${primaryLocale}>\${1:Localized text.}</${primaryLocale}></lang>`,
+    insertTextFormat: InsertTextFormat.Snippet,
+    data: {
+      capability: HiaIdeCapabilityId.CompletionLanguageMarker,
+      source: "language-marker",
+      marker: "<lang>",
+      target: "inline-text",
+      sourceDocumentTruth: "HiaI18nModel.fields"
+    }
+  });
+  pushCompletion(items, seen, "language-marker:<l>", {
+    label: "<l>",
+    kind: CompletionItemKind.Snippet,
+    detail: "Short canonical inline locale segment container",
+    documentation: createLanguageMarkerDocumentation("inline"),
+    insertText: `<l><${primaryLocale}>\${1:Localized text.}</${primaryLocale}></l>`,
+    insertTextFormat: InsertTextFormat.Snippet,
+    data: {
+      capability: HiaIdeCapabilityId.CompletionLanguageMarker,
+      source: "language-marker",
+      marker: "<l>",
+      target: "inline-text",
+      sourceDocumentTruth: "HiaI18nModel.fields"
+    }
+  });
+}
+
 function pushProfileTagCompletions(items: CompletionItem[], seen: Set<string>, profileSet: HiaProfileSet | undefined): void {
   if (!profileSet) {
     return;
@@ -1604,6 +1669,41 @@ function pushProfileTagCompletions(items: CompletionItem[], seen: Set<string>, p
       });
     }
   }
+}
+
+function selectPrimaryCompletionLocale(locales: readonly string[]): string {
+  return locales.includes("en")
+    ? "en"
+    : locales.includes("zh-CN")
+      ? "zh-CN"
+      : locales[0] || "en";
+}
+
+function createLanguageMarkerDocumentation(scope: "block" | "inline"): MarkupContent {
+  const lines = scope === "block"
+    ? [
+        "### @lang",
+        "",
+        "Canonical symbol-level locale marker.",
+        "",
+        "- Format: `@lang <locale> <text>`",
+        "- Maps to: `HiaI18nModel.fields.<field>.localizedText`"
+      ]
+    : [
+        "### <lang> / <l>",
+        "",
+        "Canonical inline locale segment markers.",
+        "",
+        "- Format: `<lang><locale>text</locale></lang>` or `<l><locale>text</locale></l>`",
+        "- Maps to: localized text segments inside `HiaI18nModel.fields`"
+      ];
+
+  lines.push("", "These markers are standard-level language forms and do not use an HIA prefix.");
+
+  return {
+    kind: MarkupKind.Markdown,
+    value: lines.join("\n")
+  };
 }
 
 function createProfileTagDocumentation(profileId: string, tag: HiaProfileTagDefinition): MarkupContent {

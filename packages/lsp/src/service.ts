@@ -211,7 +211,7 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
         capabilities: {
           completionProvider: {
             resolveProvider: false,
-            triggerCharacters: ["\"", ".", "/", ":", "@"]
+            triggerCharacters: ["\"", ".", "/", ":", "@", "<"]
           },
           definitionProvider: true,
           foldingRangeProvider: true,

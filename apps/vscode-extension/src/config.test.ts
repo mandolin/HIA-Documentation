@@ -15,15 +15,20 @@ import {
   HIA_PROJECT_RELATION_GRAPH_REQUEST,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
+  HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
+  createHiaDocumentationReviewItemChoices,
+  createHiaDocumentationReviewItemReport,
+  createHiaDocumentationReviewReport,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
   createHiaPreviewReport,
   createHiaResourceActionReport,
   createHiaValidationReport,
+  getHiaDocumentationReviewDraftText,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
   resolveConfiguredManifestPath,
@@ -31,7 +36,8 @@ import {
   resolveDefaultPreviewPath,
   resolveHiaPreviewPath,
   resolveHiaCliModule,
-  resolveHiaServerModule
+  resolveHiaServerModule,
+  type HiaDocumentationEditProposalsSummary
 } from "./config.js";
 
 describe("@hia-doc/vscode-extension config", () => {
@@ -57,6 +63,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_OPEN_RELATED_LOCATION_COMMAND).toBe("hia.openRelatedLocation");
     expect(HIA_SHOW_RESOURCE_ACTION_COMMAND).toBe("hia.showResourceAction");
     expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
+    expect(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND).toBe("hia.reviewDocumentationProposals");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -286,6 +293,149 @@ describe("@hia-doc/vscode-extension config", () => {
       "Unavailable reasons: resource-key-missing=1, source-fragment-missing=2",
       "Diagnostic codes: HIA_LSP_I18N_LOCALE_MISSING=1, HIA_LSP_SOURCE_REFERENCE_INVALID=1"
     ]);
+  });
+
+  it("creates review-only documentation proposal reports", () => {
+    const reviewPayload: HiaDocumentationEditProposalsSummary = {
+      draftCount: 1,
+      proposalCount: 1,
+      privacy: {
+        allowsAutomaticWrites: false,
+        includesSourceContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      },
+      reviewPayload: {
+        actionPolicy: {
+          allowedActions: ["review", "copy-draft"],
+          deniedActions: ["apply-workspace-edit"]
+        },
+        contract: "hia-documentation-review-payload",
+        contractVersion: "0.1.0-draft",
+        draftCount: 1,
+        items: [
+          {
+            actionHints: {
+              applyAvailable: false,
+              copyDraftAvailable: true,
+              editCandidatePreviewAvailable: true,
+              openContextAvailable: true
+            },
+            contextLinks: {
+              docSourceMapEntryCount: 1,
+              projectEntryCount: 0,
+              relationCount: 1
+            },
+            draft: {
+              draftKind: "translation-stub",
+              localeDrafts: {
+                en: "English draft."
+              },
+              targetLocale: "en",
+              text: "English draft."
+            },
+            editCandidate: {
+              applyMode: "host-preview-only",
+              contract: "hia-documentation-edit-candidate",
+              contractVersion: "0.1.0-draft",
+              id: "candidate:1",
+              kind: "external-resource-locale-entry",
+              preview: {
+                previewKind: "draft-text",
+                text: "English draft.",
+                textFormat: "plain-text"
+              },
+              safety: {
+                allowsAutomaticWrites: false,
+                directApply: false,
+                hostWrite: false,
+                includesSourceContent: false,
+                requiresHumanReview: true,
+                rollback: "host-undo",
+                sourcesContentPolicy: "none"
+              },
+              status: "preview-only",
+              target: {
+                fieldPath: "description",
+                locale: "en",
+                relativePath: "docs/profile.hia.json"
+              },
+              workspaceEditBoundary: "review-only"
+            },
+            id: "review:1",
+            kind: "missing-locale-stub",
+            proposalId: "proposal:1",
+            qualityChecks: [
+              {
+                code: "HIA_LANG_PRESENT",
+                message: "ok",
+                status: "pass"
+              }
+            ],
+            risk: {
+              level: "low",
+              reasons: ["public-metadata-only"]
+            },
+            status: "review-required",
+            target: {
+              fieldPath: "description",
+              locale: "en",
+              relativePath: "docs/profile.hia.json",
+              symbolName: "Profile"
+            },
+            title: "Add English description",
+            workspaceEditBoundary: "review-only"
+          }
+        ],
+        localeQuality: {
+          canonicalJsOutput: "@lang/<lang>",
+          checkSummary: {
+            blocked: 0,
+            pass: 1,
+            warning: 0
+          },
+          policyLocales: ["en", "zh-CN"],
+          sourceDocumentTruth: "HiaI18nModel.fields"
+        },
+        privacy: {
+          allowsAutomaticWrites: false,
+          includesSourceContent: false,
+          requiresHumanReview: true,
+          sourcesContentPolicy: "none"
+        },
+        proposalCount: 1,
+        summary: {
+          draftCount: 1,
+          itemCount: 1,
+          qualityBlockedCount: 0,
+          qualityWarningCount: 0
+        }
+      },
+      status: "available"
+    };
+
+    const report = createHiaDocumentationReviewReport(reviewPayload);
+    const choices = createHiaDocumentationReviewItemChoices(reviewPayload.reviewPayload);
+    const itemReport = createHiaDocumentationReviewItemReport(reviewPayload.reviewPayload?.items?.[0] ?? {});
+
+    expect(report).toContain("Review items: 1");
+    expect(report).toContain("Automatic writes: disabled");
+    expect(report).toContain("Locale truth: HiaI18nModel.fields");
+    expect(report).toContain("Allowed actions: review, copy-draft");
+    expect(report).toContain("Denied actions: apply-workspace-edit");
+    expect(choices).toHaveLength(1);
+    expect(choices[0]).toMatchObject({
+      label: "Add English description",
+      description: "missing-locale-stub | review-required | risk:low"
+    });
+    expect(choices[0]?.detail).toContain("docs/profile.hia.json Profile description locale:en");
+    expect(choices[0]?.detail).toContain("edit preview");
+    expect(choices[0]?.detail).toContain("action:copy draft");
+    expect(itemReport).toContain("Proposal: proposal:1");
+    expect(itemReport).toContain("Kind: missing-locale-stub");
+    expect(itemReport).toContain("Edit candidate: preview-only (external-resource-locale-entry)");
+    expect(itemReport).toContain("Action hints: copyDraft=yes, editPreview=yes, openContext=yes, apply=no");
+    expect(getHiaDocumentationReviewDraftText(reviewPayload.reviewPayload?.items?.[0] ?? {})).toBe("English draft.");
   });
 
   it("creates resource action preview reports", () => {

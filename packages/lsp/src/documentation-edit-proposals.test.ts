@@ -9,6 +9,8 @@ import {
   HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
   HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
@@ -220,6 +222,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
     });
     expect(result.reviewPayload).toMatchObject({
       actionPolicy: {
+        allowedActions: expect.arrayContaining(["preview-edit-candidate"]),
         defaultAction: "review",
         deniedActions: expect.arrayContaining(["auto-apply", "apply-workspace-edit"])
       },
@@ -241,6 +244,8 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
           actionHints: expect.objectContaining({
             applyAvailable: false,
             copyDraftAvailable: true,
+            editCandidateAvailable: true,
+            editCandidatePreviewAvailable: true,
             openContextAvailable: true,
             openTargetAvailable: true,
             primaryAction: "review"
@@ -255,6 +260,32 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
             contract: HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
             draftKind: "translation-stub",
             targetLocale: "en"
+          }),
+          editCandidate: expect.objectContaining({
+            contract: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
+            contractVersion: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+            kind: "external-resource-locale-entry",
+            preview: expect.objectContaining({
+              previewKind: "draft-text",
+              text: "TODO(en): Review localized description text for renderProfile.",
+              textFormat: "plain-text"
+            }),
+            safety: {
+              allowsAutomaticWrites: false,
+              directApply: false,
+              hostWrite: false,
+              includesSourceContent: false,
+              requiresHumanReview: true,
+              rollback: "host-undo",
+              sourcesContentPolicy: "none"
+            },
+            status: "preview-only",
+            target: expect.objectContaining({
+              locale: "en",
+              resourcePath: "i18n/profile.hia-i18n.json",
+              resourcePointer: "/en/profile.render.description"
+            }),
+            workspaceEditBoundary: "external-resource-only"
           }),
           kind: "missing-locale-stub",
           qualityChecks: expect.arrayContaining([
@@ -285,6 +316,10 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
             expect.objectContaining({
               code: "HIA_REVIEW_NO_AUTOMATIC_WRITE",
               status: "pass"
+            }),
+            expect.objectContaining({
+              code: "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY",
+              status: "pass"
             })
           ]),
           risk: {
@@ -303,7 +338,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         canonicalJsOutput: "@lang/<lang>",
         checkSummary: {
           blocked: 0,
-          pass: 9,
+          pass: 10,
           warning: 1
         },
         defaultLocale: "zh-CN",
@@ -331,7 +366,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         draftCount: 1,
         itemCount: 1,
         qualityBlockedCount: 0,
-        qualityCheckCount: 10,
+        qualityCheckCount: 11,
         qualityWarningCount: 1,
         reviewRequiredCount: 1,
         unifiedContextCount: 0
@@ -439,7 +474,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
       localeQuality: {
         checkSummary: {
           blocked: 0,
-          pass: 21,
+          pass: 24,
           warning: 2
         },
         documentLocales: ["en"],
@@ -452,7 +487,7 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         draftCount: 1,
         itemCount: 3,
         qualityBlockedCount: 0,
-        qualityCheckCount: 23,
+        qualityCheckCount: 26,
         qualityWarningCount: 2,
         reviewRequiredCount: 3,
         unifiedContextCount: 0
@@ -468,7 +503,12 @@ describe("@hia-doc/lsp documentation edit proposals", () => {
         actionHints: expect.objectContaining({
           applyAvailable: false,
           copyDraftAvailable: false,
+          editCandidatePreviewAvailable: false,
           primaryAction: "review"
+        }),
+        editCandidate: expect.objectContaining({
+          kind: "copy-only",
+          status: "unavailable"
         }),
         kind: "generic-docline-diagnostic",
         qualityChecks: expect.arrayContaining([

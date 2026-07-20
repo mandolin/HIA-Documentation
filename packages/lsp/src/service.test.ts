@@ -32,6 +32,9 @@ describe("@hia-doc/lsp service", () => {
     expect(initializeResult.capabilities.completionProvider).toMatchObject({
       resolveProvider: false
     });
+    expect(initializeResult.capabilities.completionProvider).toMatchObject({
+      triggerCharacters: expect.arrayContaining(["@", "<"])
+    });
     expect(initializeResult.capabilities.hoverProvider).toBe(true);
     expect(initializeResult.capabilities.definitionProvider).toBe(true);
     expect(initializeResult.capabilities.foldingRangeProvider).toBe(true);

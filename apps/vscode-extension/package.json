@@ -23,6 +23,7 @@
     "onCommand:hia.openRelatedLocation",
     "onCommand:hia.showResourceAction",
     "onCommand:hia.copyResourceKey",
+    "onCommand:hia.reviewDocumentationProposals",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
   ],
@@ -59,6 +60,10 @@
       {
         "command": "hia.validateWorkspace",
         "title": "HIA: Validate Workspace"
+      },
+      {
+        "command": "hia.reviewDocumentationProposals",
+        "title": "HIA: Review Documentation Proposals"
       }
     ],
     "configuration": {

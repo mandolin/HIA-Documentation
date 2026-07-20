@@ -8,6 +8,8 @@ import {
   HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT,
   HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION,
+  HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
+  HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT,
   HIA_DOCUMENTATION_EDIT_PROPOSALS_CONTRACT_VERSION,
   HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT,
@@ -98,7 +100,7 @@ async function main() {
   assert.equal(result.reviewPayload.privacy.allowsTargetRepositoryMutation, false);
   assert.equal(result.reviewPayload.summary.itemCount, 4);
   assert.equal(result.reviewPayload.summary.draftCount, 2);
-  assert.equal(result.reviewPayload.summary.qualityCheckCount, 33);
+  assert.equal(result.reviewPayload.summary.qualityCheckCount, 37);
   assert.equal(result.reviewPayload.summary.qualityWarningCount, 3);
   assert.equal(result.reviewPayload.summary.qualityBlockedCount, 0);
   assert.equal(result.reviewPayload.localeQuality.canonicalJsOutput, "@lang/<lang>");
@@ -107,7 +109,7 @@ async function main() {
   assert.equal(result.reviewPayload.localeQuality.sourceDocumentTruth, "HiaI18nModel.fields");
   assert.equal(result.reviewPayload.localeQuality.staleLocaleStatus, "not-evaluated");
   assert.deepEqual(result.reviewPayload.localeQuality.policyLocales, ["en", "zh-CN"]);
-  assert.equal(result.reviewPayload.localeQuality.checkSummary.pass, 30);
+  assert.equal(result.reviewPayload.localeQuality.checkSummary.pass, 34);
   assert.equal(result.reviewPayload.localeQuality.checkSummary.warning, 3);
   assert.equal(result.reviewPayload.localeQuality.checkSummary.blocked, 0);
   assert.equal(result.host.capability, "hia.documentationEditProposal");
@@ -131,13 +133,22 @@ async function main() {
   const missingLocaleReviewItem = result.reviewPayload.items.find((item) => item.kind === "missing-locale-stub");
   assert.equal(missingLocaleReviewItem?.actionHints.copyDraftAvailable, true);
   assert.equal(missingLocaleReviewItem?.actionHints.applyAvailable, false);
+  assert.equal(missingLocaleReviewItem?.actionHints.editCandidatePreviewAvailable, true);
   assert.equal(missingLocaleReviewItem?.actionHints.openContextAvailable, true);
   assert.equal(missingLocaleReviewItem?.risk.level, "low");
   assert.equal(missingLocaleReviewItem?.draft?.draftKind, "translation-stub");
+  assert.equal(missingLocaleReviewItem?.editCandidate.contract, HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT);
+  assert.equal(missingLocaleReviewItem?.editCandidate.contractVersion, HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION);
+  assert.equal(missingLocaleReviewItem?.editCandidate.kind, "external-resource-locale-entry");
+  assert.equal(missingLocaleReviewItem?.editCandidate.status, "preview-only");
+  assert.equal(missingLocaleReviewItem?.editCandidate.safety.directApply, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.safety.hostWrite, false);
+  assert.equal(missingLocaleReviewItem?.editCandidate.safety.includesSourceContent, false);
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_TARGET_LOCALE_DRAFT_PRESENT" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_FIELD_LEVEL_I18N_TARGET" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_MISSING_LOCALE" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_CANONICAL_LOCALE_OUTPUT_BOUNDARY" && check.status === "pass"));
+  assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY" && check.status === "pass"));
   assert.ok(missingLocaleReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_STALE_LOCALE_STATUS" && check.status === "warning"));
   const missingDocumentationProposal = result.proposals.find((proposal) => proposal.kind === "missing-documentation");
   assert.ok(missingDocumentationProposal?.unifiedContext, "Missing-documentation proposal should carry unified context.");
@@ -165,11 +176,15 @@ async function main() {
   assert.equal(missingDocumentationProposal.aiContextPackageRef?.sourceExcerptPolicy, "none");
   const missingDocumentationReviewItem = result.reviewPayload.items.find((item) => item.kind === "missing-documentation");
   assert.equal(missingDocumentationReviewItem?.actionHints.copyDraftAvailable, true);
+  assert.equal(missingDocumentationReviewItem?.actionHints.editCandidatePreviewAvailable, true);
   assert.equal(missingDocumentationReviewItem?.contextLinks.docSourceMapEntryCount, 1);
   assert.equal(missingDocumentationReviewItem?.contextLinks.projectEntryCount, 1);
   assert.equal(missingDocumentationReviewItem?.contextLinks.relationCount, 2);
   assert.equal(missingDocumentationReviewItem?.draft?.draftKind, "documentation-stub");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.kind, "source-docline-draft");
+  assert.equal(missingDocumentationReviewItem?.editCandidate.status, "preview-only");
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_BILINGUAL_DRAFT_LOCALES" && check.status === "pass"));
+  assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY" && check.status === "pass"));
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_SOURCE_DOCUMENT_TRUTH_BOUNDARY" && check.status === "warning"));
   assert.ok(missingDocumentationReviewItem?.qualityChecks.some((check) => check.code === "HIA_REVIEW_STALE_LOCALE_STATUS" && check.status === "warning"));
   assert(!serialized.includes("\"sourcesContent\":"), "AI authoring evidence must not embed sourcesContent.");

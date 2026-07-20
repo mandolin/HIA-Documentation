@@ -17,6 +17,7 @@ import {
   HIA_CONFIGURATION_SECTION,
   HIA_EXTENSION_NAME,
   HIA_COPY_RESOURCE_KEY_COMMAND,
+  HIA_DOCUMENTATION_EDIT_PROPOSALS_REQUEST,
   HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
   HIA_IDE_CAPABILITIES_REQUEST,
   HIA_OPEN_PREVIEW_COMMAND,
@@ -27,15 +28,20 @@ import {
   HIA_PROJECT_RELATION_GRAPH_REQUEST,
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
+  HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
+  createHiaDocumentationReviewItemChoices,
+  createHiaDocumentationReviewItemReport,
+  createHiaDocumentationReviewReport,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
   createHiaPreviewReport,
   createHiaResourceActionReport,
   createHiaValidationReport,
+  getHiaDocumentationReviewDraftText,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
   resolveConfiguredManifestPath,
@@ -47,6 +53,9 @@ import {
   type HiaCommandSettings,
   type HiaCommandSettingsInput,
   type HiaDiagnosticSummary,
+  type HiaDocumentationEditProposalsSummary,
+  type HiaDocumentationReviewItemChoice,
+  type HiaDocumentationReviewPayloadItemSummary,
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
@@ -241,6 +250,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const copyResourceKeyCommand = vscode.commands.registerCommand(HIA_COPY_RESOURCE_KEY_COMMAND, async (action: HiaResourceActionSummary) => {
     await copyHiaResourceKey(action, outputChannel);
   });
+  const reviewDocumentationProposalsCommand = vscode.commands.registerCommand(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND, async () => {
+    await reviewHiaDocumentationProposals(outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
     provideCodeActions(document, _range, codeActionContext) {
       return createHiaCodeActions(document, codeActionContext.diagnostics);
@@ -253,7 +265,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -542,6 +554,74 @@ async function openHiaRelatedLocation(location: HiaAuthoringLocationSummary, out
     outputChannel.appendLine(`Cannot open HIA related location ${location.uri}: ${message}`);
     void vscode.window.showWarningMessage("Cannot open HIA related location. See HIA output for details.");
   }
+}
+
+/**
+ * 在 VS Code 中展示 documentation edit proposal 的人工审查列表。
+ * Show documentation edit proposals as a human-review list in VS Code.
+ *
+ * 中文：首轮实现只允许查看、复制和输出上下文摘要，不写入目标仓库文件。
+ * English: The first slice only allows review, copy and context summaries; it never writes target repository files.
+ */
+async function reviewHiaDocumentationProposals(outputChannel: vscode.OutputChannel): Promise<void> {
+  if (!client) {
+    void vscode.window.showWarningMessage("HIA language server is not running.");
+    return;
+  }
+
+  const editor = vscode.window.activeTextEditor;
+
+  if (!editor || !isHiaDocument(editor.document)) {
+    void vscode.window.showWarningMessage("Open a .hia.json document before reviewing HIA documentation proposals.");
+    return;
+  }
+
+  const uri = editor.document.uri.toString();
+
+  outputChannel.show(true);
+  outputChannel.appendLine(`Reviewing HIA documentation proposals: ${uri}`);
+
+  let result: HiaDocumentationEditProposalsSummary;
+
+  try {
+    result = await client.sendRequest<HiaDocumentationEditProposalsSummary>(HIA_DOCUMENTATION_EDIT_PROPOSALS_REQUEST, {
+      uri
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.appendLine(`HIA documentation proposal request failed: ${message}`);
+    void vscode.window.showErrorMessage("HIA documentation proposal request failed. See HIA output for details.");
+    return;
+  }
+
+  outputChannel.appendLine("HIA documentation proposal review report:");
+
+  for (const line of createHiaDocumentationReviewReport(result)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  const choices = createHiaDocumentationReviewItemChoices(result.reviewPayload);
+
+  if (choices.length === 0) {
+    void vscode.window.showInformationMessage("No HIA documentation proposal requires review.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<DocumentationReviewQuickPickItem>(
+    choices.map((choice) => ({
+      ...choice,
+      choice
+    })),
+    {
+      placeHolder: "Choose an HIA documentation proposal to review"
+    }
+  );
+
+  if (!selected) {
+    return;
+  }
+
+  await selectHiaDocumentationReviewAction(selected.choice, outputChannel);
 }
 
 /**
@@ -875,6 +955,96 @@ async function selectHiaProjectRelationTarget(choice: HiaProjectRelationChoice):
   );
 }
 
+async function selectHiaDocumentationReviewAction(
+  choice: HiaDocumentationReviewItemChoice,
+  outputChannel: vscode.OutputChannel
+): Promise<void> {
+  const item = choice.item;
+  const actions: DocumentationReviewActionQuickPickItem[] = [
+    {
+      label: "Show proposal details",
+      description: item.proposalId || item.id || "proposal id unavailable",
+      actionKind: "show-details",
+      item
+    },
+    {
+      label: "Copy draft text",
+      description: item.actionHints?.copyDraftAvailable ? "review-only draft" : "draft unavailable",
+      actionKind: "copy-draft",
+      item
+    },
+    {
+      label: "Copy proposal id",
+      description: item.proposalId || item.id || "proposal id unavailable",
+      actionKind: "copy-proposal-id",
+      item
+    },
+    {
+      label: "Show context summary",
+      description: "doc-source-map, project relation and privacy boundary",
+      actionKind: "show-context",
+      item
+    },
+    {
+      label: "Show edit candidate preview",
+      description: item.editCandidate?.status === "preview-only" ? item.editCandidate.kind || "candidate preview" : "candidate unavailable",
+      actionKind: "show-edit-candidate",
+      item
+    },
+    {
+      label: "Apply edit",
+      description: "disabled until human-approved apply contract lands",
+      actionKind: "apply-unavailable",
+      item
+    }
+  ];
+  const selected = await vscode.window.showQuickPick(actions, {
+    placeHolder: `Review ${choice.label}`
+  });
+
+  if (!selected) {
+    return;
+  }
+
+  if (selected.actionKind === "show-details") {
+    showHiaDocumentationReviewItemDetails(item, outputChannel);
+    return;
+  }
+
+  if (selected.actionKind === "copy-draft") {
+    await copyHiaDocumentationReviewDraft(item, outputChannel);
+    return;
+  }
+
+  if (selected.actionKind === "copy-proposal-id") {
+    const value = item.proposalId || item.id;
+
+    if (!value) {
+      void vscode.window.showWarningMessage("HIA documentation proposal id is unavailable.");
+      return;
+    }
+
+    await vscode.env.clipboard.writeText(value);
+    outputChannel.appendLine(`Copied HIA documentation proposal id: ${value}`);
+    void vscode.window.showInformationMessage("HIA documentation proposal id copied.");
+    return;
+  }
+
+  if (selected.actionKind === "show-context") {
+    showHiaDocumentationReviewContext(item, outputChannel);
+    return;
+  }
+
+  if (selected.actionKind === "show-edit-candidate") {
+    showHiaDocumentationReviewEditCandidate(item, outputChannel);
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation apply action is unavailable in this review-only slice.");
+  void vscode.window.showInformationMessage("HIA documentation apply is disabled until the human-approved apply contract is implemented.");
+}
+
 async function openHiaSourceLinkageTarget(
   target: HiaSourceLinkageNavigationTarget,
   workspaceFolder: vscode.WorkspaceFolder,
@@ -961,6 +1131,23 @@ interface SourceLinkageDocumentQuickPickItem extends vscode.QuickPickItem {
   uri: vscode.Uri;
 }
 
+interface DocumentationReviewQuickPickItem extends HiaDocumentationReviewItemChoice, vscode.QuickPickItem {
+  choice: HiaDocumentationReviewItemChoice;
+}
+
+type DocumentationReviewActionKind =
+  | "apply-unavailable"
+  | "copy-draft"
+  | "copy-proposal-id"
+  | "show-context"
+  | "show-edit-candidate"
+  | "show-details";
+
+interface DocumentationReviewActionQuickPickItem extends vscode.QuickPickItem {
+  actionKind: DocumentationReviewActionKind;
+  item: HiaDocumentationReviewPayloadItemSummary;
+}
+
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {
   uri: vscode.Uri;
 }
@@ -981,6 +1168,80 @@ interface ProjectRelationQuickPickItem extends vscode.QuickPickItem {
 }
 
 type ProjectRelationActionQuickPickItem = HiaProjectRelationActionChoice & vscode.QuickPickItem;
+
+function showHiaDocumentationReviewItemDetails(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation proposal details:");
+
+  for (const line of createHiaDocumentationReviewItemReport(item)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA documentation proposal details written to output.");
+}
+
+async function copyHiaDocumentationReviewDraft(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): Promise<void> {
+  const text = getHiaDocumentationReviewDraftText(item);
+
+  if (!text) {
+    void vscode.window.showWarningMessage("This HIA documentation proposal has no draft text to copy.");
+    return;
+  }
+
+  await vscode.env.clipboard.writeText(text);
+  outputChannel.appendLine(`Copied HIA documentation review draft: ${item.proposalId || item.id || "unknown"}`);
+  void vscode.window.showInformationMessage("HIA documentation draft copied.");
+}
+
+function showHiaDocumentationReviewContext(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation proposal context summary:");
+  outputChannel.appendLine(`- Proposal: ${item.proposalId || item.id || "unknown"}`);
+  outputChannel.appendLine(`- Target URI: ${item.target?.targetUri || "not included"}`);
+  outputChannel.appendLine(`- Relative path: ${item.target?.relativePath || "not included"}`);
+  outputChannel.appendLine(`- Resource path: ${item.target?.resourcePath || "not included"}`);
+  outputChannel.appendLine(`- Resource pointer: ${item.target?.resourcePointer || "not included"}`);
+  outputChannel.appendLine(`- Doc source-map entries: ${item.contextLinks?.docSourceMapEntryCount ?? 0}`);
+  outputChannel.appendLine(`- Project entries: ${item.contextLinks?.projectEntryCount ?? 0}`);
+  outputChannel.appendLine(`- Relations: ${item.contextLinks?.relationCount ?? 0}`);
+  outputChannel.appendLine(`- Workspace edit boundary: ${item.workspaceEditBoundary || "review-only"}`);
+  outputChannel.appendLine("- Source bodies: not shown by the VS Code review command.");
+  void vscode.window.showInformationMessage("HIA documentation proposal context written to output.");
+}
+
+function showHiaDocumentationReviewEditCandidate(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+  const candidate = item.editCandidate;
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation edit candidate preview:");
+
+  if (!candidate) {
+    outputChannel.appendLine("- Candidate: unavailable");
+    void vscode.window.showWarningMessage("This HIA documentation proposal has no edit candidate preview.");
+    return;
+  }
+
+  outputChannel.appendLine(`- Candidate: ${candidate.id || "unknown"}`);
+  outputChannel.appendLine(`- Status: ${candidate.status || "unknown"}`);
+  outputChannel.appendLine(`- Kind: ${candidate.kind || "unknown"}`);
+  outputChannel.appendLine(`- Apply mode: ${candidate.applyMode || "unknown"}`);
+  outputChannel.appendLine(`- Workspace edit boundary: ${candidate.workspaceEditBoundary || "review-only"}`);
+  outputChannel.appendLine(`- Direct apply: ${candidate.safety?.directApply ? "enabled" : "disabled"}`);
+  outputChannel.appendLine(`- Host write: ${candidate.safety?.hostWrite ? "enabled" : "disabled"}`);
+  outputChannel.appendLine(`- Source content: ${candidate.safety?.includesSourceContent ? "included" : "not included"}`);
+  outputChannel.appendLine(`- Target resource: ${candidate.target?.resourcePath || "not included"}`);
+  outputChannel.appendLine(`- Target pointer: ${candidate.target?.resourcePointer || "not included"}`);
+  outputChannel.appendLine(`- Target source: ${candidate.target?.relativePath || "not included"}`);
+
+  if (candidate.preview?.text) {
+    outputChannel.appendLine("- Preview text:");
+    outputChannel.appendLine(candidate.preview.text);
+  } else if (candidate.unavailableReason) {
+    outputChannel.appendLine(`- Unavailable reason: ${candidate.unavailableReason}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA documentation edit candidate preview written to output.");
+}
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {
   outputChannel.show(true);

@@ -45,6 +45,8 @@ export const HIA_AI_CONTEXT_PACKAGE_CONTRACT = "hia-ai-context-package";
 export const HIA_AI_CONTEXT_PACKAGE_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT = "hia-documentation-draft-text";
 export const HIA_DOCUMENTATION_DRAFT_TEXT_CONTRACT_VERSION = "0.1.0-draft";
+export const HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT = "hia-documentation-edit-candidate";
+export const HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT = "hia-documentation-review-payload";
 export const HIA_DOCUMENTATION_REVIEW_PAYLOAD_CONTRACT_VERSION = "0.1.0-draft";
 
@@ -327,9 +329,67 @@ export interface HiaDocumentationReviewPayloadActionHints {
   applyAvailable: false;
   copyDraftAvailable: boolean;
   deniedActions: string[];
+  editCandidateAvailable: boolean;
+  editCandidatePreviewAvailable: boolean;
   openContextAvailable: boolean;
   openTargetAvailable: boolean;
   primaryAction: "review";
+}
+
+export type HiaDocumentationEditCandidateStatus = "preview-only" | "unavailable";
+export type HiaDocumentationEditCandidateKind =
+  | "copy-only"
+  | "external-resource-locale-entry"
+  | "source-docline-draft";
+
+export interface HiaDocumentationEditCandidateSafety {
+  allowsAutomaticWrites: false;
+  directApply: false;
+  hostWrite: false;
+  includesSourceContent: false;
+  requiresHumanReview: true;
+  rollback: "host-undo" | "not-applicable";
+  sourcesContentPolicy: "none";
+}
+
+export interface HiaDocumentationEditCandidateTarget {
+  diagnosticCode?: string;
+  fieldPath?: string;
+  locale?: string;
+  relativePath?: string;
+  resourcePath?: string;
+  resourcePointer?: string;
+  symbolId?: string;
+  symbolName?: string;
+  targetPath?: string;
+}
+
+export interface HiaDocumentationEditCandidatePreview {
+  previewKind: "draft-text" | "pointer-only";
+  text?: string;
+  textFormat: HiaDocumentationEditProposalDraftTextFormat;
+}
+
+/**
+ * 人工确认前只读展示的文档化编辑候选。
+ * Read-only documentation edit candidate shown before human approval.
+ *
+ * @lang zh-CN 该 contract 只表达 preview/copy 边界，不包含可直接执行的编辑对象。
+ * @lang en This contract only expresses preview/copy boundaries and does not carry a directly executable edit object.
+ */
+export interface HiaDocumentationEditCandidate {
+  applyMode: "manual-copy" | "host-preview-only";
+  contract: typeof HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT;
+  contractVersion: typeof HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION;
+  id: string;
+  kind: HiaDocumentationEditCandidateKind;
+  preview?: HiaDocumentationEditCandidatePreview;
+  proposalId: string;
+  safety: HiaDocumentationEditCandidateSafety;
+  status: HiaDocumentationEditCandidateStatus;
+  target: HiaDocumentationEditCandidateTarget;
+  unavailableReason?: string;
+  workspaceEditBoundary: string;
 }
 
 export interface HiaDocumentationReviewPayloadQualityCheck {
@@ -353,6 +413,7 @@ export interface HiaDocumentationReviewPayloadItem {
   contextLinks: HiaDocumentationReviewPayloadContextLinks;
   diagnostic?: HiaDocumentationEditProposalDiagnostic;
   draft?: HiaDocumentationEditProposalDraft;
+  editCandidate: HiaDocumentationEditCandidate;
   id: string;
   kind: HiaDocumentationEditProposalKind;
   proposalId: string;
@@ -1244,6 +1305,7 @@ function createReviewPayloadItem(
     contextLinks,
     ...(proposal.diagnostic ? { diagnostic: proposal.diagnostic } : {}),
     ...(proposal.draft ? { draft: proposal.draft } : {}),
+    editCandidate: createReviewPayloadEditCandidate(proposal),
     id: createReviewPayloadItemId(proposal.id),
     kind: proposal.kind,
     proposalId: sanitizeContextId(proposal.id),
@@ -1259,6 +1321,75 @@ function createReviewPayloadItem(
   return item;
 }
 
+function createReviewPayloadEditCandidate(proposal: HiaDocumentationEditProposal): HiaDocumentationEditCandidate {
+  const hasDraft = Boolean(proposal.draft);
+  const status: HiaDocumentationEditCandidateStatus = proposal.status === "review-required" && hasDraft
+    ? "preview-only"
+    : "unavailable";
+  const candidate: HiaDocumentationEditCandidate = {
+    applyMode: hasDraft ? "host-preview-only" : "manual-copy",
+    contract: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT,
+    contractVersion: HIA_DOCUMENTATION_EDIT_CANDIDATE_CONTRACT_VERSION,
+    id: `candidate:${sanitizeContextId(proposal.id)}`,
+    kind: selectEditCandidateKind(proposal),
+    proposalId: sanitizeContextId(proposal.id),
+    safety: {
+      allowsAutomaticWrites: false,
+      directApply: false,
+      hostWrite: false,
+      includesSourceContent: false,
+      requiresHumanReview: true,
+      rollback: proposal.workspaceEditBoundary === "external-resource-only" ? "host-undo" : "not-applicable",
+      sourcesContentPolicy: "none"
+    },
+    status,
+    target: createEditCandidateTarget(proposal.target),
+    ...(proposal.workspaceEditBoundary ? { workspaceEditBoundary: proposal.workspaceEditBoundary } : { workspaceEditBoundary: "proposal-only" })
+  };
+
+  if (proposal.draft) {
+    candidate.preview = {
+      previewKind: "draft-text",
+      text: proposal.draft.text,
+      textFormat: proposal.draft.textFormat
+    };
+  } else {
+    candidate.preview = {
+      previewKind: "pointer-only",
+      textFormat: "plain-text"
+    };
+    candidate.unavailableReason = proposal.unavailableReason || "draft-unavailable";
+  }
+
+  return candidate;
+}
+
+function selectEditCandidateKind(proposal: HiaDocumentationEditProposal): HiaDocumentationEditCandidateKind {
+  if (proposal.workspaceEditBoundary === "external-resource-only" || proposal.target.resourcePointer || proposal.target.resourcePath) {
+    return "external-resource-locale-entry";
+  }
+
+  if (proposal.target.relativePath || proposal.target.range) {
+    return "source-docline-draft";
+  }
+
+  return "copy-only";
+}
+
+function createEditCandidateTarget(target: HiaDocumentationEditProposalTarget): HiaDocumentationEditCandidateTarget {
+  return {
+    ...(target.diagnosticCode ? { diagnosticCode: target.diagnosticCode } : {}),
+    ...(target.fieldPath ? { fieldPath: target.fieldPath } : {}),
+    ...(target.locale ? { locale: target.locale } : {}),
+    ...(target.relativePath ? { relativePath: target.relativePath } : {}),
+    ...(target.resourcePath ? { resourcePath: target.resourcePath } : {}),
+    ...(target.resourcePointer ? { resourcePointer: target.resourcePointer } : {}),
+    ...(target.symbolId ? { symbolId: target.symbolId } : {}),
+    ...(target.symbolName ? { symbolName: target.symbolName } : {}),
+    ...(target.targetPath ? { targetPath: target.targetPath } : {})
+  };
+}
+
 function createReviewPayloadActionPolicy(): HiaDocumentationReviewPayloadActionPolicy {
   return {
     allowedActions: [
@@ -1267,6 +1398,7 @@ function createReviewPayloadActionPolicy(): HiaDocumentationReviewPayloadActionP
       "open-context",
       "copy-proposal",
       "copy-draft",
+      "preview-edit-candidate",
       "cancel"
     ],
     defaultAction: "review",
@@ -1365,6 +1497,7 @@ function createReviewPayloadActionHints(
   contextLinks: HiaDocumentationReviewPayloadContextLinks
 ): HiaDocumentationReviewPayloadActionHints {
   const copyDraftAvailable = Boolean(proposal.draft);
+  const editCandidateAvailable = proposal.status === "review-required" && Boolean(proposal.draft);
   const openContextAvailable = Boolean(contextLinks.aiContextPackageRef)
     || contextLinks.docSourceMapEntryCount > 0
     || contextLinks.projectEntryCount > 0
@@ -1391,6 +1524,8 @@ function createReviewPayloadActionHints(
       ...proposal.review.deniedActions,
       "apply-workspace-edit"
     ]),
+    editCandidateAvailable,
+    editCandidatePreviewAvailable: editCandidateAvailable,
     openContextAvailable,
     openTargetAvailable,
     primaryAction: "review"
@@ -1450,6 +1585,12 @@ function createReviewPayloadQualityChecks(
       ? "Review item is linked to the AI context package and optional unified context metadata."
       : "Review item has no AI context package reference.",
     status: contextLinks.aiContextPackageRef ? "pass" : "warning"
+  });
+
+  checks.push({
+    code: "HIA_REVIEW_EDIT_CANDIDATE_PREVIEW_ONLY",
+    message: "Edit candidate is preview-only and cannot write target files without a later human-approved apply contract.",
+    status: proposal.draft || !requiresDraftForReview(proposal.kind) ? "pass" : "warning"
   });
 
   checks.push(...createReviewPayloadLocaleQualityChecks(proposal, localeState));
