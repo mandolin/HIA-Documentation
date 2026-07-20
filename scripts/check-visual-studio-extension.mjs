@@ -129,6 +129,15 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.surface?.editCandidateContract, "hia-documentation-edit-candidate@0.1.0-draft", "Visual Studio review surface must pin edit candidate preview.");
   assert.equal(reviewSurface?.surface?.editDiffPreviewContract, "hia-documentation-edit-diff-preview@0.1.0-draft", "Visual Studio review surface must pin edit diff preview.");
   assert.equal(reviewSurface?.surface?.editApplyPreflightContract, "hia-documentation-edit-apply-preflight@0.1.0-draft", "Visual Studio review surface must pin edit apply preflight.");
+  assert.equal(reviewSurface?.surface?.providerAugmentationContract, "hia-provider-review-payload-augmentation@0.1.0-draft", "Visual Studio review surface must pin provider augmentation.");
+  assert.equal(reviewSurface?.providerReview?.status, "input-ready", "Visual Studio review surface must expose provider-review input readiness.");
+  assert.equal(reviewSurface?.providerReview?.inputMode, "review-payload-augmentation-only", "Visual Studio provider review must consume augmentation only.");
+  assert.equal(reviewSurface?.providerReview?.checkedApplyAvailable, false, "Visual Studio provider review must not claim checked apply.");
+  assert.equal(reviewSurface?.providerReview?.externalProviderApiKeyRequired, false, "Visual Studio provider review must not require API keys.");
+  assert.equal(reviewSurface?.providerReview?.externalProviderNetworkAllowed, false, "Visual Studio provider review must not claim external network access.");
+  assert.equal(reviewSurface?.providerReview?.workspaceWriteAvailable, false, "Visual Studio provider review must not claim workspace writes.");
+  assert.equal(reviewSurface?.providerReview?.targetRepositoryMutation, false, "Visual Studio provider review must not mutate target repositories.");
+  assert.ok(Array.isArray(reviewSurface?.providerReview?.requiredFields) && reviewSurface.providerReview.requiredFields.includes("providerAugmentation.reviewMetadata"), "Visual Studio provider review must require provider review metadata.");
   assert.equal(reviewSurface?.applyPreview?.status, "input-ready", "Visual Studio review surface must expose apply-preview input readiness.");
   assert.equal(reviewSurface?.applyPreview?.inputMode, "preflight-preview-only", "Visual Studio review surface must keep apply preview preflight-only.");
   assert.equal(reviewSurface?.applyPreview?.checkedApplyAvailable, false, "Visual Studio review surface must not claim checked apply.");
@@ -139,6 +148,7 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");
+  assertSurfaceView(reviewSurface, "provider-review");
   assertSurfaceView(reviewSurface, "candidate-preview");
   assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });

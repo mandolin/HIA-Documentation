@@ -64,7 +64,16 @@ async function main() {
   assert.equal(panel.review.applyPreview.targetRepositoryMutation, false, "Review surface must not mutate target repositories.");
   assert.equal(panel.review.applyPreview.hostCheckPreflightCount, 1, "Review surface must summarize host-check preflight inputs.");
   assert.equal(panel.review.applyPreview.targetFileCount, 1, "Review surface must summarize apply-preview target files.");
+  assert.equal(panel.review.provider.contract, "hia-provider-review-payload-augmentation", "Review surface must expose provider augmentation contract.");
+  assert.equal(panel.review.provider.providerId, "hia-deterministic-mock", "Review surface must expose provider identity.");
+  assert.equal(panel.review.provider.draftOutputCount, 1, "Review surface must summarize provider drafts.");
+  assert.equal(panel.review.provider.reviewMetadataCount, 1, "Review surface must summarize provider review metadata.");
+  assert.equal(panel.review.provider.refusalOutputCount, 0, "Review surface must summarize provider refusals.");
+  assert.equal(panel.review.provider.directApplyAllowed, false, "Review surface provider metadata must keep direct apply disabled.");
+  assert.equal(panel.review.provider.workspaceWriteAllowed, false, "Review surface provider metadata must keep workspace writes disabled.");
   assert.equal(reviewDetail?.actionHints.applyAvailable, false, "Review surface must keep apply unavailable.");
+  assert.equal(reviewDetail?.provider.draftOutputCount, 1, "Review detail must expose provider drafts for the item.");
+  assert.equal(reviewDetail?.provider.reviewMetadataCount, 1, "Review detail must expose provider metadata for the item.");
   assert.equal(reviewDetail?.editCandidate.status, "preview-only", "Review surface must expose candidate preview status.");
   assert.equal(reviewDetail?.editCandidate.kind, "source-docline-draft", "Review surface must expose candidate kind.");
   assert.equal(reviewDetail?.editCandidate.diffPreview.status, "preview-only", "Review surface must expose diff preview status.");
@@ -127,6 +136,7 @@ async function main() {
         diffPreviewCount: panel.review.items.filter((item) => item.editCandidate.diffPreview.status === "preview-only").length,
         diffPreviewOperationCount: panel.review.items.flatMap((item) => item.editCandidate.diffPreview.operations).length,
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
+        provider: panel.review.provider,
         privacy: panel.review.privacy
       }
     }
@@ -186,6 +196,55 @@ function createFixturePayload() {
           to: "source:src/api.ts"
         }
       ]
+    },
+    providerAugmentation: {
+      actionPolicy: {
+        directApplyAllowed: false,
+        directEditObjectAllowed: false,
+        requiresHumanReview: true,
+        targetRepositoryMutationAllowed: false,
+        toolExecutionAllowed: false,
+        workspaceWriteAllowed: false
+      },
+      contract: "hia-provider-review-payload-augmentation",
+      contractVersion: "0.1.0-draft",
+      draftOutputs: [
+        {
+          id: "runner-draft-output",
+          proposalId: "provider-proposal-api-doc",
+          providerOutputId: "draft-output",
+          target: {
+            reviewItemId: "review-item-proposal-api-doc"
+          }
+        }
+      ],
+      provider: {
+        id: "hia-deterministic-mock",
+        runtimeKind: "deterministic-mock",
+        version: "0.1.0"
+      },
+      refusalOutputs: [],
+      reviewItemBindings: [
+        {
+          providerReviewItemId: "review-item-proposal-api-doc",
+          sourceReviewItemId: "review-item:proposal:api-doc"
+        }
+      ],
+      reviewMetadata: [
+        {
+          proposalId: "provider-proposal-api-doc",
+          providerOutputId: "review-output",
+          qualitySignals: ["deterministic", "review-only"],
+          riskLevel: "low"
+        }
+      ],
+      status: "success",
+      privacy: {
+        includesSourceBody: false,
+        includesSourcesContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      }
     },
     reviewPayload: {
       actionPolicy: {

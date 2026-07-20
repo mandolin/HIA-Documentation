@@ -33,6 +33,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Provider adapter interface evidence | `scripts/prepare-wp35-provider-adapter-evidence.mjs` | `0.1.0-draft` |
 | Deterministic mock provider evidence | `scripts/prepare-wp35-provider-mock-evidence.mjs` | `0.1.0-draft` |
 | Local provider runner evidence | `scripts/prepare-wp35-provider-runner-evidence.mjs` | `0.1.0-draft` |
+| Host review provider evidence | `scripts/prepare-wp35-host-review-provider-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -72,6 +73,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Provider adapter interface evidence | `main-repo` scripts | W-P35 evidence proving the provider SDK accepts safe fixtures and rejects unsafe capabilities, source-body inputs and direct edit outputs before deterministic mock providers are implemented. |
 | Deterministic mock provider evidence | `main-repo` scripts | W-P35 evidence proving the first provider implementation is offline, deterministic, review-only and mediated by `@hia-doc/provider-sdk`. |
 | Local provider runner evidence | `main-repo` scripts | W-P35 evidence proving provider output can be routed back into review payload augmentation without source bodies, WorkspaceEdit objects or target repository mutation. |
+| Host review provider evidence | `main-repo` scripts | W-P35 evidence proving VS Code, DevTools and Visual Studio review surfaces can display provider augmentation while apply/write authority remains disabled. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |

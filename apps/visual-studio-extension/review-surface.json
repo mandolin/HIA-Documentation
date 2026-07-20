@@ -11,7 +11,28 @@
     "editCandidateContract": "hia-documentation-edit-candidate@0.1.0-draft",
     "editDiffPreviewContract": "hia-documentation-edit-diff-preview@0.1.0-draft",
     "editApplyPreflightContract": "hia-documentation-edit-apply-preflight@0.1.0-draft",
+    "providerAugmentationContract": "hia-provider-review-payload-augmentation@0.1.0-draft",
     "hostResultContract": "hia-lsp-host-result@0.1.0-draft"
+  },
+  "providerReview": {
+    "status": "input-ready",
+    "inputMode": "review-payload-augmentation-only",
+    "checkedApplyAvailable": false,
+    "externalProviderApiKeyRequired": false,
+    "externalProviderNetworkAllowed": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "requiredFields": [
+      "providerAugmentation.contract",
+      "providerAugmentation.contractVersion",
+      "providerAugmentation.provider",
+      "providerAugmentation.status",
+      "providerAugmentation.draftOutputs",
+      "providerAugmentation.reviewMetadata",
+      "providerAugmentation.refusalOutputs",
+      "providerAugmentation.actionPolicy",
+      "providerAugmentation.privacy"
+    ]
   },
   "applyPreview": {
     "status": "input-ready",
@@ -52,6 +73,20 @@
         "item.proposal.summary",
         "item.draft.text",
         "item.aiContextRef"
+      ]
+    },
+    {
+      "id": "provider-review",
+      "title": "Provider Review",
+      "purpose": "Show provider origin, draft outputs, review metadata, quality signals and refusal state without granting apply or write authority.",
+      "requiredFields": [
+        "providerAugmentation.provider.id",
+        "providerAugmentation.provider.runtimeKind",
+        "providerAugmentation.draftOutputs",
+        "providerAugmentation.reviewMetadata",
+        "providerAugmentation.refusalOutputs",
+        "providerAugmentation.actionPolicy.directApplyAllowed",
+        "providerAugmentation.privacy.sourcesContentPolicy"
       ]
     },
     {

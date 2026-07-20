@@ -295,6 +295,57 @@ export interface HiaDocumentationReviewPayloadSummary {
     sourceDocumentTruth?: string;
     staleLocaleStatus?: string;
   };
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary;
+}
+
+export interface HiaProviderReviewPayloadAugmentationSummary {
+  actionPolicy?: {
+    deniedActions?: string[];
+    directApplyAllowed?: boolean;
+    directEditObjectAllowed?: boolean;
+    requiresHumanReview?: boolean;
+    targetRepositoryMutationAllowed?: boolean;
+    toolExecutionAllowed?: boolean;
+    workspaceWriteAllowed?: boolean;
+  };
+  contract?: string;
+  contractVersion?: string;
+  draftOutputs?: Array<{
+    id?: string;
+    locale?: string;
+    proposalId?: string;
+    providerOutputId?: string;
+    target?: {
+      reviewItemId?: string;
+    };
+  }>;
+  provider?: {
+    id?: string;
+    runtimeKind?: string;
+    version?: string;
+  };
+  refusalOutputs?: Array<{
+    id?: string;
+    providerOutputId?: string;
+    reasonCode?: string;
+  }>;
+  reviewItemBindings?: Array<{
+    providerReviewItemId?: string;
+    sourceReviewItemId?: string;
+  }>;
+  reviewMetadata?: Array<{
+    proposalId?: string;
+    providerOutputId?: string;
+    qualitySignals?: string[];
+    riskLevel?: string;
+  }>;
+  status?: string;
+  privacy?: {
+    includesSourceBody?: boolean;
+    includesSourcesContent?: boolean;
+    requiresHumanReview?: boolean;
+    sourcesContentPolicy?: string;
+  };
 }
 
 /**
@@ -491,6 +542,7 @@ export interface HiaDocumentationReviewItemChoice {
   detail?: string;
   item: HiaDocumentationReviewPayloadItemSummary;
   label: string;
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary;
 }
 
 export interface HiaDocumentationEditProposalsSummary {
@@ -499,6 +551,7 @@ export interface HiaDocumentationEditProposalsSummary {
   privacy?: HiaDocumentationEditProposalPrivacySummary;
   proposalCount?: number;
   proposals?: HiaDocumentationEditProposalSummary[];
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary;
   reviewPayload?: HiaDocumentationReviewPayloadSummary;
   status?: string;
   uri?: string;
@@ -742,6 +795,7 @@ export function createHiaDocumentationReviewReport(input: HiaDocumentationEditPr
   const summary = payload?.summary;
   const localeQuality = payload?.localeQuality;
   const privacy = payload?.privacy ?? input.privacy;
+  const providerAugmentation = getHiaDocumentationProviderAugmentation(input);
   const lines = [
     `Status: ${input.status || "unknown"}`,
     `Proposals: ${input.proposalCount ?? payload?.proposalCount ?? 0}`,
@@ -761,6 +815,18 @@ export function createHiaDocumentationReviewReport(input: HiaDocumentationEditPr
     lines.push(`Policy locales: ${(localeQuality.policyLocales || []).join(", ") || "none"}`);
   }
 
+  if (providerAugmentation) {
+    const provider = providerAugmentation.provider;
+    lines.push(`Provider: ${formatProviderLabel(providerAugmentation)}`);
+    lines.push(`Provider status: ${providerAugmentation.status || "unknown"}`);
+    lines.push(`Provider drafts: ${providerAugmentation.draftOutputs?.length ?? 0}`);
+    lines.push(`Provider metadata: ${providerAugmentation.reviewMetadata?.length ?? 0}`);
+    lines.push(`Provider refusals: ${providerAugmentation.refusalOutputs?.length ?? 0}`);
+    lines.push(`Provider runtime: ${provider?.runtimeKind || "unknown"}`);
+    lines.push(`Provider human review: ${providerAugmentation.actionPolicy?.requiresHumanReview ? "required" : "not confirmed"}`);
+    lines.push(`Provider direct apply: ${providerAugmentation.actionPolicy?.directApplyAllowed ? "enabled" : "disabled"}`);
+  }
+
   if (payload?.actionPolicy) {
     lines.push(`Allowed actions: ${(payload.actionPolicy.allowedActions || []).join(", ") || "none"}`);
     lines.push(`Denied actions: ${(payload.actionPolicy.deniedActions || []).join(", ") || "none"}`);
@@ -773,7 +839,10 @@ export function createHiaDocumentationReviewReport(input: HiaDocumentationEditPr
  * 将 host-neutral review payload 转成 VS Code QuickPick item。
  * Convert a host-neutral review payload into VS Code QuickPick-friendly item summaries.
  */
-export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentationReviewPayloadSummary): HiaDocumentationReviewItemChoice[] {
+export function createHiaDocumentationReviewItemChoices(
+  payload?: HiaDocumentationReviewPayloadSummary,
+  providerAugmentation = payload?.providerAugmentation
+): HiaDocumentationReviewItemChoice[] {
   return (payload?.items || []).map((item, index) => {
     const target = summarizeReviewTarget(item);
     const quality = summarizeReviewQuality(item);
@@ -781,14 +850,16 @@ export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentati
     const editCandidate = item.actionHints?.editCandidatePreviewAvailable ? "edit preview" : undefined;
     const diffPreview = item.editCandidate?.diffPreview?.status === "preview-only" ? "diff preview" : undefined;
     const applyPreflight = item.editCandidate?.applyPreflight?.status === "requires-host-check" ? "host preflight" : undefined;
+    const provider = summarizeReviewProvider(item, providerAugmentation);
 
     return {
       item,
+      ...(providerAugmentation ? { providerAugmentation } : {}),
       label: item.title || item.proposalId || item.id || `Review item ${index + 1}`,
       description: [item.kind, item.status, item.risk?.level ? `risk:${item.risk.level}` : undefined]
         .filter(isNonEmptyString)
         .join(" | "),
-      detail: [target, quality, editCandidate, diffPreview, applyPreflight, `action:${action}`]
+      detail: [target, quality, provider, editCandidate, diffPreview, applyPreflight, `action:${action}`]
         .filter(isNonEmptyString)
         .join(" | ")
     };
@@ -799,8 +870,12 @@ export function createHiaDocumentationReviewItemChoices(payload?: HiaDocumentati
  * 创建单个 review item 的可读详情报告。
  * Creates a readable detail report for a single review item.
  */
-export function createHiaDocumentationReviewItemReport(item: HiaDocumentationReviewPayloadItemSummary): string[] {
+export function createHiaDocumentationReviewItemReport(
+  item: HiaDocumentationReviewPayloadItemSummary,
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary
+): string[] {
   const qualityCounts = countBy((item.qualityChecks || []).map((check) => check.status || "unknown"));
+  const providerItem = summarizeProviderItemCounts(item, providerAugmentation);
   const lines = [
     `Title: ${item.title || item.proposalId || item.id || "HIA documentation proposal"}`,
     `Proposal: ${item.proposalId || item.id || "unknown"}`,
@@ -818,6 +893,15 @@ export function createHiaDocumentationReviewItemReport(item: HiaDocumentationRev
     `Workspace edit boundary: ${item.workspaceEditBoundary || "not available"}`
   ];
 
+  if (providerAugmentation) {
+    lines.push(`Provider: ${formatProviderLabel(providerAugmentation)}`);
+    lines.push(`Provider drafts: ${providerItem.draftCount}`);
+    lines.push(`Provider metadata: ${providerItem.metadataCount}`);
+    lines.push(`Provider refusals: ${providerItem.refusalCount}`);
+    lines.push(`Provider quality signals: ${providerItem.qualitySignals.join(", ") || "none"}`);
+    lines.push(`Provider direct apply: ${providerAugmentation.actionPolicy?.directApplyAllowed ? "enabled" : "disabled"}`);
+  }
+
   for (const reason of item.risk?.reasons || []) {
     lines.push(`Risk reason: ${reason}`);
   }
@@ -827,6 +911,42 @@ export function createHiaDocumentationReviewItemReport(item: HiaDocumentationRev
   }
 
   return lines;
+}
+
+/**
+ * 创建 provider augmentation 的可读审查摘要。
+ * Create a readable review summary for provider augmentation data.
+ */
+export function createHiaDocumentationReviewProviderReport(
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary
+): string[] {
+  if (!providerAugmentation) {
+    return ["Provider: none"];
+  }
+
+  const actionPolicy = providerAugmentation.actionPolicy;
+  const privacy = providerAugmentation.privacy;
+  return [
+    `Provider: ${formatProviderLabel(providerAugmentation)}`,
+    `Provider status: ${providerAugmentation.status || "unknown"}`,
+    `Provider drafts: ${providerAugmentation.draftOutputs?.length ?? 0}`,
+    `Provider metadata: ${providerAugmentation.reviewMetadata?.length ?? 0}`,
+    `Provider refusals: ${providerAugmentation.refusalOutputs?.length ?? 0}`,
+    `Provider direct apply: ${actionPolicy?.directApplyAllowed ? "enabled" : "disabled"}`,
+    `Provider direct edit object: ${actionPolicy?.directEditObjectAllowed ? "enabled" : "disabled"}`,
+    `Provider workspace write: ${actionPolicy?.workspaceWriteAllowed ? "enabled" : "disabled"}`,
+    `Provider target mutation: ${actionPolicy?.targetRepositoryMutationAllowed ? "enabled" : "disabled"}`,
+    `Provider tool execution: ${actionPolicy?.toolExecutionAllowed ? "enabled" : "disabled"}`,
+    `Provider human review: ${actionPolicy?.requiresHumanReview ? "required" : "not confirmed"}`,
+    `Provider sources content policy: ${privacy?.sourcesContentPolicy || "none"}`,
+    `Provider source body: ${privacy?.includesSourceBody ? "included" : "not included"}`
+  ];
+}
+
+export function getHiaDocumentationProviderAugmentation(
+  input?: HiaDocumentationEditProposalsSummary
+): HiaProviderReviewPayloadAugmentationSummary | undefined {
+  return input?.providerAugmentation ?? input?.reviewPayload?.providerAugmentation;
 }
 
 /**
@@ -906,6 +1026,65 @@ function summarizeReviewTarget(item: HiaDocumentationReviewPayloadItemSummary): 
 function summarizeReviewQuality(item: HiaDocumentationReviewPayloadItemSummary): string | undefined {
   const counts = countBy((item.qualityChecks || []).map((check) => check.status || "unknown"));
   return counts.size > 0 ? `quality:${formatCounts(counts)}` : undefined;
+}
+
+function summarizeReviewProvider(
+  item: HiaDocumentationReviewPayloadItemSummary,
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary
+): string | undefined {
+  if (!providerAugmentation) {
+    return undefined;
+  }
+
+  const counts = summarizeProviderItemCounts(item, providerAugmentation);
+  return `provider:drafts=${counts.draftCount}, metadata=${counts.metadataCount}, refusals=${counts.refusalCount}`;
+}
+
+function summarizeProviderItemCounts(
+  item: HiaDocumentationReviewPayloadItemSummary,
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary
+): { draftCount: number; metadataCount: number; refusalCount: number; qualitySignals: string[] } {
+  if (!providerAugmentation) {
+    return {
+      draftCount: 0,
+      metadataCount: 0,
+      refusalCount: 0,
+      qualitySignals: []
+    };
+  }
+
+  const providerReviewItemId = findProviderReviewItemId(item, providerAugmentation);
+  const draftOutputs = (providerAugmentation.draftOutputs || [])
+    .filter((output) => !providerReviewItemId || output.target?.reviewItemId === providerReviewItemId);
+  const draftProposalIds = new Set(draftOutputs.map((output) => output.proposalId).filter(isNonEmptyString));
+  const reviewMetadata = (providerAugmentation.reviewMetadata || [])
+    .filter((output) => draftProposalIds.size === 0 || (output.proposalId && draftProposalIds.has(output.proposalId)));
+  const refusalOutputs = providerAugmentation.refusalOutputs || [];
+  const qualitySignals = [...new Set(reviewMetadata.flatMap((output) => output.qualitySignals || []))].sort();
+
+  return {
+    draftCount: draftOutputs.length,
+    metadataCount: reviewMetadata.length,
+    refusalCount: refusalOutputs.length,
+    qualitySignals
+  };
+}
+
+function findProviderReviewItemId(
+  item: HiaDocumentationReviewPayloadItemSummary,
+  providerAugmentation: HiaProviderReviewPayloadAugmentationSummary
+): string | undefined {
+  const sourceId = item.id || item.proposalId;
+  const binding = (providerAugmentation.reviewItemBindings || [])
+    .find((candidate) => candidate.sourceReviewItemId === sourceId);
+  return binding?.providerReviewItemId;
+}
+
+function formatProviderLabel(providerAugmentation: HiaProviderReviewPayloadAugmentationSummary): string {
+  const provider = providerAugmentation.provider;
+  const id = provider?.id || "unknown";
+  const version = provider?.version ? `@${provider.version}` : "";
+  return `${id}${version}`;
 }
 
 export function getHiaPreviewStaleReason(input: {

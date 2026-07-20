@@ -61,12 +61,14 @@
         "documentation proposal list and detail presentation",
         "draft text copy action",
         "read-only edit candidate preview",
+        "provider origin, review metadata and refusal presentation",
         "locale-quality and language-marker review hints"
       ],
       "consumes": [
         "hia/documentationEditProposals",
         "hia-documentation-review-payload@0.1.0-draft",
         "hia-documentation-edit-candidate@0.1.0-draft",
+        "hia-provider-review-payload-augmentation@0.1.0-draft",
         "hia-lsp-host-result@0.1.0-draft"
       ],
       "applySupport": "disabled-until-human-approved-workspace-edit-contract"

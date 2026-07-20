@@ -22,6 +22,7 @@ import {
   createHiaBuildArgs,
   createHiaDocumentationReviewItemChoices,
   createHiaDocumentationReviewItemReport,
+  createHiaDocumentationReviewProviderReport,
   createHiaDocumentationReviewReport,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
@@ -29,6 +30,7 @@ import {
   createHiaResourceActionReport,
   createHiaValidationReport,
   getHiaDocumentationReviewDraftText,
+  getHiaDocumentationProviderAugmentation,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
   resolveConfiguredManifestPath,
@@ -296,6 +298,55 @@ describe("@hia-doc/vscode-extension config", () => {
   });
 
   it("creates review-only documentation proposal reports", () => {
+    const providerAugmentation = {
+      actionPolicy: {
+        directApplyAllowed: false,
+        directEditObjectAllowed: false,
+        requiresHumanReview: true,
+        targetRepositoryMutationAllowed: false,
+        toolExecutionAllowed: false,
+        workspaceWriteAllowed: false
+      },
+      contract: "hia-provider-review-payload-augmentation",
+      contractVersion: "0.1.0-draft",
+      draftOutputs: [
+        {
+          id: "runner-draft-1",
+          proposalId: "provider-proposal-1",
+          providerOutputId: "draft-1",
+          target: {
+            reviewItemId: "review-1"
+          }
+        }
+      ],
+      provider: {
+        id: "hia-deterministic-mock",
+        runtimeKind: "deterministic-mock",
+        version: "0.1.0"
+      },
+      refusalOutputs: [],
+      reviewItemBindings: [
+        {
+          providerReviewItemId: "review-1",
+          sourceReviewItemId: "review:1"
+        }
+      ],
+      reviewMetadata: [
+        {
+          proposalId: "provider-proposal-1",
+          providerOutputId: "metadata-1",
+          qualitySignals: ["deterministic", "review-only"],
+          riskLevel: "low"
+        }
+      ],
+      status: "success",
+      privacy: {
+        includesSourceBody: false,
+        includesSourcesContent: false,
+        requiresHumanReview: true,
+        sourcesContentPolicy: "none"
+      }
+    };
     const reviewPayload: HiaDocumentationEditProposalsSummary = {
       draftCount: 1,
       proposalCount: 1,
@@ -478,6 +529,7 @@ describe("@hia-doc/vscode-extension config", () => {
           sourcesContentPolicy: "none"
         },
         proposalCount: 1,
+        providerAugmentation,
         summary: {
           draftCount: 1,
           itemCount: 1,
@@ -485,16 +537,23 @@ describe("@hia-doc/vscode-extension config", () => {
           qualityWarningCount: 0
         }
       },
+      providerAugmentation,
       status: "available"
     };
 
     const report = createHiaDocumentationReviewReport(reviewPayload);
-    const choices = createHiaDocumentationReviewItemChoices(reviewPayload.reviewPayload);
-    const itemReport = createHiaDocumentationReviewItemReport(reviewPayload.reviewPayload?.items?.[0] ?? {});
+    const provider = getHiaDocumentationProviderAugmentation(reviewPayload);
+    const choices = createHiaDocumentationReviewItemChoices(reviewPayload.reviewPayload, provider);
+    const itemReport = createHiaDocumentationReviewItemReport(reviewPayload.reviewPayload?.items?.[0] ?? {}, provider);
+    const providerReport = createHiaDocumentationReviewProviderReport(provider);
 
     expect(report).toContain("Review items: 1");
     expect(report).toContain("Automatic writes: disabled");
     expect(report).toContain("Locale truth: HiaI18nModel.fields");
+    expect(report).toContain("Provider: hia-deterministic-mock@0.1.0");
+    expect(report).toContain("Provider drafts: 1");
+    expect(report).toContain("Provider metadata: 1");
+    expect(report).toContain("Provider direct apply: disabled");
     expect(report).toContain("Allowed actions: review, copy-draft");
     expect(report).toContain("Denied actions: apply-workspace-edit");
     expect(choices).toHaveLength(1);
@@ -503,6 +562,7 @@ describe("@hia-doc/vscode-extension config", () => {
       description: "missing-locale-stub | review-required | risk:low"
     });
     expect(choices[0]?.detail).toContain("docs/profile.hia.json Profile description locale:en");
+    expect(choices[0]?.detail).toContain("provider:drafts=1, metadata=1, refusals=0");
     expect(choices[0]?.detail).toContain("edit preview");
     expect(choices[0]?.detail).toContain("diff preview");
     expect(choices[0]?.detail).toContain("host preflight");
@@ -512,7 +572,11 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(itemReport).toContain("Edit candidate: preview-only (external-resource-locale-entry)");
     expect(itemReport).toContain("Diff preview: preview-only (external-resource-locale-entry)");
     expect(itemReport).toContain("Apply preflight: requires-host-check (conflict:not-checked)");
+    expect(itemReport).toContain("Provider: hia-deterministic-mock@0.1.0");
+    expect(itemReport).toContain("Provider quality signals: deterministic, review-only");
     expect(itemReport).toContain("Action hints: copyDraft=yes, editPreview=yes, openContext=yes, apply=no");
+    expect(providerReport).toContain("Provider workspace write: disabled");
+    expect(providerReport).toContain("Provider source body: not included");
     expect(getHiaDocumentationReviewDraftText(reviewPayload.reviewPayload?.items?.[0] ?? {})).toBe("English draft.");
   });
 

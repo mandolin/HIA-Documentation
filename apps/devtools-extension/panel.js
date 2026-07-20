@@ -81,6 +81,7 @@ function renderSummary() {
     ["Relations", state.model.summary.relationCount],
     ["Review", state.model.review.summary.itemCount],
     ["Drafts", state.model.review.draftCount],
+    ["Provider Drafts", state.model.review.provider.draftOutputCount],
     ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount]
   ];
 
@@ -220,6 +221,10 @@ function renderReviewDetail() {
       <dt>Target</dt><dd>${escapeHtml(item.targetLabel)}</dd>
       <dt>Proposal</dt><dd>${escapeHtml(item.proposalId)}</dd>
       <dt>Quality</dt><dd>${escapeHtml(`pass:${item.quality.pass} warning:${item.quality.warning} blocked:${item.quality.blocked}`)}</dd>
+      <dt>Provider</dt><dd>${escapeHtml(state.model.review.provider.providerId)}</dd>
+      <dt>Provider Drafts</dt><dd>${escapeHtml(String(item.provider.draftOutputCount))}</dd>
+      <dt>Provider Metadata</dt><dd>${escapeHtml(String(item.provider.reviewMetadataCount))}</dd>
+      <dt>Provider Refusals</dt><dd>${escapeHtml(String(item.provider.refusalOutputCount))}</dd>
       <dt>Candidate</dt><dd>${escapeHtml(`${item.editCandidate.status} / ${item.editCandidate.kind}`)}</dd>
       <dt>Diff</dt><dd>${escapeHtml(`${item.editCandidate.diffPreview.status} / ${item.editCandidate.diffPreview.targetKind} / operations:${item.editCandidate.diffPreview.operationCount}`)}</dd>
       <dt>Preflight</dt><dd>${escapeHtml(`${item.editCandidate.applyPreflight.status} / conflict:${item.editCandidate.applyPreflight.conflictStatus}`)}</dd>
@@ -240,7 +245,12 @@ function formatReviewCandidatePreview(item) {
     `Requires conflict check: ${item.editCandidate.diffPreview.requiresConflictCheck ? "yes" : "no"}`,
     `Apply preflight: ${item.editCandidate.applyPreflight.status}`,
     `Preflight target files: ${item.editCandidate.applyPreflight.targetFileCount}`,
-    `Preflight rollback: ${item.editCandidate.applyPreflight.rollbackStrategy}${item.editCandidate.applyPreflight.rollbackRecordRequired ? " (record required)" : ""}`
+    `Preflight rollback: ${item.editCandidate.applyPreflight.rollbackStrategy}${item.editCandidate.applyPreflight.rollbackRecordRequired ? " (record required)" : ""}`,
+    "",
+    `Provider drafts: ${item.provider.draftOutputCount}`,
+    `Provider metadata: ${item.provider.reviewMetadataCount}`,
+    `Provider refusals: ${item.provider.refusalOutputCount}`,
+    `Provider quality signals: ${item.provider.qualitySignals.join(", ") || "none"}`
   ];
 
   for (const operation of item.editCandidate.diffPreview.operations) {

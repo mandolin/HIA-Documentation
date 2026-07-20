@@ -35,6 +35,7 @@ import {
   createHiaBuildArgs,
   createHiaDocumentationReviewItemChoices,
   createHiaDocumentationReviewItemReport,
+  createHiaDocumentationReviewProviderReport,
   createHiaDocumentationReviewReport,
   createHiaDocumentSelector,
   createHiaFileWatcherPattern,
@@ -42,6 +43,7 @@ import {
   createHiaResourceActionReport,
   createHiaValidationReport,
   getHiaDocumentationReviewDraftText,
+  getHiaDocumentationProviderAugmentation,
   getHiaPreviewStaleReason,
   normalizeHiaCommandSettings,
   resolveConfiguredManifestPath,
@@ -56,6 +58,7 @@ import {
   type HiaDocumentationEditProposalsSummary,
   type HiaDocumentationReviewItemChoice,
   type HiaDocumentationReviewPayloadItemSummary,
+  type HiaProviderReviewPayloadAugmentationSummary,
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
@@ -600,7 +603,8 @@ async function reviewHiaDocumentationProposals(outputChannel: vscode.OutputChann
     outputChannel.appendLine(`- ${line}`);
   }
 
-  const choices = createHiaDocumentationReviewItemChoices(result.reviewPayload);
+  const providerAugmentation = getHiaDocumentationProviderAugmentation(result);
+  const choices = createHiaDocumentationReviewItemChoices(result.reviewPayload, providerAugmentation);
 
   if (choices.length === 0) {
     void vscode.window.showInformationMessage("No HIA documentation proposal requires review.");
@@ -960,12 +964,21 @@ async function selectHiaDocumentationReviewAction(
   outputChannel: vscode.OutputChannel
 ): Promise<void> {
   const item = choice.item;
+  const providerAugmentation = choice.providerAugmentation;
   const actions: DocumentationReviewActionQuickPickItem[] = [
     {
       label: "Show proposal details",
       description: item.proposalId || item.id || "proposal id unavailable",
       actionKind: "show-details",
-      item
+      item,
+      ...(providerAugmentation ? { providerAugmentation } : {})
+    },
+    {
+      label: "Show provider review metadata",
+      description: providerAugmentation?.provider?.id || "provider metadata unavailable",
+      actionKind: "show-provider",
+      item,
+      ...(providerAugmentation ? { providerAugmentation } : {})
     },
     {
       label: "Copy draft text",
@@ -1015,7 +1028,12 @@ async function selectHiaDocumentationReviewAction(
   }
 
   if (selected.actionKind === "show-details") {
-    showHiaDocumentationReviewItemDetails(item, outputChannel);
+    showHiaDocumentationReviewItemDetails(item, outputChannel, selected.providerAugmentation);
+    return;
+  }
+
+  if (selected.actionKind === "show-provider") {
+    showHiaDocumentationProviderReview(selected.providerAugmentation, outputChannel);
     return;
   }
 
@@ -1155,11 +1173,13 @@ type DocumentationReviewActionKind =
   | "show-apply-preflight"
   | "show-context"
   | "show-edit-candidate"
-  | "show-details";
+  | "show-details"
+  | "show-provider";
 
 interface DocumentationReviewActionQuickPickItem extends vscode.QuickPickItem {
   actionKind: DocumentationReviewActionKind;
   item: HiaDocumentationReviewPayloadItemSummary;
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary;
 }
 
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {
@@ -1183,15 +1203,33 @@ interface ProjectRelationQuickPickItem extends vscode.QuickPickItem {
 
 type ProjectRelationActionQuickPickItem = HiaProjectRelationActionChoice & vscode.QuickPickItem;
 
-function showHiaDocumentationReviewItemDetails(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+function showHiaDocumentationReviewItemDetails(
+  item: HiaDocumentationReviewPayloadItemSummary,
+  outputChannel: vscode.OutputChannel,
+  providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary
+): void {
   outputChannel.show(true);
   outputChannel.appendLine("HIA documentation proposal details:");
 
-  for (const line of createHiaDocumentationReviewItemReport(item)) {
+  for (const line of createHiaDocumentationReviewItemReport(item, providerAugmentation)) {
     outputChannel.appendLine(`- ${line}`);
   }
 
   void vscode.window.showInformationMessage("HIA documentation proposal details written to output.");
+}
+
+function showHiaDocumentationProviderReview(
+  providerAugmentation: HiaProviderReviewPayloadAugmentationSummary | undefined,
+  outputChannel: vscode.OutputChannel
+): void {
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA provider review metadata:");
+
+  for (const line of createHiaDocumentationReviewProviderReport(providerAugmentation)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA provider review metadata written to output.");
 }
 
 async function copyHiaDocumentationReviewDraft(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): Promise<void> {

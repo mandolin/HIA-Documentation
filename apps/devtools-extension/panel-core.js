@@ -73,7 +73,8 @@ export function createHiaDevToolsPanelViewModel(payload) {
  */
 export function createHiaDevToolsReviewSurfaceViewModel(payload) {
   const reviewPayload = selectReviewPayload(payload);
-  const items = arrayValue(reviewPayload?.items).map(normalizeReviewItem);
+  const providerAugmentation = selectProviderAugmentation(payload) ?? selectProviderAugmentation(reviewPayload);
+  const items = arrayValue(reviewPayload?.items).map((item) => normalizeReviewItem(item, providerAugmentation));
   const summary = isRecord(reviewPayload?.summary) ? reviewPayload.summary : {};
   const privacy = isRecord(reviewPayload?.privacy) ? reviewPayload.privacy : {};
   const actionPolicy = isRecord(reviewPayload?.actionPolicy) ? reviewPayload.actionPolicy : {};
@@ -95,6 +96,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       requiresHumanReview: booleanValue(privacy.requiresHumanReview) ?? true,
       sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none"
     },
+    provider: normalizeProviderAugmentation(providerAugmentation),
     summary: {
       blockedCount: numberValue(summary.blockedCount) ?? items.filter((item) => item.status === "blocked").length,
       itemCount: numberValue(summary.itemCount) ?? items.length,
@@ -250,12 +252,41 @@ function selectReviewPayload(payload) {
   return undefined;
 }
 
-function normalizeReviewItem(value) {
+function selectProviderAugmentation(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (input.contract === "hia-provider-review-payload-augmentation") {
+    return input;
+  }
+
+  if (isRecord(input.providerAugmentation)) {
+    return input.providerAugmentation;
+  }
+
+  if (isRecord(input.reviewPayloadAugmentation)) {
+    return input.reviewPayloadAugmentation;
+  }
+
+  if (isRecord(input.result)) {
+    if (isRecord(input.result.providerAugmentation)) {
+      return input.result.providerAugmentation;
+    }
+
+    if (isRecord(input.result.reviewPayloadAugmentation)) {
+      return input.result.reviewPayloadAugmentation;
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeReviewItem(value, providerAugmentation) {
   const item = isRecord(value) ? value : {};
   const actionHints = isRecord(item.actionHints) ? item.actionHints : {};
   const draft = isRecord(item.draft) ? item.draft : {};
   const editCandidate = isRecord(item.editCandidate) ? item.editCandidate : {};
   const qualityChecks = arrayValue(item.qualityChecks);
+  const provider = normalizeProviderItem(item, providerAugmentation);
 
   return {
     actionHints: cloneJsonValue(actionHints) ?? {},
@@ -269,11 +300,74 @@ function normalizeReviewItem(value) {
       pass: qualityChecks.filter((check) => isRecord(check) && check.status === "pass").length,
       warning: qualityChecks.filter((check) => isRecord(check) && check.status === "warning").length
     },
+    provider,
     riskLevel: stringValue(isRecord(item.risk) ? item.risk.level : undefined) ?? "unknown",
     status: stringValue(item.status) ?? "unknown",
     targetLabel: formatReviewTarget(item.target),
     title: stringValue(item.title) ?? stringValue(item.proposalId) ?? "HIA documentation proposal"
   };
+}
+
+function normalizeProviderAugmentation(value) {
+  const augmentation = isRecord(value) ? value : {};
+  const provider = isRecord(augmentation.provider) ? augmentation.provider : {};
+  const actionPolicy = isRecord(augmentation.actionPolicy) ? augmentation.actionPolicy : {};
+  const privacy = isRecord(augmentation.privacy) ? augmentation.privacy : {};
+
+  return {
+    contract: stringValue(augmentation.contract) ?? "",
+    contractVersion: stringValue(augmentation.contractVersion) ?? "",
+    directApplyAllowed: booleanValue(actionPolicy.directApplyAllowed) ?? false,
+    directEditObjectAllowed: booleanValue(actionPolicy.directEditObjectAllowed) ?? false,
+    draftOutputCount: arrayValue(augmentation.draftOutputs).length,
+    providerId: stringValue(provider.id) ?? "none",
+    providerVersion: stringValue(provider.version) ?? "",
+    refusalOutputCount: arrayValue(augmentation.refusalOutputs).length,
+    requiresHumanReview: booleanValue(actionPolicy.requiresHumanReview) ?? true,
+    reviewMetadataCount: arrayValue(augmentation.reviewMetadata).length,
+    runtimeKind: stringValue(provider.runtimeKind) ?? "none",
+    sourceBodyIncluded: booleanValue(privacy.includesSourceBody) ?? false,
+    sourcesContentIncluded: booleanValue(privacy.includesSourcesContent) ?? false,
+    sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none",
+    status: stringValue(augmentation.status) ?? "none",
+    targetRepositoryMutationAllowed: booleanValue(actionPolicy.targetRepositoryMutationAllowed) ?? false,
+    toolExecutionAllowed: booleanValue(actionPolicy.toolExecutionAllowed) ?? false,
+    workspaceWriteAllowed: booleanValue(actionPolicy.workspaceWriteAllowed) ?? false
+  };
+}
+
+function normalizeProviderItem(item, providerAugmentation) {
+  const providerReviewItemId = findProviderReviewItemId(item, providerAugmentation);
+  const draftOutputs = arrayValue(providerAugmentation?.draftOutputs)
+    .filter((output) => !providerReviewItemId || reviewItemIdFromProviderDraft(output) === providerReviewItemId);
+  const proposalIds = new Set(draftOutputs.map((output) => isRecord(output) ? stringValue(output.proposalId) : undefined).filter(Boolean));
+  const reviewMetadata = arrayValue(providerAugmentation?.reviewMetadata)
+    .filter((output) => !isRecord(output) || proposalIds.size === 0 || proposalIds.has(stringValue(output.proposalId)));
+  const qualitySignals = [...new Set(reviewMetadata.flatMap((output) => {
+    return isRecord(output) ? stringArray(output.qualitySignals) : [];
+  }))].sort();
+
+  return {
+    draftOutputCount: draftOutputs.length,
+    qualitySignals,
+    refusalOutputCount: arrayValue(providerAugmentation?.refusalOutputs).length,
+    reviewMetadataCount: reviewMetadata.length
+  };
+}
+
+function findProviderReviewItemId(item, providerAugmentation) {
+  const sourceId = stringValue(item.id) ?? stringValue(item.proposalId);
+  const binding = arrayValue(providerAugmentation?.reviewItemBindings)
+    .find((candidate) => isRecord(candidate) && stringValue(candidate.sourceReviewItemId) === sourceId);
+  return isRecord(binding) ? stringValue(binding.providerReviewItemId) : undefined;
+}
+
+function reviewItemIdFromProviderDraft(output) {
+  if (!isRecord(output) || !isRecord(output.target)) {
+    return undefined;
+  }
+
+  return stringValue(output.target.reviewItemId);
 }
 
 function normalizeEditCandidate(value) {
