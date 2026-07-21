@@ -121,6 +121,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | DevTools / Visual Studio confirmation parity evidence | `main-repo` scripts and host shells | W-P38 evidence proving DevTools and Visual Studio can expose checked apply confirmation and target collaboration summaries as read-only host inputs without enabling writes. |
 | Writable apply sandbox closeout next inputs | `main-repo` scripts | W-P38 closeout evidence summarizing sandbox success/failure, host confirmation preparation, provider smoke gates, target collaboration flow, host parity and deferred manual gates for the next cycle. |
 | Host runtime capture intake evidence | `main-repo` scripts | W-P39 intake evidence mapping the first formal cycle group to VS Code, Chrome DevTools and Visual Studio runtime capture packets while keeping all manual captures, provider calls and target writes unclaimed. |
+| VS Code runtime capture packet evidence | `main-repo` scripts and VS Code shell | W-P39 evidence preparing an Extension Development Host manual capture packet, checklist and report template without launching VS Code or claiming GUI capture completion. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -188,6 +189,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - DevTools / Visual Studio confirmation parity evidence may project checked apply confirmation and target collaboration summaries into host surfaces only. It must not run real host runtime capture, apply edits, write workspaces, mutate target repositories or serialize source bodies.
 - Writable apply sandbox closeout evidence may summarize completed W-P38 inputs and deferred gates only. It must not convert deferred manual gates into completed runtime, provider or target repository actions.
 - Host runtime capture intake evidence may plan VS Code, Chrome DevTools and Visual Studio runtime captures and map them to a `C-*` cycle group. It must not claim manual captures, call remote providers, create target branches or pull requests, write workspaces, mutate target repositories or expose source bodies.
+- VS Code runtime capture packet evidence may prepare launch commands, checklists and report templates for a human Extension Development Host capture. It must not launch VS Code, drive the GUI, mark a manual capture complete, call `workspace.applyEdit()`, write target repositories or expose source bodies.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
