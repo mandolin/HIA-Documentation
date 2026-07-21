@@ -80,6 +80,7 @@
     "wp38:target-branch-pr-flow:evidence": "node scripts/prepare-wp38-target-branch-pr-flow-contract-evidence.mjs",
     "wp38:host-parity:evidence": "pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp38-devtools-visual-studio-confirmation-parity-evidence.mjs",
     "wp38:closeout:evidence": "node scripts/prepare-wp38-closeout-next-inputs.mjs",
+    "wp39:host-runtime-intake:evidence": "node scripts/prepare-wp39-host-runtime-capture-intake-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
