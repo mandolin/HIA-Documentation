@@ -45,6 +45,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real provider governance closeout checked-apply inputs | `scripts/prepare-wp36-closeout-checked-apply-inputs.mjs` | `0.1.0-draft` |
 | Checked apply baseline audit | `scripts/prepare-wp37-checked-apply-baseline-audit.mjs` | `0.1.0-draft` |
 | Host edit transaction evidence | `scripts/prepare-wp37-host-edit-transaction-evidence.mjs` | `0.1.0-draft` |
+| Host file read/version/conflict evidence | `scripts/prepare-wp37-file-read-version-conflict-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -96,6 +97,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real provider governance closeout checked-apply inputs | `main-repo` scripts | W-P36 closeout evidence proving provider governance gates are ready while remote/API provider calls and checked apply remain explicit downstream inputs. |
 | Checked apply baseline audit | `main-repo` scripts | W-P37 audit evidence converting W-P34 apply-preview and W-P36 provider-governance closeouts into host-owned checked-apply requirements before any writable implementation. |
 | Host edit transaction evidence | `main-repo` scripts | W-P37 evidence mapping review edit candidates to host-owned, non-executable transaction envelopes before file-read/version/conflict evidence exists. |
+| Host file read/version/conflict evidence | `main-repo` scripts | W-P37 evidence modeling host-owned file snapshots, private version hashes, semantic ranges and conflict results before rollback, formatter, audit or apply confirmation exists. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -152,6 +154,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Real provider governance closeout evidence may mark W-P36 gates complete, but it must keep checked apply host-owned, remote/API provider smoke separately approved, and target repository mutation at zero.
 - Checked apply baseline audit evidence must keep apply authority host-owned, require human approval, file read, version, conflict, rollback, formatter and audit gates, and continue denying provider-owned `WorkspaceEdit` output.
 - Host edit transaction evidence may bind semantic operations to host-owned transaction envelopes, but must not carry direct editor objects, source bodies, secrets or write authority.
+- Host file read/version/conflict evidence may record relative target paths, read metadata, private-hash status, semantic ranges and conflict results, but must not expose document text, digest values, absolute paths, direct editor objects or write authority.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
