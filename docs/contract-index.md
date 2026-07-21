@@ -56,6 +56,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Remote provider smoke gate preparation evidence | `scripts/prepare-wp38-remote-provider-smoke-gate-preparation-evidence.mjs` | `0.1.0-draft` |
 | Target branch/PR flow contract evidence | `scripts/prepare-wp38-target-branch-pr-flow-contract-evidence.mjs` | `0.1.0-draft` |
 | DevTools / Visual Studio confirmation parity evidence | `scripts/prepare-wp38-devtools-visual-studio-confirmation-parity-evidence.mjs` | `0.1.0-draft` |
+| Writable apply sandbox closeout next inputs | `scripts/prepare-wp38-closeout-next-inputs.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -118,6 +119,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Remote provider smoke gate preparation evidence | `main-repo` scripts | W-P38 evidence preparing remote/API provider smoke gates for credential references, host-mediated network consent, source privacy, redacted audit, review-only output and checked-apply separation without calling a real provider. |
 | Target branch/PR flow contract evidence | `main-repo` scripts | W-P38 evidence defining target-owned branch, pull request and sandbox collaboration flows while keeping HIA automation from pushing branches, opening PRs or mutating target repositories. |
 | DevTools / Visual Studio confirmation parity evidence | `main-repo` scripts and host shells | W-P38 evidence proving DevTools and Visual Studio can expose checked apply confirmation and target collaboration summaries as read-only host inputs without enabling writes. |
+| Writable apply sandbox closeout next inputs | `main-repo` scripts | W-P38 closeout evidence summarizing sandbox success/failure, host confirmation preparation, provider smoke gates, target collaboration flow, host parity and deferred manual gates for the next cycle. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -183,6 +185,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Remote provider smoke gate preparation evidence may prepare manual remote/API smoke gates only. It must not serialize credential material, perform network calls, expose source bodies, mutate target repositories, produce direct editor operations or weaken host-owned checked apply separation.
 - Target branch/PR flow contract evidence may define collaboration states only. HIA automation must not create target branches, open pull requests, push commits, mutate target repositories or treat provider output as directly applicable edits.
 - DevTools / Visual Studio confirmation parity evidence may project checked apply confirmation and target collaboration summaries into host surfaces only. It must not run real host runtime capture, apply edits, write workspaces, mutate target repositories or serialize source bodies.
+- Writable apply sandbox closeout evidence may summarize completed W-P38 inputs and deferred gates only. It must not convert deferred manual gates into completed runtime, provider or target repository actions.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
