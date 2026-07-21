@@ -50,6 +50,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | VS Code checked apply confirmation evidence | `scripts/prepare-wp37-vscode-checked-apply-confirmation-evidence.mjs` | `0.1.0-draft` |
 | Target/self-doc checked apply dry-run evidence | `scripts/prepare-wp37-target-self-doc-checked-apply-dry-run-evidence.mjs` | `0.1.0-draft` |
 | Checked apply closeout provider/remote inputs | `scripts/prepare-wp37-closeout-provider-remote-inputs.mjs` | `0.1.0-draft` |
+| Host-owned writable apply sandbox evidence | `scripts/prepare-wp38-host-owned-writable-apply-sandbox-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -106,6 +107,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | VS Code checked apply confirmation evidence | `main-repo` scripts | W-P37 evidence proving VS Code can render host confirmation choices and reports from rollback/formatter/audit readiness records without calling WorkspaceEdit or writing files. |
 | Target/self-doc checked apply dry-run evidence | `main-repo` scripts | W-P37 evidence proving known HIA self-doc and target-project scenarios can consume checked apply confirmation reports without reading source bodies, applying edits or mutating target repositories. |
 | Checked apply closeout provider/remote inputs | `main-repo` scripts | W-P37 closeout evidence summarizing host-owned checked apply readiness while forwarding writable sandbox, real GUI confirmation, remote provider smoke and target branch/PR inputs without granting write authority. |
+| Host-owned writable apply sandbox evidence | `main-repo` scripts | W-P38 evidence proving host-owned apply can write inside a synthetic `dist/` sandbox after final confirmation, repeat conflict check, private rollback snapshot, formatter execution, post-apply validation and redacted audit, while target repositories remain untouched. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -167,6 +169,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - VS Code checked apply confirmation evidence may expose host confirmation choices and blocked apply reports, but must not call `workspace.applyEdit()`, carry direct edit objects, read/write target repositories or imply provider/LSP write authority.
 - Target/self-doc checked apply dry-run evidence may map confirmation reports to self-doc and target-project scenarios, but it must keep target repositories read-only, hide local paths, avoid source bodies and keep final apply authority blocked.
 - Checked apply closeout evidence may summarize readiness and forward inputs, but must keep writable apply, real GUI confirmation, remote provider smoke and target branch/PR mutation as downstream gated work.
+- Host-owned writable apply sandbox evidence may write synthetic files under its `dist/` sandbox only. It must not write target repositories, expose source bodies or digest values, call real `workspace.applyEdit()`, or allow provider/LSP-owned apply.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
