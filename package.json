@@ -72,6 +72,7 @@
     "wp37:rollback-formatter-audit:evidence": "pnpm run wp37:file-read-conflict:evidence && node scripts/prepare-wp37-rollback-formatter-audit-evidence.mjs",
     "wp37:vscode-confirmation:evidence": "pnpm run wp37:rollback-formatter-audit:evidence && pnpm run build && node scripts/prepare-wp37-vscode-checked-apply-confirmation-evidence.mjs",
     "wp37:target-self-doc:evidence": "pnpm run wp37:vscode-confirmation:evidence && node scripts/prepare-wp37-target-self-doc-checked-apply-dry-run-evidence.mjs",
+    "wp37:closeout:evidence": "pnpm run wp37:target-self-doc:evidence && node scripts/prepare-wp37-closeout-provider-remote-inputs.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
