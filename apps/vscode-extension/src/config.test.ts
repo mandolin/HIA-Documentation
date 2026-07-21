@@ -16,10 +16,13 @@ import {
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
+  HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
+  createHiaCheckedApplySandboxConfirmationChoices,
+  createHiaCheckedApplySandboxConfirmationReport,
   createHiaDocumentationCheckedApplyConfirmationChoices,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
@@ -69,6 +72,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_SHOW_RESOURCE_ACTION_COMMAND).toBe("hia.showResourceAction");
     expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
     expect(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND).toBe("hia.reviewDocumentationProposals");
+    expect(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND).toBe("hia.showCheckedApplySandboxConfirmation");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -607,6 +611,76 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(checkedConfirmationReport).toContain("Direct apply: disabled");
     expect(checkedConfirmationReport).toContain("Workspace write: disabled");
     expect(getHiaDocumentationReviewDraftText(reviewItem)).toBe("English draft.");
+  });
+
+  it("creates checked apply sandbox confirmation choices and reports", () => {
+    const evidence = {
+      contract: "hia-wp38-host-owned-writable-apply-sandbox-evidence",
+      contractVersion: "0.1.0-draft",
+      sandboxPolicy: {
+        applyAuthority: "host-owned-sandbox-only",
+        outputScope: "dist-sandbox",
+        providerOwnedApplyAllowed: false,
+        realWorkspaceApplyEditAllowed: false,
+        sourcesContentPolicy: "none",
+        targetRepositoryMutationAllowed: false
+      },
+      status: "ready-for-vscode-real-gui-confirmation-evidence",
+      summary: {
+        directApplyAllowedCount: 0,
+        directEditObjectCount: 0,
+        formatterExecutionCount: 1,
+        lspServerOwnedApplyCount: 0,
+        postApplyValidationSuccessCount: 1,
+        providerOwnedApplyCount: 0,
+        sandboxApplySuccessCount: 1,
+        sandboxWriteOperationCount: 3,
+        sourceBodyIncludedInEvidence: false,
+        sourcesContentPolicy: "none",
+        targetRepositoryMutationCount: 0,
+        workspaceApplyEditCallCount: 0,
+        workspaceWriteAllowedCount: 0
+      },
+      transactionResults: [
+        {
+          applyStatus: "applied-to-sandbox",
+          auditRecord: "redacted",
+          finalHumanConfirmation: "fixture-confirmed",
+          formatterExecution: "executed-by-sandbox-host",
+          id: "sandbox-locale-entry",
+          label: "Sandbox locale resource entry",
+          outputScope: "dist-sandbox",
+          postApplyValidation: "passed",
+          repeatConflictCheck: "clear",
+          rollbackSnapshotPrepared: true,
+          sandboxRelativePath: "dist/wp38-host-owned-writable-apply-sandbox/sandbox/locale/messages.zh-CN.json",
+          targetKind: "external-resource-locale-entry",
+          targetRepositoryMode: "not-a-target-repository"
+        }
+      ]
+    };
+    const choices = createHiaCheckedApplySandboxConfirmationChoices(evidence);
+    const report = createHiaCheckedApplySandboxConfirmationReport(evidence, choices[0]?.transaction);
+
+    expect(choices).toHaveLength(1);
+    expect(choices[0]).toMatchObject({
+      label: "Sandbox locale resource entry",
+      description: "applied-to-sandbox; dist-sandbox; not-a-target-repository"
+    });
+    expect(choices[0]?.detail).toContain("conflict:clear");
+    expect(report).toContain("Evidence: hia-wp38-host-owned-writable-apply-sandbox-evidence@0.1.0-draft");
+    expect(report).toContain("Final human confirmation: fixture-confirmed");
+    expect(report).toContain("Final conflict recheck: clear");
+    expect(report).toContain("Rollback private snapshot: yes");
+    expect(report).toContain("Formatter execution: executed-by-sandbox-host");
+    expect(report).toContain("Post-apply validation: passed");
+    expect(report).toContain("Workspace applyEdit: disabled");
+    expect(report).toContain("Workspace write: disabled");
+    expect(report).toContain("Target repository mutation: disabled");
+    expect(report).toContain("Provider-owned apply: disabled");
+    expect(report).toContain("LSP server-owned apply: disabled");
+    expect(report).toContain("Direct edit object: disabled");
+    expect(report).toContain("Source bodies: not shown by the VS Code checked apply sandbox confirmation.");
   });
 
   it("creates resource action preview reports", () => {

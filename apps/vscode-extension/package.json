@@ -24,6 +24,7 @@
     "onCommand:hia.showResourceAction",
     "onCommand:hia.copyResourceKey",
     "onCommand:hia.reviewDocumentationProposals",
+    "onCommand:hia.showCheckedApplySandboxConfirmation",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
   ],
@@ -64,6 +65,10 @@
       {
         "command": "hia.reviewDocumentationProposals",
         "title": "HIA: Review Documentation Proposals"
+      },
+      {
+        "command": "hia.showCheckedApplySandboxConfirmation",
+        "title": "HIA: Show Checked Apply Sandbox Confirmation"
       }
     ],
     "configuration": {

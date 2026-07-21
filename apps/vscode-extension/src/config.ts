@@ -18,6 +18,12 @@ export const HIA_COPY_RESOURCE_KEY_COMMAND = "hia.copyResourceKey";
  * 中文：VS Code 中用于打开文档化 proposal 人工审查入口的只读命令标识。
  */
 export const HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND = "hia.reviewDocumentationProposals";
+/**
+ * VS Code read-only command id for inspecting W-P38 sandbox checked-apply confirmation evidence.
+ *
+ * 中文：VS Code 中用于查看 W-P38 sandbox checked-apply 确认证据的只读命令标识。
+ */
+export const HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND = "hia.showCheckedApplySandboxConfirmation";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -586,6 +592,83 @@ export interface HiaDocumentationCheckedApplyConfirmationChoice {
   label: string;
 }
 
+export interface HiaCheckedApplySandboxPolicySummary {
+  applyAuthority?: string;
+  outputScope?: string;
+  providerOwnedApplyAllowed?: boolean;
+  realWorkspaceApplyEditAllowed?: boolean;
+  sourcesContentPolicy?: string;
+  targetRepositoryMutationAllowed?: boolean;
+}
+
+export interface HiaCheckedApplySandboxEvidenceRollup {
+  directApplyAllowedCount?: number;
+  directEditObjectCount?: number;
+  formatterExecutionCount?: number;
+  hardFailureCount?: number;
+  lspServerOwnedApplyCount?: number;
+  postApplyValidationSuccessCount?: number;
+  providerOwnedApplyCount?: number;
+  redactedAuditRecordCount?: number;
+  repeatConflictCheckCount?: number;
+  rollbackPrivateSnapshotCount?: number;
+  sandboxApplySuccessCount?: number;
+  sandboxScenarioCount?: number;
+  sandboxWriteOperationCount?: number;
+  sourceBodyIncludedInEvidence?: boolean;
+  sourcesContentPolicy?: string;
+  targetRepositoryMutationCount?: number;
+  workspaceApplyEditCallCount?: number;
+  workspaceWriteAllowedCount?: number;
+}
+
+export interface HiaCheckedApplySandboxTransactionSummary {
+  applyStatus?: string;
+  auditRecord?: string;
+  finalHumanConfirmation?: string;
+  formatterExecution?: string;
+  id?: string;
+  label?: string;
+  outputScope?: string;
+  postApplyValidation?: string;
+  redactedAuditRecordId?: string;
+  repeatConflictCheck?: string;
+  rollbackSnapshotPrepared?: boolean;
+  sandboxRelativePath?: string;
+  targetKind?: string;
+  targetRepositoryMode?: string;
+}
+
+/**
+ * W-P38 sandbox checked-apply evidence 的 VS Code 可见摘要。
+ * VS Code-visible summary for W-P38 sandbox checked-apply evidence.
+ *
+ * 中文：该结构只读取 public-safe evidence 中的 gate 结果，不携带源码正文、可执行
+ * WorkspaceEdit 或目标仓库写入指令。
+ * English: This shape only reads gate results from public-safe evidence and
+ * does not carry source bodies, executable WorkspaceEdit data or target
+ * repository write instructions.
+ */
+export interface HiaCheckedApplySandboxEvidenceSummary {
+  contract?: string;
+  contractVersion?: string;
+  sandboxPolicy?: HiaCheckedApplySandboxPolicySummary;
+  status?: string;
+  summary?: HiaCheckedApplySandboxEvidenceRollup;
+  transactionResults?: HiaCheckedApplySandboxTransactionSummary[];
+}
+
+/**
+ * VS Code QuickPick 可展示的 W-P38 sandbox checked-apply confirmation 选择项。
+ * W-P38 sandbox checked-apply confirmation choice that can be shown by a VS Code QuickPick.
+ */
+export interface HiaCheckedApplySandboxConfirmationChoice {
+  description?: string;
+  detail?: string;
+  label: string;
+  transaction: HiaCheckedApplySandboxTransactionSummary;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -1085,6 +1168,87 @@ export function createHiaDocumentationCheckedApplyConfirmationReport(
 }
 
 /**
+ * 将 W-P38 sandbox evidence 转成 VS Code 可展示的确认选择项。
+ * Converts W-P38 sandbox evidence into VS Code-visible confirmation choices.
+ *
+ * 中文：该 helper 只公开 sandbox transaction 的 gate 状态；不会输出源码正文、
+ * rollback 内容或任何可执行编辑对象。
+ * English: This helper exposes only sandbox transaction gate states; it does
+ * not emit source bodies, rollback contents or executable edit objects.
+ */
+export function createHiaCheckedApplySandboxConfirmationChoices(
+  evidence: HiaCheckedApplySandboxEvidenceSummary
+): HiaCheckedApplySandboxConfirmationChoice[] {
+  const transactions = Array.isArray(evidence.transactionResults) ? evidence.transactionResults : [];
+
+  return transactions.map((transaction, index) => {
+    const label = transaction.label || transaction.id || `Sandbox checked apply ${index + 1}`;
+    const applyStatus = transaction.applyStatus || "apply status unknown";
+    const scope = transaction.outputScope || "scope unknown";
+    const targetMode = transaction.targetRepositoryMode || "target mode unknown";
+    const detail = [
+      transaction.id,
+      transaction.targetKind,
+      transaction.sandboxRelativePath,
+      transaction.repeatConflictCheck ? `conflict:${transaction.repeatConflictCheck}` : undefined,
+      transaction.formatterExecution ? `formatter:${transaction.formatterExecution}` : undefined,
+      transaction.postApplyValidation ? `validation:${transaction.postApplyValidation}` : undefined,
+      transaction.auditRecord ? `audit:${transaction.auditRecord}` : transaction.redactedAuditRecordId ? `audit:${transaction.redactedAuditRecordId}` : undefined
+    ]
+      .filter(isNonEmptyString)
+      .join(" | ");
+
+    return {
+      description: `${applyStatus}; ${scope}; ${targetMode}`,
+      detail,
+      label,
+      transaction
+    };
+  });
+}
+
+/**
+ * 创建 W-P38 sandbox checked-apply confirmation 的可读报告行。
+ * Creates readable report lines for a W-P38 sandbox checked-apply confirmation.
+ */
+export function createHiaCheckedApplySandboxConfirmationReport(
+  evidence: HiaCheckedApplySandboxEvidenceSummary,
+  transaction?: HiaCheckedApplySandboxTransactionSummary
+): string[] {
+  const summary = evidence.summary || {};
+  const policy = evidence.sandboxPolicy || {};
+  const lines = [
+    `Evidence: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status: ${evidence.status || "unknown"}`,
+    `Apply authority: ${policy.applyAuthority || "host-owned-sandbox-only"}`,
+    `Output scope: ${transaction?.outputScope || policy.outputScope || "unknown"}`,
+    `Transaction: ${transaction?.id || "summary"}`,
+    `Target kind: ${transaction?.targetKind || "unknown"}`,
+    `Apply status: ${transaction?.applyStatus || "unknown"}`,
+    `Final human confirmation: ${transaction?.finalHumanConfirmation || "unknown"}`,
+    `Final conflict recheck: ${transaction?.repeatConflictCheck || "unknown"}`,
+    `Rollback private snapshot: ${formatYesNo(transaction?.rollbackSnapshotPrepared)}`,
+    `Formatter execution: ${transaction?.formatterExecution || "unknown"}`,
+    `Post-apply validation: ${transaction?.postApplyValidation || "unknown"}`,
+    `Apply audit record: ${transaction?.auditRecord || transaction?.redactedAuditRecordId || "unknown"}`,
+    `Sandbox apply successes: ${formatOptionalNumber(summary.sandboxApplySuccessCount)}`,
+    `Sandbox write operations: ${formatOptionalNumber(summary.sandboxWriteOperationCount)}`,
+    `Workspace applyEdit: ${formatDisabledByZero(summary.workspaceApplyEditCallCount)}`,
+    `Workspace write: ${formatDisabledByZero(summary.workspaceWriteAllowedCount)}`,
+    `Target repository mutation: ${formatDisabledByZero(summary.targetRepositoryMutationCount)}`,
+    `Provider-owned apply: ${formatDisabledByZero(summary.providerOwnedApplyCount)}`,
+    `LSP server-owned apply: ${formatDisabledByZero(summary.lspServerOwnedApplyCount)}`,
+    `Direct apply: ${formatDisabledByZero(summary.directApplyAllowedCount)}`,
+    `Direct edit object: ${formatDisabledByZero(summary.directEditObjectCount)}`,
+    `Sources content policy: ${summary.sourcesContentPolicy || policy.sourcesContentPolicy || "none"}`,
+    `Source bodies: ${summary.sourceBodyIncludedInEvidence ? "included" : "not shown by the VS Code checked apply sandbox confirmation."}`,
+    "Manual GUI confirmation: required before user-facing apply UX is enabled."
+  ];
+
+  return lines;
+}
+
+/**
  * 创建 provider augmentation 的可读审查摘要。
  * Create a readable review summary for provider augmentation data.
  */
@@ -1200,6 +1364,18 @@ function formatEnabledDisabled(value: boolean | undefined): string {
   }
 
   return value ? "enabled" : "disabled";
+}
+
+function formatDisabledByZero(value: number | undefined): string {
+  if (value === undefined) {
+    return "unknown";
+  }
+
+  return value === 0 ? "disabled" : `enabled:${value}`;
+}
+
+function formatOptionalNumber(value: number | undefined): string {
+  return value === undefined ? "unknown" : String(value);
 }
 
 function formatRequiredStatus(value: boolean | undefined): string {

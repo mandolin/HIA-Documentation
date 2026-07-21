@@ -29,6 +29,7 @@ describe("VS Code extension package", () => {
     expect(manifest.activationEvents).toContain("onCommand:hia.showResourceAction");
     expect(manifest.activationEvents).toContain("onCommand:hia.copyResourceKey");
     expect(manifest.activationEvents).toContain("onCommand:hia.reviewDocumentationProposals");
+    expect(manifest.activationEvents).toContain("onCommand:hia.showCheckedApplySandboxConfirmation");
     expect(manifest.contributes.languages[0]).toMatchObject({
       id: "hia",
       extensions: [".hia.json"]
@@ -40,7 +41,8 @@ describe("VS Code extension package", () => {
       "hia.openSourceLinkage",
       "hia.openProjectRelations",
       "hia.validateWorkspace",
-      "hia.reviewDocumentationProposals"
+      "hia.reviewDocumentationProposals",
+      "hia.showCheckedApplySandboxConfirmation"
     ]);
     expect(Object.keys(manifest.contributes.configuration.properties)).toEqual(expect.arrayContaining([
       "hia.build.config",
