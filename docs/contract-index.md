@@ -54,6 +54,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | VS Code real GUI confirmation evidence | `scripts/prepare-wp38-vscode-real-gui-confirmation-evidence.mjs` | `0.1.0-draft` |
 | Sandbox rollback restore failure-path evidence | `scripts/prepare-wp38-sandbox-rollback-restore-failure-path-evidence.mjs` | `0.1.0-draft` |
 | Remote provider smoke gate preparation evidence | `scripts/prepare-wp38-remote-provider-smoke-gate-preparation-evidence.mjs` | `0.1.0-draft` |
+| Target branch/PR flow contract evidence | `scripts/prepare-wp38-target-branch-pr-flow-contract-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -114,6 +115,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | VS Code real GUI confirmation evidence | `main-repo` scripts and VS Code shell | W-P38 evidence preparing a real Extension Development Host confirmation command and manual capture checklist for W-P38 sandbox transactions while keeping real GUI capture explicitly manual-required. |
 | Sandbox rollback restore failure-path evidence | `main-repo` scripts | W-P38 evidence proving conflict, formatter and post-apply validation failures are handled inside the synthetic sandbox; post-validation writes are restored from private rollback snapshots while target repositories remain untouched. |
 | Remote provider smoke gate preparation evidence | `main-repo` scripts | W-P38 evidence preparing remote/API provider smoke gates for credential references, host-mediated network consent, source privacy, redacted audit, review-only output and checked-apply separation without calling a real provider. |
+| Target branch/PR flow contract evidence | `main-repo` scripts | W-P38 evidence defining target-owned branch, pull request and sandbox collaboration flows while keeping HIA automation from pushing branches, opening PRs or mutating target repositories. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -177,6 +179,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Checked apply closeout evidence may summarize readiness and forward inputs, but must keep writable apply, real GUI confirmation, remote provider smoke and target branch/PR mutation as downstream gated work.
 - Host-owned writable apply sandbox evidence may write synthetic files under its `dist/` sandbox only. It must not write target repositories, expose source bodies or digest values, call real `workspace.applyEdit()`, or allow provider/LSP-owned apply.
 - Remote provider smoke gate preparation evidence may prepare manual remote/API smoke gates only. It must not serialize credential material, perform network calls, expose source bodies, mutate target repositories, produce direct editor operations or weaken host-owned checked apply separation.
+- Target branch/PR flow contract evidence may define collaboration states only. HIA automation must not create target branches, open pull requests, push commits, mutate target repositories or treat provider output as directly applicable edits.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 

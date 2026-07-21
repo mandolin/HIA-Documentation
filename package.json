@@ -77,6 +77,7 @@
     "wp38:vscode-gui-confirmation:evidence": "pnpm run wp38:writable-sandbox:evidence && pnpm run build && node scripts/prepare-wp38-vscode-real-gui-confirmation-evidence.mjs",
     "wp38:sandbox-rollback:evidence": "pnpm run wp38:vscode-gui-confirmation:evidence && node scripts/prepare-wp38-sandbox-rollback-restore-failure-path-evidence.mjs",
     "wp38:remote-provider-smoke-gate:evidence": "node scripts/prepare-wp38-remote-provider-smoke-gate-preparation-evidence.mjs",
+    "wp38:target-branch-pr-flow:evidence": "node scripts/prepare-wp38-target-branch-pr-flow-contract-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
