@@ -53,6 +53,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Host-owned writable apply sandbox evidence | `scripts/prepare-wp38-host-owned-writable-apply-sandbox-evidence.mjs` | `0.1.0-draft` |
 | VS Code real GUI confirmation evidence | `scripts/prepare-wp38-vscode-real-gui-confirmation-evidence.mjs` | `0.1.0-draft` |
 | Sandbox rollback restore failure-path evidence | `scripts/prepare-wp38-sandbox-rollback-restore-failure-path-evidence.mjs` | `0.1.0-draft` |
+| Remote provider smoke gate preparation evidence | `scripts/prepare-wp38-remote-provider-smoke-gate-preparation-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -112,6 +113,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Host-owned writable apply sandbox evidence | `main-repo` scripts | W-P38 evidence proving host-owned apply can write inside a synthetic `dist/` sandbox after final confirmation, repeat conflict check, private rollback snapshot, formatter execution, post-apply validation and redacted audit, while target repositories remain untouched. |
 | VS Code real GUI confirmation evidence | `main-repo` scripts and VS Code shell | W-P38 evidence preparing a real Extension Development Host confirmation command and manual capture checklist for W-P38 sandbox transactions while keeping real GUI capture explicitly manual-required. |
 | Sandbox rollback restore failure-path evidence | `main-repo` scripts | W-P38 evidence proving conflict, formatter and post-apply validation failures are handled inside the synthetic sandbox; post-validation writes are restored from private rollback snapshots while target repositories remain untouched. |
+| Remote provider smoke gate preparation evidence | `main-repo` scripts | W-P38 evidence preparing remote/API provider smoke gates for credential references, host-mediated network consent, source privacy, redacted audit, review-only output and checked-apply separation without calling a real provider. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -174,6 +176,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Target/self-doc checked apply dry-run evidence may map confirmation reports to self-doc and target-project scenarios, but it must keep target repositories read-only, hide local paths, avoid source bodies and keep final apply authority blocked.
 - Checked apply closeout evidence may summarize readiness and forward inputs, but must keep writable apply, real GUI confirmation, remote provider smoke and target branch/PR mutation as downstream gated work.
 - Host-owned writable apply sandbox evidence may write synthetic files under its `dist/` sandbox only. It must not write target repositories, expose source bodies or digest values, call real `workspace.applyEdit()`, or allow provider/LSP-owned apply.
+- Remote provider smoke gate preparation evidence may prepare manual remote/API smoke gates only. It must not serialize credential material, perform network calls, expose source bodies, mutate target repositories, produce direct editor operations or weaken host-owned checked apply separation.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
