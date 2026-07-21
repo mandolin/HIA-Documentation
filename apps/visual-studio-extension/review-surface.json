@@ -50,6 +50,37 @@
       "item.editCandidate.applyPreflight.rollback"
     ]
   },
+  "checkedApplyConfirmation": {
+    "status": "input-ready",
+    "inputMode": "confirmation-preview-only",
+    "checkedApplyAvailable": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "directApplyAvailable": false,
+    "requiredFields": [
+      "checkedApplyConfirmation.status",
+      "checkedApplyConfirmation.confirmationChoiceCount",
+      "checkedApplyConfirmation.confirmationReportCount",
+      "checkedApplyConfirmation.sandboxApplySuccessCount",
+      "checkedApplyConfirmation.realGuiManualEvidenceRequired"
+    ]
+  },
+  "targetCollaboration": {
+    "status": "input-ready",
+    "inputMode": "target-owner-flow-only",
+    "targetOwnerActionRequiredForWrite": true,
+    "hiaOwnedTargetRepositoryMutationAllowed": false,
+    "actualTargetBranchCreated": false,
+    "actualPullRequestCreated": false,
+    "targetRepositoryMutationCount": 0,
+    "requiredFields": [
+      "targetCollaboration.status",
+      "targetCollaboration.collaborationModeCount",
+      "targetCollaboration.flowStateCount",
+      "targetCollaboration.targetOwnerActionRequiredForWrite",
+      "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
+    ]
+  },
   "views": [
     {
       "id": "review-list",
@@ -104,6 +135,30 @@
         "item.editCandidate.applyPreflight.status",
         "item.editCandidate.applyPreflight.conflictStatus",
         "item.editCandidate.applyPreflight.rollback"
+      ]
+    },
+    {
+      "id": "checked-apply-confirmation",
+      "title": "Checked Apply Confirmation",
+      "purpose": "Show checked apply confirmation gates and keep apply disabled until explicit host-owned approval exists.",
+      "requiredFields": [
+        "checkedApplyConfirmation.status",
+        "checkedApplyConfirmation.confirmationChoiceCount",
+        "checkedApplyConfirmation.confirmationReportCount",
+        "checkedApplyConfirmation.workspaceWriteAllowed",
+        "checkedApplyConfirmation.targetRepositoryMutation"
+      ]
+    },
+    {
+      "id": "target-collaboration",
+      "title": "Target Collaboration",
+      "purpose": "Show target-owned sandbox, branch and pull request flow without granting HIA target repository write authority.",
+      "requiredFields": [
+        "targetCollaboration.status",
+        "targetCollaboration.collaborationModeCount",
+        "targetCollaboration.flowStateCount",
+        "targetCollaboration.targetOwnerActionRequiredForWrite",
+        "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
       ]
     }
   ],

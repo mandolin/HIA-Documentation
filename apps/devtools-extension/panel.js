@@ -82,7 +82,9 @@ function renderSummary() {
     ["Review", state.model.review.summary.itemCount],
     ["Drafts", state.model.review.draftCount],
     ["Provider Drafts", state.model.review.provider.draftOutputCount],
-    ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount]
+    ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount],
+    ["Confirmations", state.model.review.checkedApplyConfirmation.confirmationReportCount],
+    ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -228,6 +230,8 @@ function renderReviewDetail() {
       <dt>Candidate</dt><dd>${escapeHtml(`${item.editCandidate.status} / ${item.editCandidate.kind}`)}</dd>
       <dt>Diff</dt><dd>${escapeHtml(`${item.editCandidate.diffPreview.status} / ${item.editCandidate.diffPreview.targetKind} / operations:${item.editCandidate.diffPreview.operationCount}`)}</dd>
       <dt>Preflight</dt><dd>${escapeHtml(`${item.editCandidate.applyPreflight.status} / conflict:${item.editCandidate.applyPreflight.conflictStatus}`)}</dd>
+      <dt>Checked Apply</dt><dd>${escapeHtml(`${state.model.review.checkedApplyConfirmation.status} / reports:${state.model.review.checkedApplyConfirmation.confirmationReportCount}`)}</dd>
+      <dt>Target Flow</dt><dd>${escapeHtml(`${state.model.review.targetCollaboration.status} / modes:${state.model.review.targetCollaboration.collaborationModeCount}`)}</dd>
       <dt>Apply</dt><dd>disabled</dd>
     </dl>
   `;
@@ -250,7 +254,12 @@ function formatReviewCandidatePreview(item) {
     `Provider drafts: ${item.provider.draftOutputCount}`,
     `Provider metadata: ${item.provider.reviewMetadataCount}`,
     `Provider refusals: ${item.provider.refusalOutputCount}`,
-    `Provider quality signals: ${item.provider.qualitySignals.join(", ") || "none"}`
+    `Provider quality signals: ${item.provider.qualitySignals.join(", ") || "none"}`,
+    "",
+    `Checked apply confirmation: ${state.model.review.checkedApplyConfirmation.status}`,
+    `Confirmation reports: ${state.model.review.checkedApplyConfirmation.confirmationReportCount}`,
+    `Target collaboration: ${state.model.review.targetCollaboration.status}`,
+    `Collaboration modes: ${state.model.review.targetCollaboration.collaborationModeCount}`
   ];
 
   for (const operation of item.editCandidate.diffPreview.operations) {

@@ -6,6 +6,8 @@ export const HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY = "devtools.inspectedWind
 export const HIA_DEVTOOLS_PANEL_MESSAGE_SOURCE = "hia-devtools-panel";
 export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT = "hia-devtools-review-surface";
 export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION = "0.1.0-draft";
+export const HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT = "hia-devtools-checked-apply-confirmation-summary";
+export const HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT = "hia-devtools-target-collaboration-summary";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -50,6 +52,7 @@ export function createHiaDevToolsPanelViewModel(payload) {
  * @returns {{
  *   actionPolicy: { allowedActions: string[]; deniedActions: string[] };
  *   applyPreview: { applyAvailable: boolean; candidateCount: number; checkedApply: boolean; conflictStatus: string; hostCheckPreflightCount: number; hostFileRead: boolean; hostWrite: boolean; rollbackRecordRequiredCount: number; status: string; targetFileCount: number; targetRepositoryMutation: boolean };
+ *   checkedApplyConfirmation: { contract: string; status: string; confirmationChoiceCount: number; confirmationReportCount: number; checkedApplyAvailable: boolean; workspaceWriteAllowed: boolean; targetRepositoryMutation: boolean; directApplyAllowed: boolean; directEditObjectCount: number; realGuiManualEvidenceRequired: boolean };
  *   contract: string;
  *   contractVersion: string;
  *   draftCount: number;
@@ -69,9 +72,11 @@ export function createHiaDevToolsPanelViewModel(payload) {
  *   payloadContract?: string;
  *   privacy: { allowsAutomaticWrites: boolean; includesSourceContent: boolean; requiresHumanReview: boolean; sourcesContentPolicy: string };
  *   summary: { itemCount: number; reviewRequiredCount: number; blockedCount: number };
+ *   targetCollaboration: { contract: string; status: string; collaborationModeCount: number; flowStateCount: number; hiaOwnedTargetRepositoryMutationAllowed: boolean; targetOwnerActionRequiredForWrite: boolean; actualTargetBranchCreated: boolean; actualPullRequestCreated: boolean; targetRepositoryMutationCount: number };
  * }}
  */
 export function createHiaDevToolsReviewSurfaceViewModel(payload) {
+  const input = isRecord(payload) ? payload : {};
   const reviewPayload = selectReviewPayload(payload);
   const providerAugmentation = selectProviderAugmentation(payload) ?? selectProviderAugmentation(reviewPayload);
   const items = arrayValue(reviewPayload?.items).map((item) => normalizeReviewItem(item, providerAugmentation));
@@ -85,6 +90,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       deniedActions: stringArray(actionPolicy.deniedActions)
     },
     applyPreview: createDevToolsApplyPreviewSummary(items),
+    checkedApplyConfirmation: createDevToolsCheckedApplyConfirmationSummary(input),
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
     contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
     draftCount: numberValue(reviewPayload?.draftCount) ?? items.filter((item) => Boolean(item.draftText)).length,
@@ -101,7 +107,8 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       blockedCount: numberValue(summary.blockedCount) ?? items.filter((item) => item.status === "blocked").length,
       itemCount: numberValue(summary.itemCount) ?? items.length,
       reviewRequiredCount: numberValue(summary.reviewRequiredCount) ?? items.filter((item) => item.status === "review-required").length
-    }
+    },
+    targetCollaboration: createDevToolsTargetCollaborationSummary(input)
   };
 }
 
@@ -122,6 +129,40 @@ function createDevToolsApplyPreviewSummary(items) {
     status: hostCheckPreflightCount > 0 ? "input-ready" : "not-applicable",
     targetFileCount,
     targetRepositoryMutation: false
+  };
+}
+
+function createDevToolsCheckedApplyConfirmationSummary(payload) {
+  const input = selectCheckedApplyConfirmation(payload);
+
+  return {
+    checkedApplyAvailable: false,
+    confirmationChoiceCount: numberValue(input?.confirmationChoiceCount) ?? 0,
+    confirmationReportCount: numberValue(input?.confirmationReportCount) ?? 0,
+    contract: HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
+    directApplyAllowed: booleanValue(input?.directApplyAllowed) ?? false,
+    directEditObjectCount: numberValue(input?.directEditObjectCount) ?? 0,
+    realGuiManualEvidenceRequired: booleanValue(input?.realGuiManualEvidenceRequired) ?? false,
+    sandboxApplySuccessCount: numberValue(input?.sandboxApplySuccessCount) ?? 0,
+    status: stringValue(input?.status) ?? "not-available",
+    targetRepositoryMutation: booleanValue(input?.targetRepositoryMutation) ?? false,
+    workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
+  };
+}
+
+function createDevToolsTargetCollaborationSummary(payload) {
+  const input = selectTargetCollaboration(payload);
+
+  return {
+    actualPullRequestCreated: booleanValue(input?.actualPullRequestCreated) ?? false,
+    actualTargetBranchCreated: booleanValue(input?.actualTargetBranchCreated) ?? false,
+    collaborationModeCount: numberValue(input?.collaborationModeCount) ?? 0,
+    contract: HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT,
+    flowStateCount: numberValue(input?.flowStateCount) ?? 0,
+    hiaOwnedTargetRepositoryMutationAllowed: booleanValue(input?.hiaOwnedTargetRepositoryMutationAllowed) ?? false,
+    status: stringValue(input?.status) ?? "not-available",
+    targetOwnerActionRequiredForWrite: booleanValue(input?.targetOwnerActionRequiredForWrite) ?? false,
+    targetRepositoryMutationCount: numberValue(input?.targetRepositoryMutationCount) ?? 0
   };
 }
 
@@ -275,6 +316,34 @@ function selectProviderAugmentation(payload) {
     if (isRecord(input.result.reviewPayloadAugmentation)) {
       return input.result.reviewPayloadAugmentation;
     }
+  }
+
+  return undefined;
+}
+
+function selectCheckedApplyConfirmation(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.checkedApplyConfirmation)) {
+    return input.checkedApplyConfirmation;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.checkedApplyConfirmation)) {
+    return input.result.checkedApplyConfirmation;
+  }
+
+  return undefined;
+}
+
+function selectTargetCollaboration(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.targetCollaboration)) {
+    return input.targetCollaboration;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.targetCollaboration)) {
+    return input.result.targetCollaboration;
   }
 
   return undefined;

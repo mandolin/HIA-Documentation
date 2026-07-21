@@ -69,6 +69,8 @@ async function main() {
       editDiffPreviewContract: reviewSurface.surface.editDiffPreviewContract,
       editApplyPreflightContract: reviewSurface.surface.editApplyPreflightContract,
       applyPreview: reviewSurface.applyPreview,
+      checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
+      targetCollaboration: reviewSurface.targetCollaboration,
       viewCount: reviewSurface.views.length,
       actionCount: reviewSurface.actions.length,
       disabledApply: reviewSurface.actions.some((action) => action.id === "apply-candidate" && action.available === false),
@@ -145,11 +147,28 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.applyPreview?.workspaceWriteAvailable, false, "Visual Studio review surface must not claim workspace writes.");
   assert.equal(reviewSurface?.applyPreview?.targetRepositoryMutation, false, "Visual Studio review surface must not mutate target repositories.");
   assert.ok(Array.isArray(reviewSurface?.applyPreview?.requiredFields) && reviewSurface.applyPreview.requiredFields.includes("item.editCandidate.applyPreflight.targetFiles"), "Visual Studio review surface must require apply preflight target files.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.status, "input-ready", "Visual Studio review surface must expose checked apply confirmation readiness.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.inputMode, "confirmation-preview-only", "Visual Studio checked apply confirmation must stay preview-only.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.checkedApplyAvailable, false, "Visual Studio checked apply confirmation must not claim checked apply availability.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.workspaceWriteAvailable, false, "Visual Studio checked apply confirmation must not claim workspace writes.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.targetRepositoryMutation, false, "Visual Studio checked apply confirmation must not mutate target repositories.");
+  assert.equal(reviewSurface?.checkedApplyConfirmation?.directApplyAvailable, false, "Visual Studio checked apply confirmation must not allow direct apply.");
+  assert.ok(Array.isArray(reviewSurface?.checkedApplyConfirmation?.requiredFields) && reviewSurface.checkedApplyConfirmation.requiredFields.includes("checkedApplyConfirmation.confirmationReportCount"), "Visual Studio checked apply confirmation must require confirmation report count.");
+  assert.equal(reviewSurface?.targetCollaboration?.status, "input-ready", "Visual Studio review surface must expose target collaboration readiness.");
+  assert.equal(reviewSurface?.targetCollaboration?.inputMode, "target-owner-flow-only", "Visual Studio target collaboration must stay target-owner-only.");
+  assert.equal(reviewSurface?.targetCollaboration?.targetOwnerActionRequiredForWrite, true, "Visual Studio target collaboration must require target owner action.");
+  assert.equal(reviewSurface?.targetCollaboration?.hiaOwnedTargetRepositoryMutationAllowed, false, "Visual Studio target collaboration must not allow HIA-owned target mutation.");
+  assert.equal(reviewSurface?.targetCollaboration?.actualTargetBranchCreated, false, "Visual Studio target collaboration must not claim branch creation.");
+  assert.equal(reviewSurface?.targetCollaboration?.actualPullRequestCreated, false, "Visual Studio target collaboration must not claim pull request creation.");
+  assert.equal(reviewSurface?.targetCollaboration?.targetRepositoryMutationCount, 0, "Visual Studio target collaboration must keep target mutation count at zero.");
+  assert.ok(Array.isArray(reviewSurface?.targetCollaboration?.requiredFields) && reviewSurface.targetCollaboration.requiredFields.includes("targetCollaboration.flowStateCount"), "Visual Studio target collaboration must require flow state count.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");
   assertSurfaceView(reviewSurface, "provider-review");
   assertSurfaceView(reviewSurface, "candidate-preview");
+  assertSurfaceView(reviewSurface, "checked-apply-confirmation");
+  assertSurfaceView(reviewSurface, "target-collaboration");
   assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "apply-candidate", {

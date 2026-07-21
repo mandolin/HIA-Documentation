@@ -9,12 +9,14 @@ const evidencePath = path.join(rootDir, "dist", "devtools-extension-check.json")
 
 const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
+  HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_STRATEGY,
   HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
   HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
+  HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT,
   createHiaDevToolsInspectedWindowBridgeExpression,
   createHiaDevToolsOpenRequestBridgeEnvelope,
   createHiaDevToolsOpenRequestMessage,
@@ -64,6 +66,24 @@ async function main() {
   assert.equal(panel.review.applyPreview.targetRepositoryMutation, false, "Review surface must not mutate target repositories.");
   assert.equal(panel.review.applyPreview.hostCheckPreflightCount, 1, "Review surface must summarize host-check preflight inputs.");
   assert.equal(panel.review.applyPreview.targetFileCount, 1, "Review surface must summarize apply-preview target files.");
+  assert.equal(panel.review.checkedApplyConfirmation.contract, HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT, "Review surface must expose checked apply confirmation summary.");
+  assert.equal(panel.review.checkedApplyConfirmation.status, "input-ready", "Review surface must expose checked apply confirmation readiness.");
+  assert.equal(panel.review.checkedApplyConfirmation.confirmationChoiceCount, 2, "Review surface must preserve confirmation choices.");
+  assert.equal(panel.review.checkedApplyConfirmation.confirmationReportCount, 2, "Review surface must preserve confirmation reports.");
+  assert.equal(panel.review.checkedApplyConfirmation.checkedApplyAvailable, false, "Review surface must keep checked apply unavailable.");
+  assert.equal(panel.review.checkedApplyConfirmation.workspaceWriteAllowed, false, "Review surface must keep workspace writes disabled.");
+  assert.equal(panel.review.checkedApplyConfirmation.targetRepositoryMutation, false, "Review surface must keep target mutation disabled.");
+  assert.equal(panel.review.checkedApplyConfirmation.directApplyAllowed, false, "Review surface must keep direct apply disabled.");
+  assert.equal(panel.review.checkedApplyConfirmation.directEditObjectCount, 0, "Review surface must not expose direct edit objects.");
+  assert.equal(panel.review.targetCollaboration.contract, HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT, "Review surface must expose target collaboration summary.");
+  assert.equal(panel.review.targetCollaboration.status, "input-ready", "Review surface must expose target collaboration readiness.");
+  assert.equal(panel.review.targetCollaboration.collaborationModeCount, 4, "Review surface must preserve collaboration mode count.");
+  assert.equal(panel.review.targetCollaboration.flowStateCount, 8, "Review surface must preserve flow state count.");
+  assert.equal(panel.review.targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed, false, "Review surface must keep HIA-owned target mutation disabled.");
+  assert.equal(panel.review.targetCollaboration.targetOwnerActionRequiredForWrite, true, "Review surface must require target owner action for writes.");
+  assert.equal(panel.review.targetCollaboration.actualTargetBranchCreated, false, "Review surface must not claim target branch creation.");
+  assert.equal(panel.review.targetCollaboration.actualPullRequestCreated, false, "Review surface must not claim pull request creation.");
+  assert.equal(panel.review.targetCollaboration.targetRepositoryMutationCount, 0, "Review surface must keep target mutation count at zero.");
   assert.equal(panel.review.provider.contract, "hia-provider-review-payload-augmentation", "Review surface must expose provider augmentation contract.");
   assert.equal(panel.review.provider.providerId, "hia-deterministic-mock", "Review surface must expose provider identity.");
   assert.equal(panel.review.provider.draftOutputCount, 1, "Review surface must summarize provider drafts.");
@@ -133,11 +153,13 @@ async function main() {
         payloadContract: panel.review.payloadContract,
         applyPreflightHostCheckCount: panel.review.items.filter((item) => item.editCandidate.applyPreflight.status === "requires-host-check").length,
         applyPreflightTargetFileCount: panel.review.items.flatMap((item) => Array.from({ length: item.editCandidate.applyPreflight.targetFileCount })).length,
+        checkedApplyConfirmation: panel.review.checkedApplyConfirmation,
         diffPreviewCount: panel.review.items.filter((item) => item.editCandidate.diffPreview.status === "preview-only").length,
         diffPreviewOperationCount: panel.review.items.flatMap((item) => item.editCandidate.diffPreview.operations).length,
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
         provider: panel.review.provider,
-        privacy: panel.review.privacy
+        privacy: panel.review.privacy,
+        targetCollaboration: panel.review.targetCollaboration
       }
     }
   }, null, 2)}\n`, "utf8");
@@ -151,6 +173,18 @@ function createFixturePayload() {
       linkedEntryCount: 1,
       relationCount: 1,
       relationNodeCount: 2
+    },
+    checkedApplyConfirmation: {
+      checkedApplyAvailable: false,
+      confirmationChoiceCount: 2,
+      confirmationReportCount: 2,
+      directApplyAllowed: false,
+      directEditObjectCount: 0,
+      realGuiManualEvidenceRequired: true,
+      sandboxApplySuccessCount: 2,
+      status: "input-ready",
+      targetRepositoryMutation: false,
+      workspaceWriteAllowed: false
     },
     entries: [
       {
@@ -410,6 +444,16 @@ function createFixturePayload() {
         itemCount: 1,
         reviewRequiredCount: 1
       }
+    },
+    targetCollaboration: {
+      actualPullRequestCreated: false,
+      actualTargetBranchCreated: false,
+      collaborationModeCount: 4,
+      flowStateCount: 8,
+      hiaOwnedTargetRepositoryMutationAllowed: false,
+      status: "input-ready",
+      targetOwnerActionRequiredForWrite: true,
+      targetRepositoryMutationCount: 0
     }
   };
 }
