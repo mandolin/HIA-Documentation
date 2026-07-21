@@ -11,6 +11,8 @@ This app is the Visual Studio counterpart to the VS Code and browser DevTools ho
   - VisualStudio.Extensibility owns commands and tool-window presentation.
   - Visual Studio LSP client support connects to `@hia-doc/lsp`.
   - `@hia-doc/cli` remains responsible for documentation builds.
+- Pins the current runtime status as `contract-level-runtime-prep`; real Visual Studio runtime capture, VSIX packaging and experimental instance execution are all explicitly not claimed yet.
+- Requires dependency and license audit before any future VSIX implementation route is selected.
 - Maps HIA custom requests used by the future Visual Studio host:
   - `hia/ideCapabilities`
   - `hia/documentSourceMapIndex`
@@ -44,3 +46,11 @@ pnpm run visual-studio:check
 ```
 
 The check validates `host-contract.json`, the zero-dependency skeleton package and the privacy boundary for the Visual Studio host.
+
+W-P39 runtime preparation evidence can be refreshed with:
+
+```powershell
+pnpm run wp39:visual-studio-runtime-prep:evidence
+```
+
+That packet records the current route decision and manual preparation checklist. It does not build a VSIX or claim real Visual Studio runtime capture.

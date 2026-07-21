@@ -83,6 +83,7 @@
     "wp39:host-runtime-intake:evidence": "node scripts/prepare-wp39-host-runtime-capture-intake-evidence.mjs",
     "wp39:vscode-runtime-packet:evidence": "pnpm run wp39:host-runtime-intake:evidence && node scripts/prepare-wp39-vscode-runtime-capture-packet-evidence.mjs",
     "wp39:devtools-runtime-packet:evidence": "pnpm run wp39:host-runtime-intake:evidence && pnpm run devtools:check && node scripts/prepare-wp39-devtools-runtime-capture-packet-evidence.mjs",
+    "wp39:visual-studio-runtime-prep:evidence": "pnpm run wp39:host-runtime-intake:evidence && pnpm run visual-studio:check && node scripts/prepare-wp39-visual-studio-runtime-preparation-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",

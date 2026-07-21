@@ -32,6 +32,11 @@ async function main() {
   assert.equal(contract.contractVersion, "0.1.0-draft", "Visual Studio host contract version must be explicit.");
   assert.equal(contract.appDirectory, "apps/visual-studio-extension", "Visual Studio host must live under main-repo/apps.");
   assert.equal(contract.host?.model, "hybrid", "Visual Studio host must use the planned hybrid model.");
+  assert.equal(contract.runtime?.preparationStatus, "contract-level-runtime-prep", "Visual Studio runtime must stay in contract-level preparation until a real VSIX route is implemented.");
+  assert.equal(contract.runtime?.actualVisualStudioRuntimeCaptureExecuted, false, "Visual Studio skeleton must not claim real runtime capture.");
+  assert.equal(contract.runtime?.visualStudioExtensionPackageBuilt, false, "Visual Studio skeleton must not claim VSIX packaging.");
+  assert.equal(contract.runtime?.experimentalInstanceExecuted, false, "Visual Studio skeleton must not claim experimental instance execution.");
+  assert.equal(contract.runtime?.dependencyLicenseAuditRequiredBeforeVsix, true, "Visual Studio VSIX route must require dependency and license audit before implementation.");
   assert.equal(contract.runtime?.languageServer?.package, "@hia-doc/lsp", "Visual Studio host must delegate LSP features to @hia-doc/lsp.");
   assert.equal(contract.runtime?.cli?.package, "@hia-doc/cli", "Visual Studio host must delegate builds to @hia-doc/cli.");
   assertRequiredMethods(contract.customRequests);
@@ -57,6 +62,13 @@ async function main() {
       model: contract.host.model,
       primaryRoute: contract.host.primaryRoute,
       targetIde: contract.host.targetIde
+    },
+    runtimePreparation: {
+      preparationStatus: contract.runtime.preparationStatus,
+      actualVisualStudioRuntimeCaptureExecuted: contract.runtime.actualVisualStudioRuntimeCaptureExecuted,
+      visualStudioExtensionPackageBuilt: contract.runtime.visualStudioExtensionPackageBuilt,
+      experimentalInstanceExecuted: contract.runtime.experimentalInstanceExecuted,
+      dependencyLicenseAuditRequiredBeforeVsix: contract.runtime.dependencyLicenseAuditRequiredBeforeVsix
     },
     hostResultMetadata: contract.hostResultMetadata,
     reviewSurface: {

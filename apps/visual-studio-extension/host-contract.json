@@ -11,6 +11,11 @@
     "targetIde": "Visual Studio"
   },
   "runtime": {
+    "preparationStatus": "contract-level-runtime-prep",
+    "actualVisualStudioRuntimeCaptureExecuted": false,
+    "visualStudioExtensionPackageBuilt": false,
+    "experimentalInstanceExecuted": false,
+    "dependencyLicenseAuditRequiredBeforeVsix": true,
     "languageServer": {
       "package": "@hia-doc/lsp",
       "transport": "stdio",
