@@ -48,6 +48,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Host file read/version/conflict evidence | `scripts/prepare-wp37-file-read-version-conflict-evidence.mjs` | `0.1.0-draft` |
 | Host rollback/formatter/audit evidence | `scripts/prepare-wp37-rollback-formatter-audit-evidence.mjs` | `0.1.0-draft` |
 | VS Code checked apply confirmation evidence | `scripts/prepare-wp37-vscode-checked-apply-confirmation-evidence.mjs` | `0.1.0-draft` |
+| Target/self-doc checked apply dry-run evidence | `scripts/prepare-wp37-target-self-doc-checked-apply-dry-run-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -102,6 +103,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Host file read/version/conflict evidence | `main-repo` scripts | W-P37 evidence modeling host-owned file snapshots, private version hashes, semantic ranges and conflict results before rollback, formatter, audit or apply confirmation exists. |
 | Host rollback/formatter/audit evidence | `main-repo` scripts | W-P37 evidence modeling rollback records, formatter/post-apply validation plans and redacted audit drafts before any host confirmation or workspace write exists. |
 | VS Code checked apply confirmation evidence | `main-repo` scripts | W-P37 evidence proving VS Code can render host confirmation choices and reports from rollback/formatter/audit readiness records without calling WorkspaceEdit or writing files. |
+| Target/self-doc checked apply dry-run evidence | `main-repo` scripts | W-P37 evidence proving known HIA self-doc and target-project scenarios can consume checked apply confirmation reports without reading source bodies, applying edits or mutating target repositories. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -161,6 +163,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Host file read/version/conflict evidence may record relative target paths, read metadata, private-hash status, semantic ranges and conflict results, but must not expose document text, digest values, absolute paths, direct editor objects or write authority.
 - Host rollback/formatter/audit evidence may prepare host-owned rollback records, formatter/post-apply validation plans and redacted audit drafts, but must not execute formatters, apply edits, write files, mutate target repositories or expose document content.
 - VS Code checked apply confirmation evidence may expose host confirmation choices and blocked apply reports, but must not call `workspace.applyEdit()`, carry direct edit objects, read/write target repositories or imply provider/LSP write authority.
+- Target/self-doc checked apply dry-run evidence may map confirmation reports to self-doc and target-project scenarios, but it must keep target repositories read-only, hide local paths, avoid source bodies and keep final apply authority blocked.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
