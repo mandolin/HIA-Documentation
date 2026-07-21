@@ -545,6 +545,47 @@ export interface HiaDocumentationReviewItemChoice {
   providerAugmentation?: HiaProviderReviewPayloadAugmentationSummary;
 }
 
+/**
+ * VS Code checked apply confirmation 的 host-visible 摘要。
+ * Host-visible summary for a VS Code checked apply confirmation preview.
+ *
+ * 中文：该结构只表达宿主确认 UI 需要展示的 gate 状态，不包含可直接执行的编辑对象。
+ * English: This shape only exposes gate status for host confirmation UI and never carries directly executable edit objects.
+ */
+export interface HiaDocumentationCheckedApplyConfirmationSummary {
+  applyAuditRecordId?: string;
+  applyAuthorityStillBlocked?: boolean;
+  confirmationState?: string;
+  conflictStatus?: string;
+  currentState?: string;
+  directApplyAllowed?: boolean;
+  finalConflictRecheckRequired?: boolean;
+  finalHumanConfirmationRequired?: boolean;
+  formatterExecutionRequiredAtApply?: boolean;
+  formatterId?: string;
+  formatterStatus?: string;
+  formatterValidationRecordId?: string;
+  postApplyValidationRequired?: boolean;
+  readyForHostConfirmation?: boolean;
+  reportSource?: string;
+  rollbackRecordId?: string;
+  targetKind?: string;
+  targetRepositoryMutationAllowed?: boolean;
+  transactionId?: string;
+  workspaceWriteAllowed?: boolean;
+}
+
+/**
+ * VS Code QuickPick 可展示的 checked apply confirmation 选择项。
+ * Checked apply confirmation choice that can be shown by a VS Code QuickPick.
+ */
+export interface HiaDocumentationCheckedApplyConfirmationChoice {
+  confirmation: HiaDocumentationCheckedApplyConfirmationSummary;
+  description?: string;
+  detail?: string;
+  label: string;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -850,6 +891,7 @@ export function createHiaDocumentationReviewItemChoices(
     const editCandidate = item.actionHints?.editCandidatePreviewAvailable ? "edit preview" : undefined;
     const diffPreview = item.editCandidate?.diffPreview?.status === "preview-only" ? "diff preview" : undefined;
     const applyPreflight = item.editCandidate?.applyPreflight?.status === "requires-host-check" ? "host preflight" : undefined;
+    const checkedApplyConfirmation = createHiaDocumentationCheckedApplyConfirmationPreview(item) ? "checked confirmation" : undefined;
     const provider = summarizeReviewProvider(item, providerAugmentation);
 
     return {
@@ -859,7 +901,7 @@ export function createHiaDocumentationReviewItemChoices(
       description: [item.kind, item.status, item.risk?.level ? `risk:${item.risk.level}` : undefined]
         .filter(isNonEmptyString)
         .join(" | "),
-      detail: [target, quality, provider, editCandidate, diffPreview, applyPreflight, `action:${action}`]
+      detail: [target, quality, provider, editCandidate, diffPreview, applyPreflight, checkedApplyConfirmation, `action:${action}`]
         .filter(isNonEmptyString)
         .join(" | ")
     };
@@ -909,6 +951,135 @@ export function createHiaDocumentationReviewItemReport(
   for (const check of item.qualityChecks || []) {
     lines.push(`Quality ${check.status || "unknown"}: ${check.code || "unknown"}${check.message ? ` - ${check.message}` : ""}`);
   }
+
+  return lines;
+}
+
+/**
+ * 从 review item 的 apply preflight 派生 VS Code checked apply confirmation 的保守预览。
+ * Derives a conservative VS Code checked apply confirmation preview from an apply preflight review item.
+ *
+ * 中文：该 helper 用于当前 VS Code first slice；它不会把 preflight 升级为可写事务，只标明最终确认链路仍被阻断。
+ * English: This helper serves the current VS Code first slice; it does not upgrade preflight data into a writable transaction and keeps final apply blocked.
+ */
+export function createHiaDocumentationCheckedApplyConfirmationPreview(
+  item: HiaDocumentationReviewPayloadItemSummary
+): HiaDocumentationCheckedApplyConfirmationSummary | undefined {
+  const preflight = item.editCandidate?.applyPreflight;
+
+  if (!preflight) {
+    return undefined;
+  }
+
+  const targetFile = preflight.targetFiles?.[0];
+  const summary: HiaDocumentationCheckedApplyConfirmationSummary = {
+    applyAuthorityStillBlocked: true,
+    confirmationState: "preflight-only",
+    directApplyAllowed: false,
+    finalConflictRecheckRequired: true,
+    finalHumanConfirmationRequired: true,
+    formatterExecutionRequiredAtApply: true,
+    postApplyValidationRequired: true,
+    readyForHostConfirmation: false,
+    reportSource: "vscode-review-preflight-preview",
+    targetRepositoryMutationAllowed: false,
+    workspaceWriteAllowed: false
+  };
+  const transactionId = preflight.id || item.editCandidate?.id || item.proposalId || item.id;
+  const targetKind = preflight.targetKind || item.editCandidate?.kind || item.kind;
+  const conflictStatus = preflight.conflictStatus || targetFile?.conflict?.status;
+  const formatterId = targetFile?.formatting?.formatter;
+
+  if (transactionId) {
+    summary.transactionId = transactionId;
+  }
+
+  if (targetKind) {
+    summary.targetKind = targetKind;
+  }
+
+  if (conflictStatus) {
+    summary.conflictStatus = conflictStatus;
+  }
+
+  if (preflight.rollback?.recordRequired) {
+    summary.rollbackRecordId = "required-at-apply";
+  }
+
+  if (formatterId) {
+    summary.formatterId = formatterId;
+    summary.formatterStatus = "planned-by-preflight";
+  } else {
+    summary.formatterStatus = "required-at-apply";
+  }
+
+  return summary;
+}
+
+/**
+ * 将 checked apply confirmation 摘要转为 VS Code QuickPick 选择项。
+ * Converts checked apply confirmation summaries into VS Code QuickPick-friendly choices.
+ */
+export function createHiaDocumentationCheckedApplyConfirmationChoices(
+  confirmations: readonly HiaDocumentationCheckedApplyConfirmationSummary[]
+): HiaDocumentationCheckedApplyConfirmationChoice[] {
+  return confirmations.map((confirmation, index) => {
+    const label = `Checked apply confirmation ${index + 1}`;
+    const readiness = confirmation.readyForHostConfirmation ? "ready for host confirmation" : confirmation.confirmationState || "confirmation preview";
+    const applyBoundary = confirmation.applyAuthorityStillBlocked === false ? "apply authority open" : "apply authority blocked";
+    const detail = [
+      confirmation.transactionId,
+      confirmation.targetKind,
+      confirmation.conflictStatus ? `conflict:${confirmation.conflictStatus}` : undefined,
+      confirmation.rollbackRecordId ? `rollback:${confirmation.rollbackRecordId}` : undefined,
+      confirmation.formatterId ? `formatter:${confirmation.formatterId}` : confirmation.formatterStatus ? `formatter:${confirmation.formatterStatus}` : undefined,
+      confirmation.applyAuditRecordId ? `audit:${confirmation.applyAuditRecordId}` : undefined
+    ]
+      .filter(isNonEmptyString)
+      .join(" | ");
+    const choice: HiaDocumentationCheckedApplyConfirmationChoice = {
+      confirmation,
+      description: `${readiness}; ${applyBoundary}`,
+      label
+    };
+
+    if (detail) {
+      choice.detail = detail;
+    }
+
+    return choice;
+  });
+}
+
+/**
+ * 创建 checked apply confirmation 的可读报告行。
+ * Creates readable report lines for a checked apply confirmation preview.
+ */
+export function createHiaDocumentationCheckedApplyConfirmationReport(
+  confirmation: HiaDocumentationCheckedApplyConfirmationSummary
+): string[] {
+  const lines = [
+    `Transaction: ${confirmation.transactionId || "unknown"}`,
+    `Source: ${confirmation.reportSource || "host-readiness-result"}`,
+    `State: ${confirmation.currentState || confirmation.confirmationState || "unknown"}`,
+    `Target kind: ${confirmation.targetKind || "unknown"}`,
+    `Conflict status: ${confirmation.conflictStatus || "unknown"}`,
+    `Ready for host confirmation: ${formatYesNo(confirmation.readyForHostConfirmation)}`,
+    `Final human confirmation: ${formatRequiredStatus(confirmation.finalHumanConfirmationRequired)}`,
+    `Final conflict recheck: ${formatRequiredStatus(confirmation.finalConflictRecheckRequired)}`,
+    `Rollback record: ${confirmation.rollbackRecordId || "not available"}`,
+    `Formatter: ${confirmation.formatterId || confirmation.formatterStatus || "not available"}`,
+    `Formatter execution: ${formatRequiredStatus(confirmation.formatterExecutionRequiredAtApply)}`,
+    `Post-apply validation: ${formatRequiredStatus(confirmation.postApplyValidationRequired)}`,
+    `Apply audit record: ${confirmation.applyAuditRecordId || "not available"}`,
+    `Apply authority: ${confirmation.applyAuthorityStillBlocked === false ? "not blocked" : "blocked"}`,
+    `Direct apply: ${formatEnabledDisabled(confirmation.directApplyAllowed)}`,
+    `Workspace write: ${formatEnabledDisabled(confirmation.workspaceWriteAllowed)}`,
+    `Target repository mutation: ${formatEnabledDisabled(confirmation.targetRepositoryMutationAllowed)}`,
+    "Source bodies: not shown by the VS Code checked apply confirmation preview."
+  ];
+
+  pushReportLine(lines, "Formatter validation record", confirmation.formatterValidationRecordId);
 
   return lines;
 }
@@ -1021,6 +1192,30 @@ function summarizeReviewTarget(item: HiaDocumentationReviewPayloadItemSummary): 
   ]
     .filter(isNonEmptyString)
     .join(" ");
+}
+
+function formatEnabledDisabled(value: boolean | undefined): string {
+  if (value === undefined) {
+    return "unknown";
+  }
+
+  return value ? "enabled" : "disabled";
+}
+
+function formatRequiredStatus(value: boolean | undefined): string {
+  if (value === undefined) {
+    return "unknown";
+  }
+
+  return value ? "required" : "not required";
+}
+
+function formatYesNo(value: boolean | undefined): string {
+  if (value === undefined) {
+    return "unknown";
+  }
+
+  return value ? "yes" : "no";
 }
 
 function summarizeReviewQuality(item: HiaDocumentationReviewPayloadItemSummary): string | undefined {

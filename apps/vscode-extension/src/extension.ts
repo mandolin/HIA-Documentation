@@ -33,6 +33,8 @@ import {
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
+  createHiaDocumentationCheckedApplyConfirmationPreview,
+  createHiaDocumentationCheckedApplyConfirmationReport,
   createHiaDocumentationReviewItemChoices,
   createHiaDocumentationReviewItemReport,
   createHiaDocumentationReviewProviderReport,
@@ -965,6 +967,7 @@ async function selectHiaDocumentationReviewAction(
 ): Promise<void> {
   const item = choice.item;
   const providerAugmentation = choice.providerAugmentation;
+  const checkedApplyConfirmation = createHiaDocumentationCheckedApplyConfirmationPreview(item);
   const actions: DocumentationReviewActionQuickPickItem[] = [
     {
       label: "Show proposal details",
@@ -1010,6 +1013,14 @@ async function selectHiaDocumentationReviewAction(
         ? `${item.editCandidate.applyPreflight.conflictStatus || "conflict unknown"}; target files:${item.editCandidate.applyPreflight.targetFiles?.length ?? 0}`
         : "preflight not applicable",
       actionKind: "show-apply-preflight",
+      item
+    },
+    {
+      label: "Show checked apply confirmation",
+      description: checkedApplyConfirmation
+        ? `${checkedApplyConfirmation.confirmationState || "confirmation preview"}; apply remains blocked`
+        : "confirmation unavailable",
+      actionKind: "show-checked-apply-confirmation",
       item
     },
     {
@@ -1068,6 +1079,11 @@ async function selectHiaDocumentationReviewAction(
 
   if (selected.actionKind === "show-apply-preflight") {
     showHiaDocumentationApplyPreflightPreview(item, outputChannel);
+    return;
+  }
+
+  if (selected.actionKind === "show-checked-apply-confirmation") {
+    showHiaDocumentationCheckedApplyConfirmation(item, outputChannel);
     return;
   }
 
@@ -1171,6 +1187,7 @@ type DocumentationReviewActionKind =
   | "copy-draft"
   | "copy-proposal-id"
   | "show-apply-preflight"
+  | "show-checked-apply-confirmation"
   | "show-context"
   | "show-edit-candidate"
   | "show-details"
@@ -1340,6 +1357,25 @@ function showHiaDocumentationApplyPreflightPreview(item: HiaDocumentationReviewP
   }
 
   void vscode.window.showInformationMessage("HIA documentation apply preflight preview written to output. Apply remains disabled.");
+}
+
+function showHiaDocumentationCheckedApplyConfirmation(item: HiaDocumentationReviewPayloadItemSummary, outputChannel: vscode.OutputChannel): void {
+  const confirmation = createHiaDocumentationCheckedApplyConfirmationPreview(item);
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation checked apply confirmation preview:");
+
+  if (!confirmation) {
+    outputChannel.appendLine("- Confirmation: unavailable");
+    void vscode.window.showWarningMessage("This HIA documentation proposal has no checked apply confirmation preview.");
+    return;
+  }
+
+  for (const line of createHiaDocumentationCheckedApplyConfirmationReport(confirmation)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA checked apply confirmation preview written to output. Apply remains disabled.");
 }
 
 function showHiaResourceAction(action: HiaResourceActionSummary, outputChannel: vscode.OutputChannel): void {

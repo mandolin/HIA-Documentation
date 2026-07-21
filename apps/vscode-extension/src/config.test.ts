@@ -20,6 +20,9 @@ import {
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
+  createHiaDocumentationCheckedApplyConfirmationChoices,
+  createHiaDocumentationCheckedApplyConfirmationPreview,
+  createHiaDocumentationCheckedApplyConfirmationReport,
   createHiaDocumentationReviewItemChoices,
   createHiaDocumentationReviewItemReport,
   createHiaDocumentationReviewProviderReport,
@@ -544,8 +547,12 @@ describe("@hia-doc/vscode-extension config", () => {
     const report = createHiaDocumentationReviewReport(reviewPayload);
     const provider = getHiaDocumentationProviderAugmentation(reviewPayload);
     const choices = createHiaDocumentationReviewItemChoices(reviewPayload.reviewPayload, provider);
-    const itemReport = createHiaDocumentationReviewItemReport(reviewPayload.reviewPayload?.items?.[0] ?? {}, provider);
+    const reviewItem = reviewPayload.reviewPayload?.items?.[0] ?? {};
+    const itemReport = createHiaDocumentationReviewItemReport(reviewItem, provider);
     const providerReport = createHiaDocumentationReviewProviderReport(provider);
+    const checkedConfirmation = createHiaDocumentationCheckedApplyConfirmationPreview(reviewItem);
+    const checkedConfirmationChoices = createHiaDocumentationCheckedApplyConfirmationChoices(checkedConfirmation ? [checkedConfirmation] : []);
+    const checkedConfirmationReport = checkedConfirmation ? createHiaDocumentationCheckedApplyConfirmationReport(checkedConfirmation) : [];
 
     expect(report).toContain("Review items: 1");
     expect(report).toContain("Automatic writes: disabled");
@@ -566,6 +573,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(choices[0]?.detail).toContain("edit preview");
     expect(choices[0]?.detail).toContain("diff preview");
     expect(choices[0]?.detail).toContain("host preflight");
+    expect(choices[0]?.detail).toContain("checked confirmation");
     expect(choices[0]?.detail).toContain("action:copy draft");
     expect(itemReport).toContain("Proposal: proposal:1");
     expect(itemReport).toContain("Kind: missing-locale-stub");
@@ -577,7 +585,28 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(itemReport).toContain("Action hints: copyDraft=yes, editPreview=yes, openContext=yes, apply=no");
     expect(providerReport).toContain("Provider workspace write: disabled");
     expect(providerReport).toContain("Provider source body: not included");
-    expect(getHiaDocumentationReviewDraftText(reviewPayload.reviewPayload?.items?.[0] ?? {})).toBe("English draft.");
+    expect(checkedConfirmation).toMatchObject({
+      applyAuthorityStillBlocked: true,
+      confirmationState: "preflight-only",
+      conflictStatus: "not-checked",
+      directApplyAllowed: false,
+      finalConflictRecheckRequired: true,
+      finalHumanConfirmationRequired: true,
+      postApplyValidationRequired: true,
+      readyForHostConfirmation: false,
+      targetKind: "external-resource-locale-entry",
+      transactionId: "apply-preflight:1",
+      workspaceWriteAllowed: false
+    });
+    expect(checkedConfirmationChoices).toHaveLength(1);
+    expect(checkedConfirmationChoices[0]?.description).toBe("preflight-only; apply authority blocked");
+    expect(checkedConfirmationReport).toContain("Ready for host confirmation: no");
+    expect(checkedConfirmationReport).toContain("Final human confirmation: required");
+    expect(checkedConfirmationReport).toContain("Final conflict recheck: required");
+    expect(checkedConfirmationReport).toContain("Apply authority: blocked");
+    expect(checkedConfirmationReport).toContain("Direct apply: disabled");
+    expect(checkedConfirmationReport).toContain("Workspace write: disabled");
+    expect(getHiaDocumentationReviewDraftText(reviewItem)).toBe("English draft.");
   });
 
   it("creates resource action preview reports", () => {
