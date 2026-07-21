@@ -52,6 +52,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Checked apply closeout provider/remote inputs | `scripts/prepare-wp37-closeout-provider-remote-inputs.mjs` | `0.1.0-draft` |
 | Host-owned writable apply sandbox evidence | `scripts/prepare-wp38-host-owned-writable-apply-sandbox-evidence.mjs` | `0.1.0-draft` |
 | VS Code real GUI confirmation evidence | `scripts/prepare-wp38-vscode-real-gui-confirmation-evidence.mjs` | `0.1.0-draft` |
+| Sandbox rollback restore failure-path evidence | `scripts/prepare-wp38-sandbox-rollback-restore-failure-path-evidence.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -110,6 +111,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Checked apply closeout provider/remote inputs | `main-repo` scripts | W-P37 closeout evidence summarizing host-owned checked apply readiness while forwarding writable sandbox, real GUI confirmation, remote provider smoke and target branch/PR inputs without granting write authority. |
 | Host-owned writable apply sandbox evidence | `main-repo` scripts | W-P38 evidence proving host-owned apply can write inside a synthetic `dist/` sandbox after final confirmation, repeat conflict check, private rollback snapshot, formatter execution, post-apply validation and redacted audit, while target repositories remain untouched. |
 | VS Code real GUI confirmation evidence | `main-repo` scripts and VS Code shell | W-P38 evidence preparing a real Extension Development Host confirmation command and manual capture checklist for W-P38 sandbox transactions while keeping real GUI capture explicitly manual-required. |
+| Sandbox rollback restore failure-path evidence | `main-repo` scripts | W-P38 evidence proving conflict, formatter and post-apply validation failures are handled inside the synthetic sandbox; post-validation writes are restored from private rollback snapshots while target repositories remain untouched. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
