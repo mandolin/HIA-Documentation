@@ -77,6 +77,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target-owner command evidence template | `scripts/prepare-wp41-target-owner-command-evidence-template.mjs` | `0.1.0-draft` |
 | Provider review payload handoff evidence | `scripts/prepare-wp41-provider-review-payload-handoff.mjs` | `0.1.0-draft` |
 | Target-owner dry-run evidence | `scripts/prepare-wp41-target-owner-dry-run-evidence.mjs` | `0.1.0-draft` |
+| W-P41 closeout W-P42/W-P43 inputs evidence | `scripts/prepare-wp41-closeout-wp42-wp43-inputs.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -160,6 +161,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target-owner command evidence template | `main-repo` scripts | W-P41 evidence consolidating local sandbox and branch/PR command templates into a target-owner transcript and evidence packet shape. It must not claim command execution, branch creation, pull-request creation, target writes or provider success. |
 | Provider review payload handoff evidence | `main-repo` scripts | W-P41 evidence binding W-P40 blocked/refused provider review payloads to the target-owner evidence packet as review-only context. It must not execute providers or networks, trigger checked apply, create edits, run target commands or mutate target repositories. |
 | Target-owner dry-run evidence | `main-repo` scripts | W-P41 evidence preparing a structural target-owner dry-run/readiness matrix from command templates and provider review handoff. It must not run target commands, create sandboxes, branches or pull requests, claim target-owner execution, trigger checked apply or mutate target repositories. |
+| W-P41 closeout W-P42/W-P43 inputs evidence | `main-repo` scripts | W-P41 closeout evidence summarizing target-owner packets, provider review handoff and dry-run readiness into downstream checked-apply and host UX inputs. It must not convert prepared materials into target execution, provider execution, checked apply or target repository writes. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -246,6 +248,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Target-owner command evidence template may consolidate transcript fields, result shapes, privacy checks and target-owner evidence sections only. HIA automation must not record target-owner execution as complete, create branches or PRs, push commits, run commands, mutate repositories, expose source text, serialize credentials or produce direct edit objects.
 - Provider review payload handoff evidence may bind review item references, blocked/refused provider result shape, host display projections and target-owner decision shapes only. It must not claim provider success, execute providers or networks, trigger checked apply, generate direct edits, run target commands, mutate target repositories, expose source text, serialize credentials or include local absolute paths.
 - Target-owner dry-run evidence may prepare readiness matrices, evidence review checklists and result templates only. It must not execute target dry-runs, run commands, create sandboxes, branches or pull requests, claim target-owner execution, execute providers or networks, trigger checked apply, generate direct edits, mutate target repositories, expose source text, serialize credentials or include local absolute paths.
+- W-P41 closeout evidence may summarize ready inputs and downstream W-P42/W-P43 handoff only. It must not reclassify target-owner prepared packets as target execution, claim provider success, call networks, trigger checked apply, generate direct edits, run target commands, mutate target repositories, expose source text, serialize credentials or include local absolute paths.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
