@@ -64,6 +64,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Runtime evidence normalization | `scripts/prepare-wp39-runtime-evidence-normalization.mjs` | `0.1.0-draft` |
 | Next gate bridge evidence | `scripts/prepare-wp39-next-gate-bridge-evidence.mjs` | `0.1.0-draft` |
 | Host runtime closeout W-P40 inputs | `scripts/prepare-wp39-closeout-wp40-inputs.mjs` | `0.1.0-draft` |
+| Controlled remote provider smoke intake evidence | `scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -134,6 +135,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Runtime evidence normalization | `main-repo` scripts | W-P39 evidence normalizing VS Code, Chrome DevTools and Visual Studio runtime packet/preparation states into one host matrix for W-P40/W-P41/W-P42 consumption without claiming missing runtime captures. |
 | Next gate bridge evidence | `main-repo` scripts | W-P39 evidence bridging normalized host runtime states into W-P40 remote provider smoke, W-P41 target-owner flow, W-P42 checked apply hardening and W-P43 host UX inputs without running providers, mutating targets or enabling write authority. |
 | Host runtime closeout W-P40 inputs | `main-repo` scripts | W-P39 closeout evidence summarizing W-P39.1-W-P39.6 and turning W-P40 controlled remote provider smoke into a single startup input contract while preserving manual approval, privacy and no-write gates. |
+| Controlled remote provider smoke intake evidence | `main-repo` scripts | W-P40 intake evidence building a provider selection/manual approval safety envelope from W-P36/W-P38/W-P39 inputs before any real provider choice, credential resolution, network call or target write. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -207,6 +209,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Runtime evidence normalization may map host-specific packet states to a shared matrix only. It must not transform `manual-capture-ready` or `route-preparation-ready` into `captured`, enable write authority, run hosts, call providers, mutate target repositories or expose source bodies.
 - Next gate bridge evidence may prepare downstream W-P40/W-P41/W-P42/W-P43 inputs only. It must not run remote providers, launch IDE/browser hosts, create branches or pull requests, apply edits, grant provider/LSP-owned write authority, mutate target repositories or expose source bodies.
 - Host runtime closeout W-P40 input evidence may close W-P39 and prepare W-P40 startup inputs only. It must not convert prepared host states into captured states, run remote providers, perform network calls, create target branches or PRs, grant write authority, mutate targets or expose source bodies.
+- Controlled remote provider smoke intake evidence may prepare provider candidates, manual approval routes and safety envelopes only. It must not select a real provider for execution, resolve credential values, execute external network calls, include source bodies, mutate targets, grant write authority or apply edits.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
