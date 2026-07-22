@@ -99,6 +99,7 @@
     "wp41:branch-pr-packet:evidence": "pnpm run wp41:local-sandbox-packet:evidence && node scripts/prepare-wp41-target-owner-branch-pr-packet.mjs",
     "wp41:command-evidence-template:evidence": "pnpm run wp41:branch-pr-packet:evidence && node scripts/prepare-wp41-target-owner-command-evidence-template.mjs",
     "wp41:provider-review-handoff:evidence": "pnpm run wp41:command-evidence-template:evidence && node scripts/prepare-wp41-provider-review-payload-handoff.mjs",
+    "wp41:target-owner-dry-run:evidence": "pnpm run wp41:provider-review-handoff:evidence && node scripts/prepare-wp41-target-owner-dry-run-evidence.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
