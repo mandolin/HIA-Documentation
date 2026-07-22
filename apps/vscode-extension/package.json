@@ -25,6 +25,7 @@
     "onCommand:hia.copyResourceKey",
     "onCommand:hia.reviewDocumentationProposals",
     "onCommand:hia.showCheckedApplySandboxConfirmation",
+    "onCommand:hia.showHostApplyUxIntake",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
   ],
@@ -69,6 +70,10 @@
       {
         "command": "hia.showCheckedApplySandboxConfirmation",
         "title": "HIA: Show Checked Apply Sandbox Confirmation"
+      },
+      {
+        "command": "hia.showHostApplyUxIntake",
+        "title": "HIA: Show Host Apply UX Intake"
       }
     ],
     "configuration": {

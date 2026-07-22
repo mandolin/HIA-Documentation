@@ -109,6 +109,7 @@
     "wp42:multi-host-projection:evidence": "pnpm run wp42:provider-target-boundary:evidence && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp42-multi-host-contract-projection.mjs",
     "wp42:closeout:evidence": "pnpm run wp42:multi-host-projection:evidence && node scripts/prepare-wp42-closeout-wp43-inputs.mjs",
     "wp43:host-ux-intake:evidence": "pnpm run wp42:closeout:evidence && node scripts/prepare-wp43-host-ux-intake.mjs",
+    "wp43:vscode-host-ux-surface:evidence": "pnpm run wp43:host-ux-intake:evidence && pnpm --filter @hia-doc/vscode-extension test && node scripts/prepare-wp43-vscode-host-ux-surface.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",

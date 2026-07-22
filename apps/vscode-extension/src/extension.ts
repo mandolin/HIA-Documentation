@@ -30,12 +30,15 @@ import {
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
+  HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
   createHiaCheckedApplySandboxConfirmationChoices,
   createHiaCheckedApplySandboxConfirmationReport,
+  createHiaHostApplyUxIntakeReport,
+  createHiaHostApplyUxSurfaceChoices,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
   createHiaDocumentationReviewItemChoices,
@@ -66,6 +69,8 @@ import {
   type HiaDocumentationReviewItemChoice,
   type HiaDocumentationReviewPayloadItemSummary,
   type HiaProviderReviewPayloadAugmentationSummary,
+  type HiaHostApplyUxIntakeEvidenceSummary,
+  type HiaHostApplyUxSurfaceChoice,
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
@@ -266,6 +271,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const showCheckedApplySandboxConfirmationCommand = vscode.commands.registerCommand(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND, async () => {
     await showHiaCheckedApplySandboxConfirmation(outputChannel);
   });
+  const showHostApplyUxIntakeCommand = vscode.commands.registerCommand(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND, async () => {
+    await showHiaHostApplyUxIntake(outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
     provideCodeActions(document, _range, codeActionContext) {
       return createHiaCodeActions(document, codeActionContext.diagnostics);
@@ -278,7 +286,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -704,6 +712,69 @@ async function showHiaCheckedApplySandboxConfirmation(outputChannel: vscode.Outp
   }
 
   void vscode.window.showInformationMessage("HIA checked apply sandbox confirmation written to output. Apply remains disabled.");
+}
+
+/**
+ * Show W-P43 host-owned apply UX intake evidence read-only in VS Code.
+ *
+ * 中文：以只读方式在 VS Code 输出面板展示 W-P43 host-owned apply UX intake 证据。
+ */
+async function showHiaHostApplyUxIntake(outputChannel: vscode.OutputChannel): Promise<void> {
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open the HIA main repo workspace before showing host apply UX intake.");
+    return;
+  }
+
+  const evidencePath = path.join(workspaceRoot, "dist", "wp43-host-ux-intake", "evidence.json");
+  let evidence: HiaHostApplyUxIntakeEvidenceSummary;
+
+  try {
+    evidence = JSON.parse(await readFile(evidencePath, "utf8")) as HiaHostApplyUxIntakeEvidenceSummary;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA host apply UX intake evidence could not be read: ${message}`);
+    void vscode.window.showWarningMessage("Run pnpm run wp43:host-ux-intake:evidence before showing host apply UX intake.");
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA host apply UX intake evidence:");
+
+  const choices = createHiaHostApplyUxSurfaceChoices(evidence).map((choice) => ({
+    ...choice,
+    choice
+  }));
+
+  if (choices.length === 0) {
+    for (const line of createHiaHostApplyUxIntakeReport(evidence)) {
+      outputChannel.appendLine(`- ${line}`);
+    }
+
+    void vscode.window.showWarningMessage("No HIA host apply UX surface is available. See HIA output.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<HostApplyUxSurfaceQuickPickItem>(
+    choices,
+    {
+      placeHolder: "Choose a W-P43 host apply UX surface"
+    }
+  );
+
+  if (!selected) {
+    return;
+  }
+
+  outputChannel.appendLine(`Selected host apply UX surface: ${selected.choice.label}`);
+
+  for (const line of createHiaHostApplyUxIntakeReport(evidence, selected.choice.surface)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA host apply UX intake written to output. Apply remains disabled.");
 }
 
 /**
@@ -1277,6 +1348,10 @@ interface DocumentationReviewActionQuickPickItem extends vscode.QuickPickItem {
 
 interface CheckedApplySandboxConfirmationQuickPickItem extends HiaCheckedApplySandboxConfirmationChoice, vscode.QuickPickItem {
   choice: HiaCheckedApplySandboxConfirmationChoice;
+}
+
+interface HostApplyUxSurfaceQuickPickItem extends HiaHostApplyUxSurfaceChoice, vscode.QuickPickItem {
+  choice: HiaHostApplyUxSurfaceChoice;
 }
 
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {

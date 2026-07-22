@@ -24,6 +24,12 @@ export const HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND = "hia.reviewDocumentati
  * 中文：VS Code 中用于查看 W-P38 sandbox checked-apply 确认证据的只读命令标识。
  */
 export const HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND = "hia.showCheckedApplySandboxConfirmation";
+/**
+ * VS Code read-only command id for inspecting W-P43 host-owned apply UX intake evidence.
+ *
+ * 中文：VS Code 中用于查看 W-P43 host-owned apply UX intake 证据的只读命令标识。
+ */
+export const HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND = "hia.showHostApplyUxIntake";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -669,6 +675,99 @@ export interface HiaCheckedApplySandboxConfirmationChoice {
   transaction: HiaCheckedApplySandboxTransactionSummary;
 }
 
+export interface HiaHostApplyUxRequirementSummary {
+  description?: string;
+  hostOwned?: boolean;
+  id?: string;
+  readiness?: string;
+  status?: string;
+  writeAuthorityGranted?: boolean;
+}
+
+export interface HiaHostApplyUxDisplayRuleSummary {
+  description?: string;
+  id?: string;
+  status?: string;
+  writeAuthorityGranted?: boolean;
+}
+
+export interface HiaHostApplyUxSurfaceSummary {
+  actualRuntimeCaptureExecuted?: boolean;
+  checkedApplyWriteEnabled?: boolean;
+  deferredGateVisible?: boolean;
+  directEditObjectProduced?: boolean;
+  hostEditorApiCalled?: boolean;
+  id?: string;
+  label?: string;
+  providerNetworkExecuted?: boolean;
+  providerReviewLinkageVisible?: boolean;
+  sourceBodyIncluded?: boolean;
+  sourceReferenceIncluded?: boolean;
+  sourcesContentPolicy?: string;
+  status?: string;
+  surface?: string;
+  targetCommandsExecutedByHia?: boolean;
+  targetOwnerEvidenceVisible?: boolean;
+  targetRepositoryMutationAllowed?: boolean;
+  uxRequirementRefs?: string[];
+  workspaceWriteAllowed?: boolean;
+}
+
+export interface HiaHostApplyUxIntakeRollup {
+  actualRuntimeCaptureExecutedCount?: number;
+  checkedApplyTriggeredCount?: number;
+  checkedApplyWriteEnabled?: boolean;
+  credentialValueIncludedCount?: number;
+  directEditObjectCount?: number;
+  documentContentIncludedInEvidenceCount?: number;
+  hostEditorApiCallCount?: number;
+  hostSurfaceCount?: number;
+  pathExposureCount?: number;
+  providerNetworkExecutedCount?: number;
+  providerOutputReviewOnly?: boolean;
+  providerReviewDisplayRuleCount?: number;
+  readyHostSurfaceCount?: number;
+  readyUxRequirementCount?: number;
+  sourceBodyIncludedInEvidence?: boolean;
+  sourceReferenceIncludedCount?: number;
+  sourcesContentPolicy?: string;
+  targetCommandExecutedByHiaCount?: number;
+  targetOwnerActionRequired?: boolean;
+  targetOwnerDisplayRuleCount?: number;
+  targetOwnerExecutionClaimed?: boolean;
+  targetRepositoryMutationCount?: number;
+  uxRequirementCount?: number;
+  workspaceWriteAllowedCount?: number;
+}
+
+/**
+ * W-P43 host-owned apply UX intake evidence 的 VS Code 可见摘要。
+ * VS Code-visible summary for W-P43 host-owned apply UX intake evidence.
+ *
+ * 中文：该结构只表达宿主 UX requirement、display rule 与 surface contract，
+ * 不携带源码正文、credential、可执行编辑对象或写入指令。
+ * English: This shape only exposes host UX requirements, display rules and
+ * surface contracts; it carries no source bodies, credentials, executable edit
+ * objects or write instructions.
+ */
+export interface HiaHostApplyUxIntakeEvidenceSummary {
+  contract?: string;
+  contractVersion?: string;
+  hostSurfaces?: HiaHostApplyUxSurfaceSummary[];
+  providerReviewDisplayRules?: HiaHostApplyUxDisplayRuleSummary[];
+  status?: string;
+  summary?: HiaHostApplyUxIntakeRollup;
+  targetOwnerDisplayRules?: HiaHostApplyUxDisplayRuleSummary[];
+  uxRequirements?: HiaHostApplyUxRequirementSummary[];
+}
+
+export interface HiaHostApplyUxSurfaceChoice {
+  description?: string;
+  detail?: string;
+  label: string;
+  surface: HiaHostApplyUxSurfaceSummary;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -1244,6 +1343,89 @@ export function createHiaCheckedApplySandboxConfirmationReport(
     `Source bodies: ${summary.sourceBodyIncludedInEvidence ? "included" : "not shown by the VS Code checked apply sandbox confirmation."}`,
     "Manual GUI confirmation: required before user-facing apply UX is enabled."
   ];
+
+  return lines;
+}
+
+/**
+ * 将 W-P43 host UX intake evidence 转成 VS Code 可展示的宿主 surface 选择项。
+ * Converts W-P43 host UX intake evidence into VS Code-visible host surface choices.
+ */
+export function createHiaHostApplyUxSurfaceChoices(
+  evidence: HiaHostApplyUxIntakeEvidenceSummary
+): HiaHostApplyUxSurfaceChoice[] {
+  const surfaces = Array.isArray(evidence.hostSurfaces) ? evidence.hostSurfaces : [];
+
+  return surfaces.map((surface, index) => {
+    const label = surface.label || surface.id || `Host apply UX surface ${index + 1}`;
+    const status = surface.status || "surface status unknown";
+    const applyBoundary = surface.checkedApplyWriteEnabled ? "apply write enabled" : "apply write disabled";
+    const detail = [
+      surface.id,
+      surface.surface,
+      `requirements:${surface.uxRequirementRefs?.length ?? 0}`,
+      surface.providerReviewLinkageVisible ? "provider review visible" : undefined,
+      surface.targetOwnerEvidenceVisible ? "target-owner visible" : undefined,
+      surface.deferredGateVisible ? "deferred gates visible" : undefined
+    ]
+      .filter(isNonEmptyString)
+      .join(" | ");
+
+    return {
+      description: `${status}; ${applyBoundary}`,
+      detail,
+      label,
+      surface
+    };
+  });
+}
+
+/**
+ * 创建 W-P43 host-owned apply UX intake 的可读报告行。
+ * Creates readable report lines for W-P43 host-owned apply UX intake.
+ */
+export function createHiaHostApplyUxIntakeReport(
+  evidence: HiaHostApplyUxIntakeEvidenceSummary,
+  surface?: HiaHostApplyUxSurfaceSummary
+): string[] {
+  const summary = evidence.summary || {};
+  const selectedSurface = surface || evidence.hostSurfaces?.[0];
+  const lines = [
+    `Evidence: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status: ${evidence.status || "unknown"}`,
+    `Surface: ${selectedSurface?.label || selectedSurface?.id || "summary"}`,
+    `Surface status: ${selectedSurface?.status || "not selected"}`,
+    `UX requirements: ${formatOptionalNumber(summary.readyUxRequirementCount)} / ${formatOptionalNumber(summary.uxRequirementCount)} ready`,
+    `Provider review rules: ${formatOptionalNumber(summary.providerReviewDisplayRuleCount)}`,
+    `Target-owner rules: ${formatOptionalNumber(summary.targetOwnerDisplayRuleCount)}`,
+    `Host surfaces: ${formatOptionalNumber(summary.readyHostSurfaceCount)} / ${formatOptionalNumber(summary.hostSurfaceCount)} ready`,
+    `Provider review-only: ${formatYesNo(summary.providerOutputReviewOnly)}`,
+    `Target-owner action required: ${formatYesNo(summary.targetOwnerActionRequired)}`,
+    `Target-owner execution claimed: ${formatYesNo(summary.targetOwnerExecutionClaimed)}`,
+    `Checked apply write: ${formatEnabledDisabled(summary.checkedApplyWriteEnabled)}`,
+    `Workspace write: ${formatDisabledByZero(summary.workspaceWriteAllowedCount)}`,
+    `Target repository mutation: ${formatDisabledByZero(summary.targetRepositoryMutationCount)}`,
+    `Checked apply trigger: ${formatDisabledByZero(summary.checkedApplyTriggeredCount)}`,
+    `Direct edit object: ${formatDisabledByZero(summary.directEditObjectCount)}`,
+    `Provider network: ${formatDisabledByZero(summary.providerNetworkExecutedCount)}`,
+    `Target command by HIA: ${formatDisabledByZero(summary.targetCommandExecutedByHiaCount)}`,
+    `Runtime capture: ${formatDisabledByZero(summary.actualRuntimeCaptureExecutedCount)}`,
+    `Host editor API: ${formatDisabledByZero(summary.hostEditorApiCallCount)}`,
+    `Sources content policy: ${summary.sourcesContentPolicy || selectedSurface?.sourcesContentPolicy || "none"}`,
+    `Source bodies: ${summary.sourceBodyIncludedInEvidence ? "included" : "not shown by the VS Code host apply UX intake."}`
+  ];
+
+  for (const requirement of evidence.uxRequirements || []) {
+    lines.push(`UX requirement: ${requirement.id || "unknown"} - ${requirement.status || "unknown"}`);
+  }
+
+  for (const rule of evidence.providerReviewDisplayRules || []) {
+    lines.push(`Provider rule: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
+  }
+
+  for (const rule of evidence.targetOwnerDisplayRules || []) {
+    lines.push(`Target-owner rule: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
+  }
 
   return lines;
 }

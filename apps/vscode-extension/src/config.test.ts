@@ -17,12 +17,15 @@ import {
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
+  HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
   HIA_VALIDATE_WORKSPACE_COMMAND,
   createHiaBuildArgs,
   createHiaCheckedApplySandboxConfirmationChoices,
   createHiaCheckedApplySandboxConfirmationReport,
+  createHiaHostApplyUxIntakeReport,
+  createHiaHostApplyUxSurfaceChoices,
   createHiaDocumentationCheckedApplyConfirmationChoices,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
@@ -73,6 +76,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
     expect(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND).toBe("hia.reviewDocumentationProposals");
     expect(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND).toBe("hia.showCheckedApplySandboxConfirmation");
+    expect(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND).toBe("hia.showHostApplyUxIntake");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -681,6 +685,94 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(report).toContain("LSP server-owned apply: disabled");
     expect(report).toContain("Direct edit object: disabled");
     expect(report).toContain("Source bodies: not shown by the VS Code checked apply sandbox confirmation.");
+  });
+
+  it("creates host apply UX intake surface choices and reports", () => {
+    const evidence = {
+      contract: "hia-wp43-host-owned-apply-ux-intake-evidence",
+      contractVersion: "0.1.0-draft",
+      hostSurfaces: [
+        {
+          checkedApplyWriteEnabled: false,
+          deferredGateVisible: true,
+          hostEditorApiCalled: false,
+          id: "vscode",
+          label: "VS Code Extension",
+          providerNetworkExecuted: false,
+          providerReviewLinkageVisible: true,
+          sourcesContentPolicy: "none",
+          status: "surface-contract-ready",
+          surface: "review-action-panel",
+          targetCommandsExecutedByHia: false,
+          targetOwnerEvidenceVisible: true,
+          targetRepositoryMutationAllowed: false,
+          uxRequirementRefs: ["host-owned-apply-ux", "provider-review-linkage"],
+          workspaceWriteAllowed: false
+        }
+      ],
+      providerReviewDisplayRules: [
+        {
+          id: "provider-state",
+          status: "ready-display-rule"
+        }
+      ],
+      status: "ready-for-wp43-host-surface-contract",
+      summary: {
+        actualRuntimeCaptureExecutedCount: 0,
+        checkedApplyTriggeredCount: 0,
+        checkedApplyWriteEnabled: false,
+        directEditObjectCount: 0,
+        hostEditorApiCallCount: 0,
+        hostSurfaceCount: 1,
+        providerNetworkExecutedCount: 0,
+        providerOutputReviewOnly: true,
+        providerReviewDisplayRuleCount: 1,
+        readyHostSurfaceCount: 1,
+        readyUxRequirementCount: 2,
+        sourceBodyIncludedInEvidence: false,
+        sourcesContentPolicy: "none",
+        targetCommandExecutedByHiaCount: 0,
+        targetOwnerActionRequired: true,
+        targetOwnerDisplayRuleCount: 1,
+        targetOwnerExecutionClaimed: false,
+        targetRepositoryMutationCount: 0,
+        uxRequirementCount: 2,
+        workspaceWriteAllowedCount: 0
+      },
+      targetOwnerDisplayRules: [
+        {
+          id: "target-owner-action-required",
+          status: "ready-display-rule"
+        }
+      ],
+      uxRequirements: [
+        {
+          id: "host-owned-apply-ux",
+          status: "ready-requirement"
+        },
+        {
+          id: "provider-review-linkage",
+          status: "ready-requirement"
+        }
+      ]
+    };
+    const choices = createHiaHostApplyUxSurfaceChoices(evidence);
+    const report = createHiaHostApplyUxIntakeReport(evidence, choices[0]?.surface);
+
+    expect(choices).toHaveLength(1);
+    expect(choices[0]).toMatchObject({
+      label: "VS Code Extension",
+      description: "surface-contract-ready; apply write disabled"
+    });
+    expect(choices[0]?.detail).toContain("requirements:2");
+    expect(report).toContain("Evidence: hia-wp43-host-owned-apply-ux-intake-evidence@0.1.0-draft");
+    expect(report).toContain("Surface: VS Code Extension");
+    expect(report).toContain("Provider review-only: yes");
+    expect(report).toContain("Target-owner action required: yes");
+    expect(report).toContain("Checked apply write: disabled");
+    expect(report).toContain("Workspace write: disabled");
+    expect(report).toContain("Provider network: disabled");
+    expect(report).toContain("Source bodies: not shown by the VS Code host apply UX intake.");
   });
 
   it("creates resource action preview reports", () => {
