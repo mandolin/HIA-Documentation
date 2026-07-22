@@ -106,6 +106,7 @@
     "wp42:denial-checker:evidence": "pnpm run wp42:transaction-contract:evidence && node scripts/prepare-wp42-preflight-denial-checker-fixtures.mjs",
     "wp42:rollback-audit-hardening:evidence": "pnpm run wp42:denial-checker:evidence && node scripts/prepare-wp42-rollback-formatter-audit-hardening.mjs",
     "wp42:provider-target-boundary:evidence": "pnpm run wp42:rollback-audit-hardening:evidence && node scripts/prepare-wp42-provider-review-target-owner-boundary.mjs",
+    "wp42:multi-host-projection:evidence": "pnpm run wp42:provider-target-boundary:evidence && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp42-multi-host-contract-projection.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
