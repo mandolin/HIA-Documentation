@@ -115,6 +115,7 @@
     "wp43:target-owner-evidence-view:evidence": "pnpm run wp43:provider-review-linkage-panel:evidence && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp43-target-owner-evidence-view.mjs",
     "wp43:host-confirmation-manual-packet:evidence": "pnpm run wp43:target-owner-evidence-view:evidence && pnpm run wp39:vscode-runtime-packet:evidence && pnpm run wp39:devtools-runtime-packet:evidence && pnpm run wp39:visual-studio-runtime-prep:evidence && node scripts/prepare-wp43-host-confirmation-manual-packet-refresh.mjs",
     "wp43:closeout:evidence": "pnpm run wp43:host-confirmation-manual-packet:evidence && node scripts/prepare-wp43-closeout-c-hia-p1-inputs.mjs",
+    "wp44:runtime-capture-readiness:evidence": "pnpm run wp43:closeout:evidence && node scripts/prepare-wp44-runtime-capture-readiness-audit.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
