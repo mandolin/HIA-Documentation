@@ -65,6 +65,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Next gate bridge evidence | `scripts/prepare-wp39-next-gate-bridge-evidence.mjs` | `0.1.0-draft` |
 | Host runtime closeout W-P40 inputs | `scripts/prepare-wp39-closeout-wp40-inputs.mjs` | `0.1.0-draft` |
 | Controlled remote provider smoke intake evidence | `scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs` | `0.1.0-draft` |
+| Remote provider candidate selection evidence | `scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -210,6 +211,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Next gate bridge evidence may prepare downstream W-P40/W-P41/W-P42/W-P43 inputs only. It must not run remote providers, launch IDE/browser hosts, create branches or pull requests, apply edits, grant provider/LSP-owned write authority, mutate target repositories or expose source bodies.
 - Host runtime closeout W-P40 input evidence may close W-P39 and prepare W-P40 startup inputs only. It must not convert prepared host states into captured states, run remote providers, perform network calls, create target branches or PRs, grant write authority, mutate targets or expose source bodies.
 - Controlled remote provider smoke intake evidence may prepare provider candidates, manual approval routes and safety envelopes only. It must not select a real provider for execution, resolve credential values, execute external network calls, include source bodies, mutate targets, grant write authority or apply edits.
+- Remote provider candidate selection evidence may record candidate identity, package, provenance, license, capability and manual-selection state only. It must not select a provider for execution, resolve credential values, perform external calls, include source bodies, create direct edits, grant write authority or mutate targets.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
