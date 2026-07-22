@@ -24,6 +24,7 @@ This app is the Visual Studio counterpart to the VS Code and browser DevTools ho
 - Adds `review-surface.json` as the first Visual Studio review tool-window input contract:
   - consume `hia-documentation-review-payload@0.1.0-draft`;
   - show review list, review detail, draft text, locale-quality counts and read-only edit candidate preview;
+  - expose W-P43 host-owned apply UX requirements, provider review linkage, target-owner evidence and deferred gates as read-only `hostApplyUx` data;
   - expose copy/open-context actions only;
   - keep apply disabled until a later human-approved WorkspaceEdit contract exists.
 
@@ -36,6 +37,8 @@ Workspace edits, VSIX packaging and Marketplace publishing are not part of this 
 ## Review Surface
 
 `review-surface.json` is deliberately host-facing but implementation-neutral. A future Visual Studio tool window should map it to native UI controls, while the data still comes from the shared HIA LSP and AI authoring contracts. For HIA-ASPNETPortal and other .NET targets, the first useful path is reviewing DotNetDoc proposals inside Visual Studio, copying approved draft text, and opening workspace-relative context; direct target repository mutation remains outside this phase.
+
+The W-P43 `hostApplyUx` section is also read-only. It can show that provider review, target-owner evidence and deferred gates are visible, but it must not imply checked apply write, provider/network execution, target command execution or real Visual Studio runtime capture.
 
 ## Validation
 

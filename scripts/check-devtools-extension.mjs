@@ -10,6 +10,7 @@ const evidencePath = path.join(rootDir, "dist", "devtools-extension-check.json")
 const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
   HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
+  HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
@@ -84,6 +85,22 @@ async function main() {
   assert.equal(panel.review.targetCollaboration.actualTargetBranchCreated, false, "Review surface must not claim target branch creation.");
   assert.equal(panel.review.targetCollaboration.actualPullRequestCreated, false, "Review surface must not claim pull request creation.");
   assert.equal(panel.review.targetCollaboration.targetRepositoryMutationCount, 0, "Review surface must keep target mutation count at zero.");
+  assert.equal(panel.review.hostApplyUx.contract, HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT, "Review surface must expose host apply UX summary.");
+  assert.equal(panel.review.hostApplyUx.status, "input-ready", "Review surface must expose host apply UX readiness.");
+  assert.equal(panel.review.hostApplyUx.uxRequirementRefCount, 8, "Review surface must preserve host apply UX requirement refs.");
+  assert.equal(panel.review.hostApplyUx.providerReviewLinkageVisible, true, "Review surface must show provider review linkage.");
+  assert.equal(panel.review.hostApplyUx.targetOwnerEvidenceVisible, true, "Review surface must show target-owner evidence.");
+  assert.equal(panel.review.hostApplyUx.deferredGateVisible, true, "Review surface must show deferred gate state.");
+  assert.equal(panel.review.hostApplyUx.checkedApplyWriteEnabled, false, "Review surface must keep checked apply write disabled.");
+  assert.equal(panel.review.hostApplyUx.workspaceWriteAllowed, false, "Review surface must keep workspace write disabled.");
+  assert.equal(panel.review.hostApplyUx.targetRepositoryMutationAllowed, false, "Review surface must keep target mutation disabled.");
+  assert.equal(panel.review.hostApplyUx.directEditObjectProduced, false, "Review surface must not expose direct edit objects.");
+  assert.equal(panel.review.hostApplyUx.providerNetworkExecuted, false, "Review surface must not claim provider network execution.");
+  assert.equal(panel.review.hostApplyUx.targetCommandsExecutedByHia, false, "Review surface must not claim target command execution.");
+  assert.equal(panel.review.hostApplyUx.actualRuntimeCaptureExecuted, false, "Review surface must not claim runtime capture completion.");
+  assert.equal(panel.review.hostApplyUx.hostEditorApiCalled, false, "Review surface must not claim host editor API calls.");
+  assert.equal(panel.review.hostApplyUx.sourceBodyIncluded, false, "Review surface must not expose source bodies.");
+  assert.equal(panel.review.hostApplyUx.sourcesContentPolicy, "none", "Review surface must preserve sourcesContent default none.");
   assert.equal(panel.review.provider.contract, "hia-provider-review-payload-augmentation", "Review surface must expose provider augmentation contract.");
   assert.equal(panel.review.provider.providerId, "hia-deterministic-mock", "Review surface must expose provider identity.");
   assert.equal(panel.review.provider.draftOutputCount, 1, "Review surface must summarize provider drafts.");
@@ -156,6 +173,7 @@ async function main() {
         checkedApplyConfirmation: panel.review.checkedApplyConfirmation,
         diffPreviewCount: panel.review.items.filter((item) => item.editCandidate.diffPreview.status === "preview-only").length,
         diffPreviewOperationCount: panel.review.items.flatMap((item) => item.editCandidate.diffPreview.operations).length,
+        hostApplyUx: panel.review.hostApplyUx,
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
         provider: panel.review.provider,
         privacy: panel.review.privacy,
@@ -230,6 +248,33 @@ function createFixturePayload() {
           to: "source:src/api.ts"
         }
       ]
+    },
+    hostApplyUx: {
+      actualRuntimeCaptureExecuted: false,
+      checkedApplyWriteEnabled: false,
+      deferredGateVisible: true,
+      directEditObjectProduced: false,
+      hostEditorApiCalled: false,
+      providerNetworkExecuted: false,
+      providerReviewLinkageVisible: true,
+      sourceBodyIncluded: false,
+      sourcesContentPolicy: "none",
+      status: "input-ready",
+      surface: "browser-devtools-panel",
+      targetCommandsExecutedByHia: false,
+      targetOwnerEvidenceVisible: true,
+      targetRepositoryMutationAllowed: false,
+      uxRequirementRefs: [
+        "host-owned-apply-ux",
+        "provider-review-linkage",
+        "target-owner-evidence-view",
+        "rollback-formatter-audit-panel",
+        "multi-host-read-only-projection",
+        "deferred-write-gate-banner",
+        "final-human-confirmation-state",
+        "privacy-source-policy-state"
+      ],
+      workspaceWriteAllowed: false
     },
     providerAugmentation: {
       actionPolicy: {

@@ -8,6 +8,7 @@ export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT = "hia-devtools-review-surface
 export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT = "hia-devtools-checked-apply-confirmation-summary";
 export const HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT = "hia-devtools-target-collaboration-summary";
+export const HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT = "hia-devtools-host-apply-ux-summary";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -56,6 +57,7 @@ export function createHiaDevToolsPanelViewModel(payload) {
  *   contract: string;
  *   contractVersion: string;
  *   draftCount: number;
+ *   hostApplyUx: { actualRuntimeCaptureExecuted: boolean; checkedApplyWriteEnabled: boolean; contract: string; deferredGateVisible: boolean; directEditObjectProduced: boolean; hostEditorApiCalled: boolean; providerNetworkExecuted: boolean; providerReviewLinkageVisible: boolean; sourceBodyIncluded: boolean; sourcesContentPolicy: string; status: string; surface: string; targetCommandsExecutedByHia: boolean; targetOwnerEvidenceVisible: boolean; targetRepositoryMutationAllowed: boolean; uxRequirementRefCount: number; workspaceWriteAllowed: boolean };
  *   items: Array<{
  *     actionHints: Record<string, unknown>;
  *     draftText?: string;
@@ -94,6 +96,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
     contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
     draftCount: numberValue(reviewPayload?.draftCount) ?? items.filter((item) => Boolean(item.draftText)).length,
+    hostApplyUx: createDevToolsHostApplyUxSummary(input),
     items,
     ...(stringValue(reviewPayload?.contract) ? { payloadContract: stringValue(reviewPayload.contract) } : {}),
     privacy: {
@@ -163,6 +166,30 @@ function createDevToolsTargetCollaborationSummary(payload) {
     status: stringValue(input?.status) ?? "not-available",
     targetOwnerActionRequiredForWrite: booleanValue(input?.targetOwnerActionRequiredForWrite) ?? false,
     targetRepositoryMutationCount: numberValue(input?.targetRepositoryMutationCount) ?? 0
+  };
+}
+
+function createDevToolsHostApplyUxSummary(payload) {
+  const input = selectHostApplyUx(payload);
+
+  return {
+    actualRuntimeCaptureExecuted: booleanValue(input?.actualRuntimeCaptureExecuted) ?? false,
+    checkedApplyWriteEnabled: booleanValue(input?.checkedApplyWriteEnabled) ?? false,
+    contract: HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
+    deferredGateVisible: booleanValue(input?.deferredGateVisible) ?? false,
+    directEditObjectProduced: booleanValue(input?.directEditObjectProduced) ?? false,
+    hostEditorApiCalled: booleanValue(input?.hostEditorApiCalled) ?? false,
+    providerNetworkExecuted: booleanValue(input?.providerNetworkExecuted) ?? false,
+    providerReviewLinkageVisible: booleanValue(input?.providerReviewLinkageVisible) ?? false,
+    sourceBodyIncluded: booleanValue(input?.sourceBodyIncluded) ?? false,
+    sourcesContentPolicy: stringValue(input?.sourcesContentPolicy) ?? "none",
+    status: stringValue(input?.status) ?? "not-available",
+    surface: stringValue(input?.surface) ?? "browser-devtools-panel",
+    targetCommandsExecutedByHia: booleanValue(input?.targetCommandsExecutedByHia) ?? false,
+    targetOwnerEvidenceVisible: booleanValue(input?.targetOwnerEvidenceVisible) ?? false,
+    targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? false,
+    uxRequirementRefCount: stringArray(input?.uxRequirementRefs).length,
+    workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
   };
 }
 
@@ -344,6 +371,20 @@ function selectTargetCollaboration(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.targetCollaboration)) {
     return input.result.targetCollaboration;
+  }
+
+  return undefined;
+}
+
+function selectHostApplyUx(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.hostApplyUx)) {
+    return input.hostApplyUx;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.hostApplyUx)) {
+    return input.result.hostApplyUx;
   }
 
   return undefined;

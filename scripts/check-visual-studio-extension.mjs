@@ -82,6 +82,7 @@ async function main() {
       editApplyPreflightContract: reviewSurface.surface.editApplyPreflightContract,
       applyPreview: reviewSurface.applyPreview,
       checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
+      hostApplyUx: reviewSurface.hostApplyUx,
       targetCollaboration: reviewSurface.targetCollaboration,
       viewCount: reviewSurface.views.length,
       actionCount: reviewSurface.actions.length,
@@ -174,6 +175,23 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.targetCollaboration?.actualPullRequestCreated, false, "Visual Studio target collaboration must not claim pull request creation.");
   assert.equal(reviewSurface?.targetCollaboration?.targetRepositoryMutationCount, 0, "Visual Studio target collaboration must keep target mutation count at zero.");
   assert.ok(Array.isArray(reviewSurface?.targetCollaboration?.requiredFields) && reviewSurface.targetCollaboration.requiredFields.includes("targetCollaboration.flowStateCount"), "Visual Studio target collaboration must require flow state count.");
+  assert.equal(reviewSurface?.hostApplyUx?.contract, "hia-visual-studio-host-apply-ux-summary", "Visual Studio host apply UX contract must be explicit.");
+  assert.equal(reviewSurface?.hostApplyUx?.status, "input-ready", "Visual Studio host apply UX must expose readiness.");
+  assert.equal(reviewSurface?.hostApplyUx?.inputMode, "host-owned-apply-ux-intake-only", "Visual Studio host apply UX must consume intake data only.");
+  assert.equal(reviewSurface?.hostApplyUx?.uxRequirementRefCount, 8, "Visual Studio host apply UX must preserve requirement refs.");
+  assert.equal(reviewSurface?.hostApplyUx?.providerReviewLinkageVisible, true, "Visual Studio host apply UX must show provider review linkage.");
+  assert.equal(reviewSurface?.hostApplyUx?.targetOwnerEvidenceVisible, true, "Visual Studio host apply UX must show target-owner evidence.");
+  assert.equal(reviewSurface?.hostApplyUx?.deferredGateVisible, true, "Visual Studio host apply UX must show deferred gates.");
+  assert.equal(reviewSurface?.hostApplyUx?.checkedApplyWriteEnabled, false, "Visual Studio host apply UX must keep checked apply write disabled.");
+  assert.equal(reviewSurface?.hostApplyUx?.workspaceWriteAvailable, false, "Visual Studio host apply UX must keep workspace writes disabled.");
+  assert.equal(reviewSurface?.hostApplyUx?.targetRepositoryMutation, false, "Visual Studio host apply UX must keep target mutation disabled.");
+  assert.equal(reviewSurface?.hostApplyUx?.directEditObjectProduced, false, "Visual Studio host apply UX must not expose direct edit objects.");
+  assert.equal(reviewSurface?.hostApplyUx?.providerNetworkExecuted, false, "Visual Studio host apply UX must not claim provider network execution.");
+  assert.equal(reviewSurface?.hostApplyUx?.targetCommandsExecutedByHia, false, "Visual Studio host apply UX must not claim target command execution.");
+  assert.equal(reviewSurface?.hostApplyUx?.actualRuntimeCaptureExecuted, false, "Visual Studio host apply UX must not claim runtime capture.");
+  assert.equal(reviewSurface?.hostApplyUx?.hostEditorApiCalled, false, "Visual Studio host apply UX must not claim editor API calls.");
+  assert.equal(reviewSurface?.hostApplyUx?.sourcesContentPolicy, "none", "Visual Studio host apply UX must preserve sourcesContent none.");
+  assert.ok(Array.isArray(reviewSurface?.hostApplyUx?.requiredFields) && reviewSurface.hostApplyUx.requiredFields.includes("hostApplyUx.providerReviewLinkageVisible"), "Visual Studio host apply UX must require visible linkage fields.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");
@@ -181,6 +199,7 @@ function assertReviewSurface(contract, reviewSurface) {
   assertSurfaceView(reviewSurface, "candidate-preview");
   assertSurfaceView(reviewSurface, "checked-apply-confirmation");
   assertSurfaceView(reviewSurface, "target-collaboration");
+  assertSurfaceView(reviewSurface, "host-apply-ux");
   assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "apply-candidate", {

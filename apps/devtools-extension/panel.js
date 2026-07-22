@@ -84,7 +84,8 @@ function renderSummary() {
     ["Provider Drafts", state.model.review.provider.draftOutputCount],
     ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount],
     ["Confirmations", state.model.review.checkedApplyConfirmation.confirmationReportCount],
-    ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount]
+    ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
+    ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -232,6 +233,7 @@ function renderReviewDetail() {
       <dt>Preflight</dt><dd>${escapeHtml(`${item.editCandidate.applyPreflight.status} / conflict:${item.editCandidate.applyPreflight.conflictStatus}`)}</dd>
       <dt>Checked Apply</dt><dd>${escapeHtml(`${state.model.review.checkedApplyConfirmation.status} / reports:${state.model.review.checkedApplyConfirmation.confirmationReportCount}`)}</dd>
       <dt>Target Flow</dt><dd>${escapeHtml(`${state.model.review.targetCollaboration.status} / modes:${state.model.review.targetCollaboration.collaborationModeCount}`)}</dd>
+      <dt>Host UX</dt><dd>${escapeHtml(`${state.model.review.hostApplyUx.status} / refs:${state.model.review.hostApplyUx.uxRequirementRefCount}`)}</dd>
       <dt>Apply</dt><dd>disabled</dd>
     </dl>
   `;
@@ -259,7 +261,9 @@ function formatReviewCandidatePreview(item) {
     `Checked apply confirmation: ${state.model.review.checkedApplyConfirmation.status}`,
     `Confirmation reports: ${state.model.review.checkedApplyConfirmation.confirmationReportCount}`,
     `Target collaboration: ${state.model.review.targetCollaboration.status}`,
-    `Collaboration modes: ${state.model.review.targetCollaboration.collaborationModeCount}`
+    `Collaboration modes: ${state.model.review.targetCollaboration.collaborationModeCount}`,
+    `Host apply UX: ${state.model.review.hostApplyUx.status}`,
+    `Host UX requirement refs: ${state.model.review.hostApplyUx.uxRequirementRefCount}`
   ];
 
   for (const operation of item.editCandidate.diffPreview.operations) {

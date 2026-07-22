@@ -81,6 +81,35 @@
       "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
     ]
   },
+  "hostApplyUx": {
+    "contract": "hia-visual-studio-host-apply-ux-summary",
+    "status": "input-ready",
+    "inputMode": "host-owned-apply-ux-intake-only",
+    "surface": "visual-studio-review-tool-window",
+    "surfaceContract": "hia-wp43-host-owned-apply-ux-intake-evidence@0.1.0-draft",
+    "vscodeBaselineContract": "hia-wp43-vscode-host-ux-surface-evidence@0.1.0-draft",
+    "uxRequirementRefCount": 8,
+    "providerReviewLinkageVisible": true,
+    "targetOwnerEvidenceVisible": true,
+    "deferredGateVisible": true,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "directEditObjectProduced": false,
+    "providerNetworkExecuted": false,
+    "targetCommandsExecutedByHia": false,
+    "actualRuntimeCaptureExecuted": false,
+    "hostEditorApiCalled": false,
+    "sourcesContentPolicy": "none",
+    "requiredFields": [
+      "hostApplyUx.status",
+      "hostApplyUx.uxRequirementRefCount",
+      "hostApplyUx.providerReviewLinkageVisible",
+      "hostApplyUx.targetOwnerEvidenceVisible",
+      "hostApplyUx.deferredGateVisible",
+      "hostApplyUx.checkedApplyWriteEnabled"
+    ]
+  },
   "views": [
     {
       "id": "review-list",
@@ -159,6 +188,19 @@
         "targetCollaboration.flowStateCount",
         "targetCollaboration.targetOwnerActionRequiredForWrite",
         "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
+      ]
+    },
+    {
+      "id": "host-apply-ux",
+      "title": "Host Apply UX",
+      "purpose": "Show W-P43 host-owned apply UX requirements, provider review linkage, target-owner evidence and deferred gates without granting write authority.",
+      "requiredFields": [
+        "hostApplyUx.status",
+        "hostApplyUx.uxRequirementRefCount",
+        "hostApplyUx.providerReviewLinkageVisible",
+        "hostApplyUx.targetOwnerEvidenceVisible",
+        "hostApplyUx.deferredGateVisible",
+        "hostApplyUx.checkedApplyWriteEnabled"
       ]
     }
   ],
