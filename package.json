@@ -89,6 +89,7 @@
     "wp39:closeout:evidence": "pnpm run wp39:next-gate-bridge:evidence && node scripts/prepare-wp39-closeout-wp40-inputs.mjs",
     "wp40:controlled-remote-smoke-intake:evidence": "node scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs",
     "wp40:provider-candidate-selection:evidence": "pnpm run wp40:controlled-remote-smoke-intake:evidence && node scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs",
+    "wp40:secret-network-consent:evidence": "pnpm run wp40:provider-candidate-selection:evidence && node scripts/prepare-wp40-secret-reference-network-consent-packet.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
