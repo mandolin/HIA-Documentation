@@ -10,6 +10,7 @@ export const HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT = "hia-devtools-ch
 export const HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT = "hia-devtools-target-collaboration-summary";
 export const HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT = "hia-devtools-host-apply-ux-summary";
 export const HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT = "hia-devtools-provider-review-linkage-panel";
+export const HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT = "hia-devtools-target-owner-evidence-view";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -60,6 +61,7 @@ export function createHiaDevToolsPanelViewModel(payload) {
  *   draftCount: number;
  *   hostApplyUx: { actualRuntimeCaptureExecuted: boolean; checkedApplyWriteEnabled: boolean; contract: string; deferredGateVisible: boolean; directEditObjectProduced: boolean; hostEditorApiCalled: boolean; providerNetworkExecuted: boolean; providerReviewLinkageVisible: boolean; sourceBodyIncluded: boolean; sourcesContentPolicy: string; status: string; surface: string; targetCommandsExecutedByHia: boolean; targetOwnerEvidenceVisible: boolean; targetRepositoryMutationAllowed: boolean; uxRequirementRefCount: number; workspaceWriteAllowed: boolean };
  *   providerReviewPanel: { blockedProviderReviewShapeAccepted: boolean; contract: string; directApplyAllowed: boolean; providerId: string; providerNetworkExecuted: boolean; refusalResultVisible: boolean; requiresHumanReview: boolean; resultTaxonomyKindCount: number; reviewOnlyOutputRequired: boolean; sourcesContentPolicy: string; status: string; targetOwnerHandoffVisible: boolean; targetRepositoryMutationAllowed: boolean; workspaceWriteAllowed: boolean };
+ *   targetOwnerEvidenceView: { actualCommandTranscriptSubmitted: boolean; actualDryRunExecuted: boolean; actualPullRequestCreated: boolean; actualTargetBranchCreated: boolean; actualTargetSandboxCreated: boolean; checkedApplyWriteEnabled: boolean; contract: string; deferredGateCount: number; directEditObjectCount: number; evidenceCompletenessCheckCount: number; handoffBindingReviewCount: number; hiaMayModifyTargetRepository: boolean; hiaMayRunTargetCommands: boolean; inputMode: string; providerNetworkExecuted: boolean; readinessMatrixItemCount: number; sourcesContentPolicy: string; status: string; targetCommandsExecutedByHia: boolean; targetOwnerActionRequired: boolean; targetOwnerExecutionClaimed: boolean; targetOwnerMaterialReady: boolean; targetOwnerMaySubmitEvidence: boolean; targetRepositoryMutationAllowed: boolean; transcriptStepReviewCount: number; workspaceWriteAllowed: boolean };
  *   items: Array<{
  *     actionHints: Record<string, unknown>;
  *     draftText?: string;
@@ -114,7 +116,8 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       itemCount: numberValue(summary.itemCount) ?? items.length,
       reviewRequiredCount: numberValue(summary.reviewRequiredCount) ?? items.filter((item) => item.status === "review-required").length
     },
-    targetCollaboration: createDevToolsTargetCollaborationSummary(input)
+    targetCollaboration: createDevToolsTargetCollaborationSummary(input),
+    targetOwnerEvidenceView: createDevToolsTargetOwnerEvidenceViewSummary(input)
   };
 }
 
@@ -217,6 +220,41 @@ function createDevToolsProviderReviewPanelSummary(payload, providerAugmentation)
     targetOwnerHandoffVisible: booleanValue(input?.targetOwnerHandoffVisible) ?? false,
     targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? booleanValue(actionPolicy.targetRepositoryMutationAllowed) ?? false,
     workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? booleanValue(actionPolicy.workspaceWriteAllowed) ?? false
+  };
+}
+
+function createDevToolsTargetOwnerEvidenceViewSummary(payload) {
+  const input = selectTargetOwnerEvidenceView(payload);
+  const targetCollaboration = selectTargetCollaboration(payload);
+  const hostApplyUx = selectHostApplyUx(payload);
+
+  return {
+    actualCommandTranscriptSubmitted: booleanValue(input?.actualCommandTranscriptSubmitted) ?? false,
+    actualDryRunExecuted: booleanValue(input?.actualDryRunExecuted) ?? false,
+    actualPullRequestCreated: booleanValue(input?.actualPullRequestCreated) ?? booleanValue(targetCollaboration?.actualPullRequestCreated) ?? false,
+    actualTargetBranchCreated: booleanValue(input?.actualTargetBranchCreated) ?? booleanValue(targetCollaboration?.actualTargetBranchCreated) ?? false,
+    actualTargetSandboxCreated: booleanValue(input?.actualTargetSandboxCreated) ?? false,
+    checkedApplyWriteEnabled: booleanValue(input?.checkedApplyWriteEnabled) ?? booleanValue(hostApplyUx?.checkedApplyWriteEnabled) ?? false,
+    contract: HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT,
+    deferredGateCount: numberValue(input?.deferredGateCount) ?? 0,
+    directEditObjectCount: numberValue(input?.directEditObjectCount) ?? 0,
+    evidenceCompletenessCheckCount: numberValue(input?.evidenceCompletenessCheckCount) ?? 0,
+    handoffBindingReviewCount: numberValue(input?.handoffBindingReviewCount) ?? 0,
+    hiaMayModifyTargetRepository: booleanValue(input?.hiaMayModifyTargetRepository) ?? false,
+    hiaMayRunTargetCommands: booleanValue(input?.hiaMayRunTargetCommands) ?? false,
+    inputMode: stringValue(input?.inputMode) ?? "target-owner-evidence-read-only",
+    providerNetworkExecuted: booleanValue(input?.providerNetworkExecuted) ?? booleanValue(hostApplyUx?.providerNetworkExecuted) ?? false,
+    readinessMatrixItemCount: numberValue(input?.readinessMatrixItemCount) ?? 0,
+    sourcesContentPolicy: stringValue(input?.sourcesContentPolicy) ?? stringValue(hostApplyUx?.sourcesContentPolicy) ?? "none",
+    status: stringValue(input?.status) ?? (targetCollaboration ? "input-ready" : "not-available"),
+    targetCommandsExecutedByHia: booleanValue(input?.targetCommandsExecutedByHia) ?? booleanValue(hostApplyUx?.targetCommandsExecutedByHia) ?? false,
+    targetOwnerActionRequired: booleanValue(input?.targetOwnerActionRequired) ?? booleanValue(targetCollaboration?.targetOwnerActionRequiredForWrite) ?? false,
+    targetOwnerExecutionClaimed: booleanValue(input?.targetOwnerExecutionClaimed) ?? false,
+    targetOwnerMaterialReady: booleanValue(input?.targetOwnerMaterialReady) ?? false,
+    targetOwnerMaySubmitEvidence: booleanValue(input?.targetOwnerMaySubmitEvidence) ?? false,
+    targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? booleanValue(hostApplyUx?.targetRepositoryMutationAllowed) ?? false,
+    transcriptStepReviewCount: numberValue(input?.transcriptStepReviewCount) ?? 0,
+    workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? booleanValue(hostApplyUx?.workspaceWriteAllowed) ?? false
   };
 }
 
@@ -426,6 +464,20 @@ function selectProviderReviewPanel(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.providerReviewPanel)) {
     return input.result.providerReviewPanel;
+  }
+
+  return undefined;
+}
+
+function selectTargetOwnerEvidenceView(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.targetOwnerEvidenceView)) {
+    return input.targetOwnerEvidenceView;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.targetOwnerEvidenceView)) {
+    return input.result.targetOwnerEvidenceView;
   }
 
   return undefined;

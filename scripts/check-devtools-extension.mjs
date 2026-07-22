@@ -12,6 +12,7 @@ const {
   HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
   HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
   HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT,
+  HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
@@ -123,6 +124,32 @@ async function main() {
   assert.equal(panel.review.providerReviewPanel.targetRepositoryMutationAllowed, false, "Provider review panel must keep target mutation disabled.");
   assert.equal(panel.review.providerReviewPanel.providerNetworkExecuted, false, "Provider review panel must not claim provider network execution.");
   assert.equal(panel.review.providerReviewPanel.sourcesContentPolicy, "none", "Provider review panel must preserve sourcesContent none.");
+  assert.equal(panel.review.targetOwnerEvidenceView.contract, HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT, "Review surface must expose target-owner evidence view.");
+  assert.equal(panel.review.targetOwnerEvidenceView.status, "input-ready", "Target-owner evidence view must expose readiness.");
+  assert.equal(panel.review.targetOwnerEvidenceView.inputMode, "target-owner-evidence-read-only", "Target-owner evidence view must remain read-only.");
+  assert.equal(panel.review.targetOwnerEvidenceView.readinessMatrixItemCount, 12, "Target-owner evidence view must expose readiness matrix count.");
+  assert.equal(panel.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount, 12, "Target-owner evidence view must expose evidence completeness count.");
+  assert.equal(panel.review.targetOwnerEvidenceView.transcriptStepReviewCount, 16, "Target-owner evidence view must expose transcript step count.");
+  assert.equal(panel.review.targetOwnerEvidenceView.handoffBindingReviewCount, 6, "Target-owner evidence view must expose handoff binding count.");
+  assert.equal(panel.review.targetOwnerEvidenceView.deferredGateCount, 7, "Target-owner evidence view must expose deferred gate count.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetOwnerActionRequired, true, "Target-owner evidence view must require target-owner action.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetOwnerMaterialReady, true, "Target-owner evidence view must expose material readiness.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetOwnerMaySubmitEvidence, true, "Target-owner evidence view must allow target-owner evidence submission.");
+  assert.equal(panel.review.targetOwnerEvidenceView.actualDryRunExecuted, false, "Target-owner evidence view must not claim dry-run execution.");
+  assert.equal(panel.review.targetOwnerEvidenceView.actualCommandTranscriptSubmitted, false, "Target-owner evidence view must not claim transcript submission.");
+  assert.equal(panel.review.targetOwnerEvidenceView.actualTargetSandboxCreated, false, "Target-owner evidence view must not claim sandbox creation.");
+  assert.equal(panel.review.targetOwnerEvidenceView.actualTargetBranchCreated, false, "Target-owner evidence view must not claim branch creation.");
+  assert.equal(panel.review.targetOwnerEvidenceView.actualPullRequestCreated, false, "Target-owner evidence view must not claim pull request creation.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetOwnerExecutionClaimed, false, "Target-owner evidence view must not claim target-owner execution.");
+  assert.equal(panel.review.targetOwnerEvidenceView.hiaMayRunTargetCommands, false, "Target-owner evidence view must keep HIA target commands disabled.");
+  assert.equal(panel.review.targetOwnerEvidenceView.hiaMayModifyTargetRepository, false, "Target-owner evidence view must keep HIA target mutation disabled.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetCommandsExecutedByHia, false, "Target-owner evidence view must not claim target commands.");
+  assert.equal(panel.review.targetOwnerEvidenceView.checkedApplyWriteEnabled, false, "Target-owner evidence view must keep checked apply write disabled.");
+  assert.equal(panel.review.targetOwnerEvidenceView.workspaceWriteAllowed, false, "Target-owner evidence view must keep workspace writes disabled.");
+  assert.equal(panel.review.targetOwnerEvidenceView.targetRepositoryMutationAllowed, false, "Target-owner evidence view must keep target mutation disabled.");
+  assert.equal(panel.review.targetOwnerEvidenceView.directEditObjectCount, 0, "Target-owner evidence view must not expose direct edit objects.");
+  assert.equal(panel.review.targetOwnerEvidenceView.providerNetworkExecuted, false, "Target-owner evidence view must not claim provider network execution.");
+  assert.equal(panel.review.targetOwnerEvidenceView.sourcesContentPolicy, "none", "Target-owner evidence view must preserve sourcesContent none.");
   assert.equal(reviewDetail?.actionHints.applyAvailable, false, "Review surface must keep apply unavailable.");
   assert.equal(reviewDetail?.provider.draftOutputCount, 1, "Review detail must expose provider drafts for the item.");
   assert.equal(reviewDetail?.provider.reviewMetadataCount, 1, "Review detail must expose provider metadata for the item.");
@@ -192,6 +219,7 @@ async function main() {
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
         provider: panel.review.provider,
         providerReviewPanel: panel.review.providerReviewPanel,
+        targetOwnerEvidenceView: panel.review.targetOwnerEvidenceView,
         privacy: panel.review.privacy,
         targetCollaboration: panel.review.targetCollaboration
       }
@@ -354,6 +382,33 @@ function createFixturePayload() {
       status: "input-ready",
       targetOwnerHandoffVisible: true,
       targetRepositoryMutationAllowed: false,
+      workspaceWriteAllowed: false
+    },
+    targetOwnerEvidenceView: {
+      actualCommandTranscriptSubmitted: false,
+      actualDryRunExecuted: false,
+      actualPullRequestCreated: false,
+      actualTargetBranchCreated: false,
+      actualTargetSandboxCreated: false,
+      checkedApplyWriteEnabled: false,
+      deferredGateCount: 7,
+      directEditObjectCount: 0,
+      evidenceCompletenessCheckCount: 12,
+      handoffBindingReviewCount: 6,
+      hiaMayModifyTargetRepository: false,
+      hiaMayRunTargetCommands: false,
+      inputMode: "target-owner-evidence-read-only",
+      providerNetworkExecuted: false,
+      readinessMatrixItemCount: 12,
+      sourcesContentPolicy: "none",
+      status: "input-ready",
+      targetCommandsExecutedByHia: false,
+      targetOwnerActionRequired: true,
+      targetOwnerExecutionClaimed: false,
+      targetOwnerMaterialReady: true,
+      targetOwnerMaySubmitEvidence: true,
+      targetRepositoryMutationAllowed: false,
+      transcriptStepReviewCount: 16,
       workspaceWriteAllowed: false
     },
     reviewPayload: {

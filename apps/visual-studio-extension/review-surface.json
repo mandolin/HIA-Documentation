@@ -106,6 +106,43 @@
       "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
     ]
   },
+  "targetOwnerEvidenceView": {
+    "contract": "hia-visual-studio-target-owner-evidence-view",
+    "status": "input-ready",
+    "inputMode": "target-owner-evidence-read-only",
+    "readinessMatrixItemCount": 12,
+    "evidenceCompletenessCheckCount": 12,
+    "transcriptStepReviewCount": 16,
+    "handoffBindingReviewCount": 6,
+    "deferredGateCount": 7,
+    "targetOwnerActionRequired": true,
+    "targetOwnerMaterialReady": true,
+    "targetOwnerMaySubmitEvidence": true,
+    "actualDryRunExecuted": false,
+    "actualCommandTranscriptSubmitted": false,
+    "actualTargetSandboxCreated": false,
+    "actualTargetBranchCreated": false,
+    "actualPullRequestCreated": false,
+    "targetOwnerExecutionClaimed": false,
+    "hiaMayRunTargetCommands": false,
+    "hiaMayModifyTargetRepository": false,
+    "targetCommandsExecutedByHia": false,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "directEditObjectCount": 0,
+    "providerNetworkExecuted": false,
+    "sourcesContentPolicy": "none",
+    "requiredFields": [
+      "targetOwnerEvidenceView.status",
+      "targetOwnerEvidenceView.readinessMatrixItemCount",
+      "targetOwnerEvidenceView.evidenceCompletenessCheckCount",
+      "targetOwnerEvidenceView.transcriptStepReviewCount",
+      "targetOwnerEvidenceView.deferredGateCount",
+      "targetOwnerEvidenceView.targetOwnerActionRequired",
+      "targetOwnerEvidenceView.targetOwnerExecutionClaimed"
+    ]
+  },
   "hostApplyUx": {
     "contract": "hia-visual-studio-host-apply-ux-summary",
     "status": "input-ready",
@@ -226,6 +263,19 @@
         "targetCollaboration.flowStateCount",
         "targetCollaboration.targetOwnerActionRequiredForWrite",
         "targetCollaboration.hiaOwnedTargetRepositoryMutationAllowed"
+      ]
+    },
+    {
+      "id": "target-owner-evidence-view",
+      "title": "Target Owner Evidence",
+      "purpose": "Show target-owner readiness matrix, evidence completeness, transcript slots and deferred gates without claiming HIA or target-owner execution.",
+      "requiredFields": [
+        "targetOwnerEvidenceView.status",
+        "targetOwnerEvidenceView.evidenceCompletenessCheckCount",
+        "targetOwnerEvidenceView.transcriptStepReviewCount",
+        "targetOwnerEvidenceView.deferredGateCount",
+        "targetOwnerEvidenceView.targetOwnerActionRequired",
+        "targetOwnerEvidenceView.targetOwnerExecutionClaimed"
       ]
     },
     {

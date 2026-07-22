@@ -85,6 +85,7 @@ function renderSummary() {
     ["Provider Panel", state.model.review.providerReviewPanel.resultTaxonomyKindCount],
     ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount],
     ["Confirmations", state.model.review.checkedApplyConfirmation.confirmationReportCount],
+    ["Owner Evidence", state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount],
     ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
     ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount]
   ];
@@ -234,6 +235,7 @@ function renderReviewDetail() {
       <dt>Diff</dt><dd>${escapeHtml(`${item.editCandidate.diffPreview.status} / ${item.editCandidate.diffPreview.targetKind} / operations:${item.editCandidate.diffPreview.operationCount}`)}</dd>
       <dt>Preflight</dt><dd>${escapeHtml(`${item.editCandidate.applyPreflight.status} / conflict:${item.editCandidate.applyPreflight.conflictStatus}`)}</dd>
       <dt>Checked Apply</dt><dd>${escapeHtml(`${state.model.review.checkedApplyConfirmation.status} / reports:${state.model.review.checkedApplyConfirmation.confirmationReportCount}`)}</dd>
+      <dt>Owner Evidence</dt><dd>${escapeHtml(`${state.model.review.targetOwnerEvidenceView.status} / checks:${state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount}`)}</dd>
       <dt>Target Flow</dt><dd>${escapeHtml(`${state.model.review.targetCollaboration.status} / modes:${state.model.review.targetCollaboration.collaborationModeCount}`)}</dd>
       <dt>Host UX</dt><dd>${escapeHtml(`${state.model.review.hostApplyUx.status} / refs:${state.model.review.hostApplyUx.uxRequirementRefCount}`)}</dd>
       <dt>Apply</dt><dd>disabled</dd>
@@ -265,6 +267,11 @@ function formatReviewCandidatePreview(item) {
     "",
     `Checked apply confirmation: ${state.model.review.checkedApplyConfirmation.status}`,
     `Confirmation reports: ${state.model.review.checkedApplyConfirmation.confirmationReportCount}`,
+    `Target-owner evidence: ${state.model.review.targetOwnerEvidenceView.status}`,
+    `Evidence completeness checks: ${state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount}`,
+    `Transcript steps: ${state.model.review.targetOwnerEvidenceView.transcriptStepReviewCount}`,
+    `Deferred gates: ${state.model.review.targetOwnerEvidenceView.deferredGateCount}`,
+    `Target-owner execution claimed: ${state.model.review.targetOwnerEvidenceView.targetOwnerExecutionClaimed ? "yes" : "no"}`,
     `Target collaboration: ${state.model.review.targetCollaboration.status}`,
     `Collaboration modes: ${state.model.review.targetCollaboration.collaborationModeCount}`,
     `Host apply UX: ${state.model.review.hostApplyUx.status}`,

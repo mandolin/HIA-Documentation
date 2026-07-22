@@ -85,6 +85,7 @@ async function main() {
       hostApplyUx: reviewSurface.hostApplyUx,
       providerReviewPanel: reviewSurface.providerReviewPanel,
       targetCollaboration: reviewSurface.targetCollaboration,
+      targetOwnerEvidenceView: reviewSurface.targetOwnerEvidenceView,
       viewCount: reviewSurface.views.length,
       actionCount: reviewSurface.actions.length,
       disabledApply: reviewSurface.actions.some((action) => action.id === "apply-candidate" && action.available === false),
@@ -191,6 +192,33 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.targetCollaboration?.actualPullRequestCreated, false, "Visual Studio target collaboration must not claim pull request creation.");
   assert.equal(reviewSurface?.targetCollaboration?.targetRepositoryMutationCount, 0, "Visual Studio target collaboration must keep target mutation count at zero.");
   assert.ok(Array.isArray(reviewSurface?.targetCollaboration?.requiredFields) && reviewSurface.targetCollaboration.requiredFields.includes("targetCollaboration.flowStateCount"), "Visual Studio target collaboration must require flow state count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.contract, "hia-visual-studio-target-owner-evidence-view", "Visual Studio target-owner evidence view contract must be explicit.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.status, "input-ready", "Visual Studio target-owner evidence view must expose readiness.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.inputMode, "target-owner-evidence-read-only", "Visual Studio target-owner evidence view must stay read-only.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.readinessMatrixItemCount, 12, "Visual Studio target-owner evidence view must expose readiness matrix count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.evidenceCompletenessCheckCount, 12, "Visual Studio target-owner evidence view must expose evidence completeness count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.transcriptStepReviewCount, 16, "Visual Studio target-owner evidence view must expose transcript step count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.handoffBindingReviewCount, 6, "Visual Studio target-owner evidence view must expose handoff binding count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.deferredGateCount, 7, "Visual Studio target-owner evidence view must expose deferred gate count.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetOwnerActionRequired, true, "Visual Studio target-owner evidence view must require target-owner action.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetOwnerMaterialReady, true, "Visual Studio target-owner evidence view must expose target-owner material readiness.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetOwnerMaySubmitEvidence, true, "Visual Studio target-owner evidence view must allow target-owner evidence submission.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.actualDryRunExecuted, false, "Visual Studio target-owner evidence view must not claim dry-run execution.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.actualCommandTranscriptSubmitted, false, "Visual Studio target-owner evidence view must not claim transcript submission.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.actualTargetSandboxCreated, false, "Visual Studio target-owner evidence view must not claim sandbox creation.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.actualTargetBranchCreated, false, "Visual Studio target-owner evidence view must not claim branch creation.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.actualPullRequestCreated, false, "Visual Studio target-owner evidence view must not claim pull request creation.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetOwnerExecutionClaimed, false, "Visual Studio target-owner evidence view must not claim target-owner execution.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.hiaMayRunTargetCommands, false, "Visual Studio target-owner evidence view must keep HIA target commands disabled.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.hiaMayModifyTargetRepository, false, "Visual Studio target-owner evidence view must keep HIA target mutation disabled.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetCommandsExecutedByHia, false, "Visual Studio target-owner evidence view must not claim target commands.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.checkedApplyWriteEnabled, false, "Visual Studio target-owner evidence view must keep checked apply write disabled.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.workspaceWriteAvailable, false, "Visual Studio target-owner evidence view must keep workspace writes disabled.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.targetRepositoryMutation, false, "Visual Studio target-owner evidence view must keep target mutation disabled.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.directEditObjectCount, 0, "Visual Studio target-owner evidence view must not expose direct edit objects.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.providerNetworkExecuted, false, "Visual Studio target-owner evidence view must not claim provider network execution.");
+  assert.equal(reviewSurface?.targetOwnerEvidenceView?.sourcesContentPolicy, "none", "Visual Studio target-owner evidence view must preserve sourcesContent none.");
+  assert.ok(Array.isArray(reviewSurface?.targetOwnerEvidenceView?.requiredFields) && reviewSurface.targetOwnerEvidenceView.requiredFields.includes("targetOwnerEvidenceView.targetOwnerExecutionClaimed"), "Visual Studio target-owner evidence view must require execution-claim fields.");
   assert.equal(reviewSurface?.hostApplyUx?.contract, "hia-visual-studio-host-apply-ux-summary", "Visual Studio host apply UX contract must be explicit.");
   assert.equal(reviewSurface?.hostApplyUx?.status, "input-ready", "Visual Studio host apply UX must expose readiness.");
   assert.equal(reviewSurface?.hostApplyUx?.inputMode, "host-owned-apply-ux-intake-only", "Visual Studio host apply UX must consume intake data only.");
@@ -216,6 +244,7 @@ function assertReviewSurface(contract, reviewSurface) {
   assertSurfaceView(reviewSurface, "candidate-preview");
   assertSurfaceView(reviewSurface, "checked-apply-confirmation");
   assertSurfaceView(reviewSurface, "target-collaboration");
+  assertSurfaceView(reviewSurface, "target-owner-evidence-view");
   assertSurfaceView(reviewSurface, "host-apply-ux");
   assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });

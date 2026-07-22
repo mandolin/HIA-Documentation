@@ -25,6 +25,7 @@ This app is the Visual Studio counterpart to the VS Code and browser DevTools ho
   - consume `hia-documentation-review-payload@0.1.0-draft`;
   - show review list, review detail, draft text, locale-quality counts and read-only edit candidate preview;
   - show provider result/refusal taxonomy, blocked review shape, review-only output boundary and target-owner handoff through `providerReviewPanel`;
+  - show target-owner readiness matrix, evidence completeness, transcript slots and deferred gates through `targetOwnerEvidenceView`;
   - expose W-P43 host-owned apply UX requirements, provider review linkage, target-owner evidence and deferred gates as read-only `hostApplyUx` data;
   - expose copy/open-context actions only;
   - keep apply disabled until a later human-approved WorkspaceEdit contract exists.
@@ -42,6 +43,8 @@ Workspace edits, VSIX packaging and Marketplace publishing are not part of this 
 The W-P43 `hostApplyUx` section is also read-only. It can show that provider review, target-owner evidence and deferred gates are visible, but it must not imply checked apply write, provider/network execution, target command execution or real Visual Studio runtime capture.
 
 The `providerReviewPanel` section is a review linkage contract, not a provider execution API. It may display provider result/refusal taxonomy and target-owner handoff state, but it must keep provider output review-only and must not grant workspace or target repository write authority.
+
+The `targetOwnerEvidenceView` section is also read-only. It may display readiness matrix counts, evidence completeness, transcript slots and deferred gates, but it must not imply that HIA ran target commands, created a sandbox/branch/PR, received a target-owner transcript or enabled checked apply write.
 
 ## Validation
 
