@@ -75,6 +75,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target-owner local sandbox packet evidence | `scripts/prepare-wp41-target-owner-local-sandbox-packet.mjs` | `0.1.0-draft` |
 | Target-owner branch/PR packet evidence | `scripts/prepare-wp41-target-owner-branch-pr-packet.mjs` | `0.1.0-draft` |
 | Target-owner command evidence template | `scripts/prepare-wp41-target-owner-command-evidence-template.mjs` | `0.1.0-draft` |
+| Provider review payload handoff evidence | `scripts/prepare-wp41-provider-review-payload-handoff.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -156,6 +157,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target-owner local sandbox packet evidence | `main-repo` scripts | W-P41 evidence preparing copy-only local sandbox instructions, target-owner command templates and evidence report templates. It must not run target commands, create target sandboxes, write target repositories or claim target-owner execution. |
 | Target-owner branch/PR packet evidence | `main-repo` scripts | W-P41 evidence preparing target-owned branch naming, commit, pull-request, check and evidence templates. It must not create branches, push commits, open pull requests, run target checks, write target repositories or claim target-owner execution. |
 | Target-owner command evidence template | `main-repo` scripts | W-P41 evidence consolidating local sandbox and branch/PR command templates into a target-owner transcript and evidence packet shape. It must not claim command execution, branch creation, pull-request creation, target writes or provider success. |
+| Provider review payload handoff evidence | `main-repo` scripts | W-P41 evidence binding W-P40 blocked/refused provider review payloads to the target-owner evidence packet as review-only context. It must not execute providers or networks, trigger checked apply, create edits, run target commands or mutate target repositories. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -240,6 +242,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Target-owner local sandbox packet evidence may publish copy-only command templates and target-owner evidence templates only. HIA automation must not execute those commands, create or copy a target sandbox, mutate target repositories, claim target-owner execution, expose document text, serialize credentials or produce direct edit objects.
 - Target-owner branch/PR packet evidence may publish branch naming, commit, pull-request, check and report templates only. HIA automation must not create target branches, push commits, open pull requests, run target checks, mutate repositories, claim target-owner execution, expose source text, serialize credentials or produce direct edit objects.
 - Target-owner command evidence template may consolidate transcript fields, result shapes, privacy checks and target-owner evidence sections only. HIA automation must not record target-owner execution as complete, create branches or PRs, push commits, run commands, mutate repositories, expose source text, serialize credentials or produce direct edit objects.
+- Provider review payload handoff evidence may bind review item references, blocked/refused provider result shape, host display projections and target-owner decision shapes only. It must not claim provider success, execute providers or networks, trigger checked apply, generate direct edits, run target commands, mutate target repositories, expose source text, serialize credentials or include local absolute paths.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
