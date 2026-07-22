@@ -71,6 +71,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real remote provider smoke execution gate evidence | `scripts/prepare-wp40-real-remote-provider-smoke-execution-gate.mjs` | `0.1.0-draft` |
 | Provider result/refusal review linkage evidence | `scripts/prepare-wp40-provider-result-review-linkage.mjs` | `0.1.0-draft` |
 | W-P40 closeout W-P41/W-P42 inputs evidence | `scripts/prepare-wp40-closeout-wp41-wp42-inputs.mjs` | `0.1.0-draft` |
+| Target-owner flow intake evidence | `scripts/prepare-wp41-target-owner-flow-intake.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -148,6 +149,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Real remote provider smoke execution gate evidence | `main-repo` scripts | W-P40 evidence interpreting manual gate-entry approval and either allowing a later final network-send decision or producing a blocked/refused review shape. It must not treat gate-entry approval as credential, network or execution grant. |
 | Provider result/refusal review linkage evidence | `main-repo` scripts | W-P40 evidence linking provider success/refusal/rate-limit/error shapes into review-only host payloads. It may consume a blocked/refused gate result, but must not execute providers, call networks, trigger checked apply or create direct edits. |
 | W-P40 closeout W-P41/W-P42 inputs evidence | `main-repo` scripts | W-P40 closeout evidence summarizing completed controlled remote smoke gates and preparing W-P41 target-owner plus W-P42 checked-apply inputs. It must not reclassify blocked provider/network execution as success or create target-side side effects. |
+| Target-owner flow intake evidence | `main-repo` scripts | W-P41 intake evidence combining the W-P38 target-owner collaboration contract and W-P40 review-only provider result input into a target-owner action policy. It may prepare candidate packet plans and policy docs only, and must not create target branches, pull requests, local sandboxes, pushes or target writes. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -228,6 +230,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Real remote provider smoke execution gate evidence may record user approval to enter the gate, but it must refuse execution when concrete provider identity, immutable package version, host-bound secret references, non-placeholder destination and final consent are missing. It may generate a review-only blocked/refusal result shape; it must not fake provider results, perform external calls, read credential values, include source text, create direct edits, grant write authority or mutate targets.
 - Provider result/refusal review linkage evidence may normalize actual blocked/refused results and future success/refusal/rate-limit/error shapes for host review surfaces only. It must keep provider output review-only, require human review, avoid source text and credential values, and deny checked apply triggers, direct edits, workspace writes, target mutations and external calls.
 - W-P40 closeout evidence may summarize W-P40 outcomes and prepare W-P41/W-P42/W-P43 inputs only. It must preserve blocked-before-network as blocked, keep target-owner action explicit, deny direct apply and write authority, and avoid source text, credential values, target mutations, external calls and fake provider success.
+- Target-owner flow intake evidence may define target-owner action policy, candidate packet sequence and provider review handoff only. HIA automation must not create target branches, open pull requests, create local target sandboxes, push commits, run target commands, mutate targets, expose source text, serialize credentials or convert provider output into direct edits.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
