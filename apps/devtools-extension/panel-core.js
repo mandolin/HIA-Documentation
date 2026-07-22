@@ -9,6 +9,7 @@ export const HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION = "0.1.0-draft";
 export const HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT = "hia-devtools-checked-apply-confirmation-summary";
 export const HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT = "hia-devtools-target-collaboration-summary";
 export const HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT = "hia-devtools-host-apply-ux-summary";
+export const HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT = "hia-devtools-provider-review-linkage-panel";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -58,6 +59,7 @@ export function createHiaDevToolsPanelViewModel(payload) {
  *   contractVersion: string;
  *   draftCount: number;
  *   hostApplyUx: { actualRuntimeCaptureExecuted: boolean; checkedApplyWriteEnabled: boolean; contract: string; deferredGateVisible: boolean; directEditObjectProduced: boolean; hostEditorApiCalled: boolean; providerNetworkExecuted: boolean; providerReviewLinkageVisible: boolean; sourceBodyIncluded: boolean; sourcesContentPolicy: string; status: string; surface: string; targetCommandsExecutedByHia: boolean; targetOwnerEvidenceVisible: boolean; targetRepositoryMutationAllowed: boolean; uxRequirementRefCount: number; workspaceWriteAllowed: boolean };
+ *   providerReviewPanel: { blockedProviderReviewShapeAccepted: boolean; contract: string; directApplyAllowed: boolean; providerId: string; providerNetworkExecuted: boolean; refusalResultVisible: boolean; requiresHumanReview: boolean; resultTaxonomyKindCount: number; reviewOnlyOutputRequired: boolean; sourcesContentPolicy: string; status: string; targetOwnerHandoffVisible: boolean; targetRepositoryMutationAllowed: boolean; workspaceWriteAllowed: boolean };
  *   items: Array<{
  *     actionHints: Record<string, unknown>;
  *     draftText?: string;
@@ -106,6 +108,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none"
     },
     provider: normalizeProviderAugmentation(providerAugmentation),
+    providerReviewPanel: createDevToolsProviderReviewPanelSummary(input, providerAugmentation),
     summary: {
       blockedCount: numberValue(summary.blockedCount) ?? items.filter((item) => item.status === "blocked").length,
       itemCount: numberValue(summary.itemCount) ?? items.length,
@@ -190,6 +193,30 @@ function createDevToolsHostApplyUxSummary(payload) {
     targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? false,
     uxRequirementRefCount: stringArray(input?.uxRequirementRefs).length,
     workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
+  };
+}
+
+function createDevToolsProviderReviewPanelSummary(payload, providerAugmentation) {
+  const input = selectProviderReviewPanel(payload);
+  const provider = isRecord(providerAugmentation?.provider) ? providerAugmentation.provider : {};
+  const actionPolicy = isRecord(providerAugmentation?.actionPolicy) ? providerAugmentation.actionPolicy : {};
+  const privacy = isRecord(providerAugmentation?.privacy) ? providerAugmentation.privacy : {};
+
+  return {
+    blockedProviderReviewShapeAccepted: booleanValue(input?.blockedProviderReviewShapeAccepted) ?? false,
+    contract: HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT,
+    directApplyAllowed: booleanValue(input?.directApplyAllowed) ?? booleanValue(actionPolicy.directApplyAllowed) ?? false,
+    providerId: stringValue(input?.providerId) ?? stringValue(provider.id) ?? "none",
+    providerNetworkExecuted: booleanValue(input?.providerNetworkExecuted) ?? false,
+    refusalResultVisible: booleanValue(input?.refusalResultVisible) ?? arrayValue(providerAugmentation?.refusalOutputs).length > 0,
+    requiresHumanReview: booleanValue(input?.requiresHumanReview) ?? booleanValue(actionPolicy.requiresHumanReview) ?? true,
+    resultTaxonomyKindCount: numberValue(input?.resultTaxonomyKindCount) ?? 0,
+    reviewOnlyOutputRequired: booleanValue(input?.reviewOnlyOutputRequired) ?? true,
+    sourcesContentPolicy: stringValue(input?.sourcesContentPolicy) ?? stringValue(privacy.sourcesContentPolicy) ?? "none",
+    status: stringValue(input?.status) ?? (providerAugmentation ? "input-ready" : "not-available"),
+    targetOwnerHandoffVisible: booleanValue(input?.targetOwnerHandoffVisible) ?? false,
+    targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? booleanValue(actionPolicy.targetRepositoryMutationAllowed) ?? false,
+    workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? booleanValue(actionPolicy.workspaceWriteAllowed) ?? false
   };
 }
 
@@ -385,6 +412,20 @@ function selectHostApplyUx(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.hostApplyUx)) {
     return input.result.hostApplyUx;
+  }
+
+  return undefined;
+}
+
+function selectProviderReviewPanel(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.providerReviewPanel)) {
+    return input.providerReviewPanel;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.providerReviewPanel)) {
+    return input.result.providerReviewPanel;
   }
 
   return undefined;

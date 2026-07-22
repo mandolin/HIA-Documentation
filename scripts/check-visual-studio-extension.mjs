@@ -83,6 +83,7 @@ async function main() {
       applyPreview: reviewSurface.applyPreview,
       checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
       hostApplyUx: reviewSurface.hostApplyUx,
+      providerReviewPanel: reviewSurface.providerReviewPanel,
       targetCollaboration: reviewSurface.targetCollaboration,
       viewCount: reviewSurface.views.length,
       actionCount: reviewSurface.actions.length,
@@ -153,6 +154,21 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.providerReview?.workspaceWriteAvailable, false, "Visual Studio provider review must not claim workspace writes.");
   assert.equal(reviewSurface?.providerReview?.targetRepositoryMutation, false, "Visual Studio provider review must not mutate target repositories.");
   assert.ok(Array.isArray(reviewSurface?.providerReview?.requiredFields) && reviewSurface.providerReview.requiredFields.includes("providerAugmentation.reviewMetadata"), "Visual Studio provider review must require provider review metadata.");
+  assert.equal(reviewSurface?.providerReviewPanel?.contract, "hia-visual-studio-provider-review-linkage-panel", "Visual Studio provider review panel contract must be explicit.");
+  assert.equal(reviewSurface?.providerReviewPanel?.status, "input-ready", "Visual Studio provider review panel must expose readiness.");
+  assert.equal(reviewSurface?.providerReviewPanel?.inputMode, "provider-result-refusal-review-only", "Visual Studio provider review panel must stay review-only.");
+  assert.equal(reviewSurface?.providerReviewPanel?.resultTaxonomyKindCount, 5, "Visual Studio provider review panel must expose taxonomy count.");
+  assert.equal(reviewSurface?.providerReviewPanel?.blockedProviderReviewShapeAccepted, true, "Visual Studio provider review panel must expose blocked/refused shape acceptance.");
+  assert.equal(reviewSurface?.providerReviewPanel?.refusalResultVisible, true, "Visual Studio provider review panel must expose refusal visibility.");
+  assert.equal(reviewSurface?.providerReviewPanel?.reviewOnlyOutputRequired, true, "Visual Studio provider review panel must require review-only output.");
+  assert.equal(reviewSurface?.providerReviewPanel?.requiresHumanReview, true, "Visual Studio provider review panel must require human review.");
+  assert.equal(reviewSurface?.providerReviewPanel?.targetOwnerHandoffVisible, true, "Visual Studio provider review panel must expose target-owner handoff.");
+  assert.equal(reviewSurface?.providerReviewPanel?.directApplyAllowed, false, "Visual Studio provider review panel must keep direct apply disabled.");
+  assert.equal(reviewSurface?.providerReviewPanel?.workspaceWriteAvailable, false, "Visual Studio provider review panel must keep workspace writes disabled.");
+  assert.equal(reviewSurface?.providerReviewPanel?.targetRepositoryMutation, false, "Visual Studio provider review panel must keep target mutation disabled.");
+  assert.equal(reviewSurface?.providerReviewPanel?.providerNetworkExecuted, false, "Visual Studio provider review panel must not claim provider network execution.");
+  assert.equal(reviewSurface?.providerReviewPanel?.sourcesContentPolicy, "none", "Visual Studio provider review panel must preserve sourcesContent none.");
+  assert.ok(Array.isArray(reviewSurface?.providerReviewPanel?.requiredFields) && reviewSurface.providerReviewPanel.requiredFields.includes("providerReviewPanel.reviewOnlyOutputRequired"), "Visual Studio provider review panel must require review-only fields.");
   assert.equal(reviewSurface?.applyPreview?.status, "input-ready", "Visual Studio review surface must expose apply-preview input readiness.");
   assert.equal(reviewSurface?.applyPreview?.inputMode, "preflight-preview-only", "Visual Studio review surface must keep apply preview preflight-only.");
   assert.equal(reviewSurface?.applyPreview?.checkedApplyAvailable, false, "Visual Studio review surface must not claim checked apply.");
@@ -196,6 +212,7 @@ function assertReviewSurface(contract, reviewSurface) {
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");
   assertSurfaceView(reviewSurface, "provider-review");
+  assertSurfaceView(reviewSurface, "provider-review-linkage");
   assertSurfaceView(reviewSurface, "candidate-preview");
   assertSurfaceView(reviewSurface, "checked-apply-confirmation");
   assertSurfaceView(reviewSurface, "target-collaboration");

@@ -11,6 +11,7 @@ const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
   HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
   HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
+  HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_CONTRACT_VERSION,
   HIA_DEVTOOLS_OPEN_REQUEST_BRIDGE_EVENT_TYPE,
@@ -108,6 +109,20 @@ async function main() {
   assert.equal(panel.review.provider.refusalOutputCount, 0, "Review surface must summarize provider refusals.");
   assert.equal(panel.review.provider.directApplyAllowed, false, "Review surface provider metadata must keep direct apply disabled.");
   assert.equal(panel.review.provider.workspaceWriteAllowed, false, "Review surface provider metadata must keep workspace writes disabled.");
+  assert.equal(panel.review.providerReviewPanel.contract, HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT, "Review surface must expose provider review linkage panel.");
+  assert.equal(panel.review.providerReviewPanel.status, "input-ready", "Provider review panel must expose readiness.");
+  assert.equal(panel.review.providerReviewPanel.providerId, "remote-api-provider-template", "Provider review panel must expose provider identity.");
+  assert.equal(panel.review.providerReviewPanel.resultTaxonomyKindCount, 5, "Provider review panel must expose taxonomy count.");
+  assert.equal(panel.review.providerReviewPanel.blockedProviderReviewShapeAccepted, true, "Provider review panel must expose blocked/refused shape acceptance.");
+  assert.equal(panel.review.providerReviewPanel.refusalResultVisible, true, "Provider review panel must expose refusal visibility.");
+  assert.equal(panel.review.providerReviewPanel.reviewOnlyOutputRequired, true, "Provider review panel must stay review-only.");
+  assert.equal(panel.review.providerReviewPanel.requiresHumanReview, true, "Provider review panel must require human review.");
+  assert.equal(panel.review.providerReviewPanel.targetOwnerHandoffVisible, true, "Provider review panel must expose target-owner handoff.");
+  assert.equal(panel.review.providerReviewPanel.directApplyAllowed, false, "Provider review panel must keep direct apply disabled.");
+  assert.equal(panel.review.providerReviewPanel.workspaceWriteAllowed, false, "Provider review panel must keep workspace writes disabled.");
+  assert.equal(panel.review.providerReviewPanel.targetRepositoryMutationAllowed, false, "Provider review panel must keep target mutation disabled.");
+  assert.equal(panel.review.providerReviewPanel.providerNetworkExecuted, false, "Provider review panel must not claim provider network execution.");
+  assert.equal(panel.review.providerReviewPanel.sourcesContentPolicy, "none", "Provider review panel must preserve sourcesContent none.");
   assert.equal(reviewDetail?.actionHints.applyAvailable, false, "Review surface must keep apply unavailable.");
   assert.equal(reviewDetail?.provider.draftOutputCount, 1, "Review detail must expose provider drafts for the item.");
   assert.equal(reviewDetail?.provider.reviewMetadataCount, 1, "Review detail must expose provider metadata for the item.");
@@ -176,6 +191,7 @@ async function main() {
         hostApplyUx: panel.review.hostApplyUx,
         previewCandidateCount: panel.review.items.filter((item) => item.editCandidate.status === "preview-only").length,
         provider: panel.review.provider,
+        providerReviewPanel: panel.review.providerReviewPanel,
         privacy: panel.review.privacy,
         targetCollaboration: panel.review.targetCollaboration
       }
@@ -324,6 +340,21 @@ function createFixturePayload() {
         requiresHumanReview: true,
         sourcesContentPolicy: "none"
       }
+    },
+    providerReviewPanel: {
+      blockedProviderReviewShapeAccepted: true,
+      directApplyAllowed: false,
+      providerId: "remote-api-provider-template",
+      providerNetworkExecuted: false,
+      refusalResultVisible: true,
+      requiresHumanReview: true,
+      resultTaxonomyKindCount: 5,
+      reviewOnlyOutputRequired: true,
+      sourcesContentPolicy: "none",
+      status: "input-ready",
+      targetOwnerHandoffVisible: true,
+      targetRepositoryMutationAllowed: false,
+      workspaceWriteAllowed: false
     },
     reviewPayload: {
       actionPolicy: {

@@ -34,6 +34,31 @@
       "providerAugmentation.privacy"
     ]
   },
+  "providerReviewPanel": {
+    "contract": "hia-visual-studio-provider-review-linkage-panel",
+    "status": "input-ready",
+    "inputMode": "provider-result-refusal-review-only",
+    "providerIdSource": "providerAugmentation.provider.id",
+    "resultTaxonomyKindCount": 5,
+    "blockedProviderReviewShapeAccepted": true,
+    "refusalResultVisible": true,
+    "reviewOnlyOutputRequired": true,
+    "requiresHumanReview": true,
+    "targetOwnerHandoffVisible": true,
+    "directApplyAllowed": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "providerNetworkExecuted": false,
+    "sourcesContentPolicy": "none",
+    "requiredFields": [
+      "providerAugmentation.provider.id",
+      "providerAugmentation.status",
+      "providerAugmentation.reviewMetadata",
+      "providerAugmentation.refusalOutputs",
+      "providerReviewPanel.resultTaxonomyKindCount",
+      "providerReviewPanel.reviewOnlyOutputRequired"
+    ]
+  },
   "applyPreview": {
     "status": "input-ready",
     "inputMode": "preflight-preview-only",
@@ -147,6 +172,19 @@
         "providerAugmentation.refusalOutputs",
         "providerAugmentation.actionPolicy.directApplyAllowed",
         "providerAugmentation.privacy.sourcesContentPolicy"
+      ]
+    },
+    {
+      "id": "provider-review-linkage",
+      "title": "Provider Review Linkage",
+      "purpose": "Show provider result/refusal taxonomy, blocked shape, review-only output boundary and target-owner handoff state.",
+      "requiredFields": [
+        "providerReviewPanel.status",
+        "providerReviewPanel.resultTaxonomyKindCount",
+        "providerReviewPanel.blockedProviderReviewShapeAccepted",
+        "providerReviewPanel.refusalResultVisible",
+        "providerReviewPanel.reviewOnlyOutputRequired",
+        "providerReviewPanel.targetOwnerHandoffVisible"
       ]
     },
     {

@@ -82,6 +82,7 @@ function renderSummary() {
     ["Review", state.model.review.summary.itemCount],
     ["Drafts", state.model.review.draftCount],
     ["Provider Drafts", state.model.review.provider.draftOutputCount],
+    ["Provider Panel", state.model.review.providerReviewPanel.resultTaxonomyKindCount],
     ["Apply Inputs", state.model.review.applyPreview.hostCheckPreflightCount],
     ["Confirmations", state.model.review.checkedApplyConfirmation.confirmationReportCount],
     ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
@@ -225,6 +226,7 @@ function renderReviewDetail() {
       <dt>Proposal</dt><dd>${escapeHtml(item.proposalId)}</dd>
       <dt>Quality</dt><dd>${escapeHtml(`pass:${item.quality.pass} warning:${item.quality.warning} blocked:${item.quality.blocked}`)}</dd>
       <dt>Provider</dt><dd>${escapeHtml(state.model.review.provider.providerId)}</dd>
+      <dt>Provider Panel</dt><dd>${escapeHtml(`${state.model.review.providerReviewPanel.status} / taxonomy:${state.model.review.providerReviewPanel.resultTaxonomyKindCount}`)}</dd>
       <dt>Provider Drafts</dt><dd>${escapeHtml(String(item.provider.draftOutputCount))}</dd>
       <dt>Provider Metadata</dt><dd>${escapeHtml(String(item.provider.reviewMetadataCount))}</dd>
       <dt>Provider Refusals</dt><dd>${escapeHtml(String(item.provider.refusalOutputCount))}</dd>
@@ -257,6 +259,9 @@ function formatReviewCandidatePreview(item) {
     `Provider metadata: ${item.provider.reviewMetadataCount}`,
     `Provider refusals: ${item.provider.refusalOutputCount}`,
     `Provider quality signals: ${item.provider.qualitySignals.join(", ") || "none"}`,
+    `Provider panel: ${state.model.review.providerReviewPanel.status}`,
+    `Provider taxonomy kinds: ${state.model.review.providerReviewPanel.resultTaxonomyKindCount}`,
+    `Provider review-only: ${state.model.review.providerReviewPanel.reviewOnlyOutputRequired ? "yes" : "no"}`,
     "",
     `Checked apply confirmation: ${state.model.review.checkedApplyConfirmation.status}`,
     `Confirmation reports: ${state.model.review.checkedApplyConfirmation.confirmationReportCount}`,
