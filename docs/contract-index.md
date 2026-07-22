@@ -67,6 +67,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Controlled remote provider smoke intake evidence | `scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs` | `0.1.0-draft` |
 | Remote provider candidate selection evidence | `scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs` | `0.1.0-draft` |
 | Secret reference and network consent evidence | `scripts/prepare-wp40-secret-reference-network-consent-packet.mjs` | `0.1.0-draft` |
+| Request preview and privacy dry-run evidence | `scripts/prepare-wp40-request-preview-privacy-dry-run.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -214,6 +215,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Controlled remote provider smoke intake evidence may prepare provider candidates, manual approval routes and safety envelopes only. It must not select a real provider for execution, resolve credential values, execute external network calls, include source bodies, mutate targets, grant write authority or apply edits.
 - Remote provider candidate selection evidence may record candidate identity, package, provenance, license, capability and manual-selection state only. It must not select a provider for execution, resolve credential values, perform external calls, include source bodies, create direct edits, grant write authority or mutate targets.
 - Secret reference and network consent evidence may bind provider candidates to host-managed secret reference metadata, consent records, destination allowlists and redacted audit previews only. It must not serialize credential values, perform external calls, select providers for execution, include source bodies, grant write authority or mutate targets.
+- Request preview and privacy dry-run evidence may prepare metadata-only provider request summaries and privacy checks only. It must not include credential values, source text, source references, external network calls, provider execution, direct edits, write authority or target mutations.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
