@@ -228,14 +228,14 @@ function frozenPacket(host, readiness, sourceStatus, packet) {
 
 function createRedactionControls() {
   return [
-    redaction("no-source-body", "Do not include source file bodies in public evidence."),
-    redaction("no-sources-content", "Do not serialize source map sourcesContent."),
-    redaction("no-credential-values", "Do not include API keys, tokens or secret values."),
-    redaction("no-digest-values", "Do not include host-private file digest values."),
-    redaction("no-local-absolute-paths", "Do not include local absolute paths in public evidence."),
-    redaction("no-private-workspace-name", "Do not include private work-zone paths or identifiers."),
-    redaction("no-target-command-output-body", "Do not include target command output unless target owner explicitly approves a public-safe transcript."),
-    redaction("metadata-only-screenshots", "Screenshots must show host UI state, not private source content.")
+    redaction("no-source-body", "public evidence 中不得包含源码文件正文。"),
+    redaction("no-sources-content", "不得序列化 source map 的 sourcesContent。"),
+    redaction("no-credential-values", "不得包含 API key、token 或 secret value。"),
+    redaction("no-digest-values", "不得包含宿主私有 file digest value。"),
+    redaction("no-local-absolute-paths", "public evidence 中不得包含本地绝对路径。"),
+    redaction("no-private-workspace-name", "不得包含私有 work-zone 路径或标识。"),
+    redaction("no-target-command-output-body", "除非 target owner 明确批准 public-safe transcript，否则不得包含目标命令输出正文。"),
+    redaction("metadata-only-screenshots", "截图应展示宿主 UI 状态，不展示私有源码内容。")
   ];
 }
 
@@ -351,9 +351,9 @@ function check(code, passed, details = {}) {
 
 function renderAudit(evidence) {
   const summary = evidence.summary;
-  return `# W-P44.1 Runtime Capture Readiness Audit
+  return `# W-P44.1 Runtime Capture Readiness Audit / 运行时采集就绪审计
 
-## Summary
+## 摘要
 
 - status: \`${evidence.status}\`
 - input evidence ready: ${summary.readyInputEvidenceCount} / ${summary.inputEvidenceCount}
@@ -366,14 +366,14 @@ function renderAudit(evidence) {
 - checked apply / workspace write / target mutation / direct edit: ${summary.checkedApplyWriteEnabledCount} / ${summary.workspaceWriteAllowedCount} / ${summary.targetRepositoryMutationCount} / ${summary.directEditObjectCount}
 - sourcesContent policy: ${summary.sourcesContentPolicy}
 
-## Next Stage
+## 下一阶段
 
-W-P44.2 can run the VS Code manual runtime capture from the frozen packet.
+W-P44.2 可基于 frozen packet 准备或执行 VS Code manual runtime capture；在人工证据回填前不得标记为 captured。
 `;
 }
 
 function renderFrozenPackets(evidence) {
-  return `# Frozen Manual Capture Packets
+  return `# Frozen Manual Capture Packets / 已冻结的手工采集包
 
 ${evidence.frozenPackets.map((packet) => `## ${packet.host}
 
@@ -390,7 +390,7 @@ ${evidence.frozenPackets.map((packet) => `## ${packet.host}
 }
 
 function renderRedactionChecklist(evidence) {
-  return `# Public-Safe Redaction Checklist
+  return `# Public-Safe Redaction Checklist / 公开安全脱敏清单
 
 ${evidence.redactionControls.map((control) => `- ${control.id}: ${control.requirement}`).join("\n")}
 `;

@@ -330,12 +330,12 @@ function createLaunchCommandTemplate() {
 
 function createRequiredArtifacts() {
   return [
-    artifact("extension-development-host-window", "screenshot", "Extension Development Host window is visible."),
-    artifact("command-palette-host-apply-ux", "screenshot", "Command palette shows HIA: Show Host Apply UX Intake."),
-    artifact("quickpick-host-surface-list", "screenshot", "QuickPick lists VS Code, DevTools and Visual Studio host surfaces."),
-    artifact("output-channel-host-summary", "screenshot", "HIA output channel shows host apply UX evidence summary."),
-    artifact("output-channel-deferred-gates", "screenshot", "Output shows provider/network, target-owner and checked-apply gates still deferred."),
-    artifact("redacted-output-transcript", "transcript", "Transcript records only public-safe marker lines and excludes private source text.")
+    artifact("extension-development-host-window", "screenshot", "Extension Development Host 窗口可见。"),
+    artifact("command-palette-host-apply-ux", "screenshot", "命令面板中可见 HIA: Show Host Apply UX Intake。"),
+    artifact("quickpick-host-surface-list", "screenshot", "QuickPick 中可见 VS Code、DevTools 和 Visual Studio 宿主 surface。"),
+    artifact("output-channel-host-summary", "screenshot", "HIA Output Channel 显示 host apply UX evidence 摘要。"),
+    artifact("output-channel-deferred-gates", "screenshot", "Output 中可见 provider/network、target-owner 和 checked-apply gate 仍处于 deferred。"),
+    artifact("redacted-output-transcript", "transcript", "Transcript 仅记录 public-safe marker 行，并排除私有源码正文。")
   ];
 }
 
@@ -351,7 +351,7 @@ function artifact(id, kind, marker) {
 
 function createManualChecklist({ command, frozenVscodePacket, launchCommandTemplate, requiredArtifacts }) {
   return {
-    title: "W-P44.2 VS Code Extension Development Host Manual Capture Checklist",
+    title: "W-P44.2 VS Code Extension Development Host 手工采集清单",
     host: "vscode",
     runtime: "extension-development-host",
     commandId: command.id,
@@ -359,20 +359,20 @@ function createManualChecklist({ command, frozenVscodePacket, launchCommandTempl
     frozenPacketId: frozenVscodePacket.freezeId,
     launchCommandTemplate,
     steps: [
-      "Open a clean shell at <main-repo>.",
-      "Run pnpm run wp44:vscode-manual-capture:evidence to refresh this packet.",
-      "Run pnpm run build so the extension and language server are current.",
-      "Launch VS Code with the launch command template from this packet.",
-      "In the Extension Development Host, open the command palette.",
-      `Run ${command.title}.`,
-      "Capture the command-palette screenshot before execution when the command is visible.",
-      "Capture the QuickPick screenshot when host surfaces are listed.",
-      "Select the VS Code surface and wait for the HIA output channel report.",
-      "Capture the output summary screenshot with deferred gates visible.",
-      "Record a redacted transcript with marker lines only.",
-      "Verify no source bodies, credentials, digest values, local absolute paths or sourcesContent are included.",
-      "Fill the evidence intake template and keep the result as captured, blocked or needs-rerun.",
-      "Do not run provider/network calls, target commands, checked apply write or target repository mutations."
+      "在 <main-repo> 打开一个干净 shell。",
+      "运行 pnpm run wp44:vscode-manual-capture:evidence 刷新本 packet。",
+      "运行 pnpm run build，确保 extension 与 language server 为当前构建。",
+      "使用本 packet 的 launch command template 启动 VS Code。",
+      "在 Extension Development Host 中打开命令面板。",
+      `运行 ${command.title}。`,
+      "在命令可见时采集 command-palette 截图。",
+      "在宿主 surface 列表可见时采集 QuickPick 截图。",
+      "选择 VS Code surface，并等待 HIA Output Channel report 输出。",
+      "采集包含 deferred gates 的 output summary 截图。",
+      "仅记录 marker 行，形成 redacted transcript。",
+      "确认未包含 source body、credential、digest value、本地绝对路径或 sourcesContent。",
+      "填写 evidence intake template，并将结果保持为 captured、blocked 或 needs-rerun 之一。",
+      "不要运行 provider/network、目标项目命令、checked apply write 或目标仓库 mutation。"
     ],
     requiredArtifacts
   };
@@ -380,7 +380,7 @@ function createManualChecklist({ command, frozenVscodePacket, launchCommandTempl
 
 function createEvidenceIntakeTemplate({ command, requiredArtifacts }) {
   return {
-    title: "W-P44.2 VS Code Capture Evidence Intake",
+    title: "W-P44.2 VS Code 采集证据回填模板",
     commandId: command.id,
     commandTitle: command.title,
     resultOptions: [
@@ -389,26 +389,26 @@ function createEvidenceIntakeTemplate({ command, requiredArtifacts }) {
       "needs-rerun"
     ],
     sections: [
-      "Operator",
-      "Host And Version",
-      "Launch Method",
-      "Extension Under Test",
-      "Captured Artifact Inventory",
-      "Observed Host Markers",
-      "Provider And Network Gate Confirmation",
-      "Target-Owner Gate Confirmation",
-      "Checked Apply Write Gate Confirmation",
-      "Privacy And Redaction Confirmation",
-      "Result",
-      "Follow-Up"
+      "操作者",
+      "宿主与版本",
+      "启动方式",
+      "被测 Extension",
+      "采集证据清单",
+      "观察到的宿主标记",
+      "Provider 与 Network Gate 确认",
+      "Target-Owner Gate 确认",
+      "Checked Apply Write Gate 确认",
+      "隐私与脱敏确认",
+      "结果",
+      "后续事项"
     ],
     requiredArtifactIds: requiredArtifacts.map((artifact) => artifact.id),
     forbiddenInIntake: [
-      "source body",
+      "源码正文",
       "credential value",
       "digest value",
-      "local absolute path",
-      "target command output body",
+      "本地绝对路径",
+      "目标命令输出正文",
       "sourcesContent",
       "direct edit payload"
     ]
@@ -417,7 +417,7 @@ function createEvidenceIntakeTemplate({ command, requiredArtifacts }) {
 
 function createRedactionReportTemplate(redactionControls) {
   return {
-    title: "W-P44.2 VS Code Capture Redaction Report Template",
+    title: "W-P44.2 VS Code 采集脱敏报告模板",
     controls: redactionControls.map((control) => ({
       id: control.id,
       requirement: control.requirement,
@@ -544,9 +544,9 @@ function visitValues(value, visitor) {
 
 function renderInstructions(evidence) {
   const packet = evidence.manualCapturePacket;
-  return `# W-P44.2 VS Code Extension Development Host Capture Instructions
+  return `# W-P44.2 VS Code Extension Development Host 手工采集指令
 
-## Summary
+## 摘要
 
 - status: \`${evidence.status}\`
 - capture slot: \`${packet.captureSlotStatus}\`
@@ -557,17 +557,17 @@ function renderInstructions(evidence) {
 - checked apply write enabled: ${packet.checkedApplyWriteEnabled}
 - sourcesContent policy: ${packet.sourcesContentPolicy}
 
-## Steps
+## 操作步骤
 
 ${evidence.checklist.steps.map((step, index) => `${index + 1}. ${step}`).join("\n")}
 
-## Required Artifacts
+## 必需证据
 
 ${evidence.requiredArtifacts.map((artifact) => `- \`${artifact.id}\` (${artifact.kind}): ${artifact.marker}`).join("\n")}
 
-## Ingestion Boundary
+## 证据吸收边界
 
-This packet is ready for a human VS Code capture. It does not mark W-P44.2 as captured until the intake template is filled and redaction is checked.
+本 packet 只表示可以开始人工 VS Code capture。只有 intake template 填写完成且 redaction check 通过后，才允许把 W-P44.2 标记为 captured。
 `;
 }
 
@@ -577,7 +577,7 @@ function renderIntakeTemplate(template) {
     "",
     `Command: \`${template.commandTitle}\` / \`${template.commandId}\``,
     "",
-    "Result: captured | blocked | needs-rerun",
+    "结果：captured | blocked | needs-rerun",
     ""
   ];
 
@@ -588,7 +588,7 @@ function renderIntakeTemplate(template) {
     lines.push("");
   }
 
-  lines.push("## Required Artifact IDs");
+  lines.push("## 必需证据 ID");
   lines.push("");
 
   for (const artifactId of template.requiredArtifactIds) {
@@ -596,7 +596,7 @@ function renderIntakeTemplate(template) {
   }
 
   lines.push("");
-  lines.push("## Forbidden In Intake");
+  lines.push("## 禁止写入 Intake 的内容");
   lines.push("");
 
   for (const forbidden of template.forbiddenInIntake) {
@@ -609,7 +609,7 @@ function renderIntakeTemplate(template) {
 function renderRedactionReport(report) {
   return `# ${report.title}
 
-Required conclusion: \`${report.requiredConclusion}\`
+必需结论：\`${report.requiredConclusion}\`
 
 ${report.controls.map((control) => `- ${control.id}: ${control.requirement} (${control.evidenceState})`).join("\n")}
 `;
