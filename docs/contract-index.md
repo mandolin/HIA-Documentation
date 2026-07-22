@@ -57,6 +57,13 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Target branch/PR flow contract evidence | `scripts/prepare-wp38-target-branch-pr-flow-contract-evidence.mjs` | `0.1.0-draft` |
 | DevTools / Visual Studio confirmation parity evidence | `scripts/prepare-wp38-devtools-visual-studio-confirmation-parity-evidence.mjs` | `0.1.0-draft` |
 | Writable apply sandbox closeout next inputs | `scripts/prepare-wp38-closeout-next-inputs.mjs` | `0.1.0-draft` |
+| Host runtime capture intake evidence | `scripts/prepare-wp39-host-runtime-capture-intake-evidence.mjs` | `0.1.0-draft` |
+| VS Code runtime capture packet evidence | `scripts/prepare-wp39-vscode-runtime-capture-packet-evidence.mjs` | `0.1.0-draft` |
+| DevTools runtime capture packet evidence | `scripts/prepare-wp39-devtools-runtime-capture-packet-evidence.mjs` | `0.1.0-draft` |
+| Visual Studio runtime preparation evidence | `scripts/prepare-wp39-visual-studio-runtime-preparation-evidence.mjs` | `0.1.0-draft` |
+| Runtime evidence normalization | `scripts/prepare-wp39-runtime-evidence-normalization.mjs` | `0.1.0-draft` |
+| Next gate bridge evidence | `scripts/prepare-wp39-next-gate-bridge-evidence.mjs` | `0.1.0-draft` |
+| Host runtime closeout W-P40 inputs | `scripts/prepare-wp39-closeout-wp40-inputs.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -126,6 +133,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Visual Studio runtime preparation evidence | `main-repo` scripts and Visual Studio shell | W-P39 evidence selecting the safe Visual Studio contract-level runtime preparation route while deferring VSIX packaging, experimental-instance execution and real Visual Studio capture to a later audited implementation step. |
 | Runtime evidence normalization | `main-repo` scripts | W-P39 evidence normalizing VS Code, Chrome DevTools and Visual Studio runtime packet/preparation states into one host matrix for W-P40/W-P41/W-P42 consumption without claiming missing runtime captures. |
 | Next gate bridge evidence | `main-repo` scripts | W-P39 evidence bridging normalized host runtime states into W-P40 remote provider smoke, W-P41 target-owner flow, W-P42 checked apply hardening and W-P43 host UX inputs without running providers, mutating targets or enabling write authority. |
+| Host runtime closeout W-P40 inputs | `main-repo` scripts | W-P39 closeout evidence summarizing W-P39.1-W-P39.6 and turning W-P40 controlled remote provider smoke into a single startup input contract while preserving manual approval, privacy and no-write gates. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -198,6 +206,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Visual Studio runtime preparation evidence may select a route and prepare follow-up checklists only. It must not claim a VSIX build, experimental-instance execution, real Visual Studio runtime capture, workspace writes, target repository mutation or source-body exposure.
 - Runtime evidence normalization may map host-specific packet states to a shared matrix only. It must not transform `manual-capture-ready` or `route-preparation-ready` into `captured`, enable write authority, run hosts, call providers, mutate target repositories or expose source bodies.
 - Next gate bridge evidence may prepare downstream W-P40/W-P41/W-P42/W-P43 inputs only. It must not run remote providers, launch IDE/browser hosts, create branches or pull requests, apply edits, grant provider/LSP-owned write authority, mutate target repositories or expose source bodies.
+- Host runtime closeout W-P40 input evidence may close W-P39 and prepare W-P40 startup inputs only. It must not convert prepared host states into captured states, run remote providers, perform network calls, create target branches or PRs, grant write authority, mutate targets or expose source bodies.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 
