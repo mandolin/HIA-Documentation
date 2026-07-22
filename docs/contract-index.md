@@ -68,6 +68,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Remote provider candidate selection evidence | `scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs` | `0.1.0-draft` |
 | Secret reference and network consent evidence | `scripts/prepare-wp40-secret-reference-network-consent-packet.mjs` | `0.1.0-draft` |
 | Request preview and privacy dry-run evidence | `scripts/prepare-wp40-request-preview-privacy-dry-run.mjs` | `0.1.0-draft` |
+| Real remote provider smoke execution gate evidence | `scripts/prepare-wp40-real-remote-provider-smoke-execution-gate.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
 | Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
@@ -139,6 +140,10 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Next gate bridge evidence | `main-repo` scripts | W-P39 evidence bridging normalized host runtime states into W-P40 remote provider smoke, W-P41 target-owner flow, W-P42 checked apply hardening and W-P43 host UX inputs without running providers, mutating targets or enabling write authority. |
 | Host runtime closeout W-P40 inputs | `main-repo` scripts | W-P39 closeout evidence summarizing W-P39.1-W-P39.6 and turning W-P40 controlled remote provider smoke into a single startup input contract while preserving manual approval, privacy and no-write gates. |
 | Controlled remote provider smoke intake evidence | `main-repo` scripts | W-P40 intake evidence building a provider selection/manual approval safety envelope from W-P36/W-P38/W-P39 inputs before any real provider choice, credential resolution, network call or target write. |
+| Remote provider candidate selection evidence | `main-repo` scripts | W-P40 evidence recording candidate provider identity, package/provenance, license, capability boundaries and manual-selection state before any execution grant. |
+| Secret reference and network consent evidence | `main-repo` scripts | W-P40 evidence binding provider candidates to host-managed secret reference metadata, consent records, destination allowlists and redacted audit previews only. It does not serialize credential values or perform external calls. |
+| Request preview and privacy dry-run evidence | `main-repo` scripts | W-P40 evidence preparing metadata-only provider request summaries and privacy checks while keeping source policy `none`, network unexecuted and output review-only. |
+| Real remote provider smoke execution gate evidence | `main-repo` scripts | W-P40 evidence interpreting manual gate-entry approval and either allowing a later final network-send decision or producing a blocked/refused review shape. It must not treat gate-entry approval as credential, network or execution grant. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
@@ -216,6 +221,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - Remote provider candidate selection evidence may record candidate identity, package, provenance, license, capability and manual-selection state only. It must not select a provider for execution, resolve credential values, perform external calls, include source bodies, create direct edits, grant write authority or mutate targets.
 - Secret reference and network consent evidence may bind provider candidates to host-managed secret reference metadata, consent records, destination allowlists and redacted audit previews only. It must not serialize credential values, perform external calls, select providers for execution, include source bodies, grant write authority or mutate targets.
 - Request preview and privacy dry-run evidence may prepare metadata-only provider request summaries and privacy checks only. It must not include credential values, source text, source references, external network calls, provider execution, direct edits, write authority or target mutations.
+- Real remote provider smoke execution gate evidence may record user approval to enter the gate, but it must refuse execution when concrete provider identity, immutable package version, host-bound secret references, non-placeholder destination and final consent are missing. It may generate a review-only blocked/refusal result shape; it must not fake provider results, perform external calls, read credential values, include source text, create direct edits, grant write authority or mutate targets.
 - IDE/LSP capability and resource action data are view and ownership contracts. IDE shells should consume LSP/CLI/renderer surfaces instead of duplicating HIA semantics.
 - Renderer and CLI manifests are layered: renderer owns rendered file metadata, CLI owns filesystem output placement.
 

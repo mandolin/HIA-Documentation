@@ -91,6 +91,7 @@
     "wp40:provider-candidate-selection:evidence": "pnpm run wp40:controlled-remote-smoke-intake:evidence && node scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs",
     "wp40:secret-network-consent:evidence": "pnpm run wp40:provider-candidate-selection:evidence && node scripts/prepare-wp40-secret-reference-network-consent-packet.mjs",
     "wp40:request-preview-privacy:evidence": "pnpm run wp40:secret-network-consent:evidence && node scripts/prepare-wp40-request-preview-privacy-dry-run.mjs",
+    "wp40:real-remote-smoke-gate:evidence": "pnpm run wp40:request-preview-privacy:evidence && node scripts/prepare-wp40-real-remote-provider-smoke-execution-gate.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
