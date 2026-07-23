@@ -762,17 +762,17 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(choices).toHaveLength(1);
     expect(choices[0]).toMatchObject({
       label: "VS Code Extension",
-      description: "surface-contract-ready; apply write disabled"
+      description: "surface-contract-ready; 写入禁用 / apply write disabled"
     });
     expect(choices[0]?.detail).toContain("requirements:2");
-    expect(report).toContain("Evidence: hia-wp43-host-owned-apply-ux-intake-evidence@0.1.0-draft");
-    expect(report).toContain("Surface: VS Code Extension");
-    expect(report).toContain("Provider review-only: yes");
-    expect(report).toContain("Target-owner action required: yes");
-    expect(report).toContain("Checked apply write: disabled");
-    expect(report).toContain("Workspace write: disabled");
-    expect(report).toContain("Provider network: disabled");
-    expect(report).toContain("Source bodies: not shown by the VS Code host apply UX intake.");
+    expect(report).toContain("Evidence / 证据: hia-wp43-host-owned-apply-ux-intake-evidence@0.1.0-draft");
+    expect(report).toContain("Surface / 宿主界面: VS Code Extension");
+    expect(report).toContain("Provider review-only / Provider 仅审查: yes");
+    expect(report).toContain("Target-owner action required / 需要 target-owner 操作: yes");
+    expect(report).toContain("Checked apply write / checked apply 写入: disabled");
+    expect(report).toContain("Workspace write / 工作区写入: disabled");
+    expect(report).toContain("Provider network / Provider 网络访问: disabled");
+    expect(report).toContain("Source bodies / 源码正文: 未显示在 VS Code host apply UX intake 中。");
   });
 
   it("creates resource action preview reports", () => {

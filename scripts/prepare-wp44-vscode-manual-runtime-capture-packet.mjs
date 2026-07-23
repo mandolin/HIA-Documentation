@@ -310,7 +310,10 @@ function resolveCommandSurface(extensionPackage, extensionSource) {
     commandContributed: Boolean(commandContribution),
     commandTitleMatches: commandContribution?.title === title,
     handlerDeclared: extensionSource.includes("showHiaHostApplyUxIntake"),
-    outputMarkerDeclared: extensionSource.includes("HIA host apply UX intake evidence:")
+    outputMarkerDeclared: includesAny(extensionSource, [
+      "HIA host apply UX intake evidence:",
+      "HIA host apply UX intake evidence / 宿主应用 UX 证据:"
+    ])
   };
 }
 
@@ -498,6 +501,10 @@ function sumField(items, field) {
 
 function boolCount(value) {
   return value === true ? 1 : 0;
+}
+
+function includesAny(text, candidates) {
+  return candidates.some((candidate) => text.includes(candidate));
 }
 
 function check(code, passed, details = {}) {

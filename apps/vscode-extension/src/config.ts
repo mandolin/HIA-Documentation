@@ -1359,14 +1359,14 @@ export function createHiaHostApplyUxSurfaceChoices(
   return surfaces.map((surface, index) => {
     const label = surface.label || surface.id || `Host apply UX surface ${index + 1}`;
     const status = surface.status || "surface status unknown";
-    const applyBoundary = surface.checkedApplyWriteEnabled ? "apply write enabled" : "apply write disabled";
+    const applyBoundary = surface.checkedApplyWriteEnabled ? "写入启用 / apply write enabled" : "写入禁用 / apply write disabled";
     const detail = [
       surface.id,
       surface.surface,
       `requirements:${surface.uxRequirementRefs?.length ?? 0}`,
-      surface.providerReviewLinkageVisible ? "provider review visible" : undefined,
-      surface.targetOwnerEvidenceVisible ? "target-owner visible" : undefined,
-      surface.deferredGateVisible ? "deferred gates visible" : undefined
+      surface.providerReviewLinkageVisible ? "provider 审查可见 / provider review visible" : undefined,
+      surface.targetOwnerEvidenceVisible ? "target-owner 证据可见 / target-owner visible" : undefined,
+      surface.deferredGateVisible ? "deferred gate 可见 / deferred gates visible" : undefined
     ]
       .filter(isNonEmptyString)
       .join(" | ");
@@ -1391,40 +1391,40 @@ export function createHiaHostApplyUxIntakeReport(
   const summary = evidence.summary || {};
   const selectedSurface = surface || evidence.hostSurfaces?.[0];
   const lines = [
-    `Evidence: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
-    `Status: ${evidence.status || "unknown"}`,
-    `Surface: ${selectedSurface?.label || selectedSurface?.id || "summary"}`,
-    `Surface status: ${selectedSurface?.status || "not selected"}`,
-    `UX requirements: ${formatOptionalNumber(summary.readyUxRequirementCount)} / ${formatOptionalNumber(summary.uxRequirementCount)} ready`,
-    `Provider review rules: ${formatOptionalNumber(summary.providerReviewDisplayRuleCount)}`,
-    `Target-owner rules: ${formatOptionalNumber(summary.targetOwnerDisplayRuleCount)}`,
-    `Host surfaces: ${formatOptionalNumber(summary.readyHostSurfaceCount)} / ${formatOptionalNumber(summary.hostSurfaceCount)} ready`,
-    `Provider review-only: ${formatYesNo(summary.providerOutputReviewOnly)}`,
-    `Target-owner action required: ${formatYesNo(summary.targetOwnerActionRequired)}`,
-    `Target-owner execution claimed: ${formatYesNo(summary.targetOwnerExecutionClaimed)}`,
-    `Checked apply write: ${formatEnabledDisabled(summary.checkedApplyWriteEnabled)}`,
-    `Workspace write: ${formatDisabledByZero(summary.workspaceWriteAllowedCount)}`,
-    `Target repository mutation: ${formatDisabledByZero(summary.targetRepositoryMutationCount)}`,
-    `Checked apply trigger: ${formatDisabledByZero(summary.checkedApplyTriggeredCount)}`,
-    `Direct edit object: ${formatDisabledByZero(summary.directEditObjectCount)}`,
-    `Provider network: ${formatDisabledByZero(summary.providerNetworkExecutedCount)}`,
-    `Target command by HIA: ${formatDisabledByZero(summary.targetCommandExecutedByHiaCount)}`,
-    `Runtime capture: ${formatDisabledByZero(summary.actualRuntimeCaptureExecutedCount)}`,
-    `Host editor API: ${formatDisabledByZero(summary.hostEditorApiCallCount)}`,
-    `Sources content policy: ${summary.sourcesContentPolicy || selectedSurface?.sourcesContentPolicy || "none"}`,
-    `Source bodies: ${summary.sourceBodyIncludedInEvidence ? "included" : "not shown by the VS Code host apply UX intake."}`
+    `Evidence / 证据: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status / 状态: ${evidence.status || "unknown"}`,
+    `Surface / 宿主界面: ${selectedSurface?.label || selectedSurface?.id || "summary"}`,
+    `Surface status / 界面状态: ${selectedSurface?.status || "not selected"}`,
+    `UX requirements / UX 要求: ${formatOptionalNumber(summary.readyUxRequirementCount)} / ${formatOptionalNumber(summary.uxRequirementCount)} ready / 就绪`,
+    `Provider review rules / Provider 审查规则: ${formatOptionalNumber(summary.providerReviewDisplayRuleCount)}`,
+    `Target-owner rules / Target-owner 规则: ${formatOptionalNumber(summary.targetOwnerDisplayRuleCount)}`,
+    `Host surfaces / 宿主界面数量: ${formatOptionalNumber(summary.readyHostSurfaceCount)} / ${formatOptionalNumber(summary.hostSurfaceCount)} ready / 就绪`,
+    `Provider review-only / Provider 仅审查: ${formatYesNo(summary.providerOutputReviewOnly)}`,
+    `Target-owner action required / 需要 target-owner 操作: ${formatYesNo(summary.targetOwnerActionRequired)}`,
+    `Target-owner execution claimed / target-owner 已声明执行: ${formatYesNo(summary.targetOwnerExecutionClaimed)}`,
+    `Checked apply write / checked apply 写入: ${formatEnabledDisabled(summary.checkedApplyWriteEnabled)}`,
+    `Workspace write / 工作区写入: ${formatDisabledByZero(summary.workspaceWriteAllowedCount)}`,
+    `Target repository mutation / 目标仓库变更: ${formatDisabledByZero(summary.targetRepositoryMutationCount)}`,
+    `Checked apply trigger / checked apply 触发: ${formatDisabledByZero(summary.checkedApplyTriggeredCount)}`,
+    `Direct edit object / 直接编辑对象: ${formatDisabledByZero(summary.directEditObjectCount)}`,
+    `Provider network / Provider 网络访问: ${formatDisabledByZero(summary.providerNetworkExecutedCount)}`,
+    `Target command by HIA / HIA 执行目标命令: ${formatDisabledByZero(summary.targetCommandExecutedByHiaCount)}`,
+    `Runtime capture / 运行时采集: ${formatDisabledByZero(summary.actualRuntimeCaptureExecutedCount)}`,
+    `Host editor API / 宿主编辑器 API: ${formatDisabledByZero(summary.hostEditorApiCallCount)}`,
+    `Sources content policy / 源码正文策略: ${summary.sourcesContentPolicy || selectedSurface?.sourcesContentPolicy || "none"}`,
+    `Source bodies / 源码正文: ${summary.sourceBodyIncludedInEvidence ? "included / 已包含" : "未显示在 VS Code host apply UX intake 中。"}`
   ];
 
   for (const requirement of evidence.uxRequirements || []) {
-    lines.push(`UX requirement: ${requirement.id || "unknown"} - ${requirement.status || "unknown"}`);
+    lines.push(`UX requirement / UX 要求: ${requirement.id || "unknown"} - ${requirement.status || "unknown"}`);
   }
 
   for (const rule of evidence.providerReviewDisplayRules || []) {
-    lines.push(`Provider rule: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
+    lines.push(`Provider rule / Provider 规则: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
   }
 
   for (const rule of evidence.targetOwnerDisplayRules || []) {
-    lines.push(`Target-owner rule: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
+    lines.push(`Target-owner rule / Target-owner 规则: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
   }
 
   return lines;

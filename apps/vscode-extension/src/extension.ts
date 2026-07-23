@@ -122,8 +122,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   };
 
-  outputChannel.appendLine(`Starting ${HIA_EXTENSION_NAME} language server.`);
-  outputChannel.appendLine(`Server module: ${serverModule}`);
+  outputChannel.appendLine(`正在启动 ${HIA_EXTENSION_NAME} language server。`);
+  outputChannel.appendLine("Server module / 服务模块: 已解析；public-safe capture 中隐藏本地路径。");
 
   const showOutputCommand = vscode.commands.registerCommand(HIA_SHOW_OUTPUT_COMMAND, () => {
     outputChannel.show(true);
@@ -735,13 +735,13 @@ async function showHiaHostApplyUxIntake(outputChannel: vscode.OutputChannel): Pr
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     outputChannel.show(true);
-    outputChannel.appendLine(`HIA host apply UX intake evidence could not be read: ${message}`);
-    void vscode.window.showWarningMessage("Run pnpm run wp43:host-ux-intake:evidence before showing host apply UX intake.");
+    outputChannel.appendLine(`HIA host apply UX intake evidence / 宿主应用 UX 证据读取失败: ${message}`);
+    void vscode.window.showWarningMessage("请先运行 pnpm run wp43:host-ux-intake:evidence，再查看 host apply UX intake。");
     return;
   }
 
   outputChannel.show(true);
-  outputChannel.appendLine("HIA host apply UX intake evidence:");
+  outputChannel.appendLine("HIA host apply UX intake evidence / 宿主应用 UX 证据:");
 
   const choices = createHiaHostApplyUxSurfaceChoices(evidence).map((choice) => ({
     ...choice,
@@ -760,7 +760,7 @@ async function showHiaHostApplyUxIntake(outputChannel: vscode.OutputChannel): Pr
   const selected = await vscode.window.showQuickPick<HostApplyUxSurfaceQuickPickItem>(
     choices,
     {
-      placeHolder: "Choose a W-P43 host apply UX surface"
+      placeHolder: "选择 W-P43 host apply UX surface / 宿主界面"
     }
   );
 
@@ -768,13 +768,13 @@ async function showHiaHostApplyUxIntake(outputChannel: vscode.OutputChannel): Pr
     return;
   }
 
-  outputChannel.appendLine(`Selected host apply UX surface: ${selected.choice.label}`);
+  outputChannel.appendLine(`已选择 host apply UX surface / 宿主界面: ${selected.choice.label}`);
 
   for (const line of createHiaHostApplyUxIntakeReport(evidence, selected.choice.surface)) {
     outputChannel.appendLine(`- ${line}`);
   }
 
-  void vscode.window.showInformationMessage("HIA host apply UX intake written to output. Apply remains disabled.");
+  void vscode.window.showInformationMessage("HIA host apply UX intake 已写入输出；apply 仍保持禁用。");
 }
 
 /**
@@ -1681,8 +1681,8 @@ function runHiaCliBuild(
     stdio: ["ignore", "pipe", "pipe"]
   });
 
-  outputChannel.appendLine(`CLI module: ${cliModule}`);
-  outputChannel.appendLine(`Workspace root: ${workspaceRoot}`);
+  outputChannel.appendLine("CLI module / CLI 模块: 已解析；public-safe capture 中隐藏本地路径。");
+  outputChannel.appendLine("Workspace root / 工作区根目录: 已确认；public-safe capture 中隐藏本地路径。");
 
   child.stdout.setEncoding("utf8");
   child.stderr.setEncoding("utf8");

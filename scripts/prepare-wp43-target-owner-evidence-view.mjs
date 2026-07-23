@@ -166,9 +166,9 @@ async function main() {
       }
     ],
     manualChecks: [
-      "Confirm target-owner evidence view shows readiness and transcript slots as prepared inputs only.",
-      "Confirm branch, PR, sandbox and target command state remains false unless target owner supplies external evidence.",
-      "Confirm deferred gates stay visible and do not become checked apply write enablement."
+      "确认 target-owner evidence view 只展示就绪状态与 transcript slot，仍属于 prepared input。",
+      "确认 branch、PR、sandbox 与 target command 状态保持 false，除非 target owner 另行提交外部证据。",
+      "确认 deferred gate 保持可见，且不会被误解释为 checked apply write enablement。"
     ]
   };
   const serializedEvidence = JSON.stringify(evidence, null, 2);
@@ -221,10 +221,19 @@ async function readInputs() {
 function createVscodeView(inputs) {
   const dryRunSummary = inputs.wp41DryRun.summary || {};
   const closeoutSummary = inputs.wp41Closeout.summary || {};
-  const configReady = inputs.vscodeConfig.includes("Target-owner action required")
-    && inputs.vscodeConfig.includes("Target-owner execution claimed")
+  const configReady = includesAny(inputs.vscodeConfig, [
+    "Target-owner action required",
+    "需要 target-owner 操作"
+  ])
+    && includesAny(inputs.vscodeConfig, [
+      "Target-owner execution claimed",
+      "target-owner 已声明执行"
+    ])
     && inputs.vscodeConfig.includes("deferredGateVisible")
-    && inputs.vscodeConfigTest.includes("Target-owner action required: yes");
+    && includesAny(inputs.vscodeConfigTest, [
+      "Target-owner action required: yes",
+      "需要 target-owner 操作: yes"
+    ]);
 
   return normalizeView({
     host: "vscode",
@@ -375,6 +384,10 @@ function boolCount(value) {
   return value === true ? 1 : 0;
 }
 
+function includesAny(text, candidates) {
+  return candidates.some((candidate) => text.includes(candidate));
+}
+
 function check(code, passed, details = {}) {
   return {
     code,
@@ -385,25 +398,25 @@ function check(code, passed, details = {}) {
 
 function renderViewSummary(evidence) {
   const summary = evidence.summary;
-  return `# W-P43.5 Target-Owner Evidence View
+  return `# W-P43.5 Target-Owner Evidence View / Target Owner 证据视图
 
-## Summary
+## 摘要
 
-- status: \`${evidence.status}\`
-- host views: ${summary.readyHostViewCount} / ${summary.hostViewCount} ready
-- readiness matrix items: ${summary.readinessMatrixItemCount}
-- evidence completeness checks: ${summary.evidenceCompletenessCheckCount}
-- transcript steps: ${summary.transcriptStepReviewCount}
-- handoff bindings: ${summary.handoffBindingReviewCount}
-- deferred gates: ${summary.deferredGateCount}
-- target-owner action/material/evidence hosts: ${summary.targetOwnerActionRequiredHostCount} / ${summary.targetOwnerMaterialReadyHostCount} / ${summary.targetOwnerMaySubmitEvidenceHostCount}
-- dry-run / transcript / sandbox / branch / PR / execution claimed: ${summary.actualDryRunExecutedCount} / ${summary.actualCommandTranscriptSubmittedCount} / ${summary.actualTargetSandboxCreatedCount} / ${summary.actualTargetBranchCreatedCount} / ${summary.actualPullRequestCreatedCount} / ${summary.targetOwnerExecutionClaimedCount}
-- target commands by HIA / target mutation / checked apply write: ${summary.targetCommandsExecutedByHiaCount} / ${summary.targetRepositoryMutationCount} / ${summary.checkedApplyWriteEnabledCount}
-- sourcesContent policy: ${summary.sourcesContentPolicy}
+- status / 状态: \`${evidence.status}\`
+- host views / 宿主视图: ${summary.readyHostViewCount} / ${summary.hostViewCount} ready
+- readiness matrix items / 就绪矩阵项: ${summary.readinessMatrixItemCount}
+- evidence completeness checks / 证据完整性检查: ${summary.evidenceCompletenessCheckCount}
+- transcript steps / 命令记录步骤: ${summary.transcriptStepReviewCount}
+- handoff bindings / 交接绑定: ${summary.handoffBindingReviewCount}
+- deferred gates / 延迟 gate: ${summary.deferredGateCount}
+- target-owner action/material/evidence hosts / 目标方操作、材料、证据宿主: ${summary.targetOwnerActionRequiredHostCount} / ${summary.targetOwnerMaterialReadyHostCount} / ${summary.targetOwnerMaySubmitEvidenceHostCount}
+- dry-run / transcript / sandbox / branch / PR / execution claimed / 执行状态: ${summary.actualDryRunExecutedCount} / ${summary.actualCommandTranscriptSubmittedCount} / ${summary.actualTargetSandboxCreatedCount} / ${summary.actualTargetBranchCreatedCount} / ${summary.actualPullRequestCreatedCount} / ${summary.targetOwnerExecutionClaimedCount}
+- target commands by HIA / target mutation / checked apply write / HIA 命令、目标变更、写入: ${summary.targetCommandsExecutedByHiaCount} / ${summary.targetRepositoryMutationCount} / ${summary.checkedApplyWriteEnabledCount}
+- sourcesContent policy / 源码正文策略: ${summary.sourcesContentPolicy}
 
-## Next Stage
+## 下一阶段
 
-W-P43.6 can refresh host confirmation manual packets using these read-only target-owner views.
+W-P43.6 可以基于这些只读 target-owner views 刷新 host confirmation manual packets。
 `;
 }
 
