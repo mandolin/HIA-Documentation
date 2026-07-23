@@ -38,7 +38,9 @@ async function main() {
   const manifest = JSON.parse(await readFile(path.join(extensionRoot, "manifest.json"), "utf8"));
   const devtoolsHtml = await readFile(path.join(extensionRoot, "devtools.html"), "utf8");
   const panelHtml = await readFile(path.join(extensionRoot, "panel.html"), "utf8");
+  const defaultPayload = JSON.parse(await readFile(path.join(extensionRoot, "browser-panel-payload.json"), "utf8"));
   const panel = createHiaDevToolsPanelViewModel(createFixturePayload());
+  const defaultPanel = createHiaDevToolsPanelViewModel(defaultPayload);
   const detail = getHiaDevToolsRelationDetail(panel, "documents-source:entry:api->source:src/api.ts");
   const reviewDetail = getHiaDevToolsReviewDetail(panel, "review-item:proposal:api-doc");
   const message = createHiaDevToolsOpenRequestMessage(detail?.openRequests[0], {
@@ -55,6 +57,12 @@ async function main() {
   assert.match(panelHtml, /<script type="module" src="\.\/panel\.js"><\/script>/u, "Panel page must load a local module script.");
   assert.equal(panel.summary.entryCount, 1, "Fixture entry count must be preserved.");
   assert.equal(panel.summary.relationCount, 1, "Fixture relation count must be preserved.");
+  assert.equal(defaultPanel.summary.entryCount, 1, "Default DevTools payload must keep the panel populated for runtime capture.");
+  assert.equal(defaultPanel.summary.relationCount, 1, "Default DevTools payload must include a relation for open-request capture.");
+  assert.equal(defaultPanel.review.summary.itemCount, 1, "Default DevTools payload must include one review item.");
+  assert.equal(defaultPanel.review.checkedApplyConfirmation.status, "input-ready", "Default DevTools payload must expose checked apply confirmation readiness.");
+  assert.equal(defaultPanel.review.targetOwnerEvidenceView.status, "input-ready", "Default DevTools payload must expose target-owner evidence readiness.");
+  assert.equal(defaultPanel.review.privacy.includesSourceContent, false, "Default DevTools payload must not expose source content.");
   assert.equal(panel.review.contract, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT, "Review surface must expose a stable DevTools contract.");
   assert.equal(panel.review.contractVersion, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION, "Review surface must expose the contract version.");
   assert.equal(panel.review.payloadContract, "hia-documentation-review-payload", "Review surface must consume the review payload contract.");
@@ -201,6 +209,15 @@ async function main() {
       entryCount: panel.summary.entryCount,
       relationCount: panel.summary.relationCount,
       relationNodeCount: panel.summary.relationNodeCount,
+      defaultPayload: {
+        entryCount: defaultPanel.summary.entryCount,
+        relationCount: defaultPanel.summary.relationCount,
+        reviewItemCount: defaultPanel.review.summary.itemCount,
+        checkedApplyStatus: defaultPanel.review.checkedApplyConfirmation.status,
+        targetOwnerEvidenceStatus: defaultPanel.review.targetOwnerEvidenceView.status,
+        includesSourceContent: defaultPanel.review.privacy.includesSourceContent,
+        sourcesContentPolicy: defaultPanel.review.privacy.sourcesContentPolicy
+      },
       openRequestType: message.type,
       reviewSurface: {
         applyAvailableCount: panel.review.items.filter((item) => item.actionHints.applyAvailable === true).length,

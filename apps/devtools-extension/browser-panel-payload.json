@@ -1,0 +1,286 @@
+{
+  "summary": {
+    "entryCount": 1,
+    "linkedEntryCount": 1,
+    "relationCount": 1,
+    "relationNodeCount": 2
+  },
+  "checkedApplyConfirmation": {
+    "checkedApplyAvailable": false,
+    "confirmationChoiceCount": 2,
+    "confirmationReportCount": 2,
+    "directApplyAllowed": false,
+    "directEditObjectCount": 0,
+    "realGuiManualEvidenceRequired": true,
+    "sandboxApplySuccessCount": 2,
+    "status": "input-ready",
+    "targetRepositoryMutation": false,
+    "workspaceWriteAllowed": false
+  },
+  "entries": [
+    {
+      "id": "entry:api",
+      "kind": "symbol",
+      "label": "API",
+      "openRequests": []
+    }
+  ],
+  "relationGraph": {
+    "nodes": [
+      {
+        "id": "entry:api",
+        "kind": "entry",
+        "label": "API"
+      },
+      {
+        "id": "source:src/api.ts",
+        "kind": "source",
+        "label": "src/api.ts",
+        "path": "src/api.ts"
+      }
+    ],
+    "relations": [
+      {
+        "from": "entry:api",
+        "id": "documents-source:entry:api->source:src/api.ts",
+        "kind": "documents-source",
+        "label": "Source: src/api.ts",
+        "openRequests": [
+          {
+            "kind": "original-source",
+            "label": "Open source src/api.ts:1",
+            "target": {
+              "path": "src/api.ts",
+              "position": {
+                "line": 1
+              }
+            },
+            "type": "hia.openSource"
+          }
+        ],
+        "to": "source:src/api.ts"
+      }
+    ]
+  },
+  "hostApplyUx": {
+    "actualRuntimeCaptureExecuted": false,
+    "checkedApplyWriteEnabled": false,
+    "deferredGateVisible": true,
+    "directEditObjectProduced": false,
+    "hostEditorApiCalled": false,
+    "providerNetworkExecuted": false,
+    "providerReviewLinkageVisible": true,
+    "sourceBodyIncluded": false,
+    "sourcesContentPolicy": "none",
+    "status": "input-ready",
+    "surface": "browser-devtools-panel",
+    "targetCommandsExecutedByHia": false,
+    "targetOwnerEvidenceVisible": true,
+    "targetRepositoryMutationAllowed": false,
+    "uxRequirementRefs": [
+      "host-owned-apply-ux",
+      "provider-review-linkage",
+      "target-owner-evidence-view",
+      "rollback-formatter-audit-panel",
+      "multi-host-read-only-projection",
+      "deferred-write-gate-banner",
+      "final-human-confirmation-state",
+      "privacy-source-policy-state"
+    ],
+    "workspaceWriteAllowed": false
+  },
+  "providerAugmentation": {
+    "actionPolicy": {
+      "directApplyAllowed": false,
+      "directEditObjectAllowed": false,
+      "requiresHumanReview": true,
+      "targetRepositoryMutationAllowed": false,
+      "toolExecutionAllowed": false,
+      "workspaceWriteAllowed": false
+    },
+    "contract": "hia-provider-review-payload-augmentation",
+    "contractVersion": "0.1.0-draft",
+    "draftOutputs": [
+      {
+        "id": "runner-draft-output",
+        "proposalId": "provider-proposal-api-doc",
+        "providerOutputId": "draft-output",
+        "target": {
+          "reviewItemId": "review-item-proposal-api-doc"
+        }
+      }
+    ],
+    "provider": {
+      "id": "hia-deterministic-mock",
+      "runtimeKind": "deterministic-mock",
+      "version": "0.1.0"
+    },
+    "refusalOutputs": [],
+    "reviewItemBindings": [
+      {
+        "providerReviewItemId": "review-item-proposal-api-doc",
+        "sourceReviewItemId": "review-item:proposal:api-doc"
+      }
+    ],
+    "reviewMetadata": [
+      {
+        "proposalId": "provider-proposal-api-doc",
+        "providerOutputId": "review-output",
+        "qualitySignals": [
+          "deterministic",
+          "review-only"
+        ],
+        "riskLevel": "low"
+      }
+    ],
+    "status": "success",
+    "privacy": {
+      "includesSourceBody": false,
+      "includesSourcesContent": false,
+      "requiresHumanReview": true,
+      "sourcesContentPolicy": "none"
+    }
+  },
+  "providerReviewPanel": {
+    "blockedProviderReviewShapeAccepted": true,
+    "directApplyAllowed": false,
+    "providerId": "remote-api-provider-template",
+    "providerNetworkExecuted": false,
+    "refusalResultVisible": true,
+    "requiresHumanReview": true,
+    "resultTaxonomyKindCount": 5,
+    "reviewOnlyOutputRequired": true,
+    "sourcesContentPolicy": "none",
+    "status": "input-ready",
+    "targetOwnerHandoffVisible": true,
+    "targetRepositoryMutationAllowed": false,
+    "workspaceWriteAllowed": false
+  },
+  "targetOwnerEvidenceView": {
+    "actualCommandTranscriptSubmitted": false,
+    "actualDryRunExecuted": false,
+    "actualPullRequestCreated": false,
+    "actualTargetBranchCreated": false,
+    "actualTargetSandboxCreated": false,
+    "checkedApplyWriteEnabled": false,
+    "deferredGateCount": 7,
+    "directEditObjectCount": 0,
+    "evidenceCompletenessCheckCount": 12,
+    "handoffBindingReviewCount": 6,
+    "hiaMayModifyTargetRepository": false,
+    "hiaMayRunTargetCommands": false,
+    "inputMode": "target-owner-evidence-read-only",
+    "providerNetworkExecuted": false,
+    "readinessMatrixItemCount": 12,
+    "sourcesContentPolicy": "none",
+    "status": "input-ready",
+    "targetCommandsExecutedByHia": false,
+    "targetOwnerActionRequired": true,
+    "targetOwnerExecutionClaimed": false,
+    "targetOwnerMaterialReady": true,
+    "targetOwnerMaySubmitEvidence": true,
+    "targetRepositoryMutationAllowed": false,
+    "transcriptStepReviewCount": 16,
+    "workspaceWriteAllowed": false
+  },
+  "reviewPayload": {
+    "actionPolicy": {
+      "allowedActions": [
+        "review",
+        "copy-draft",
+        "preview-edit-candidate"
+      ],
+      "deniedActions": [
+        "apply-workspace-edit"
+      ]
+    },
+    "contract": "hia-documentation-review-payload",
+    "contractVersion": "0.1.0-draft",
+    "draftCount": 1,
+    "items": [
+      {
+        "actionHints": {
+          "applyAvailable": false,
+          "copyDraftAvailable": true,
+          "editCandidatePreviewAvailable": true,
+          "openContextAvailable": true
+        },
+        "contextLinks": {
+          "docSourceMapEntryCount": 1,
+          "projectEntryCount": 1,
+          "relationCount": 1
+        },
+        "draft": {
+          "draftKind": "documentation-stub",
+          "text": "TODO: Review API documentation.",
+          "textFormat": "plain-text"
+        },
+        "editCandidate": {
+          "applyMode": "host-preview-only",
+          "applyPreflight": {
+            "conflictStatus": "not-checked",
+            "contract": "hia-documentation-edit-apply-preflight",
+            "contractVersion": "0.1.0-draft",
+            "id": "apply-preflight:proposal:api-doc",
+            "limitations": [
+              "host-file-read-required",
+              "file-version-not-read",
+              "conflict-status-not-checked",
+              "rollback-record-required-before-apply"
+            ],
+            "requiresConflictCheck": true,
+            "requiresFileRead": true,
+            "rollbackRecordRequired": true,
+            "rollbackStrategy": "host-undo",
+            "status": "requires-host-check",
+            "targetFileCount": 1
+          },
+          "diffPreview": {
+            "contract": "hia-documentation-edit-diff-preview",
+            "contractVersion": "0.1.0-draft",
+            "executable": false,
+            "operationCount": 1,
+            "operations": [
+              {
+                "op": "insert-doc-comment",
+                "path": "src/api.ts",
+                "pointer": "/symbols/api"
+              }
+            ],
+            "requiresConflictCheck": true,
+            "requiresFileRead": true,
+            "status": "preview-only",
+            "targetKind": "source-docline-draft"
+          },
+          "kind": "source-docline-draft",
+          "previewText": "Adds a review-only documentation draft.",
+          "status": "preview-only",
+          "workspaceEditBoundary": "none"
+        },
+        "id": "review-item:proposal:api-doc",
+        "kind": "missing-documentation",
+        "proposalId": "proposal:api-doc",
+        "quality": {
+          "blocked": 0,
+          "pass": 1,
+          "warning": 0
+        },
+        "riskLevel": "low",
+        "status": "review-required",
+        "targetLabel": "API",
+        "title": "Review API documentation"
+      }
+    ],
+    "privacy": {
+      "allowsAutomaticWrites": false,
+      "includesSourceContent": false,
+      "requiresHumanReview": true,
+      "sourcesContentPolicy": "none"
+    },
+    "summary": {
+      "blockedCount": 0,
+      "itemCount": 1,
+      "reviewRequiredCount": 1
+    }
+  }
+}

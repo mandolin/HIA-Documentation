@@ -336,7 +336,7 @@ function dispatchOpenRequestToInspectedWindow(message, requestType) {
 
   inspectedWindow.eval(createHiaDevToolsInspectedWindowBridgeExpression(message), (result, exceptionInfo) => {
     if (exceptionInfo?.isException || exceptionInfo?.isError) {
-      renderOpenLog(`${message.type}: ${requestType}; inspectedWindow bridge failed: ${formatBridgeException(exceptionInfo)}`);
+      renderOpenLog(`${message.type}: ${requestType}; inspectedWindow bridge failed: ${formatBridgeException(exceptionInfo)}; retry with a local HTTP inspected page.`);
       return;
     }
 
@@ -366,13 +366,20 @@ function escapeHtml(value) {
 }
 
 function formatBridgeException(exceptionInfo) {
-  if (typeof exceptionInfo?.description === "string" && exceptionInfo.description.length > 0) {
-    return exceptionInfo.description;
+  const description = typeof exceptionInfo?.description === "string" ? exceptionInfo.description : "";
+  const value = typeof exceptionInfo?.value === "string" ? exceptionInfo.value : "";
+
+  if (description.length > 0 && value.length > 0) {
+    return description.replaceAll("%s", value);
   }
 
-  if (typeof exceptionInfo?.value === "string" && exceptionInfo.value.length > 0) {
-    return exceptionInfo.value;
+  if (description.length > 0 && !description.includes("%s")) {
+    return description;
   }
 
-  return "unknown bridge error";
+  if (value.length > 0) {
+    return value;
+  }
+
+  return "Operation failed";
 }
