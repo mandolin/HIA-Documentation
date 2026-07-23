@@ -366,6 +366,7 @@ function createManualChecklist({ command, frozenVscodePacket, launchCommandTempl
       "运行 pnpm run wp44:vscode-manual-capture:evidence 刷新本 packet。",
       "运行 pnpm run build，确保 extension 与 language server 为当前构建。",
       "使用本 packet 的 launch command template 启动 VS Code。",
+      "关闭 Welcome / Recent 视图，或切换到不会显示本地路径的空白编辑区；截图中不得出现本地绝对路径。",
       "在 Extension Development Host 中打开命令面板。",
       `运行 ${command.title}。`,
       "在命令可见时采集 command-palette 截图。",
@@ -411,6 +412,7 @@ function createEvidenceIntakeTemplate({ command, requiredArtifacts }) {
       "credential value",
       "digest value",
       "本地绝对路径",
+      "VS Code Welcome / Recent 中显示的本地路径",
       "目标命令输出正文",
       "sourcesContent",
       "direct edit payload"
