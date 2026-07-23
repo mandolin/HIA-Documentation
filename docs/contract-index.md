@@ -73,6 +73,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | W-P44 closeout downstream inputs | `scripts/prepare-wp44-closeout-downstream-inputs.mjs` | `0.1.0-draft` |
 | W-P45 controlled provider execution intake | `scripts/prepare-wp45-controlled-provider-execution-intake.mjs` | `0.1.0-draft` |
 | W-P45 provider execution boundary contract | `scripts/prepare-wp45-provider-execution-boundary-contract.mjs` | `0.1.0-draft` |
+| W-P45 concrete provider identity package pin | `scripts/prepare-wp45-concrete-provider-identity-package-pin.mjs` | `0.1.0-draft` |
 | Controlled remote provider smoke intake evidence | `scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs` | `0.1.0-draft` |
 | Remote provider candidate selection evidence | `scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs` | `0.1.0-draft` |
 | Secret reference and network consent evidence | `scripts/prepare-wp40-secret-reference-network-consent-packet.mjs` | `0.1.0-draft` |
@@ -194,6 +195,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | W-P44 closeout downstream inputs | `main-repo` scripts | W-P44 closeout evidence summarizing readiness, manual observations, Visual Studio route decision, normalized slots and redaction ledger into explicit W-P45/W-P46/W-P47/G-VS/C-HIA-P3 inputs without granting provider, target-owner or checked apply authority. |
 | W-P45 controlled provider execution intake | `main-repo` scripts | W-P45.1 evidence reconciling W-P44 host visibility, W-P40 blocked provider smoke and W-P36 provider governance into a concrete execution readiness matrix. It records provider SDK network-contract gaps and execution blockers without running providers, resolving secrets, contacting destinations, exposing source bodies or granting write authority. |
 | W-P45 provider execution boundary contract | `main-repo` scripts | W-P45.2 evidence defining the `host-mediated-remote-provider-execution-envelope` contract. It keeps P1 provider adapters review-only/network-disabled while assigning secret references, destination allowlists, consent, redacted audit and final network-send authority to the host boundary. |
+| W-P45 concrete provider identity package pin | `main-repo` scripts | W-P45.3 evidence selecting the concrete OpenAI Responses API provider identity and immutable `openai@6.48.0` npm package pin. It records registry integrity, signatures, attestation reference, license and repository while keeping secret binding, destination binding, final consent, provider API execution and write authority blocked. |
 | IDE/LSP capability | `@hia-doc/lsp` and IDE shells | Capability ownership, profile-derived authoring data, authoring boundary and resource action/preflight data, consumed by IDE shells. |
 | Visual Studio host skeleton | `apps/visual-studio-extension` | Hybrid host mapping for VisualStudio.Extensibility commands/tool windows and Visual Studio LSP consumption. |
 | JSDoc adapter bridge | `@hia-doc/parser-jsdoc` | Converts JSDoc Integration JSON into core documents and sanitizes metadata. |
