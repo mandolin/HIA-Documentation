@@ -134,6 +134,7 @@
     "wp46:owner-evidence-schema:evidence": "pnpm run wp46:target-owner-intake:evidence && node scripts/prepare-wp46-owner-provided-evidence-packet-schema.mjs",
     "wp46:evidence-redaction-validator:evidence": "pnpm run wp46:owner-evidence-schema:evidence && node scripts/prepare-wp46-evidence-redaction-privacy-validator.mjs",
     "wp46:host-review-projection:evidence": "pnpm run wp46:evidence-redaction-validator:evidence && pnpm --filter @hia-doc/vscode-extension test && pnpm run devtools:check && pnpm run visual-studio:check && node scripts/prepare-wp46-host-review-projection-owner-evidence.mjs",
+    "wp46:adoption-trial-matrix:evidence": "pnpm run wp46:host-review-projection:evidence && node scripts/prepare-wp46-adoption-trial-scenario-matrix.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
