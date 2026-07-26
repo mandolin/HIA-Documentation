@@ -11,6 +11,7 @@ export const HIA_DEVTOOLS_TARGET_COLLABORATION_CONTRACT = "hia-devtools-target-c
 export const HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT = "hia-devtools-host-apply-ux-summary";
 export const HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT = "hia-devtools-provider-review-linkage-panel";
 export const HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT = "hia-devtools-target-owner-evidence-view";
+export const HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT = "hia-devtools-authoring-projection-summary";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -55,6 +56,7 @@ export function createHiaDevToolsPanelViewModel(payload) {
  * @returns {{
  *   actionPolicy: { allowedActions: string[]; deniedActions: string[] };
  *   applyPreview: { applyAvailable: boolean; candidateCount: number; checkedApply: boolean; conflictStatus: string; hostCheckPreflightCount: number; hostFileRead: boolean; hostWrite: boolean; rollbackRecordRequiredCount: number; status: string; targetFileCount: number; targetRepositoryMutation: boolean };
+ *   authoringProjection: { authoringModeCount: number; canonicalMarkerCount: number; changedScopePreviewVisible: boolean; contract: string; coverageRemediationVisible: boolean; fixtureGuidanceVisible: boolean; hostEditorApiCalled: boolean; inputMode: string; providerNetworkExecuted: boolean; sourceBodyIncluded: boolean; sourcesContentPolicy: string; status: string; workspaceWriteAllowed: boolean };
  *   checkedApplyConfirmation: { contract: string; status: string; confirmationChoiceCount: number; confirmationReportCount: number; checkedApplyAvailable: boolean; workspaceWriteAllowed: boolean; targetRepositoryMutation: boolean; directApplyAllowed: boolean; directEditObjectCount: number; realGuiManualEvidenceRequired: boolean };
  *   contract: string;
  *   contractVersion: string;
@@ -96,6 +98,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
       deniedActions: stringArray(actionPolicy.deniedActions)
     },
     applyPreview: createDevToolsApplyPreviewSummary(items),
+    authoringProjection: createDevToolsAuthoringProjectionSummary(input),
     checkedApplyConfirmation: createDevToolsCheckedApplyConfirmationSummary(input),
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
     contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
@@ -195,6 +198,29 @@ function createDevToolsHostApplyUxSummary(payload) {
     targetOwnerEvidenceVisible: booleanValue(input?.targetOwnerEvidenceVisible) ?? false,
     targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? false,
     uxRequirementRefCount: stringArray(input?.uxRequirementRefs).length,
+    workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
+  };
+}
+
+function createDevToolsAuthoringProjectionSummary(payload) {
+  const input = selectAuthoringProjection(payload);
+  const canonicalMarkers = stringArray(input?.canonicalMarkers);
+
+  return {
+    authoringModeCount: numberValue(input?.authoringModeCount) ?? 0,
+    canonicalMarkerCount: canonicalMarkers.length,
+    changedScopePreviewVisible: booleanValue(input?.changedScopePreviewVisible) ?? false,
+    checkedApplyWriteEnabled: booleanValue(input?.checkedApplyWriteEnabled) ?? false,
+    contract: HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT,
+    coverageRemediationVisible: booleanValue(input?.coverageRemediationVisible) ?? false,
+    fixtureGuidanceVisible: booleanValue(input?.fixtureGuidanceVisible) ?? false,
+    hostEditorApiCalled: booleanValue(input?.hostEditorApiCalled) ?? false,
+    inputMode: stringValue(input?.inputMode) ?? "devtools-authoring-projection-read-only",
+    providerNetworkExecuted: booleanValue(input?.providerNetworkExecuted) ?? false,
+    sourceBodyIncluded: booleanValue(input?.sourceBodyIncluded) ?? false,
+    sourcesContentPolicy: stringValue(input?.sourcesContentPolicy) ?? "none",
+    status: stringValue(input?.status) ?? "not-available",
+    targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? false,
     workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
   };
 }
@@ -450,6 +476,20 @@ function selectHostApplyUx(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.hostApplyUx)) {
     return input.result.hostApplyUx;
+  }
+
+  return undefined;
+}
+
+function selectAuthoringProjection(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.authoringProjection)) {
+    return input.authoringProjection;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.authoringProjection)) {
+    return input.result.authoringProjection;
   }
 
   return undefined;

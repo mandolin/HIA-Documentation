@@ -81,6 +81,7 @@ async function main() {
       editDiffPreviewContract: reviewSurface.surface.editDiffPreviewContract,
       editApplyPreflightContract: reviewSurface.surface.editApplyPreflightContract,
       applyPreview: reviewSurface.applyPreview,
+      authoringProjection: reviewSurface.authoringProjection,
       checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
       hostApplyUx: reviewSurface.hostApplyUx,
       providerReviewPanel: reviewSurface.providerReviewPanel,
@@ -236,6 +237,24 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.hostApplyUx?.hostEditorApiCalled, false, "Visual Studio host apply UX must not claim editor API calls.");
   assert.equal(reviewSurface?.hostApplyUx?.sourcesContentPolicy, "none", "Visual Studio host apply UX must preserve sourcesContent none.");
   assert.ok(Array.isArray(reviewSurface?.hostApplyUx?.requiredFields) && reviewSurface.hostApplyUx.requiredFields.includes("hostApplyUx.providerReviewLinkageVisible"), "Visual Studio host apply UX must require visible linkage fields.");
+  assert.equal(reviewSurface?.authoringProjection?.contract, "hia-visual-studio-authoring-projection", "Visual Studio authoring projection contract must be explicit.");
+  assert.equal(reviewSurface?.authoringProjection?.status, "input-ready", "Visual Studio authoring projection must expose readiness.");
+  assert.equal(reviewSurface?.authoringProjection?.inputMode, "visual-studio-authoring-projection-read-only", "Visual Studio authoring projection must stay read-only.");
+  assert.equal(reviewSurface?.authoringProjection?.sourceContract, "hia-wp50-vscode-authoring-surface@0.1.0-draft", "Visual Studio authoring projection must point back to the VS Code baseline contract.");
+  assert.deepEqual(reviewSurface?.authoringProjection?.canonicalMarkers, ["@lang", "<lang>", "<l>"], "Visual Studio authoring projection must expose canonical markers.");
+  assert.deepEqual(reviewSurface?.authoringProjection?.dotnetXmlMarkers, ["<lang>", "<l>"], "Visual Studio authoring projection must expose DotNet XML markers.");
+  assert.equal(reviewSurface?.authoringProjection?.authoringModeCount, 5, "Visual Studio authoring projection must expose authoring mode count.");
+  assert.equal(reviewSurface?.authoringProjection?.changedScopePreviewVisible, true, "Visual Studio authoring projection must show changed-scope preview.");
+  assert.equal(reviewSurface?.authoringProjection?.coverageRemediationVisible, true, "Visual Studio authoring projection must show coverage remediation.");
+  assert.equal(reviewSurface?.authoringProjection?.fixtureGuidanceVisible, true, "Visual Studio authoring projection must show fixture guidance.");
+  assert.equal(reviewSurface?.authoringProjection?.checkedApplyWriteEnabled, false, "Visual Studio authoring projection must keep checked apply disabled.");
+  assert.equal(reviewSurface?.authoringProjection?.workspaceWriteAvailable, false, "Visual Studio authoring projection must keep workspace write disabled.");
+  assert.equal(reviewSurface?.authoringProjection?.targetRepositoryMutation, false, "Visual Studio authoring projection must keep target mutation disabled.");
+  assert.equal(reviewSurface?.authoringProjection?.hostEditorApiCalled, false, "Visual Studio authoring projection must not claim host editor API calls.");
+  assert.equal(reviewSurface?.authoringProjection?.providerNetworkExecuted, false, "Visual Studio authoring projection must not claim provider network execution.");
+  assert.equal(reviewSurface?.authoringProjection?.sourceBodyIncluded, false, "Visual Studio authoring projection must not expose source bodies.");
+  assert.equal(reviewSurface?.authoringProjection?.sourcesContentPolicy, "none", "Visual Studio authoring projection must preserve sourcesContent none.");
+  assert.ok(Array.isArray(reviewSurface?.authoringProjection?.requiredFields) && reviewSurface.authoringProjection.requiredFields.includes("authoringProjection.checkedApplyWriteEnabled"), "Visual Studio authoring projection must require write-disabled state.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");
@@ -246,6 +265,7 @@ function assertReviewSurface(contract, reviewSurface) {
   assertSurfaceView(reviewSurface, "target-collaboration");
   assertSurfaceView(reviewSurface, "target-owner-evidence-view");
   assertSurfaceView(reviewSurface, "host-apply-ux");
+  assertSurfaceView(reviewSurface, "authoring-projection");
   assertAction(reviewSurface, "copy-draft", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "open-context", { mutatesTargetRepository: false });
   assertAction(reviewSurface, "apply-candidate", {

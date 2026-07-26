@@ -87,7 +87,8 @@ function renderSummary() {
     ["Confirmations", state.model.review.checkedApplyConfirmation.confirmationReportCount],
     ["Owner Evidence", state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount],
     ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
-    ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount]
+    ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount],
+    ["Authoring", state.model.review.authoringProjection.authoringModeCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -238,6 +239,7 @@ function renderReviewDetail() {
       <dt>Owner Evidence</dt><dd>${escapeHtml(`${state.model.review.targetOwnerEvidenceView.status} / checks:${state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount}`)}</dd>
       <dt>Target Flow</dt><dd>${escapeHtml(`${state.model.review.targetCollaboration.status} / modes:${state.model.review.targetCollaboration.collaborationModeCount}`)}</dd>
       <dt>Host UX</dt><dd>${escapeHtml(`${state.model.review.hostApplyUx.status} / refs:${state.model.review.hostApplyUx.uxRequirementRefCount}`)}</dd>
+      <dt>Authoring</dt><dd>${escapeHtml(`${state.model.review.authoringProjection.status} / modes:${state.model.review.authoringProjection.authoringModeCount}`)}</dd>
       <dt>Apply</dt><dd>disabled</dd>
     </dl>
   `;
@@ -275,7 +277,11 @@ function formatReviewCandidatePreview(item) {
     `Target collaboration: ${state.model.review.targetCollaboration.status}`,
     `Collaboration modes: ${state.model.review.targetCollaboration.collaborationModeCount}`,
     `Host apply UX: ${state.model.review.hostApplyUx.status}`,
-    `Host UX requirement refs: ${state.model.review.hostApplyUx.uxRequirementRefCount}`
+    `Host UX requirement refs: ${state.model.review.hostApplyUx.uxRequirementRefCount}`,
+    `Authoring projection: ${state.model.review.authoringProjection.status}`,
+    `Authoring modes: ${state.model.review.authoringProjection.authoringModeCount}`,
+    `Canonical markers: ${state.model.review.authoringProjection.canonicalMarkerCount}`,
+    `Changed-scope preview: ${state.model.review.authoringProjection.changedScopePreviewVisible ? "visible" : "not visible"}`
   ];
 
   for (const operation of item.editCandidate.diffPreview.operations) {

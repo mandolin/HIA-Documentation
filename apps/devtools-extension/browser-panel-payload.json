@@ -89,6 +89,26 @@
     ],
     "workspaceWriteAllowed": false
   },
+  "authoringProjection": {
+    "status": "input-ready",
+    "inputMode": "devtools-authoring-projection-read-only",
+    "canonicalMarkers": [
+      "@lang",
+      "<lang>",
+      "<l>"
+    ],
+    "authoringModeCount": 5,
+    "changedScopePreviewVisible": true,
+    "coverageRemediationVisible": true,
+    "fixtureGuidanceVisible": true,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAllowed": false,
+    "targetRepositoryMutationAllowed": false,
+    "hostEditorApiCalled": false,
+    "providerNetworkExecuted": false,
+    "sourceBodyIncluded": false,
+    "sourcesContentPolicy": "none"
+  },
   "providerAugmentation": {
     "actionPolicy": {
       "directApplyAllowed": false,

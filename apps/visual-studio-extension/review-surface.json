@@ -172,6 +172,40 @@
       "hostApplyUx.checkedApplyWriteEnabled"
     ]
   },
+  "authoringProjection": {
+    "contract": "hia-visual-studio-authoring-projection",
+    "status": "input-ready",
+    "inputMode": "visual-studio-authoring-projection-read-only",
+    "sourceContract": "hia-wp50-vscode-authoring-surface@0.1.0-draft",
+    "canonicalMarkers": [
+      "@lang",
+      "<lang>",
+      "<l>"
+    ],
+    "dotnetXmlMarkers": [
+      "<lang>",
+      "<l>"
+    ],
+    "authoringModeCount": 5,
+    "changedScopePreviewVisible": true,
+    "coverageRemediationVisible": true,
+    "fixtureGuidanceVisible": true,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "hostEditorApiCalled": false,
+    "providerNetworkExecuted": false,
+    "sourceBodyIncluded": false,
+    "sourcesContentPolicy": "none",
+    "requiredFields": [
+      "authoringProjection.status",
+      "authoringProjection.canonicalMarkers",
+      "authoringProjection.authoringModeCount",
+      "authoringProjection.changedScopePreviewVisible",
+      "authoringProjection.fixtureGuidanceVisible",
+      "authoringProjection.checkedApplyWriteEnabled"
+    ]
+  },
   "views": [
     {
       "id": "review-list",
@@ -289,6 +323,20 @@
         "hostApplyUx.targetOwnerEvidenceVisible",
         "hostApplyUx.deferredGateVisible",
         "hostApplyUx.checkedApplyWriteEnabled"
+      ]
+    },
+    {
+      "id": "authoring-projection",
+      "title": "Authoring Projection",
+      "purpose": "Show canonical locale markers, changed-scope preview, coverage remediation and fixture guidance without granting editor write authority.",
+      "requiredFields": [
+        "authoringProjection.status",
+        "authoringProjection.canonicalMarkers",
+        "authoringProjection.authoringModeCount",
+        "authoringProjection.changedScopePreviewVisible",
+        "authoringProjection.coverageRemediationVisible",
+        "authoringProjection.fixtureGuidanceVisible",
+        "authoringProjection.sourcesContentPolicy"
       ]
     }
   ],

@@ -9,6 +9,7 @@ const evidencePath = path.join(rootDir, "dist", "devtools-extension-check.json")
 
 const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
+  HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT,
   HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
   HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
   HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT,
@@ -62,6 +63,7 @@ async function main() {
   assert.equal(defaultPanel.review.summary.itemCount, 1, "Default DevTools payload must include one review item.");
   assert.equal(defaultPanel.review.checkedApplyConfirmation.status, "input-ready", "Default DevTools payload must expose checked apply confirmation readiness.");
   assert.equal(defaultPanel.review.targetOwnerEvidenceView.status, "input-ready", "Default DevTools payload must expose target-owner evidence readiness.");
+  assert.equal(defaultPanel.review.authoringProjection.status, "input-ready", "Default DevTools payload must expose authoring projection readiness.");
   assert.equal(defaultPanel.review.privacy.includesSourceContent, false, "Default DevTools payload must not expose source content.");
   assert.equal(panel.review.contract, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT, "Review surface must expose a stable DevTools contract.");
   assert.equal(panel.review.contractVersion, HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION, "Review surface must expose the contract version.");
@@ -111,6 +113,21 @@ async function main() {
   assert.equal(panel.review.hostApplyUx.hostEditorApiCalled, false, "Review surface must not claim host editor API calls.");
   assert.equal(panel.review.hostApplyUx.sourceBodyIncluded, false, "Review surface must not expose source bodies.");
   assert.equal(panel.review.hostApplyUx.sourcesContentPolicy, "none", "Review surface must preserve sourcesContent default none.");
+  assert.equal(panel.review.authoringProjection.contract, HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT, "Review surface must expose authoring projection contract.");
+  assert.equal(panel.review.authoringProjection.status, "input-ready", "Review surface must expose authoring projection readiness.");
+  assert.equal(panel.review.authoringProjection.inputMode, "devtools-authoring-projection-read-only", "Authoring projection must stay read-only.");
+  assert.equal(panel.review.authoringProjection.canonicalMarkerCount, 3, "Authoring projection must expose canonical locale markers.");
+  assert.equal(panel.review.authoringProjection.authoringModeCount, 5, "Authoring projection must expose authoring mode count.");
+  assert.equal(panel.review.authoringProjection.changedScopePreviewVisible, true, "Authoring projection must expose changed-scope preview.");
+  assert.equal(panel.review.authoringProjection.coverageRemediationVisible, true, "Authoring projection must expose coverage remediation.");
+  assert.equal(panel.review.authoringProjection.fixtureGuidanceVisible, true, "Authoring projection must expose fixture guidance.");
+  assert.equal(panel.review.authoringProjection.checkedApplyWriteEnabled, false, "Authoring projection must keep checked apply write disabled.");
+  assert.equal(panel.review.authoringProjection.workspaceWriteAllowed, false, "Authoring projection must keep workspace writes disabled.");
+  assert.equal(panel.review.authoringProjection.targetRepositoryMutationAllowed, false, "Authoring projection must keep target mutation disabled.");
+  assert.equal(panel.review.authoringProjection.hostEditorApiCalled, false, "Authoring projection must not claim host editor API calls.");
+  assert.equal(panel.review.authoringProjection.providerNetworkExecuted, false, "Authoring projection must not claim provider network execution.");
+  assert.equal(panel.review.authoringProjection.sourceBodyIncluded, false, "Authoring projection must not expose source bodies.");
+  assert.equal(panel.review.authoringProjection.sourcesContentPolicy, "none", "Authoring projection must preserve sourcesContent none.");
   assert.equal(panel.review.provider.contract, "hia-provider-review-payload-augmentation", "Review surface must expose provider augmentation contract.");
   assert.equal(panel.review.provider.providerId, "hia-deterministic-mock", "Review surface must expose provider identity.");
   assert.equal(panel.review.provider.draftOutputCount, 1, "Review surface must summarize provider drafts.");
@@ -215,6 +232,7 @@ async function main() {
         reviewItemCount: defaultPanel.review.summary.itemCount,
         checkedApplyStatus: defaultPanel.review.checkedApplyConfirmation.status,
         targetOwnerEvidenceStatus: defaultPanel.review.targetOwnerEvidenceView.status,
+        authoringProjectionStatus: defaultPanel.review.authoringProjection.status,
         includesSourceContent: defaultPanel.review.privacy.includesSourceContent,
         sourcesContentPolicy: defaultPanel.review.privacy.sourcesContentPolicy
       },
@@ -222,6 +240,7 @@ async function main() {
       reviewSurface: {
         applyAvailableCount: panel.review.items.filter((item) => item.actionHints.applyAvailable === true).length,
         applyPreview: panel.review.applyPreview,
+        authoringProjection: panel.review.authoringProjection,
         contract: panel.review.contract,
         contractVersion: panel.review.contractVersion,
         draftCount: panel.review.draftCount,
@@ -335,6 +354,26 @@ function createFixturePayload() {
         "final-human-confirmation-state",
         "privacy-source-policy-state"
       ],
+      workspaceWriteAllowed: false
+    },
+    authoringProjection: {
+      authoringModeCount: 5,
+      canonicalMarkers: [
+        "@lang",
+        "<lang>",
+        "<l>"
+      ],
+      changedScopePreviewVisible: true,
+      checkedApplyWriteEnabled: false,
+      coverageRemediationVisible: true,
+      fixtureGuidanceVisible: true,
+      hostEditorApiCalled: false,
+      inputMode: "devtools-authoring-projection-read-only",
+      providerNetworkExecuted: false,
+      sourceBodyIncluded: false,
+      sourcesContentPolicy: "none",
+      status: "input-ready",
+      targetRepositoryMutationAllowed: false,
       workspaceWriteAllowed: false
     },
     providerAugmentation: {
