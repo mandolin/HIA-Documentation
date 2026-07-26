@@ -30,6 +30,13 @@ export const HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND = "hia.showChec
  * 中文：VS Code 中用于查看 W-P43 host-owned apply UX intake 证据的只读命令标识。
  */
 export const HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND = "hia.showHostApplyUxIntake";
+/**
+ * VS Code read-only command id for inspecting W-P50 authoring surface evidence.
+ *
+ * @lang zh-CN VS Code 中用于查看 W-P50 authoring surface 证据的只读命令标识。
+ * @lang en Read-only VS Code command id for inspecting W-P50 authoring surface evidence.
+ */
+export const HIA_SHOW_AUTHORING_SURFACE_COMMAND = "hia.showAuthoringSurface";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -768,6 +775,90 @@ export interface HiaHostApplyUxSurfaceChoice {
   surface: HiaHostApplyUxSurfaceSummary;
 }
 
+/**
+ * W-P50 VS Code authoring mode summary displayed in the command picker.
+ *
+ * @lang zh-CN 描述一个 VS Code 可见 authoring mode，例如 locale marker、changed-scope preview 或 fixture guidance；它不携带可执行编辑。
+ * @lang en Describes one VS Code-visible authoring mode such as locale markers, changed-scope preview, or fixture guidance; it carries no executable edit.
+ */
+export interface HiaVscodeAuthoringModeSummary {
+  descriptionZh?: string;
+  id?: string;
+  label?: string;
+  priority?: string;
+  sourcePhases?: string[];
+  status?: string;
+  visibleIn?: string[];
+  writeAuthority?: string;
+}
+
+/**
+ * W-P50 VS Code authoring surface shell summary.
+ *
+ * @lang zh-CN 描述 VS Code authoring surface 的命令、可见界面和写入边界；默认保持 write disabled。
+ * @lang en Describes the VS Code authoring surface command, visible areas, and write boundary; it defaults to write disabled.
+ */
+export interface HiaVscodeAuthoringSurfaceSummary {
+  commandId?: string;
+  hostEditorApiCalled?: boolean;
+  id?: string;
+  label?: string;
+  status?: string;
+  visibleSurfaces?: string[];
+  writeAuthority?: string;
+}
+
+/**
+ * W-P50 VS Code authoring surface rollup counters.
+ *
+ * @lang zh-CN 汇总命令注册、可见能力、隐私和 no-write 计数，供输出面板和 evidence 检查复用。
+ * @lang en Summarizes command registration, visible capabilities, privacy, and no-write counters for output-panel and evidence checks.
+ */
+export interface HiaVscodeAuthoringSurfaceRollup {
+  authoringModeCount?: number;
+  checkedApplyTriggeredCount?: number;
+  checkedApplyWriteEnabledCount?: number;
+  commandDeclared?: boolean;
+  hostEditorApiCallCount?: number;
+  markerCompletionVisible?: boolean;
+  sourceBodyIncludedInEvidence?: boolean;
+  sourcesContentPolicy?: string;
+  targetCommandExecutedByHiaCount?: number;
+  targetRepositoryMutationCount?: number;
+  visibleSurfaceCount?: number;
+  vscodeCommandRegistered?: boolean;
+  workspaceWriteAllowedCount?: number;
+}
+
+/**
+ * W-P50 VS Code authoring surface evidence shape consumed by the extension.
+ *
+ * @lang zh-CN 表示 VS Code 插件读取的 W-P50.2 evidence 摘要，只用于展示 authoring guidance，不表示运行时捕获或写入授权。
+ * @lang en Represents the W-P50.2 evidence summary consumed by the VS Code extension for authoring guidance display only, not runtime capture or write authority.
+ */
+export interface HiaVscodeAuthoringSurfaceEvidenceSummary {
+  authoringModes?: HiaVscodeAuthoringModeSummary[];
+  contract?: string;
+  contractVersion?: string;
+  phase?: string;
+  status?: string;
+  summary?: HiaVscodeAuthoringSurfaceRollup;
+  vscodeSurface?: HiaVscodeAuthoringSurfaceSummary;
+}
+
+/**
+ * W-P50 VS Code authoring mode picker item.
+ *
+ * @lang zh-CN QuickPick 中的 authoring mode 选择项，绑定原始 mode summary 以便输出详细报告。
+ * @lang en Authoring mode choice for QuickPick, retaining the source mode summary for detailed reports.
+ */
+export interface HiaVscodeAuthoringSurfaceChoice {
+  description?: string;
+  detail?: string;
+  label: string;
+  mode: HiaVscodeAuthoringModeSummary;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -1425,6 +1516,93 @@ export function createHiaHostApplyUxIntakeReport(
 
   for (const rule of evidence.targetOwnerDisplayRules || []) {
     lines.push(`Target-owner rule / Target-owner 规则: ${rule.id || "unknown"} - ${rule.status || "unknown"}`);
+  }
+
+  return lines;
+}
+
+/**
+ * 将 W-P50 VS Code authoring surface evidence 转成 VS Code picker 选择项。
+ * Converts W-P50 VS Code authoring surface evidence into VS Code picker items.
+ *
+ * @lang zh-CN 这些选择项只展示 authoring guidance，不包含可执行 edit 或 workspace write。
+ * @lang en These choices only display authoring guidance and contain no executable edit or workspace write.
+ */
+export function createHiaVscodeAuthoringSurfaceChoices(
+  evidence: HiaVscodeAuthoringSurfaceEvidenceSummary
+): HiaVscodeAuthoringSurfaceChoice[] {
+  const modes = Array.isArray(evidence.authoringModes) ? evidence.authoringModes : [];
+
+  return modes.map((mode, index) => {
+    const label = mode.label || mode.id || `Authoring mode ${index + 1}`;
+    const status = mode.status || "unknown";
+    const priority = mode.priority || "P?";
+    const writeAuthority = mode.writeAuthority || evidence.vscodeSurface?.writeAuthority || "disabled";
+    const detail = [
+      mode.id,
+      priority,
+      `visible:${mode.visibleIn?.length ?? 0}`,
+      `source:${mode.sourcePhases?.join("+") || "unknown"}`,
+      `write:${writeAuthority}`
+    ]
+      .filter(isNonEmptyString)
+      .join(" | ");
+
+    return {
+      description: `${status}; ${writeAuthority === "disabled" ? "写入禁用 / write disabled" : `write:${writeAuthority}`}`,
+      detail,
+      label,
+      mode
+    };
+  });
+}
+
+/**
+ * 创建 W-P50 VS Code authoring surface 的中英双语可读报告行。
+ * Creates bilingual readable report lines for the W-P50 VS Code authoring surface.
+ *
+ * @lang zh-CN 报告必须让 marker completion、changed-scope preview、fixture guidance 和 no-write 边界同时可见。
+ * @lang en The report must make marker completion, changed-scope preview, fixture guidance, and the no-write boundary visible together.
+ */
+export function createHiaVscodeAuthoringSurfaceReport(
+  evidence: HiaVscodeAuthoringSurfaceEvidenceSummary,
+  mode?: HiaVscodeAuthoringModeSummary
+): string[] {
+  const summary = evidence.summary || {};
+  const surface = evidence.vscodeSurface || {};
+  const selectedMode = mode || evidence.authoringModes?.[0];
+  const lines = [
+    `Evidence / 证据: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status / 状态: ${evidence.status || "unknown"}`,
+    `Phase / 阶段: ${evidence.phase || "unknown"}`,
+    `Surface / 宿主界面: ${surface.label || surface.id || "VS Code Extension"}`,
+    `Command / 命令: ${surface.commandId || HIA_SHOW_AUTHORING_SURFACE_COMMAND}`,
+    `Surface status / 界面状态: ${surface.status || "unknown"}`,
+    `Selected mode / 已选模式: ${selectedMode?.label || selectedMode?.id || "summary"}`,
+    `Mode status / 模式状态: ${selectedMode?.status || "not selected"}`,
+    `Mode priority / 模式优先级: ${selectedMode?.priority || "unknown"}`,
+    `Mode guidance / 模式说明: ${selectedMode?.descriptionZh || "未提供"}`,
+    `Visible surfaces / 可见界面: ${formatOptionalNumber(summary.visibleSurfaceCount ?? surface.visibleSurfaces?.length)}`,
+    `Authoring modes / authoring 模式: ${formatOptionalNumber(summary.authoringModeCount ?? evidence.authoringModes?.length)}`,
+    `Marker completion / marker 补全: ${formatEnabledDisabled(summary.markerCompletionVisible)}`,
+    `Command declared / 命令声明: ${formatYesNo(summary.commandDeclared)}`,
+    `VS Code command registered / VS Code 命令注册: ${formatYesNo(summary.vscodeCommandRegistered)}`,
+    `Checked apply write / checked apply 写入: ${formatDisabledByZero(summary.checkedApplyWriteEnabledCount)}`,
+    `Workspace write / 工作区写入: ${formatDisabledByZero(summary.workspaceWriteAllowedCount)}`,
+    `Target repository mutation / 目标仓库变更: ${formatDisabledByZero(summary.targetRepositoryMutationCount)}`,
+    `Checked apply trigger / checked apply 触发: ${formatDisabledByZero(summary.checkedApplyTriggeredCount)}`,
+    `Target command by HIA / HIA 执行目标命令: ${formatDisabledByZero(summary.targetCommandExecutedByHiaCount)}`,
+    `Host editor API / 宿主编辑器 API: ${formatDisabledByZero(summary.hostEditorApiCallCount)}`,
+    `Sources content policy / 源码正文策略: ${summary.sourcesContentPolicy || "none"}`,
+    `Source bodies / 源码正文: ${summary.sourceBodyIncludedInEvidence ? "included / 已包含" : "not included / 未包含"}`
+  ];
+
+  for (const visibleSurface of surface.visibleSurfaces || []) {
+    lines.push(`Visible surface / 可见界面: ${visibleSurface}`);
+  }
+
+  for (const sourcePhase of selectedMode?.sourcePhases || []) {
+    lines.push(`Source phase / 来源阶段: ${sourcePhase}`);
   }
 
   return lines;

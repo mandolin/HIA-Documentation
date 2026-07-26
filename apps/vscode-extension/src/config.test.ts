@@ -17,6 +17,7 @@ import {
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
+  HIA_SHOW_AUTHORING_SURFACE_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
@@ -26,6 +27,8 @@ import {
   createHiaCheckedApplySandboxConfirmationReport,
   createHiaHostApplyUxIntakeReport,
   createHiaHostApplyUxSurfaceChoices,
+  createHiaVscodeAuthoringSurfaceChoices,
+  createHiaVscodeAuthoringSurfaceReport,
   createHiaDocumentationCheckedApplyConfirmationChoices,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
@@ -77,6 +80,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND).toBe("hia.reviewDocumentationProposals");
     expect(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND).toBe("hia.showCheckedApplySandboxConfirmation");
     expect(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND).toBe("hia.showHostApplyUxIntake");
+    expect(HIA_SHOW_AUTHORING_SURFACE_COMMAND).toBe("hia.showAuthoringSurface");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -773,6 +777,78 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(report).toContain("Workspace write / 工作区写入: disabled");
     expect(report).toContain("Provider network / Provider 网络访问: disabled");
     expect(report).toContain("Source bodies / 源码正文: 未显示在 VS Code host apply UX intake 中。");
+  });
+
+  it("creates VS Code authoring surface choices and reports", () => {
+    const evidence = {
+      authoringModes: [
+        {
+          descriptionZh: "为新增或变更注释提示 @lang、<lang> 与 <l>。",
+          id: "canonical-locale-marker-authoring",
+          label: "Canonical locale markers",
+          priority: "P0",
+          sourcePhases: ["W-P49.1"],
+          status: "visible",
+          visibleIn: ["completion", "hover"],
+          writeAuthority: "disabled"
+        },
+        {
+          descriptionZh: "展示 changed-scope public/exported 节点的注释门禁预览。",
+          id: "changed-scope-preview",
+          label: "Changed-scope preview",
+          priority: "P0",
+          sourcePhases: ["W-P49.3"],
+          status: "visible",
+          visibleIn: ["output", "quickpick"],
+          writeAuthority: "disabled"
+        }
+      ],
+      contract: "hia-wp50-vscode-authoring-surface",
+      contractVersion: "0.1.0-draft",
+      phase: "W-P50.2",
+      status: "ready-for-wp50-devtools-visual-studio-projection",
+      summary: {
+        authoringModeCount: 2,
+        checkedApplyTriggeredCount: 0,
+        checkedApplyWriteEnabledCount: 0,
+        commandDeclared: true,
+        hostEditorApiCallCount: 0,
+        markerCompletionVisible: true,
+        sourceBodyIncludedInEvidence: false,
+        sourcesContentPolicy: "none",
+        targetCommandExecutedByHiaCount: 0,
+        targetRepositoryMutationCount: 0,
+        visibleSurfaceCount: 4,
+        vscodeCommandRegistered: true,
+        workspaceWriteAllowedCount: 0
+      },
+      vscodeSurface: {
+        commandId: "hia.showAuthoringSurface",
+        hostEditorApiCalled: false,
+        id: "vscode-extension",
+        label: "VS Code Extension",
+        status: "surface-visible",
+        visibleSurfaces: ["completion", "hover", "output", "quickpick"],
+        writeAuthority: "disabled"
+      }
+    };
+    const choices = createHiaVscodeAuthoringSurfaceChoices(evidence);
+    const report = createHiaVscodeAuthoringSurfaceReport(evidence, choices[0]?.mode);
+
+    expect(choices).toHaveLength(2);
+    expect(choices[0]).toMatchObject({
+      label: "Canonical locale markers",
+      description: "visible; 写入禁用 / write disabled"
+    });
+    expect(choices[0]?.detail).toContain("source:W-P49.1");
+    expect(report).toContain("Evidence / 证据: hia-wp50-vscode-authoring-surface@0.1.0-draft");
+    expect(report).toContain("Command / 命令: hia.showAuthoringSurface");
+    expect(report).toContain("Selected mode / 已选模式: Canonical locale markers");
+    expect(report).toContain("Marker completion / marker 补全: enabled");
+    expect(report).toContain("Checked apply write / checked apply 写入: disabled");
+    expect(report).toContain("Workspace write / 工作区写入: disabled");
+    expect(report).toContain("Host editor API / 宿主编辑器 API: disabled");
+    expect(report).toContain("Source bodies / 源码正文: not included / 未包含");
   });
 
   it("creates resource action preview reports", () => {

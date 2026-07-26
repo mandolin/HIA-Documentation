@@ -30,6 +30,7 @@ import {
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
+  HIA_SHOW_AUTHORING_SURFACE_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
@@ -39,6 +40,8 @@ import {
   createHiaCheckedApplySandboxConfirmationReport,
   createHiaHostApplyUxIntakeReport,
   createHiaHostApplyUxSurfaceChoices,
+  createHiaVscodeAuthoringSurfaceChoices,
+  createHiaVscodeAuthoringSurfaceReport,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
   createHiaDocumentationReviewItemChoices,
@@ -71,6 +74,8 @@ import {
   type HiaProviderReviewPayloadAugmentationSummary,
   type HiaHostApplyUxIntakeEvidenceSummary,
   type HiaHostApplyUxSurfaceChoice,
+  type HiaVscodeAuthoringSurfaceChoice,
+  type HiaVscodeAuthoringSurfaceEvidenceSummary,
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
@@ -274,6 +279,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const showHostApplyUxIntakeCommand = vscode.commands.registerCommand(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND, async () => {
     await showHiaHostApplyUxIntake(outputChannel);
   });
+  const showAuthoringSurfaceCommand = vscode.commands.registerCommand(HIA_SHOW_AUTHORING_SURFACE_COMMAND, async () => {
+    await showHiaAuthoringSurface(outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
     provideCodeActions(document, _range, codeActionContext) {
       return createHiaCodeActions(document, codeActionContext.diagnostics);
@@ -286,7 +294,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -775,6 +783,75 @@ async function showHiaHostApplyUxIntake(outputChannel: vscode.OutputChannel): Pr
   }
 
   void vscode.window.showInformationMessage("HIA host apply UX intake 已写入输出；apply 仍保持禁用。");
+}
+
+/**
+ * 在 VS Code 中只读展示 W-P50 authoring surface evidence。
+ * Show W-P50 authoring surface evidence read-only in VS Code.
+ *
+ * 中文：该入口用于把 `@lang` marker、changed-scope preview 和 fixture-aware
+ * guidance 作为宿主可见 authoring 信息投射出来；不调用 VS Code edit API，
+ * 不写入 workspace，也不修改目标项目。
+ * English: This entry projects `@lang` markers, changed-scope previews and
+ * fixture-aware guidance as host-visible authoring information. It never calls
+ * the VS Code edit API, writes the workspace or mutates target projects.
+ */
+async function showHiaAuthoringSurface(outputChannel: vscode.OutputChannel): Promise<void> {
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open the HIA main repo workspace before showing authoring surface evidence.");
+    return;
+  }
+
+  const evidencePath = path.join(workspaceRoot, "dist", "wp50-vscode-authoring-surface", "evidence.json");
+  let evidence: HiaVscodeAuthoringSurfaceEvidenceSummary;
+
+  try {
+    evidence = JSON.parse(await readFile(evidencePath, "utf8")) as HiaVscodeAuthoringSurfaceEvidenceSummary;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA authoring surface evidence / authoring 界面证据读取失败: ${message}`);
+    void vscode.window.showWarningMessage("请先运行 pnpm run wp50:vscode-authoring-surface:evidence，再查看 authoring surface。");
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA authoring surface evidence / authoring 界面证据:");
+
+  const choices = createHiaVscodeAuthoringSurfaceChoices(evidence).map((choice) => ({
+    ...choice,
+    choice
+  }));
+
+  if (choices.length === 0) {
+    for (const line of createHiaVscodeAuthoringSurfaceReport(evidence)) {
+      outputChannel.appendLine(`- ${line}`);
+    }
+
+    void vscode.window.showWarningMessage("No HIA authoring mode is available. See HIA output.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<AuthoringSurfaceQuickPickItem>(
+    choices,
+    {
+      placeHolder: "选择 W-P50 authoring mode / authoring 模式"
+    }
+  );
+
+  if (!selected) {
+    return;
+  }
+
+  outputChannel.appendLine(`已选择 authoring mode / authoring 模式: ${selected.choice.label}`);
+
+  for (const line of createHiaVscodeAuthoringSurfaceReport(evidence, selected.choice.mode)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+
+  void vscode.window.showInformationMessage("HIA authoring surface 已写入输出；checked apply 仍保持禁用。");
 }
 
 /**
@@ -1352,6 +1429,10 @@ interface CheckedApplySandboxConfirmationQuickPickItem extends HiaCheckedApplySa
 
 interface HostApplyUxSurfaceQuickPickItem extends HiaHostApplyUxSurfaceChoice, vscode.QuickPickItem {
   choice: HiaHostApplyUxSurfaceChoice;
+}
+
+interface AuthoringSurfaceQuickPickItem extends HiaVscodeAuthoringSurfaceChoice, vscode.QuickPickItem {
+  choice: HiaVscodeAuthoringSurfaceChoice;
 }
 
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {

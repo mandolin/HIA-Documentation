@@ -159,6 +159,7 @@
     "wp49:self-doc-reference-refresh:evidence": "pnpm run build && pnpm run wp49:self-doc-inventory:evidence && pnpm run wp49:changed-scope-gate:evidence && pnpm run wp49:internal-flow-fixture:evidence && pnpm run wp49:generated-continuity-adr:evidence && node scripts/prepare-wp49-self-doc-reference-refresh.mjs",
     "wp49:closeout:evidence": "pnpm run wp49:self-doc-reference-refresh:evidence && node scripts/prepare-wp49-closeout-wp50-inputs.mjs",
     "wp50:authoring-intake:evidence": "pnpm run wp49:closeout:evidence && node scripts/prepare-wp50-authoring-tooling-intake.mjs",
+    "wp50:vscode-authoring-surface:evidence": "pnpm run wp50:authoring-intake:evidence && pnpm --filter @hia-doc/vscode-extension test && node scripts/prepare-wp50-vscode-authoring-surface.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
