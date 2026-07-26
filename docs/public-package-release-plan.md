@@ -27,18 +27,18 @@ The D3 bootstrap release is complete. All 13 first-publication packages are visi
 | Order | Package | Kind | Target | Status |
 | --- | --- | --- | --- | --- |
 | 10 | `@hia-doc/core` | owner runtime | `0.1.0` | published |
-| 20 | `@hia-doc/config` | owner runtime | `0.1.0` | published |
+| 20 | `@hia-doc/config` | owner runtime | `0.1.1` | published |
 | 20 | `@hia-doc/profile` | owner runtime | `0.1.0` | published |
 | 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` | published |
-| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.0` | published |
+| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.1` | published |
 | 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` | published |
 | 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.1` | published |
 | 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` | published |
 | 40 | `@hia-doc/profiles` | distribution | `0.1.0` | published |
 | 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` | published |
-| 50 | `@hia-doc/schemas` | distribution | `0.1.0` | published |
+| 50 | `@hia-doc/schemas` | distribution | `0.1.1` | published |
 | 60 | `@hia-doc/lsp` | tooling runtime | `0.1.0` | published |
-| 70 | `@hia-doc/cli` | tooling runtime | `0.1.0` | published |
+| 70 | `@hia-doc/cli` | tooling runtime | `0.1.1` | published |
 
 `@hia-doc/vscode-extension` is excluded from this npm train because it should be distributed through VSIX or Marketplace release governance.
 

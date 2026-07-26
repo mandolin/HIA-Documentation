@@ -33,7 +33,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/profile",
@@ -57,7 +57,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 30,
       "kind": "producer-sdk",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/source-linkage",
@@ -105,7 +105,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/lsp",
@@ -121,7 +121,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [

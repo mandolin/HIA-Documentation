@@ -18,16 +18,16 @@ The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an expli
 | Package | Package version | Contract surfaces | Compatibility status |
 | --- | --- | --- | --- |
 | `@hia-doc/core` | private `0.0.0`, target `0.1.0`, MIT | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0` | Active pre-1.0 baseline; public release candidate. |
-| `@hia-doc/config` | private `0.0.0`, target `0.1.0`, MIT | config schema `0.1.0` | Active pre-1.0 baseline; public release candidate. |
+| `@hia-doc/config` | published `0.1.1`, MIT | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
 | `@hia-doc/profile` | private `0.0.0`, target `0.1.0`, MIT | profile schema `0.1.0-draft` | Draft profile runtime baseline; public release candidate. |
 | `@hia-doc/profiles` | private `0.0.0`, target `0.1.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
-| `@hia-doc/plugin-sdk` | private `0.0.0`, target `0.1.0`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; public release candidate. |
-| `@hia-doc/schemas` | private `0.0.0`, target `0.1.0`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; public release candidate. |
+| `@hia-doc/plugin-sdk` | published `0.1.1`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; patch release carries producer result artifact compatibility. |
+| `@hia-doc/schemas` | published `0.1.1`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; patch release carries updated producer-result and project-manifest schemas. |
 | `@hia-doc/source-linkage` | private `0.0.0`, target `0.1.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer/LSP query runtime; public release candidate. |
 | `@hia-doc/parser-jsdoc` | private `0.0.0`, target `0.1.0`, MIT | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
 | `@hia-doc/theme-default` | private `0.0.0`, target `0.1.0`, MIT | default renderer assets | Active renderer asset baseline; public release candidate. |
 | `@hia-doc/renderer-html` | private `0.0.0`, target `0.1.0`, MIT | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Active renderer baseline with single-document and project-page outputs; public release candidate. |
-| `@hia-doc/cli` | private `0.0.0`, target `0.1.0`, MIT | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; public release candidate. |
+| `@hia-doc/cli` | published `0.1.1`, MIT | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; patch release can ingest documentation producer result artifacts into unified HTML output. |
 | `@hia-doc/lsp` | private `0.0.0`, target `0.1.0`, MIT | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline; public release candidate. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 
