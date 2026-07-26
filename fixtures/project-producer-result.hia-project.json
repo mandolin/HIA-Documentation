@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:producer-result",
+    "name": "Producer Result Project",
+    "title": "Producer Result Project Documentation"
+  },
+  "profiles": [
+    {
+      "profileId": "jsdoc",
+      "path": "project-mixed-profiles/jsdoc.profile.json"
+    }
+  ],
+  "inputs": [
+    {
+      "kind": "documentation-producer-result",
+      "path": "project-producer-result/dotnetdoc.producer-result.json",
+      "domain": "dotnet"
+    },
+    {
+      "kind": "jsdoc-integration",
+      "path": "jsdoc-integration.basic.json",
+      "domain": "js",
+      "profile": {
+        "profileId": "jsdoc",
+        "profileVersion": "0.1.0-draft"
+      }
+    }
+  ]
+}

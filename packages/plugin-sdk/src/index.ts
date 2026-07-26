@@ -49,6 +49,7 @@ export interface DocumentationProducerInput {
   kind: string;
   language?: string;
   path: string;
+  [key: string]: unknown;
 }
 
 export interface DocumentationProducerRequest {
@@ -74,6 +75,7 @@ export interface DocumentationProducerContext {
 export interface DocumentationProducerArtifact {
   contract?: string;
   contractVersion?: string;
+  format?: string;
   id: string;
   kind: string;
   language?: string;
@@ -387,7 +389,7 @@ function validateProducerInputs(
       ));
       return;
     }
-    validateKnownFields(input, ["kind", "path", "language"], diagnostics, fieldPath, targetPath);
+    validateProducerInputExtensionFields(input, fieldPath, diagnostics, targetPath);
     validateOpenIdentifier(input.kind, `${fieldPath}.kind`, diagnostics, targetPath);
     if (typeof input.kind === "string" && descriptor && !descriptor.inputKinds.includes(input.kind)) {
       diagnostics.push(createFieldDiagnostic(
@@ -402,6 +404,37 @@ function validateProducerInputs(
       validateNonEmptyString(input.language, `${fieldPath}.language`, diagnostics, targetPath);
     }
   });
+}
+
+/**
+ * 校验 producer input 扩展字段；路径语义字段仍必须是安全相对路径。
+ * Validates producer input extension fields; path-like fields must remain safe relative paths.
+ */
+function validateProducerInputExtensionFields(
+  input: Record<string, unknown>,
+  fieldPath: string,
+  diagnostics: HiaDiagnostic[],
+  targetPath?: string
+): void {
+  if (!isJsonCompatible(input)) {
+    diagnostics.push(createFieldDiagnostic(
+      "DOCUMENTATION_PRODUCER_REQUEST_INVALID",
+      `${fieldPath} must be JSON-compatible.`,
+      fieldPath,
+      targetPath
+    ));
+    return;
+  }
+
+  for (const [field, value] of Object.entries(input)) {
+    if (value === undefined || field === "kind" || field === "path" || field === "language") {
+      continue;
+    }
+
+    if (isPathLikeFieldName(field)) {
+      validateSafeRelativePath(value, `${fieldPath}.${field}`, diagnostics, targetPath);
+    }
+  }
 }
 
 function validateProducerIdentity(
@@ -462,7 +495,7 @@ function validateProducerArtifacts(
     }
     validateKnownFields(
       artifact,
-      ["id", "kind", "path", "contract", "contractVersion", "language", "mediaType", "profileIds"],
+      ["id", "kind", "path", "contract", "contractVersion", "format", "language", "mediaType", "profileIds"],
       diagnostics,
       fieldPath,
       targetPath
@@ -490,7 +523,7 @@ function validateProducerArtifacts(
       ));
     }
     validateOptionalStringPair(artifact, "contract", "contractVersion", fieldPath, diagnostics, targetPath);
-    for (const field of ["language", "mediaType"] as const) {
+    for (const field of ["format", "language", "mediaType"] as const) {
       if (artifact[field] !== undefined) {
         validateNonEmptyString(artifact[field], `${fieldPath}.${field}`, diagnostics, targetPath);
       }
@@ -650,6 +683,10 @@ function validateKnownFields(
       ));
     }
   }
+}
+
+function isPathLikeFieldName(field: string): boolean {
+  return /(?:path|root|directory)$/iu.test(field);
 }
 
 function validateIdentifierList(

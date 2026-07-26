@@ -18,7 +18,8 @@ import {
   validateHiaProjectManifest,
   type HiaDocsConfig,
   type HiaProjectDocsManifest as ProjectDocsManifest,
-  type HiaProjectManifestInput as ProjectManifestInput
+  type HiaProjectManifestInput as ProjectManifestInput,
+  type HiaProjectManifestProducerInput as ProjectManifestProducerInput
 } from "@hia-doc/config";
 import {
   createBasicFixtureDocument,
@@ -33,8 +34,10 @@ import {
 import { convertJSDocIntegrationToHiaDocumentDetailed } from "@hia-doc/parser-jsdoc";
 import {
   runDocumentationProducer,
+  validateDocumentationProducerResult,
   type DocumentationProducer,
   type DocumentationProducerArtifact,
+  type DocumentationProducerInput,
   type DocumentationProducerResult
 } from "@hia-doc/plugin-sdk";
 import {
@@ -101,7 +104,7 @@ interface ProjectAggregationResult {
     path: string;
     profile?: RenderProjectProfileRef;
     producerId?: string;
-    source?: "manifest" | "producer";
+    source?: RuntimeProjectInputSource;
   }>;
   producerResults?: ProducerRunSummary["results"];
 }
@@ -111,11 +114,13 @@ interface IndexedProjectDocSourceMap {
   input: RuntimeProjectInput;
 }
 
+type RuntimeProjectInputSource = "manifest" | "producer" | "producer-result";
+
 interface RuntimeProjectInput {
   baseDir: string;
   input: ProjectManifestInput;
   producerId?: string;
-  source: "manifest" | "producer";
+  source: RuntimeProjectInputSource;
 }
 
 interface ProducerRunSummary {
@@ -904,6 +909,37 @@ async function aggregateProjectDocs(
       continue;
     }
 
+    if (input.kind === "documentation-producer-result") {
+      const resultDiagnostics = validateDocumentationProducerResult(readResult);
+      diagnostics.push(...resultDiagnostics.map((diagnostic) => createCliDiagnostic(
+        diagnostic.code,
+        diagnostic.message,
+        diagnostic.severity,
+        diagnostic.targetPath ?? diagnostic.path ?? input.path,
+        diagnostic.data
+      )));
+
+      if (resultDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+        continue;
+      }
+
+      const materializedInputs = producerResultToRuntimeInputs(
+        readResult as DocumentationProducerResult,
+        input,
+        inputPath,
+        profileRefs
+      );
+      runtimeInputs.push(...materializedInputs);
+      inputRefs.push(...materializedInputs.map((materializedInput) => ({
+        kind: materializedInput.input.kind ?? "unknown",
+        path: materializedInput.input.path ?? "",
+        ...(materializedInput.input.profile ? { profile: materializedInput.input.profile } : {}),
+        ...(materializedInput.producerId ? { producerId: materializedInput.producerId } : {}),
+        source: materializedInput.source
+      })));
+      continue;
+    }
+
     diagnostics.push(createCliDiagnostic(
       "HIA_CLI_PROJECT_INPUT_KIND_UNSUPPORTED",
       `Unsupported project input kind: ${input.kind}.`,
@@ -990,11 +1026,7 @@ async function runProjectProducers(
       result = await runDocumentationProducer(producer, {
         workspaceRoot: path.resolve(baseDir, producerRef.workspaceRoot ?? "."),
         outputDirectory: producerOutputDir,
-        inputs: (producerRef.inputs ?? []).map((input) => ({
-          kind: input.kind ?? "",
-          path: input.path ?? "",
-          ...(input.language ? { language: input.language } : {})
-        })),
+        inputs: (producerRef.inputs ?? []).map(normalizeProducerInputForRuntime),
         ...(producerRef.options ? { options: producerRef.options } : {}),
         ...(producerRef.profileIds ? { profileIds: producerRef.profileIds } : {})
       });
@@ -1037,6 +1069,18 @@ async function runProjectProducers(
     inputRefs,
     runtimeInputs,
     results
+  };
+}
+
+/**
+ * 保留 manifest 中声明的 producer input 扩展字段，供 DotNetDoc 等 producer 消费。
+ * Preserves producer input extension fields declared by the manifest for producers such as DotNetDoc.
+ */
+function normalizeProducerInputForRuntime(input: ProjectManifestProducerInput): DocumentationProducerInput {
+  return {
+    ...input,
+    kind: input.kind ?? "",
+    path: input.path ?? ""
   };
 }
 
@@ -1146,6 +1190,55 @@ function producerArtifactToRuntimeInput(
     },
     producerId,
     source: "producer"
+  };
+}
+
+/**
+ * 将既有 documentation-producer-result 展开成 project aggregation runtime inputs。
+ * Expands an existing documentation-producer-result into project aggregation runtime inputs.
+ */
+function producerResultToRuntimeInputs(
+  result: DocumentationProducerResult,
+  input: ProjectManifestInput,
+  resultPath: string,
+  profileRefs: RenderProjectProfileRef[]
+): RuntimeProjectInput[] {
+  const resultBaseDir = path.dirname(resultPath);
+  return selectProducerArtifactsForAggregation(result.artifacts)
+    .map((artifact) => producerResultArtifactToRuntimeInput(artifact, result, input, resultBaseDir, profileRefs))
+    .filter((runtimeInput): runtimeInput is RuntimeProjectInput => Boolean(runtimeInput));
+}
+
+function producerResultArtifactToRuntimeInput(
+  artifact: DocumentationProducerArtifact,
+  result: DocumentationProducerResult,
+  input: ProjectManifestInput,
+  resultBaseDir: string,
+  profileRefs: RenderProjectProfileRef[]
+): RuntimeProjectInput | undefined {
+  const inputKind = projectInputKindFromArtifactKind(artifact.kind);
+  if (!inputKind) {
+    return undefined;
+  }
+
+  const artifactPath = normalizeOutputRelativePath(artifact.path);
+  if (isUnsafeOutputRelativePath(artifactPath)) {
+    return undefined;
+  }
+
+  const domain = input.domain ?? domainFromProjectInputKind(inputKind);
+  const profile = input.profile ?? profileFromArtifactProfileIds(artifact.profileIds, profileRefs);
+
+  return {
+    baseDir: resultBaseDir,
+    input: {
+      kind: inputKind,
+      path: artifactPath,
+      ...(domain ? { domain } : {}),
+      ...(profile ? { profile } : {})
+    },
+    producerId: result.producer.id,
+    source: "producer-result"
   };
 }
 

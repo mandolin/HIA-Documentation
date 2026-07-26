@@ -17,7 +17,7 @@ Single-document modes validate the converted core document through `@hia-doc/cor
 
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
-`--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest.
+`--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest. Project manifests can list existing `documentation-producer-result` files when a producer such as DotNetDoc has already emitted artifacts and the CLI only needs to render a unified project page.
 
 In the local workspace, run it through the root script after building:
 

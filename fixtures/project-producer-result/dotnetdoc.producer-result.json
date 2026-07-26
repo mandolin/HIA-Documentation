@@ -1,0 +1,22 @@
+{
+  "contract": "documentation-producer-result",
+  "contractVersion": "0.1.0-draft",
+  "producer": {
+    "id": "dotnetdoc",
+    "version": "0.1.3"
+  },
+  "status": "success",
+  "artifacts": [
+    {
+      "id": "portal-components-hia-document",
+      "kind": "hia-document",
+      "path": "Portal.Components.hia.json",
+      "format": "json",
+      "mediaType": "application/json",
+      "profileIds": [
+        "dotnetdoc"
+      ]
+    }
+  ],
+  "diagnostics": []
+}

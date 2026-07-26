@@ -121,6 +121,36 @@ Then run the HIA CLI from a project that has `@hia-doc/cli` installed:
 npx hia docs build --project-manifest hia-project.json --out dist/hia-docs
 ```
 
+If DotNetDoc has already produced `dotnetdoc.producer-result.json`, the project manifest can consume that existing result directly:
+
+中文：如果 DotNetDoc 已经生成 `dotnetdoc.producer-result.json`，不必重新跑 producer；可以让 HIA project manifest 直接消费这个既有结果，再输出统一 HTML。
+
+```json
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "name": "Portal Documentation"
+  },
+  "inputs": [
+    {
+      "kind": "documentation-producer-result",
+      "path": "temp/documentation/dotnetdoc/dotnetdoc.producer-result.json",
+      "domain": "dotnet"
+    }
+  ]
+}
+```
+
+Add a JSDoc integration input alongside it when the project also has JavaScript documentation:
+
+```json
+{
+  "kind": "jsdoc-integration",
+  "path": "temp/documentation/jsdoc/hia-integration.json",
+  "domain": "js"
+}
+```
+
 ## Verify
 
 Use these checks before publishing generated artifacts:

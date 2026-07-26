@@ -4,7 +4,7 @@ import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@h
 
 export const HIA_PROJECT_MANIFEST_SCHEMA_VERSION = "0.1.0-draft";
 export const HIA_PROJECT_MANIFEST_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json";
-export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map"] as const;
+export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map", "documentation-producer-result"] as const;
 export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "dotnet", "other"] as const;
 
 export type HiaProjectManifestInputKind = typeof HIA_PROJECT_MANIFEST_INPUT_KINDS[number];
@@ -60,6 +60,7 @@ export interface HiaProjectManifestProducerInput {
   kind?: string;
   language?: string;
   path?: string;
+  [key: string]: unknown;
 }
 
 export interface HiaProjectManifestProducerRef {
@@ -131,6 +132,17 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         ]
       }
     },
+    currentOrSafeRelativePath: {
+      type: "string",
+      minLength: 1,
+      not: {
+        anyOf: [
+          { const: ".." },
+          { pattern: "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)" },
+          { pattern: "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)" }
+        ]
+      }
+    },
     project: {
       type: "object",
       required: ["name"],
@@ -174,7 +186,11 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
       properties: {
         kind: { $ref: "#/$defs/nonEmptyString" },
         language: { $ref: "#/$defs/nonEmptyString" },
-        path: { $ref: "#/$defs/safeRelativePath" }
+        path: { $ref: "#/$defs/safeRelativePath" },
+        applicationRoot: { $ref: "#/$defs/currentOrSafeRelativePath" },
+        artifactBasePath: { $ref: "#/$defs/safeRelativePath" },
+        hiaDocumentId: { $ref: "#/$defs/nonEmptyString" },
+        title: { $ref: "#/$defs/nonEmptyString" }
       }
     },
     producer: {
@@ -186,7 +202,7 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         module: { $ref: "#/$defs/safeRelativePath" },
         exportName: { $ref: "#/$defs/nonEmptyString" },
         failureMode: { enum: ["fail", "warn"] },
-        workspaceRoot: { $ref: "#/$defs/safeRelativePath" },
+        workspaceRoot: { $ref: "#/$defs/currentOrSafeRelativePath" },
         outputDirectory: { $ref: "#/$defs/safeRelativePath" },
         inputs: {
           type: "array",
@@ -347,7 +363,7 @@ function validateProducerEntries(value: unknown, targetPrefix: string | undefine
 
     validateRequiredString(item, "id", itemPath, targetPrefix, diagnostics);
     validateSafeOptionalPath(item, "module", itemPath, targetPrefix, diagnostics, true);
-    validateSafeOptionalPath(item, "workspaceRoot", itemPath, targetPrefix, diagnostics, false);
+    validateSafeOptionalPath(item, "workspaceRoot", itemPath, targetPrefix, diagnostics, false, true);
     validateSafeOptionalPath(item, "outputDirectory", itemPath, targetPrefix, diagnostics, false);
 
     if (item.failureMode !== undefined && item.failureMode !== "fail" && item.failureMode !== "warn") {
@@ -383,8 +399,24 @@ function validateProducerEntries(value: unknown, targetPrefix: string | undefine
 
       validateRequiredString(input, "kind", inputPath, targetPrefix, diagnostics);
       validateSafeOptionalPath(input, "path", inputPath, targetPrefix, diagnostics, true);
+      validatePathLikeExtensionFields(input, inputPath, targetPrefix, diagnostics);
     });
   });
+}
+
+function validatePathLikeExtensionFields(
+  item: Record<string, unknown>,
+  itemPath: string,
+  targetPrefix: string | undefined,
+  diagnostics: HiaDiagnostic[]
+): void {
+  for (const field of Object.keys(item)) {
+    if (field === "path" || !isPathLikeFieldName(field)) {
+      continue;
+    }
+
+    validateSafeOptionalPath(item, field, itemPath, targetPrefix, diagnostics, true, field.toLowerCase().endsWith("root"));
+  }
 }
 
 function validateRequiredString(
@@ -410,14 +442,15 @@ function validateSafeOptionalPath(
   itemPath: string,
   targetPrefix: string | undefined,
   diagnostics: HiaDiagnostic[],
-  required: boolean
+  required: boolean,
+  allowCurrentDirectory = false
 ): void {
   const value = item[field];
   if (value === undefined && !required) {
     return;
   }
 
-  if (typeof value !== "string" || value.length === 0 || isUnsafeRelativePath(value)) {
+  if (typeof value !== "string" || value.length === 0 || isUnsafeRelativePath(value, allowCurrentDirectory)) {
     diagnostics.push(createProjectManifestDiagnostic(
       "HIA_PROJECT_MANIFEST_PATH_INVALID",
       `Project docs manifest ${itemPath}.${field} must be a safe relative path.`,
@@ -425,6 +458,10 @@ function validateSafeOptionalPath(
       joinTarget(targetPrefix, `${itemPath}.${field}`)
     ));
   }
+}
+
+function isPathLikeFieldName(field: string): boolean {
+  return /(?:path|root|directory)$/iu.test(field);
 }
 
 function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs", targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
@@ -473,11 +510,11 @@ function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs
   });
 }
 
-function isUnsafeRelativePath(value: string): boolean {
+function isUnsafeRelativePath(value: string, allowCurrentDirectory = false): boolean {
   const normalized = value.replaceAll("\\", "/");
 
   return !normalized
-    || normalized === "."
+    || (!allowCurrentDirectory && normalized === ".")
     || normalized === ".."
     || normalized.startsWith("../")
     || normalized.includes("/../")

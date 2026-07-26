@@ -82,6 +82,9 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
 | `htmdoc-extraction` | HTMDoc extraction artifact. |
 | `cssdoc-extraction` | CSSDoc extraction artifact. |
 | `doc-source-map` | Documentation source map manifest. The CLI indexes it and exposes source/artifact linkage to the renderer. |
+| `documentation-producer-result` | Existing producer result manifest. The CLI expands renderable artifacts such as `hia-document`, `jsdoc-integration`, `htmdoc-extraction`, `cssdoc-extraction` and `doc-source-map` from the result location. |
+
+中文：`documentation-producer-result` 用于“生产器已经跑完，只需要统一渲染”的场景，例如目标项目已经生成 DotNetDoc `dotnetdoc.producer-result.json`，HIA CLI 可以直接从其中展开可渲染 artifact。
 
 ## Producer Modules
 
@@ -123,6 +126,40 @@ Producer output defaults to:
 ```
 
 Artifacts whose kinds are known project input kinds are added to the aggregation result. The generated `hia-manifest.json` records them with `source: "producer"` and the configured `producerId`.
+
+Producer inputs preserve JSON-compatible extension fields. This lets a domain producer receive its own safe metadata, such as DotNetDoc `applicationRoot`, `artifactBasePath`, `hiaDocumentId` and `title`, without forcing the shared project manifest to know every domain-specific option. Path-like extension fields, including names ending in `path`, `root` or `directory`, are still validated as safe relative paths. `workspaceRoot` and `applicationRoot` may be `"."`; artifact paths may not.
+
+中文：producer input 会保留 JSON-compatible 扩展字段，供 DotNetDoc 等领域 producer 消费；但带路径语义的字段仍必须通过安全相对路径校验。`workspaceRoot` / `applicationRoot` 可以是 `"."`，普通 artifact path 不可以。
+
+## Existing Producer Results
+
+Use `documentation-producer-result` when a target project already ran a producer and only needs a unified HTML page from the emitted artifacts.
+
+```json
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "name": "Portal Documentation",
+    "title": "Portal Documentation"
+  },
+  "inputs": [
+    {
+      "kind": "documentation-producer-result",
+      "path": "temp/documentation/dotnetdoc/dotnetdoc.producer-result.json",
+      "domain": "dotnet"
+    },
+    {
+      "kind": "jsdoc-integration",
+      "path": "temp/documentation/jsdoc/hia-integration.json",
+      "domain": "js"
+    }
+  ]
+}
+```
+
+The producer result itself is not rendered as a documentation entry. The CLI validates the result, selects renderable artifacts, resolves artifact paths relative to the producer result file, and records the generated project manifest inputs with `source: "producer-result"` and the producer id. This is the preferred bridge for projects such as HIA-ASPNETPortal that already have DotNetDoc and JSDoc pilot outputs.
+
+中文：producer result 本身不会显示为文档条目；CLI 会校验它、挑出可渲染 artifact，并按 producer result 文件所在目录解析 artifact 路径。生成的 build manifest 会把这些条目标为 `source: "producer-result"`。
 
 If a producer fails, the CLI returns a non-zero exit code by default. Set `"failureMode": "warn"` on a producer entry to keep a partial build while downgrading that producer's errors to warnings.
 

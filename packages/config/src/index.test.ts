@@ -186,6 +186,40 @@ describe("@hia-doc/config", () => {
     expect(diagnostics).toEqual([]);
   });
 
+  it("accepts producer-result inputs and DotNetDoc producer extension fields", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Portal Documentation"
+      },
+      inputs: [
+        {
+          kind: "documentation-producer-result",
+          path: "temp/documentation/dotnetdoc/dotnetdoc.producer-result.json",
+          domain: "dotnet"
+        }
+      ],
+      producers: [
+        {
+          id: "dotnetdoc",
+          module: "node_modules/@hia-doc/dotnetdoc-producer/src/index.mjs",
+          workspaceRoot: ".",
+          inputs: [
+            {
+              kind: "dotnet-xml-doc",
+              path: "src/Portal/bin/Portal.xml",
+              artifactBasePath: "api/Portal",
+              hiaDocumentId: "dotnetdoc:Portal",
+              title: "Portal API"
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(diagnostics).toEqual([]);
+  });
+
   it("rejects empty producer arrays when provided", () => {
     const diagnostics = validateHiaProjectManifest({
       schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,

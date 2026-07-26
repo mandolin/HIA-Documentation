@@ -267,6 +267,57 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("materializes existing producer-result inputs into a unified project page", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-result-project-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-producer-result.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        build?: {
+          inputs: Array<{ kind: string; path: string; producerId?: string; source?: string }>;
+        };
+        project?: {
+          entryCounts: Record<string, number>;
+        };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(html).toContain("Producer Result Project Documentation");
+      expect(html).toContain("PortalSecurity");
+      expect(html).toContain("Portal security helper surface produced by DotNetDoc.");
+      expect(html).toContain("greet");
+      expect(manifest.project?.entryCounts).toMatchObject({ dotnet: 1, js: 2, all: 3 });
+      expect(manifest.build?.inputs).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          kind: "documentation-producer-result",
+          source: "manifest"
+        }),
+        expect.objectContaining({
+          kind: "hia-document",
+          path: "Portal.Components.hia.json",
+          producerId: "dotnetdoc",
+          source: "producer-result"
+        }),
+        expect.objectContaining({
+          kind: "jsdoc-integration",
+          source: "manifest"
+        })
+      ]));
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("prefers a producer HIA document over its equivalent extraction when aggregating a project", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-preferred-hia-document-"));
     const outDir = path.join(root, "docs");

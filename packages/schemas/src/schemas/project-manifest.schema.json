@@ -87,6 +87,23 @@
         ]
       }
     },
+    "currentOrSafeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "const": ".."
+          },
+          {
+            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
+          }
+        ]
+      }
+    },
     "project": {
       "type": "object",
       "required": [
@@ -167,6 +184,18 @@
         },
         "path": {
           "$ref": "#/$defs/safeRelativePath"
+        },
+        "applicationRoot": {
+          "$ref": "#/$defs/currentOrSafeRelativePath"
+        },
+        "artifactBasePath": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "hiaDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "title": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },
@@ -195,7 +224,7 @@
           ]
         },
         "workspaceRoot": {
-          "$ref": "#/$defs/safeRelativePath"
+          "$ref": "#/$defs/currentOrSafeRelativePath"
         },
         "outputDirectory": {
           "$ref": "#/$defs/safeRelativePath"
@@ -233,7 +262,8 @@
             "jsdoc-integration",
             "htmdoc-extraction",
             "cssdoc-extraction",
-            "doc-source-map"
+            "doc-source-map",
+            "documentation-producer-result"
           ]
         },
         "path": {

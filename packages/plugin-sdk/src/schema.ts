@@ -95,6 +95,7 @@ export const DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA = {
           path: { type: "string", minLength: 1 },
           contract: { type: "string", minLength: 1 },
           contractVersion: { type: "string", minLength: 1 },
+          format: { type: "string", minLength: 1 },
           language: { type: "string", minLength: 1 },
           mediaType: { type: "string", minLength: 1 },
           profileIds: {

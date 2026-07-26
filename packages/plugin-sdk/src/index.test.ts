@@ -87,6 +87,50 @@ describe("@hia-doc/plugin-sdk", () => {
     expect(reportProgress).toHaveBeenCalledWith({ phase: "extract", current: 1, total: 1 });
   });
 
+  it("preserves JSON-compatible producer input extension fields", async () => {
+    const produce = vi.fn(async () => createSuccessResult());
+    const producer = createProducer(produce);
+    const result = await runDocumentationProducer(producer, {
+      ...request,
+      inputs: [{
+        kind: "fixture-source",
+        path: "producer/source.fixture",
+        artifactBasePath: "api/Portal.Components",
+        hiaDocumentId: "dotnetdoc:Portal.Components",
+        title: "Portal Components API"
+      }]
+    });
+
+    expect(result.status).toBe("success");
+    expect(produce).toHaveBeenCalledWith(expect.objectContaining({
+      inputs: [
+        expect.objectContaining({
+          artifactBasePath: "api/Portal.Components",
+          hiaDocumentId: "dotnetdoc:Portal.Components",
+          title: "Portal Components API"
+        })
+      ]
+    }), expect.anything());
+  });
+
+  it("rejects unsafe path-like producer input extension fields", () => {
+    expect(validateDocumentationProducerRequest({
+      ...request,
+      inputs: [{
+        kind: "fixture-source",
+        path: "producer/source.fixture",
+        artifactBasePath: "../private"
+      }]
+    }, { descriptor })).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        code: "DOCUMENTATION_PRODUCER_PATH_UNSAFE",
+        data: expect.objectContaining({
+          fieldPath: "request.inputs[0].artifactBasePath"
+        })
+      })
+    ]));
+  });
+
   it("rejects unsafe request input paths before execution", async () => {
     const produce = vi.fn(async () => createSuccessResult());
     const producer = createProducer(produce);

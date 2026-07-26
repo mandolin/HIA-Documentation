@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "dotnetdoc:Portal.Components",
+  "title": "Portal Components API",
+  "defaultLocale": "en",
+  "locales": [
+    "en",
+    "zh-CN"
+  ],
+  "nodes": [
+    {
+      "id": "root",
+      "kind": "root",
+      "title": "Portal Components API",
+      "symbolIds": [
+        "T:Portal.Components.PortalSecurity"
+      ]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "T:Portal.Components.PortalSecurity",
+      "kind": "dotnet-type",
+      "name": "PortalSecurity",
+      "summary": "Portal security helper surface produced by DotNetDoc.",
+      "source": {
+        "model": "hia-source",
+        "modelVersion": "0.2.0",
+        "mode": "link",
+        "definedIn": {
+          "kind": "defined-in",
+          "relativePath": "src/Portal.Components/PortalSecurity.cs",
+          "language": "csharp",
+          "position": {
+            "line": 12,
+            "column": 14
+          },
+          "range": {
+            "start": {
+              "line": 12,
+              "column": 14
+            },
+            "end": {
+              "line": 24,
+              "column": 2
+            }
+          }
+        },
+        "fragments": []
+      }
+    }
+  ],
+  "diagnostics": []
+}
