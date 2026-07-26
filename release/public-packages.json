@@ -121,7 +121,7 @@
       "targetVersion": "0.1.2",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [
