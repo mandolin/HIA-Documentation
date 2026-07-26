@@ -164,6 +164,7 @@
     "wp50:generated-binding-authoring:evidence": "pnpm run wp50:host-authoring-projection:evidence && node scripts/prepare-wp50-generated-binding-authoring-input.mjs",
     "wp50:self-doc-remediation:evidence": "pnpm run wp50:generated-binding-authoring:evidence && node scripts/prepare-wp50-self-doc-remediation-ledger.mjs",
     "wp50:runtime-manual-packet:evidence": "pnpm run wp50:self-doc-remediation:evidence && node scripts/prepare-wp50-runtime-manual-packet-evidence.mjs",
+    "wp50:closeout:evidence": "pnpm run wp50:runtime-manual-packet:evidence && node scripts/prepare-wp50-closeout-wp51-inputs.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
