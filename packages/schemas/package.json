@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/schemas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Machine-readable JSON Schema distribution for HIA documentation contracts.",
   "license": "MIT",
   "repository": {

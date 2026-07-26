@@ -84,14 +84,16 @@ function validateEcosystem(data, publicPackages, profileCatalog, schemaCatalog) 
   const maturityIds = new Set((data.maturityScale ?? []).map((item) => item.id));
   assertEqualSets(["bridge-consumable", "local-consumable", "published-consumable", "workspace-incubation"], [...maturityIds], "Maturity scale");
 
-  const publishedCorePackages = publicPackages.packages
-    .filter((item) => item.releaseStatus === "published")
+  // 中英说明：patch-candidate 表示已有公开版本的包族正在准备补丁发布；公开门户仍应列为可见核心包。
+  // EN: patch-candidate means an already-public package family is preparing a patch; the public portal should still list it as a visible core package.
+  const publicCorePackages = publicPackages.packages
+    .filter((item) => item.releaseStatus === "published" || item.releaseStatus === "patch-candidate")
     .map((item) => item.name)
     .sort(compareStableText);
   assert(data.ecosystem.corePackages.scope === publicPackages.scope, "Core package scope drifted.");
   assert(data.ecosystem.corePackages.releaseStatus === "published", "Core package release status drifted.");
   assert(data.ecosystem.corePackages.names.length >= data.ecosystem.corePackages.minimumCount, "Core package list is below the reviewed floor.");
-  assertEqualSets(publishedCorePackages, data.ecosystem.corePackages.names, "Published core package inventory");
+  assertEqualSets(publicCorePackages, data.ecosystem.corePackages.names, "Published core package inventory");
 
   assertEqualSets(profileCatalog.profiles.map((profile) => profile.profileId), data.ecosystem.profiles.ids, "Profile inventory");
   assert(data.ecosystem.profiles.ids.length >= data.ecosystem.profiles.minimumCount, "Profile list is below the reviewed floor.");

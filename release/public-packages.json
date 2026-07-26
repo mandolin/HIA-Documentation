@@ -30,10 +30,10 @@
     {
       "name": "@hia-doc/config",
       "path": "packages/config",
-      "targetVersion": "0.1.0",
+      "targetVersion": "0.1.1",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/profile",
@@ -54,10 +54,10 @@
     {
       "name": "@hia-doc/plugin-sdk",
       "path": "packages/plugin-sdk",
-      "targetVersion": "0.1.0",
+      "targetVersion": "0.1.1",
       "publishOrder": 30,
       "kind": "producer-sdk",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/source-linkage",
@@ -102,10 +102,10 @@
     {
       "name": "@hia-doc/schemas",
       "path": "packages/schemas",
-      "targetVersion": "0.1.0",
+      "targetVersion": "0.1.1",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/lsp",
@@ -118,10 +118,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.0",
+      "targetVersion": "0.1.1",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     }
   ],
   "excludedPackages": [
