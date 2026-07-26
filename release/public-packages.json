@@ -118,10 +118,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.1",
+      "targetVersion": "0.1.2",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     }
   ],
   "excludedPackages": [
