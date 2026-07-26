@@ -152,6 +152,7 @@
     "wp48:c-hia-p3-input-prioritization:evidence": "node scripts/prepare-wp48-c-hia-p3-input-prioritization.mjs",
     "wp48:final-closeout:evidence": "node scripts/prepare-wp48-final-closeout-next-cycle-inputs.mjs",
     "wp49:annotation-richness-baseline:evidence": "node scripts/prepare-wp49-annotation-richness-policy-baseline.mjs",
+    "wp49:self-doc-inventory:evidence": "node scripts/prepare-wp49-repository-self-doc-inventory.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
