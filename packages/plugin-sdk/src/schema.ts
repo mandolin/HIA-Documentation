@@ -117,6 +117,14 @@ export const DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA = {
           message: { type: "string", minLength: 1 },
           severity: { enum: ["error", "warning", "info"] },
           data: { type: "object" },
+          metadata: { type: "object" },
+          source: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              path: { type: "string", minLength: 1 }
+            }
+          },
           path: { type: "string", minLength: 1 },
           targetPath: { type: "string", minLength: 1 }
         }

@@ -11,7 +11,7 @@
     {
       "kind": "hia-document",
       "path": "project-dotnet.hia.json",
-      "domain": "dotnet",
+      "domain": "other",
       "profile": {
         "profileId": "dotnetdoc",
         "profileVersion": "0.1.0-draft",

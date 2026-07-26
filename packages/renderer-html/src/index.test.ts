@@ -176,6 +176,30 @@ describe("@hia-doc/renderer-html", () => {
       contract?: string;
       contractVersion?: string;
       groups?: Array<{ kind: string; label: string; entryCount: number; views: string[] }>;
+      navigationTree?: Array<{
+        id: string;
+        kind: string;
+        label: string;
+        entryCount: number;
+        views: string[];
+        entryId?: string;
+        children?: Array<{
+          id: string;
+          kind: string;
+          label: string;
+          entryCount: number;
+          views: string[];
+          entryId?: string;
+          children?: Array<{
+            id: string;
+            kind: string;
+            label: string;
+            entryCount: number;
+            views: string[];
+            entryId?: string;
+          }>;
+        }>;
+      }>;
       entries?: Array<{ id: string; source?: { preview?: unknown } }>;
       relationGraph?: {
         contract?: string;
@@ -186,7 +210,7 @@ describe("@hia-doc/renderer-html", () => {
       };
     };
     expect(result.diagnostics).toEqual([]);
-    expect(result.manifest.project?.views).toEqual(["all", "js", "css", "html", "dotnet"]);
+    expect(result.manifest.project?.views).toEqual(["all", "dotnet", "js", "css", "html"]);
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 4, js: 1, css: 1, html: 1, dotnet: 1 });
     expect(result.manifest.initialLocale).toBe("en");
     expect(result.manifest.locales).toEqual(["en", "zh-CN"]);
@@ -222,8 +246,45 @@ describe("@hia-doc/renderer-html", () => {
     expect(navigationIndex.entries?.map((entry) => entry.id)).toEqual(["css:alert", "dotnet:portal-menu", "html:alert", "js:build"]);
     expect(navigationIndex.entries?.find((entry) => entry.id === "js:build")?.source?.preview).toBeUndefined();
     expect(navigationIndex.groups).toContainEqual({ id: "kind:dotnet-type", kind: "kind", label: "dotnet-type", entryCount: 1, views: ["dotnet"] });
-    expect(navigationIndex.groups).toContainEqual({ id: "source-root:src", kind: "source-root", label: "src", entryCount: 4, views: ["js", "css", "html", "dotnet"] });
+    expect(navigationIndex.groups).toContainEqual({ id: "source-root:src", kind: "source-root", label: "src", entryCount: 4, views: ["dotnet", "js", "css", "html"] });
+    expect(navigationIndex.navigationTree?.find((node) => node.id === "view:dotnet")).toMatchObject({
+      kind: "view",
+      label: ".NET",
+      entryCount: 1,
+      views: ["dotnet"],
+      children: [
+        expect.objectContaining({
+          kind: "namespace",
+          label: "(global namespace)",
+          children: [
+            expect.objectContaining({
+              kind: "type",
+              label: "PortalMenu",
+              entryId: "dotnet:portal-menu"
+            })
+          ]
+        })
+      ]
+    });
+    expect(navigationIndex.navigationTree?.find((node) => node.id === "view:js")).toMatchObject({
+      kind: "view",
+      label: "JS",
+      children: [
+        expect.objectContaining({
+          kind: "source-root",
+          label: "src",
+          children: [
+            expect.objectContaining({
+              kind: "source-file",
+              label: "src/profile.js"
+            })
+          ]
+        })
+      ]
+    });
     expect(html).toContain("Mixed Project Docs");
+    expect(html).toContain("Hierarchy");
+    expect(html).toContain("hia-project-hierarchy");
     expect(html).toContain("Groups");
     expect(html).toContain("Source Roots");
     expect(html).toContain("data-hia-project-view=\"js\"");
@@ -247,6 +308,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("sourcesContentPolicy=none");
     expect(html).toContain("Source Preview src/profile.js:12-14");
     expect(html).toContain("function buildProfileSummary(profile)");
+    expect(html).not.toContain("data-hia-project-search-text=\"dotnet:portal-menu portalmenu dotnet-type portal menu");
     expect(html).toContain("https://example.test/src/profile.js#L12");
     expect(html).toContain("Doc Source Map");
     expect(html).toContain("Relations");
@@ -260,5 +322,37 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("entry:html:alert");
     expect(html).toContain("dist/alert.html");
     expect(html).toContain("Profile cssdoc@0.1.0-draft");
+  });
+
+  it("renders PowerShell as a first-class project view", () => {
+    const result = renderProjectHtmlDocument({
+      project: {
+        name: "Ops Script Project",
+        defaultLocale: "zh-CN",
+        locales: ["zh-CN", "en"]
+      },
+      entries: [
+        {
+          id: "ps:deploy",
+          name: "Invoke-PortalDeploy",
+          kind: "powershell-function",
+          view: "powershell",
+          summary: "部署 Portal 资源。",
+          source: {
+            path: "scripts/deploy.ps1",
+            language: "powershell",
+            range: { start: { line: 12 }, end: { line: 48 } }
+          }
+        }
+      ]
+    });
+    const html = result.files[0]?.contents ?? "";
+
+    expect(result.manifest.project?.views).toEqual(["all", "powershell"]);
+    expect(result.manifest.project?.entryCounts).toMatchObject({ all: 1, powershell: 1 });
+    expect(html).toContain("data-hia-project-view=\"powershell\"");
+    expect(html).toContain("data-hia-project-entry=\"powershell\"");
+    expect(html).toContain("PowerShell");
+    expect(html).toContain("Invoke-PortalDeploy");
   });
 });

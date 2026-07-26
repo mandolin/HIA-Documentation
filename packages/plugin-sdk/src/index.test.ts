@@ -113,6 +113,25 @@ describe("@hia-doc/plugin-sdk", () => {
     }), expect.anything());
   });
 
+  it("accepts producer inputs located by projectPath or globs without a path field", () => {
+    expect(validateDocumentationProducerRequest({
+      ...request,
+      inputs: [
+        {
+          kind: "fixture-source",
+          projectPath: "producer/Portal.Components.csproj",
+          artifactBasePath: "api/Portal.Components"
+        },
+        {
+          kind: "fixture-source",
+          globs: ["producer/**/*.{aspx,ascx,master,cshtml,razor}"],
+          excludeGlobs: ["producer/**/bin/**"],
+          artifactBasePath: "markup/Portal"
+        }
+      ]
+    }, { descriptor })).toEqual([]);
+  });
+
   it("rejects unsafe path-like producer input extension fields", () => {
     expect(validateDocumentationProducerRequest({
       ...request,
@@ -157,6 +176,27 @@ describe("@hia-doc/plugin-sdk", () => {
     expect(result.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: "DOCUMENTATION_PRODUCER_PATH_UNSAFE" })
     ]));
+  });
+
+  it("accepts producer-native diagnostic source and metadata fields", () => {
+    const diagnostics = validateDocumentationProducerResult({
+      ...createSuccessResult(),
+      status: "partial",
+      diagnostics: [
+        {
+          code: "DOTNETDOC_PROJECT_DISCOVERY_UNSUPPORTED_SOLUTION_PROJECT",
+          message: "Solution project is not a C# project and was kept as solution metadata only.",
+          severity: "info",
+          source: { path: "fixtures/source/Portal.sln" },
+          metadata: {
+            solutionPath: "fixtures/source/Portal.sln",
+            projectTypeGuid: "FAE04EC0-301F-11D3-BF4B-00C04F79EFBC"
+          }
+        }
+      ]
+    }, { descriptor });
+
+    expect(diagnostics).toEqual([]);
   });
 
   it("converts thrown errors into execution diagnostics", async () => {

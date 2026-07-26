@@ -16,7 +16,32 @@
       "profileIds": [
         "dotnetdoc"
       ]
+    },
+    {
+      "id": "dotnetdoc-source-relation",
+      "kind": "dotnetdoc-source-relation",
+      "path": "dotnetdoc.source-relation.json",
+      "format": "json",
+      "mediaType": "application/json",
+      "contract": "dotnetdoc-source-relation",
+      "contractVersion": "0.1.0-draft",
+      "profileIds": [
+        "dotnetdoc"
+      ]
     }
   ],
-  "diagnostics": []
+  "diagnostics": [
+    {
+      "code": "DOTNETDOC_PROJECT_DISCOVERY_UNSUPPORTED_SOLUTION_PROJECT",
+      "message": "Solution project is not a C# project and was kept as solution metadata only.",
+      "severity": "info",
+      "source": {
+        "path": "Portal.sln"
+      },
+      "metadata": {
+        "solutionPath": "Portal.sln",
+        "projectTypeGuid": "FAE04EC0-301F-11D3-BF4B-00C04F79EFBC"
+      }
+    }
+  ]
 }

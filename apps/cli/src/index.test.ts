@@ -91,6 +91,7 @@ describe("@hia-doc/cli", () => {
       const navigationIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
         contract: string;
         entries: Array<{ id: string; source?: { preview?: unknown } }>;
+        navigationTree?: Array<{ id: string; label: string; children?: Array<{ label: string }> }>;
       };
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         project?: {
@@ -113,8 +114,8 @@ describe("@hia-doc/cli", () => {
       expect(html).toContain("data-hia-project-view=\"css\"");
       expect(html).toContain("data-hia-project-view=\"html\"");
       expect(html).toContain("greet");
-      expect(html).toContain("Source Preview examples/basic/src/greet.js:17-22");
-      expect(html).toContain("function greet(name)");
+      expect(html).not.toContain("Source Preview examples/basic/src/greet.js:17-22");
+      expect(html).not.toContain("function greet(name)");
       expect(html).toContain("css-component-style");
       expect(html).toContain("html-component");
       expect(html).toContain("project-mixed-alert.docmap.json");
@@ -133,6 +134,8 @@ describe("@hia-doc/cli", () => {
       expect(navigationIndex.contract).toBe("hia-project-navigation-index");
       expect(navigationIndex.entries).toHaveLength(6);
       expect(navigationIndex.entries.some((entry) => entry.source?.preview)).toBe(false);
+      expect(navigationIndex.navigationTree?.map((node) => node.id)).toEqual(["view:js", "view:css", "view:html"]);
+      expect(html).toContain("hia-project-hierarchy");
       expect(manifest.build?.mode).toBe("project");
       expect(manifest.build?.inputs.map((input) => input.kind)).toEqual([
         "jsdoc-integration",
@@ -291,12 +294,40 @@ describe("@hia-doc/cli", () => {
           entryCounts: Record<string, number>;
         };
       };
+      const projectIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        entries: Array<{ id: string; source?: { path?: string; language?: string } }>;
+        navigationTree?: Array<{
+          id: string;
+          label: string;
+          children?: Array<{ label: string; children?: Array<{ label: string; entryId?: string }> }>;
+        }>;
+      };
 
       expect(exitCode).toBe(0);
       expect(html).toContain("Producer Result Project Documentation");
       expect(html).toContain("PortalSecurity");
       expect(html).toContain("Portal security helper surface produced by DotNetDoc.");
+      expect(html).toContain("src/Portal.Components/PortalSecurity.cs:12");
+      expect(html).toContain("<dt>Language</dt><dd>csharp</dd>");
       expect(html).toContain("greet");
+      expect(projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"))?.source).toMatchObject({
+        path: "src/Portal.Components/PortalSecurity.cs",
+        language: "csharp"
+      });
+      expect(projectIndex.navigationTree?.find((node) => node.id === "view:dotnet")).toMatchObject({
+        label: ".NET",
+        children: [
+          expect.objectContaining({
+            label: "Portal.Components",
+            children: [
+              expect.objectContaining({
+                label: "PortalSecurity",
+                entryId: expect.stringContaining("portalsecurity")
+              })
+            ]
+          })
+        ]
+      });
       expect(manifest.project?.entryCounts).toMatchObject({ dotnet: 1, js: 2, all: 3 });
       expect(manifest.build?.inputs).toEqual(expect.arrayContaining([
         expect.objectContaining({
@@ -353,6 +384,7 @@ describe("@hia-doc/cli", () => {
         coverage: {
           dotnetEntries: number;
           jsEntries: number;
+          powershellEntries: number;
         };
         privacy: {
           sourcesContentPolicy: string;
@@ -369,7 +401,7 @@ describe("@hia-doc/cli", () => {
       expect(evidence.entries.total).toBe(3);
       expect(evidence.entries.byView).toMatchObject({ dotnet: 1, js: 2 });
       expect(evidence.entries.byProfile).toMatchObject({ jsdoc: 2 });
-      expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2 });
+      expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2, powershellEntries: 0 });
       expect(evidence.privacy).toMatchObject({
         sourcesContentPolicy: "none",
         sourcesContentPresent: false,

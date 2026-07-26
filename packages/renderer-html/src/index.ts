@@ -50,7 +50,7 @@ export interface RenderHtmlOptions {
   includeThemeAssets?: boolean;
 }
 
-export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "other";
+export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "powershell" | "other";
 
 export interface RenderProjectHtmlInput {
   project: RenderProjectInfo;
@@ -297,6 +297,7 @@ export interface RenderProjectNavigationIndex {
   };
   entries: RenderProjectNavigationEntry[];
   groups: RenderProjectNavigationGroup[];
+  navigationTree: RenderProjectNavigationTreeNode[];
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
   relationGraph?: RenderProjectRelationGraph;
@@ -314,6 +315,24 @@ export interface RenderProjectNavigationGroup {
   label: string;
   entryCount: number;
   views: RenderProjectView[];
+}
+
+export type RenderProjectNavigationTreeNodeKind = "view" | "namespace" | "type" | "source-root" | "source-file" | "entry";
+
+/**
+ * 项目级层级导航节点；用于把大型项目从平铺列表提升为可分域浏览的 API / 文件结构。
+ * Project-level hierarchy node; it lifts large projects from a flat list into domain-aware API and file navigation.
+ */
+export interface RenderProjectNavigationTreeNode {
+  id: string;
+  kind: RenderProjectNavigationTreeNodeKind;
+  label: string;
+  entryCount: number;
+  views: RenderProjectView[];
+  children?: RenderProjectNavigationTreeNode[];
+  entryId?: string;
+  sourcePath?: string;
+  symbolId?: string;
 }
 
 /**
@@ -509,6 +528,7 @@ function createProjectNavigationIndex(
       }))
       .sort(compareProjectNavigationEntries),
     groups: collectProjectNavigationGroups(projectInput.entries),
+    navigationTree: collectProjectNavigationTree(projectInput.entries),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
     docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps),
     ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
@@ -583,6 +603,7 @@ function renderProjectIndexHtml(
   const views = collectProjectViews(projectInput.entries);
   const entryCounts = countEntriesByView(projectInput.entries);
   const groups = collectProjectNavigationGroups(projectInput.entries);
+  const navigationTree = collectProjectNavigationTree(projectInput.entries);
   const navigation = projectInput.entries
     .map((entry) => renderProjectNavItem(entry))
     .join("");
@@ -612,6 +633,7 @@ function renderProjectIndexHtml(
     renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
     renderProjectViewControl(views, entryCounts),
     renderProjectSearchControl(),
+    renderProjectHierarchy(navigationTree),
     renderProjectGroupSummary(groups),
     navigation ? `<nav><ul>${navigation}</ul></nav>` : "",
     profileSummary,
@@ -672,6 +694,41 @@ function renderProjectGroupSummary(groups: RenderProjectNavigationGroup[]): stri
     .join("");
 
   return sections ? `<section class="hia-project-summary hia-project-groups"><h2>Groups</h2>${sections}</section>` : "";
+}
+
+function renderProjectHierarchy(nodes: RenderProjectNavigationTreeNode[]): string {
+  if (nodes.length === 0) {
+    return "";
+  }
+
+  return `<section class="hia-project-summary hia-project-hierarchy"><h2>Hierarchy</h2>${renderProjectHierarchyList(nodes)}</section>`;
+}
+
+function renderProjectHierarchyList(nodes: RenderProjectNavigationTreeNode[]): string {
+  const items = nodes
+    .map((node) => renderProjectHierarchyNode(node))
+    .join("");
+
+  return `<ul class="hia-project-hierarchy-list">${items}</ul>`;
+}
+
+function renderProjectHierarchyNode(node: RenderProjectNavigationTreeNode): string {
+  const children = node.children && node.children.length > 0 ? renderProjectHierarchyList(node.children) : "";
+  const label = node.entryId
+    ? `<a href="#${escapeHtml(node.entryId)}">${escapeHtml(node.label)}</a>`
+    : `<span>${escapeHtml(node.label)}</span>`;
+  const meta = node.kind === "entry"
+    ? ""
+    : `<small>${escapeHtml(node.kind)} / ${escapeHtml(String(node.entryCount))}</small>`;
+  const searchText = createProjectNavigationTreeSearchText(node);
+
+  return [
+    `<li data-hia-project-nav="${escapeHtml(node.views[0] ?? "other")}" data-hia-project-search-text="${escapeHtml(searchText)}">`,
+    label,
+    meta,
+    children,
+    "</li>"
+  ].join("");
 }
 
 function renderProjectNavItem(entry: RenderProjectEntry): string {
@@ -1217,7 +1274,7 @@ function compareProjectRelations(left: RenderProjectRelation, right: RenderProje
   return compareStableText(left.id, right.id);
 }
 
-const PROJECT_VIEW_ORDER: readonly RenderProjectView[] = ["all", "js", "css", "html", "dotnet", "other"];
+const PROJECT_VIEW_ORDER: readonly RenderProjectView[] = ["all", "dotnet", "js", "powershell", "css", "html", "other"];
 
 function collectProjectNavigationGroups(entries: RenderProjectEntry[]): RenderProjectNavigationGroup[] {
   return [
@@ -1225,6 +1282,247 @@ function collectProjectNavigationGroups(entries: RenderProjectEntry[]): RenderPr
     ...collectProjectNavigationGroupsBy(entries, "profile-layer", (entry) => entry.profile?.layer || entry.profile?.profileId || "unknown-profile"),
     ...collectProjectNavigationGroupsBy(entries, "source-root", (entry) => getProjectSourceRoot(entry.source?.path))
   ].sort(compareProjectNavigationGroups);
+}
+
+interface ProjectNavigationTreeBuilder {
+  id: string;
+  kind: RenderProjectNavigationTreeNodeKind;
+  label: string;
+  entryCount: number;
+  views: Set<RenderProjectView>;
+  children: ProjectNavigationTreeBuilder[];
+  childrenById: Map<string, ProjectNavigationTreeBuilder>;
+  entryId?: string;
+  sourcePath?: string;
+  symbolId?: string;
+}
+
+function collectProjectNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+  return PROJECT_VIEW_ORDER
+    .filter((view) => view !== "all")
+    .flatMap((view) => {
+      const viewEntries = entries.filter((entry) => entry.view === view);
+      if (viewEntries.length === 0) {
+        return [];
+      }
+
+      const children = view === "dotnet"
+        ? collectDotNetNavigationTree(viewEntries)
+        : collectSourceNavigationTree(viewEntries);
+
+      return [{
+        id: `view:${view}`,
+        kind: "view" as const,
+        label: formatProjectViewLabel(view),
+        entryCount: viewEntries.length,
+        views: [view],
+        children
+      }];
+    });
+}
+
+function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+  const roots = new Map<string, ProjectNavigationTreeBuilder>();
+
+  for (const entry of entries) {
+    const parts = getDotNetNavigationParts(entry);
+    const namespaceNode = getOrCreateProjectTreeChild(
+      roots,
+      `dotnet:namespace:${slugProjectGroupLabel(parts.namespaceLabel)}`,
+      "namespace",
+      parts.namespaceLabel
+    );
+    addProjectTreeEntry(namespaceNode, entry);
+
+    const typeNode = getOrCreateProjectTreeChild(
+      namespaceNode.childrenById,
+      `${namespaceNode.id}:type:${slugProjectGroupLabel(parts.typeLabel)}`,
+      "type",
+      parts.typeLabel
+    );
+    namespaceNode.children = [...namespaceNode.childrenById.values()];
+    addProjectTreeEntry(typeNode, entry);
+
+    if (entry.kind === "dotnet-type") {
+      typeNode.entryId = entry.id;
+      assignProjectTreeEntryRefs(typeNode, entry);
+      continue;
+    }
+
+    const entryNode = getOrCreateProjectTreeChild(
+      typeNode.childrenById,
+      `${typeNode.id}:entry:${slugProjectGroupLabel(entry.id)}`,
+      "entry",
+      parts.memberLabel
+    );
+    typeNode.children = [...typeNode.childrenById.values()];
+    addProjectTreeEntry(entryNode, entry);
+    entryNode.entryId = entry.id;
+    assignProjectTreeEntryRefs(entryNode, entry);
+  }
+
+  return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
+}
+
+function collectSourceNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+  const roots = new Map<string, ProjectNavigationTreeBuilder>();
+
+  for (const entry of entries) {
+    const sourceRootLabel = getProjectSourceRoot(entry.source?.path);
+    const sourcePathLabel = entry.source?.path?.replaceAll("\\", "/") || "unknown-source";
+    const rootNode = getOrCreateProjectTreeChild(
+      roots,
+      `source-root:${slugProjectGroupLabel(sourceRootLabel)}`,
+      "source-root",
+      sourceRootLabel
+    );
+    addProjectTreeEntry(rootNode, entry);
+
+    const fileNode = getOrCreateProjectTreeChild(
+      rootNode.childrenById,
+      `${rootNode.id}:source-file:${slugProjectGroupLabel(sourcePathLabel)}`,
+      "source-file",
+      sourcePathLabel
+    );
+    rootNode.children = [...rootNode.childrenById.values()];
+    addProjectTreeEntry(fileNode, entry);
+    assignProjectTreeSourcePath(fileNode, entry.source?.path);
+
+    const entryNode = getOrCreateProjectTreeChild(
+      fileNode.childrenById,
+      `${fileNode.id}:entry:${slugProjectGroupLabel(entry.id)}`,
+      "entry",
+      entry.name
+    );
+    fileNode.children = [...fileNode.childrenById.values()];
+    addProjectTreeEntry(entryNode, entry);
+    entryNode.entryId = entry.id;
+    assignProjectTreeEntryRefs(entryNode, entry);
+  }
+
+  return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
+}
+
+function getOrCreateProjectTreeChild(
+  map: Map<string, ProjectNavigationTreeBuilder>,
+  id: string,
+  kind: RenderProjectNavigationTreeNodeKind,
+  label: string
+): ProjectNavigationTreeBuilder {
+  const existing = map.get(id);
+  if (existing) {
+    return existing;
+  }
+
+  const created: ProjectNavigationTreeBuilder = {
+    id,
+    kind,
+    label,
+    entryCount: 0,
+    views: new Set<RenderProjectView>(),
+    children: [],
+    childrenById: new Map<string, ProjectNavigationTreeBuilder>()
+  };
+  map.set(id, created);
+  return created;
+}
+
+function addProjectTreeEntry(node: ProjectNavigationTreeBuilder, entry: RenderProjectEntry): void {
+  node.entryCount += 1;
+  node.views.add(entry.view);
+}
+
+function assignProjectTreeEntryRefs(node: ProjectNavigationTreeBuilder, entry: RenderProjectEntry): void {
+  if (entry.symbolId) {
+    node.symbolId = entry.symbolId;
+  }
+
+  assignProjectTreeSourcePath(node, entry.source?.path);
+}
+
+function assignProjectTreeSourcePath(node: ProjectNavigationTreeBuilder, sourcePath: string | undefined): void {
+  if (sourcePath) {
+    node.sourcePath = sourcePath;
+  }
+}
+
+function finalizeProjectTreeBuilder(node: ProjectNavigationTreeBuilder): RenderProjectNavigationTreeNode {
+  const children = sortProjectTreeNodes(node.children.map(finalizeProjectTreeBuilder));
+
+  return {
+    id: node.id,
+    kind: node.kind,
+    label: node.label,
+    entryCount: node.entryCount,
+    views: sortProjectViews([...node.views]),
+    ...(children.length > 0 ? { children } : {}),
+    ...(node.entryId ? { entryId: node.entryId } : {}),
+    ...(node.sourcePath ? { sourcePath: node.sourcePath } : {}),
+    ...(node.symbolId ? { symbolId: node.symbolId } : {})
+  };
+}
+
+function sortProjectTreeNodes(nodes: RenderProjectNavigationTreeNode[]): RenderProjectNavigationTreeNode[] {
+  return nodes.sort((left, right) => {
+    const kindOrder = compareStableNumber(projectTreeKindOrder(left.kind), projectTreeKindOrder(right.kind));
+    if (kindOrder !== 0) {
+      return kindOrder;
+    }
+
+    return compareStableText(left.label, right.label);
+  });
+}
+
+function projectTreeKindOrder(kind: RenderProjectNavigationTreeNodeKind): number {
+  if (kind === "view") {
+    return 0;
+  }
+
+  if (kind === "namespace") {
+    return 1;
+  }
+
+  if (kind === "type") {
+    return 2;
+  }
+
+  if (kind === "source-root") {
+    return 3;
+  }
+
+  if (kind === "source-file") {
+    return 4;
+  }
+
+  return 5;
+}
+
+function getDotNetNavigationParts(entry: RenderProjectEntry): {
+  memberLabel: string;
+  namespaceLabel: string;
+  typeLabel: string;
+} {
+  const symbolId = entry.symbolId || (entry.id.match(/^[A-Z]:/) ? entry.id : "");
+  const symbolBody = symbolId.match(/^[A-Z]:/) ? symbolId.slice(2) : "";
+  const normalizedSymbol = symbolBody.replace(/\(.+$/, "");
+  const segments = normalizedSymbol.split(".").filter((segment) => segment.length > 0);
+
+  if (segments.length >= 2) {
+    const memberLabel = entry.kind === "dotnet-type" ? entry.name : segments[segments.length - 1] ?? entry.name;
+    const typeIndex = entry.kind === "dotnet-type" ? segments.length - 1 : Math.max(0, segments.length - 2);
+    const typeLabel = segments[typeIndex] ?? entry.name;
+    const namespaceLabel = segments.slice(0, typeIndex).join(".") || "(global namespace)";
+    return { memberLabel, namespaceLabel, typeLabel };
+  }
+
+  const sourceStem = entry.source?.path
+    ? entry.source.path.replaceAll("\\", "/").split("/").pop()?.replace(/\.[^.]+$/, "")
+    : undefined;
+  return {
+    memberLabel: entry.name,
+    namespaceLabel: "(global namespace)",
+    typeLabel: sourceStem || entry.name
+  };
 }
 
 function collectProjectNavigationGroupsBy(
@@ -1323,6 +1621,19 @@ function countEntriesByView(entries: RenderProjectEntry[]): Record<string, numbe
   return counts;
 }
 
+function createProjectNavigationTreeSearchText(node: RenderProjectNavigationTreeNode): string {
+  return [
+    node.id,
+    node.kind,
+    node.label,
+    node.entryId,
+    node.sourcePath,
+    node.symbolId,
+    ...node.views,
+    ...(node.children ?? []).map(createProjectNavigationTreeSearchText)
+  ].filter((item): item is string => typeof item === "string" && item.length > 0).join(" ").toLowerCase();
+}
+
 function createProjectEntrySearchText(entry: RenderProjectEntry): string {
   return [
     entry.id,
@@ -1337,7 +1648,6 @@ function createProjectEntrySearchText(entry: RenderProjectEntry): string {
     entry.input?.path,
     entry.source?.path,
     entry.source?.language,
-    entry.source?.preview?.content,
     entry.docSourceMap?.path,
     entry.docSourceMap?.entryId,
     entry.docSourceMap?.sourcePath,
@@ -1367,6 +1677,10 @@ function formatProjectViewLabel(view: RenderProjectView): string {
 
   if (view === "dotnet") {
     return ".NET";
+  }
+
+  if (view === "powershell") {
+    return "PowerShell";
   }
 
   if (view === "all") {

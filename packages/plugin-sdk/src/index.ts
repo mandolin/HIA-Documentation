@@ -48,7 +48,7 @@ export interface DocumentationProducerDescriptor {
 export interface DocumentationProducerInput {
   kind: string;
   language?: string;
-  path: string;
+  path?: string;
   [key: string]: unknown;
 }
 
@@ -399,7 +399,17 @@ function validateProducerInputs(
         targetPath
       ));
     }
-    validateSafeRelativePath(input.path, `${fieldPath}.path`, diagnostics, targetPath);
+    if (!hasProducerInputLocator(input)) {
+      diagnostics.push(createFieldDiagnostic(
+        "DOCUMENTATION_PRODUCER_REQUEST_INVALID",
+        `${fieldPath} must define path, paths, projectPath, glob or globs.`,
+        fieldPath,
+        targetPath
+      ));
+    }
+    if (input.path !== undefined) {
+      validateSafeRelativePath(input.path, `${fieldPath}.path`, diagnostics, targetPath);
+    }
     if (input.language !== undefined) {
       validateNonEmptyString(input.language, `${fieldPath}.language`, diagnostics, targetPath);
     }
@@ -431,10 +441,22 @@ function validateProducerInputExtensionFields(
       continue;
     }
 
-    if (isPathLikeFieldName(field)) {
+    if (field === "paths") {
+      validateSafeRelativePathArray(value, `${fieldPath}.paths`, diagnostics, targetPath);
+    } else if (field === "glob" || field === "projectPath" || isPathLikeFieldName(field)) {
       validateSafeRelativePath(value, `${fieldPath}.${field}`, diagnostics, targetPath);
+    } else if (field === "globs" || field === "excludeGlobs" || field === "globPatterns" || field === "excludeGlobPatterns") {
+      validateSafeRelativePathArray(value, `${fieldPath}.${field}`, diagnostics, targetPath);
     }
   }
+}
+
+function hasProducerInputLocator(input: Record<string, unknown>): boolean {
+  return typeof input.path === "string"
+    || (Array.isArray(input.paths) && input.paths.length > 0)
+    || typeof input.projectPath === "string"
+    || typeof input.glob === "string"
+    || (Array.isArray(input.globs) && input.globs.length > 0);
 }
 
 function validateProducerIdentity(
@@ -562,7 +584,7 @@ function validateResultDiagnostics(
       ));
       return;
     }
-    validateKnownFields(diagnostic, ["code", "message", "severity", "data", "path", "targetPath"], diagnostics, fieldPath, targetPath);
+    validateKnownFields(diagnostic, ["code", "message", "severity", "data", "metadata", "source", "path", "targetPath"], diagnostics, fieldPath, targetPath);
     validateNonEmptyString(diagnostic.code, `${fieldPath}.code`, diagnostics, targetPath);
     validateNonEmptyString(diagnostic.message, `${fieldPath}.message`, diagnostics, targetPath);
     if (typeof diagnostic.severity !== "string" || !diagnosticSeverities.has(diagnostic.severity as HiaDiagnosticSeverity)) {
@@ -580,6 +602,26 @@ function validateResultDiagnostics(
         `${fieldPath}.data`,
         targetPath
       ));
+    }
+    if (diagnostic.metadata !== undefined && (!isRecord(diagnostic.metadata) || !isJsonCompatible(diagnostic.metadata))) {
+      diagnostics.push(createFieldDiagnostic(
+        "DOCUMENTATION_PRODUCER_DIAGNOSTIC_INVALID",
+        `${fieldPath}.metadata must be a JSON-compatible object.`,
+        `${fieldPath}.metadata`,
+        targetPath
+      ));
+    }
+    if (diagnostic.source !== undefined) {
+      if (!isRecord(diagnostic.source)) {
+        diagnostics.push(createFieldDiagnostic(
+          "DOCUMENTATION_PRODUCER_DIAGNOSTIC_INVALID",
+          `${fieldPath}.source must be an object when present.`,
+          `${fieldPath}.source`,
+          targetPath
+        ));
+      } else if (diagnostic.source.path !== undefined) {
+        validateSafeRelativePath(diagnostic.source.path, `${fieldPath}.source.path`, diagnostics, targetPath);
+      }
     }
     for (const pathField of ["path", "targetPath"] as const) {
       if (diagnostic[pathField] !== undefined) {
@@ -807,6 +849,24 @@ function validateSafeRelativePath(
       targetPath
     ));
   }
+}
+
+function validateSafeRelativePathArray(
+  value: unknown,
+  fieldPath: string,
+  diagnostics: HiaDiagnostic[],
+  targetPath?: string
+): void {
+  if (!Array.isArray(value) || value.length === 0) {
+    diagnostics.push(createFieldDiagnostic(
+      "DOCUMENTATION_PRODUCER_PATH_UNSAFE",
+      `${fieldPath} must be a non-empty array of safe relative paths.`,
+      fieldPath,
+      targetPath
+    ));
+    return;
+  }
+  value.forEach((item, index) => validateSafeRelativePath(item, `${fieldPath}[${index}]`, diagnostics, targetPath));
 }
 
 function isSafeRelativePath(value: string): boolean {

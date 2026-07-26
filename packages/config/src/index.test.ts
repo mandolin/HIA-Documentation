@@ -134,6 +134,15 @@ describe("@hia-doc/config", () => {
             profileId: "dotnetdoc",
             profileVersion: "0.1.0-draft"
           }
+        },
+        {
+          kind: "hia-document",
+          path: "artifacts/Portal.AdminScripts.hia.json",
+          domain: "powershell",
+          profile: {
+            profileId: "psdoc",
+            profileVersion: "0.1.0-draft"
+          }
         }
       ]
     });

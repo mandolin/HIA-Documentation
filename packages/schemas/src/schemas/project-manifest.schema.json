@@ -275,6 +275,7 @@
             "css",
             "html",
             "dotnet",
+            "powershell",
             "other"
           ]
         },

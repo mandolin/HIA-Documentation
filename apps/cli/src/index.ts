@@ -117,6 +117,10 @@ interface IndexedProjectDocSourceMap {
   input: RuntimeProjectInput;
 }
 
+interface DotNetSourceRelationArtifact {
+  relations?: unknown[];
+}
+
 type RuntimeProjectInputSource = "manifest" | "producer" | "producer-result";
 
 interface RuntimeProjectInput {
@@ -411,7 +415,10 @@ async function runProjectDocsBuild(
     return 1;
   }
 
-  const rendered = renderProjectHtmlDocument(aggregation.projectInput, createRenderOptions(locale, docsConfig));
+  const rendered = renderProjectHtmlDocument(
+    scrubProjectInputSourcePreviews(aggregation.projectInput),
+    createRenderOptions(locale, docsConfig)
+  );
   reportDiagnostics(rendered.diagnostics, io);
 
   if (rendered.diagnostics.some((item) => item.severity === "error")) {
@@ -508,6 +515,7 @@ interface GeneratedDocsEvidenceSummary {
     htmlEntries: number;
     cssEntries: number;
     markupEntries: number;
+    powershellEntries: number;
     surfaceEntries: number;
   };
   privacy: {
@@ -532,7 +540,7 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   const indexHtmlPath = path.join(docsDir, "index.html");
   const projectIndex = await readOptionalJson(projectIndexPath, "HIA_CLI_DOCS_EVIDENCE_PROJECT_INDEX_READ_FAILED", diagnostics);
   const manifest = await readOptionalJson(manifestPath, "HIA_CLI_DOCS_EVIDENCE_MANIFEST_READ_FAILED", diagnostics);
-  const indexHtmlPresent = await readOptionalText(indexHtmlPath);
+  const indexHtmlText = await readOptionalText(indexHtmlPath);
   const entries = isRecord(projectIndex) && Array.isArray(projectIndex.entries) ? projectIndex.entries.filter(isRecord) : [];
   const project = isRecord(projectIndex) && isRecord(projectIndex.project) ? projectIndex.project : {};
   const manifestBuild = isRecord(manifest) && isRecord(manifest.build) ? manifest.build : {};
@@ -541,19 +549,21 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   const projectName = stringValue(project.name);
   const projectVersion = stringValue(project.version);
   const requiredOutputs = {
-    indexHtml: indexHtmlPresent || manifestFiles.some((file) => stringValue(file.path) === "index.html"),
+    indexHtml: Boolean(indexHtmlText) || manifestFiles.some((file) => stringValue(file.path) === "index.html"),
     manifest: Boolean(manifest),
     projectIndex: Boolean(projectIndex)
   };
   const serializedPublicOutputs = JSON.stringify({
     projectIndex,
-    manifest
+    manifest,
+    indexHtml: indexHtmlText
   });
   const sourcesContentPresent = hasNestedKey(projectIndex, "sourcesContent") || hasNestedKey(manifest, "sourcesContent");
   const sourceBodyPresent = hasNestedKey(projectIndex, "sourceBody")
     || hasNestedKey(projectIndex, "sourceBodies")
     || hasNestedKey(manifest, "sourceBody")
-    || hasNestedKey(manifest, "sourceBodies");
+    || hasNestedKey(manifest, "sourceBodies")
+    || hasProjectHtmlEmbeddedSourceBody(indexHtmlText);
 
   if (!requiredOutputs.projectIndex) {
     diagnostics.push(createCliDiagnostic(
@@ -603,6 +613,7 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
         htmlEntries: entries.filter((entry) => stringValue(entry.view) === "html").length,
         cssEntries: entries.filter((entry) => stringValue(entry.view) === "css").length,
         markupEntries: entries.filter((entry) => (stringValue(entry.kind) ?? "").includes("markup")).length,
+        powershellEntries: entries.filter((entry) => stringValue(entry.view) === "powershell").length,
         surfaceEntries: entries.filter((entry) => {
           const kind = stringValue(entry.kind) ?? "";
           return kind.includes("surface") || kind.includes("endpoint");
@@ -620,6 +631,26 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
       }
     }
   };
+}
+
+function scrubProjectInputSourcePreviews(projectInput: RenderProjectHtmlInput): RenderProjectHtmlInput {
+  return {
+    ...projectInput,
+    entries: projectInput.entries.map((entry) => {
+      if (!entry.source?.preview) {
+        return entry;
+      }
+      const { preview: _preview, ...source } = entry.source;
+      return {
+        ...entry,
+        source
+      };
+    })
+  };
+}
+
+function hasProjectHtmlEmbeddedSourceBody(value: string | undefined): boolean {
+  return typeof value === "string" && /<pre class="hia-source-code"[^>]*><code>[\s\S]+?<\/code><\/pre>/u.test(value);
 }
 
 async function readOptionalJson(inputPath: string, code: string, diagnostics: HiaDiagnostic[]): Promise<unknown | undefined> {
@@ -640,12 +671,11 @@ async function readOptionalJson(inputPath: string, code: string, diagnostics: Hi
   }
 }
 
-async function readOptionalText(inputPath: string): Promise<boolean> {
+async function readOptionalText(inputPath: string): Promise<string | undefined> {
   try {
-    await readFile(inputPath, "utf8");
-    return true;
+    return await readFile(inputPath, "utf8");
   } catch (error) {
-    return !isFileNotFoundError(error);
+    return isFileNotFoundError(error) ? undefined : "";
   }
 }
 
@@ -1093,6 +1123,7 @@ async function aggregateProjectDocs(
   const diagnostics: HiaDiagnostic[] = [];
   const docSourceMaps: RenderProjectDocSourceMapRef[] = [];
   const indexedDocSourceMaps: IndexedProjectDocSourceMap[] = [];
+  const dotnetSourceRelations: DotNetSourceRelationArtifact[] = [];
   const inputRefs: ProjectAggregationResult["inputRefs"] = [];
   const knownProfileIds = new Set(profileRefs.map((profile) => profile.profileId));
   const producerSummary = await runProjectProducers(manifest, baseDir, outputDir, profileRefs);
@@ -1195,13 +1226,19 @@ async function aggregateProjectDocs(
         diagnostic.code,
         diagnostic.message,
         diagnostic.severity,
-        diagnostic.targetPath ?? diagnostic.path ?? input.path,
-        diagnostic.data
+        producerDiagnosticTargetPath(diagnostic, input.path ?? "project.inputs"),
+        producerDiagnosticData(diagnostic)
       )));
 
       if (resultDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
         continue;
       }
+
+      dotnetSourceRelations.push(...await readDotNetSourceRelationArtifacts(
+        readResult as DocumentationProducerResult,
+        inputPath,
+        diagnostics
+      ));
 
       const materializedInputs = producerResultToRuntimeInputs(
         readResult as DocumentationProducerResult,
@@ -1242,12 +1279,55 @@ async function aggregateProjectDocs(
       },
       profiles: profileRefs,
       docSourceMaps,
-      entries: linkProjectEntriesWithDocSourceMaps(entries, indexedDocSourceMaps),
+      entries: linkProjectEntriesWithDocSourceMaps(
+        applyDotNetSourceRelations(entries, dotnetSourceRelations),
+        indexedDocSourceMaps
+      ),
       diagnostics
     },
     inputRefs,
     producerResults: producerSummary.results
   };
+}
+
+async function readDotNetSourceRelationArtifacts(
+  result: DocumentationProducerResult,
+  resultPath: string,
+  diagnostics: HiaDiagnostic[]
+): Promise<DotNetSourceRelationArtifact[]> {
+  const resultBaseDir = path.dirname(resultPath);
+  const relationArtifacts = result.artifacts.filter((artifact) => artifact.kind === "dotnetdoc-source-relation" || artifact.contract === "dotnetdoc-source-relation");
+  const relations: DotNetSourceRelationArtifact[] = [];
+  for (const artifact of relationArtifacts) {
+    const artifactPath = normalizeOutputRelativePath(artifact.path);
+    if (isUnsafeOutputRelativePath(artifactPath)) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_DOTNET_SOURCE_RELATION_PATH_UNSAFE",
+        `Skipped unsafe DotNetDoc source relation path: ${artifact.path}.`,
+        "warning",
+        artifact.path
+      ));
+      continue;
+    }
+    const absolutePath = path.resolve(resultBaseDir, artifactPath);
+    try {
+      const parsed = JSON.parse(await readFile(absolutePath, "utf8")) as unknown;
+      if (isRecord(parsed) && Array.isArray(parsed.relations)) {
+        relations.push(parsed as DotNetSourceRelationArtifact);
+      }
+    } catch (error) {
+      diagnostics.push(createCliDiagnostic(
+        "HIA_CLI_DOTNET_SOURCE_RELATION_READ_FAILED",
+        `Unable to read DotNetDoc source relation artifact: ${artifact.path}.`,
+        "warning",
+        artifact.path,
+        {
+          cause: errorMessage(error)
+        }
+      ));
+    }
+  }
+  return relations;
 }
 
 async function runProjectProducers(
@@ -1426,13 +1506,35 @@ function normalizeProducerDiagnostics(
     diagnostic.code,
     `Producer "${producerId}": ${diagnostic.message}`,
     downgradeErrors && diagnostic.severity === "error" ? "warning" : diagnostic.severity,
-    diagnostic.targetPath ?? diagnostic.path ?? `producers.${producerIndex}.diagnostics.${diagnosticIndex}`,
+    producerDiagnosticTargetPath(diagnostic, `producers.${producerIndex}.diagnostics.${diagnosticIndex}`),
     {
-      ...(diagnostic.data ?? {}),
+      ...producerDiagnosticData(diagnostic),
       producerId,
       producerStatus: result.status
     }
   ));
+}
+
+function producerDiagnosticTargetPath(diagnostic: HiaDiagnostic, fallbackPath: string): string {
+  const extended = diagnostic as HiaDiagnostic & { source?: { path?: unknown } };
+  return diagnostic.targetPath
+    ?? diagnostic.path
+    ?? (typeof extended.source?.path === "string" ? extended.source.path : undefined)
+    ?? fallbackPath;
+}
+
+function producerDiagnosticData(diagnostic: HiaDiagnostic): HiaDiagnosticData | undefined {
+  const extended = diagnostic as HiaDiagnostic & { metadata?: unknown; source?: unknown };
+  const data = {
+    ...(diagnostic.data ?? {}),
+    ...(isPlainJsonObject(extended.metadata) ? { metadata: extended.metadata } : {}),
+    ...(isPlainJsonObject(extended.source) ? { source: extended.source } : {})
+  };
+  return Object.keys(data).length > 0 ? data : undefined;
+}
+
+function isPlainJsonObject(value: unknown): value is HiaDiagnosticData {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function producerArtifactToRuntimeInput(
@@ -1551,6 +1653,51 @@ function profileFromArtifactProfileIds(profileIds: string[] | undefined, profile
   return profileId ? profileRefs.find((profile) => profile.profileId === profileId) : undefined;
 }
 
+function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: DotNetSourceRelationArtifact[]): RenderProjectEntry[] {
+  if (artifacts.length === 0) {
+    return entries;
+  }
+  const relationsBySymbolId = new Map<string, Record<string, unknown>>();
+  for (const artifact of artifacts) {
+    for (const item of artifact.relations ?? []) {
+      if (!isRecord(item)) {
+        continue;
+      }
+      const hiaSymbol = isRecord(item.hiaSymbol) ? item.hiaSymbol : {};
+      const symbolId = stringValue(hiaSymbol.id) ?? stringValue(item.memberId);
+      const declaration = isRecord(item.declaration) ? item.declaration : undefined;
+      if (symbolId && declaration) {
+        relationsBySymbolId.set(symbolId, item);
+      }
+    }
+  }
+
+  return entries.map((entry) => {
+    const relation = entry.symbolId ? relationsBySymbolId.get(entry.symbolId) : undefined;
+    const declaration = isRecord(relation?.declaration) ? relation.declaration : undefined;
+    const declarationPath = stringValue(declaration?.path);
+    if (!declarationPath) {
+      return entry;
+    }
+
+    const declarationRange = isRecord(declaration?.range) ? normalizeProjectRange(declaration.range) : undefined;
+    const declarationLanguage = stringValue(declaration?.language);
+    const declarationRangeSource = stringValue(declaration?.rangeSource);
+    const declarationConfidence = stringValue(declaration?.confidence);
+
+    return {
+      ...entry,
+      source: {
+        path: declarationPath,
+        ...(declarationLanguage ? { language: declarationLanguage } : {}),
+        ...(declarationRange ? { range: declarationRange } : {}),
+        ...(declarationRangeSource ? { rangeSource: declarationRangeSource } : {}),
+        ...(declarationConfidence ? { confidence: declarationConfidence } : {})
+      }
+    };
+  });
+}
+
 async function readProjectJson(inputPath: string, input: ProjectManifestInput, io: CliIo): Promise<unknown | undefined> {
   try {
     return JSON.parse(await readFile(inputPath, "utf8")) as unknown;
@@ -1586,7 +1733,7 @@ function hiaSymbolToProjectEntry(
     name: symbol.name || symbol.id,
     kind: symbol.kind,
     symbolId: symbol.id,
-    view: input.domain ?? fallbackView ?? inferProjectView(symbol.kind),
+    view: resolveProjectEntryView(symbol.kind, input.kind, input.domain, fallbackView),
     ...(symbol.summary ? { summary: symbol.summary } : {}),
     ...(symbol.signature ? { signature: symbol.signature } : {}),
     ...(symbol.i18n ? { i18n: symbol.i18n } : {}),
@@ -1630,7 +1777,7 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
         name,
         kind,
         ...(symbolId ? { symbolId } : {}),
-        view: input.domain ?? inferProjectView(kind, input.kind),
+        view: resolveProjectEntryView(kind, input.kind, input.domain),
         ...(summary ? { summary } : {}),
         ...(profile ? { profile } : {}),
         input: {
@@ -1804,7 +1951,29 @@ function inferProjectView(kind: string, inputKind?: string): RenderProjectView {
     return "dotnet";
   }
 
+  if (kind.startsWith("powershell-") || kind.startsWith("ps-") || inputKind === "psdoc-extraction") {
+    return "powershell";
+  }
+
   return "other";
+}
+
+function resolveProjectEntryView(
+  kind: string,
+  inputKind: string | undefined,
+  explicitDomain: ProjectManifestInput["domain"] | undefined,
+  fallbackView?: RenderProjectView
+): RenderProjectView {
+  const inferredView = inferProjectView(kind, inputKind);
+  if (explicitDomain && explicitDomain !== "other") {
+    return explicitDomain;
+  }
+
+  if (inferredView !== "other") {
+    return inferredView;
+  }
+
+  return explicitDomain ?? fallbackView ?? inferredView;
 }
 
 function createProjectEntryId(inputKind: string, rawId: string, index: number): string {

@@ -677,6 +677,11 @@ export const genericDocLineProducer = defineDocumentationProducer({
         createGenericDiagnostic("HIA_GENERIC_DOCLINE_CONFIG_MISSING", "Generic doc-line producer requires one config input.", "error")
       ]);
     }
+    if (!configInput.path) {
+      return createProducerResult("failed", [], [
+        createGenericDiagnostic("HIA_GENERIC_DOCLINE_CONFIG_PATH_MISSING", "Generic doc-line config input requires a path field.", "error")
+      ]);
+    }
 
     const configPath = path.resolve(request.workspaceRoot, configInput.path);
     let config: GenericDocLineConfig;

@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/plugin-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Documentation producer contracts and runtime helpers for HIA adapters.",
   "license": "MIT",
   "repository": {
