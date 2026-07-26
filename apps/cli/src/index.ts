@@ -71,10 +71,12 @@ const HELP_TEXT = `HIA Documentation CLI
 Usage:
   hia --help
   hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
+  hia docs evidence [--docs-dir <dir>] [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
   docs build      Generate HTML documentation from a HIA document fixture.
+  docs evidence   Summarize generated project documentation outputs without reading source bodies.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -87,6 +89,7 @@ Options:
   --project-index <file>
                       Generated project-index.json used to attach relation graph payload data to the browser panel.
   --out <dir>         Output directory. Defaults to dist/docs.
+  --docs-dir <dir>    Existing generated docs directory for docs evidence. Defaults to dist/docs.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
 `;
@@ -144,6 +147,10 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "build") {
     return runDocsBuild(normalizedArgv.slice(2), io);
+  }
+
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "evidence") {
+    return runDocsEvidence(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {
@@ -247,6 +254,37 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   await writeFile(manifestTargetPath, JSON.stringify(manifestFile, null, 2), "utf8");
 
   io.stdout(`Generated ${rendered.files.length + 1} file(s) at ${outputDir}`);
+  return 0;
+}
+
+/**
+ * 为已生成的统一文档目录生成 public-safe evidence summary。
+ * Creates a public-safe evidence summary for an already generated unified documentation directory.
+ *
+ * @param argv - CLI 参数。CLI arguments.
+ * @param io - 命令行输入输出适配。CLI IO adapter.
+ * @returns CLI 退出码。CLI exit code.
+ */
+async function runDocsEvidence(argv: string[], io: CliIo): Promise<number> {
+  const optionDiagnostics = validateOptionValues(argv, ["--docs-dir", "--out"]);
+  reportDiagnostics(optionDiagnostics, io);
+
+  if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    return 1;
+  }
+
+  const docsDir = path.resolve(io.cwd, readOption(argv, "--docs-dir") ?? "dist/docs");
+  const outputPath = path.resolve(io.cwd, readOption(argv, "--out") ?? path.join(docsDir, "documentation-evidence.json"));
+  const summaryResult = await createGeneratedDocsEvidenceSummary(docsDir);
+  reportDiagnostics(summaryResult.diagnostics, io);
+
+  if (summaryResult.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+    return 1;
+  }
+
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, JSON.stringify(summaryResult.summary, null, 2), "utf8");
+  io.stdout(`Generated documentation evidence summary at ${outputPath}`);
   return 0;
 }
 
@@ -433,6 +471,248 @@ function createProjectOutputManifest(
       }
     ]
   };
+}
+
+interface GeneratedDocsEvidenceSummary {
+  contract: "hia-generated-docs-evidence-summary";
+  contractVersion: "0.1.0-draft";
+  status: "ready" | "incomplete";
+  requiredOutputs: {
+    indexHtml: boolean;
+    manifest: boolean;
+    projectIndex: boolean;
+  };
+  project: {
+    name?: string;
+    version?: string;
+  };
+  entries: {
+    total: number;
+    byView: Record<string, number>;
+    byKind: Record<string, number>;
+    byProfile: Record<string, number>;
+  };
+  producers: Array<{
+    id: string;
+    status: string;
+    artifactCount: number;
+  }>;
+  inputs: Array<{
+    kind: string;
+    source?: string;
+    producerId?: string;
+  }>;
+  coverage: {
+    dotnetEntries: number;
+    jsEntries: number;
+    htmlEntries: number;
+    cssEntries: number;
+    markupEntries: number;
+    surfaceEntries: number;
+  };
+  privacy: {
+    sourcesContentPolicy: "none";
+    sourcesContentPresent: boolean;
+    sourceBodyPresent: boolean;
+    absolutePathLikeStringCount: number;
+  };
+  warnings: {
+    classificationArtifactPresent: boolean;
+    buildWarningGateReady: boolean;
+  };
+}
+
+async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
+  diagnostics: HiaDiagnostic[];
+  summary: GeneratedDocsEvidenceSummary;
+}> {
+  const diagnostics: HiaDiagnostic[] = [];
+  const projectIndexPath = path.join(docsDir, "project-index.json");
+  const manifestPath = path.join(docsDir, OUTPUT_MANIFEST_PATH);
+  const indexHtmlPath = path.join(docsDir, "index.html");
+  const projectIndex = await readOptionalJson(projectIndexPath, "HIA_CLI_DOCS_EVIDENCE_PROJECT_INDEX_READ_FAILED", diagnostics);
+  const manifest = await readOptionalJson(manifestPath, "HIA_CLI_DOCS_EVIDENCE_MANIFEST_READ_FAILED", diagnostics);
+  const indexHtmlPresent = await readOptionalText(indexHtmlPath);
+  const entries = isRecord(projectIndex) && Array.isArray(projectIndex.entries) ? projectIndex.entries.filter(isRecord) : [];
+  const project = isRecord(projectIndex) && isRecord(projectIndex.project) ? projectIndex.project : {};
+  const manifestBuild = isRecord(manifest) && isRecord(manifest.build) ? manifest.build : {};
+  const manifestFiles = isRecord(manifest) && Array.isArray(manifest.files) ? manifest.files.filter(isRecord) : [];
+  const projectSummary: GeneratedDocsEvidenceSummary["project"] = {};
+  const projectName = stringValue(project.name);
+  const projectVersion = stringValue(project.version);
+  const requiredOutputs = {
+    indexHtml: indexHtmlPresent || manifestFiles.some((file) => stringValue(file.path) === "index.html"),
+    manifest: Boolean(manifest),
+    projectIndex: Boolean(projectIndex)
+  };
+  const serializedPublicOutputs = JSON.stringify({
+    projectIndex,
+    manifest
+  });
+  const sourcesContentPresent = hasNestedKey(projectIndex, "sourcesContent") || hasNestedKey(manifest, "sourcesContent");
+  const sourceBodyPresent = hasNestedKey(projectIndex, "sourceBody")
+    || hasNestedKey(projectIndex, "sourceBodies")
+    || hasNestedKey(manifest, "sourceBody")
+    || hasNestedKey(manifest, "sourceBodies");
+
+  if (!requiredOutputs.projectIndex) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_DOCS_EVIDENCE_PROJECT_INDEX_MISSING",
+      "docs evidence requires project-index.json in the generated docs directory.",
+      "error",
+      "project-index.json"
+    ));
+  }
+
+  if (!requiredOutputs.manifest) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_DOCS_EVIDENCE_MANIFEST_MISSING",
+      "docs evidence requires hia-manifest.json in the generated docs directory.",
+      "error",
+      OUTPUT_MANIFEST_PATH
+    ));
+  }
+
+  if (projectName) {
+    projectSummary.name = projectName;
+  }
+
+  if (projectVersion) {
+    projectSummary.version = projectVersion;
+  }
+
+  return {
+    diagnostics,
+    summary: {
+      contract: "hia-generated-docs-evidence-summary",
+      contractVersion: "0.1.0-draft",
+      status: Object.values(requiredOutputs).every(Boolean) ? "ready" : "incomplete",
+      requiredOutputs,
+      project: projectSummary,
+      entries: {
+        total: entries.length,
+        byView: countBy(entries, (entry) => stringValue(entry.view) ?? "all"),
+        byKind: countBy(entries, (entry) => stringValue(entry.kind) ?? "unknown"),
+        byProfile: countBy(entries, (entry) => profileIdFromProjectEntry(entry) ?? "unprofiled")
+      },
+      producers: normalizeEvidenceProducers(manifestBuild),
+      inputs: normalizeEvidenceInputs(manifestBuild),
+      coverage: {
+        dotnetEntries: entries.filter((entry) => stringValue(entry.view) === "dotnet").length,
+        jsEntries: entries.filter((entry) => stringValue(entry.view) === "js").length,
+        htmlEntries: entries.filter((entry) => stringValue(entry.view) === "html").length,
+        cssEntries: entries.filter((entry) => stringValue(entry.view) === "css").length,
+        markupEntries: entries.filter((entry) => (stringValue(entry.kind) ?? "").includes("markup")).length,
+        surfaceEntries: entries.filter((entry) => {
+          const kind = stringValue(entry.kind) ?? "";
+          return kind.includes("surface") || kind.includes("endpoint");
+        }).length
+      },
+      privacy: {
+        sourcesContentPolicy: "none",
+        sourcesContentPresent,
+        sourceBodyPresent,
+        absolutePathLikeStringCount: countAbsolutePathLikeStrings(serializedPublicOutputs)
+      },
+      warnings: {
+        classificationArtifactPresent: serializedPublicOutputs.includes("dotnetdoc-build-warning-classification"),
+        buildWarningGateReady: true
+      }
+    }
+  };
+}
+
+async function readOptionalJson(inputPath: string, code: string, diagnostics: HiaDiagnostic[]): Promise<unknown | undefined> {
+  try {
+    return JSON.parse(await readFile(inputPath, "utf8")) as unknown;
+  } catch (error) {
+    if (isFileNotFoundError(error)) {
+      return undefined;
+    }
+
+    diagnostics.push(createCliDiagnostic(
+      code,
+      `${inputPath} - ${errorMessage(error)}`,
+      "error",
+      inputPath
+    ));
+    return undefined;
+  }
+}
+
+async function readOptionalText(inputPath: string): Promise<boolean> {
+  try {
+    await readFile(inputPath, "utf8");
+    return true;
+  } catch (error) {
+    return !isFileNotFoundError(error);
+  }
+}
+
+function normalizeEvidenceProducers(build: Record<string, unknown>): GeneratedDocsEvidenceSummary["producers"] {
+  if (!Array.isArray(build.producers)) {
+    return [];
+  }
+
+  return build.producers.filter(isRecord).map((producer) => ({
+    id: stringValue(producer.id) ?? "unknown-producer",
+    status: stringValue(producer.status) ?? "unknown",
+    artifactCount: numberValue(producer.artifactCount) ?? 0
+  }));
+}
+
+function normalizeEvidenceInputs(build: Record<string, unknown>): GeneratedDocsEvidenceSummary["inputs"] {
+  if (!Array.isArray(build.inputs)) {
+    return [];
+  }
+
+  return build.inputs.filter(isRecord).map((input) => {
+    const item: GeneratedDocsEvidenceSummary["inputs"][number] = {
+      kind: stringValue(input.kind) ?? "unknown"
+    };
+    const source = stringValue(input.source);
+    const producerId = stringValue(input.producerId);
+
+    if (source) {
+      item.source = source;
+    }
+
+    if (producerId) {
+      item.producerId = producerId;
+    }
+
+    return item;
+  });
+}
+
+function profileIdFromProjectEntry(entry: Record<string, unknown>): string | undefined {
+  return isRecord(entry.profile) ? stringValue(entry.profile.profileId) : undefined;
+}
+
+function countBy(items: Record<string, unknown>[], getKey: (item: Record<string, unknown>) => string): Record<string, number> {
+  return items.reduce<Record<string, number>>((counts, item) => {
+    const key = getKey(item);
+    counts[key] = (counts[key] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function hasNestedKey(value: unknown, key: string): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasNestedKey(item, key));
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return Object.entries(value).some(([entryKey, entryValue]) => entryKey === key || hasNestedKey(entryValue, key));
+}
+
+function countAbsolutePathLikeStrings(value: string): number {
+  const windowsPathMatches = value.match(/[A-Za-z]:\\\\/g) ?? [];
+  const posixPathMatches = value.match(/"\/(?:Users|home|workspace|mnt|var|tmp|Project)\//g) ?? [];
+  return windowsPathMatches.length + posixPathMatches.length;
 }
 
 async function loadDocument(inputPath: string, jsdocIntegrationPath: string, io: CliIo): Promise<{ document?: HiaDocument }> {

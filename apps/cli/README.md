@@ -6,6 +6,7 @@ Current scope:
 
 - `hia --help`
 - `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
+- `hia docs evidence [--docs-dir <dir>] [--out <file>]`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -14,6 +15,8 @@ The build command reads config through `@hia-doc/config`, then renders one of th
 - a project docs manifest that aggregates JS, CSS, HTML and doc-source-map artifacts into one project page
 
 Single-document modes validate the converted core document through `@hia-doc/core`. Project mode keeps each source artifact explicit in the output manifest and renders a unified page with all/JS/CSS/HTML views. All modes report diagnostics, render through `@hia-doc/renderer-html`, write HTML/theme assets, and emit an output manifest. The default manifest path is `hia-manifest.json`.
+
+The evidence command reads an already generated project documentation directory and writes a public-safe `hia-generated-docs-evidence-summary` JSON file. It summarizes required output files, entry counts, views, producer inputs, coverage counters and privacy checks without reading source bodies. It is intended for repeatable project adoption checks such as validating that DotNetDoc and JSDoc entries both appear in a unified site while `sourcesContent` remains absent.
 
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
@@ -29,6 +32,7 @@ pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-en --
 pnpm run hia -- docs build --input fixtures/basic.hia.json --out dist/docs-custom --manifest manifest.json
 pnpm run hia -- docs build --jsdoc-integration fixtures/jsdoc-integration.real-basic.json --out dist/jsdoc-docs --locale zh-CN
 pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project.json --out dist/project-docs
+pnpm run hia -- docs evidence --docs-dir dist/project-docs --out dist/project-docs/documentation-evidence.json
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 

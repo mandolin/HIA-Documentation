@@ -12,6 +12,7 @@ describe("@hia-doc/cli", () => {
 
     expect(exitCode).toBe(0);
     expect(messages.join("\n")).toContain("hia docs build");
+    expect(messages.join("\n")).toContain("hia docs evidence");
     expect(messages.join("\n")).toContain("hia browser panel");
   });
 
@@ -313,6 +314,68 @@ describe("@hia-doc/cli", () => {
           source: "manifest"
         })
       ]));
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("creates a public-safe evidence summary for generated project docs", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-docs-evidence-"));
+    const outDir = path.join(root, "docs");
+    const evidencePath = path.join(root, "documentation-evidence.json");
+    const messages: string[] = [];
+
+    try {
+      const buildExitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-producer-result.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const evidenceExitCode = await runCli([
+        "docs",
+        "evidence",
+        "--docs-dir",
+        outDir,
+        "--out",
+        evidencePath
+      ], createTestIo(messages));
+      const evidence = JSON.parse(await readFile(evidencePath, "utf8")) as {
+        contract: string;
+        status: string;
+        entries: {
+          total: number;
+          byView: Record<string, number>;
+          byProfile: Record<string, number>;
+        };
+        coverage: {
+          dotnetEntries: number;
+          jsEntries: number;
+        };
+        privacy: {
+          sourcesContentPolicy: string;
+          sourcesContentPresent: boolean;
+          sourceBodyPresent: boolean;
+          absolutePathLikeStringCount: number;
+        };
+      };
+
+      expect(buildExitCode).toBe(0);
+      expect(evidenceExitCode).toBe(0);
+      expect(evidence.contract).toBe("hia-generated-docs-evidence-summary");
+      expect(evidence.status).toBe("ready");
+      expect(evidence.entries.total).toBe(3);
+      expect(evidence.entries.byView).toMatchObject({ dotnet: 1, js: 2 });
+      expect(evidence.entries.byProfile).toMatchObject({ jsdoc: 2 });
+      expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2 });
+      expect(evidence.privacy).toMatchObject({
+        sourcesContentPolicy: "none",
+        sourcesContentPresent: false,
+        sourceBodyPresent: false,
+        absolutePathLikeStringCount: 0
+      });
     } finally {
       await rm(root, { force: true, recursive: true });
     }
