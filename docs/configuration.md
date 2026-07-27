@@ -64,7 +64,7 @@ CLI 按以下顺序解析配置：
 | `none` | 保留源码定位元数据，不输出源码链接、动态加载地址或源码正文。 |
 | `link` | 默认策略。输出定位与外链，不把源码正文写入文档。 |
 | `embed` | 显式把源码片段写入对应 `entries/*.html`；适合受控的私有/本地文档。 |
-| `fetch` | 节点打开后仍不加载源码；用户再点“加载源码”时，从 `fetchBaseUrl` 动态读取纯文本。 |
+| `fetch` | 从 `fetchBaseUrl` 动态读取纯文本；默认在用户展开源码区域时加载，也可配置为按钮触发。 |
 
 ### GitHub 或仓库链接
 
@@ -107,6 +107,7 @@ CLI 按以下顺序解析配置：
       "presentation": "fetch",
       "fetchBaseUrl": "https://raw.githubusercontent.com/example/project/main",
       "linkBaseUrl": "https://github.com/example/project/blob/main",
+      "fetchTrigger": "on-expand",
       "maxLines": 400
     }
   }
@@ -114,6 +115,13 @@ CLI 按以下顺序解析配置：
 ```
 
 `fetchBaseUrl` 必须返回纯文本源码，并允许文档站来源通过 CORS 读取。GitHub `blob` 页面不能作为 `fetchBaseUrl`；应使用 raw URL 或目标项目自己的受控源码服务。
+
+`fetchTrigger` 支持：
+
+- `on-expand`：默认值。用户展开源码小三角时立即加载。
+- `manual`：展开后显示“加载源码”按钮，点击后才加载。
+
+当 locator 只有起始行而没有结束行时，fetch reader 从起始行开始，最多显示 `maxLines` 行，不再把缺失结束行误当成只读取一行。精确 symbol 结束范围仍应由对应 doc line/source extractor 提供。
 
 ## 字段
 
@@ -132,6 +140,7 @@ CLI 按以下顺序解析配置：
 | `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `link`。 |
 | `docs.source.linkBaseUrl` | string | 仓库或浏览器源码链接基础 URL。 |
 | `docs.source.fetchBaseUrl` | string | `fetch` 模式必填的纯文本源码基础 URL。 |
+| `docs.source.fetchTrigger` | `"on-expand"` / `"manual"` | fetch 加载触发方式，默认 `on-expand`。 |
 | `docs.source.localRoot` | string | `embed` 模式读取源码的本地根目录。 |
 | `docs.source.defaultExpanded` | boolean | 嵌入源码是否默认展开。 |
 | `docs.source.maxLines` | positive integer | 单个源码片段最大行数。 |

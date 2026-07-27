@@ -9,6 +9,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - 单一 document 模式输出一个 `index.html`。
 - 统一项目站默认输出 `split-site`：入口页、延迟导航分片、搜索索引、关系图和逐节点 HTML fragment。
 - `projectSite.source.presentation` 统一约束 `none`、`link`、`embed`、`fetch` 四种源码呈现方式。
+- `fetch` 默认在用户展开源码详情时加载；`projectSite.source.fetchTrigger: "manual"` 可恢复显式加载按钮，且 split-site / single-page 复用同一加载逻辑。
 - Consumes field-level i18n text and emits runtime-switchable locale blocks.
 - Marks fallback text with `data-hia-fallback-from`.
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.

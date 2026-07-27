@@ -498,7 +498,9 @@ describe("@hia-doc/cli", () => {
         docs: {
           source: {
             presentation: "fetch",
-            fetchBaseUrl: "https://raw.example.test/mandolin/project/main"
+            fetchBaseUrl: "https://raw.example.test/mandolin/project/main",
+            fetchTrigger: "on-expand",
+            maxLines: 80
           }
         }
       }), "utf8");
@@ -554,6 +556,11 @@ describe("@hia-doc/cli", () => {
       expect(fetchHtml).toContain(
         "data-hia-source-fetch=\"https://raw.example.test/mandolin/project/main/examples/basic/src/greet.js\""
       );
+      expect(fetchHtml).toContain("data-hia-source-fetch-trigger=\"on-expand\"");
+      expect(fetchHtml).toContain("data-hia-source-max-lines=\"80\"");
+      expect(fetchHtml).toContain("data-hia-source-start=\"17\"");
+      expect(fetchHtml).toContain("data-hia-source-end=\"22\"");
+      expect(fetchHtml).not.toContain("data-hia-source-fetch-button");
       expect(fetchHtml).not.toContain("function greet(name)");
     } finally {
       await rm(root, { force: true, recursive: true });

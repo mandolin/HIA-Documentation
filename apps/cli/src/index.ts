@@ -680,20 +680,25 @@ async function prepareProjectSourcePresentation(
       }
 
       const { preview: existingPreview, fetchUrl: _existingFetchUrl, linkUrl: existingLinkUrl, ...locator } = entry.source;
+      // <lang><zh-CN>优先采用 producer 提供的 primary block 范围，避免 fetch 退化为只读取定义位置的一行。</zh-CN><en>Prefer the producer primary-block range so fetch does not collapse to the single defined-in line.</en></lang>
+      const effectiveRange = existingPreview?.range ?? locator.range;
+      const preparedLocator = {
+        ...locator,
+        ...(effectiveRange ? { range: effectiveRange } : {})
+      };
       const linkUrl = linkBaseUrl
-        ? createProjectSourceUrl(linkBaseUrl, locator.path, locator.range, true)
+        ? createProjectSourceUrl(linkBaseUrl, preparedLocator.path, preparedLocator.range, true)
         : existingLinkUrl;
       const source: NonNullable<RenderProjectEntry["source"]> = {
-        ...locator,
+        ...preparedLocator,
         ...(linkUrl && presentation !== "none" ? { linkUrl } : {})
       };
 
       if (presentation === "fetch" && fetchBaseUrl) {
-        source.fetchUrl = createProjectSourceUrl(fetchBaseUrl, locator.path, undefined, false);
+        source.fetchUrl = createProjectSourceUrl(fetchBaseUrl, preparedLocator.path, undefined, false);
         if (!source.range) {
           source.range = {
-            start: { line: 1 },
-            end: { line: maxLines }
+            start: { line: 1 }
           };
         }
       }
@@ -701,8 +706,8 @@ async function prepareProjectSourcePresentation(
       if (presentation === "embed") {
         const preview = existingPreview ?? await readProjectSourcePreview(
           localRoot,
-          locator.path,
-          locator.range,
+          preparedLocator.path,
+          preparedLocator.range,
           maxLines,
           sourceFileCache
         );
@@ -2396,7 +2401,9 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
     layout: docsConfig.renderer?.projectLayout ?? "split-site",
     source: {
       presentation: resolveProjectSourcePresentation(docsConfig),
-      defaultExpanded: docsConfig.source?.defaultExpanded ?? false
+      defaultExpanded: docsConfig.source?.defaultExpanded ?? false,
+      fetchTrigger: docsConfig.source?.fetchTrigger ?? "on-expand",
+      maxLines: docsConfig.source?.maxLines ?? 400
     }
   };
 

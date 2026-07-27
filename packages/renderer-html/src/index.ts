@@ -58,6 +58,7 @@ export interface RenderHtmlOptions {
 export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "powershell" | "other";
 export type RenderProjectSiteLayout = "split-site" | "single-page";
 export type RenderProjectSourcePresentation = "none" | "link" | "embed" | "fetch";
+export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
 
 export interface RenderProjectSiteOptions {
   /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
@@ -67,6 +68,10 @@ export interface RenderProjectSiteOptions {
     presentation?: RenderProjectSourcePresentation;
     /** embed 模式的源码详情默认展开状态。Default expansion state for embedded source details. */
     defaultExpanded?: boolean;
+    /** fetch 模式默认在展开时加载；manual 保留显式加载按钮。Fetch mode loads on expansion by default; manual keeps an explicit load button. */
+    fetchTrigger?: RenderProjectSourceFetchTrigger;
+    /** fetch 模式单次最多显示的源码行数。Maximum source lines displayed by one fetch operation. */
+    maxLines?: number;
   };
 }
 
@@ -237,6 +242,8 @@ export interface RenderProjectInputRef {
 export interface RenderProjectSourceRef {
   confidence?: string;
   fetchUrl?: string;
+  fetchTrigger?: RenderProjectSourceFetchTrigger;
+  fetchMaxLines?: number;
   language?: string;
   linkUrl?: string;
   path: string;
@@ -508,7 +515,11 @@ function applyProjectSourcePresentationPolicy(
             ...(previewDefaultExpanded !== undefined ? { defaultExpanded: previewDefaultExpanded } : {})
           }
         } : {}),
-        ...(presentation === "fetch" && fetchUrl ? { fetchUrl } : {})
+        ...(presentation === "fetch" && fetchUrl ? {
+          fetchUrl,
+          fetchTrigger: options.projectSite?.source?.fetchTrigger ?? entry.source.fetchTrigger ?? "on-expand",
+          fetchMaxLines: options.projectSite?.source?.maxLines ?? entry.source.fetchMaxLines ?? 400
+        } : {})
       };
       return {
         ...entry,
@@ -884,6 +895,63 @@ function renderProjectSplitSiteHtml(
   ].join("");
 }
 
+/**
+ * 生成 split-site 与 single-page 共用的 fetch 源码加载逻辑。
+ *
+ * @lang zh-CN 该脚本默认在 details 展开时加载源码，并保留 manual 按钮模式作为显式配置。
+ * @lang en Generates the shared fetch-source loader for split-site and single-page layouts, loading on details expansion by default while retaining an explicit manual button mode.
+ */
+function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "document"): string[] {
+  return [
+    "  async function loadSourceFetch(details) {",
+    "    if (details.dataset.loaded === 'true' || details.dataset.loading === 'true') return;",
+    "    const code = details.querySelector('code');",
+    "    const button = details.querySelector('[data-hia-source-fetch-button]');",
+    "    const status = details.querySelector('[data-hia-source-fetch-status]');",
+    "    details.dataset.loading = 'true';",
+    "    details.setAttribute('aria-busy', 'true');",
+    "    if (status) {",
+    "      status.hidden = false;",
+    "      status.textContent = 'Loading source / 正在加载源码...';",
+    "    }",
+    "    try {",
+    "      const response = await fetch(details.dataset.hiaSourceFetch || '', { credentials: 'omit' });",
+    "      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
+    "      const lines = (await response.text()).split(/\\r?\\n/u);",
+    "      const start = Math.max(1, Number(details.dataset.hiaSourceStart || 1));",
+    "      const maxLines = Math.max(1, Number(details.dataset.hiaSourceMaxLines || 400));",
+    "      const declaredEnd = Number(details.dataset.hiaSourceEnd || 0);",
+    "      const end = declaredEnd >= start ? Math.min(declaredEnd, start + maxLines - 1) : start + maxLines - 1;",
+    "      if (code) code.textContent = lines.slice(start - 1, end).join('\\n');",
+    "      details.dataset.loaded = 'true';",
+    "      if (button) button.hidden = true;",
+    "      if (status) status.hidden = true;",
+    "    } catch (error) {",
+    "      if (status) status.textContent = `Source load failed / 源码加载失败: ${String(error?.message || error)}`;",
+    "      if (button) {",
+    "        button.hidden = false;",
+    "        button.textContent = 'Retry source / 重试加载源码';",
+    "      }",
+    "    } finally {",
+    "      delete details.dataset.loading;",
+    "      details.removeAttribute('aria-busy');",
+    "    }",
+    "  }",
+    `  function bindSourceFetch(root = ${rootExpression}) {`,
+    "    for (const details of root?.querySelectorAll('details[data-hia-source-fetch]') || []) {",
+    "      const button = details.querySelector('[data-hia-source-fetch-button]');",
+    "      if (button) button.addEventListener('click', () => loadSourceFetch(details));",
+    "      if (details.dataset.hiaSourceFetchTrigger !== 'manual') {",
+    "        details.addEventListener('toggle', () => {",
+    "          if (details.open) void loadSourceFetch(details);",
+    "        });",
+    "        if (details.open) void loadSourceFetch(details);",
+    "      }",
+    "    }",
+    "  }"
+  ];
+}
+
 function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: string): string {
   return [
     "<script>",
@@ -982,26 +1050,7 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "      block.hidden = block.getAttribute('data-hia-locale') !== selected;",
     "    }",
     "  }",
-    "  function bindSourceFetch() {",
-    "    for (const button of contentHost?.querySelectorAll('[data-hia-source-fetch]') || []) {",
-    "      button.addEventListener('click', async () => {",
-    "        if (button.dataset.loaded === 'true') return;",
-    "        const code = button.parentElement?.querySelector('code');",
-    "        try {",
-    "          const response = await fetch(button.dataset.hiaSourceFetch || '', { credentials: 'omit' });",
-    "          if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
-    "          const lines = (await response.text()).split(/\\r?\\n/u);",
-    "          const start = Math.max(1, Number(button.dataset.hiaSourceStart || 1));",
-    "          const end = Math.max(start, Number(button.dataset.hiaSourceEnd || lines.length));",
-    "          if (code) code.textContent = lines.slice(start - 1, end).join('\\n');",
-    "          button.dataset.loaded = 'true';",
-    "          button.hidden = true;",
-    "        } catch (error) {",
-    "          button.textContent = String(error?.message || error);",
-    "        }",
-    "      });",
-    "    }",
-    "  }",
+    ...renderProjectSourceFetchClientLines("contentHost"),
     "  async function loadEntry(entryId, contentPath, updateHash) {",
     "    if (!contentHost) return;",
     "    contentHost.innerHTML = '<p class=\"hia-project-loading\">...</p>';",
@@ -1326,11 +1375,19 @@ function renderProjectEntrySource(source: RenderProjectSourceRef): string {
 
 function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
   const startLine = source.range?.start.line ?? 1;
-  const endLine = source.range?.end?.line ?? startLine;
+  const endLine = source.range?.end?.line;
+  const fetchTrigger = source.fetchTrigger ?? "on-expand";
+  const maxLines = source.fetchMaxLines ?? 400;
+  const caption = endLine ? `${source.path}:${startLine}-${endLine}` : `${source.path}:${startLine}`;
+  const endAttribute = endLine ? ` data-hia-source-end="${escapeHtml(String(endLine))}"` : "";
+  const manualButton = fetchTrigger === "manual"
+    ? "<button type=\"button\" class=\"hia-source-fetch-button\" data-hia-source-fetch-button>Load source / 加载源码</button>"
+    : "";
   return [
-    "<details class=\"hia-source-preview hia-project-source-preview\">",
-    `<summary>${escapeHtml(`${source.path}:${startLine}-${endLine}`)}</summary>`,
-    `<button type="button" class="hia-source-fetch-button" data-hia-source-fetch="${escapeHtml(source.fetchUrl ?? "")}" data-hia-source-start="${escapeHtml(String(startLine))}" data-hia-source-end="${escapeHtml(String(endLine))}">Load source / 加载源码</button>`,
+    `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl ?? "")}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-start="${escapeHtml(String(startLine))}"${endAttribute} data-hia-source-max-lines="${escapeHtml(String(maxLines))}">`,
+    `<summary>${escapeHtml(caption)}</summary>`,
+    manualButton,
+    "<p class=\"hia-project-loading\" data-hia-source-fetch-status hidden></p>",
     `<pre class="hia-source-code"><code data-language="${escapeHtml(source.language ?? "")}"></code></pre>`,
     "</details>"
   ].join("");
@@ -1516,6 +1573,7 @@ function renderProjectViewScript(): string {
     "  const search = document.querySelector('[data-hia-project-search]');",
     "  const empty = document.querySelector('[data-hia-project-empty]');",
     "  let activeView = 'all';",
+    ...renderProjectSourceFetchClientLines("document"),
     "  function matchesFilter(item, view, query) {",
     "    const viewName = item.dataset.hiaProjectEntry || item.dataset.hiaProjectNav || 'other';",
     "    const text = (item.dataset.hiaProjectSearchText || '').toLowerCase();",
@@ -1549,6 +1607,7 @@ function renderProjectViewScript(): string {
     "      }, window.location.protocol === 'file:' || window.location.origin === 'null' ? '*' : window.location.origin);",
     "    });",
     "  }",
+    "  bindSourceFetch();",
     "  activate('all');",
     "})();",
     "</script>"

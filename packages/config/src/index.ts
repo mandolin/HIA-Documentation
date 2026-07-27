@@ -10,6 +10,7 @@ export const HIA_CONFIG_FILE_NAMES = ["hia.config.json"] as const;
 export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
 export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
 export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"] as const;
+export const HIA_CONFIG_SOURCE_FETCH_TRIGGERS = ["on-expand", "manual"] as const;
 export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
 export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
 
@@ -55,6 +56,8 @@ export interface HiaSourceLinkConfig {
   linkBaseUrl?: string;
   /** fetch 模式下返回纯文本源码的基础 URL。Base URL returning plain source text in fetch mode. */
   fetchBaseUrl?: string;
+  /** fetch 模式的加载触发方式；默认展开源码区域时自动加载。Fetch loading trigger; defaults to loading when the source details are expanded. */
+  fetchTrigger?: typeof HIA_CONFIG_SOURCE_FETCH_TRIGGERS[number];
   /** embed 模式读取相对源码路径时使用的本地根目录。Local root used to resolve relative source paths in embed mode. */
   localRoot?: string;
   /** 源码卡片呈现策略。Source-card presentation policy. */
@@ -246,6 +249,7 @@ function validateSourceConfig(value: unknown, diagnostics: HiaDiagnostic[], targ
   validateOptionalString(value, "baseUrl", diagnostics, targetPath);
   validateOptionalString(value, "linkBaseUrl", diagnostics, targetPath);
   validateOptionalString(value, "fetchBaseUrl", diagnostics, targetPath);
+  validateOptionalEnum(value, "fetchTrigger", HIA_CONFIG_SOURCE_FETCH_TRIGGERS, diagnostics, targetPath);
   validateOptionalString(value, "localRoot", diagnostics, targetPath);
   validateOptionalEnum(value, "mode", HIA_CONFIG_SOURCE_MODES, diagnostics, targetPath);
   validateOptionalEnum(value, "presentation", HIA_CONFIG_SOURCE_PRESENTATIONS, diagnostics, targetPath);

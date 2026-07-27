@@ -30,7 +30,7 @@
     {
       "name": "@hia-doc/config",
       "path": "packages/config",
-      "targetVersion": "0.1.3",
+      "targetVersion": "0.1.4",
       "publishOrder": 20,
       "kind": "owner-runtime",
       "releaseStatus": "published"
@@ -94,7 +94,7 @@
     {
       "name": "@hia-doc/renderer-html",
       "path": "packages/renderer-html",
-      "targetVersion": "0.1.2",
+      "targetVersion": "0.1.3",
       "publishOrder": 40,
       "kind": "renderer-runtime",
       "releaseStatus": "published"
@@ -118,7 +118,7 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.4",
+      "targetVersion": "0.1.5",
       "publishOrder": 70,
       "kind": "tooling-runtime",
       "releaseStatus": "published"

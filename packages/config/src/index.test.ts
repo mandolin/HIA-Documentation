@@ -124,6 +124,40 @@ describe("@hia-doc/config", () => {
     expect(disabledEmbed.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_PRESENTATION_DISABLED");
   });
 
+  it("accepts on-expand/manual fetch triggers and rejects unknown triggers", () => {
+    const onExpand = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "fetch",
+          fetchBaseUrl: "https://raw.example.test/project",
+          fetchTrigger: "on-expand"
+        }
+      }
+    });
+    const manual = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "fetch",
+          fetchBaseUrl: "https://raw.example.test/project",
+          fetchTrigger: "manual"
+        }
+      }
+    });
+    const invalid = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "fetch",
+          fetchBaseUrl: "https://raw.example.test/project",
+          fetchTrigger: "immediate"
+        }
+      }
+    });
+
+    expect(onExpand).toEqual([]);
+    expect(manual).toEqual([]);
+    expect(invalid.some((diagnostic) => diagnostic.code === "HIA_CONFIG_FIELD_INVALID")).toBe(true);
+  });
+
   it("exports and validates the project manifest contract", () => {
     expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.$id).toBe(HIA_PROJECT_MANIFEST_SCHEMA_ID);
     expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.properties.schemaVersion.const).toBe(HIA_PROJECT_MANIFEST_SCHEMA_VERSION);

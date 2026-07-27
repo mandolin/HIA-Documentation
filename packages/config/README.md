@@ -9,7 +9,7 @@ HIA 文档工具共享的配置 contract 与 loader。
 - Validate the first JSON config contract.
 - Provide diagnostics in the same shape used by `@hia-doc/core`, including machine-readable `data` where useful.
 
-配置包表达项目与构建设置，不向核心 document IR 添加字段。统一项目站可通过 `docs.renderer.projectLayout` 选择分片/单页输出，并通过 `docs.source.presentation` 选择 `none`、`link`、`embed` 或 `fetch`。
+配置包表达项目与构建设置，不向核心 document IR 添加字段。统一项目站可通过 `docs.renderer.projectLayout` 选择分片/单页输出，并通过 `docs.source.presentation` 选择 `none`、`link`、`embed` 或 `fetch`。`fetch` 默认在源码详情展开时加载；需要额外确认动作时，可设置 `docs.source.fetchTrigger: "manual"`。
 
 The first contract is intentionally small. `hia.config.ts`, layered config merging and dynamic config evaluation are deferred.
 

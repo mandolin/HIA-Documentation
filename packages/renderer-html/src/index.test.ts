@@ -520,7 +520,57 @@ describe("@hia-doc/renderer-html", () => {
     expect(entryHtml("embed")).toContain("function sourceMode()");
     expect(entryHtml("embed")).not.toContain("data-hia-source-fetch");
     expect(entryHtml("fetch")).toContain("data-hia-source-fetch=\"https://raw.example.test/src/source-mode.js\"");
+    expect(entryHtml("fetch")).toContain("data-hia-source-fetch-trigger=\"on-expand\"");
+    expect(entryHtml("fetch")).not.toContain("data-hia-source-fetch-button");
     expect(entryHtml("fetch")).not.toContain("function sourceMode()");
+
+    const manualFetch = renderProjectHtmlDocument(input, {
+      projectSite: {
+        source: {
+          presentation: "fetch",
+          fetchTrigger: "manual",
+          maxLines: 80
+        }
+      }
+    }).files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+    expect(manualFetch).toContain("data-hia-source-fetch-trigger=\"manual\"");
+    expect(manualFetch).toContain("data-hia-source-max-lines=\"80\"");
+    expect(manualFetch).toContain("data-hia-source-fetch-button");
+
+    const openEndedFetch = renderProjectHtmlDocument({
+      ...input,
+      entries: [
+        {
+          ...input.entries[0],
+          source: {
+            ...input.entries[0]!.source,
+            range: { start: { line: 3 } }
+          }
+        }
+      ]
+    }, {
+      projectSite: {
+        source: {
+          presentation: "fetch",
+          maxLines: 80
+        }
+      }
+    }).files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+    expect(openEndedFetch).toContain("<summary>src/source-mode.js:3</summary>");
+    expect(openEndedFetch).not.toContain("src/source-mode.js:3-3");
+    expect(openEndedFetch).not.toContain("data-hia-source-end=");
+    expect(openEndedFetch).toContain("data-hia-source-max-lines=\"80\"");
+
+    const singlePageFetch = renderProjectHtmlDocument(input, {
+      projectSite: {
+        layout: "single-page",
+        source: {
+          presentation: "fetch"
+        }
+      }
+    }).files.find((file) => file.path === "index.html")?.contents ?? "";
+    expect(singlePageFetch).toContain("function bindSourceFetch(root = document)");
+    expect(singlePageFetch).toContain("bindSourceFetch();");
   });
 
   it("separates ASP.NET surfaces and project structure from assembly API hierarchy", () => {
