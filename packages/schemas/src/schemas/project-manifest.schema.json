@@ -284,6 +284,12 @@
         },
         "sourceRoot": {
           "$ref": "#/$defs/safeRelativePath"
+        },
+        "artifactPolicy": {
+          "enum": [
+            "all",
+            "relations-only"
+          ]
         }
       }
     }

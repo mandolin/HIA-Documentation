@@ -164,11 +164,43 @@ describe("@hia-doc/renderer-html", () => {
           kind: "dotnet-type",
           view: "dotnet",
           summary: "Represents a portal navigation menu.",
+          i18n: {
+            enabled: true,
+            model: "hia-text-i18n",
+            modelVersion: "0.2.0",
+            defaultLocale: "en",
+            locales: ["en", "zh-CN"],
+            fields: {
+              summary: {
+                fieldPath: "summary",
+                kind: "summary",
+                defaultLocale: "en",
+                localizedText: {
+                  en: "Represents a portal navigation menu.",
+                  "zh-CN": "表示门户导航菜单。"
+                }
+              }
+            }
+          },
+          symbolId: "T:Portal.Components.PortalMenu",
+          hierarchy: {
+            assembly: "Portal.Components",
+            namespace: "Portal.Components",
+            baseTypeIds: ["T:System.Object"],
+            interfaceIds: ["T:Portal.Components.IMenu"]
+          },
           profile: { profileId: "dotnetdoc", profileVersion: "0.1.0-draft" },
           input: { kind: "hia-document", path: "Portal.Components.hia.json", contract: "dotnetdoc-csharp-source-extraction" },
           source: { path: "src/PortalMenu.cs", language: "csharp", range: { start: { line: 8 }, end: { line: 29 } } }
         }
       ]
+    }, {
+      projectSite: {
+        layout: "single-page",
+        source: {
+          presentation: "embed"
+        }
+      }
     });
 
     const html = result.files[0]?.contents ?? "";
@@ -254,13 +286,25 @@ describe("@hia-doc/renderer-html", () => {
       views: ["dotnet"],
       children: [
         expect.objectContaining({
-          kind: "namespace",
-          label: "(global namespace)",
+          kind: "assembly",
+          label: "Portal.Components",
           children: [
             expect.objectContaining({
-              kind: "type",
-              label: "PortalMenu",
-              entryId: "dotnet:portal-menu"
+              kind: "namespace",
+              label: "Portal",
+              children: [
+                expect.objectContaining({
+                  kind: "namespace",
+                  label: "Components",
+                  children: [
+                    expect.objectContaining({
+                      kind: "type",
+                      label: "PortalMenu",
+                      entryId: "dotnet:portal-menu"
+                    })
+                  ]
+                })
+              ]
             })
           ]
         })
@@ -295,6 +339,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("data-hia-project-entry=\"dotnet\"");
     expect(html).toContain(".NET");
     expect(html).toContain("PortalMenu");
+    expect(html).toContain("表示门户导航菜单。");
     expect(html).toContain("dotnet-type");
     expect(html).toContain("buildProfileSummary");
     expect(html).toContain("生成用户资料摘要。");
@@ -324,6 +369,246 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("Profile cssdoc@0.1.0-draft");
   });
 
+  it("uses split-site output by default and keeps semantic navigation lazy", () => {
+    const input = {
+      project: {
+        name: "Large Project",
+        defaultLocale: "en",
+        locales: ["en", "zh-CN"]
+      },
+      entries: [
+        {
+          id: "js:module",
+          name: "profile",
+          kind: "module",
+          view: "js" as const,
+          symbolId: "module:profile",
+          source: {
+            path: "src/profile.js",
+            language: "javascript",
+            linkUrl: "https://example.test/src/profile.js#L1",
+            range: { start: { line: 1 }, end: { line: 40 } }
+          }
+        },
+        {
+          id: "js:build",
+          name: "buildProfileSummary",
+          kind: "function",
+          view: "js" as const,
+          symbolId: "function:buildProfileSummary",
+          hierarchy: {
+            parentSymbolId: "module:profile"
+          },
+          summary: "Builds a user profile summary.",
+          source: {
+            path: "src/profile.js",
+            language: "javascript",
+            linkUrl: "https://example.test/src/profile.js#L12",
+            range: { start: { line: 12 }, end: { line: 14 } },
+            preview: {
+              content: "function buildProfileSummary(profile) {\n  return profile.displayName;\n}",
+              language: "javascript",
+              range: { start: { line: 12 }, end: { line: 14 } }
+            }
+          }
+        }
+      ]
+    };
+
+    const result = renderProjectHtmlDocument(input);
+    const paths = result.files.map((file) => file.path);
+    const indexHtml = result.files.find((file) => file.path === "index.html")?.contents ?? "";
+    const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      site?: { layout?: string; sourcePresentation?: string };
+      navigationTree?: Array<{ id: string; children?: unknown[] }>;
+    };
+    const rootShard = JSON.parse(result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "{}") as {
+      children?: Array<{ id: string; children?: unknown[]; childrenPath?: string }>;
+    };
+    const entryFiles = result.files.filter((file) => file.path.startsWith("entries/"));
+
+    expect(paths).toContain("navigation/root.json");
+    expect(paths).toContain("search/index.json");
+    expect(paths).toContain("relations/project.json");
+    expect(entryFiles).toHaveLength(2);
+    expect(projectIndex.site).toEqual(expect.objectContaining({
+      layout: "split-site",
+      sourcePresentation: "link"
+    }));
+    expect(rootShard.children).toEqual([
+      expect.objectContaining({
+        id: "view:js",
+        childrenPath: expect.stringMatching(/^navigation\/.+\.json$/u)
+      })
+    ]);
+    expect(rootShard.children?.[0]?.children).toBeUndefined();
+    expect(projectIndex.navigationTree?.[0]).toMatchObject({
+      id: "view:js",
+      children: [
+        expect.objectContaining({
+          kind: "source-root",
+          children: [
+            expect.objectContaining({
+              kind: "source-file",
+              children: [
+                expect.objectContaining({
+                  kind: "type",
+                  entryId: "js:module",
+                  children: [
+                    expect.objectContaining({
+                      kind: "entry",
+                      entryId: "js:build"
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        })
+      ]
+    });
+    expect(indexHtml).toContain("data-hia-project-tree");
+    expect(indexHtml).toContain("fetch(contentPath");
+    expect(indexHtml).not.toContain("data-hia-project-entry=\"js\"");
+    expect(indexHtml).not.toContain("function buildProfileSummary(profile)");
+    expect(entryFiles.find((file) => file.contents.includes("buildProfileSummary"))?.contents)
+      .toContain("https://example.test/src/profile.js#L12");
+    expect(entryFiles.find((file) => file.contents.includes("buildProfileSummary"))?.contents)
+      .not.toContain("function buildProfileSummary(profile)");
+  });
+
+  it("enforces none, link, embed and fetch source presentation at the renderer boundary", () => {
+    const input = {
+      project: {
+        name: "Source Mode Project"
+      },
+      entries: [
+        {
+          id: "js:source-mode",
+          name: "sourceMode",
+          kind: "function",
+          view: "js" as const,
+          source: {
+            path: "src/source-mode.js",
+            language: "javascript",
+            linkUrl: "https://example.test/src/source-mode.js#L3",
+            fetchUrl: "https://raw.example.test/src/source-mode.js",
+            range: { start: { line: 3 }, end: { line: 5 } },
+            preview: {
+              content: "function sourceMode() {\n  return true;\n}",
+              range: { start: { line: 3 }, end: { line: 5 } }
+            }
+          }
+        }
+      ]
+    };
+    const entryHtml = (presentation: "none" | "link" | "embed" | "fetch") => {
+      const result = renderProjectHtmlDocument(input, {
+        projectSite: {
+          source: {
+            presentation
+          }
+        }
+      });
+      return result.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+    };
+
+    expect(entryHtml("none")).not.toContain("https://example.test");
+    expect(entryHtml("none")).not.toContain("function sourceMode()");
+    expect(entryHtml("link")).toContain("https://example.test/src/source-mode.js#L3");
+    expect(entryHtml("link")).not.toContain("function sourceMode()");
+    expect(entryHtml("embed")).toContain("function sourceMode()");
+    expect(entryHtml("embed")).not.toContain("data-hia-source-fetch");
+    expect(entryHtml("fetch")).toContain("data-hia-source-fetch=\"https://raw.example.test/src/source-mode.js\"");
+    expect(entryHtml("fetch")).not.toContain("function sourceMode()");
+  });
+
+  it("separates ASP.NET surfaces and project structure from assembly API hierarchy", () => {
+    const result = renderProjectHtmlDocument({
+      project: {
+        name: "Portal"
+      },
+      entries: [
+        {
+          id: "endpoint:default",
+          name: "Page ~/Default.aspx",
+          kind: "aspnet-endpoint",
+          view: "dotnet",
+          source: { path: "src/Portal/Default.aspx", language: "aspnet-markup" }
+        },
+        {
+          id: "markup:admin",
+          name: "DiagnosticsLogs.aspx comment",
+          kind: "dotnet-markup-comment",
+          view: "dotnet",
+          source: { path: "src/Portal/Admin/DiagnosticsLogs.aspx", language: "aspnet-markup" }
+        },
+        {
+          id: "project:portal",
+          name: "Portal",
+          kind: "dotnet-project",
+          view: "dotnet",
+          source: { path: "src/Portal/Portal.csproj", language: "msbuild" }
+        }
+      ]
+    });
+    const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      navigationTree?: Array<{ children?: Array<{ kind: string; label: string; entryCount: number }> }>;
+    };
+    const roots = projectIndex.navigationTree?.[0]?.children ?? [];
+
+    expect(roots).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: "surface", label: "ASP.NET Surfaces", entryCount: 2 }),
+      expect.objectContaining({ kind: "project", label: ".NET Project Structure", entryCount: 1 })
+    ]));
+    expect(roots.some((item) => item.label === "(unknown assembly)")).toBe(false);
+  });
+
+  it("keeps a 3000-entry project index shell small and emits entry content separately", () => {
+    const entries = Array.from({ length: 3000 }, (_, index) => {
+      const typeIndex = Math.floor(index / 50);
+      return {
+        id: `dotnet:method:${index}`,
+        name: `Method${index}`,
+        kind: "dotnet-method",
+        view: "dotnet" as const,
+        symbolId: `M:Portal.Feature${typeIndex}.Type${typeIndex}.Method${index}`,
+        hierarchy: {
+          assembly: "Portal",
+          namespace: `Portal.Feature${typeIndex}`,
+          containingType: `Portal.Feature${typeIndex}.Type${typeIndex}`,
+          parentSymbolId: `T:Portal.Feature${typeIndex}.Type${typeIndex}`
+        },
+        source: {
+          path: `src/Portal/Feature${typeIndex}/Type${typeIndex}.cs`,
+          language: "csharp",
+          range: {
+            start: { line: index + 1 },
+            end: { line: index + 3 }
+          }
+        }
+      };
+    });
+    const result = renderProjectHtmlDocument({
+      project: {
+        name: "Portal Scale Fixture"
+      },
+      entries
+    });
+    const indexHtml = result.files.find((file) => file.path === "index.html")?.contents ?? "";
+    const rootShard = result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "";
+
+    expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(3000);
+    expect(result.files.some((file) => file.path === "search/index.json")).toBe(true);
+    expect(result.files.some((file) => file.path === "relations/project.json")).toBe(true);
+    expect(indexHtml.length).toBeLessThan(30000);
+    expect(indexHtml).not.toContain("Method2999");
+    expect(indexHtml).not.toContain("data-hia-project-entry=\"dotnet\"");
+    expect(rootShard.length).toBeLessThan(1000);
+    expect(rootShard).toContain("\"id\": \"view:dotnet\"");
+    expect(rootShard).not.toContain("Method2999");
+  });
+
   it("renders PowerShell as a first-class project view", () => {
     const result = renderProjectHtmlDocument({
       project: {
@@ -345,6 +630,10 @@ describe("@hia-doc/renderer-html", () => {
           }
         }
       ]
+    }, {
+      projectSite: {
+        layout: "single-page"
+      }
     });
     const html = result.files[0]?.contents ?? "";
 

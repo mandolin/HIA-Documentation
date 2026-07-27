@@ -54,6 +54,7 @@ import {
   type RenderProjectEntry,
   type RenderProjectHtmlInput,
   type RenderProjectProfileRef,
+  type RenderProjectSourcePresentation,
   type RenderProjectView
 } from "@hia-doc/renderer-html";
 import {
@@ -108,6 +109,7 @@ interface ProjectAggregationResult {
     profile?: RenderProjectProfileRef;
     producerId?: string;
     source?: RuntimeProjectInputSource;
+    artifactPolicy?: ProjectManifestInput["artifactPolicy"];
   }>;
   producerResults?: ProducerRunSummary["results"];
 }
@@ -220,7 +222,7 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   }
 
   if (projectManifestPath) {
-    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, locale, io);
+    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, configResult.baseDir, locale, io);
   }
 
   const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
@@ -392,6 +394,7 @@ async function runProjectDocsBuild(
   outputDir: string,
   manifestPath: string,
   docsConfig: HiaDocsConfig,
+  configBaseDir: string,
   locale: string | undefined,
   io: CliIo
 ): Promise<number> {
@@ -415,10 +418,12 @@ async function runProjectDocsBuild(
     return 1;
   }
 
-  const rendered = renderProjectHtmlDocument(
-    scrubProjectInputSourcePreviews(aggregation.projectInput),
-    createRenderOptions(locale, docsConfig)
+  const preparedProjectInput = await prepareProjectSourcePresentation(
+    aggregation.projectInput,
+    docsConfig,
+    configBaseDir
   );
+  const rendered = renderProjectHtmlDocument(preparedProjectInput, createRenderOptions(locale, docsConfig));
   reportDiagnostics(rendered.diagnostics, io);
 
   if (rendered.diagnostics.some((item) => item.severity === "error")) {
@@ -508,6 +513,7 @@ interface GeneratedDocsEvidenceSummary {
     kind: string;
     source?: string;
     producerId?: string;
+    artifactPolicy?: ProjectManifestInput["artifactPolicy"];
   }>;
   coverage: {
     dotnetEntries: number;
@@ -519,7 +525,8 @@ interface GeneratedDocsEvidenceSummary {
     surfaceEntries: number;
   };
   privacy: {
-    sourcesContentPolicy: "none";
+    sourcePresentation: "none" | "link" | "embed" | "fetch";
+    sourcesContentPolicy: "none" | "explicit-embed";
     sourcesContentPresent: boolean;
     sourceBodyPresent: boolean;
     absolutePathLikeStringCount: number;
@@ -545,6 +552,18 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   const project = isRecord(projectIndex) && isRecord(projectIndex.project) ? projectIndex.project : {};
   const manifestBuild = isRecord(manifest) && isRecord(manifest.build) ? manifest.build : {};
   const manifestFiles = isRecord(manifest) && Array.isArray(manifest.files) ? manifest.files.filter(isRecord) : [];
+  const projectSite = isRecord(projectIndex) && isRecord(projectIndex.site) ? projectIndex.site : {};
+  const sourcePresentation = normalizeEvidenceSourcePresentation(projectSite.sourcePresentation);
+  const htmlOutputPaths = (sourcePresentation === "embed" ? manifestFiles : [])
+    .filter((file) => stringValue(file.contentType)?.startsWith("text/html"))
+    .map((file) => stringValue(file.path))
+    .filter((filePath): filePath is string => Boolean(filePath))
+    .concat("index.html")
+    .filter((filePath, index, paths) => paths.indexOf(filePath) === index);
+  const htmlOutputs = await Promise.all(htmlOutputPaths.map(async (filePath) => ({
+    path: filePath,
+    contents: filePath === "index.html" ? indexHtmlText : await readOptionalText(path.join(docsDir, filePath))
+  })));
   const projectSummary: GeneratedDocsEvidenceSummary["project"] = {};
   const projectName = stringValue(project.name);
   const projectVersion = stringValue(project.version);
@@ -556,14 +575,14 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   const serializedPublicOutputs = JSON.stringify({
     projectIndex,
     manifest,
-    indexHtml: indexHtmlText
+    htmlOutputs
   });
   const sourcesContentPresent = hasNestedKey(projectIndex, "sourcesContent") || hasNestedKey(manifest, "sourcesContent");
   const sourceBodyPresent = hasNestedKey(projectIndex, "sourceBody")
     || hasNestedKey(projectIndex, "sourceBodies")
     || hasNestedKey(manifest, "sourceBody")
     || hasNestedKey(manifest, "sourceBodies")
-    || hasProjectHtmlEmbeddedSourceBody(indexHtmlText);
+    || htmlOutputs.some((output) => hasProjectHtmlEmbeddedSourceBody(output.contents));
 
   if (!requiredOutputs.projectIndex) {
     diagnostics.push(createCliDiagnostic(
@@ -620,7 +639,8 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
         }).length
       },
       privacy: {
-        sourcesContentPolicy: "none",
+        sourcePresentation,
+        sourcesContentPolicy: sourcePresentation === "embed" ? "explicit-embed" : "none",
         sourcesContentPresent,
         sourceBodyPresent,
         absolutePathLikeStringCount: countAbsolutePathLikeStrings(serializedPublicOutputs)
@@ -633,20 +653,135 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   };
 }
 
-function scrubProjectInputSourcePreviews(projectInput: RenderProjectHtmlInput): RenderProjectHtmlInput {
+function normalizeEvidenceSourcePresentation(
+  value: unknown
+): GeneratedDocsEvidenceSummary["privacy"]["sourcePresentation"] {
+  return value === "none" || value === "embed" || value === "fetch" ? value : "link";
+}
+
+async function prepareProjectSourcePresentation(
+  projectInput: RenderProjectHtmlInput,
+  docsConfig: HiaDocsConfig,
+  configBaseDir: string
+): Promise<RenderProjectHtmlInput> {
+  const presentation = resolveProjectSourcePresentation(docsConfig);
+  const linkBaseUrl = docsConfig.source?.linkBaseUrl ?? docsConfig.source?.baseUrl;
+  const fetchBaseUrl = docsConfig.source?.fetchBaseUrl;
+  const localRoot = path.resolve(configBaseDir, docsConfig.source?.localRoot ?? ".");
+  const defaultExpanded = docsConfig.source?.defaultExpanded ?? false;
+  const maxLines = docsConfig.source?.maxLines ?? 400;
+  const sourceFileCache = new Map<string, string>();
+
   return {
     ...projectInput,
-    entries: projectInput.entries.map((entry) => {
-      if (!entry.source?.preview) {
+    entries: await Promise.all(projectInput.entries.map(async (entry) => {
+      if (!entry.source) {
         return entry;
       }
-      const { preview: _preview, ...source } = entry.source;
+
+      const { preview: existingPreview, fetchUrl: _existingFetchUrl, linkUrl: existingLinkUrl, ...locator } = entry.source;
+      const linkUrl = linkBaseUrl
+        ? createProjectSourceUrl(linkBaseUrl, locator.path, locator.range, true)
+        : existingLinkUrl;
+      const source: NonNullable<RenderProjectEntry["source"]> = {
+        ...locator,
+        ...(linkUrl && presentation !== "none" ? { linkUrl } : {})
+      };
+
+      if (presentation === "fetch" && fetchBaseUrl) {
+        source.fetchUrl = createProjectSourceUrl(fetchBaseUrl, locator.path, undefined, false);
+        if (!source.range) {
+          source.range = {
+            start: { line: 1 },
+            end: { line: maxLines }
+          };
+        }
+      }
+
+      if (presentation === "embed") {
+        const preview = existingPreview ?? await readProjectSourcePreview(
+          localRoot,
+          locator.path,
+          locator.range,
+          maxLines,
+          sourceFileCache
+        );
+        if (preview) {
+          source.preview = {
+            ...preview,
+            defaultExpanded
+          };
+        }
+      }
+
       return {
         ...entry,
         source
       };
-    })
+    }))
   };
+}
+
+function resolveProjectSourcePresentation(
+  docsConfig: HiaDocsConfig
+): RenderProjectSourcePresentation {
+  if (docsConfig.source?.enabled === false || docsConfig.source?.mode === "none") {
+    return "none";
+  }
+  return docsConfig.source?.presentation ?? "link";
+}
+
+async function readProjectSourcePreview(
+  localRoot: string,
+  relativePath: string,
+  range: NonNullable<RenderProjectEntry["source"]>["range"],
+  maxLines: number,
+  cache: Map<string, string>
+): Promise<NonNullable<NonNullable<RenderProjectEntry["source"]>["preview"]> | undefined> {
+  const normalizedPath = toPosix(relativePath);
+  if (!normalizedPath || normalizedPath.startsWith("/") || /^[a-zA-Z]:\//u.test(normalizedPath) || normalizedPath.split("/").includes("..")) {
+    return undefined;
+  }
+  const absolutePath = path.resolve(localRoot, normalizedPath);
+  if (!isPathInside(localRoot, absolutePath)) {
+    return undefined;
+  }
+
+  let sourceText = cache.get(absolutePath);
+  if (sourceText === undefined) {
+    try {
+      sourceText = await readFile(absolutePath, "utf8");
+      cache.set(absolutePath, sourceText);
+    } catch {
+      return undefined;
+    }
+  }
+
+  const lines = sourceText.split(/\r?\n/u);
+  const startLine = Math.max(1, range?.start.line ?? 1);
+  const requestedEndLine = range?.end?.line ?? (startLine + maxLines - 1);
+  const endLine = Math.min(lines.length, requestedEndLine, startLine + maxLines - 1);
+  return {
+    content: lines.slice(startLine - 1, endLine).join("\n"),
+    range: {
+      start: { line: startLine },
+      end: { line: endLine }
+    }
+  };
+}
+
+function createProjectSourceUrl(
+  baseUrl: string,
+  relativePath: string,
+  range: NonNullable<RenderProjectEntry["source"]>["range"] | undefined,
+  includeLineFragment: boolean
+): string {
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const encodedPath = toPosix(relativePath).split("/").map(encodeURIComponent).join("/");
+  const lineFragment = includeLineFragment && range
+    ? `#L${range.start.line}${range.end?.line ? `-L${range.end.line}` : ""}`
+    : "";
+  return `${normalizedBase}${encodedPath}${lineFragment}`;
 }
 
 function hasProjectHtmlEmbeddedSourceBody(value: string | undefined): boolean {
@@ -702,6 +837,7 @@ function normalizeEvidenceInputs(build: Record<string, unknown>): GeneratedDocsE
     };
     const source = stringValue(input.source);
     const producerId = stringValue(input.producerId);
+    const artifactPolicy = stringValue(input.artifactPolicy);
 
     if (source) {
       item.source = source;
@@ -709,6 +845,10 @@ function normalizeEvidenceInputs(build: Record<string, unknown>): GeneratedDocsE
 
     if (producerId) {
       item.producerId = producerId;
+    }
+
+    if (artifactPolicy === "all" || artifactPolicy === "relations-only") {
+      item.artifactPolicy = artifactPolicy;
     }
 
     return item;
@@ -1149,6 +1289,7 @@ async function aggregateProjectDocs(
         kind: input.kind,
         path: input.path,
         ...(input.profile ? { profile: input.profile } : {}),
+        ...(input.artifactPolicy ? { artifactPolicy: input.artifactPolicy } : {}),
         source: runtimeInput.source
       });
     }
@@ -1280,7 +1421,7 @@ async function aggregateProjectDocs(
       profiles: profileRefs,
       docSourceMaps,
       entries: linkProjectEntriesWithDocSourceMaps(
-        applyDotNetSourceRelations(entries, dotnetSourceRelations),
+        applyDotNetSourceRelations(dedupeProjectEntries(entries), dotnetSourceRelations),
         indexedDocSourceMaps
       ),
       diagnostics
@@ -1288,6 +1429,25 @@ async function aggregateProjectDocs(
     inputRefs,
     producerResults: producerSummary.results
   };
+}
+
+/**
+ * 按领域视图和 canonical symbol id 去重，保留先出现的规范化 API 文档，避免 source-probe 辅助 document 形成第二套卡片。
+ * Deduplicates by domain view and canonical symbol id, preserving the first normalized API document so source-probe helper documents do not create duplicate cards.
+ */
+function dedupeProjectEntries(entries: RenderProjectEntry[]): RenderProjectEntry[] {
+  const seenSymbolKeys = new Set<string>();
+  return entries.filter((entry) => {
+    if (!entry.symbolId) {
+      return true;
+    }
+    const key = `${entry.view}:${entry.symbolId}`;
+    if (seenSymbolKeys.has(key)) {
+      return false;
+    }
+    seenSymbolKeys.add(key);
+    return true;
+  });
 }
 
 async function readDotNetSourceRelationArtifacts(
@@ -1585,6 +1745,10 @@ function producerResultToRuntimeInputs(
   resultPath: string,
   profileRefs: RenderProjectProfileRef[]
 ): RuntimeProjectInput[] {
+  if (input.artifactPolicy === "relations-only") {
+    return [];
+  }
+
   const resultBaseDir = path.dirname(resultPath);
   return selectProducerArtifactsForAggregation(result.artifacts)
     .map((artifact) => producerResultArtifactToRuntimeInput(artifact, result, input, resultBaseDir, profileRefs))
@@ -1667,7 +1831,10 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
       const symbolId = stringValue(hiaSymbol.id) ?? stringValue(item.memberId);
       const declaration = isRecord(item.declaration) ? item.declaration : undefined;
       if (symbolId && declaration) {
-        relationsBySymbolId.set(symbolId, item);
+        const current = relationsBySymbolId.get(symbolId);
+        if (!current || compareDotNetSourceRelationPreference(item, current) < 0) {
+          relationsBySymbolId.set(symbolId, item);
+        }
       }
     }
   }
@@ -1684,6 +1851,9 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
     const declarationLanguage = stringValue(declaration?.language);
     const declarationRangeSource = stringValue(declaration?.rangeSource);
     const declarationConfidence = stringValue(declaration?.confidence);
+    const declarationSemantic = isRecord(declaration?.semantic) ? declaration.semantic : undefined;
+    const declarationHierarchy = createProjectEntryHierarchyFromDotNetSemantic(declarationSemantic);
+    const mergedHierarchy = mergeProjectEntryHierarchy(entry.hierarchy, declarationHierarchy);
 
     return {
       ...entry,
@@ -1693,9 +1863,104 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
         ...(declarationRange ? { range: declarationRange } : {}),
         ...(declarationRangeSource ? { rangeSource: declarationRangeSource } : {}),
         ...(declarationConfidence ? { confidence: declarationConfidence } : {})
-      }
+      },
+      ...(mergedHierarchy ? { hierarchy: mergedHierarchy } : {})
     };
   });
+}
+
+/**
+ * 在 partial type 的多个合法声明中优先人工维护的声明，避免节点卡片默认跳到 designer/generated 文件。
+ * Prefer a human-maintained declaration among partial-type locations so entry cards do not default to designer/generated files.
+ */
+function compareDotNetSourceRelationPreference(
+  left: Record<string, unknown>,
+  right: Record<string, unknown>
+): number {
+  const leftKey = dotNetSourceRelationPreferenceKey(left);
+  const rightKey = dotNetSourceRelationPreferenceKey(right);
+  return leftKey[0] - rightKey[0]
+    || leftKey[1] - rightKey[1]
+    || leftKey[2] - rightKey[2]
+    || leftKey[3].localeCompare(rightKey[3])
+    || leftKey[4] - rightKey[4];
+}
+
+function dotNetSourceRelationPreferenceKey(relation: Record<string, unknown>): [number, number, number, string, number] {
+  const declaration = isRecord(relation.declaration) ? relation.declaration : {};
+  const match = isRecord(relation.match) ? relation.match : {};
+  const range = isRecord(declaration.range) ? declaration.range : {};
+  const start = isRecord(range.start) ? range.start : {};
+  const sourcePath = stringValue(declaration.path) ?? "";
+  const normalizedPath = sourcePath.replaceAll("\\", "/").toLowerCase();
+  const generatedRank = /(?:^|\/)(?:obj|generated)(?:\/|$)|\.(?:designer|generated|g|g\.i)\.cs$/u.test(normalizedPath)
+    ? 1
+    : 0;
+  const matchMode = stringValue(match.mode);
+  const matchRank = matchMode === "documentation-id"
+    ? 0
+    : matchMode === "normalized-signature-fallback"
+      ? 1
+      : 2;
+  const confidence = stringValue(declaration.confidence) ?? stringValue(relation.confidence);
+  const confidenceRank = confidence === "high" ? 0 : confidence === "medium" ? 1 : 2;
+  const line = typeof start.line === "number" ? start.line : Number.MAX_SAFE_INTEGER;
+  return [generatedRank, matchRank, confidenceRank, normalizedPath, line];
+}
+
+/**
+ * 将 DotNetDoc/Roslyn 的语义结果投影为 renderer 中立层级，不让 HTML renderer 猜测 C# 语义。
+ * Projects DotNetDoc/Roslyn semantic output into renderer-neutral hierarchy data so the HTML renderer does not infer C# semantics.
+ */
+function createProjectEntryHierarchyFromDotNetSemantic(
+  semantic: Record<string, unknown> | undefined
+): RenderProjectEntry["hierarchy"] | undefined {
+  if (!semantic) {
+    return undefined;
+  }
+
+  const hierarchy: NonNullable<RenderProjectEntry["hierarchy"]> = {};
+  const assembly = stringValue(semantic.containingAssembly);
+  const namespace = stringValue(semantic.containingNamespace);
+  const containingType = stringValue(semantic.containingType);
+  const symbolDocumentationId = stringValue(semantic.documentationCommentId);
+  const displayName = stringValue(semantic.displayName);
+  const parentSymbolId = stringValue(semantic.parentDocumentationCommentId);
+  const baseTypeIds = stringArrayValue(semantic.baseTypeIds);
+  const interfaceIds = stringArrayValue(semantic.interfaceIds);
+
+  if (assembly) hierarchy.assembly = assembly;
+  if (namespace) hierarchy.namespace = namespace;
+  if (containingType) hierarchy.containingType = containingType;
+  if (symbolDocumentationId) hierarchy.symbolDocumentationId = symbolDocumentationId;
+  if (displayName) hierarchy.displayName = displayName;
+  if (parentSymbolId) hierarchy.parentSymbolId = parentSymbolId;
+  if (baseTypeIds.length > 0) hierarchy.baseTypeIds = baseTypeIds;
+  if (interfaceIds.length > 0) hierarchy.interfaceIds = interfaceIds;
+
+  return Object.keys(hierarchy).length > 0 ? hierarchy : undefined;
+}
+
+function mergeProjectEntryHierarchy(
+  current: RenderProjectEntry["hierarchy"],
+  incoming: RenderProjectEntry["hierarchy"]
+): RenderProjectEntry["hierarchy"] {
+  if (!current) {
+    return incoming;
+  }
+  if (!incoming) {
+    return current;
+  }
+  return {
+    ...current,
+    ...incoming
+  };
+}
+
+function stringArrayValue(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
 }
 
 async function readProjectJson(inputPath: string, input: ProjectManifestInput, io: CliIo): Promise<unknown | undefined> {
@@ -1727,6 +1992,13 @@ function hiaSymbolToProjectEntry(
   fallbackView?: RenderProjectView
 ): RenderProjectEntry {
   const sourceRef = createProjectSourceFromHiaSymbol(symbol).source;
+  const dotnetdoc = isRecord(symbol.metadata?.dotnetdoc) ? symbol.metadata.dotnetdoc : undefined;
+  const semantic = isRecord(dotnetdoc?.semantic) ? dotnetdoc.semantic : undefined;
+  const semanticHierarchy = createProjectEntryHierarchyFromDotNetSemantic(semantic);
+  const hierarchy = mergeProjectEntryHierarchy(
+    symbol.parentId ? { parentSymbolId: symbol.parentId } : undefined,
+    semanticHierarchy
+  );
 
   return {
     id: createProjectEntryId(input.kind ?? "hia-document", symbol.id || symbol.name, index),
@@ -1743,7 +2015,8 @@ function hiaSymbolToProjectEntry(
       path: input.path ?? "",
       ...(document.schemaVersion ? { contract: "hia-core-document", contractVersion: document.schemaVersion } : {})
     },
-    ...(sourceRef ? { source: sourceRef } : {})
+    ...(sourceRef ? { source: sourceRef } : {}),
+    ...(hierarchy ? { hierarchy } : {})
   };
 }
 
@@ -2118,6 +2391,14 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
   if (typeof docsConfig.renderer?.includeThemeAssets === "boolean") {
     options.includeThemeAssets = docsConfig.renderer.includeThemeAssets;
   }
+
+  options.projectSite = {
+    layout: docsConfig.renderer?.projectLayout ?? "split-site",
+    source: {
+      presentation: resolveProjectSourcePresentation(docsConfig),
+      defaultExpanded: docsConfig.source?.defaultExpanded ?? false
+    }
+  };
 
   return options;
 }

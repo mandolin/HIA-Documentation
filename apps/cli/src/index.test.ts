@@ -88,6 +88,7 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const navigationIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
         contract: string;
         entries: Array<{ id: string; source?: { preview?: unknown } }>;
@@ -107,22 +108,22 @@ describe("@hia-doc/cli", () => {
       };
 
       expect(exitCode).toBe(0);
-      expect(messages.join("\n")).toContain("Generated 5 file");
+      expect(messages.join("\n")).toMatch(/Generated \d+ file\(s\)/u);
       expect(html).toContain("Mixed Project Documentation");
       expect(html).toContain("data-hia-project-search");
       expect(html).toContain("data-hia-project-view=\"js\"");
       expect(html).toContain("data-hia-project-view=\"css\"");
       expect(html).toContain("data-hia-project-view=\"html\"");
-      expect(html).toContain("greet");
-      expect(html).not.toContain("Source Preview examples/basic/src/greet.js:17-22");
-      expect(html).not.toContain("function greet(name)");
-      expect(html).toContain("css-component-style");
-      expect(html).toContain("html-component");
-      expect(html).toContain("project-mixed-alert.docmap.json");
-      expect(html).toContain("1/1 linked");
-      expect(html).toContain("Doc Source Map");
-      expect(html).toContain("entry:html:alert");
-      expect(html).toContain("[data-component=&quot;Alert&quot;]");
+      expect(html).not.toContain("data-hia-project-entry=");
+      expect(entryHtml).toContain("greet");
+      expect(entryHtml).not.toContain("Source Preview examples/basic/src/greet.js:17-22");
+      expect(entryHtml).not.toContain("function greet(name)");
+      expect(entryHtml).toContain("css-component-style");
+      expect(entryHtml).toContain("html-component");
+      expect(entryHtml).toContain("project-mixed-alert.docmap.json");
+      expect(entryHtml).toContain("Doc Source Map");
+      expect(entryHtml).toContain("entry:html:alert");
+      expect(entryHtml).toContain("[data-component=&quot;Alert&quot;]");
       expect(manifest.project?.views).toEqual(["all", "js", "css", "html"]);
       expect(manifest.project?.entryCounts).toMatchObject({ js: 2, css: 2, html: 2 });
       expect(manifest.project?.navigationIndex).toEqual({
@@ -174,6 +175,7 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const navigationIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
         entries: Array<{ id: string; view: string; input?: { path?: string }; source?: { path?: string; language?: string } }>;
       };
@@ -188,15 +190,15 @@ describe("@hia-doc/cli", () => {
       };
 
       expect(exitCode).toBe(0);
-      expect(messages.join("\n")).toContain("Generated 5 file");
+      expect(messages.join("\n")).toMatch(/Generated \d+ file\(s\)/u);
       expect(html).toContain("DotNet Project Fixture Documentation");
       expect(html).toContain("data-hia-project-view=\"dotnet\"");
-      expect(html).toContain("data-hia-project-entry=\"dotnet\"");
+      expect(html).not.toContain("data-hia-project-entry=\"dotnet\"");
       expect(html).toContain(".NET");
-      expect(html).toContain("PortalMenu");
-      expect(html).toContain("dotnet-type");
-      expect(html).toContain("dotnet-method");
-      expect(html).toContain("src/Portal.Components/Navigation/PortalMenu.cs:8");
+      expect(entryHtml).toContain("PortalMenu");
+      expect(entryHtml).toContain("dotnet-type");
+      expect(entryHtml).toContain("dotnet-method");
+      expect(entryHtml).toContain("src/Portal.Components/Navigation/PortalMenu.cs:8");
       expect(manifest.project?.views).toEqual(["all", "dotnet"]);
       expect(manifest.project?.entryCounts).toMatchObject({ all: 2, dotnet: 2 });
       expect(manifest.build?.inputs).toEqual([
@@ -235,6 +237,7 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         build?: {
           inputs: Array<{ kind: string; path: string; producerId?: string; source?: string }>;
@@ -247,10 +250,10 @@ describe("@hia-doc/cli", () => {
 
       expect(exitCode).toBe(0);
       expect(html).toContain("Producer Mixed Project Documentation");
-      expect(html).toContain("Source-produced alert component.");
-      expect(html).toContain("Source-produced alert styles.");
-      expect(html).toContain(".hia-producers/mixed-source-fixture/alert.docmap.json");
-      expect(html).toContain("Doc Source Map");
+      expect(entryHtml).toContain("Source-produced alert component.");
+      expect(entryHtml).toContain("Source-produced alert styles.");
+      expect(entryHtml).toContain(".hia-producers/mixed-source-fixture/alert.docmap.json");
+      expect(entryHtml).toContain("Doc Source Map");
       expect(manifest.project?.entryCounts).toMatchObject({ css: 1, html: 1 });
       expect(manifest.build?.producers).toEqual([
         {
@@ -286,6 +289,7 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         build?: {
           inputs: Array<{ kind: string; path: string; producerId?: string; source?: string }>;
@@ -295,7 +299,11 @@ describe("@hia-doc/cli", () => {
         };
       };
       const projectIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
-        entries: Array<{ id: string; source?: { path?: string; language?: string } }>;
+        entries: Array<{
+          id: string;
+          source?: { path?: string; language?: string };
+          hierarchy?: { assembly?: string; namespace?: string; baseTypeIds?: string[]; interfaceIds?: string[] };
+        }>;
         navigationTree?: Array<{
           id: string;
           label: string;
@@ -305,24 +313,34 @@ describe("@hia-doc/cli", () => {
 
       expect(exitCode).toBe(0);
       expect(html).toContain("Producer Result Project Documentation");
-      expect(html).toContain("PortalSecurity");
-      expect(html).toContain("Portal security helper surface produced by DotNetDoc.");
-      expect(html).toContain("src/Portal.Components/PortalSecurity.cs:12");
-      expect(html).toContain("<dt>Language</dt><dd>csharp</dd>");
-      expect(html).toContain("greet");
+      expect(entryHtml).toContain("PortalSecurity");
+      expect(entryHtml).toContain("Portal security helper surface produced by DotNetDoc.");
+      expect(entryHtml).toContain("src/Portal.Components/PortalSecurity.cs:12");
+      expect(entryHtml).toContain("<dt>Language</dt><dd>csharp</dd>");
+      expect(entryHtml).toContain("greet");
       expect(projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"))?.source).toMatchObject({
         path: "src/Portal.Components/PortalSecurity.cs",
         language: "csharp"
+      });
+      expect(projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"))?.hierarchy).toMatchObject({
+        assembly: "Portal.Components",
+        namespace: "Portal.Components",
+        baseTypeIds: ["T:System.Object"],
+        interfaceIds: ["T:Portal.Components.IPortalSecurity"]
       });
       expect(projectIndex.navigationTree?.find((node) => node.id === "view:dotnet")).toMatchObject({
         label: ".NET",
         children: [
           expect.objectContaining({
-            label: "Portal.Components",
+            kind: "assembly",
             children: [
               expect.objectContaining({
-                label: "PortalSecurity",
-                entryId: expect.stringContaining("portalsecurity")
+                label: "Portal",
+                children: [
+                  expect.objectContaining({
+                    label: "Components"
+                  })
+                ]
               })
             ]
           })
@@ -345,6 +363,198 @@ describe("@hia-doc/cli", () => {
           source: "manifest"
         })
       ]));
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("uses producer results as relation-only augmentation without materializing document cards", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-producer-result-relations-only-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--project-manifest",
+        "fixtures/project-producer-result-relations-only.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const entryHtml = await readGeneratedEntryHtml(outDir);
+      const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        build?: {
+          inputs: Array<{
+            artifactPolicy?: string;
+            kind: string;
+            source?: string;
+          }>;
+        };
+        project?: {
+          entryCounts: Record<string, number>;
+        };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(entryHtml).toContain("src/Portal.Components/PortalSecurity.cs:12");
+      expect(entryHtml).not.toContain("bin/Portal.Components.xml");
+      expect(manifest.project?.entryCounts).toMatchObject({ dotnet: 1, all: 1 });
+      expect(manifest.build?.inputs).toEqual([
+        expect.objectContaining({
+          kind: "hia-document",
+          source: "manifest"
+        }),
+        expect.objectContaining({
+          kind: "documentation-producer-result",
+          artifactPolicy: "relations-only",
+          source: "manifest"
+        })
+      ]);
+      expect(manifest.build?.inputs.some((input) => input.source === "producer-result")).toBe(false);
+
+      const evidencePath = path.join(root, "evidence.json");
+      const evidenceExitCode = await runCli([
+        "docs",
+        "evidence",
+        "--docs-dir",
+        outDir,
+        "--out",
+        evidencePath
+      ], createTestIo(messages));
+      const evidence = JSON.parse(await readFile(evidencePath, "utf8")) as {
+        inputs?: Array<{ artifactPolicy?: string; kind: string }>;
+      };
+      expect(evidenceExitCode).toBe(0);
+      expect(evidence.inputs).toContainEqual(expect.objectContaining({
+        kind: "documentation-producer-result",
+        artifactPolicy: "relations-only"
+      }));
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("builds clickable DotNet source links from declaration relations", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-dotnet-source-link-"));
+    const outDir = path.join(root, "docs");
+    const configPath = path.join(root, "hia.config.json");
+    const messages: string[] = [];
+
+    try {
+      await writeFile(configPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          source: {
+            presentation: "link",
+            linkBaseUrl: "https://github.com/mandolin/HIA-ASPNETPortal/blob/main"
+          }
+        }
+      }), "utf8");
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--config",
+        configPath,
+        "--project-manifest",
+        "fixtures/project-producer-result.hia-project.json",
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const entryHtml = await readGeneratedEntryHtml(outDir);
+
+      expect(exitCode).toBe(0);
+      expect(entryHtml).toContain(
+        "https://github.com/mandolin/HIA-ASPNETPortal/blob/main/src/Portal.Components/PortalSecurity.cs#L12-L24"
+      );
+      expect(entryHtml).not.toContain("bin/Portal.Components.xml");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("supports explicit embedded and URL-fetched project source modes", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-source-modes-"));
+    const embedOutDir = path.join(root, "embed-docs");
+    const fetchOutDir = path.join(root, "fetch-docs");
+    const embedConfigPath = path.join(root, "hia.embed.config.json");
+    const fetchConfigPath = path.join(root, "hia.fetch.config.json");
+    const evidencePath = path.join(root, "embed-evidence.json");
+    const messages: string[] = [];
+
+    try {
+      await writeFile(embedConfigPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          source: {
+            presentation: "embed",
+            defaultExpanded: false,
+            maxLines: 80
+          }
+        }
+      }), "utf8");
+      await writeFile(fetchConfigPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          source: {
+            presentation: "fetch",
+            fetchBaseUrl: "https://raw.example.test/mandolin/project/main"
+          }
+        }
+      }), "utf8");
+
+      const embedExitCode = await runCli([
+        "docs",
+        "build",
+        "--config",
+        embedConfigPath,
+        "--project-manifest",
+        "fixtures/project-mixed.hia-project.json",
+        "--out",
+        embedOutDir
+      ], createTestIo(messages));
+      const evidenceExitCode = await runCli([
+        "docs",
+        "evidence",
+        "--docs-dir",
+        embedOutDir,
+        "--out",
+        evidencePath
+      ], createTestIo(messages));
+      const fetchExitCode = await runCli([
+        "docs",
+        "build",
+        "--config",
+        fetchConfigPath,
+        "--project-manifest",
+        "fixtures/project-mixed.hia-project.json",
+        "--out",
+        fetchOutDir
+      ], createTestIo(messages));
+      const embedHtml = await readGeneratedEntryHtml(embedOutDir);
+      const fetchHtml = await readGeneratedEntryHtml(fetchOutDir);
+      const evidence = JSON.parse(await readFile(evidencePath, "utf8")) as {
+        privacy?: {
+          sourcePresentation?: string;
+          sourcesContentPolicy?: string;
+          sourceBodyPresent?: boolean;
+        };
+      };
+
+      expect(embedExitCode).toBe(0);
+      expect(evidenceExitCode).toBe(0);
+      expect(fetchExitCode).toBe(0);
+      expect(embedHtml).toContain("function greet(name)");
+      expect(embedHtml).toContain("hia-source-preview hia-project-source-preview");
+      expect(evidence.privacy).toMatchObject({
+        sourcePresentation: "embed",
+        sourcesContentPolicy: "explicit-embed",
+        sourceBodyPresent: true
+      });
+      expect(fetchHtml).toContain(
+        "data-hia-source-fetch=\"https://raw.example.test/mandolin/project/main/examples/basic/src/greet.js\""
+      );
+      expect(fetchHtml).not.toContain("function greet(name)");
     } finally {
       await rm(root, { force: true, recursive: true });
     }
@@ -403,6 +613,7 @@ describe("@hia-doc/cli", () => {
       expect(evidence.entries.byProfile).toMatchObject({ jsdoc: 2 });
       expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2, powershellEntries: 0 });
       expect(evidence.privacy).toMatchObject({
+        sourcePresentation: "link",
         sourcesContentPolicy: "none",
         sourcesContentPresent: false,
         sourceBodyPresent: false,
@@ -428,14 +639,15 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         project?: { entryCounts?: Record<string, number> };
         build?: { inputs?: Array<{ kind: string; source?: string }> };
       };
 
       expect(exitCode).toBe(0);
-      expect(messages.join("\n")).toContain("Generated 5 file");
-      expect(html.match(/Profile card component\./g)).toHaveLength(1);
+      expect(messages.join("\n")).toMatch(/Generated \d+ file\(s\)/u);
+      expect(entryHtml.match(/Profile card component\./g)).toHaveLength(1);
       expect(manifest.project?.entryCounts).toMatchObject({ html: 1, all: 1 });
       expect(manifest.build?.inputs).toEqual([
         expect.objectContaining({
@@ -463,6 +675,7 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const html = await readFile(path.join(outDir, "index.html"), "utf8");
+      const entryHtml = await readGeneratedEntryHtml(outDir);
       const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
         build?: {
           inputs: Array<{ kind: string; path: string; profile?: { profileId: string }; source?: string }>;
@@ -474,7 +687,7 @@ describe("@hia-doc/cli", () => {
       expect(messages.join("\n")).toContain("[warning:FIXTURE_PRODUCER_FAILED]");
       expect(messages.join("\n")).toContain("[warning:DOCUMENTATION_PRODUCER_EXECUTION_FAILED]");
       expect(html).toContain("Producer Warn Project Documentation");
-      expect(html).toContain("greet");
+      expect(entryHtml).toContain("greet");
       expect(manifest.build?.inputs).toEqual([
         {
           kind: "jsdoc-integration",
@@ -849,4 +1062,15 @@ function createTestIo(messages: string[]): CliIo {
     stdout: (message) => messages.push(message),
     stderr: (message) => messages.push(message)
   };
+}
+
+async function readGeneratedEntryHtml(outDir: string): Promise<string> {
+  const manifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+    files?: Array<{ path?: string }>;
+  };
+  const entryPaths = (manifest.files ?? [])
+    .map((file) => file.path)
+    .filter((filePath): filePath is string => typeof filePath === "string" && filePath.startsWith("entries/"));
+  const entryFiles = await Promise.all(entryPaths.map((filePath) => readFile(path.join(outDir, filePath), "utf8")));
+  return entryFiles.join("\n");
 }

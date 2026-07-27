@@ -3,7 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  HIA_CONFIG_PROJECT_LAYOUTS,
   HIA_CONFIG_SOURCE_MODES,
+  HIA_CONFIG_SOURCE_PRESENTATIONS,
   HIA_CONFIG_SCHEMA_VERSION,
   HIA_CONFIG_THEME_NAMES,
   HIA_PROJECT_MANIFEST_JSON_SCHEMA,
@@ -51,6 +53,8 @@ describe("@hia-doc/config", () => {
       expect(result.config.docs?.projectManifest).toBe("fixtures/project.hia-project.json");
       expect(result.diagnostics).toEqual([]);
       expect(HIA_CONFIG_SOURCE_MODES).toEqual(["none", "file", "external"]);
+      expect(HIA_CONFIG_SOURCE_PRESENTATIONS).toEqual(["none", "link", "embed", "fetch"]);
+      expect(HIA_CONFIG_PROJECT_LAYOUTS).toEqual(["split-site", "single-page"]);
       expect(HIA_CONFIG_THEME_NAMES).toEqual(["default"]);
     } finally {
       await rm(root, { force: true, recursive: true });
@@ -97,6 +101,27 @@ describe("@hia-doc/config", () => {
       fallbackTheme: "default"
     });
     expect(diagnostics.some((diagnostic) => diagnostic.severity === "warning")).toBe(true);
+  });
+
+  it("requires a fetch base URL and rejects conflicting disabled source presentation", () => {
+    const missingFetchBase = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "fetch"
+        }
+      }
+    });
+    const disabledEmbed = validateHiaProjectConfig({
+      docs: {
+        source: {
+          enabled: false,
+          presentation: "embed"
+        }
+      }
+    });
+
+    expect(missingFetchBase.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_FETCH_BASE_REQUIRED");
+    expect(disabledEmbed.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_PRESENTATION_DISABLED");
   });
 
   it("exports and validates the project manifest contract", () => {
@@ -205,7 +230,8 @@ describe("@hia-doc/config", () => {
         {
           kind: "documentation-producer-result",
           path: "temp/documentation/dotnetdoc/dotnetdoc.producer-result.json",
-          domain: "dotnet"
+          domain: "dotnet",
+          artifactPolicy: "relations-only"
         }
       ],
       producers: [
@@ -227,6 +253,25 @@ describe("@hia-doc/config", () => {
     });
 
     expect(diagnostics).toEqual([]);
+  });
+
+  it("rejects relations-only for inputs other than producer results", () => {
+    const diagnostics = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Invalid Relation Input"
+      },
+      inputs: [
+        {
+          kind: "hia-document",
+          path: "artifacts/basic.hia.json",
+          artifactPolicy: "relations-only"
+        }
+      ]
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_FIELD_INVALID");
+    expect(hasConfigErrors(diagnostics)).toBe(true);
   });
 
   it("rejects empty producer arrays when provided", () => {

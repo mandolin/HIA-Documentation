@@ -1,17 +1,19 @@
 # @hia-doc/renderer-html
 
-Minimal HTML renderer for HIA documents.
+HIA 文档的 HTML renderer，同时支持单一 document 与统一项目站。
 
 The renderer consumes `@hia-doc/core` data and returns file payloads. It does not read from disk or own CLI behavior.
 
 ## Current Scope
 
-- Renders a single `index.html`.
+- 单一 document 模式输出一个 `index.html`。
+- 统一项目站默认输出 `split-site`：入口页、延迟导航分片、搜索索引、关系图和逐节点 HTML fragment。
+- `projectSite.source.presentation` 统一约束 `none`、`link`、`embed`、`fetch` 四种源码呈现方式。
 - Consumes field-level i18n text and emits runtime-switchable locale blocks.
 - Marks fallback text with `data-hia-fallback-from`.
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.
 - Emits default CSS/JS assets from `@hia-doc/theme-default`.
-- Project-page mode also emits `project-index.json`: a stable, presentation-neutral navigation index for portals and search. It excludes inline source previews; the unified page remains the full-detail renderer.
+- 项目模式额外输出 `project-index.json`，作为 portal/search 可消费的稳定中立索引；源码正文不会进入该索引。
 - Returns a renderer manifest with entrypoint, locale and file metadata for CLI or other writers.
 
 ## Contract

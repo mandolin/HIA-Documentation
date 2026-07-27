@@ -48,9 +48,27 @@ export interface RenderHtmlOptions {
   locale?: string;
   title?: string;
   includeThemeAssets?: boolean;
+  /**
+   * 统一项目文档站的输出与源码呈现策略；普通单文档渲染忽略该字段。
+   * Output and source-presentation policy for unified project sites; ignored by single-document rendering.
+   */
+  projectSite?: RenderProjectSiteOptions;
 }
 
 export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "powershell" | "other";
+export type RenderProjectSiteLayout = "split-site" | "single-page";
+export type RenderProjectSourcePresentation = "none" | "link" | "embed" | "fetch";
+
+export interface RenderProjectSiteOptions {
+  /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
+  layout?: RenderProjectSiteLayout;
+  source?: {
+    /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
+    presentation?: RenderProjectSourcePresentation;
+    /** embed 模式的源码详情默认展开状态。Default expansion state for embedded source details. */
+    defaultExpanded?: boolean;
+  };
+}
 
 export interface RenderProjectHtmlInput {
   project: RenderProjectInfo;
@@ -172,8 +190,24 @@ export interface RenderProjectEntry {
   input?: RenderProjectInputRef;
   source?: RenderProjectSourceRef;
   symbolId?: string;
+  hierarchy?: RenderProjectEntryHierarchyRef;
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
   diagnostics?: HiaDiagnostic[];
+}
+
+/**
+ * 领域 adapter 或 source relation 提供的稳定语义层级，renderer 只投影、不重新猜测语言语义。
+ * Stable semantic hierarchy supplied by a domain adapter or source relation; the renderer only projects it.
+ */
+export interface RenderProjectEntryHierarchyRef {
+  assembly?: string;
+  namespace?: string;
+  containingType?: string;
+  symbolDocumentationId?: string;
+  displayName?: string;
+  parentSymbolId?: string;
+  baseTypeIds?: string[];
+  interfaceIds?: string[];
 }
 
 export interface RenderProjectEntryDocSourceMapRef {
@@ -202,6 +236,7 @@ export interface RenderProjectInputRef {
 
 export interface RenderProjectSourceRef {
   confidence?: string;
+  fetchUrl?: string;
   language?: string;
   linkUrl?: string;
   path: string;
@@ -301,6 +336,13 @@ export interface RenderProjectNavigationIndex {
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
   relationGraph?: RenderProjectRelationGraph;
+  site?: {
+    layout: RenderProjectSiteLayout;
+    navigationRootPath?: string;
+    searchIndexPath?: string;
+    relationIndexPath?: string;
+    sourcePresentation: RenderProjectSourcePresentation;
+  };
 }
 
 export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "source-root";
@@ -317,7 +359,17 @@ export interface RenderProjectNavigationGroup {
   views: RenderProjectView[];
 }
 
-export type RenderProjectNavigationTreeNodeKind = "view" | "namespace" | "type" | "source-root" | "source-file" | "entry";
+export type RenderProjectNavigationTreeNodeKind =
+  | "view"
+  | "assembly"
+  | "surface"
+  | "project"
+  | "namespace"
+  | "type"
+  | "relation"
+  | "source-root"
+  | "source-file"
+  | "entry";
 
 /**
  * 项目级层级导航节点；用于把大型项目从平铺列表提升为可分域浏览的 API / 文件结构。
@@ -330,6 +382,8 @@ export interface RenderProjectNavigationTreeNode {
   entryCount: number;
   views: RenderProjectView[];
   children?: RenderProjectNavigationTreeNode[];
+  childrenPath?: string;
+  contentPath?: string;
   entryId?: string;
   sourcePath?: string;
   symbolId?: string;
@@ -351,6 +405,8 @@ export interface RenderProjectNavigationEntry {
   input?: RenderProjectInputRef;
   source?: Omit<RenderProjectSourceRef, "preview">;
   symbolId?: string;
+  hierarchy?: RenderProjectEntryHierarchyRef;
+  contentPath?: string;
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
 
@@ -385,24 +441,28 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
 }
 
 export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
-  const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
+  const sourcePreparedProjectInput = applyProjectSourcePresentationPolicy(projectInput, options);
+  const normalizedProjectInput = normalizeProjectRelationGraphInput(sourcePreparedProjectInput);
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
+  const siteLayout = options.projectSite?.layout ?? "split-site";
   const navigationIndex = createProjectNavigationIndex(normalizedProjectInput, pageTitle, options);
-  const files: RenderedHtmlFile[] = [
-    {
-      path: "index.html",
-      contents: renderProjectIndexHtml(pageTitle, normalizedProjectInput, options),
-      contentType: "text/html; charset=utf-8",
-      role: "entry"
-    },
-    {
-      path: "project-index.json",
-      contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
-      contentType: "application/json; charset=utf-8",
-      role: "index"
-    }
-  ];
+  const files: RenderedHtmlFile[] = siteLayout === "single-page"
+    ? [
+        {
+          path: "index.html",
+          contents: renderProjectIndexHtml(pageTitle, normalizedProjectInput, options),
+          contentType: "text/html; charset=utf-8",
+          role: "entry"
+        }
+      ]
+    : createProjectSplitSiteFiles(pageTitle, normalizedProjectInput, navigationIndex, options);
+  files.push({
+    path: "project-index.json",
+    contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
+    contentType: "application/json; charset=utf-8",
+    role: "index"
+  });
 
   if (includeThemeAssets) {
     for (const asset of getDefaultThemeAssets()) {
@@ -419,6 +479,42 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
     files,
     diagnostics: normalizedProjectInput.diagnostics ?? [],
     manifest: createProjectManifest(normalizedProjectInput, files, pageTitle, options, navigationIndex)
+  };
+}
+
+/**
+ * 在 renderer 公共入口执行源码呈现边界，保证直接库调用与 CLI 调用具有同一隐私语义。
+ * Enforces source-presentation boundaries at the renderer API so direct library and CLI calls share the same privacy semantics.
+ */
+function applyProjectSourcePresentationPolicy(
+  projectInput: RenderProjectHtmlInput,
+  options: RenderHtmlOptions
+): RenderProjectHtmlInput {
+  const presentation = options.projectSite?.source?.presentation ?? "link";
+  return {
+    ...projectInput,
+    entries: projectInput.entries.map((entry) => {
+      if (!entry.source) {
+        return entry;
+      }
+      const { preview, fetchUrl, linkUrl, ...locator } = entry.source;
+      const previewDefaultExpanded = options.projectSite?.source?.defaultExpanded ?? preview?.defaultExpanded;
+      const source: RenderProjectSourceRef = {
+        ...locator,
+        ...(presentation !== "none" && linkUrl ? { linkUrl } : {}),
+        ...(presentation === "embed" && preview ? {
+          preview: {
+            ...preview,
+            ...(previewDefaultExpanded !== undefined ? { defaultExpanded: previewDefaultExpanded } : {})
+          }
+        } : {}),
+        ...(presentation === "fetch" && fetchUrl ? { fetchUrl } : {})
+      };
+      return {
+        ...entry,
+        source
+      };
+    })
   };
 }
 
@@ -524,6 +620,8 @@ function createProjectNavigationIndex(
         ...(entry.input ? { input: entry.input } : {}),
         ...(entry.source ? { source: omitProjectSourcePreview(entry.source) } : {}),
         ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
+        ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
+        contentPath: createProjectEntryContentPath(entry.id),
         ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {})
       }))
       .sort(compareProjectNavigationEntries),
@@ -531,10 +629,137 @@ function createProjectNavigationIndex(
     navigationTree: collectProjectNavigationTree(projectInput.entries),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
     docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps),
+    site: {
+      layout: options.projectSite?.layout ?? "split-site",
+      ...(options.projectSite?.layout === "single-page" ? {} : {
+        navigationRootPath: "navigation/root.json",
+        searchIndexPath: "search/index.json",
+        relationIndexPath: "relations/project.json"
+      }),
+      sourcePresentation: options.projectSite?.source?.presentation ?? "link"
+    },
     ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
       ? { relationGraph: projectInput.relationGraph }
       : {})
   };
+}
+
+/**
+ * 生成大型项目默认使用的 split-site 文件集合；入口页只保留应用壳。
+ * Generates the split-site file set used by large projects by default; the entry page only keeps the application shell.
+ */
+function createProjectSplitSiteFiles(
+  pageTitle: string,
+  projectInput: RenderProjectHtmlInput,
+  navigationIndex: RenderProjectNavigationIndex,
+  options: RenderHtmlOptions
+): RenderedHtmlFile[] {
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
+  const files: RenderedHtmlFile[] = [
+    {
+      path: "index.html",
+      contents: renderProjectSplitSiteHtml(pageTitle, projectInput, options),
+      contentType: "text/html; charset=utf-8",
+      role: "entry"
+    },
+    ...createProjectNavigationShardFiles(navigationIndex.navigationTree),
+    {
+      path: "search/index.json",
+      contents: `${JSON.stringify({
+        contract: "hia-project-search-index",
+        contractVersion: "0.1.0-draft",
+        entries: projectInput.entries.map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          kind: entry.kind,
+          view: entry.view,
+          contentPath: createProjectEntryContentPath(entry.id),
+          searchText: createProjectEntrySearchText(entry)
+        }))
+      }, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
+    },
+    {
+      path: "relations/project.json",
+      contents: `${JSON.stringify(projectInput.relationGraph ?? createProjectRelationGraph(projectInput.entries), null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
+    }
+  ];
+
+  for (const entry of projectInput.entries) {
+    files.push({
+      path: createProjectEntryContentPath(entry.id),
+      contents: renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale),
+      contentType: "text/html; charset=utf-8",
+      role: "asset"
+    });
+  }
+
+  return files;
+}
+
+function createProjectNavigationShardFiles(nodes: RenderProjectNavigationTreeNode[]): RenderedHtmlFile[] {
+  const files: RenderedHtmlFile[] = [];
+  const emittedPaths = new Set<string>();
+
+  const emitChildren = (nodeId: string, children: RenderProjectNavigationTreeNode[], root = false): void => {
+    const shardPath = root ? "navigation/root.json" : createProjectNavigationChildrenPath(nodeId);
+    if (emittedPaths.has(shardPath)) {
+      return;
+    }
+    emittedPaths.add(shardPath);
+    files.push({
+      path: shardPath,
+      contents: `${JSON.stringify({
+        contract: "hia-project-navigation-shard",
+        contractVersion: "0.1.0-draft",
+        nodeId,
+        children: children.map(toLazyProjectNavigationNode)
+      }, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
+    });
+
+    for (const child of children) {
+      if (child.children && child.children.length > 0) {
+        emitChildren(child.id, child.children);
+      }
+    }
+  };
+
+  emitChildren("root", nodes, true);
+  return files;
+}
+
+function toLazyProjectNavigationNode(node: RenderProjectNavigationTreeNode): RenderProjectNavigationTreeNode {
+  const { children: _children, ...lazyNode } = node;
+  return {
+    ...lazyNode,
+    ...(node.children && node.children.length > 0
+      ? { childrenPath: createProjectNavigationChildrenPath(node.id) }
+      : {}),
+    ...(node.entryId ? { contentPath: createProjectEntryContentPath(node.entryId) } : {})
+  };
+}
+
+function createProjectEntryContentPath(entryId: string): string {
+  return `entries/${stableProjectArtifactName(entryId)}.html`;
+}
+
+function createProjectNavigationChildrenPath(nodeId: string): string {
+  return `navigation/${stableProjectArtifactName(nodeId)}.json`;
+}
+
+function stableProjectArtifactName(value: string): string {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.codePointAt(0) ?? 0;
+    hash = Math.imul(hash, 16777619);
+  }
+  const slug = value.toLowerCase().replace(/[^a-z0-9._-]+/gu, "-").replace(/^-|-$/gu, "").slice(0, 72) || "item";
+  return `${slug}-${(hash >>> 0).toString(16).padStart(8, "0")}`;
 }
 
 function omitProjectSourcePreview(source: RenderProjectSourceRef): Omit<RenderProjectSourceRef, "preview"> {
@@ -590,6 +815,261 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
     "</body>",
     "</html>"
+  ].join("");
+}
+
+function renderProjectSplitSiteHtml(
+  pageTitle: string,
+  projectInput: RenderProjectHtmlInput,
+  options: RenderHtmlOptions
+): string {
+  const projectName = projectInput.project.title ?? projectInput.project.name;
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
+  const views = collectProjectViews(projectInput.entries);
+  const entryCounts = countEntriesByView(projectInput.entries);
+  const selectedChinese = localeModel.selectedLocale.toLowerCase().startsWith("zh");
+  const labels = selectedChinese
+    ? {
+        hierarchy: "层级导航",
+        loading: "正在加载文档导航...",
+        open: "打开",
+        relations: "项目关系",
+        select: "请从左侧层级树选择一个文档节点。",
+        search: "搜索",
+        searchPlaceholder: "名称、类型、源码或选择器",
+        requiresServer: "按需加载站点需要通过 HTTP(S) 提供；请使用本地静态服务器打开该目录。"
+      }
+    : {
+        hierarchy: "Hierarchy",
+        loading: "Loading documentation navigation...",
+        open: "Open",
+        relations: "Project relations",
+        select: "Select a documentation node from the hierarchy.",
+        search: "Search",
+        searchPlaceholder: "Name, kind, source, selector",
+        requiresServer: "The lazy site must be served over HTTP(S); open this directory through a local static server."
+      };
+
+  return [
+    "<!doctype html>",
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}">`,
+    "<head>",
+    "<meta charset=\"utf-8\">",
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+    `<title>${escapeHtml(pageTitle)}</title>`,
+    "<link rel=\"icon\" href=\"data:,\">",
+    `<link rel="stylesheet" href="${escapeHtml(DEFAULT_THEME_CSS_PATH)}">`,
+    "</head>",
+    "<body>",
+    "<div class=\"hia-shell hia-project-shell hia-project-split-site\">",
+    "<aside class=\"hia-sidebar\">",
+    `<h1>${escapeHtml(projectName)}</h1>`,
+    renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
+    renderProjectViewControl(views, entryCounts),
+    [
+      "<label class=\"hia-project-search\">",
+      `<span>${escapeHtml(labels.search)}</span>`,
+      `<input type="search" data-hia-project-search placeholder="${escapeHtml(labels.searchPlaceholder)}">`,
+      "</label>"
+    ].join(""),
+    `<section class="hia-project-summary hia-project-hierarchy"><h2>${escapeHtml(labels.hierarchy)}</h2><div data-hia-project-tree><p class="hia-project-loading">${escapeHtml(labels.loading)}</p></div></section>`,
+    `<button type="button" class="hia-project-secondary-action" data-hia-project-relations>${escapeHtml(labels.relations)}</button>`,
+    "</aside>",
+    `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${escapeHtml(labels.select)}</p></main>`,
+    "</div>",
+    `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
+    renderProjectSplitSiteScript(labels.requiresServer, labels.open),
+    "</body>",
+    "</html>"
+  ].join("");
+}
+
+function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: string): string {
+  return [
+    "<script>",
+    "(() => {",
+    "  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json' };",
+    "  const treeHost = document.querySelector('[data-hia-project-tree]');",
+    "  const contentHost = document.querySelector('[data-hia-project-content]');",
+    "  const search = document.querySelector('[data-hia-project-search]');",
+    "  const locale = document.querySelector('[data-hia-locale-control]');",
+    "  const viewButtons = Array.from(document.querySelectorAll('[data-hia-project-view]'));",
+    "  let rootNodes = [];",
+    "  let searchEntries = null;",
+    "  let activeView = 'all';",
+    "  async function readJson(target) {",
+    "    const response = await fetch(target, { credentials: 'omit' });",
+    "    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
+    "    return response.json();",
+    "  }",
+    "  function showLoadError(error) {",
+    `    const hint = location.protocol === 'file:' ? ${JSON.stringify(fileProtocolMessage)} : String(error?.message || error);`,
+    "    if (contentHost) contentHost.innerHTML = '';",
+    "    const message = document.createElement('p');",
+    "    message.className = 'hia-project-load-error';",
+    "    message.textContent = hint;",
+    "    (contentHost || treeHost)?.append(message);",
+    "  }",
+    "  function nodeMatchesView(node) {",
+    "    return activeView === 'all' || (Array.isArray(node.views) && node.views.includes(activeView));",
+    "  }",
+    "  function createTreeList(nodes) {",
+    "    const list = document.createElement('ul');",
+    "    list.className = 'hia-project-hierarchy-list';",
+    "    for (const node of nodes.filter(nodeMatchesView)) list.append(createTreeNode(node));",
+    "    return list;",
+    "  }",
+    "  function createTreeNode(node) {",
+    "    const item = document.createElement('li');",
+    "    item.dataset.hiaProjectNav = node.views?.[0] || 'other';",
+    "    if (node.childrenPath) {",
+    "      const details = document.createElement('details');",
+    "      const summary = document.createElement('summary');",
+    "      const summaryLabel = document.createElement('span');",
+    "      summaryLabel.textContent = `${node.label} (${node.entryCount})`;",
+    "      summary.append(summaryLabel);",
+    "      if (node.entryId && node.contentPath) {",
+    "        const openButton = document.createElement('button');",
+    "        openButton.type = 'button';",
+    "        openButton.className = 'hia-project-entry-link hia-project-tree-open';",
+    `        openButton.textContent = ${JSON.stringify(openLabel)};`,
+    "        openButton.addEventListener('click', (event) => {",
+    "          event.preventDefault();",
+    "          event.stopPropagation();",
+    "          loadEntry(node.entryId, node.contentPath, true);",
+    "        });",
+    "        summary.append(openButton);",
+    "      }",
+    "      details.append(summary);",
+    "      details.addEventListener('toggle', async () => {",
+    "        if (!details.open || details.dataset.loaded === 'true') return;",
+    "        details.dataset.loaded = 'true';",
+    "        const loading = document.createElement('p');",
+    "        loading.className = 'hia-project-loading';",
+    "        loading.textContent = '...';",
+    "        details.append(loading);",
+    "        try {",
+    "          const shard = await readJson(node.childrenPath);",
+    "          loading.replaceWith(createTreeList(Array.isArray(shard.children) ? shard.children : []));",
+    "        } catch (error) {",
+    "          loading.textContent = String(error?.message || error);",
+    "        }",
+    "      });",
+    "      item.append(details);",
+    "    } else if (node.entryId && node.contentPath) {",
+    "      const button = document.createElement('button');",
+    "      button.type = 'button';",
+    "      button.className = 'hia-project-entry-link';",
+    "      button.textContent = node.label;",
+    "      button.addEventListener('click', () => loadEntry(node.entryId, node.contentPath, true));",
+    "      item.append(button);",
+    "    } else {",
+    "      const label = document.createElement('span');",
+    "      label.textContent = node.label;",
+    "      item.append(label);",
+    "    }",
+    "    return item;",
+    "  }",
+    "  function renderRoot() {",
+    "    if (!treeHost) return;",
+    "    treeHost.innerHTML = '';",
+    "    treeHost.append(createTreeList(rootNodes));",
+    "  }",
+    "  function applyLocale() {",
+    "    const selected = String(locale?.value || document.documentElement.lang || 'und');",
+    "    document.documentElement.lang = selected;",
+    "    for (const block of document.querySelectorAll('[data-hia-locale]')) {",
+    "      block.hidden = block.getAttribute('data-hia-locale') !== selected;",
+    "    }",
+    "  }",
+    "  function bindSourceFetch() {",
+    "    for (const button of contentHost?.querySelectorAll('[data-hia-source-fetch]') || []) {",
+    "      button.addEventListener('click', async () => {",
+    "        if (button.dataset.loaded === 'true') return;",
+    "        const code = button.parentElement?.querySelector('code');",
+    "        try {",
+    "          const response = await fetch(button.dataset.hiaSourceFetch || '', { credentials: 'omit' });",
+    "          if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
+    "          const lines = (await response.text()).split(/\\r?\\n/u);",
+    "          const start = Math.max(1, Number(button.dataset.hiaSourceStart || 1));",
+    "          const end = Math.max(start, Number(button.dataset.hiaSourceEnd || lines.length));",
+    "          if (code) code.textContent = lines.slice(start - 1, end).join('\\n');",
+    "          button.dataset.loaded = 'true';",
+    "          button.hidden = true;",
+    "        } catch (error) {",
+    "          button.textContent = String(error?.message || error);",
+    "        }",
+    "      });",
+    "    }",
+    "  }",
+    "  async function loadEntry(entryId, contentPath, updateHash) {",
+    "    if (!contentHost) return;",
+    "    contentHost.innerHTML = '<p class=\"hia-project-loading\">...</p>';",
+    "    try {",
+    "      const response = await fetch(contentPath, { credentials: 'omit' });",
+    "      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
+    "      contentHost.innerHTML = await response.text();",
+    "      applyLocale();",
+    "      bindSourceFetch();",
+    "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entryId)}`);",
+    "    } catch (error) {",
+    "      showLoadError(error);",
+    "    }",
+    "  }",
+    "  async function ensureSearchIndex() {",
+    "    if (searchEntries) return searchEntries;",
+    "    const index = await readJson(config.search);",
+    "    searchEntries = Array.isArray(index.entries) ? index.entries : [];",
+    "    return searchEntries;",
+    "  }",
+    "  async function runSearch() {",
+    "    const query = String(search?.value || '').trim().toLowerCase();",
+    "    if (!query) { renderRoot(); return; }",
+    "    try {",
+    "      const entries = await ensureSearchIndex();",
+    "      const matches = entries.filter((entry) => (activeView === 'all' || entry.view === activeView) && String(entry.searchText || '').includes(query)).slice(0, 200);",
+    "      if (!treeHost) return;",
+    "      treeHost.innerHTML = '';",
+    "      const nodes = matches.map((entry) => ({ id: entry.id, label: `${entry.name} · ${entry.kind}`, entryId: entry.id, contentPath: entry.contentPath, views: [entry.view], entryCount: 1 }));",
+    "      treeHost.append(createTreeList(nodes));",
+    "    } catch (error) { showLoadError(error); }",
+    "  }",
+    "  for (const button of viewButtons) {",
+    "    button.addEventListener('click', () => {",
+    "      activeView = button.dataset.hiaProjectView || 'all';",
+    "      for (const candidate of viewButtons) candidate.setAttribute('aria-pressed', String(candidate === button));",
+    "      runSearch();",
+    "    });",
+    "  }",
+    "  search?.addEventListener('input', runSearch);",
+    "  locale?.addEventListener('change', applyLocale);",
+    "  document.querySelector('[data-hia-project-relations]')?.addEventListener('click', async () => {",
+    "    try {",
+    "      const graph = await readJson(config.relations);",
+    "      if (!contentHost) return;",
+    "      contentHost.innerHTML = '';",
+    "      const article = document.createElement('article');",
+    "      article.className = 'hia-symbol';",
+    "      const heading = document.createElement('h2');",
+    "      heading.textContent = 'Relations';",
+    "      const summary = document.createElement('p');",
+    "      summary.textContent = `${graph.nodeCount || 0} node(s), ${graph.relationCount || 0} relation(s).`;",
+    "      article.append(heading, summary);",
+    "      contentHost.append(article);",
+    "    } catch (error) { showLoadError(error); }",
+    "  });",
+    "  readJson(config.navigation).then((shard) => {",
+    "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
+    "    renderRoot();",
+    "    const hash = location.hash.startsWith('#entry=') ? decodeURIComponent(location.hash.slice(7)) : '';",
+    "    if (hash) ensureSearchIndex().then((entries) => {",
+    "      const entry = entries.find((candidate) => candidate.id === hash);",
+    "      if (entry) loadEntry(entry.id, entry.contentPath, false);",
+    "    });",
+    "  }).catch(showLoadError);",
+    "  viewButtons.find((button) => button.dataset.hiaProjectView === 'all')?.setAttribute('aria-pressed', 'true');",
+    "})();",
+    "</script>"
   ].join("");
 }
 
@@ -748,6 +1228,7 @@ function renderProjectEntry(entry: RenderProjectEntry, locales: string[], select
   const summary = renderProjectEntrySummary(entry, locales, selectedLocale);
   const input = entry.input ? renderProjectEntryInput(entry.input) : "";
   const profile = entry.profile ? renderProjectEntryProfile(entry.profile) : "";
+  const hierarchy = entry.hierarchy ? renderProjectEntryHierarchy(entry.hierarchy) : "";
   const source = entry.source ? renderProjectEntrySource(entry.source) : "";
   const docSourceMap = entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap) : "";
   const diagnostics = renderProjectDiagnostics(entry.diagnostics ?? []);
@@ -762,6 +1243,7 @@ function renderProjectEntry(entry: RenderProjectEntry, locales: string[], select
     summary,
     input,
     profile,
+    hierarchy,
     source,
     docSourceMap,
     diagnostics,
@@ -769,8 +1251,26 @@ function renderProjectEntry(entry: RenderProjectEntry, locales: string[], select
   ].join("");
 }
 
+function renderProjectEntryHierarchy(hierarchy: RenderProjectEntryHierarchyRef): string {
+  const details = [
+    hierarchy.assembly ? `<dt>Assembly</dt><dd>${escapeHtml(hierarchy.assembly)}</dd>` : "",
+    hierarchy.namespace ? `<dt>Namespace</dt><dd>${escapeHtml(hierarchy.namespace)}</dd>` : "",
+    hierarchy.containingType ? `<dt>Containing Type</dt><dd>${escapeHtml(hierarchy.containingType)}</dd>` : "",
+    hierarchy.symbolDocumentationId ? `<dt>Documentation ID</dt><dd>${escapeHtml(hierarchy.symbolDocumentationId)}</dd>` : "",
+    hierarchy.parentSymbolId ? `<dt>Parent</dt><dd>${escapeHtml(hierarchy.parentSymbolId)}</dd>` : "",
+    hierarchy.baseTypeIds && hierarchy.baseTypeIds.length > 0
+      ? `<dt>Inheritance</dt><dd>${escapeHtml(hierarchy.baseTypeIds.join(" -> "))}</dd>`
+      : "",
+    hierarchy.interfaceIds && hierarchy.interfaceIds.length > 0
+      ? `<dt>Interfaces</dt><dd>${escapeHtml(hierarchy.interfaceIds.join(", "))}</dd>`
+      : ""
+  ].join("");
+
+  return details ? `<dl class="hia-project-meta hia-project-hierarchy-meta">${details}</dl>` : "";
+}
+
 function renderProjectEntrySummary(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
-  const field = entry.i18n?.fields.description;
+  const field = entry.i18n?.fields.description ?? entry.i18n?.fields.summary;
 
   if (!field && !entry.summary) {
     return "";
@@ -819,8 +1319,21 @@ function renderProjectEntrySource(source: RenderProjectSourceRef): string {
     source.confidence ? `<dt>Confidence</dt><dd>${escapeHtml(source.confidence)}</dd>` : ""
   ].join("");
   const preview = source.preview ? renderProjectSourcePreview(source.preview, source.path) : "";
+  const fetchPreview = source.fetchUrl ? renderProjectSourceFetch(source) : "";
 
-  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl>${preview}</section>`;
+  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl>${preview}${fetchPreview}</section>`;
+}
+
+function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
+  const startLine = source.range?.start.line ?? 1;
+  const endLine = source.range?.end?.line ?? startLine;
+  return [
+    "<details class=\"hia-source-preview hia-project-source-preview\">",
+    `<summary>${escapeHtml(`${source.path}:${startLine}-${endLine}`)}</summary>`,
+    `<button type="button" class="hia-source-fetch-button" data-hia-source-fetch="${escapeHtml(source.fetchUrl ?? "")}" data-hia-source-start="${escapeHtml(String(startLine))}" data-hia-source-end="${escapeHtml(String(endLine))}">Load source / 加载源码</button>`,
+    `<pre class="hia-source-code"><code data-language="${escapeHtml(source.language ?? "")}"></code></pre>`,
+    "</details>"
+  ].join("");
 }
 
 function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
@@ -1308,7 +1821,7 @@ function collectProjectNavigationTree(entries: RenderProjectEntry[]): RenderProj
 
       const children = view === "dotnet"
         ? collectDotNetNavigationTree(viewEntries)
-        : collectSourceNavigationTree(viewEntries);
+        : collectSemanticSourceNavigationTree(viewEntries);
 
       return [{
         id: `view:${view}`,
@@ -1326,32 +1839,55 @@ function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProje
 
   for (const entry of entries) {
     const parts = getDotNetNavigationParts(entry);
-    const namespaceNode = getOrCreateProjectTreeChild(
+    const assemblyNode = getOrCreateProjectTreeChild(
       roots,
-      `dotnet:namespace:${slugProjectGroupLabel(parts.namespaceLabel)}`,
-      "namespace",
-      parts.namespaceLabel
+      `dotnet:${parts.rootKind}:${slugProjectGroupLabel(parts.assemblyLabel)}`,
+      parts.rootKind,
+      parts.assemblyLabel
     );
-    addProjectTreeEntry(namespaceNode, entry);
+    addProjectTreeEntry(assemblyNode, entry);
+
+    let namespaceParent = assemblyNode;
+    const namespaceSegments = parts.namespaceLabel === "(global namespace)"
+      ? [parts.namespaceLabel]
+      : parts.namespaceLabel.split(".").filter(Boolean);
+    let qualifiedNamespace = "";
+    for (const namespaceSegment of namespaceSegments) {
+      qualifiedNamespace = qualifiedNamespace
+        ? `${qualifiedNamespace}.${namespaceSegment}`
+        : namespaceSegment;
+      const namespaceNode = getOrCreateProjectTreeChild(
+        namespaceParent.childrenById,
+        `${assemblyNode.id}:namespace:${slugProjectGroupLabel(qualifiedNamespace)}`,
+        "namespace",
+        namespaceSegment
+      );
+      namespaceParent.children = [...namespaceParent.childrenById.values()];
+      addProjectTreeEntry(namespaceNode, entry);
+      namespaceParent = namespaceNode;
+    }
 
     const typeNode = getOrCreateProjectTreeChild(
-      namespaceNode.childrenById,
-      `${namespaceNode.id}:type:${slugProjectGroupLabel(parts.typeLabel)}`,
+      namespaceParent.childrenById,
+      `${namespaceParent.id}:type:${slugProjectGroupLabel(parts.typeId)}`,
       "type",
       parts.typeLabel
     );
-    namespaceNode.children = [...namespaceNode.childrenById.values()];
+    namespaceParent.children = [...namespaceParent.childrenById.values()];
     addProjectTreeEntry(typeNode, entry);
 
-    if (entry.kind === "dotnet-type") {
+    if (isDotNetTypeNavigationEntry(entry)) {
       typeNode.entryId = entry.id;
       assignProjectTreeEntryRefs(typeNode, entry);
+      if (entry.kind === "dotnet-type") {
+        addDotNetInheritanceNodes(typeNode, entry);
+      }
       continue;
     }
 
     const entryNode = getOrCreateProjectTreeChild(
       typeNode.childrenById,
-      `${typeNode.id}:entry:${slugProjectGroupLabel(entry.id)}`,
+      `${typeNode.id}:entry:${entry.id}`,
       "entry",
       parts.memberLabel
     );
@@ -1364,10 +1900,52 @@ function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProje
   return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
 }
 
-function collectSourceNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+function addDotNetInheritanceNodes(typeNode: ProjectNavigationTreeBuilder, entry: RenderProjectEntry): void {
+  for (const baseTypeId of entry.hierarchy?.baseTypeIds ?? []) {
+    const relationNode = getOrCreateProjectTreeChild(
+      typeNode.childrenById,
+      `${typeNode.id}:base:${slugProjectGroupLabel(baseTypeId)}`,
+      "relation",
+      `Base: ${baseTypeId.replace(/^T:/u, "")}`
+    );
+    relationNode.views.add(entry.view);
+  }
+  for (const interfaceId of entry.hierarchy?.interfaceIds ?? []) {
+    const relationNode = getOrCreateProjectTreeChild(
+      typeNode.childrenById,
+      `${typeNode.id}:interface:${slugProjectGroupLabel(interfaceId)}`,
+      "relation",
+      `Interface: ${interfaceId.replace(/^T:/u, "")}`
+    );
+    relationNode.views.add(entry.view);
+  }
+  typeNode.children = [...typeNode.childrenById.values()];
+}
+
+/**
+ * 为非 .NET 领域保留源码目录，同时在 adapter 提供 parentSymbolId 时恢复 module/class/member 层级。
+ * Preserves source grouping for non-.NET domains while restoring module/class/member hierarchy when adapters provide parentSymbolId.
+ */
+function collectSemanticSourceNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
   const roots = new Map<string, ProjectNavigationTreeBuilder>();
+  const nodesByEntryId = new Map<string, ProjectNavigationTreeBuilder>();
+  const entriesBySymbolId = new Map<string, RenderProjectEntry>();
+  const fileNodesByEntryId = new Map<string, ProjectNavigationTreeBuilder>();
 
   for (const entry of entries) {
+    if (entry.symbolId) {
+      entriesBySymbolId.set(entry.symbolId, entry);
+    }
+    const entryNode = getOrCreateProjectTreeChild(
+      nodesByEntryId,
+      `entry:${entry.id}`,
+      isProjectTypeLikeKind(entry.kind) ? "type" : "entry",
+      entry.name
+    );
+    addProjectTreeEntry(entryNode, entry);
+    entryNode.entryId = entry.id;
+    assignProjectTreeEntryRefs(entryNode, entry);
+
     const sourceRootLabel = getProjectSourceRoot(entry.source?.path);
     const sourcePathLabel = entry.source?.path?.replaceAll("\\", "/") || "unknown-source";
     const rootNode = getOrCreateProjectTreeChild(
@@ -1387,20 +1965,55 @@ function collectSourceNavigationTree(entries: RenderProjectEntry[]): RenderProje
     rootNode.children = [...rootNode.childrenById.values()];
     addProjectTreeEntry(fileNode, entry);
     assignProjectTreeSourcePath(fileNode, entry.source?.path);
+    fileNodesByEntryId.set(entry.id, fileNode);
+  }
 
-    const entryNode = getOrCreateProjectTreeChild(
-      fileNode.childrenById,
-      `${fileNode.id}:entry:${slugProjectGroupLabel(entry.id)}`,
-      "entry",
-      entry.name
-    );
-    fileNode.children = [...fileNode.childrenById.values()];
-    addProjectTreeEntry(entryNode, entry);
-    entryNode.entryId = entry.id;
-    assignProjectTreeEntryRefs(entryNode, entry);
+  for (const entry of entries) {
+    const entryNode = nodesByEntryId.get(`entry:${entry.id}`);
+    const parentEntry = entry.hierarchy?.parentSymbolId
+      ? entriesBySymbolId.get(entry.hierarchy.parentSymbolId)
+      : undefined;
+    const parentNode = parentEntry
+      ? nodesByEntryId.get(`entry:${parentEntry.id}`)
+      : undefined;
+    const sameSource = parentEntry?.source?.path === entry.source?.path;
+
+    if (entryNode && parentEntry && parentNode && sameSource && parentNode !== entryNode) {
+      parentNode.childrenById.set(entryNode.id, entryNode);
+      incrementProjectNavigationAncestorCounts(parentEntry, entriesBySymbolId, nodesByEntryId);
+      continue;
+    }
+
+    const fileNode = fileNodesByEntryId.get(entry.id);
+    if (entryNode && fileNode) {
+      fileNode.childrenById.set(entryNode.id, entryNode);
+    }
   }
 
   return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
+}
+
+function incrementProjectNavigationAncestorCounts(
+  parentEntry: RenderProjectEntry,
+  entriesBySymbolId: Map<string, RenderProjectEntry>,
+  nodesByEntryId: Map<string, ProjectNavigationTreeBuilder>
+): void {
+  const visited = new Set<string>();
+  let current: RenderProjectEntry | undefined = parentEntry;
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    const node = nodesByEntryId.get(`entry:${current.id}`);
+    if (node) {
+      node.entryCount += 1;
+    }
+    current = current.hierarchy?.parentSymbolId
+      ? entriesBySymbolId.get(current.hierarchy.parentSymbolId)
+      : undefined;
+  }
+}
+
+function isProjectTypeLikeKind(kind: string): boolean {
+  return /(?:^|[-_])(class|interface|type|module|namespace|enum|struct|record)(?:$|[-_])/iu.test(kind);
 }
 
 function getOrCreateProjectTreeChild(
@@ -1447,7 +2060,8 @@ function assignProjectTreeSourcePath(node: ProjectNavigationTreeBuilder, sourceP
 }
 
 function finalizeProjectTreeBuilder(node: ProjectNavigationTreeBuilder): RenderProjectNavigationTreeNode {
-  const children = sortProjectTreeNodes(node.children.map(finalizeProjectTreeBuilder));
+  const childBuilders = node.childrenById.size > 0 ? [...node.childrenById.values()] : node.children;
+  const children = sortProjectTreeNodes(childBuilders.map(finalizeProjectTreeBuilder));
 
   return {
     id: node.id,
@@ -1478,31 +2092,52 @@ function projectTreeKindOrder(kind: RenderProjectNavigationTreeNodeKind): number
     return 0;
   }
 
-  if (kind === "namespace") {
-    return 1;
-  }
-
-  if (kind === "type") {
+  if (kind === "surface" || kind === "project") {
     return 2;
   }
 
-  if (kind === "source-root") {
+  if (kind === "namespace") {
     return 3;
   }
 
-  if (kind === "source-file") {
+  if (kind === "type") {
     return 4;
   }
 
-  return 5;
+  if (kind === "relation") {
+    return 5;
+  }
+
+  if (kind === "assembly") {
+    return 1;
+  }
+
+  if (kind === "source-root") {
+    return 6;
+  }
+
+  if (kind === "source-file") {
+    return 7;
+  }
+
+  return 8;
 }
 
 function getDotNetNavigationParts(entry: RenderProjectEntry): {
+  assemblyLabel: string;
   memberLabel: string;
   namespaceLabel: string;
+  rootKind: "assembly" | "surface" | "project";
+  typeId: string;
   typeLabel: string;
 } {
-  const symbolId = entry.symbolId || (entry.id.match(/^[A-Z]:/) ? entry.id : "");
+  const fallback = getDotNetNonAssemblyNavigationParts(entry);
+  const assemblyLabel = entry.hierarchy?.assembly || fallback.assemblyLabel;
+  const semanticNamespace = entry.hierarchy?.namespace;
+  const semanticContainingType = entry.hierarchy?.containingType;
+  const symbolId = entry.hierarchy?.symbolDocumentationId
+    || (entry.symbolId?.match(/^[A-Z]:/) ? entry.symbolId : "")
+    || (entry.id.match(/^[A-Z]:/) ? entry.id : "");
   const symbolBody = symbolId.match(/^[A-Z]:/) ? symbolId.slice(2) : "";
   const normalizedSymbol = symbolBody.replace(/\(.+$/, "");
   const segments = normalizedSymbol.split(".").filter((segment) => segment.length > 0);
@@ -1512,17 +2147,68 @@ function getDotNetNavigationParts(entry: RenderProjectEntry): {
     const typeIndex = entry.kind === "dotnet-type" ? segments.length - 1 : Math.max(0, segments.length - 2);
     const typeLabel = segments[typeIndex] ?? entry.name;
     const namespaceLabel = segments.slice(0, typeIndex).join(".") || "(global namespace)";
-    return { memberLabel, namespaceLabel, typeLabel };
+    return {
+      assemblyLabel,
+      memberLabel,
+      namespaceLabel: semanticNamespace || namespaceLabel,
+      rootKind: entry.hierarchy?.assembly ? "assembly" : fallback.rootKind,
+      typeId: semanticContainingType ? `T:${semanticContainingType}` : `T:${segments.slice(0, typeIndex + 1).join(".")}`,
+      typeLabel: semanticContainingType?.split(".").pop() || typeLabel
+    };
   }
 
   const sourceStem = entry.source?.path
     ? entry.source.path.replaceAll("\\", "/").split("/").pop()?.replace(/\.[^.]+$/, "")
     : undefined;
   return {
+    assemblyLabel,
     memberLabel: entry.name,
-    namespaceLabel: "(global namespace)",
-    typeLabel: sourceStem || entry.name
+    namespaceLabel: semanticNamespace || fallback.namespaceLabel,
+    rootKind: entry.hierarchy?.assembly ? "assembly" : fallback.rootKind,
+    typeId: semanticContainingType ? `T:${semanticContainingType}` : symbolId || entry.id,
+    typeLabel: semanticContainingType?.split(".").pop() || sourceStem || entry.name
   };
+}
+
+function getDotNetNonAssemblyNavigationParts(entry: RenderProjectEntry): {
+  assemblyLabel: string;
+  namespaceLabel: string;
+  rootKind: "assembly" | "surface" | "project";
+} {
+  if (entry.kind === "dotnet-project" || entry.kind === "dotnet-solution") {
+    return {
+      assemblyLabel: ".NET Project Structure",
+      namespaceLabel: entry.kind === "dotnet-solution" ? "Solutions" : "Projects",
+      rootKind: "project"
+    };
+  }
+
+  if (entry.kind === "aspnet-endpoint" || entry.kind === "dotnet-markup-comment") {
+    const sourceDirectories = (entry.source?.path ?? "")
+      .replaceAll("\\", "/")
+      .split("/")
+      .slice(0, -1)
+      .filter((segment) => segment && segment !== "src" && segment !== "Portal");
+    const category = entry.kind === "aspnet-endpoint" ? "Endpoints" : "Markup";
+    return {
+      assemblyLabel: "ASP.NET Surfaces",
+      namespaceLabel: [category, ...sourceDirectories].join("."),
+      rootKind: "surface"
+    };
+  }
+
+  return {
+    assemblyLabel: ".NET Other",
+    namespaceLabel: "(global namespace)",
+    rootKind: "assembly"
+  };
+}
+
+function isDotNetTypeNavigationEntry(entry: RenderProjectEntry): boolean {
+  return entry.kind === "dotnet-type"
+    || entry.kind === "dotnet-project"
+    || entry.kind === "dotnet-solution"
+    || entry.kind === "aspnet-endpoint";
 }
 
 function collectProjectNavigationGroupsBy(
@@ -1642,6 +2328,12 @@ function createProjectEntrySearchText(entry: RenderProjectEntry): string {
     entry.summary,
     entry.signature,
     entry.symbolId,
+    entry.hierarchy?.assembly,
+    entry.hierarchy?.namespace,
+    entry.hierarchy?.containingType,
+    entry.hierarchy?.parentSymbolId,
+    ...(entry.hierarchy?.baseTypeIds ?? []),
+    ...(entry.hierarchy?.interfaceIds ?? []),
     entry.view,
     entry.profile?.profileId,
     entry.input?.kind,

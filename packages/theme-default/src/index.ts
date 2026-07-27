@@ -46,6 +46,7 @@ body {
   background: var(--hia-bg);
   color: var(--hia-text);
   line-height: 1.55;
+  overflow-x: hidden;
 }
 
 a {
@@ -62,6 +63,13 @@ a {
   border-right: 1px solid var(--hia-border);
   padding: 1.5rem;
   background: #eef2f6;
+}
+
+.hia-project-split-site .hia-sidebar {
+  height: 100vh;
+  overflow: auto;
+  position: sticky;
+  top: 0;
 }
 
 .hia-sidebar nav ul,
@@ -174,6 +182,7 @@ a {
 
 .hia-main {
   max-width: 72rem;
+  min-width: 0;
   width: 100%;
   padding: 2rem;
 }
@@ -183,7 +192,16 @@ a {
   border: 1px solid var(--hia-border);
   border-radius: 6px;
   margin: 1rem 0;
+  min-width: 0;
   padding: 1rem;
+}
+
+.hia-project-meta,
+.hia-project-meta dd,
+.hia-project-entry,
+.hia-project-entry a {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .hia-symbol h2 {
@@ -287,6 +305,73 @@ a {
   margin-top: .75rem;
 }
 
+.hia-source-fetch-button,
+.hia-project-secondary-action,
+.hia-project-entry-link {
+  appearance: none;
+  border: 1px solid var(--hia-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.hia-source-fetch-button,
+.hia-project-secondary-action {
+  background: var(--hia-surface);
+  color: var(--hia-text);
+  min-height: 2rem;
+  padding: .35rem .65rem;
+}
+
+.hia-project-secondary-action {
+  margin-top: .75rem;
+  width: 100%;
+}
+
+.hia-source-fetch-button:hover,
+.hia-project-secondary-action:hover,
+.hia-project-entry-link:hover {
+  border-color: var(--hia-accent);
+  color: var(--hia-accent);
+}
+
+.hia-project-entry-link {
+  background: transparent;
+  color: var(--hia-accent);
+  padding: .15rem .2rem;
+  text-align: left;
+}
+
+.hia-project-hierarchy-list details > summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: .4rem;
+  justify-content: space-between;
+  overflow-wrap: anywhere;
+}
+
+.hia-project-tree-open {
+  flex: none;
+  font-size: .78rem;
+  padding: .18rem .45rem;
+}
+
+.hia-project-hierarchy-list details > ul {
+  border-left: 1px solid var(--hia-border);
+  margin-left: .25rem;
+}
+
+.hia-project-loading,
+.hia-project-load-error {
+  color: var(--hia-muted);
+}
+
+.hia-project-load-error {
+  border-left: 3px solid #b42318;
+  padding-left: .75rem;
+}
+
 .hia-source-actions {
   display: flex;
   flex-wrap: wrap;
@@ -372,6 +457,12 @@ a {
   .hia-sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--hia-border);
+  }
+
+  .hia-project-split-site .hia-sidebar {
+    height: auto;
+    max-height: 48vh;
+    position: static;
   }
 
   .hia-main {

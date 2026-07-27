@@ -30,10 +30,10 @@
     {
       "name": "@hia-doc/config",
       "path": "packages/config",
-      "targetVersion": "0.1.2",
+      "targetVersion": "0.1.3",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/profile",
@@ -70,10 +70,10 @@
     {
       "name": "@hia-doc/theme-default",
       "path": "packages/theme-default",
-      "targetVersion": "0.1.1",
+      "targetVersion": "0.1.2",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/browser-panel",
@@ -94,18 +94,18 @@
     {
       "name": "@hia-doc/renderer-html",
       "path": "packages/renderer-html",
-      "targetVersion": "0.1.1",
+      "targetVersion": "0.1.2",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/schemas",
       "path": "packages/schemas",
-      "targetVersion": "0.1.2",
+      "targetVersion": "0.1.3",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/lsp",
@@ -118,10 +118,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.3",
+      "targetVersion": "0.1.4",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     }
   ],
   "excludedPackages": [

@@ -9,6 +9,8 @@ export const HIA_CONFIG_SCHEMA_VERSION = "0.1.0";
 export const HIA_CONFIG_FILE_NAMES = ["hia.config.json"] as const;
 export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
 export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
+export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"] as const;
+export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
 export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
 
 export interface HiaProjectConfig {
@@ -29,8 +31,12 @@ export interface HiaDocsConfig {
 }
 
 export interface HiaRendererHtmlConfig {
+  /** 生成站点标题。Generated site title. */
   title?: string;
+  /** 是否输出默认主题静态资源。Whether to emit default theme assets. */
   includeThemeAssets?: boolean;
+  /** 大型项目默认使用分片站点；单页模式仅用于兼容和小型输出。Large projects default to split-site; single-page is for compatibility and small outputs. */
+  projectLayout?: typeof HIA_CONFIG_PROJECT_LAYOUTS[number];
 }
 
 export interface HiaThemeConfig {
@@ -39,9 +45,25 @@ export interface HiaThemeConfig {
 }
 
 export interface HiaSourceLinkConfig {
+  /** 是否启用源码呈现；false 会覆盖 presentation 并按 none 处理。Whether source presentation is enabled; false overrides presentation as none. */
   enabled?: boolean;
+  /** 旧版兼容模式；新配置应使用 presentation。Legacy compatibility mode; new configurations should use presentation. */
   mode?: typeof HIA_CONFIG_SOURCE_MODES[number];
+  /** linkBaseUrl 的兼容别名。Compatibility alias for linkBaseUrl. */
   baseUrl?: string;
+  /** 浏览器源码链接的仓库或服务基础 URL。Repository or service base URL used for browser source links. */
+  linkBaseUrl?: string;
+  /** fetch 模式下返回纯文本源码的基础 URL。Base URL returning plain source text in fetch mode. */
+  fetchBaseUrl?: string;
+  /** embed 模式读取相对源码路径时使用的本地根目录。Local root used to resolve relative source paths in embed mode. */
+  localRoot?: string;
+  /** 源码卡片呈现策略。Source-card presentation policy. */
+  presentation?: typeof HIA_CONFIG_SOURCE_PRESENTATIONS[number];
+  /** embed 模式生成的源码详情是否默认展开。Whether embedded source details are expanded by default. */
+  defaultExpanded?: boolean;
+  /** 单个源码片段允许嵌入或动态显示的最大行数。Maximum lines embedded or dynamically displayed per source excerpt. */
+  maxLines?: number;
+  /** 旧版源码链接打开方式；当前项目站链接沿用普通浏览器导航。Legacy source-link open mode; project-site links currently use normal browser navigation. */
   openMode?: typeof HIA_CONFIG_SOURCE_OPEN_MODES[number];
 }
 
@@ -188,6 +210,7 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
 
   validateOptionalString(value, "title", diagnostics, targetPath);
   validateOptionalBoolean(value, "includeThemeAssets", diagnostics, targetPath);
+  validateOptionalEnum(value, "projectLayout", HIA_CONFIG_PROJECT_LAYOUTS, diagnostics, targetPath);
 }
 
 function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
@@ -221,8 +244,45 @@ function validateSourceConfig(value: unknown, diagnostics: HiaDiagnostic[], targ
 
   validateOptionalBoolean(value, "enabled", diagnostics, targetPath);
   validateOptionalString(value, "baseUrl", diagnostics, targetPath);
+  validateOptionalString(value, "linkBaseUrl", diagnostics, targetPath);
+  validateOptionalString(value, "fetchBaseUrl", diagnostics, targetPath);
+  validateOptionalString(value, "localRoot", diagnostics, targetPath);
   validateOptionalEnum(value, "mode", HIA_CONFIG_SOURCE_MODES, diagnostics, targetPath);
+  validateOptionalEnum(value, "presentation", HIA_CONFIG_SOURCE_PRESENTATIONS, diagnostics, targetPath);
+  validateOptionalBoolean(value, "defaultExpanded", diagnostics, targetPath);
+  validateOptionalPositiveInteger(value, "maxLines", diagnostics, targetPath);
   validateOptionalEnum(value, "openMode", HIA_CONFIG_SOURCE_OPEN_MODES, diagnostics, targetPath);
+
+  if (value.presentation === "fetch" && (typeof value.fetchBaseUrl !== "string" || value.fetchBaseUrl.length === 0)) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_SOURCE_FETCH_BASE_REQUIRED",
+      "docs.source.fetchBaseUrl is required when docs.source.presentation is fetch.",
+      "error",
+      `${targetPath}.fetchBaseUrl`
+    ));
+  }
+
+  if ((value.enabled === false || value.mode === "none") && value.presentation !== undefined && value.presentation !== "none") {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_SOURCE_PRESENTATION_DISABLED",
+      "docs.source.presentation must be none when docs.source is disabled or mode is none.",
+      "error",
+      `${targetPath}.presentation`
+    ));
+  }
+}
+
+function validateOptionalPositiveInteger(
+  record: Record<string, unknown>,
+  field: string,
+  diagnostics: HiaDiagnostic[],
+  prefix = ""
+): void {
+  const value = record[field];
+  if (value !== undefined && (!Number.isInteger(value) || Number(value) <= 0)) {
+    const targetPath = prefix ? `${prefix}.${field}` : field;
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_FIELD_INVALID", `${targetPath} must be a positive integer.`, "error", targetPath));
+  }
 }
 
 function validateOptionalString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {

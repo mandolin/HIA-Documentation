@@ -6,9 +6,11 @@ export const HIA_PROJECT_MANIFEST_SCHEMA_VERSION = "0.1.0-draft";
 export const HIA_PROJECT_MANIFEST_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json";
 export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map", "documentation-producer-result"] as const;
 export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "dotnet", "powershell", "other"] as const;
+export const HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES = ["all", "relations-only"] as const;
 
 export type HiaProjectManifestInputKind = typeof HIA_PROJECT_MANIFEST_INPUT_KINDS[number];
 export type HiaProjectManifestDomain = typeof HIA_PROJECT_MANIFEST_DOMAINS[number];
+export type HiaProjectManifestArtifactPolicy = typeof HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES[number];
 
 export interface HiaProjectDocsManifest {
   schemaVersion?: string;
@@ -54,6 +56,11 @@ export interface HiaProjectManifestInput {
   domain?: HiaProjectManifestDomain;
   profile?: HiaProjectManifestInputProfileRef;
   sourceRoot?: string;
+  /**
+   * 控制 producer result 中哪些 artifact 参与项目聚合；relations-only 只消费关系增强产物。
+   * Controls which producer-result artifacts join project aggregation; relations-only consumes relation augmentation only.
+   */
+  artifactPolicy?: HiaProjectManifestArtifactPolicy;
 }
 
 export interface HiaProjectManifestProducerInput {
@@ -226,7 +233,8 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         path: { $ref: "#/$defs/safeRelativePath" },
         domain: { enum: [...HIA_PROJECT_MANIFEST_DOMAINS] },
         profile: { $ref: "#/$defs/inputProfileRef" },
-        sourceRoot: { $ref: "#/$defs/safeRelativePath" }
+        sourceRoot: { $ref: "#/$defs/safeRelativePath" },
+        artifactPolicy: { enum: [...HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES] }
       }
     }
   }
@@ -497,6 +505,24 @@ function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs
         "error",
         joinTarget(targetPrefix, `${field}.${index}.kind`)
       ));
+    }
+
+    if (field === "inputs" && item.artifactPolicy !== undefined) {
+      if (!HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES.includes(item.artifactPolicy as HiaProjectManifestArtifactPolicy)) {
+        diagnostics.push(createProjectManifestDiagnostic(
+          "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+          `Project docs manifest ${field}.${index}.artifactPolicy must be "all" or "relations-only".`,
+          "error",
+          joinTarget(targetPrefix, `${field}.${index}.artifactPolicy`)
+        ));
+      } else if (item.artifactPolicy === "relations-only" && item.kind !== "documentation-producer-result") {
+        diagnostics.push(createProjectManifestDiagnostic(
+          "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+          `Project docs manifest ${field}.${index}.artifactPolicy "relations-only" is only valid for documentation-producer-result inputs.`,
+          "error",
+          joinTarget(targetPrefix, `${field}.${index}.artifactPolicy`)
+        ));
+      }
     }
 
     if (typeof item.path !== "string" || item.path.length === 0 || isUnsafeRelativePath(item.path)) {

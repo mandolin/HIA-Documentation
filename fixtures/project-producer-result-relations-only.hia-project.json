@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "project": {
+    "id": "project:producer-result-relations-only",
+    "name": "Producer Result Relations Only Project",
+    "title": "Producer Result Relations Only Documentation"
+  },
+  "inputs": [
+    {
+      "kind": "hia-document",
+      "path": "project-producer-result/Portal.Components.hia.json",
+      "domain": "dotnet"
+    },
+    {
+      "kind": "documentation-producer-result",
+      "path": "project-producer-result/dotnetdoc.producer-result.json",
+      "domain": "dotnet",
+      "artifactPolicy": "relations-only"
+    }
+  ]
+}

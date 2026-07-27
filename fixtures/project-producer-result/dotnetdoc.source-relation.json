@@ -57,7 +57,73 @@
           }
         },
         "rangeSource": "roslyn-syntax",
-        "confidence": "high"
+        "confidence": "high",
+        "semantic": {
+          "documentationCommentId": "T:Portal.Components.PortalSecurity",
+          "symbolKind": "NamedType",
+          "containingAssembly": "Portal.Components",
+          "containingNamespace": "Portal.Components",
+          "containingType": null,
+          "parentDocumentationCommentId": null,
+          "baseTypeIds": [
+            "T:System.Object"
+          ],
+          "interfaceIds": [
+            "T:Portal.Components.IPortalSecurity"
+          ],
+          "displayName": "Portal.Components.PortalSecurity"
+        }
+      }
+    },
+    {
+      "id": "dotnetdoc:source-relation:t-portal.components.portalsecurity-designer",
+      "relation": "documents-declaration",
+      "memberName": "T:Portal.Components.PortalSecurity",
+      "memberId": "T:Portal.Components.PortalSecurity",
+      "kind": "dotnet-type",
+      "name": "PortalSecurity",
+      "confidence": "high",
+      "match": {
+        "mode": "documentation-id",
+        "exactDocumentationId": true
+      },
+      "hiaSymbol": {
+        "id": "T:Portal.Components.PortalSecurity",
+        "artifactPath": "Portal.Components.hia.json",
+        "documentId": "dotnetdoc:Portal.Components"
+      },
+      "declaration": {
+        "memberId": "T:Portal.Components.PortalSecurity",
+        "artifactPath": "Portal.Components.source.dotnetdoc.json",
+        "path": "src/Portal.Components/PortalSecurity.designer.cs",
+        "language": "csharp",
+        "range": {
+          "start": {
+            "line": 4,
+            "column": 14
+          },
+          "end": {
+            "line": 10,
+            "column": 2
+          }
+        },
+        "rangeSource": "roslyn-syntax",
+        "confidence": "high",
+        "semantic": {
+          "documentationCommentId": "T:Portal.Components.PortalSecurity",
+          "symbolKind": "NamedType",
+          "containingAssembly": "Portal.Components",
+          "containingNamespace": "Portal.Components",
+          "containingType": null,
+          "parentDocumentationCommentId": null,
+          "baseTypeIds": [
+            "T:System.Object"
+          ],
+          "interfaceIds": [
+            "T:Portal.Components.IPortalSecurity"
+          ],
+          "displayName": "Portal.Components.PortalSecurity"
+        }
       }
     }
   ],

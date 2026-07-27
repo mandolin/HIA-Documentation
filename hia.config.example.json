@@ -7,7 +7,8 @@
     "manifest": "hia-manifest.json",
     "renderer": {
       "title": "HIA Config Example",
-      "includeThemeAssets": true
+      "includeThemeAssets": true,
+      "projectLayout": "split-site"
     },
     "theme": {
       "name": "default"
@@ -15,6 +16,7 @@
     "source": {
       "enabled": true,
       "mode": "file",
+      "presentation": "link",
       "openMode": "same-tab"
     }
   }
