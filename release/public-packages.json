@@ -33,7 +33,7 @@
       "targetVersion": "0.1.4",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/profile",
@@ -97,7 +97,7 @@
       "targetVersion": "0.1.3",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/schemas",
@@ -121,7 +121,7 @@
       "targetVersion": "0.1.5",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [
