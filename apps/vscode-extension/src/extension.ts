@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
+import { lstat, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import * as vscode from "vscode";
 import {
@@ -29,6 +29,7 @@ import {
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
+  HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
   HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
@@ -88,6 +89,13 @@ import {
   type HiaResourceActionsSummary,
   type HiaResourceIndexSummary
 } from "./config.js";
+import {
+  HIA_WP53_SELF_SANDBOX_RELATIVE_PATH,
+  HIA_WP53_SELF_SANDBOX_SCOPE_ID,
+  HIA_WP53_SELF_SANDBOX_WORKSPACE_NAME,
+  createHiaWp53SelfSandboxReport,
+  runHiaWp53SelfSandboxTransaction
+} from "./checked-apply-self-sandbox.js";
 import {
   createHiaProjectRelationActionChoices,
   createHiaProjectRelationChoices,
@@ -290,6 +298,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const showGeneratedBindingRelationsCommand = vscode.commands.registerCommand(HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND, async () => {
     await showHiaGeneratedBindingRelations(outputChannel);
   });
+  const runWp53SelfSandboxPilotCommand = vscode.commands.registerCommand(HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND, async () => {
+    await runHiaWp53SelfSandboxPilot(outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
     provideCodeActions(document, _range, codeActionContext) {
       return createHiaCodeActions(document, codeActionContext.diagnostics);
@@ -302,7 +313,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, showGeneratedBindingRelationsCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, showGeneratedBindingRelationsCommand, runWp53SelfSandboxPilotCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -660,6 +671,145 @@ async function reviewHiaDocumentationProposals(outputChannel: vscode.OutputChann
   }
 
   await selectHiaDocumentationReviewAction(selected.choice, outputChannel);
+}
+
+/**
+ * 运行 W-P53 唯一允许的 VS Code host-owned self-sandbox apply-and-rollback 试点。
+ * Run the only allowed W-P53 VS Code host-owned self-sandbox apply-and-rollback pilot.
+ *
+ * 中文：该入口不接收路径、文本、proposal 或 editor object 参数。它只允许已由 evidence
+ * command 预置的主仓 `dist` fixture；在未信任 workspace、身份不匹配、fixture 缺失/变更、
+ * 用户取消确认或版本冲突时均在调用 `workspace.applyEdit` 前停止。
+ * English: This entry accepts no path, text, proposal, or editor-object argument. It only allows
+ * the main-repo `dist` fixture pre-seeded by the evidence command; untrusted workspaces, identity
+ * mismatches, missing/changed fixtures, cancelled confirmation, and version conflicts all stop
+ * before `workspace.applyEdit` is called.
+ */
+async function runHiaWp53SelfSandboxPilot(outputChannel: vscode.OutputChannel): Promise<void> {
+  if (!vscode.workspace.isTrusted) {
+    void vscode.window.showWarningMessage("The W-P53 self-sandbox pilot is unavailable in Restricted Mode.");
+    return;
+  }
+
+  const workspaceRoot = resolveWorkspaceRoot();
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open the HIA main repo workspace before running the W-P53 self-sandbox pilot.");
+    return;
+  }
+
+  const fixturePath = await resolveHiaWp53SelfSandboxFixturePath(workspaceRoot);
+  if (!fixturePath) {
+    void vscode.window.showWarningMessage("Prepare the W-P53 dedicated self-sandbox fixture before running this pilot.");
+    return;
+  }
+
+  try {
+    const result = await runHiaWp53SelfSandboxTransaction({
+      workspaceTrusted: vscode.workspace.isTrusted,
+      async getWorkspacePackageName() {
+        return readHiaWp53WorkspacePackageName(workspaceRoot);
+      },
+      async readSandboxSnapshot() {
+        const document = await vscode.workspace.openTextDocument(vscode.Uri.file(fixturePath));
+        return {
+          handle: document.uri,
+          scopeId: HIA_WP53_SELF_SANDBOX_SCOPE_ID,
+          text: document.getText(),
+          version: document.version
+        };
+      },
+      async requestFinalConfirmation() {
+        const selected = await vscode.window.showWarningMessage(
+          "Run the W-P53 host-owned self-sandbox apply and immediate rollback?",
+          {
+            detail: "This command changes only the pre-seeded dedicated main-repo synthetic fixture, validates it, and restores it before completion. It never writes a target repository.",
+            modal: true
+          },
+          "Apply and Roll Back"
+        );
+        return selected === "Apply and Roll Back";
+      },
+      async replaceSandboxText(snapshot, nextText) {
+        if (!(snapshot.handle instanceof vscode.Uri)) {
+          return false;
+        }
+
+        const document = await vscode.workspace.openTextDocument(snapshot.handle);
+        if (document.version !== snapshot.version) {
+          return false;
+        }
+
+        const replacementRange = new vscode.Range(
+          document.positionAt(0),
+          document.positionAt(document.getText().length)
+        );
+        const edit = new vscode.WorkspaceEdit();
+        edit.replace(document.uri, replacementRange, nextText);
+        return vscode.workspace.applyEdit(edit);
+      }
+    });
+
+    outputChannel.show(true);
+    for (const line of createHiaWp53SelfSandboxReport(result)) {
+      outputChannel.appendLine(`- ${line}`);
+    }
+
+    if (result.outcome === "completed-and-rolled-back") {
+      void vscode.window.showInformationMessage("W-P53 self-sandbox pilot applied, validated, and rolled back.");
+      return;
+    }
+
+    void vscode.window.showWarningMessage(`W-P53 self-sandbox pilot stopped: ${result.outcome}. See HIA output for the public-safe audit.`);
+  } catch {
+    outputChannel.show(true);
+    outputChannel.appendLine("W-P53 self-sandbox pilot failed before a public-safe audit record could be completed; private details were not printed.");
+    void vscode.window.showErrorMessage("W-P53 self-sandbox pilot failed. No private details were written to HIA output.");
+  }
+}
+
+/**
+ * 解析并检查 W-P53 fixture 的唯一可写范围。
+ * Resolve and inspect the sole writable scope of the W-P53 fixture.
+ *
+ * 中文：命令不创建 fixture，也拒绝任何被 symlink 替代的路径段，以免合成 `dist` sandbox
+ * 逃逸到工作区外。返回 `undefined` 时调用方必须在任何 host mutation 前停止。
+ * English: The command never creates the fixture and rejects every path segment replaced by a
+ * symlink, preventing the synthetic `dist` sandbox from escaping the workspace. When it returns
+ * `undefined`, callers must stop before any host mutation.
+ */
+async function resolveHiaWp53SelfSandboxFixturePath(workspaceRoot: string): Promise<string | undefined> {
+  const resolvedWorkspaceRoot = path.resolve(workspaceRoot);
+  const fixturePath = path.resolve(resolvedWorkspaceRoot, ...HIA_WP53_SELF_SANDBOX_RELATIVE_PATH);
+  const relativeFixturePath = path.relative(resolvedWorkspaceRoot, fixturePath);
+
+  if (!relativeFixturePath || relativeFixturePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativeFixturePath)) {
+    return undefined;
+  }
+
+  let inspectedPath = resolvedWorkspaceRoot;
+  for (const segment of HIA_WP53_SELF_SANDBOX_RELATIVE_PATH) {
+    inspectedPath = path.join(inspectedPath, segment);
+    try {
+      if ((await lstat(inspectedPath)).isSymbolicLink()) {
+        return undefined;
+      }
+    } catch {
+      return undefined;
+    }
+  }
+
+  return fixturePath;
+}
+
+/**
+ * 读取主仓 package identity，而不把 manifest 正文传出宿主边界。
+ * Read the main-repository package identity without moving manifest text across the host boundary.
+ */
+async function readHiaWp53WorkspacePackageName(workspaceRoot: string): Promise<string | undefined> {
+  const manifestPath = path.join(workspaceRoot, "package.json");
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as { name?: unknown };
+  const packageName = typeof manifest.name === "string" ? manifest.name : undefined;
+  return packageName === HIA_WP53_SELF_SANDBOX_WORKSPACE_NAME ? packageName : undefined;
 }
 
 /**

@@ -45,6 +45,16 @@ export const HIA_SHOW_AUTHORING_SURFACE_COMMAND = "hia.showAuthoringSurface";
  * one-to-many relations.
  */
 export const HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND = "hia.showGeneratedBindingRelations";
+/**
+ * VS Code command id for the W-P53 host-owned self-sandbox apply-and-rollback pilot.
+ *
+ * 中文：VS Code 中仅用于 W-P53 主仓专用 synthetic sandbox apply-and-rollback 试点的命令标识。
+ * 它不接受 target path、provider edit 或 LSP edit，也不构成通用 checked-apply 权限。
+ * @lang en VS Code command id for the W-P53 main-repository dedicated synthetic-sandbox
+ * apply-and-rollback pilot. It accepts no target path, provider edit, or LSP edit and does not
+ * grant general checked-apply authority.
+ */
+export const HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND = "hia.runWp53SelfSandboxPilot";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;

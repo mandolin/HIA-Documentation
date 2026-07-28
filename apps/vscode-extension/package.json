@@ -28,9 +28,16 @@
     "onCommand:hia.showHostApplyUxIntake",
     "onCommand:hia.showAuthoringSurface",
     "onCommand:hia.showGeneratedBindingRelations",
+    "onCommand:hia.runWp53SelfSandboxPilot",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "HIA documentation commands inspect and build workspace materials, and may later offer host-owned checked apply. For safety, the extension is disabled in Restricted Mode. / HIA 文档命令会检查和构建工作区材料，且未来可能提供宿主拥有的 checked apply；为安全起见，受限模式下禁用该扩展。"
+    }
+  },
   "contributes": {
     "languages": [
       {
@@ -84,6 +91,10 @@
       {
         "command": "hia.showGeneratedBindingRelations",
         "title": "HIA: Show Generated Binding Relations"
+      },
+      {
+        "command": "hia.runWp53SelfSandboxPilot",
+        "title": "HIA: Run W-P53 Self-Sandbox Pilot"
       }
     ],
     "configuration": {
@@ -141,7 +152,7 @@
   "files": ["dist", "README.md", "language-configuration.json", "package.json"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "cd ../.. && vitest run apps/vscode-extension/src/config.test.ts apps/vscode-extension/src/source-linkage.test.ts apps/vscode-extension/src/project-relations.test.ts"
+    "test": "cd ../.. && vitest run apps/vscode-extension/src/config.test.ts apps/vscode-extension/src/source-linkage.test.ts apps/vscode-extension/src/project-relations.test.ts apps/vscode-extension/src/checked-apply-self-sandbox.test.ts"
   },
   "dependencies": {
     "@hia-doc/lsp": "workspace:*",

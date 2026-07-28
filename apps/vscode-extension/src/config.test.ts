@@ -16,6 +16,7 @@ import {
   HIA_RESOURCE_ACTIONS_REQUEST,
   HIA_RESOURCE_INDEX_REQUEST,
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
+  HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
   HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
@@ -81,6 +82,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_SHOW_RESOURCE_ACTION_COMMAND).toBe("hia.showResourceAction");
     expect(HIA_COPY_RESOURCE_KEY_COMMAND).toBe("hia.copyResourceKey");
     expect(HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND).toBe("hia.reviewDocumentationProposals");
+    expect(HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND).toBe("hia.runWp53SelfSandboxPilot");
     expect(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND).toBe("hia.showCheckedApplySandboxConfirmation");
     expect(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND).toBe("hia.showHostApplyUxIntake");
     expect(HIA_SHOW_AUTHORING_SURFACE_COMMAND).toBe("hia.showAuthoringSurface");

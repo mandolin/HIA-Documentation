@@ -33,6 +33,7 @@ describe("VS Code extension package", () => {
     expect(manifest.activationEvents).toContain("onCommand:hia.showHostApplyUxIntake");
     expect(manifest.activationEvents).toContain("onCommand:hia.showAuthoringSurface");
     expect(manifest.activationEvents).toContain("onCommand:hia.showGeneratedBindingRelations");
+    expect(manifest.activationEvents).toContain("onCommand:hia.runWp53SelfSandboxPilot");
     expect(manifest.contributes.languages[0]).toMatchObject({
       id: "hia",
       extensions: [".hia.json"]
@@ -48,7 +49,8 @@ describe("VS Code extension package", () => {
       "hia.showCheckedApplySandboxConfirmation",
       "hia.showHostApplyUxIntake",
       "hia.showAuthoringSurface",
-      "hia.showGeneratedBindingRelations"
+      "hia.showGeneratedBindingRelations",
+      "hia.runWp53SelfSandboxPilot"
     ]);
     expect(Object.keys(manifest.contributes.configuration.properties)).toEqual(expect.arrayContaining([
       "hia.build.config",
