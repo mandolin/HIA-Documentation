@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>12</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>HiaDocumentation.VisualStudio</RootNamespace>
+    <AssemblyName>HiaDocumentation.VisualStudio</AssemblyName>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Extensibility.Sdk"
+                      Version="17.14.40608"
+                      PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.Extensibility.Build"
+                      Version="17.14.40608"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="DocumentationToolWindowControl.xaml" />
+    <EmbeddedResource Include="review-surface.json"
+                      LogicalName="HiaDocumentation.VisualStudio.review-surface.json" />
+    <EmbeddedResource Include="authoring-probe.hia.json"
+                      LogicalName="HiaDocumentation.VisualStudio.authoring-probe.hia.json" />
+    <Page Remove="DocumentationToolWindowControl.xaml" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('.runtime\lsp\dist\node.js')">
+    <Content Include=".runtime\lsp\**\*">
+      <Link>runtime\lsp\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,103 @@
+{
+  "contract": "hia-visual-studio-implementation-baseline",
+  "contractVersion": "0.1.0-draft",
+  "status": "install-runtime-captured",
+  "phase": "W-P51.6",
+  "selectedRoute": {
+    "model": "visualstudio-extensibility-out-of-process",
+    "sdkPackage": "Microsoft.VisualStudio.Extensibility.Sdk",
+    "buildPackage": "Microsoft.VisualStudio.Extensibility.Build",
+    "packageVersion": "17.14.40608",
+    "privateAssets": "all",
+    "targetFramework": "net8.0-windows8.0",
+    "languageVersion": "12",
+    "nullable": "enable"
+  },
+  "compatibility": {
+    "minimumVisualStudioApi": "17.0",
+    "validatedIdeMajors": [
+      17,
+      18
+    ],
+    "targetProducts": [
+      "Visual Studio 2022",
+      "Visual Studio 2026"
+    ],
+    "upperVersionBoundRequired": false
+  },
+  "hostArchitecture": {
+    "commandSurface": "VisualStudio.Extensibility Command",
+    "toolWindowSurface": "VisualStudio.Extensibility ToolWindow with Remote UI",
+    "remoteUiModel": "XAML embedded resource plus DataContract view model",
+    "languageServerSurface": "VisualStudio.Extensibility LanguageServerProvider",
+    "languageServerTransport": "stdio",
+    "languageServerPackage": "@hia-doc/lsp",
+    "documentationBuildPackage": "@hia-doc/cli"
+  },
+  "licenseGate": {
+    "auditStatus": "reviewed",
+    "licenseFamily": "Microsoft Visual Studio Add-ons and Extensions",
+    "osiApproved": false,
+    "requireLicenseAcceptance": true,
+    "allowedUse": "build and use the HIA extension with licensed Visual Studio products",
+    "standaloneRedistributionAllowed": false,
+    "sdkAssetsBundledInExtension": false,
+    "userAcceptanceRequiredBeforePackageReference": true,
+    "userAcceptanceRecorded": true,
+    "userAcceptanceDate": "2026-07-28",
+    "acceptanceEvidence": "explicit-user-confirmation-in-session"
+  },
+  "currentImplementation": {
+    "projectFileCreated": true,
+    "sdkPackageReferenceAdded": true,
+    "commandImplemented": true,
+    "toolWindowImplemented": true,
+    "localizedReviewToolWindowImplemented": true,
+    "reviewSurfaceContractEmbedded": true,
+    "remoteUiNeutralResourceImplemented": true,
+    "remoteUiSimplifiedChineseResourceImplemented": true,
+    "metadataLocalizationCultureCount": 2,
+    "languageServerProviderImplemented": true,
+    "languageServerRuntimePackaged": true,
+    "languageServerRuntimeSelfContainedAfterExtraction": true,
+    "languageServerRuntimeSymbolicLinkCount": 0,
+    "languageServerTransport": "stdio",
+    "languageServerActivationFileExtensionCount": 2,
+    "languageServerPublicSafeLifecycleImplemented": true,
+    "authoringProjectionImplemented": true,
+    "authoringProjectionSessionMode": "isolated-read-only",
+    "authoringProjectionCustomRequestCount": 3,
+    "authoringProjectionUsesSyntheticFixture": true,
+    "authoringProjectionSharesManagedLspStream": false,
+    "extensionAssemblyBuilt": true,
+    "vsixBuilt": true,
+    "experimentalInstanceExecuted": true,
+    "runtimeCaptureExecuted": true,
+    "runtimeCaptureHostCount": 2,
+    "languageServerReadyHostCount": 2,
+    "liveAuthoringReadyHostCount": 2,
+    "ordinaryInstanceInstallClaimed": false
+  },
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "sourceBodyIncluded": false,
+    "absolutePathIncluded": false,
+    "providerNetworkExecuted": false,
+    "hostEditorApiCalled": false,
+    "workspaceWriteAllowed": false,
+    "targetRepositoryMutationAllowed": false,
+    "checkedApplyWriteEnabled": false
+  },
+  "officialReferences": [
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/visualstudio-extensibility",
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/tool-window/tool-window",
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/inside-the-sdk/remote-ui",
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/command/localize-metadata",
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/language-server-provider/language-server-provider",
+    "https://learn.microsoft.com/visualstudio/extensibility/adding-an-lsp-extension",
+    "https://learn.microsoft.com/visualstudio/extensibility/migration/extension-compatibility",
+    "https://learn.microsoft.com/visualstudio/extensibility/visualstudio.extensibility/get-started/debug-extensions",
+    "https://github.com/microsoft/VSExtensibility/tree/main/New_Extensibility_Model/Samples/ToolWindowSample",
+    "https://github.com/microsoft/VSExtensibility/tree/main/New_Extensibility_Model/Samples/RustLanguageServerProvider"
+  ]
+}

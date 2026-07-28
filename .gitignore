@@ -14,3 +14,7 @@ tmp/
 temp/
 playwright-report/
 test-results/
+bin/
+obj/
+apps/visual-studio-extension/.runtime/
+apps/visual-studio-extension/.vs/

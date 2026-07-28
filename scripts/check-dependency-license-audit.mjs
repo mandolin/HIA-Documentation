@@ -7,6 +7,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const allowedLicenses = new Set(["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC"]);
 const forbiddenLicenseFragments = ["GPL", "AGPL", "LGPL", "SSPL", "BUSL", "BSL"];
+const generatedDependencyDirectories = new Set([
+  ".runtime",
+  "bin",
+  "dist",
+  "node_modules",
+  "obj"
+]);
 
 const directDependencyAudit = [
   {
@@ -89,6 +96,29 @@ const toolAudit = [
   }
 ];
 
+const approvedPlatformSdkAudit = [
+  {
+    name: "Microsoft.VisualStudio.Extensibility.Sdk",
+    ecosystem: "NuGet",
+    version: "17.14.40608",
+    license: "Microsoft Visual Studio Add-ons and Extensions",
+    purpose: "Compile the out-of-process HIA Visual Studio extension.",
+    privateAssets: "all",
+    approvalRecorded: true,
+    approvalDate: "2026-07-28"
+  },
+  {
+    name: "Microsoft.VisualStudio.Extensibility.Build",
+    ecosystem: "NuGet",
+    version: "17.14.40608",
+    license: "Microsoft Visual Studio Add-ons and Extensions",
+    purpose: "Generate the HIA Visual Studio VSIX and contribution metadata.",
+    privateAssets: "all",
+    approvalRecorded: true,
+    approvalDate: "2026-07-28"
+  }
+];
+
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 }
@@ -107,7 +137,7 @@ function listPackageJsonFiles() {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       const absolutePath = path.join(current, entry.name);
 
-      if (entry.isDirectory()) {
+      if (entry.isDirectory() && !generatedDependencyDirectories.has(entry.name)) {
         stack.push(absolutePath);
       } else if (entry.isFile() && entry.name === "package.json") {
         packageJsonFiles.push(path.relative(root, absolutePath).replaceAll(path.sep, "/"));
@@ -198,12 +228,41 @@ function assertToolAudit() {
   assert.match(miseConfig, /pnpm\s*=\s*"10\.34\.4"/);
 }
 
+/**
+ * 校验经维护者明确批准的平台 SDK，不把专有许可证混入宽松开源白名单。
+ * Validate explicitly approved platform SDKs without mixing proprietary licenses
+ * into the permissive open-source allowlist.
+ */
+function assertApprovedPlatformSdkAudit() {
+  const baseline = readJson("apps/visual-studio-extension/implementation-baseline.json");
+  const expectedPackages = new Map([
+    [baseline.selectedRoute.sdkPackage, baseline.selectedRoute.packageVersion],
+    [baseline.selectedRoute.buildPackage, baseline.selectedRoute.packageVersion]
+  ]);
+
+  assert.equal(baseline.licenseGate.userAcceptanceRecorded, true);
+  assert.equal(baseline.licenseGate.standaloneRedistributionAllowed, false);
+  assert.equal(baseline.licenseGate.sdkAssetsBundledInExtension, false);
+
+  for (const entry of approvedPlatformSdkAudit) {
+    assert.ok(entry.purpose.length >= 12, `${entry.name} must have a meaningful purpose`);
+    assert.equal(entry.ecosystem, "NuGet");
+    assert.equal(entry.privateAssets, "all");
+    assert.equal(entry.approvalRecorded, true, `${entry.name} requires explicit maintainer approval`);
+    assert.match(entry.approvalDate, /^\d{4}-\d{2}-\d{2}$/u);
+    assert.equal(expectedPackages.get(entry.name), entry.version, `${entry.name} must match the implementation baseline`);
+    assert.equal(entry.license, baseline.licenseGate.licenseFamily);
+  }
+
+  assert.equal(approvedPlatformSdkAudit.length, expectedPackages.size);
+}
+
 function assertDocsMentionAuditedDependencies() {
   const auditDoc = fs.readFileSync(path.join(root, "docs/dependency-license-audit.md"), "utf8");
   const notesDoc = fs.readFileSync(path.join(root, "docs/dependency-notes.md"), "utf8");
   const templateDoc = fs.readFileSync(path.join(root, "docs/dependency-review-template.md"), "utf8");
 
-  for (const entry of [...directDependencyAudit, ...toolAudit]) {
+  for (const entry of [...directDependencyAudit, ...toolAudit, ...approvedPlatformSdkAudit]) {
     assert.ok(auditDoc.includes(`\`${entry.name}\``), `audit doc must mention ${entry.name}`);
     assert.ok(auditDoc.includes(entry.license), `audit doc must mention ${entry.name} license ${entry.license}`);
   }
@@ -216,6 +275,7 @@ function assertDocsMentionAuditedDependencies() {
 function run() {
   assertToolAudit();
   assertDirectDependencyAudit();
+  assertApprovedPlatformSdkAudit();
   assertDocsMentionAuditedDependencies();
 
   console.log("Dependency and license audit passed.");

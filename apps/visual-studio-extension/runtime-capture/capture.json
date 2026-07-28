@@ -1,0 +1,148 @@
+{
+  "contract": "hia-visual-studio-runtime-capture",
+  "contractVersion": "0.1.0-draft",
+  "phase": "W-P51.6",
+  "captureDate": "2026-07-28",
+  "status": "captured",
+  "deployment": {
+    "model": "visualstudio-extensibility-f5-oop-experimental-instance",
+    "commandLineMode": "/RootSuffix Exp /OopExtDebug",
+    "sdkExperimentalDeploymentSucceeded": true,
+    "vsixInstallerCustomRootSuffixSupported": false,
+    "ordinaryInstanceInstallClaimed": false,
+    "ordinaryInstanceExtensionSetModified": false
+  },
+  "vsix": {
+    "identity": "HiaDocumentation.VisualStudio.f56aeeb6-e79c-4656-a536-dbdc9acfbdb6",
+    "version": "0.1.0.0",
+    "sha256": "76C5979096E7A7826ECBA55EC8DB85CE9FC1DDC98510BBC280E7B3863E12C108",
+    "byteCount": 4467598,
+    "extensionType": "VisualStudio.Extensibility",
+    "installationTargetRange": "[17.14,)",
+    "targetArchitectures": [
+      "amd64",
+      "arm64"
+    ],
+    "targetFramework": "net8.0"
+  },
+  "hosts": [
+    {
+      "id": "visual-studio-2022",
+      "product": "Visual Studio Enterprise 2022",
+      "version": "17.14.36401.2",
+      "ideMajor": 17,
+      "captureState": "captured",
+      "experimentalInstanceExecuted": true,
+      "commandVisible": true,
+      "localizedToolWindowVisible": true,
+      "overviewStatus": "ready",
+      "languageServer": {
+        "state": "ready",
+        "reasonCode": "lsp-initialized",
+        "runtimeOrigin": "vsix-content",
+        "package": "@hia-doc/lsp",
+        "packageVersion": "0.1.0",
+        "transport": "stdio",
+        "nodeEngine": ">=20.19.0"
+      },
+      "liveAuthoring": {
+        "state": "ready",
+        "reasonCode": "projection-requests-completed",
+        "sessionMode": "isolated-read-only",
+        "requestCount": 3,
+        "capabilityCount": 25,
+        "availableCapabilityCount": 14,
+        "partialCapabilityCount": 2,
+        "plannedCapabilityCount": 3,
+        "unavailableCapabilityCount": 6,
+        "authoringLocationCount": 3,
+        "authoringLocationKindCount": 3,
+        "proposalCount": 1,
+        "draftCount": 1
+      },
+      "screenshots": [
+        "vs2022-overview.jpg",
+        "vs2022-live-authoring.jpg",
+        "vs2022-language-server-ready.jpg"
+      ],
+      "hostObservation": null
+    },
+    {
+      "id": "visual-studio-2026",
+      "product": "Visual Studio Enterprise 2026",
+      "version": "18.0.11205.157",
+      "ideMajor": 18,
+      "captureState": "captured",
+      "experimentalInstanceExecuted": true,
+      "commandVisible": true,
+      "localizedToolWindowVisible": true,
+      "overviewStatus": "ready",
+      "languageServer": {
+        "state": "ready",
+        "reasonCode": "lsp-initialized",
+        "runtimeOrigin": "vsix-content",
+        "package": "@hia-doc/lsp",
+        "packageVersion": "0.1.0",
+        "transport": "stdio",
+        "nodeEngine": ">=20.19.0"
+      },
+      "liveAuthoring": {
+        "state": "ready",
+        "reasonCode": "projection-requests-completed",
+        "sessionMode": "isolated-read-only",
+        "requestCount": 3,
+        "capabilityCount": 25,
+        "availableCapabilityCount": 14,
+        "partialCapabilityCount": 2,
+        "plannedCapabilityCount": 3,
+        "unavailableCapabilityCount": 6,
+        "authoringLocationCount": 3,
+        "authoringLocationKindCount": 3,
+        "proposalCount": 1,
+        "draftCount": 1
+      },
+      "screenshots": [
+        "vs2026-overview.jpg",
+        "vs2026-live-authoring.jpg",
+        "vs2026-language-server-ready.jpg"
+      ],
+      "hostObservation": {
+        "code": "duplicate-markdown-editor-format-definitions",
+        "attribution": "non-hia-editor-extension",
+        "duplicateNameCount": 6,
+        "hiaErrorEntryCount": 0,
+        "blocksHiaRuntime": false
+      }
+    }
+  ],
+  "safety": {
+    "publicSafeVisualInspectionCompleted": true,
+    "sourceBodyVisibleInScreenshots": false,
+    "absolutePathVisibleInScreenshots": false,
+    "credentialVisibleInScreenshots": false,
+    "sourcesContentPolicy": "none",
+    "sourceBodyIncluded": false,
+    "absolutePathIncluded": false,
+    "credentialIncluded": false,
+    "providerNetworkExecuted": false,
+    "hostEditorApiCalled": false,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAllowed": false,
+    "targetRepositoryMutationAllowed": false,
+    "targetCommandExecutedByHia": false
+  },
+  "summary": {
+    "capturedHostCount": 2,
+    "experimentalInstanceExecutionCount": 2,
+    "sdkExperimentalDeploymentCount": 2,
+    "ordinaryInstanceInstallCount": 0,
+    "commandVisibleHostCount": 2,
+    "localizedToolWindowVisibleHostCount": 2,
+    "languageServerReadyHostCount": 2,
+    "liveAuthoringReadyHostCount": 2,
+    "screenshotCount": 6,
+    "hostEditorApiCallCount": 0,
+    "workspaceWriteCount": 0,
+    "targetRepositoryMutationCount": 0
+  }
+}

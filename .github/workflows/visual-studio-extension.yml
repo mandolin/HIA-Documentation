@@ -1,0 +1,77 @@
+name: Visual Studio Extension
+
+on:
+  pull_request:
+    paths:
+      - "apps/visual-studio-extension/**"
+      - "packages/config/**"
+      - "packages/core/**"
+      - "packages/lsp/**"
+      - "packages/profile/**"
+      - "packages/source-linkage/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "scripts/prepare-visual-studio-lsp-runtime.mjs"
+      - "scripts/prepare-wp51-visual-studio-language-server-provider.mjs"
+      - "scripts/prepare-wp51-visual-studio-authoring-remediation-projection.mjs"
+      - "scripts/check-visual-studio-extension.mjs"
+      - ".github/workflows/visual-studio-extension.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/visual-studio-extension/**"
+      - "packages/config/**"
+      - "packages/core/**"
+      - "packages/lsp/**"
+      - "packages/profile/**"
+      - "packages/source-linkage/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "scripts/prepare-visual-studio-lsp-runtime.mjs"
+      - "scripts/prepare-wp51-visual-studio-language-server-provider.mjs"
+      - "scripts/prepare-wp51-visual-studio-authoring-remediation-projection.mjs"
+      - "scripts/check-visual-studio-extension.mjs"
+      - ".github/workflows/visual-studio-extension.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-vsix:
+    name: Build VSIX
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Visual Studio extension
+        run: pnpm run visual-studio:build:release
+
+      - name: Check Visual Studio contracts and privacy boundary
+        run: pnpm run visual-studio:check
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: hia-documentation-visual-studio-vsix
+          path: apps/visual-studio-extension/bin/Release/net8.0-windows8.0/HiaDocumentation.VisualStudio.vsix
+          if-no-files-found: error

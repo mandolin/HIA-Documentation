@@ -1,7 +1,7 @@
 {
   "contract": "hia-visual-studio-host-skeleton",
   "contractVersion": "0.1.0-draft",
-  "status": "skeleton",
+  "status": "install-runtime-captured",
   "appDirectory": "apps/visual-studio-extension",
   "host": {
     "displayName": "HIA Documentation Visual Studio",
@@ -11,19 +11,65 @@
     "targetIde": "Visual Studio"
   },
   "runtime": {
-    "preparationStatus": "contract-level-runtime-prep",
-    "actualVisualStudioRuntimeCaptureExecuted": false,
-    "visualStudioExtensionPackageBuilt": false,
-    "experimentalInstanceExecuted": false,
+    "preparationStatus": "install-runtime-captured",
+    "actualVisualStudioRuntimeCaptureExecuted": true,
+    "visualStudioExtensionPackageBuilt": true,
+    "experimentalInstanceExecuted": true,
     "dependencyLicenseAuditRequiredBeforeVsix": true,
+    "dependencyLicenseAuditCompleted": true,
+    "userLicenseAcceptanceRecorded": true,
+    "projectFile": "apps/visual-studio-extension/HiaDocumentation.VisualStudio.csproj",
+    "toolWindowImplemented": true,
+    "localizedReviewToolWindowImplemented": true,
+    "reviewSurfaceContractEmbedded": true,
+    "remoteUiLocalizationCultures": [
+      "en-US",
+      "zh-Hans"
+    ],
+    "metadataLocalizationCultures": [
+      "zh-CN",
+      "zh-Hans"
+    ],
+    "languageServerProviderImplemented": true,
+    "authoringProjectionImplemented": true,
+    "authoringProjectionSession": "isolated-read-only-lsp-session",
+    "authoringProjectionFixture": "synthetic-public-fixture",
+    "authoringProjectionRequestCount": 3,
     "languageServer": {
       "package": "@hia-doc/lsp",
+      "packageVersion": "0.1.0",
       "transport": "stdio",
-      "workspaceRelativePath": "packages/lsp/dist/node.js"
+      "vsixRelativePath": "runtime/lsp/dist/node.js",
+      "nodeEngine": ">=20.19.0",
+      "activationFileExtensions": [
+        ".hia.json",
+        ".docmap.json"
+      ],
+      "runtimeDeployment": "pnpm-legacy-hoisted-production-deploy",
+      "selfContainedAfterVsixExtraction": true,
+      "symbolicLinkCount": 0,
+      "publicDiagnosticPolicy": "stable-reason-codes-only"
     },
     "cli": {
       "package": "@hia-doc/cli",
       "workspaceRelativePath": "apps/cli/dist/index.js"
+    },
+    "runtimeCapture": {
+      "contract": "hia-visual-studio-runtime-capture@0.1.0-draft",
+      "status": "captured",
+      "deploymentModel": "visualstudio-extensibility-f5-oop-experimental-instance",
+      "capturedHostCount": 2,
+      "validatedIdeMajors": [
+        17,
+        18
+      ],
+      "languageServerReadyHostCount": 2,
+      "liveAuthoringReadyHostCount": 2,
+      "screenshotCount": 6,
+      "ordinaryInstanceInstallClaimed": false,
+      "hostEditorApiCalled": false,
+      "workspaceWriteAllowed": false,
+      "targetRepositoryMutationAllowed": false
     }
   },
   "surfaces": [
@@ -53,6 +99,7 @@
       ],
       "consumes": [
         "hia/ideCapabilities",
+        "hia/documentAuthoringLocations",
         "hia/documentSourceMapIndex",
         "hia/projectRelationGraph",
         "hia/resourceActions",
@@ -98,6 +145,10 @@
     {
       "method": "hia/ideCapabilities",
       "purpose": "Read host capability availability before showing commands or tool-window states."
+    },
+    {
+      "method": "hia/documentAuthoringLocations",
+      "purpose": "Read public-safe authoring locations from an isolated synthetic document without calling host editor APIs."
     },
     {
       "capability": "hia.sourceLinkage.query",
@@ -164,7 +215,7 @@
     {
       "id": "hia-aspnetportal",
       "purpose": "ASP.NET/C# endpoint and component documentation navigation",
-      "targetRepositoryPolicy": "read-only-maintainer-notify"
+      "targetRepositoryPolicy": "read-only-central-notify-pull"
     }
   ],
   "privacy": {
@@ -175,5 +226,21 @@
     "requiresHumanReviewForEditProposals": true,
     "parsesGeneratedHtml": false,
     "runsDocumentationProducers": false
+  },
+  "authoringProjection": {
+    "mode": "isolated-read-only-lsp-session",
+    "requests": [
+      "hia/ideCapabilities",
+      "hia/documentAuthoringLocations",
+      "hia/documentationEditProposals"
+    ],
+    "syntheticFixtureOnly": true,
+    "sharesVisualStudioManagedLspStream": false,
+    "includesSourceContent": false,
+    "allowsAutomaticWrites": false,
+    "hostEditorApiCalled": false,
+    "workspaceWriteAllowed": false,
+    "targetRepositoryMutationAllowed": false,
+    "providerNetworkExecuted": false
   }
 }

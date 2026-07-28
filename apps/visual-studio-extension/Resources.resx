@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ProductName" xml:space="preserve"><value>HIA Documentation</value></data>
+  <data name="ToolWindowTitle" xml:space="preserve"><value>HIA Documentation Review</value></data>
+  <data name="PhaseFormat" xml:space="preserve"><value>Phase: {0}</value></data>
+  <data name="LocaleFormat" xml:space="preserve"><value>UI locale: {0}</value></data>
+  <data name="BoundarySummary" xml:space="preserve"><value>Read-only review surface. Workspace writes and target repository changes remain disabled.</value></data>
+  <data name="OverviewTab" xml:space="preserve"><value>Overview</value></data>
+  <data name="AuthoringTab" xml:space="preserve"><value>Authoring</value></data>
+  <data name="ReviewTab" xml:space="preserve"><value>Review</value></data>
+  <data name="SafetyTab" xml:space="preserve"><value>Safety</value></data>
+  <data name="LanguageServerTab" xml:space="preserve"><value>Language Server</value></data>
+  <data name="ProjectionTab" xml:space="preserve"><value>Live Authoring</value></data>
+  <data name="ContractLabel" xml:space="preserve"><value>Contract</value></data>
+  <data name="ContractStatusLabel" xml:space="preserve"><value>Contract status</value></data>
+  <data name="ContractLoadLabel" xml:space="preserve"><value>Contract load</value></data>
+  <data name="ViewCountLabel" xml:space="preserve"><value>Declared views</value></data>
+  <data name="ActionCountLabel" xml:space="preserve"><value>Declared actions</value></data>
+  <data name="AuthoringStatusLabel" xml:space="preserve"><value>Authoring input</value></data>
+  <data name="CanonicalMarkersLabel" xml:space="preserve"><value>Canonical locale markers</value></data>
+  <data name="AuthoringModeCountLabel" xml:space="preserve"><value>Authoring modes</value></data>
+  <data name="ChangedScopeLabel" xml:space="preserve"><value>Changed-scope preview</value></data>
+  <data name="CoverageRemediationLabel" xml:space="preserve"><value>Coverage remediation</value></data>
+  <data name="RemediationBatchCountLabel" xml:space="preserve"><value>Remediation batches</value></data>
+  <data name="P0RemediationBatchCountLabel" xml:space="preserve"><value>P0 remediation batches</value></data>
+  <data name="GeneratedBindingStepCountLabel" xml:space="preserve"><value>Generated-binding authoring steps</value></data>
+  <data name="GeneratedBindingDiagnosticCountLabel" xml:space="preserve"><value>Generated-binding diagnostic guidance</value></data>
+  <data name="GeneratedBindingSyntaxFrozenLabel" xml:space="preserve"><value>Concrete generated-binding syntax frozen</value></data>
+  <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider review input</value></data>
+  <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider result kinds</value></data>
+  <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>Target-owner evidence</value></data>
+  <data name="EvidenceCheckCountLabel" xml:space="preserve"><value>Evidence checks</value></data>
+  <data name="DeferredGateCountLabel" xml:space="preserve"><value>Deferred gates</value></data>
+  <data name="TargetOwnerActionLabel" xml:space="preserve"><value>Target-owner action required</value></data>
+  <data name="HostUxStatusLabel" xml:space="preserve"><value>Host UX input</value></data>
+  <data name="HostUxRequirementCountLabel" xml:space="preserve"><value>Host UX requirements</value></data>
+  <data name="ApplyAvailableLabel" xml:space="preserve"><value>Checked apply</value></data>
+  <data name="WorkspaceWriteLabel" xml:space="preserve"><value>Workspace write</value></data>
+  <data name="TargetMutationLabel" xml:space="preserve"><value>Target repository mutation</value></data>
+  <data name="ProviderNetworkLabel" xml:space="preserve"><value>Provider network execution</value></data>
+  <data name="SourceBodyLabel" xml:space="preserve"><value>Source body embedded</value></data>
+  <data name="SourcesContentPolicyLabel" xml:space="preserve"><value>sourcesContent policy</value></data>
+  <data name="ContractLoadReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="ContractLoadUnavailable" xml:space="preserve"><value>Unavailable</value></data>
+  <data name="EnabledValue" xml:space="preserve"><value>Enabled</value></data>
+  <data name="DisabledValue" xml:space="preserve"><value>Disabled</value></data>
+  <data name="LanguageServerStateLabel" xml:space="preserve"><value>Lifecycle state</value></data>
+  <data name="LanguageServerReasonLabel" xml:space="preserve"><value>Reason code</value></data>
+  <data name="LanguageServerRuntimeOriginLabel" xml:space="preserve"><value>Runtime origin</value></data>
+  <data name="LanguageServerPackageLabel" xml:space="preserve"><value>Server package</value></data>
+  <data name="LanguageServerTransportLabel" xml:space="preserve"><value>Transport</value></data>
+  <data name="LanguageServerNodeLabel" xml:space="preserve"><value>Node.js prerequisite</value></data>
+  <data name="LanguageServerSelectorLabel" xml:space="preserve"><value>Activation files</value></data>
+  <data name="LanguageServerDiagnosticPolicyLabel" xml:space="preserve"><value>Diagnostic exposure</value></data>
+  <data name="LanguageServerDiagnosticPolicyValue" xml:space="preserve"><value>Stable reason codes only; local paths and raw exceptions are hidden.</value></data>
+  <data name="ProjectionStateLabel" xml:space="preserve"><value>Projection state</value></data>
+  <data name="ProjectionReasonLabel" xml:space="preserve"><value>Projection reason code</value></data>
+  <data name="ProjectionSessionModeLabel" xml:space="preserve"><value>Projection session</value></data>
+  <data name="ProjectionRuntimeOriginLabel" xml:space="preserve"><value>Projection runtime origin</value></data>
+  <data name="ProjectionRequestCountLabel" xml:space="preserve"><value>Live custom requests</value></data>
+  <data name="ProjectionCapabilityCountLabel" xml:space="preserve"><value>IDE capabilities</value></data>
+  <data name="ProjectionAvailableCapabilityCountLabel" xml:space="preserve"><value>Available capabilities</value></data>
+  <data name="ProjectionPartialCapabilityCountLabel" xml:space="preserve"><value>Partial capabilities</value></data>
+  <data name="ProjectionPlannedCapabilityCountLabel" xml:space="preserve"><value>Planned capabilities</value></data>
+  <data name="ProjectionUnsupportedCapabilityCountLabel" xml:space="preserve"><value>Unsupported capabilities</value></data>
+  <data name="ProjectionLanguageMarkerStatusLabel" xml:space="preserve"><value>Language-marker capability</value></data>
+  <data name="ProjectionAuthoringLocationCountLabel" xml:space="preserve"><value>Authoring locations</value></data>
+  <data name="ProjectionAuthoringLocationKindCountLabel" xml:space="preserve"><value>Authoring location kinds</value></data>
+  <data name="ProjectionProposalCountLabel" xml:space="preserve"><value>Remediation proposals</value></data>
+  <data name="ProjectionDraftCountLabel" xml:space="preserve"><value>Reviewable drafts</value></data>
+  <data name="ProjectionProposalStatusLabel" xml:space="preserve"><value>Proposal status</value></data>
+  <data name="ProjectionAutomaticWriteLabel" xml:space="preserve"><value>Automatic writes</value></data>
+  <data name="ProjectionSourceContentLabel" xml:space="preserve"><value>Source content returned</value></data>
+  <data name="ProjectionSourcesContentPolicyLabel" xml:space="preserve"><value>Projection sourcesContent policy</value></data>
+</root>

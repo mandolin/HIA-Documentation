@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ProductName" xml:space="preserve"><value>HIA 文档化</value></data>
+  <data name="ToolWindowTitle" xml:space="preserve"><value>HIA 文档化审查</value></data>
+  <data name="PhaseFormat" xml:space="preserve"><value>阶段：{0}</value></data>
+  <data name="LocaleFormat" xml:space="preserve"><value>界面语言：{0}</value></data>
+  <data name="BoundarySummary" xml:space="preserve"><value>只读审查界面。工作区写入和目标仓库变更仍保持禁用。</value></data>
+  <data name="OverviewTab" xml:space="preserve"><value>概览</value></data>
+  <data name="AuthoringTab" xml:space="preserve"><value>编写</value></data>
+  <data name="ReviewTab" xml:space="preserve"><value>审查</value></data>
+  <data name="SafetyTab" xml:space="preserve"><value>安全边界</value></data>
+  <data name="LanguageServerTab" xml:space="preserve"><value>语言服务器</value></data>
+  <data name="ProjectionTab" xml:space="preserve"><value>实时编写</value></data>
+  <data name="ContractLabel" xml:space="preserve"><value>合同</value></data>
+  <data name="ContractStatusLabel" xml:space="preserve"><value>合同状态</value></data>
+  <data name="ContractLoadLabel" xml:space="preserve"><value>合同加载</value></data>
+  <data name="ViewCountLabel" xml:space="preserve"><value>声明的视图</value></data>
+  <data name="ActionCountLabel" xml:space="preserve"><value>声明的动作</value></data>
+  <data name="AuthoringStatusLabel" xml:space="preserve"><value>编写输入</value></data>
+  <data name="CanonicalMarkersLabel" xml:space="preserve"><value>规范语言标记</value></data>
+  <data name="AuthoringModeCountLabel" xml:space="preserve"><value>编写模式</value></data>
+  <data name="ChangedScopeLabel" xml:space="preserve"><value>变更范围预览</value></data>
+  <data name="CoverageRemediationLabel" xml:space="preserve"><value>覆盖率修复</value></data>
+  <data name="RemediationBatchCountLabel" xml:space="preserve"><value>修复批次</value></data>
+  <data name="P0RemediationBatchCountLabel" xml:space="preserve"><value>P0 修复批次</value></data>
+  <data name="GeneratedBindingStepCountLabel" xml:space="preserve"><value>生成绑定编写步骤</value></data>
+  <data name="GeneratedBindingDiagnosticCountLabel" xml:space="preserve"><value>生成绑定诊断指引</value></data>
+  <data name="GeneratedBindingSyntaxFrozenLabel" xml:space="preserve"><value>已冻结具体生成绑定语法</value></data>
+  <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider 审查输入</value></data>
+  <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider 结果类型</value></data>
+  <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>目标所有者证据</value></data>
+  <data name="EvidenceCheckCountLabel" xml:space="preserve"><value>证据检查项</value></data>
+  <data name="DeferredGateCountLabel" xml:space="preserve"><value>后延门</value></data>
+  <data name="TargetOwnerActionLabel" xml:space="preserve"><value>需要目标所有者操作</value></data>
+  <data name="HostUxStatusLabel" xml:space="preserve"><value>宿主 UX 输入</value></data>
+  <data name="HostUxRequirementCountLabel" xml:space="preserve"><value>宿主 UX 要求</value></data>
+  <data name="ApplyAvailableLabel" xml:space="preserve"><value>受检应用</value></data>
+  <data name="WorkspaceWriteLabel" xml:space="preserve"><value>工作区写入</value></data>
+  <data name="TargetMutationLabel" xml:space="preserve"><value>目标仓库变更</value></data>
+  <data name="ProviderNetworkLabel" xml:space="preserve"><value>Provider 网络执行</value></data>
+  <data name="SourceBodyLabel" xml:space="preserve"><value>嵌入源码正文</value></data>
+  <data name="SourcesContentPolicyLabel" xml:space="preserve"><value>sourcesContent 策略</value></data>
+  <data name="ContractLoadReady" xml:space="preserve"><value>就绪</value></data>
+  <data name="ContractLoadUnavailable" xml:space="preserve"><value>不可用</value></data>
+  <data name="EnabledValue" xml:space="preserve"><value>已启用</value></data>
+  <data name="DisabledValue" xml:space="preserve"><value>已禁用</value></data>
+  <data name="LanguageServerStateLabel" xml:space="preserve"><value>生命周期状态</value></data>
+  <data name="LanguageServerReasonLabel" xml:space="preserve"><value>原因码</value></data>
+  <data name="LanguageServerRuntimeOriginLabel" xml:space="preserve"><value>运行时来源</value></data>
+  <data name="LanguageServerPackageLabel" xml:space="preserve"><value>服务器包</value></data>
+  <data name="LanguageServerTransportLabel" xml:space="preserve"><value>传输方式</value></data>
+  <data name="LanguageServerNodeLabel" xml:space="preserve"><value>Node.js 前置条件</value></data>
+  <data name="LanguageServerSelectorLabel" xml:space="preserve"><value>激活文件</value></data>
+  <data name="LanguageServerDiagnosticPolicyLabel" xml:space="preserve"><value>诊断暴露策略</value></data>
+  <data name="LanguageServerDiagnosticPolicyValue" xml:space="preserve"><value>仅显示稳定原因码；隐藏本地路径和原始异常。</value></data>
+  <data name="ProjectionStateLabel" xml:space="preserve"><value>投影状态</value></data>
+  <data name="ProjectionReasonLabel" xml:space="preserve"><value>投影原因码</value></data>
+  <data name="ProjectionSessionModeLabel" xml:space="preserve"><value>投影会话</value></data>
+  <data name="ProjectionRuntimeOriginLabel" xml:space="preserve"><value>投影运行时来源</value></data>
+  <data name="ProjectionRequestCountLabel" xml:space="preserve"><value>实时自定义请求</value></data>
+  <data name="ProjectionCapabilityCountLabel" xml:space="preserve"><value>IDE 能力</value></data>
+  <data name="ProjectionAvailableCapabilityCountLabel" xml:space="preserve"><value>可用能力</value></data>
+  <data name="ProjectionPartialCapabilityCountLabel" xml:space="preserve"><value>部分可用能力</value></data>
+  <data name="ProjectionPlannedCapabilityCountLabel" xml:space="preserve"><value>规划中能力</value></data>
+  <data name="ProjectionUnsupportedCapabilityCountLabel" xml:space="preserve"><value>不可用能力</value></data>
+  <data name="ProjectionLanguageMarkerStatusLabel" xml:space="preserve"><value>语言标记能力</value></data>
+  <data name="ProjectionAuthoringLocationCountLabel" xml:space="preserve"><value>编写位置</value></data>
+  <data name="ProjectionAuthoringLocationKindCountLabel" xml:space="preserve"><value>编写位置类型</value></data>
+  <data name="ProjectionProposalCountLabel" xml:space="preserve"><value>修复建议</value></data>
+  <data name="ProjectionDraftCountLabel" xml:space="preserve"><value>可审查草稿</value></data>
+  <data name="ProjectionProposalStatusLabel" xml:space="preserve"><value>建议状态</value></data>
+  <data name="ProjectionAutomaticWriteLabel" xml:space="preserve"><value>自动写入</value></data>
+  <data name="ProjectionSourceContentLabel" xml:space="preserve"><value>返回源码正文</value></data>
+  <data name="ProjectionSourcesContentPolicyLabel" xml:space="preserve"><value>投影 sourcesContent 策略</value></data>
+</root>

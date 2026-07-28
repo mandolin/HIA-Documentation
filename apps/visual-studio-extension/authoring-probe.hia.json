@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "0.2.0",
+  "id": "fixture.wp51.visual-studio-authoring-projection",
+  "title": "W-P51 Visual Studio Authoring Projection Fixture",
+  "defaultLocale": "zh-CN",
+  "fallbackLocale": ["en", "zh-CN"],
+  "locales": ["zh-CN", "en"],
+  "nodes": [
+    {
+      "id": "node.module.wp51",
+      "kind": "module",
+      "title": "W-P51",
+      "symbolIds": ["function:renderProjection"]
+    }
+  ],
+  "symbols": [
+    {
+      "id": "function:renderProjection",
+      "kind": "function",
+      "name": "renderProjection",
+      "i18n": {
+        "enabled": true,
+        "model": "hia-text-i18n",
+        "modelVersion": "0.2.0",
+        "defaultLocale": "zh-CN",
+        "fallbackLocale": ["en", "zh-CN"],
+        "locales": ["zh-CN", "en"],
+        "mode": "runtimeSwitch",
+        "resources": [
+          {
+            "kind": "external-resource",
+            "path": "i18n/wp51.hia-i18n.json",
+            "locale": "en",
+            "format": "hia-i18n-json",
+            "fields": ["description"]
+          }
+        ],
+        "fields": {
+          "description": {
+            "fieldPath": "description",
+            "kind": "description",
+            "key": "wp51.renderProjection.description",
+            "path": "wp51.renderProjection",
+            "defaultLocale": "zh-CN",
+            "defaultText": "投影视觉工作室编写状态。",
+            "localizedText": {
+              "zh-CN": "投影视觉工作室编写状态。"
+            },
+            "missingLocales": ["en"]
+          }
+        }
+      }
+    }
+  ],
+  "diagnostics": []
+}
