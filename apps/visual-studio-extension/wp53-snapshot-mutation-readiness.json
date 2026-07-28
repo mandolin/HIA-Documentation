@@ -1,0 +1,62 @@
+{
+  "contract": "hia-wp53-visual-studio-snapshot-mutation-readiness",
+  "contractVersion": "0.1.0-draft",
+  "phase": "W-P53.4",
+  "status": "readiness-only-no-host-mutation",
+  "host": {
+    "owner": "VisualStudio.Extensibility EditorExtensibility",
+    "mutationMethod": "EditorExtensibility.EditAsync",
+    "editableSnapshotMethod": "ITextDocumentSnapshot.AsEditable",
+    "snapshotTypes": [
+      "ITextViewSnapshot",
+      "ITextDocumentSnapshot"
+    ],
+    "snapshotModel": "immutable-versioned"
+  },
+  "transactionPolicy": {
+    "scope": "future-host-owned-dedicated-synthetic-sandbox-only",
+    "freeFormPathAccepted": false,
+    "providerEditObjectAccepted": false,
+    "lspEditObjectAccepted": false,
+    "targetRepositoryMutationAllowed": false,
+    "workspaceMutationImplemented": false,
+    "finalHumanConfirmationRequired": true,
+    "snapshotReadRequiredAfterConfirmation": true,
+    "editRequestMustUseCurrentSnapshot": true,
+    "mutationRejectionRequiresFreshSnapshot": true,
+    "retryRequiresFreshFinalConfirmation": true,
+    "singleEditAsyncRequestAtomicityRequired": true,
+    "concurrentRequestSerializationRequired": true,
+    "formatterPlanRequired": true,
+    "postApplyValidationRequired": true,
+    "rollbackRequiresSeparateFreshSnapshotRequest": true,
+    "redactedAuditRequired": true
+  },
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "snapshotBodyMayBeSerialized": false,
+    "rollbackBodyMayBeSerialized": false,
+    "versionValueMayBeSerialized": false,
+    "digestValueMayBeSerialized": false,
+    "absolutePathMayBeSerialized": false,
+    "targetRepositoryMutationAllowed": false,
+    "providerOwnedApplyAllowed": false,
+    "lspServerOwnedApplyAllowed": false,
+    "networkExecutionAllowed": false
+  },
+  "currentExecution": {
+    "editorExtensibilityEditAsyncCallCount": 0,
+    "editableSnapshotCallCount": 0,
+    "hostEditorApiCallCount": 0,
+    "workspaceWriteAllowedCount": 0,
+    "actualVisualStudioMutationExecutionCount": 0,
+    "finalHumanConfirmationCapturedCount": 0,
+    "visualStudioLaunchCountInThisPhase": 0,
+    "targetRepositoryMutationCount": 0,
+    "providerNetworkExecutedCount": 0
+  },
+  "officialReference": {
+    "editingText": "https://learn.microsoft.com/en-us/visualstudio/extensibility/visualstudio.extensibility/editor/walkthroughs/editing-text?view=visualstudio",
+    "editorConcepts": "https://learn.microsoft.com/en-us/visualstudio/extensibility/visualstudio.extensibility/editor/editor-concepts?view=visualstudio"
+  }
+}

@@ -184,6 +184,7 @@
     "wp53:pilot-refresh-intake:evidence": "node --check scripts/prepare-wp53-capability-consent-write-authority-refresh.mjs && node scripts/prepare-wp53-capability-consent-write-authority-refresh.mjs",
     "wp53:owner-evidence-currentness:evidence": "pnpm run wp53:pilot-refresh-intake:evidence && node --check scripts/prepare-wp53-target-owner-evidence-currentness-and-trial-selection.mjs && node scripts/prepare-wp53-target-owner-evidence-currentness-and-trial-selection.mjs",
     "wp53:vscode-self-sandbox:evidence": "pnpm run build && pnpm exec vitest run apps/vscode-extension/src/checked-apply-self-sandbox.test.ts apps/vscode-extension/src/config.test.ts && node --check scripts/prepare-wp53-vscode-host-owned-self-sandbox-pilot-gate.mjs && node scripts/prepare-wp53-vscode-host-owned-self-sandbox-pilot-gate.mjs",
+    "wp53:visual-studio-snapshot-readiness:evidence": "pnpm run visual-studio:check && node --check scripts/prepare-wp53-visual-studio-snapshot-mutation-readiness.mjs && node scripts/prepare-wp53-visual-studio-snapshot-mutation-readiness.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",

@@ -11,6 +11,7 @@ const hostContractPath = path.join(appRoot, "host-contract.json");
 const implementationBaselinePath = path.join(appRoot, "implementation-baseline.json");
 const reviewSurfacePath = path.join(appRoot, "review-surface.json");
 const runtimeCapturePath = path.join(appRoot, "runtime-capture", "capture.json");
+const wp53SnapshotMutationReadinessPath = path.join(appRoot, "wp53-snapshot-mutation-readiness.json");
 const projectPath = path.join(appRoot, "HiaDocumentation.VisualStudio.csproj");
 const extensionEntrypointPath = path.join(appRoot, "ExtensionEntrypoint.cs");
 const commandPath = path.join(appRoot, "ShowDocumentationToolWindowCommand.cs");
@@ -54,6 +55,7 @@ async function main() {
   const implementationBaseline = JSON.parse(await readFile(implementationBaselinePath, "utf8"));
   const reviewSurface = JSON.parse(await readFile(reviewSurfacePath, "utf8"));
   const runtimeCapture = JSON.parse(await readFile(runtimeCapturePath, "utf8"));
+  const wp53SnapshotMutationReadiness = JSON.parse(await readFile(wp53SnapshotMutationReadinessPath, "utf8"));
   const implementationFiles = await readImplementationFiles();
 
   assert.equal(packageJson.name, "@hia-doc/visual-studio-extension", "Visual Studio host package name must be stable.");
@@ -103,6 +105,7 @@ async function main() {
   assertHostResultMetadata(contract.hostResultMetadata);
   assertReviewSurface(contract, reviewSurface);
   assertPrivacy(contract.privacy);
+  assertWp53SnapshotMutationReadiness(packageJson, wp53SnapshotMutationReadiness, implementationFiles);
   assert.match(readme, /VisualStudio\.Extensibility/u, "README must name the VisualStudio.Extensibility route.");
   assert.match(readme, /@hia-doc\/lsp/u, "README must name the LSP dependency boundary.");
   assert.match(readme, /does not parse language source/u, "README must preserve the no-parser host boundary.");
@@ -214,6 +217,9 @@ async function main() {
       languageMarkers: reviewSurface.languageAuthoringHints.canonicalMarkers,
       targetScenarios: reviewSurface.targetScenarios.map((scenario) => scenario.id)
     },
+    wp53SnapshotMutationReadiness: summarizeWp53SnapshotMutationReadiness(
+      wp53SnapshotMutationReadiness,
+      implementationFiles),
     privacy: contract.privacy,
     requests: contract.customRequests.map((request) => ({
       capability: request.capability,
@@ -734,4 +740,126 @@ function assertPrivacy(privacy) {
   assert.equal(privacy?.requiresHumanReviewForEditProposals, true, "Visual Studio host must require human review for edit proposals.");
   assert.equal(privacy?.parsesGeneratedHtml, false, "Visual Studio host must not parse generated HTML.");
   assert.equal(privacy?.runsDocumentationProducers, false, "Visual Studio host must not run producers.");
+}
+
+/**
+ * 校验 W-P53.4 snapshot-mutation readiness contract，且保持实际 Visual Studio editor API 调用为零。
+ *
+ * @lang en Validates the W-P53.4 snapshot-mutation readiness contract while keeping actual
+ * Visual Studio editor API calls at zero.
+ * @param {Record<string, unknown>} packageJson <lang><zh-CN>Visual Studio host package manifest。</zh-CN><en>Visual Studio host package manifest.</en></lang>
+ * @param {Record<string, unknown>} readiness <lang><zh-CN>只读的 W-P53.4 readiness contract。</zh-CN><en>Read-only W-P53.4 readiness contract.</en></lang>
+ * @param {Record<string, string>} files <lang><zh-CN>仅用于静态断言的本仓实现源码。</zh-CN><en>Repository implementation source used only for static assertions.</en></lang>
+ * @returns {void}
+ */
+function assertWp53SnapshotMutationReadiness(packageJson, readiness, files) {
+  assert.ok(Array.isArray(packageJson.files) && packageJson.files.includes("wp53-snapshot-mutation-readiness.json"), "Visual Studio package must retain the W-P53 snapshot-mutation readiness contract.");
+  assert.equal(readiness?.contract, "hia-wp53-visual-studio-snapshot-mutation-readiness", "W-P53 Visual Studio readiness contract must be explicit.");
+  assert.equal(readiness?.contractVersion, "0.1.0-draft", "W-P53 Visual Studio readiness contract version must be explicit.");
+  assert.equal(readiness?.phase, "W-P53.4", "W-P53 Visual Studio readiness must stay in W-P53.4.");
+  assert.equal(readiness?.status, "readiness-only-no-host-mutation", "W-P53 Visual Studio readiness must not claim a mutation implementation.");
+  assert.equal(readiness?.host?.owner, "VisualStudio.Extensibility EditorExtensibility", "Visual Studio mutation ownership must remain with the host EditorExtensibility API.");
+  assert.equal(readiness?.host?.mutationMethod, "EditorExtensibility.EditAsync", "Visual Studio readiness must name the asynchronous host mutation method.");
+  assert.equal(readiness?.host?.editableSnapshotMethod, "ITextDocumentSnapshot.AsEditable", "Visual Studio readiness must bind edits to an editable document snapshot.");
+  assert.deepEqual(readiness?.host?.snapshotTypes, ["ITextViewSnapshot", "ITextDocumentSnapshot"], "Visual Studio readiness must retain both immutable snapshot types.");
+  assert.equal(readiness?.host?.snapshotModel, "immutable-versioned", "Visual Studio readiness must use immutable versioned snapshots.");
+  assert.equal(readiness?.transactionPolicy?.scope, "future-host-owned-dedicated-synthetic-sandbox-only", "Future Visual Studio mutation scope must stay dedicated and synthetic.");
+  assert.equal(readiness?.transactionPolicy?.freeFormPathAccepted, false, "Visual Studio readiness must reject free-form paths.");
+  assert.equal(readiness?.transactionPolicy?.providerEditObjectAccepted, false, "Visual Studio readiness must reject provider edit objects.");
+  assert.equal(readiness?.transactionPolicy?.lspEditObjectAccepted, false, "Visual Studio readiness must reject LSP edit objects.");
+  assert.equal(readiness?.transactionPolicy?.targetRepositoryMutationAllowed, false, "Visual Studio readiness must not grant target mutation.");
+  assert.equal(readiness?.transactionPolicy?.workspaceMutationImplemented, false, "Visual Studio readiness must not claim workspace mutation implementation.");
+  assert.equal(readiness?.transactionPolicy?.finalHumanConfirmationRequired, true, "Visual Studio readiness must require final human confirmation.");
+  assert.equal(readiness?.transactionPolicy?.snapshotReadRequiredAfterConfirmation, true, "Visual Studio readiness must require a post-confirmation snapshot read.");
+  assert.equal(readiness?.transactionPolicy?.editRequestMustUseCurrentSnapshot, true, "Visual Studio readiness must use the current snapshot for an edit request.");
+  assert.equal(readiness?.transactionPolicy?.mutationRejectionRequiresFreshSnapshot, true, "Visual Studio readiness must require a fresh snapshot after rejection.");
+  assert.equal(readiness?.transactionPolicy?.retryRequiresFreshFinalConfirmation, true, "Visual Studio readiness must require a fresh final confirmation before retry.");
+  assert.equal(readiness?.transactionPolicy?.singleEditAsyncRequestAtomicityRequired, true, "Visual Studio readiness must preserve one-request atomicity.");
+  assert.equal(readiness?.transactionPolicy?.concurrentRequestSerializationRequired, true, "Visual Studio readiness must serialize future concurrent requests.");
+  assert.equal(readiness?.transactionPolicy?.formatterPlanRequired, true, "Visual Studio readiness must retain a formatter plan gate.");
+  assert.equal(readiness?.transactionPolicy?.postApplyValidationRequired, true, "Visual Studio readiness must retain post-apply validation.");
+  assert.equal(readiness?.transactionPolicy?.rollbackRequiresSeparateFreshSnapshotRequest, true, "Visual Studio readiness must require a fresh snapshot for rollback.");
+  assert.equal(readiness?.transactionPolicy?.redactedAuditRequired, true, "Visual Studio readiness must require a redacted audit.");
+  assert.equal(readiness?.privacy?.sourcesContentPolicy, "none", "Visual Studio readiness must keep sourcesContent disabled.");
+  assert.equal(readiness?.privacy?.snapshotBodyMayBeSerialized, false, "Visual Studio readiness must not serialize snapshot bodies.");
+  assert.equal(readiness?.privacy?.rollbackBodyMayBeSerialized, false, "Visual Studio readiness must not serialize rollback bodies.");
+  assert.equal(readiness?.privacy?.versionValueMayBeSerialized, false, "Visual Studio readiness must not serialize version values.");
+  assert.equal(readiness?.privacy?.digestValueMayBeSerialized, false, "Visual Studio readiness must not serialize digest values.");
+  assert.equal(readiness?.privacy?.absolutePathMayBeSerialized, false, "Visual Studio readiness must not serialize absolute paths.");
+  assert.equal(readiness?.privacy?.targetRepositoryMutationAllowed, false, "Visual Studio readiness must not allow target mutation.");
+  assert.equal(readiness?.privacy?.providerOwnedApplyAllowed, false, "Visual Studio readiness must not allow provider-owned apply.");
+  assert.equal(readiness?.privacy?.lspServerOwnedApplyAllowed, false, "Visual Studio readiness must not allow LSP-owned apply.");
+  assert.equal(readiness?.privacy?.networkExecutionAllowed, false, "Visual Studio readiness must not allow network execution.");
+
+  const source = collectVisualStudioCSharpSource(files);
+  assert.equal(countMatches(source, /\bEditAsync\s*\(/gu), 0, "W-P53.4 must not call EditAsync yet.");
+  assert.equal(countMatches(source, /\bAsEditable\s*\(/gu), 0, "W-P53.4 must not call AsEditable yet.");
+  assert.equal(readiness?.currentExecution?.editorExtensibilityEditAsyncCallCount, 0, "W-P53.4 evidence must not claim EditAsync calls.");
+  assert.equal(readiness?.currentExecution?.editableSnapshotCallCount, 0, "W-P53.4 evidence must not claim editable snapshot calls.");
+  assert.equal(readiness?.currentExecution?.hostEditorApiCallCount, 0, "W-P53.4 evidence must not claim host editor API calls.");
+  assert.equal(readiness?.currentExecution?.workspaceWriteAllowedCount, 0, "W-P53.4 evidence must not claim workspace writes.");
+  assert.equal(readiness?.currentExecution?.actualVisualStudioMutationExecutionCount, 0, "W-P53.4 evidence must not claim Visual Studio mutation execution.");
+  assert.equal(readiness?.currentExecution?.finalHumanConfirmationCapturedCount, 0, "W-P53.4 evidence must not claim final human confirmation.");
+  assert.equal(readiness?.currentExecution?.visualStudioLaunchCountInThisPhase, 0, "W-P53.4 must not launch Visual Studio.");
+  assert.equal(readiness?.currentExecution?.targetRepositoryMutationCount, 0, "W-P53.4 must not mutate target repositories.");
+  assert.equal(readiness?.currentExecution?.providerNetworkExecutedCount, 0, "W-P53.4 must not execute provider network work.");
+}
+
+/**
+ * 生成 W-P53.4 contract 的 public-safe 检查摘要。
+ *
+ * @lang en Creates a public-safe checker summary for the W-P53.4 contract.
+ * @param {Record<string, unknown>} readiness <lang><zh-CN>只读 readiness contract。</zh-CN><en>Read-only readiness contract.</en></lang>
+ * @param {Record<string, string>} files <lang><zh-CN>仅供静态检查的实现源码。</zh-CN><en>Implementation source used only for static checks.</en></lang>
+ * @returns {Record<string, unknown>}
+ */
+function summarizeWp53SnapshotMutationReadiness(readiness, files) {
+  const source = collectVisualStudioCSharpSource(files);
+  return {
+    contract: readiness.contract,
+    contractVersion: readiness.contractVersion,
+    phase: readiness.phase,
+    status: readiness.status,
+    hostOwner: readiness.host?.owner,
+    mutationMethod: readiness.host?.mutationMethod,
+    snapshotModel: readiness.host?.snapshotModel,
+    finalHumanConfirmationRequired: readiness.transactionPolicy?.finalHumanConfirmationRequired === true,
+    currentSnapshotRequired: readiness.transactionPolicy?.editRequestMustUseCurrentSnapshot === true,
+    retryRequiresFreshFinalConfirmation: readiness.transactionPolicy?.retryRequiresFreshFinalConfirmation === true,
+    concurrentRequestSerializationRequired: readiness.transactionPolicy?.concurrentRequestSerializationRequired === true,
+    rollbackRequiresSeparateFreshSnapshotRequest: readiness.transactionPolicy?.rollbackRequiresSeparateFreshSnapshotRequest === true,
+    editAsyncSourceCallCount: countMatches(source, /\bEditAsync\s*\(/gu),
+    asEditableSourceCallCount: countMatches(source, /\bAsEditable\s*\(/gu),
+    currentExecution: readiness.currentExecution,
+    privacy: {
+      sourcesContentPolicy: readiness.privacy?.sourcesContentPolicy,
+      snapshotBodyMayBeSerialized: readiness.privacy?.snapshotBodyMayBeSerialized,
+      rollbackBodyMayBeSerialized: readiness.privacy?.rollbackBodyMayBeSerialized,
+      absolutePathMayBeSerialized: readiness.privacy?.absolutePathMayBeSerialized,
+      targetRepositoryMutationAllowed: readiness.privacy?.targetRepositoryMutationAllowed,
+      providerOwnedApplyAllowed: readiness.privacy?.providerOwnedApplyAllowed,
+      lspServerOwnedApplyAllowed: readiness.privacy?.lspServerOwnedApplyAllowed,
+      networkExecutionAllowed: readiness.privacy?.networkExecutionAllowed
+    }
+  };
+}
+
+function collectVisualStudioCSharpSource(files) {
+  return [
+    files.extensionEntrypoint,
+    files.command,
+    files.toolWindow,
+    files.remoteControl,
+    files.remoteData,
+    files.localizedStrings,
+    files.languageServerProvider,
+    files.languageServerRuntimeLauncher,
+    files.languageServerRuntimeState,
+    files.authoringProjectionProbe,
+    files.reviewSnapshot
+  ].join("\n");
+}
+
+function countMatches(value, pattern) {
+  return [...value.matchAll(pattern)].length;
 }

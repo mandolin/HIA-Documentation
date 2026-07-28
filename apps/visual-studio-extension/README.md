@@ -51,6 +51,8 @@ The Visual Studio host does not parse language source, run producers, generate H
 
 Workspace edits, ordinary-instance installation and Marketplace publishing are not part of this stage. Reviewable edit proposals are metadata for human approval, not directly applicable edits. Full WorkspaceEdit support remains behind later privacy, conflict, review and host-owned write gates.
 
+The checked-in `wp53-snapshot-mutation-readiness.json` is a readiness-only contract for a future, separate Visual Studio mutation route. It records the immutable versioned snapshot and asynchronous `EditorExtensibility.EditAsync` model, final confirmation, fresh-snapshot retry, request-serialization, validation, rollback and redacted-audit requirements. It does not call editor APIs, accept VS Code edit objects, write a workspace, or claim a live mutation.
+
 ## Language Server Runtime
 
 `HiaLanguageServerProvider` follows the official `VisualStudio.Extensibility` provider model. Opening an applicable HIA document lets Visual Studio request a duplex stdio connection; the extension starts the deployed `runtime/lsp/dist/node.js` entry with `--stdio` and returns the process streams to the host.

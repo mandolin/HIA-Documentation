@@ -28,6 +28,7 @@
     "host-contract.json",
     "implementation-baseline.json",
     "review-surface.json",
+    "wp53-snapshot-mutation-readiness.json",
     "authoring-probe.hia.json",
     "runtime-capture/capture.json",
     "runtime-capture/vs2022-overview.jpg",
