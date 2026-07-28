@@ -187,6 +187,7 @@
     "wp53:visual-studio-snapshot-readiness:evidence": "pnpm run visual-studio:check && node --check scripts/prepare-wp53-visual-studio-snapshot-mutation-readiness.mjs && node scripts/prepare-wp53-visual-studio-snapshot-mutation-readiness.mjs",
     "wp53:owner-handoff-refresh:evidence": "node --check scripts/prepare-wp53-target-owner-adoption-handoff-refresh.mjs && node scripts/prepare-wp53-target-owner-adoption-handoff-refresh.mjs",
     "wp53:pilot-decision:evidence": "node --check scripts/prepare-wp53-real-pilot-authorization-decision-and-manual-evidence.mjs && node scripts/prepare-wp53-real-pilot-authorization-decision-and-manual-evidence.mjs",
+    "wp53:closeout:evidence": "node --check scripts/prepare-wp53-closeout-next-stage-boundary.mjs && node scripts/prepare-wp53-closeout-next-stage-boundary.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",

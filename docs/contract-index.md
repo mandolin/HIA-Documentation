@@ -106,6 +106,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | W-P53 Visual Studio snapshot-mutation readiness | `scripts/prepare-wp53-visual-studio-snapshot-mutation-readiness.mjs` | `0.1.0-draft` |
 | W-P53 target-owner adoption handoff refresh | `scripts/prepare-wp53-target-owner-adoption-handoff-refresh.mjs` | `0.1.0-draft` |
 | W-P53 real pilot authorization decision and manual evidence | `scripts/prepare-wp53-real-pilot-authorization-decision-and-manual-evidence.mjs` | `0.1.0-draft` |
+| W-P53 closeout and next-stage boundary | `scripts/prepare-wp53-closeout-next-stage-boundary.mjs` | `0.1.0-draft` |
 | Controlled remote provider smoke intake evidence | `scripts/prepare-wp40-controlled-remote-provider-smoke-intake.mjs` | `0.1.0-draft` |
 | Remote provider candidate selection evidence | `scripts/prepare-wp40-remote-provider-candidate-selection-packet.mjs` | `0.1.0-draft` |
 | Secret reference and network consent evidence | `scripts/prepare-wp40-secret-reference-network-consent-packet.mjs` | `0.1.0-draft` |
