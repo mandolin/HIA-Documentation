@@ -175,6 +175,8 @@
     "wp51:visual-studio-authoring-projection:evidence": "pnpm run visual-studio:build && pnpm run visual-studio:build:release && pnpm run visual-studio:check && node scripts/prepare-wp51-visual-studio-authoring-remediation-projection.mjs",
     "wp51:visual-studio-install-runtime-capture:evidence": "pnpm run visual-studio:check && node scripts/prepare-wp51-visual-studio-install-runtime-capture.mjs",
     "wp51:closeout:evidence": "node scripts/prepare-wp51-closeout-wp52-inputs.mjs",
+    "wp52:generated-binding-intake:evidence": "pnpm run wp51:closeout:evidence && node scripts/prepare-wp52-generated-binding-research-adr-intake.mjs",
+    "wp52:syntax-scope-confidence:evidence": "node scripts/prepare-wp52-syntax-scope-confidence-decision.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",
