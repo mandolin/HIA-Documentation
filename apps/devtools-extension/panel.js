@@ -8,6 +8,7 @@ import {
 
 const state = {
   model: createHiaDevToolsPanelViewModel(undefined),
+  selectedGeneratedBindingId: "",
   selectedRelationId: "",
   selectedReviewItemId: "",
   selectedView: "relations"
@@ -60,6 +61,7 @@ async function loadPayloadText(text) {
     const payload = JSON.parse(text);
     state.model = createHiaDevToolsPanelViewModel(payload);
     state.selectedRelationId = state.model.relations[0]?.id ?? "";
+    state.selectedGeneratedBindingId = state.model.review.generatedDocumentationBindingProjection.bindings[0]?.id ?? "";
     state.selectedReviewItemId = state.model.review.items[0]?.id ?? "";
     state.selectedView = state.model.relations.length === 0 && state.model.review.items.length > 0 ? "review" : state.selectedView;
     render();
@@ -88,7 +90,8 @@ function renderSummary() {
     ["Owner Evidence", state.model.review.targetOwnerEvidenceView.evidenceCompletenessCheckCount],
     ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
     ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount],
-    ["Authoring", state.model.review.authoringProjection.authoringModeCount]
+    ["Authoring", state.model.review.authoringProjection.authoringModeCount],
+    ["Binding Targets", state.model.review.generatedDocumentationBindingProjection.targetCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -111,12 +114,39 @@ function renderTabs() {
 }
 
 function renderNavigation() {
+  if (state.selectedView === "bindings") {
+    renderGeneratedBindingRelations();
+    return;
+  }
+
   if (state.selectedView === "review") {
     renderReviewItems();
     return;
   }
 
   renderRelations();
+}
+
+function renderGeneratedBindingRelations() {
+  const bindings = state.model.review.generatedDocumentationBindingProjection.bindings;
+
+  if (bindings.length === 0) {
+    elements.list.replaceChildren(emptyElement("No generated binding relations loaded."));
+    return;
+  }
+
+  elements.list.replaceChildren(...bindings.map((binding) => {
+    const button = document.createElement("button");
+    button.className = "list-button";
+    button.type = "button";
+    button.setAttribute("aria-selected", String(binding.id === state.selectedGeneratedBindingId));
+    button.innerHTML = `<strong>${escapeHtml(binding.id)}</strong><span>${escapeHtml(`${binding.targets.length} target(s) · ${binding.quality.resolutionKind}/${binding.quality.confidence}/${binding.quality.provenanceCoverage}`)}</span>`;
+    button.addEventListener("click", () => {
+      state.selectedGeneratedBindingId = binding.id;
+      render();
+    });
+    return button;
+  }));
 }
 
 function renderRelations() {
@@ -160,12 +190,48 @@ function renderReviewItems() {
 }
 
 function renderDetail() {
+  if (state.selectedView === "bindings") {
+    renderGeneratedBindingDetail();
+    return;
+  }
+
   if (state.selectedView === "review") {
     renderReviewDetail();
     return;
   }
 
   renderRelationDetail();
+}
+
+function renderGeneratedBindingDetail() {
+  const projection = state.model.review.generatedDocumentationBindingProjection;
+  const binding = projection.bindings.find((item) => item.id === state.selectedGeneratedBindingId);
+
+  if (!binding) {
+    elements.detail.replaceChildren(emptyElement("Select a generated binding relation."));
+    return;
+  }
+
+  const memberPath = binding.bindingRef.memberPath.join(".") || binding.bindingRef.rootDeclarationId;
+  const article = document.createElement("section");
+  const expansionRows = binding.expansions.map((expansion) => `<li>${escapeHtml(expansion.id)} · key=${escapeHtml(expansion.instanceKey.displayKey || expansion.instanceKey.status)} · ${escapeHtml(`${expansion.quality.resolutionKind}/${expansion.quality.confidence}/${expansion.quality.provenanceCoverage}`)} · targets:${escapeHtml(String(expansion.targetIds.length))}</li>`).join("");
+  const targetRows = binding.targets.map((target) => `<li>${escapeHtml(target.id)} · ${escapeHtml(target.identity.kind)}${target.identity.selector ? ` · ${escapeHtml(target.identity.selector)}` : ""}${target.identity.symbolId ? ` · ${escapeHtml(target.identity.symbolId)}` : ""}</li>`).join("");
+
+  article.innerHTML = `
+    <h2>Generated Binding</h2>
+    <dl class="kv">
+      <dt>Binding</dt><dd>${escapeHtml(binding.id)}</dd>
+      <dt>Ref</dt><dd>${escapeHtml(memberPath)}</dd>
+      <dt>Source intent</dt><dd>${escapeHtml(`${binding.sourceIntent.kind}${binding.sourceIntent.field ? ` / ${binding.sourceIntent.field}` : ""}`)}</dd>
+      <dt>Quality</dt><dd>${escapeHtml(`${binding.quality.resolutionKind} / ${binding.quality.confidence} / ${binding.quality.provenanceCoverage}`)}</dd>
+      <dt>Composition</dt><dd>${escapeHtml(`${binding.composition.relation} / ${binding.composition.mergePolicy}`)}</dd>
+      <dt>Projection</dt><dd>${escapeHtml(`${projection.status} / targets:${projection.targetCount} / write:${projection.writeAuthority}`)}</dd>
+      <dt>Privacy</dt><dd>${escapeHtml(`source body:no / sourcesContent:${projection.sourcesContentPolicy}`)}</dd>
+    </dl>
+    <h3>Expansions</h3><ul>${expansionRows || "<li>None</li>"}</ul>
+    <h3>Targets</h3><ul>${targetRows || "<li>None</li>"}</ul>
+  `;
+  elements.detail.replaceChildren(article);
 }
 
 function renderRelationDetail() {

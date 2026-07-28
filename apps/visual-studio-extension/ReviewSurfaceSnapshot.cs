@@ -49,6 +49,28 @@ internal sealed class ReviewSurfaceSnapshot
 
     public bool GeneratedBindingConcreteSyntaxFrozen { get; private init; }
 
+    /// <summary>
+    /// <lang>
+    /// <zh-CN>生成式文档绑定关系投影的可用状态。</zh-CN>
+    /// <en>Availability state of the generated documentation binding relation projection.</en>
+    /// </lang>
+    /// </summary>
+    public string GeneratedBindingRelationStatus { get; private init; } = "unavailable";
+
+    public int GeneratedBindingRelationBindingCount { get; private init; }
+
+    public int GeneratedBindingRelationExpansionCount { get; private init; }
+
+    public int GeneratedBindingRelationTargetCount { get; private init; }
+
+    public int GeneratedBindingRelationDiagnosticCount { get; private init; }
+
+    public int GeneratedBindingRelationStableInstanceKeyCount { get; private init; }
+
+    public bool GeneratedBindingRelationTargetsVisible { get; private init; }
+
+    public bool GeneratedBindingRelationQualityVisible { get; private init; }
+
     public string ProviderReviewStatus { get; private init; } = "unavailable";
 
     public int ProviderTaxonomyKindCount { get; private init; }
@@ -105,6 +127,10 @@ internal sealed class ReviewSurfaceSnapshot
             using JsonDocument document = JsonDocument.Parse(stream);
             JsonElement root = document.RootElement;
             JsonElement authoring = ReadObject(root, "authoringProjection");
+            JsonElement generatedBinding = ReadObject(
+                root,
+                "generatedDocumentationBindingProjection");
+            JsonElement generatedBindingSummary = ReadObject(generatedBinding, "summary");
             JsonElement provider = ReadObject(root, "providerReviewPanel");
             JsonElement targetOwner = ReadObject(root, "targetOwnerEvidenceView");
             JsonElement hostUx = ReadObject(root, "hostApplyUx");
@@ -134,6 +160,30 @@ internal sealed class ReviewSurfaceSnapshot
                     ReadInt32(authoring, "generatedBindingDiagnosticGuidanceCount"),
                 GeneratedBindingConcreteSyntaxFrozen =
                     ReadBoolean(authoring, "generatedBindingConcreteSyntaxFrozen"),
+                GeneratedBindingRelationStatus = ReadString(
+                    generatedBinding,
+                    "status"),
+                GeneratedBindingRelationBindingCount = ReadInt32(
+                    generatedBindingSummary,
+                    "bindingCount"),
+                GeneratedBindingRelationExpansionCount = ReadInt32(
+                    generatedBindingSummary,
+                    "expansionCount"),
+                GeneratedBindingRelationTargetCount = ReadInt32(
+                    generatedBindingSummary,
+                    "targetCount"),
+                GeneratedBindingRelationDiagnosticCount = ReadInt32(
+                    generatedBindingSummary,
+                    "diagnosticCount"),
+                GeneratedBindingRelationStableInstanceKeyCount = ReadInt32(
+                    generatedBindingSummary,
+                    "stableInstanceKeyCount"),
+                GeneratedBindingRelationTargetsVisible = ReadBoolean(
+                    generatedBinding,
+                    "targetRelationVisible"),
+                GeneratedBindingRelationQualityVisible = ReadBoolean(
+                    generatedBinding,
+                    "threeQualityDimensionsVisible"),
                 ProviderReviewStatus = ReadString(provider, "status"),
                 ProviderTaxonomyKindCount = ReadInt32(provider, "resultTaxonomyKindCount"),
                 TargetOwnerStatus = ReadString(targetOwner, "status"),

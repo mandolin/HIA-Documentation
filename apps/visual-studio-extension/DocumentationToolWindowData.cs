@@ -89,6 +89,30 @@ internal sealed class DocumentationToolWindowData : NotifyPropertyChangedObject,
             Flag(
                 "GeneratedBindingSyntaxFrozenLabel",
                 snapshot.GeneratedBindingConcreteSyntaxFrozen),
+            Metric(
+                "GeneratedBindingRelationStatusLabel",
+                snapshot.GeneratedBindingRelationStatus),
+            Metric(
+                "GeneratedBindingRelationBindingCountLabel",
+                snapshot.GeneratedBindingRelationBindingCount),
+            Metric(
+                "GeneratedBindingRelationExpansionCountLabel",
+                snapshot.GeneratedBindingRelationExpansionCount),
+            Metric(
+                "GeneratedBindingRelationTargetCountLabel",
+                snapshot.GeneratedBindingRelationTargetCount),
+            Metric(
+                "GeneratedBindingRelationDiagnosticCountLabel",
+                snapshot.GeneratedBindingRelationDiagnosticCount),
+            Metric(
+                "GeneratedBindingRelationStableInstanceKeyCountLabel",
+                snapshot.GeneratedBindingRelationStableInstanceKeyCount),
+            Flag(
+                "GeneratedBindingRelationTargetsVisibleLabel",
+                snapshot.GeneratedBindingRelationTargetsVisible),
+            Flag(
+                "GeneratedBindingRelationQualityVisibleLabel",
+                snapshot.GeneratedBindingRelationQualityVisible),
         ];
         this.ReviewMetrics =
         [

@@ -22,6 +22,13 @@ read-only `binding -> generated targets` and `generated target -> bindings`
 queries. It never loads a sidecar path, executes expressions/locals, or starts
 a renderer or host projection. See `docs/generated-documentation-binding-contract.md`.
 
+`createGeneratedDocumentationBindingHostProjection()` converts that index into
+the frozen `generated-documentation-binding-host-projection@0.1.0-draft` view
+model for renderer and host surfaces. The projection carries binding-to-target
+relations, stable instance-key state, diagnostics by code/severity, and separate
+resolution/confidence/provenance values. It deliberately omits source bodies and
+ranges, sidecar paths, locals values/digests, and diagnostic free text.
+
 ## Example
 
 ```ts
@@ -48,6 +55,7 @@ const result = querySourceLinkedPosition(docIndex, sourceMapIndex, {
 ```ts
 import {
   createDocSourceMapIndex,
+  createGeneratedDocumentationBindingHostProjection,
   createGeneratedDocumentationBindingIndex,
   findGeneratedBindingsForTarget,
   findGeneratedTargetsForBinding
@@ -60,4 +68,5 @@ const bindingIndex = createGeneratedDocumentationBindingIndex(bindingSidecarJson
 
 const generatedTargets = findGeneratedTargetsForBinding(bindingIndex, "binding:card-title");
 const sourceBindings = findGeneratedBindingsForTarget(bindingIndex, "target:card-title");
+const hostProjection = createGeneratedDocumentationBindingHostProjection(bindingIndex);
 ```

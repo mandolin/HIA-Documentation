@@ -31,6 +31,7 @@ import {
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
+  HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
@@ -42,6 +43,8 @@ import {
   createHiaHostApplyUxSurfaceChoices,
   createHiaVscodeAuthoringSurfaceChoices,
   createHiaVscodeAuthoringSurfaceReport,
+  createHiaVscodeGeneratedBindingRelationChoices,
+  createHiaVscodeGeneratedBindingRelationReport,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
   createHiaDocumentationReviewItemChoices,
@@ -76,6 +79,8 @@ import {
   type HiaHostApplyUxSurfaceChoice,
   type HiaVscodeAuthoringSurfaceChoice,
   type HiaVscodeAuthoringSurfaceEvidenceSummary,
+  type HiaVscodeGeneratedBindingProjectionEvidence,
+  type HiaVscodeGeneratedBindingRelationChoice,
   type HiaIdeCapabilitiesSummary,
   type HiaPreviewManifestSummary,
   type HiaPreviewStatusReportInput,
@@ -282,6 +287,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const showAuthoringSurfaceCommand = vscode.commands.registerCommand(HIA_SHOW_AUTHORING_SURFACE_COMMAND, async () => {
     await showHiaAuthoringSurface(outputChannel);
   });
+  const showGeneratedBindingRelationsCommand = vscode.commands.registerCommand(HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND, async () => {
+    await showHiaGeneratedBindingRelations(outputChannel);
+  });
   const codeActionProvider = vscode.languages.registerCodeActionsProvider(createHiaDocumentSelector(), {
     provideCodeActions(document, _range, codeActionContext) {
       return createHiaCodeActions(document, codeActionContext.diagnostics);
@@ -294,7 +302,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, showGeneratedBindingRelationsCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -852,6 +860,64 @@ async function showHiaAuthoringSurface(outputChannel: vscode.OutputChannel): Pro
   }
 
   void vscode.window.showInformationMessage("HIA authoring surface 已写入输出；checked apply 仍保持禁用。");
+}
+
+/**
+ * 在 VS Code 中只读展示 W-P52 generated-documentation-binding 一对多关系。
+ * Show W-P52 generated-documentation-binding one-to-many relations read-only in VS Code.
+ *
+ * @remarks
+ * 中文：只读取 source-linkage 生成的 public-safe evidence projection；不读取 sidecar
+ * 路径、不执行 binding expression/locals，也不调用 edit API 或写入 workspace。
+ * English: Reads only the public-safe evidence projection produced by
+ * source-linkage; it does not read a sidecar path, execute binding expressions/
+ * locals, call edit APIs, or write the workspace.
+ */
+async function showHiaGeneratedBindingRelations(outputChannel: vscode.OutputChannel): Promise<void> {
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open the HIA main repo workspace before showing generated binding relations.");
+    return;
+  }
+
+  const evidencePath = path.join(workspaceRoot, "dist", "wp52-renderer-and-host-projection", "binding-relation-projection.json");
+  let evidence: HiaVscodeGeneratedBindingProjectionEvidence;
+
+  try {
+    evidence = JSON.parse(await readFile(evidencePath, "utf8")) as HiaVscodeGeneratedBindingProjectionEvidence;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA generated binding relation evidence / 生成式绑定关系证据读取失败: ${message}`);
+    void vscode.window.showWarningMessage("请先运行 pnpm run wp52:renderer-host-projection:evidence，再查看 generated binding relation。");
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA generated binding relations / 生成式绑定关系:");
+  const choices = createHiaVscodeGeneratedBindingRelationChoices(evidence).map((choice) => ({ ...choice, choice }));
+
+  if (choices.length === 0) {
+    for (const line of createHiaVscodeGeneratedBindingRelationReport(evidence)) {
+      outputChannel.appendLine(`- ${line}`);
+    }
+    void vscode.window.showWarningMessage("No generated binding relation is available. See HIA output.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<GeneratedBindingRelationQuickPickItem>(choices, {
+    placeHolder: "选择 generated binding / generated binding relation"
+  });
+
+  if (!selected) {
+    return;
+  }
+
+  for (const line of createHiaVscodeGeneratedBindingRelationReport(evidence, selected.choice.relation)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+  void vscode.window.showInformationMessage("HIA generated binding relation 已写入输出；写入和表达式执行仍保持禁用。");
 }
 
 /**
@@ -1433,6 +1499,10 @@ interface HostApplyUxSurfaceQuickPickItem extends HiaHostApplyUxSurfaceChoice, v
 
 interface AuthoringSurfaceQuickPickItem extends HiaVscodeAuthoringSurfaceChoice, vscode.QuickPickItem {
   choice: HiaVscodeAuthoringSurfaceChoice;
+}
+
+interface GeneratedBindingRelationQuickPickItem extends HiaVscodeGeneratedBindingRelationChoice, vscode.QuickPickItem {
+  choice: HiaVscodeGeneratedBindingRelationChoice;
 }
 
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {

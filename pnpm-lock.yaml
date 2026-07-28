@@ -163,6 +163,9 @@ importers:
       '@hia-doc/core':
         specifier: workspace:*
         version: link:../core
+      '@hia-doc/source-linkage':
+        specifier: workspace:*
+        version: link:../source-linkage
       '@hia-doc/theme-default':
         specifier: workspace:*
         version: link:../theme-default

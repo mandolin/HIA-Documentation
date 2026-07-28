@@ -13,6 +13,7 @@ import {
   type HiaSourceReference,
   type HiaSymbol
 } from "@hia-doc/core";
+import type { GeneratedDocumentationBindingHostProjection } from "@hia-doc/source-linkage";
 import { DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH, getDefaultThemeAssets } from "@hia-doc/theme-default";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
@@ -80,6 +81,12 @@ export interface RenderProjectHtmlInput {
   entries: RenderProjectEntry[];
   profiles?: RenderProjectProfileRef[];
   docSourceMaps?: RenderProjectDocSourceMapRef[];
+  /**
+   * 中文：由 @hia-doc/source-linkage 的 W-P52.5 index 产生的安全 binding relation 投影。
+   * English: Safe binding-relation projection produced by the W-P52.5
+   * @hia-doc/source-linkage index.
+   */
+  generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   relationGraph?: RenderProjectRelationGraph;
   diagnostics?: HiaDiagnostic[];
 }
@@ -288,6 +295,7 @@ export interface RenderHtmlManifest {
     navigationIndex?: RenderProjectNavigationIndexRef;
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
+    generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
   };
 }
@@ -322,6 +330,20 @@ export interface RenderProjectRelationGraphRef {
 }
 
 /**
+ * 中文：renderer manifest 中 generated binding relation 投影的最小引用。
+ * English: Minimal generated-binding relation projection reference in the
+ * renderer manifest.
+ */
+export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
+  bindingCount: number;
+  contract: string;
+  contractVersion: string;
+  path: string;
+  status: string;
+  targetCount: number;
+}
+
+/**
  * 供 portal 使用的、无 HTML 表示细节的项目入口索引。
  * Project entry index without HTML presentation details, intended for portal consumption.
  */
@@ -342,6 +364,7 @@ export interface RenderProjectNavigationIndex {
   navigationTree: RenderProjectNavigationTreeNode[];
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
+  generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   relationGraph?: RenderProjectRelationGraph;
   site?: {
     layout: RenderProjectSiteLayout;
@@ -583,6 +606,18 @@ function createProjectManifest(
       },
       ...(projectInput.profiles && projectInput.profiles.length > 0 ? { profiles: projectInput.profiles } : {}),
       ...(projectInput.docSourceMaps && projectInput.docSourceMaps.length > 0 ? { docSourceMaps: projectInput.docSourceMaps } : {}),
+      ...(projectInput.generatedDocumentationBindingProjection
+        ? {
+            generatedDocumentationBindingProjection: {
+              bindingCount: projectInput.generatedDocumentationBindingProjection.summary.bindingCount,
+              contract: projectInput.generatedDocumentationBindingProjection.contract,
+              contractVersion: projectInput.generatedDocumentationBindingProjection.contractVersion,
+              path: "project-index.json",
+              status: projectInput.generatedDocumentationBindingProjection.status,
+              targetCount: projectInput.generatedDocumentationBindingProjection.summary.targetCount
+            }
+          }
+        : {}),
       ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
         ? {
             relationGraph: {
@@ -640,6 +675,9 @@ function createProjectNavigationIndex(
     navigationTree: collectProjectNavigationTree(projectInput.entries),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
     docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps),
+    ...(projectInput.generatedDocumentationBindingProjection
+      ? { generatedDocumentationBindingProjection: projectInput.generatedDocumentationBindingProjection }
+      : {}),
     site: {
       layout: options.projectSite?.layout ?? "split-site",
       ...(options.projectSite?.layout === "single-page" ? {} : {
@@ -877,6 +915,7 @@ function renderProjectSplitSiteHtml(
     `<h1>${escapeHtml(projectName)}</h1>`,
     renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
     renderProjectViewControl(views, entryCounts),
+    renderProjectGeneratedDocumentationBindingProjection(projectInput.generatedDocumentationBindingProjection),
     [
       "<label class=\"hia-project-search\">",
       `<span>${escapeHtml(labels.search)}</span>`,
@@ -1143,6 +1182,9 @@ function renderProjectIndexHtml(
   const docSourceMapSummary = renderProjectDocSourceMaps(projectInput.docSourceMaps ?? []);
   const relationGraphSummary = renderProjectRelationGraphSummary(projectInput.relationGraph);
   const relationGraph = renderProjectRelationGraph(projectInput.relationGraph);
+  const generatedDocumentationBindingProjection = renderProjectGeneratedDocumentationBindingProjection(
+    projectInput.generatedDocumentationBindingProjection
+  );
   const diagnostics = renderProjectDiagnostics(projectInput.diagnostics ?? []);
 
   return [
@@ -1168,6 +1210,7 @@ function renderProjectIndexHtml(
     profileSummary,
     docSourceMapSummary,
     relationGraphSummary,
+    generatedDocumentationBindingProjection,
     diagnostics,
     "</aside>",
     "<main class=\"hia-main hia-project-main\">",
@@ -1489,6 +1532,65 @@ function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[
     .join("");
 
   return `<section class="hia-project-summary"><h2>Doc Source Maps</h2><ul>${items}</ul></section>`;
+}
+
+/**
+ * 中文：渲染由 source-linkage index 产生的一对多 generated binding 只读关系。
+ * English: Renders the read-only one-to-many generated-binding relation created
+ * by the source-linkage index.
+ *
+ * @remarks
+ * 中文：这里不回读 sidecar、不展开 source body，也不显示 locals/digest；页面只显示
+ * 安全投影里的 source intent、受限 member path、实例键状态、targets 与质量维度。
+ * English: This renderer does not read a sidecar back, expand source bodies, or
+ * display locals/digests; it shows only safe source intent, restricted member
+ * paths, instance-key state, targets, and quality dimensions.
+ */
+function renderProjectGeneratedDocumentationBindingProjection(
+  projection: GeneratedDocumentationBindingHostProjection | undefined
+): string {
+  if (!projection) {
+    return "";
+  }
+
+  const summaryItems = [
+    `<li><span>Bindings / 绑定</span><strong>${escapeHtml(String(projection.summary.bindingCount))}</strong></li>`,
+    `<li><span>Expansions / 展开</span><strong>${escapeHtml(String(projection.summary.expansionCount))}</strong></li>`,
+    `<li><span>Targets / 目标</span><strong>${escapeHtml(String(projection.summary.targetCount))}</strong></li>`,
+    `<li><span>Diagnostics / 诊断</span><strong>${escapeHtml(String(projection.summary.diagnosticCount))}</strong></li>`,
+    `<li><span>sourcesContent</span><strong>${escapeHtml(projection.privacy.sourcesContentPolicy)}</strong></li>`
+  ].join("");
+  const bindings = projection.bindings.map((binding) => {
+    const memberPath = binding.bindingRef.memberPath.join(".") || binding.bindingRef.rootDeclarationId;
+    const quality = `${binding.quality.resolutionKind} / ${binding.quality.confidence} / ${binding.quality.provenanceCoverage}`;
+    const expansions = binding.expansions
+      .map((expansion) => {
+        const key = expansion.instanceKey.displayKey ?? expansion.instanceKey.status;
+        return `<li>${escapeHtml(expansion.id)} · key=${escapeHtml(key)} · ${escapeHtml(expansion.quality.resolutionKind)} / ${escapeHtml(expansion.quality.confidence)} / ${escapeHtml(expansion.quality.provenanceCoverage)} · ${escapeHtml(String(expansion.targetIds.length))} target(s)</li>`;
+      })
+      .join("");
+    const targets = binding.targets
+      .map((target) => `<li>${escapeHtml(target.id)} · ${escapeHtml(target.identity.kind)}${target.identity.selector ? ` · ${escapeHtml(target.identity.selector)}` : ""}</li>`)
+      .join("");
+    return [
+      "<li>",
+      `<strong>${escapeHtml(binding.id)}</strong>`,
+      `<p>${escapeHtml(binding.sourceIntent.kind)}${binding.sourceIntent.field ? ` / ${escapeHtml(binding.sourceIntent.field)}` : ""} · ${escapeHtml(memberPath)} · ${escapeHtml(quality)}</p>`,
+      `<p>scope=${escapeHtml(binding.scopeId)} · ${escapeHtml(binding.composition.relation)} / ${escapeHtml(binding.composition.mergePolicy)}</p>`,
+      expansions ? `<details><summary>Expansions / 展开 (${escapeHtml(String(binding.expansions.length))})</summary><ul>${expansions}</ul></details>` : "",
+      targets ? `<details><summary>Targets / 目标 (${escapeHtml(String(binding.targets.length))})</summary><ul>${targets}</ul></details>` : "",
+      "</li>"
+    ].join("");
+  }).join("");
+
+  return [
+    "<section class=\"hia-project-summary hia-generated-binding-relations\">",
+    "<h2>Generated Documentation Bindings / 生成式文档绑定</h2>",
+    `<p>${escapeHtml(projection.contract)}@${escapeHtml(projection.contractVersion)} · ${escapeHtml(projection.status)}</p>`,
+    `<ul class=\"hia-project-group-list\">${summaryItems}</ul>`,
+    bindings ? `<ul class=\"hia-project-relation-list\">${bindings}</ul>` : "<p>No binding relations available.</p>",
+    "</section>"
+  ].join("");
 }
 
 function renderProjectRelationGraphSummary(relationGraph: RenderProjectRelationGraph | undefined): string {

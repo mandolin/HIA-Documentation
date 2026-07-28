@@ -214,6 +214,45 @@
       "authoringProjection.checkedApplyWriteEnabled"
     ]
   },
+  "generatedDocumentationBindingProjection": {
+    "contract": "generated-documentation-binding-host-projection",
+    "contractVersion": "0.1.0-draft",
+    "status": "available",
+    "bindingContract": "generated-documentation-binding@0.1.0-draft",
+    "inputMode": "visual-studio-generated-binding-relation-read-only",
+    "summary": {
+      "bindingCount": 4,
+      "expansionCount": 6,
+      "targetCount": 6,
+      "diagnosticCount": 1,
+      "stableInstanceKeyCount": 6,
+      "linkedDocSourceMapEntryCount": 4
+    },
+    "sourceBindingVisible": true,
+    "targetRelationVisible": true,
+    "threeQualityDimensionsVisible": true,
+    "diagnosticsVisible": true,
+    "inheritanceCompositionVisible": true,
+    "docSourceMapSidecarLinkageVisible": true,
+    "checkedApplyWriteEnabled": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "hostEditorApiCalled": false,
+    "providerNetworkExecuted": false,
+    "sourceBodyIncluded": false,
+    "sourceRangeIncluded": false,
+    "localsValueIncluded": false,
+    "sidecarPathIncluded": false,
+    "sourcesContentPolicy": "none",
+    "requiredFields": [
+      "generatedDocumentationBindingProjection.status",
+      "generatedDocumentationBindingProjection.summary.bindingCount",
+      "generatedDocumentationBindingProjection.summary.targetCount",
+      "generatedDocumentationBindingProjection.targetRelationVisible",
+      "generatedDocumentationBindingProjection.threeQualityDimensionsVisible",
+      "generatedDocumentationBindingProjection.checkedApplyWriteEnabled"
+    ]
+  },
   "views": [
     {
       "id": "review-list",

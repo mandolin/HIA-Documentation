@@ -11,6 +11,13 @@ Local unpacked Chrome DevTools panel shell for HIA `browser-panel-payload.json` 
 
 The panel renders relation graph summaries, read-only documentation review items, and structured `hia.browserPanel.openRequest` messages for later host integration. It does not run producers, scan source files, parse generated HTML, or write target files.
 
+The **Bindings** tab accepts the public-safe
+`generated-documentation-binding-host-projection@0.1.0-draft` payload. It shows
+the source binding, expansion instance keys, generated targets, and separate
+resolution/confidence/provenance values. Source bodies/ranges, sidecar paths,
+locals values, checked apply, workspace writes, and provider/network execution
+remain outside this panel.
+
 ## Bridge Candidate
 
 When a relation open-request button is clicked, the panel emits the local `hia.browserPanel.openRequest` window message and then tries a zero-permission inspected-page bridge through `chrome.devtools.inspectedWindow.eval`. The inspected page receives a `hia:devtools-open-request` `CustomEvent` whose `detail` contains the `hia-devtools-open-request-bridge@0.1.0-draft` envelope.

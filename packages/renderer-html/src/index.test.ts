@@ -694,4 +694,70 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("PowerShell");
     expect(html).toContain("Invoke-PortalDeploy");
   });
+
+  it("renders the read-only generated binding projection without source bodies or ordinary map embedding", () => {
+    const generatedDocumentationBindingProjection = {
+      contract: "generated-documentation-binding-host-projection",
+      contractVersion: "0.1.0-draft",
+      bindingContract: "generated-documentation-binding",
+      bindingContractVersion: "0.1.0-draft",
+      status: "available",
+      sidecarId: "sidecar:pug:colors",
+      privacy: {
+        diagnosticFreeTextIncluded: false,
+        localsValueIncluded: false,
+        sidecarPathIncluded: false,
+        sourceBodyIncluded: false,
+        sourceRangeIncluded: false,
+        sourcesContentPolicy: "none"
+      },
+      summary: {
+        bindingCount: 1,
+        diagnosticCount: 0,
+        expansionCount: 2,
+        linkedDocSourceMapEntryCount: 1,
+        stableInstanceKeyCount: 2,
+        targetCount: 2,
+        unlinkedBindingCount: 0
+      },
+      diagnostics: [],
+      bindings: [{
+        id: "binding:pug:colors:name",
+        sourceIntent: { kind: "documentation-field", field: "description" },
+        bindingRef: { kind: "member-path", memberPath: ["name"], rootDeclarationId: "decl:pug:colors:value" },
+        scopeId: "gdb-scope/v1/pug/source-colors#each/value",
+        quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+        composition: { contributionCount: 0, relation: "none", mergePolicy: "not-applicable" },
+        docSourceMapEntryIds: ["entry:colorswatch"],
+        expansions: [{
+          id: "expansion:pug:colors:sky",
+          order: 0,
+          instanceKey: { displayKey: "gdb-key/v1/string:sky", privacySafe: true, status: "stable" },
+          quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+          targetIds: ["target:pug:colors:sky"]
+        }],
+        targets: [{
+          id: "target:pug:colors:sky",
+          docSourceMapEntryIds: ["entry:colorswatch"],
+          identity: { kind: "generated-html-element", selector: "article.swatch", symbolId: "element:ColorSwatch" },
+          quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" }
+        }]
+      }]
+    } as const;
+    const result = renderProjectHtmlDocument({
+      project: { name: "Generated Binding Fixture" },
+      entries: [{ id: "entry:colorswatch", name: "ColorSwatch", kind: "element", view: "html" }],
+      generatedDocumentationBindingProjection
+    });
+    const indexHtml = result.files.find((file) => file.path === "index.html")?.contents ?? "";
+    const projectIndex = result.files.find((file) => file.path === "project-index.json")?.contents ?? "";
+
+    expect(indexHtml).toContain("Generated Documentation Bindings / 生成式文档绑定");
+    expect(indexHtml).toContain("binding:pug:colors:name");
+    expect(indexHtml).toContain("gdb-key/v1/string:sky");
+    expect(indexHtml).toContain("article.swatch");
+    expect(indexHtml).toContain("sourcesContent");
+    expect(projectIndex).toContain("generatedDocumentationBindingProjection");
+    expect(projectIndex).not.toContain("sourcesContent\": [");
+  });
 });

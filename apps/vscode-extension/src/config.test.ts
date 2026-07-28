@@ -18,6 +18,7 @@ import {
   HIA_REVIEW_DOCUMENTATION_PROPOSALS_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
+  HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
   HIA_SHOW_OUTPUT_COMMAND,
@@ -29,6 +30,8 @@ import {
   createHiaHostApplyUxSurfaceChoices,
   createHiaVscodeAuthoringSurfaceChoices,
   createHiaVscodeAuthoringSurfaceReport,
+  createHiaVscodeGeneratedBindingRelationChoices,
+  createHiaVscodeGeneratedBindingRelationReport,
   createHiaDocumentationCheckedApplyConfirmationChoices,
   createHiaDocumentationCheckedApplyConfirmationPreview,
   createHiaDocumentationCheckedApplyConfirmationReport,
@@ -81,6 +84,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND).toBe("hia.showCheckedApplySandboxConfirmation");
     expect(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND).toBe("hia.showHostApplyUxIntake");
     expect(HIA_SHOW_AUTHORING_SURFACE_COMMAND).toBe("hia.showAuthoringSurface");
+    expect(HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND).toBe("hia.showGeneratedBindingRelations");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -849,6 +853,66 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(report).toContain("Workspace write / 工作区写入: disabled");
     expect(report).toContain("Host editor API / 宿主编辑器 API: disabled");
     expect(report).toContain("Source bodies / 源码正文: not included / 未包含");
+  });
+
+  it("creates read-only generated binding relation choices and reports", () => {
+    const evidence = {
+      contract: "hia-wp52-renderer-and-host-projection-evidence",
+      contractVersion: "0.1.0-draft",
+      phase: "W-P52.6",
+      status: "ready-for-wp52-cross-language-reuse-and-closeout",
+      projection: {
+        contract: "generated-documentation-binding-host-projection",
+        contractVersion: "0.1.0-draft",
+        status: "available",
+        privacy: {
+          localsValueIncluded: false,
+          sidecarPathIncluded: false,
+          sourceBodyIncluded: false,
+          sourceRangeIncluded: false,
+          sourcesContentPolicy: "none"
+        },
+        summary: {
+          bindingCount: 1,
+          diagnosticCount: 0,
+          expansionCount: 2,
+          stableInstanceKeyCount: 2,
+          targetCount: 2
+        },
+        bindings: [{
+          id: "binding:pug:colors:name",
+          sourceIntent: { kind: "documentation-field", field: "description" },
+          bindingRef: { memberPath: ["name"], rootDeclarationId: "decl:pug:colors:value" },
+          composition: { relation: "none", mergePolicy: "not-applicable" },
+          quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+          expansions: [{
+            id: "expansion:pug:colors:sky",
+            instanceKey: { displayKey: "gdb-key/v1/string:sky", status: "stable" },
+            quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+            targetIds: ["target:pug:colors:sky"]
+          }],
+          targets: [{
+            id: "target:pug:colors:sky",
+            identity: { kind: "generated-html-element", selector: "article.swatch", symbolId: "element:ColorSwatch" }
+          }]
+        }]
+      }
+    };
+    const choices = createHiaVscodeGeneratedBindingRelationChoices(evidence);
+    const report = createHiaVscodeGeneratedBindingRelationReport(evidence, choices[0]?.relation);
+
+    expect(choices).toHaveLength(1);
+    expect(choices[0]).toMatchObject({
+      label: "binding:pug:colors:name",
+      description: "1 target(s) · exact / high / source-and-generated"
+    });
+    expect(report).toContain("Bindings / 绑定: 1");
+    expect(report).toContain("Stable instance keys / 稳定实例键: 2");
+    expect(report).toContain("Binding / 绑定: binding:pug:colors:name");
+    expect(report).toContain("Expansion / 展开: expansion:pug:colors:sky · key=gdb-key/v1/string:sky · exact / high / source-and-generated · targets=1");
+    expect(report).toContain("Target / 目标: target:pug:colors:sky · generated-html-element · article.swatch · element:ColorSwatch");
+    expect(report).toContain("Source body / 源码正文: not included / 未包含");
+    expect(report).toContain("Sidecar path / sidecar 路径: not included / 未包含");
   });
 
   it("creates resource action preview reports", () => {

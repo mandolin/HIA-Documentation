@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@hia-doc/core": "workspace:*",
+    "@hia-doc/source-linkage": "workspace:*",
     "@hia-doc/theme-default": "workspace:*"
   },
   "sideEffects": false

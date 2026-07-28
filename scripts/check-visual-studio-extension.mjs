@@ -202,6 +202,7 @@ async function main() {
       editApplyPreflightContract: reviewSurface.surface.editApplyPreflightContract,
       applyPreview: reviewSurface.applyPreview,
       authoringProjection: reviewSurface.authoringProjection,
+      generatedDocumentationBindingProjection: reviewSurface.generatedDocumentationBindingProjection,
       checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
       hostApplyUx: reviewSurface.hostApplyUx,
       providerReviewPanel: reviewSurface.providerReviewPanel,
@@ -652,6 +653,27 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.authoringProjection?.sourceBodyIncluded, false, "Visual Studio authoring projection must not expose source bodies.");
   assert.equal(reviewSurface?.authoringProjection?.sourcesContentPolicy, "none", "Visual Studio authoring projection must preserve sourcesContent none.");
   assert.ok(Array.isArray(reviewSurface?.authoringProjection?.requiredFields) && reviewSurface.authoringProjection.requiredFields.includes("authoringProjection.checkedApplyWriteEnabled"), "Visual Studio authoring projection must require write-disabled state.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.contract, "generated-documentation-binding-host-projection", "Visual Studio generated binding projection must name the neutral host projection contract.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.contractVersion, "0.1.0-draft", "Visual Studio generated binding projection must pin its draft version.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.bindingContract, "generated-documentation-binding@0.1.0-draft", "Visual Studio generated binding projection must point to the frozen binding contract.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.status, "available", "Visual Studio generated binding projection must be available.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.summary?.bindingCount, 4, "Visual Studio generated binding projection must expose all fixture bindings.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.summary?.expansionCount, 6, "Visual Studio generated binding projection must expose all fixture expansions.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.summary?.targetCount, 6, "Visual Studio generated binding projection must expose all fixture targets.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.summary?.diagnosticCount, 1, "Visual Studio generated binding projection must retain the paired doc-source-map information diagnostic.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.summary?.stableInstanceKeyCount, 6, "Visual Studio generated binding projection must expose stable instance keys.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.targetRelationVisible, true, "Visual Studio generated binding projection must show source-to-target relations.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.threeQualityDimensionsVisible, true, "Visual Studio generated binding projection must show resolution/confidence/provenance separately.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.checkedApplyWriteEnabled, false, "Visual Studio generated binding projection must keep checked apply disabled.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.workspaceWriteAvailable, false, "Visual Studio generated binding projection must keep workspace write disabled.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.targetRepositoryMutation, false, "Visual Studio generated binding projection must keep target mutation disabled.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.providerNetworkExecuted, false, "Visual Studio generated binding projection must not execute provider network.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sourceBodyIncluded, false, "Visual Studio generated binding projection must not expose source bodies.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sourceRangeIncluded, false, "Visual Studio generated binding projection must not expose source ranges.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.localsValueIncluded, false, "Visual Studio generated binding projection must not expose locals values.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sidecarPathIncluded, false, "Visual Studio generated binding projection must not expose sidecar paths.");
+  assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sourcesContentPolicy, "none", "Visual Studio generated binding projection must preserve sourcesContent none.");
+  assert.ok(Array.isArray(reviewSurface?.generatedDocumentationBindingProjection?.requiredFields) && reviewSurface.generatedDocumentationBindingProjection.requiredFields.includes("generatedDocumentationBindingProjection.checkedApplyWriteEnabled"), "Visual Studio generated binding projection must require write-disabled state.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");

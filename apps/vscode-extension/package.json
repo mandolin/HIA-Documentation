@@ -27,6 +27,7 @@
     "onCommand:hia.showCheckedApplySandboxConfirmation",
     "onCommand:hia.showHostApplyUxIntake",
     "onCommand:hia.showAuthoringSurface",
+    "onCommand:hia.showGeneratedBindingRelations",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
   ],
@@ -79,6 +80,10 @@
       {
         "command": "hia.showAuthoringSurface",
         "title": "HIA: Show Authoring Surface"
+      },
+      {
+        "command": "hia.showGeneratedBindingRelations",
+        "title": "HIA: Show Generated Binding Relations"
       }
     ],
     "configuration": {

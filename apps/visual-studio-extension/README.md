@@ -67,6 +67,13 @@ The W-P51.5 Live Authoring tab starts a separate read-only projection session ag
 
 The W-P43 `hostApplyUx` section remains a read-only input snapshot from before runtime capture. It can show that provider review, target-owner evidence and deferred gates are visible, but it must not imply checked apply write, provider/network execution or target command execution. The separate `runtime-capture/capture.json` contract records the later W-P51.6 host execution.
 
+The `generatedDocumentationBindingProjection` section projects the neutral
+`generated-documentation-binding-host-projection@0.1.0-draft` summary into the
+Authoring tab. It displays binding, expansion, target, stable-instance-key, and
+diagnostic counts plus source-to-target and three-quality-dimension visibility.
+It remains an embedded public-safe summary: it does not load sidecar files,
+source bodies/ranges, locals values, or editor/write capabilities.
+
 The `providerReviewPanel` section is a review linkage contract, not a provider execution API. It may display provider result/refusal taxonomy and target-owner handoff state, but it must keep provider output review-only and must not grant workspace or target repository write authority.
 
 The `targetOwnerEvidenceView` section is also read-only. It may display readiness matrix counts, evidence completeness, transcript slots and deferred gates, but it must not imply that HIA ran target commands, created a sandbox/branch/PR, received a target-owner transcript or enabled checked apply write.

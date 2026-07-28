@@ -10,6 +10,7 @@ const evidencePath = path.join(rootDir, "dist", "devtools-extension-check.json")
 const {
   HIA_DEVTOOLS_OPEN_REQUEST_MESSAGE_TYPE,
   HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT,
+  HIA_DEVTOOLS_GENERATED_BINDING_PROJECTION_CONTRACT,
   HIA_DEVTOOLS_CHECKED_APPLY_CONFIRMATION_CONTRACT,
   HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT,
   HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT,
@@ -39,6 +40,7 @@ async function main() {
   const manifest = JSON.parse(await readFile(path.join(extensionRoot, "manifest.json"), "utf8"));
   const devtoolsHtml = await readFile(path.join(extensionRoot, "devtools.html"), "utf8");
   const panelHtml = await readFile(path.join(extensionRoot, "panel.html"), "utf8");
+  const panelJs = await readFile(path.join(extensionRoot, "panel.js"), "utf8");
   const defaultPayload = JSON.parse(await readFile(path.join(extensionRoot, "browser-panel-payload.json"), "utf8"));
   const panel = createHiaDevToolsPanelViewModel(createFixturePayload());
   const defaultPanel = createHiaDevToolsPanelViewModel(defaultPayload);
@@ -56,8 +58,21 @@ async function main() {
   assert.deepEqual(manifest.host_permissions, [], "DevTools shell must not request host permissions in the first slice.");
   assert.match(devtoolsHtml, /<script src="\.\/devtools\.js"><\/script>/u, "DevTools page must load a local script.");
   assert.match(panelHtml, /<script type="module" src="\.\/panel\.js"><\/script>/u, "Panel page must load a local module script.");
+  assert.match(panelHtml, /data-hia-view-tab="bindings"/u, "Panel page must expose the generated binding relation tab.");
+  assert.match(panelJs, /renderGeneratedBindingDetail/u, "Panel must render generated binding relation details.");
   assert.equal(panel.summary.entryCount, 1, "Fixture entry count must be preserved.");
   assert.equal(panel.summary.relationCount, 1, "Fixture relation count must be preserved.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.contract, HIA_DEVTOOLS_GENERATED_BINDING_PROJECTION_CONTRACT, "DevTools generated binding projection contract must be explicit.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.status, "available", "DevTools generated binding projection must be available for the fixture.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.bindingCount, 1, "DevTools generated binding projection must expose binding count.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.expansionCount, 2, "DevTools generated binding projection must expose expansion count.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.targetCount, 2, "DevTools generated binding projection must expose target count.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.stableInstanceKeyCount, 2, "DevTools generated binding projection must expose stable instance keys.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.targetRelationVisible, true, "DevTools generated binding projection must show one-to-many targets.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.threeQualityDimensionsVisible, true, "DevTools generated binding projection must show resolution/confidence/provenance separately.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.sourceBodyIncluded, false, "DevTools generated binding projection must not expose source bodies.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.sourcesContentPolicy, "none", "DevTools generated binding projection must preserve sourcesContent none.");
+  assert.equal(panel.review.generatedDocumentationBindingProjection.workspaceWriteAllowed, false, "DevTools generated binding projection must keep workspace writes disabled.");
   assert.equal(defaultPanel.summary.entryCount, 1, "Default DevTools payload must keep the panel populated for runtime capture.");
   assert.equal(defaultPanel.summary.relationCount, 1, "Default DevTools payload must include a relation for open-request capture.");
   assert.equal(defaultPanel.review.summary.itemCount, 1, "Default DevTools payload must include one review item.");
@@ -233,6 +248,8 @@ async function main() {
         checkedApplyStatus: defaultPanel.review.checkedApplyConfirmation.status,
         targetOwnerEvidenceStatus: defaultPanel.review.targetOwnerEvidenceView.status,
         authoringProjectionStatus: defaultPanel.review.authoringProjection.status,
+        generatedBindingProjectionStatus: defaultPanel.review.generatedDocumentationBindingProjection.status,
+        generatedBindingTargetCount: defaultPanel.review.generatedDocumentationBindingProjection.targetCount,
         includesSourceContent: defaultPanel.review.privacy.includesSourceContent,
         sourcesContentPolicy: defaultPanel.review.privacy.sourcesContentPolicy
       },
@@ -241,6 +258,7 @@ async function main() {
         applyAvailableCount: panel.review.items.filter((item) => item.actionHints.applyAvailable === true).length,
         applyPreview: panel.review.applyPreview,
         authoringProjection: panel.review.authoringProjection,
+        generatedDocumentationBindingProjection: panel.review.generatedDocumentationBindingProjection,
         contract: panel.review.contract,
         contractVersion: panel.review.contractVersion,
         draftCount: panel.review.draftCount,
@@ -376,6 +394,7 @@ function createFixturePayload() {
       targetRepositoryMutationAllowed: false,
       workspaceWriteAllowed: false
     },
+    generatedDocumentationBindingProjection: createFixtureGeneratedBindingProjection(),
     providerAugmentation: {
       actionPolicy: {
         directApplyAllowed: false,
@@ -642,5 +661,52 @@ function createFixturePayload() {
       targetOwnerActionRequiredForWrite: true,
       targetRepositoryMutationCount: 0
     }
+  };
+}
+
+/**
+ * 中文：构造 DevTools 静态检查使用的安全 generated binding relation fixture。
+ * English: Builds the safe generated-binding relation fixture used by the
+ * DevTools static check.
+ */
+function createFixtureGeneratedBindingProjection() {
+  return {
+    contract: "generated-documentation-binding-host-projection",
+    contractVersion: "0.1.0-draft",
+    status: "available",
+    privacy: {
+      sourceBodyIncluded: false,
+      sourceRangeIncluded: false,
+      sidecarPathIncluded: false,
+      localsValueIncluded: false,
+      sourcesContentPolicy: "none"
+    },
+    summary: {
+      bindingCount: 1,
+      diagnosticCount: 0,
+      expansionCount: 2,
+      linkedDocSourceMapEntryCount: 1,
+      stableInstanceKeyCount: 2,
+      targetCount: 2
+    },
+    diagnostics: [],
+    bindings: [{
+      id: "binding:pug:colors:name",
+      sourceIntent: { kind: "documentation-field", field: "description" },
+      bindingRef: { kind: "member-path", rootDeclarationId: "decl:pug:colors:value", memberPath: ["name"] },
+      composition: { relation: "none", mergePolicy: "not-applicable" },
+      quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+      expansions: [{
+        id: "expansion:pug:colors:sky",
+        instanceKey: { displayKey: "gdb-key/v1/string:sky", status: "stable" },
+        quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" },
+        targetIds: ["target:pug:colors:sky"]
+      }],
+      targets: [{
+        id: "target:pug:colors:sky",
+        identity: { kind: "generated-html-element", selector: "article.swatch", symbolId: "element:ColorSwatch" },
+        quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" }
+      }]
+    }]
   };
 }

@@ -38,6 +38,14 @@
   <data name="GeneratedBindingStepCountLabel" xml:space="preserve"><value>生成绑定编写步骤</value></data>
   <data name="GeneratedBindingDiagnosticCountLabel" xml:space="preserve"><value>生成绑定诊断指引</value></data>
   <data name="GeneratedBindingSyntaxFrozenLabel" xml:space="preserve"><value>已冻结具体生成绑定语法</value></data>
+  <data name="GeneratedBindingRelationStatusLabel" xml:space="preserve"><value>生成式绑定关系状态</value></data>
+  <data name="GeneratedBindingRelationBindingCountLabel" xml:space="preserve"><value>生成式绑定关系</value></data>
+  <data name="GeneratedBindingRelationExpansionCountLabel" xml:space="preserve"><value>生成式绑定展开</value></data>
+  <data name="GeneratedBindingRelationTargetCountLabel" xml:space="preserve"><value>生成式绑定目标</value></data>
+  <data name="GeneratedBindingRelationDiagnosticCountLabel" xml:space="preserve"><value>生成式绑定诊断</value></data>
+  <data name="GeneratedBindingRelationStableInstanceKeyCountLabel" xml:space="preserve"><value>稳定生成式绑定实例键</value></data>
+  <data name="GeneratedBindingRelationTargetsVisibleLabel" xml:space="preserve"><value>生成式绑定目标可见</value></data>
+  <data name="GeneratedBindingRelationQualityVisibleLabel" xml:space="preserve"><value>解析/置信度/来源维度可见</value></data>
   <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider 审查输入</value></data>
   <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider 结果类型</value></data>
   <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>目标所有者证据</value></data>

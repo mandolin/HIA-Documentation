@@ -109,6 +109,84 @@
     "sourceBodyIncluded": false,
     "sourcesContentPolicy": "none"
   },
+  "generatedDocumentationBindingProjection": {
+    "contract": "generated-documentation-binding-host-projection",
+    "contractVersion": "0.1.0-draft",
+    "status": "available",
+    "privacy": {
+      "sourceBodyIncluded": false,
+      "sourceRangeIncluded": false,
+      "sidecarPathIncluded": false,
+      "localsValueIncluded": false,
+      "sourcesContentPolicy": "none"
+    },
+    "summary": {
+      "bindingCount": 1,
+      "expansionCount": 2,
+      "targetCount": 2,
+      "diagnosticCount": 0,
+      "stableInstanceKeyCount": 2,
+      "linkedDocSourceMapEntryCount": 1
+    },
+    "diagnostics": [],
+    "bindings": [
+      {
+        "id": "binding:pug:colors:name",
+        "sourceIntent": {
+          "kind": "documentation-field",
+          "field": "description"
+        },
+        "bindingRef": {
+          "kind": "member-path",
+          "rootDeclarationId": "decl:pug:colors:value",
+          "memberPath": [
+            "name"
+          ]
+        },
+        "composition": {
+          "relation": "none",
+          "mergePolicy": "not-applicable"
+        },
+        "quality": {
+          "resolutionKind": "exact",
+          "confidence": "high",
+          "provenanceCoverage": "source-and-generated"
+        },
+        "expansions": [
+          {
+            "id": "expansion:pug:colors:sky",
+            "instanceKey": {
+              "displayKey": "gdb-key/v1/string:sky",
+              "status": "stable"
+            },
+            "quality": {
+              "resolutionKind": "exact",
+              "confidence": "high",
+              "provenanceCoverage": "source-and-generated"
+            },
+            "targetIds": [
+              "target:pug:colors:sky"
+            ]
+          }
+        ],
+        "targets": [
+          {
+            "id": "target:pug:colors:sky",
+            "identity": {
+              "kind": "generated-html-element",
+              "selector": "article.swatch",
+              "symbolId": "element:ColorSwatch"
+            },
+            "quality": {
+              "resolutionKind": "exact",
+              "confidence": "high",
+              "provenanceCoverage": "source-and-generated"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "providerAugmentation": {
     "actionPolicy": {
       "directApplyAllowed": false,

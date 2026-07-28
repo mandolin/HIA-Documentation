@@ -37,6 +37,14 @@ export const HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND = "hia.showHostApplyUxIntake"
  * @lang en Read-only VS Code command id for inspecting W-P50 authoring surface evidence.
  */
 export const HIA_SHOW_AUTHORING_SURFACE_COMMAND = "hia.showAuthoringSurface";
+/**
+ * VS Code read-only command id for inspecting W-P52 generated binding relations.
+ *
+ * @lang zh-CN VS Code 中用于查看 W-P52 generated binding 一对多关系的只读命令标识。
+ * @lang en Read-only VS Code command id for inspecting W-P52 generated-binding
+ * one-to-many relations.
+ */
+export const HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND = "hia.showGeneratedBindingRelations";
 export const HIA_CLIENT_ID = "hiaDocumentation";
 export const HIA_CONFIGURATION_SECTION = "hia";
 export const HIA_SERVER_RELATIVE_PATH = ["..", "..", "packages", "lsp", "dist", "node.js"] as const;
@@ -859,6 +867,81 @@ export interface HiaVscodeAuthoringSurfaceChoice {
   mode: HiaVscodeAuthoringModeSummary;
 }
 
+/**
+ * W-P52 generated binding relation evidence shape consumed by VS Code.
+ *
+ * @lang zh-CN 该结构只承载 source-linkage 生成的 public-safe 投影；不含源码正文、
+ * sidecar path、locals value/digest 或可写编辑。
+ * @lang en This shape carries only the public-safe projection produced by
+ * source-linkage; it contains no source bodies, sidecar paths, locals
+ * values/digests, or writable edits.
+ */
+export interface HiaVscodeGeneratedBindingProjectionEvidence {
+  contract?: string;
+  contractVersion?: string;
+  phase?: string;
+  projection?: HiaVscodeGeneratedBindingProjection;
+  status?: string;
+  summary?: HiaVscodeGeneratedBindingProjectionSummary;
+}
+
+/** 中文：VS Code 可读的 generated binding 投影。English: Generated-binding projection readable by VS Code. */
+export interface HiaVscodeGeneratedBindingProjection {
+  bindings?: HiaVscodeGeneratedBindingRelation[];
+  contract?: string;
+  contractVersion?: string;
+  diagnostics?: Array<{ code?: string; severity?: string }>;
+  privacy?: {
+    localsValueIncluded?: boolean;
+    sidecarPathIncluded?: boolean;
+    sourceBodyIncluded?: boolean;
+    sourceRangeIncluded?: boolean;
+    sourcesContentPolicy?: string;
+  };
+  status?: string;
+  summary?: HiaVscodeGeneratedBindingProjectionSummary;
+}
+
+/** 中文：一条绑定到 targets 的安全关系。English: Safe relation from one binding to its targets. */
+export interface HiaVscodeGeneratedBindingRelation {
+  bindingRef?: { memberPath?: string[]; rootDeclarationId?: string };
+  composition?: { mergePolicy?: string; relation?: string };
+  expansions?: Array<{
+    id?: string;
+    instanceKey?: { displayKey?: string; status?: string };
+    quality?: HiaVscodeGeneratedBindingQuality;
+    targetIds?: string[];
+  }>;
+  id?: string;
+  quality?: HiaVscodeGeneratedBindingQuality;
+  sourceIntent?: { field?: string; kind?: string };
+  targets?: Array<{ id?: string; identity?: { kind?: string; selector?: string; symbolId?: string } }>;
+}
+
+/** 中文：resolution/confidence/provenance 三维质量。English: Resolution/confidence/provenance quality dimensions. */
+export interface HiaVscodeGeneratedBindingQuality {
+  confidence?: string;
+  provenanceCoverage?: string;
+  resolutionKind?: string;
+}
+
+/** 中文：投影界面的只读计数。English: Read-only counters for the projection surface. */
+export interface HiaVscodeGeneratedBindingProjectionSummary {
+  bindingCount?: number;
+  diagnosticCount?: number;
+  expansionCount?: number;
+  stableInstanceKeyCount?: number;
+  targetCount?: number;
+}
+
+/** 中文：生成 binding QuickPick 选择项。English: Generated-binding QuickPick choice. */
+export interface HiaVscodeGeneratedBindingRelationChoice {
+  description?: string;
+  detail?: string;
+  label: string;
+  relation: HiaVscodeGeneratedBindingRelation;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -1606,6 +1689,83 @@ export function createHiaVscodeAuthoringSurfaceReport(
   }
 
   return lines;
+}
+
+/**
+ * 中文：将 generated binding 安全投影转为 VS Code picker 选择项。
+ * English: Converts a safe generated-binding projection into VS Code picker choices.
+ */
+export function createHiaVscodeGeneratedBindingRelationChoices(
+  evidence: HiaVscodeGeneratedBindingProjectionEvidence
+): HiaVscodeGeneratedBindingRelationChoice[] {
+  const relations = evidence.projection?.bindings ?? [];
+
+  return relations.map((relation, index) => {
+    const memberPath = relation.bindingRef?.memberPath?.join(".") || relation.bindingRef?.rootDeclarationId || "binding ref unavailable";
+    const quality = formatHiaGeneratedBindingQuality(relation.quality);
+    const targetCount = relation.targets?.length ?? 0;
+    return {
+      description: `${targetCount} target(s) · ${quality}`,
+      detail: `${relation.sourceIntent?.kind || "source intent"}${relation.sourceIntent?.field ? ` / ${relation.sourceIntent.field}` : ""} · ${relation.composition?.relation || "none"}`,
+      label: relation.id || `Generated binding ${index + 1}: ${memberPath}`,
+      relation
+    };
+  });
+}
+
+/**
+ * 中文：创建 generated binding relation 的中英双语只读报告。
+ * English: Creates a bilingual read-only report for a generated-binding relation.
+ */
+export function createHiaVscodeGeneratedBindingRelationReport(
+  evidence: HiaVscodeGeneratedBindingProjectionEvidence,
+  relation?: HiaVscodeGeneratedBindingRelation
+): string[] {
+  const projection = evidence.projection || {};
+  const summary = projection.summary || evidence.summary || {};
+  const selected = relation || projection.bindings?.[0];
+  const lines = [
+    `Evidence / 证据: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status / 状态: ${evidence.status || projection.status || "unknown"}`,
+    `Phase / 阶段: ${evidence.phase || "W-P52.6"}`,
+    `Projection / 投影: ${projection.contract || "generated-documentation-binding-host-projection"}@${projection.contractVersion || "unknown"}`,
+    `Bindings / 绑定: ${formatOptionalNumber(summary.bindingCount)}`,
+    `Expansions / 展开: ${formatOptionalNumber(summary.expansionCount)}`,
+    `Targets / 目标: ${formatOptionalNumber(summary.targetCount)}`,
+    `Stable instance keys / 稳定实例键: ${formatOptionalNumber(summary.stableInstanceKeyCount)}`,
+    `Diagnostics / 诊断: ${formatOptionalNumber(summary.diagnosticCount)}`,
+    `Source body / 源码正文: ${projection.privacy?.sourceBodyIncluded ? "included / 已包含" : "not included / 未包含"}`,
+    `Sidecar path / sidecar 路径: ${projection.privacy?.sidecarPathIncluded ? "included / 已包含" : "not included / 未包含"}`,
+    `Locals value / locals 值: ${projection.privacy?.localsValueIncluded ? "included / 已包含" : "not included / 未包含"}`,
+    `sourcesContent policy / 源码正文策略: ${projection.privacy?.sourcesContentPolicy || "none"}`
+  ];
+
+  if (!selected) {
+    return lines;
+  }
+
+  const memberPath = selected.bindingRef?.memberPath?.join(".") || selected.bindingRef?.rootDeclarationId || "unknown";
+  lines.push(
+    `Binding / 绑定: ${selected.id || "unknown"}`,
+    `Binding ref / 绑定引用: ${memberPath}`,
+    `Source intent / 上游意图: ${selected.sourceIntent?.kind || "unknown"}${selected.sourceIntent?.field ? ` / ${selected.sourceIntent.field}` : ""}`,
+    `Resolution / 解析质量: ${formatHiaGeneratedBindingQuality(selected.quality)}`,
+    `Composition / 组合: ${selected.composition?.relation || "none"} / ${selected.composition?.mergePolicy || "not-applicable"}`
+  );
+
+  for (const expansion of selected.expansions || []) {
+    lines.push(`Expansion / 展开: ${expansion.id || "unknown"} · key=${expansion.instanceKey?.displayKey || expansion.instanceKey?.status || "unknown"} · ${formatHiaGeneratedBindingQuality(expansion.quality)} · targets=${expansion.targetIds?.length ?? 0}`);
+  }
+  for (const target of selected.targets || []) {
+    const identity = target.identity || {};
+    lines.push(`Target / 目标: ${target.id || "unknown"} · ${identity.kind || "unknown"}${identity.selector ? ` · ${identity.selector}` : ""}${identity.symbolId ? ` · ${identity.symbolId}` : ""}`);
+  }
+
+  return lines;
+}
+
+function formatHiaGeneratedBindingQuality(quality: HiaVscodeGeneratedBindingQuality | undefined): string {
+  return `${quality?.resolutionKind || "unknown"} / ${quality?.confidence || "unknown"} / ${quality?.provenanceCoverage || "unknown"}`;
 }
 
 /**

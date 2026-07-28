@@ -25,10 +25,18 @@ VS Code is the first IDE shell for HIA Documentation. Other IDE integrations sho
   - `HIA: Open Source Linkage`
   - `HIA: Open Project Relations`
   - `HIA: Validate Workspace`
+  - `HIA: Show Generated Binding Relations`
 
 `HIA: Build Docs` delegates to the shared CLI and reads `hia.build.*` workspace settings, including project manifest builds. `HIA: Open Preview` reads the generated manifest when available, opens the manifest entrypoint, and warns when the preview may be stale. `HIA: Open Source Linkage` consumes `hia/documentSourceMapIndex` and uses native VS Code pickers to navigate original source, generated artifact or the existing documentation preview. `HIA: Open Project Relations` consumes `hia/projectRelationGraph` from `project-index.json`, then lets the user navigate relation-backed source files, generated artifacts, the documentation preview, or copy stable relation/entry ids. These commands do not execute producers, parse generated HTML, embed `sourcesContent`, or open targets outside the workspace. `HIA: Validate Workspace` asks the LSP server for capability, profile, resource index, authoring location and resource action data, then writes a validation report to the HIA output channel.
 
 The extension does not parse JSDoc, generate HTML directly, or duplicate core diagnostics.
+
+`HIA: Show Generated Binding Relations` reads the public-safe
+`dist/wp52-renderer-and-host-projection/binding-relation-projection.json`
+evidence projection and displays source bindings, one-to-many targets, stable
+instance keys, resolution/confidence/provenance, and diagnostics in an output
+channel/QuickPick flow. It never reads a sidecar path, executes a binding
+expression or locals, invokes edit APIs, or writes the workspace.
 
 ## Runtime Evidence
 

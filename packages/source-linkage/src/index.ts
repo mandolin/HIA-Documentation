@@ -62,6 +62,19 @@ export {
   type GeneratedDocumentationBindingSourceIntent,
   type GeneratedDocumentationBindingTargetIdentity
 } from "./generated-documentation-binding-index.js";
+export {
+  GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT,
+  GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT_VERSION,
+  createGeneratedDocumentationBindingHostProjection,
+  type GeneratedDocumentationBindingHostBinding,
+  type GeneratedDocumentationBindingHostDiagnostic,
+  type GeneratedDocumentationBindingHostExpansion,
+  type GeneratedDocumentationBindingHostProjection,
+  type GeneratedDocumentationBindingHostProjectionPrivacy,
+  type GeneratedDocumentationBindingHostProjectionSummary,
+  type GeneratedDocumentationBindingHostQuality,
+  type GeneratedDocumentationBindingHostTarget
+} from "./generated-documentation-binding-host-projection.js";
 
 export interface DocSourceMapIndexOptions {
   path?: string;

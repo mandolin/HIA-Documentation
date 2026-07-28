@@ -15,6 +15,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.
 - Emits default CSS/JS assets from `@hia-doc/theme-default`.
 - 项目模式额外输出 `project-index.json`，作为 portal/search 可消费的稳定中立索引；源码正文不会进入该索引。
+- 项目输入可选接受 `generatedDocumentationBindingProjection`（来自 `@hia-doc/source-linkage`）：HTML 与 `project-index.json` 只读呈现 binding → expansion → target、stable instance key、resolution/confidence/provenance 与诊断计数；不加载 sidecar path、不嵌入 source body/locals，也不把完整模型放回 ordinary doc-source-map。
 - Returns a renderer manifest with entrypoint, locale and file metadata for CLI or other writers.
 
 ## Contract

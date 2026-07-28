@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createDocSourceMapIndex,
+  createGeneratedDocumentationBindingHostProjection,
   createGeneratedDocumentationBindingIndex,
   findGeneratedBindingsForDocSourceMapEntry,
   findGeneratedBindingsForTarget,
@@ -226,6 +227,51 @@ describe("generated-documentation-binding bidirectional index", () => {
     ]);
     expect(Object.isFrozen(index)).toBe(true);
     expect(Object.isFrozen(index.targets)).toBe(true);
+  });
+
+  it("projects the indexed relation for hosts without source bodies, paths, locals, or diagnostic free text", () => {
+    const index = createGeneratedDocumentationBindingIndex(
+      createPugLikeSidecar(),
+      { docSourceMapIndex: createDocSourceMapIndex(createDocSourceMap()) }
+    );
+    const projection = createGeneratedDocumentationBindingHostProjection(index);
+
+    expect(projection).toMatchObject({
+      contract: "generated-documentation-binding-host-projection",
+      contractVersion: "0.1.0-draft",
+      bindingContract: "generated-documentation-binding",
+      status: "available",
+      privacy: {
+        sourceBodyIncluded: false,
+        sourceRangeIncluded: false,
+        sidecarPathIncluded: false,
+        localsValueIncluded: false,
+        diagnosticFreeTextIncluded: false,
+        sourcesContentPolicy: "none"
+      },
+      summary: {
+        bindingCount: 1,
+        expansionCount: 2,
+        targetCount: 2,
+        stableInstanceKeyCount: 2
+      }
+    });
+    expect(projection.bindings[0]).toMatchObject({
+      id: "binding:pug:colors:name",
+      bindingRef: { memberPath: ["name"] },
+      quality: { resolutionKind: "exact", confidence: "high", provenanceCoverage: "source-and-generated" }
+    });
+    expect(projection.bindings[0]?.expansions[0]).toMatchObject({
+      instanceKey: { displayKey: "gdb-key/v1/string:sky", status: "stable" }
+    });
+    expect(projection.bindings[0]?.targets[0]).toMatchObject({
+      id: "target:pug:colors:sky",
+      identity: { kind: "generated-html-element" }
+    });
+    expect(JSON.stringify(projection)).not.toContain("src/colors.pug");
+    expect(JSON.stringify(projection)).not.toContain("colors.gdb.json");
+    expect(Object.isFrozen(projection)).toBe(true);
+    expect(Object.isFrozen(projection.bindings)).toBe(true);
   });
 
   it("rejects a sidecar path declaration that does not match the linked doc-source-map", () => {

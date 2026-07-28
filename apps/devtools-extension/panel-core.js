@@ -12,6 +12,11 @@ export const HIA_DEVTOOLS_HOST_APPLY_UX_CONTRACT = "hia-devtools-host-apply-ux-s
 export const HIA_DEVTOOLS_PROVIDER_REVIEW_LINKAGE_PANEL_CONTRACT = "hia-devtools-provider-review-linkage-panel";
 export const HIA_DEVTOOLS_TARGET_OWNER_EVIDENCE_VIEW_CONTRACT = "hia-devtools-target-owner-evidence-view";
 export const HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT = "hia-devtools-authoring-projection-summary";
+/**
+ * 中文：DevTools 对 W-P52 generated binding relation 的只读摘要 contract。
+ * English: Read-only DevTools summary contract for W-P52 generated-binding relations.
+ */
+export const HIA_DEVTOOLS_GENERATED_BINDING_PROJECTION_CONTRACT = "hia-devtools-generated-binding-projection-summary";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -99,6 +104,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
     },
     applyPreview: createDevToolsApplyPreviewSummary(items),
     authoringProjection: createDevToolsAuthoringProjectionSummary(input),
+    generatedDocumentationBindingProjection: createDevToolsGeneratedBindingProjectionSummary(input),
     checkedApplyConfirmation: createDevToolsCheckedApplyConfirmationSummary(input),
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
     contractVersion: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT_VERSION,
@@ -222,6 +228,105 @@ function createDevToolsAuthoringProjectionSummary(payload) {
     status: stringValue(input?.status) ?? "not-available",
     targetRepositoryMutationAllowed: booleanValue(input?.targetRepositoryMutationAllowed) ?? false,
     workspaceWriteAllowed: booleanValue(input?.workspaceWriteAllowed) ?? false
+  };
+}
+
+/**
+ * 将 source-linkage 的 generated binding host projection 规整为 DevTools 安全摘要。
+ * Normalize a source-linkage generated-binding host projection into a safe DevTools summary.
+ *
+ * @remarks
+ * 中文：只复制 binding/expansion/target identity 与三维质量；忽略路径、source range、
+ * locals、diagnostic message 和未识别字段。
+ * English: Copies only binding/expansion/target identity and the three quality
+ * dimensions; paths, source ranges, locals, diagnostic messages, and unknown
+ * fields are ignored.
+ */
+function createDevToolsGeneratedBindingProjectionSummary(payload) {
+  const input = selectGeneratedDocumentationBindingProjection(payload);
+  const summary = isRecord(input?.summary) ? input.summary : {};
+  const privacy = isRecord(input?.privacy) ? input.privacy : {};
+  const bindings = arrayValue(input?.bindings).map(normalizeGeneratedBindingRelation);
+
+  return {
+    bindingCount: numberValue(summary.bindingCount) ?? bindings.length,
+    bindings,
+    contract: HIA_DEVTOOLS_GENERATED_BINDING_PROJECTION_CONTRACT,
+    diagnosticCount: numberValue(summary.diagnosticCount) ?? arrayValue(input?.diagnostics).length,
+    expansionCount: numberValue(summary.expansionCount) ?? bindings.reduce((count, binding) => count + binding.expansions.length, 0),
+    linkedDocSourceMapEntryCount: numberValue(summary.linkedDocSourceMapEntryCount) ?? 0,
+    sourceBindingVisible: bindings.length > 0,
+    sourceBodyIncluded: false,
+    sourceRangeIncluded: false,
+    stableInstanceKeyCount: numberValue(summary.stableInstanceKeyCount) ?? bindings.reduce((count, binding) => count + binding.expansions.filter((expansion) => expansion.instanceKey.status === "stable").length, 0),
+    status: stringValue(input?.status) ?? "not-available",
+    targetCount: numberValue(summary.targetCount) ?? bindings.reduce((count, binding) => count + binding.targets.length, 0),
+    targetRelationVisible: bindings.some((binding) => binding.targets.length > 0),
+    threeQualityDimensionsVisible: bindings.some((binding) => binding.quality.resolutionKind.length > 0 && binding.quality.confidence.length > 0 && binding.quality.provenanceCoverage.length > 0),
+    writeAuthority: "disabled",
+    workspaceWriteAllowed: false,
+    targetRepositoryMutationAllowed: false,
+    providerNetworkExecuted: false,
+    sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none"
+  };
+}
+
+function normalizeGeneratedBindingRelation(value) {
+  const input = isRecord(value) ? value : {};
+  const bindingRef = isRecord(input.bindingRef) ? input.bindingRef : {};
+  const sourceIntent = isRecord(input.sourceIntent) ? input.sourceIntent : {};
+  const composition = isRecord(input.composition) ? input.composition : {};
+
+  return {
+    bindingRef: {
+      memberPath: stringArray(bindingRef.memberPath),
+      rootDeclarationId: stringValue(bindingRef.rootDeclarationId) ?? "unknown"
+    },
+    composition: {
+      mergePolicy: stringValue(composition.mergePolicy) ?? "not-applicable",
+      relation: stringValue(composition.relation) ?? "none"
+    },
+    expansions: arrayValue(input.expansions).map((expansion) => {
+      const item = isRecord(expansion) ? expansion : {};
+      const instanceKey = isRecord(item.instanceKey) ? item.instanceKey : {};
+      return {
+        id: stringValue(item.id) ?? "unknown",
+        instanceKey: {
+          displayKey: stringValue(instanceKey.displayKey),
+          status: stringValue(instanceKey.status) ?? "unknown"
+        },
+        quality: normalizeGeneratedBindingQuality(item.quality),
+        targetIds: stringArray(item.targetIds)
+      };
+    }),
+    id: stringValue(input.id) ?? "binding:unknown",
+    quality: normalizeGeneratedBindingQuality(input.quality),
+    sourceIntent: {
+      field: stringValue(sourceIntent.field),
+      kind: stringValue(sourceIntent.kind) ?? "unknown"
+    },
+    targets: arrayValue(input.targets).map((target) => {
+      const item = isRecord(target) ? target : {};
+      const identity = isRecord(item.identity) ? item.identity : {};
+      return {
+        id: stringValue(item.id) ?? "target:unknown",
+        identity: {
+          kind: stringValue(identity.kind) ?? "unknown",
+          selector: stringValue(identity.selector),
+          symbolId: stringValue(identity.symbolId)
+        },
+        quality: normalizeGeneratedBindingQuality(item.quality)
+      };
+    })
+  };
+}
+
+function normalizeGeneratedBindingQuality(value) {
+  const input = isRecord(value) ? value : {};
+  return {
+    confidence: stringValue(input.confidence) ?? "unknown",
+    provenanceCoverage: stringValue(input.provenanceCoverage) ?? "unknown",
+    resolutionKind: stringValue(input.resolutionKind) ?? "unknown"
   };
 }
 
@@ -490,6 +595,20 @@ function selectAuthoringProjection(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.authoringProjection)) {
     return input.result.authoringProjection;
+  }
+
+  return undefined;
+}
+
+function selectGeneratedDocumentationBindingProjection(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.generatedDocumentationBindingProjection)) {
+    return input.generatedDocumentationBindingProjection;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.generatedDocumentationBindingProjection)) {
+    return input.result.generatedDocumentationBindingProjection;
   }
 
   return undefined;

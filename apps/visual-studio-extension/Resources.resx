@@ -38,6 +38,14 @@
   <data name="GeneratedBindingStepCountLabel" xml:space="preserve"><value>Generated-binding authoring steps</value></data>
   <data name="GeneratedBindingDiagnosticCountLabel" xml:space="preserve"><value>Generated-binding diagnostic guidance</value></data>
   <data name="GeneratedBindingSyntaxFrozenLabel" xml:space="preserve"><value>Concrete generated-binding syntax frozen</value></data>
+  <data name="GeneratedBindingRelationStatusLabel" xml:space="preserve"><value>Generated-binding relation status</value></data>
+  <data name="GeneratedBindingRelationBindingCountLabel" xml:space="preserve"><value>Generated-binding relations</value></data>
+  <data name="GeneratedBindingRelationExpansionCountLabel" xml:space="preserve"><value>Generated-binding expansions</value></data>
+  <data name="GeneratedBindingRelationTargetCountLabel" xml:space="preserve"><value>Generated-binding targets</value></data>
+  <data name="GeneratedBindingRelationDiagnosticCountLabel" xml:space="preserve"><value>Generated-binding diagnostics</value></data>
+  <data name="GeneratedBindingRelationStableInstanceKeyCountLabel" xml:space="preserve"><value>Stable generated-binding instance keys</value></data>
+  <data name="GeneratedBindingRelationTargetsVisibleLabel" xml:space="preserve"><value>Generated binding targets visible</value></data>
+  <data name="GeneratedBindingRelationQualityVisibleLabel" xml:space="preserve"><value>Resolution/confidence/provenance visible</value></data>
   <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider review input</value></data>
   <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider result kinds</value></data>
   <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>Target-owner evidence</value></data>
