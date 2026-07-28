@@ -43,6 +43,25 @@ export {
   validateGeneratedDocumentationBinding,
   type GeneratedDocumentationBindingValidationOptions
 } from "./generated-documentation-binding.js";
+export {
+  createGeneratedDocumentationBindingIndex,
+  findGeneratedBindingsForDocSourceMapEntry,
+  findGeneratedBindingsForTarget,
+  findGeneratedBindingsForTargetSymbol,
+  findGeneratedTargetsForBinding,
+  type GeneratedDocumentationBindingComposition,
+  type GeneratedDocumentationBindingIndex,
+  type GeneratedDocumentationBindingIndexedBinding,
+  type GeneratedDocumentationBindingIndexedExpansion,
+  type GeneratedDocumentationBindingIndexedTarget,
+  type GeneratedDocumentationBindingIndexOptions,
+  type GeneratedDocumentationBindingInstanceKey,
+  type GeneratedDocumentationBindingReference,
+  type GeneratedDocumentationBindingResolution,
+  type GeneratedDocumentationBindingScope,
+  type GeneratedDocumentationBindingSourceIntent,
+  type GeneratedDocumentationBindingTargetIdentity
+} from "./generated-documentation-binding-index.js";
 
 export interface DocSourceMapIndexOptions {
   path?: string;
@@ -51,6 +70,13 @@ export interface DocSourceMapIndexOptions {
 export interface DocSourceMapIndex {
   artifactCount: number;
   bindingSidecarCount: number;
+  /**
+   * 中文：doc-source-map 声明的 generated binding sidecar 元数据；不加载
+   * sidecar 正文。
+   * English: Generated-binding sidecar metadata declared by the doc-source-map;
+   * sidecar bodies are not loaded here.
+   */
+  bindingSidecars: DocSourceMapGeneratedBindingSidecar[];
   contract: typeof DOC_SOURCE_MAP_CONTRACT;
   contractVersion?: string;
   diagnostics: HiaDiagnostic[];
@@ -71,12 +97,42 @@ export interface DocSourceMapIndexedEntry {
   artifactLinks: DocSourceMapArtifactLink[];
   classification?: string;
   diagnostics: string[];
+  /**
+   * 中文：普通 doc-source-map 中仅保存的 sidecar/binding 引用；不含 binding
+   * model 正文。
+   * English: Sidecar/binding references stored by an ordinary doc-source-map;
+   * never the binding-model body.
+   */
+  generatedBindingRefs: DocSourceMapGeneratedBindingRef[];
   id: string;
   kind: string;
   relationKind?: string;
   sourceLinks: DocSourceMapSourceLink[];
   symbolId?: string;
   symbolKind?: string;
+}
+
+/**
+ * 中文：由 doc-source-map entry 指向独立 generated-documentation-binding
+ * sidecar 的最小引用。
+ * English: Minimal reference from a doc-source-map entry to an independent
+ * generated-documentation-binding sidecar.
+ */
+export interface DocSourceMapGeneratedBindingRef {
+  bindingId: string;
+  sidecarId: string;
+}
+
+/**
+ * 中文：普通 doc-source-map 中 generated binding sidecar 的声明元数据。
+ * English: Generated-binding sidecar declaration metadata in an ordinary
+ * doc-source-map.
+ */
+export interface DocSourceMapGeneratedBindingSidecar {
+  contract?: string;
+  contractVersion?: string;
+  id: string;
+  path?: string;
 }
 
 export interface DocSourceMapSourceLink {
@@ -250,7 +306,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   const artifacts = collectIndexedNodes(value.artifacts);
   const sources = collectIndexedNodes(value.sources);
   const sourceMaps = collectIndexedNodes(value.sourceMaps).map(indexedNodeToSourceMapLink);
-  const bindingSidecars = collectIndexedNodes(value.generatedBindingSidecars);
+  const bindingSidecars = collectGeneratedBindingSidecars(value.generatedBindingSidecars);
   const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   const sourceById = new Map(sources.map((source) => [source.id, source]));
   const bindingSidecarById = new Map(bindingSidecars.map((sidecar) => [sidecar.id, sidecar]));
@@ -285,6 +341,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   return {
     artifactCount: artifacts.length,
     bindingSidecarCount: bindingSidecars.length,
+    bindingSidecars,
     contract: DOC_SOURCE_MAP_CONTRACT,
     ...(contractVersion ? { contractVersion } : {}),
     diagnostics,
@@ -595,6 +652,13 @@ function createIndexedEntry(
   const artifactLinks = Array.isArray(entry.artifactRefs)
     ? entry.artifactRefs.filter(isRecord).map((artifactRef) => createArtifactLink(artifactRef, artifactById))
     : [];
+  const generatedBindingRefs = Array.isArray(entry.generatedBindingRefs)
+    ? entry.generatedBindingRefs.filter(isRecord).flatMap((bindingRef) => {
+      const bindingId = stringValue(bindingRef.bindingId);
+      const sidecarId = stringValue(bindingRef.sidecarId);
+      return bindingId && sidecarId ? [{ bindingId, sidecarId }] : [];
+    })
+    : [];
 
   for (const sourceRef of Array.isArray(entry.sourceRefs) ? entry.sourceRefs.filter(isRecord) : []) {
     const sourceId = stringValue(sourceRef.sourceId);
@@ -649,6 +713,7 @@ function createIndexedEntry(
   const item: DocSourceMapIndexedEntry = {
     artifactLinks,
     diagnostics: collectEntryDiagnosticCodes(entry.diagnostics),
+    generatedBindingRefs,
     id,
     kind: stringValue(entry.kind) ?? "entry",
     sourceLinks
@@ -854,6 +919,35 @@ function collectIndexedNodes(value: unknown): IndexedNode[] {
       }
 
       return node;
+    });
+}
+
+function collectGeneratedBindingSidecars(value: unknown): DocSourceMapGeneratedBindingSidecar[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .filter(isRecord)
+    .map((item, index) => {
+      const sidecar: DocSourceMapGeneratedBindingSidecar = {
+        id: stringValue(item.id) ?? `generated-binding-sidecar:${index + 1}`
+      };
+      const contract = stringValue(item.contract);
+      const contractVersion = stringValue(item.contractVersion);
+      const sidecarPath = stringValue(item.path);
+
+      if (contract) {
+        sidecar.contract = contract;
+      }
+      if (contractVersion) {
+        sidecar.contractVersion = contractVersion;
+      }
+      if (sidecarPath) {
+        sidecar.path = sidecarPath;
+      }
+
+      return sidecar;
     });
 }
 
@@ -1071,6 +1165,7 @@ function createEmptyIndex(options: {
   return {
     artifactCount: 0,
     bindingSidecarCount: 0,
+    bindingSidecars: [],
     contract: DOC_SOURCE_MAP_CONTRACT,
     diagnostics: options.diagnostics,
     entries: [],

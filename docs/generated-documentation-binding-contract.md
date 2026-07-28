@@ -86,8 +86,10 @@ collection references, and duplicated instance keys in one expansion scope.
 
 An individual doc-source-map entry may use `generatedBindingRefs`, containing
 only `bindingId` and `sidecarId`. This is intentionally a reference edge, not
-an embedded bindings/expansions/targets model. W-P52.5 will use those edges to
-build bidirectional indexes.
+an embedded bindings/expansions/targets model. The read-only
+`@hia-doc/source-linkage` bidirectional index consumes those edges together
+with the explicit sidecar; it does not load paths or embed the model back into
+the ordinary map.
 
 ## Compatibility
 

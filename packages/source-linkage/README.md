@@ -16,7 +16,11 @@ It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_
 contract. The package exports its Draft 2020-12 schema and
 `validateGeneratedDocumentationBinding()`. A doc-source-map may declare only a
 safe sidecar reference plus binding ids; it never embeds the full binding model
-or source content. See `docs/generated-documentation-binding-contract.md`.
+or source content. `createGeneratedDocumentationBindingIndex()` consumes an
+explicit in-memory sidecar and a pre-built doc-source-map index to provide
+read-only `binding -> generated targets` and `generated target -> bindings`
+queries. It never loads a sidecar path, executes expressions/locals, or starts
+a renderer or host projection. See `docs/generated-documentation-binding-contract.md`.
 
 ## Example
 
@@ -37,4 +41,23 @@ const result = querySourceLinkedPosition(docIndex, sourceMapIndex, {
   generatedPath: "dist/profile-card.js",
   generatedPosition: { line: 2, column: 1 }
 });
+```
+
+## Generated binding example
+
+```ts
+import {
+  createDocSourceMapIndex,
+  createGeneratedDocumentationBindingIndex,
+  findGeneratedBindingsForTarget,
+  findGeneratedTargetsForBinding
+} from "@hia-doc/source-linkage";
+
+const docIndex = createDocSourceMapIndex(docSourceMapJson);
+const bindingIndex = createGeneratedDocumentationBindingIndex(bindingSidecarJson, {
+  docSourceMapIndex: docIndex
+});
+
+const generatedTargets = findGeneratedTargetsForBinding(bindingIndex, "binding:card-title");
+const sourceBindings = findGeneratedBindingsForTarget(bindingIndex, "target:card-title");
 ```

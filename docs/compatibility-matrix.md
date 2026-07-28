@@ -60,7 +60,7 @@ The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an expli
 | HTMDoc extraction `0.1.0-draft` | `hia-htmdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.htmdoc.json` |
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
 | Doc source map `0.1.0-draft` | satellite generators / fixtures | `@hia-doc/source-linkage`, CLI project build, renderer project summary | `fixtures/project-mixed-alert.docmap.json` plus distributed schema |
-| Generated documentation binding `0.1.0-draft` | future generated-language adapters | `@hia-doc/source-linkage` validator, future W-P52.5 index and host projections | source-linkage neutral sidecar fixture and distributed schema; no production extractor yet |
+| Generated documentation binding `0.1.0-draft` | generated-language adapters | `@hia-doc/source-linkage` validator and read-only bidirectional index; future host projections | distributed schema, neutral source-linkage fixture, and W-P52.4 Pug sidecar cross-check; no host projection yet |
 | Renderer manifest `0.1.0` | `@hia-doc/renderer-html` | CLI, IDE preview | CLI/renderer unit and e2e tests |
 | Project navigation index `0.1.0-draft` | `@hia-doc/renderer-html` | static portals and search | renderer/CLI project-build tests |
 | LSP profile capability data | `@hia-doc/lsp` | IDE shells | `packages/lsp/src/authoring.test.ts` |
