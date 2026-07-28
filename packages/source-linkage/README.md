@@ -29,6 +29,14 @@ relations, stable instance-key state, diagnostics by code/severity, and separate
 resolution/confidence/provenance values. It deliberately omits source bodies and
 ranges, sidecar paths, locals values/digests, and diagnostic free text.
 
+Cross-language reuse keeps parser and scope ownership with each language adapter.
+The current production binding sidecar fixture is Pug. Sass and Vue committed
+fixtures prove only the ordinary source-map/doc-source-map privacy baseline, not
+binding declarations, expansions, lexical scope, or instance keys; JSX has no
+workspace adapter yet, and Meta remains an upstream design input. Those inputs
+must not be treated as generated-binding producers until each adapter emits and
+validates its own reference-only sidecar.
+
 ## Example
 
 ```ts
