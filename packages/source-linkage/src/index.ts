@@ -18,14 +18,31 @@ import {
   type HiaSourcePosition,
   type HiaSourceRange
 } from "@hia-doc/core";
-import { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
+import {
+  DOC_SOURCE_MAP_CONTRACT,
+  DOC_SOURCE_MAP_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+} from "./constants.js";
 
-export { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
+export {
+  DOC_SOURCE_MAP_CONTRACT,
+  DOC_SOURCE_MAP_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+} from "./constants.js";
 export {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_ID,
   DOC_SOURCE_MAP_SCHEMA_VERSION
 } from "./schema.js";
+export {
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  validateGeneratedDocumentationBinding,
+  type GeneratedDocumentationBindingValidationOptions
+} from "./generated-documentation-binding.js";
 
 export interface DocSourceMapIndexOptions {
   path?: string;
@@ -33,6 +50,7 @@ export interface DocSourceMapIndexOptions {
 
 export interface DocSourceMapIndex {
   artifactCount: number;
+  bindingSidecarCount: number;
   contract: typeof DOC_SOURCE_MAP_CONTRACT;
   contractVersion?: string;
   diagnostics: HiaDiagnostic[];
@@ -232,18 +250,22 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   const artifacts = collectIndexedNodes(value.artifacts);
   const sources = collectIndexedNodes(value.sources);
   const sourceMaps = collectIndexedNodes(value.sourceMaps).map(indexedNodeToSourceMapLink);
+  const bindingSidecars = collectIndexedNodes(value.generatedBindingSidecars);
   const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const bindingSidecarById = new Map(bindingSidecars.map((sidecar) => [sidecar.id, sidecar]));
 
   collectPathDiagnostics(diagnostics, artifacts, options.path, "artifact");
   collectPathDiagnostics(diagnostics, sources, options.path, "source");
   collectPathDiagnostics(diagnostics, sourceMaps, options.path, "sourceMap");
+  collectPathDiagnostics(diagnostics, bindingSidecars, options.path, "generated binding sidecar");
   collectContractRefDiagnostics(diagnostics, value.artifacts, options.path);
+  collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, options.path);
   collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, options.path);
   diagnostics.push(...normalizeManifestDiagnostics(value.diagnostics, options.path));
 
   const entries = Array.isArray(value.entries)
-    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, diagnostics, options.path))
+    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, options.path))
     : [];
 
   if (!Array.isArray(value.entries)) {
@@ -262,6 +284,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
 
   return {
     artifactCount: artifacts.length,
+    bindingSidecarCount: bindingSidecars.length,
     contract: DOC_SOURCE_MAP_CONTRACT,
     ...(contractVersion ? { contractVersion } : {}),
     diagnostics,
@@ -561,6 +584,7 @@ function createIndexedEntry(
   index: number,
   sourceById: Map<string, IndexedNode>,
   artifactById: Map<string, IndexedNode>,
+  bindingSidecarById: Map<string, IndexedNode>,
   diagnostics: HiaDiagnostic[],
   targetPath?: string
 ): DocSourceMapIndexedEntry {
@@ -599,6 +623,24 @@ function createIndexedEntry(
         {
           artifactId,
           entryId: id
+        }
+      ));
+    }
+  }
+
+  for (const bindingRef of Array.isArray(entry.generatedBindingRefs) ? entry.generatedBindingRefs.filter(isRecord) : []) {
+    const bindingId = stringValue(bindingRef.bindingId);
+    const sidecarId = stringValue(bindingRef.sidecarId);
+    if (!bindingId || !sidecarId || !bindingSidecarById.has(sidecarId)) {
+      diagnostics.push(createSourceLinkageDiagnostic(
+        "DOC_SOURCE_MAP_BINDING_SIDECAR_UNRESOLVED",
+        "doc-source-map generated binding reference must name a bindingId and declared sidecarId.",
+        "warning",
+        appendTarget(targetPath, `entries.${index}.generatedBindingRefs`),
+        {
+          bindingId: bindingId ?? "",
+          entryId: id,
+          sidecarId: sidecarId ?? ""
         }
       ));
     }
@@ -870,6 +912,43 @@ function collectContractRefDiagnostics(diagnostics: HiaDiagnostic[], artifacts: 
   });
 }
 
+/**
+ * 中文：只校验 doc-source-map 对 generated binding sidecar 的声明，不读取
+ * sidecar 本体；完整 binding model 始终保持在独立 artifact。
+ * English: Validates only doc-source-map declarations of generated-binding
+ * sidecars without reading their bodies; the complete binding model remains in
+ * the independent artifact.
+ */
+function collectGeneratedBindingSidecarDiagnostics(diagnostics: HiaDiagnostic[], sidecars: unknown, targetPath: string | undefined): void {
+  if (!Array.isArray(sidecars)) {
+    return;
+  }
+  const ids = new Set<string>();
+  sidecars.filter(isRecord).forEach((sidecar, index) => {
+    const id = stringValue(sidecar.id);
+    const sidecarPath = stringValue(sidecar.path);
+    if (!id || ids.has(id) || sidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT || sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION) {
+      diagnostics.push(createSourceLinkageDiagnostic(
+        "DOC_SOURCE_MAP_BINDING_SIDECAR_INVALID",
+        "generated binding sidecar must have a unique id and the supported contract/version.",
+        "error",
+        appendTarget(targetPath, `generatedBindingSidecars.${index}`)
+      ));
+    }
+    if (id) {
+      ids.add(id);
+    }
+    if (!sidecarPath || isUnsafeRelativePath(sidecarPath)) {
+      diagnostics.push(createSourceLinkageDiagnostic(
+        "DOC_SOURCE_MAP_UNSAFE_PATH",
+        "generated binding sidecar path must be a safe relative path.",
+        "error",
+        appendTarget(targetPath, `generatedBindingSidecars.${index}.path`)
+      ));
+    }
+  });
+}
+
 function collectSourcesContentDiagnostics(
   diagnostics: HiaDiagnostic[],
   sources: unknown,
@@ -991,6 +1070,7 @@ function createEmptyIndex(options: {
 }): DocSourceMapIndex {
   return {
     artifactCount: 0,
+    bindingSidecarCount: 0,
     contract: DOC_SOURCE_MAP_CONTRACT,
     diagnostics: options.diagnostics,
     entries: [],

@@ -1,7 +1,7 @@
 {
   "contract": "hia-public-portal-data",
   "contractVersion": "0.1.0-draft",
-  "updated": "2026-07-18",
+  "updated": "2026-07-28",
   "project": {
     "id": "project:hia-public-reference",
     "title": "HIA Documentation System Reference",
@@ -93,12 +93,13 @@
       ]
     },
     "schemas": {
-      "minimumCount": 6,
+      "minimumCount": 7,
       "keys": [
         "documentation-profile",
         "documentation-producer",
         "documentation-producer-result",
         "doc-source-map",
+        "generated-documentation-binding",
         "hia-document",
         "project-manifest"
       ]

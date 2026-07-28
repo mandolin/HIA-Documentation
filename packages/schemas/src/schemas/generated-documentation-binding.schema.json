@@ -1,0 +1,905 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "producer",
+    "docSourceMapLinkage",
+    "privacy",
+    "deterministicLocalsPolicy",
+    "compatibility",
+    "bindings",
+    "expansions",
+    "targets",
+    "diagnostics"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "contract": {
+      "const": "generated-documentation-binding"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "producer": {
+      "$ref": "#/$defs/producer"
+    },
+    "docSourceMapLinkage": {
+      "$ref": "#/$defs/docSourceMapLinkage"
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "deterministicLocalsPolicy": {
+      "$ref": "#/$defs/deterministicLocalsPolicy"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/binding"
+      }
+    },
+    "expansions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/expansion"
+      }
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/target"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    },
+    "adapterExtensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "const": "."
+          },
+          {
+            "const": ".."
+          },
+          {
+            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
+          }
+        ]
+      }
+    },
+    "producer": {
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "adapterId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "adapterId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "position": {
+      "type": "object",
+      "required": [
+        "line"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "required": [
+        "sourceId",
+        "range",
+        "rangeSource"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sourceId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        },
+        "rangeSource": {
+          "enum": [
+            "parser",
+            "compiler",
+            "adapter",
+            "source-map",
+            "manual",
+            "heuristic",
+            "unresolved"
+          ]
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "id",
+        "adapterId",
+        "sourceId",
+        "semanticAncestry",
+        "declarationSlot"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^gdb-scope/v1/[^/]+/[^#]+#[^/]+/[^/]+$"
+        },
+        "adapterId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "semanticAncestry": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "declarationSlot": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "aliasMetadata": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "stableUpstreamId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "bindingReference": {
+      "type": "object",
+      "required": [
+        "kind",
+        "rootDeclarationId",
+        "memberPath"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "identifier",
+            "member-path",
+            "adapter-defined"
+          ]
+        },
+        "rootDeclarationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "memberPath": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "adapterReferenceId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "required": [
+        "resolutionKind",
+        "confidence",
+        "provenanceCoverage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resolutionKind": {
+          "enum": [
+            "exact",
+            "inferred",
+            "ambiguous",
+            "unresolved"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "none"
+          ]
+        },
+        "provenanceCoverage": {
+          "enum": [
+            "source-only",
+            "source-and-generated",
+            "generated-only"
+          ]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "resolutionKind": {
+              "const": "exact"
+            },
+            "confidence": {
+              "const": "high"
+            }
+          }
+        },
+        {
+          "properties": {
+            "resolutionKind": {
+              "const": "inferred"
+            },
+            "confidence": {
+              "const": "medium"
+            }
+          }
+        },
+        {
+          "properties": {
+            "resolutionKind": {
+              "const": "inferred"
+            },
+            "confidence": {
+              "const": "low"
+            }
+          }
+        },
+        {
+          "properties": {
+            "resolutionKind": {
+              "const": "ambiguous"
+            },
+            "confidence": {
+              "const": "low"
+            }
+          }
+        },
+        {
+          "properties": {
+            "resolutionKind": {
+              "const": "unresolved"
+            },
+            "confidence": {
+              "const": "none"
+            }
+          }
+        }
+      ]
+    },
+    "sourceIntent": {
+      "type": "object",
+      "required": [
+        "kind",
+        "sourceRef"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "field": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceRef": {
+          "$ref": "#/$defs/sourceRef"
+        },
+        "locale": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "overrideContext": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "none",
+            "base",
+            "child",
+            "include",
+            "adapter-defined"
+          ]
+        },
+        "contextId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "contribution": {
+      "type": "object",
+      "required": [
+        "id",
+        "mode",
+        "order",
+        "sourceRef",
+        "overrideContext"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "mode": {
+          "enum": [
+            "base",
+            "replace",
+            "append",
+            "prepend",
+            "include"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceRef": {
+          "$ref": "#/$defs/sourceRef"
+        },
+        "overrideContext": {
+          "$ref": "#/$defs/overrideContext"
+        }
+      }
+    },
+    "composition": {
+      "type": "object",
+      "required": [
+        "relation",
+        "mergePolicy",
+        "contributions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "relation": {
+          "enum": [
+            "none",
+            "inheritance",
+            "composition"
+          ]
+        },
+        "mergePolicy": {
+          "enum": [
+            "not-applicable",
+            "nearest-explicit-child-wins",
+            "ordered-contribution",
+            "compose-in-linked-order",
+            "same-precedence-singleton-conflict"
+          ]
+        },
+        "contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contribution"
+          }
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "required": [
+        "id",
+        "adapterId",
+        "sourceIntent",
+        "bindingRef",
+        "scope",
+        "resolution",
+        "composition"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "adapterId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceIntent": {
+          "$ref": "#/$defs/sourceIntent"
+        },
+        "bindingRef": {
+          "$ref": "#/$defs/bindingReference"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "resolution": {
+          "$ref": "#/$defs/resolution"
+        },
+        "composition": {
+          "$ref": "#/$defs/composition"
+        },
+        "adapterExtensions": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "stableInstanceKey": {
+      "type": "object",
+      "required": [
+        "status",
+        "key",
+        "origin",
+        "privacySafe"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "stable"
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^gdb-key/v1/(?:string|number|boolean|stable-id):[A-Za-z0-9._~-]+$"
+        },
+        "origin": {
+          "enum": [
+            "explicit-instance-key",
+            "each-object-key",
+            "meta-schema-stable-id",
+            "generated-target-stable-id"
+          ]
+        },
+        "privacySafe": {
+          "const": true
+        }
+      }
+    },
+    "unstableInstanceKey": {
+      "type": "object",
+      "required": [
+        "status",
+        "key",
+        "origin",
+        "privacySafe",
+        "diagnosticCode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "unstable"
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^gdb-key/v1/(?:number|ordinal):[A-Za-z0-9._~-]+$"
+        },
+        "origin": {
+          "const": "array-index"
+        },
+        "privacySafe": {
+          "const": true
+        },
+        "diagnosticCode": {
+          "const": "GDB_INSTANCE_KEY_UNSTABLE"
+        }
+      }
+    },
+    "missingInstanceKey": {
+      "type": "object",
+      "required": [
+        "status",
+        "origin",
+        "diagnosticCode"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "missing"
+        },
+        "origin": {
+          "const": "unavailable"
+        },
+        "diagnosticCode": {
+          "const": "GDB_INSTANCE_KEY_MISSING"
+        }
+      }
+    },
+    "instanceKey": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/stableInstanceKey"
+        },
+        {
+          "$ref": "#/$defs/unstableInstanceKey"
+        },
+        {
+          "$ref": "#/$defs/missingInstanceKey"
+        }
+      ]
+    },
+    "targetIdentity": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "artifactId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "symbolId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "selector": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "artifactId"
+          ]
+        },
+        {
+          "required": [
+            "symbolId"
+          ]
+        }
+      ]
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "id",
+        "identity",
+        "resolution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "identity": {
+          "$ref": "#/$defs/targetIdentity"
+        },
+        "resolution": {
+          "$ref": "#/$defs/resolution"
+        },
+        "adapterExtensions": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "expansion": {
+      "type": "object",
+      "required": [
+        "id",
+        "bindingId",
+        "scopeId",
+        "order",
+        "instanceKey",
+        "resolution",
+        "targetIds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "bindingId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scopeId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "instanceKey": {
+          "$ref": "#/$defs/instanceKey"
+        },
+        "resolution": {
+          "$ref": "#/$defs/resolution"
+        },
+        "targetIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": [
+        "id",
+        "code",
+        "severity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "code": {
+          "enum": [
+            "GDB_REF_SYNTAX_INVALID",
+            "GDB_REF_UNRESOLVED",
+            "GDB_SCOPE_AMBIGUOUS",
+            "GDB_EXPANSION_RUNTIME_ONLY",
+            "GDB_INSTANCE_KEY_MISSING",
+            "GDB_INSTANCE_KEY_UNSTABLE",
+            "GDB_INSTANCE_KEY_DUPLICATE",
+            "GDB_TARGET_MISMATCH",
+            "GDB_INHERITANCE_CONFLICT",
+            "GDB_LOCALS_POLICY_VIOLATION"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "subjectId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "sourcesContentPolicy",
+        "allowAbsolutePaths",
+        "allowUncPaths",
+        "allowSourceBodySerialization",
+        "allowRuntimeValueSerialization",
+        "allowRuntimeExpressionExecution",
+        "allowDigestSerialization",
+        "allowSecretSerialization"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sourcesContentPolicy": {
+          "const": "none"
+        },
+        "allowAbsolutePaths": {
+          "const": false
+        },
+        "allowUncPaths": {
+          "const": false
+        },
+        "allowSourceBodySerialization": {
+          "const": false
+        },
+        "allowRuntimeValueSerialization": {
+          "const": false
+        },
+        "allowRuntimeExpressionExecution": {
+          "const": false
+        },
+        "allowDigestSerialization": {
+          "const": false
+        },
+        "allowSecretSerialization": {
+          "const": false
+        }
+      }
+    },
+    "deterministicLocalsPolicy": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "mode",
+        "adapterId",
+        "bindingAllowlist",
+        "privacyClassification",
+        "limits",
+        "prohibitedSources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "generated-doc-locals"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft-input"
+        },
+        "mode": {
+          "enum": [
+            "none",
+            "deterministic-json-compatible"
+          ]
+        },
+        "inputId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "adapterId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "bindingAllowlist": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "privacyClassification": {
+          "enum": [
+            "metadata-only",
+            "sensitive-not-serialized"
+          ]
+        },
+        "limits": {
+          "type": "object",
+          "required": [
+            "maxDepth",
+            "maxEntries",
+            "maxStringBytes"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "maxDepth": {
+              "const": 12
+            },
+            "maxEntries": {
+              "const": 10000
+            },
+            "maxStringBytes": {
+              "const": 65536
+            }
+          }
+        },
+        "prohibitedSources": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "process-environment",
+              "network",
+              "provider",
+              "host-editor",
+              "implicit-runtime-capture"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "deterministic-json-compatible"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "inputId"
+            ]
+          }
+        }
+      ]
+    },
+    "docSourceMapLinkage": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "sidecarId",
+        "sidecarPath",
+        "entryReferenceField"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "doc-source-map"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "docSourceMapId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sidecarId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sidecarPath": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "entryReferenceField": {
+          "const": "generatedBindingRefs"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "required": [
+        "minimumConsumerContractVersion",
+        "unknownFieldPolicy",
+        "breakingChangePolicy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minimumConsumerContractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "unknownFieldPolicy": {
+          "const": "ignore-unknown-optional-fields"
+        },
+        "breakingChangePolicy": {
+          "const": "new-contract-version-and-schema-id"
+        }
+      }
+    }
+  }
+}

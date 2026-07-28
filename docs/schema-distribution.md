@@ -14,6 +14,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-producer` | `@hia-doc/plugin-sdk` | draft |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | draft |
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
+| `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
 
@@ -32,6 +33,7 @@ Explicit JSON exports are available for non-runtime consumers:
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
+import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import producerSchema from "@hia-doc/schemas/documentation-producer.schema.json" with { type: "json" };
 ```
 

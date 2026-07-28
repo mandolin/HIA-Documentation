@@ -71,6 +71,7 @@ describe("@hia-doc/source-linkage", () => {
 
     expect(index.status).toBe("available");
     expect(index.entryCount).toBe(1);
+    expect(index.bindingSidecarCount).toBe(0);
     expect(index.linkedEntryCount).toBe(1);
     expect(index.unresolvedEntryCount).toBe(0);
     expect(index.entries[0]).toMatchObject({
@@ -231,6 +232,41 @@ describe("@hia-doc/source-linkage", () => {
       "DOC_SOURCE_MAP_SOURCES_CONTENT_BLOCKED"
     ]);
     expect(diagnostics.every((diagnostic) => diagnostic.severity === "error")).toBe(true);
+  });
+
+  it("accepts generated binding sidecar declarations without embedding their binding model", () => {
+    const index = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [{ id: "artifact:html", path: "dist/card.html" }],
+      sources: [{ id: "source:template", path: "src/card.pug", sourcesContentPolicy: "none" }],
+      sourceMaps: [],
+      generatedBindingSidecars: [
+        {
+          id: "sidecar:card",
+          contract: "generated-documentation-binding",
+          contractVersion: "0.1.0-draft",
+          path: "dist/card.generated-doc-binding.json"
+        }
+      ],
+      entries: [
+        {
+          id: "entry:card",
+          kind: "symbol",
+          sourceRefs: [],
+          artifactRefs: [],
+          generatedBindingRefs: [
+            { bindingId: "binding:card-title", sidecarId: "sidecar:card" }
+          ],
+          diagnostics: []
+        }
+      ],
+      privacy: { sourcesContentPolicy: "none" }
+    });
+
+    expect(index.status).toBe("available");
+    expect(index.bindingSidecarCount).toBe(1);
+    expect(index.diagnostics).toEqual([]);
   });
 });
 

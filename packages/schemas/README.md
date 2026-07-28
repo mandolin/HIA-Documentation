@@ -24,6 +24,7 @@ The package exports its catalog and each schema as JSON:
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" with { type: "json" };
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
+import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 ```
 
 The canonical public schema root is:

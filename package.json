@@ -177,6 +177,7 @@
     "wp51:closeout:evidence": "node scripts/prepare-wp51-closeout-wp52-inputs.mjs",
     "wp52:generated-binding-intake:evidence": "pnpm run wp51:closeout:evidence && node scripts/prepare-wp52-generated-binding-research-adr-intake.mjs",
     "wp52:syntax-scope-confidence:evidence": "node scripts/prepare-wp52-syntax-scope-confidence-decision.mjs",
+    "wp52:generated-binding-contract:evidence": "pnpm run build && pnpm --filter @hia-doc/source-linkage test && pnpm --filter @hia-doc/schemas test && pnpm --filter @hia-doc/schemas sync:check && node scripts/prepare-wp52-generated-doc-binding-contract.mjs",
     "wp30:unified-output:evidence": "pnpm run build && node scripts/prepare-wp30-unified-output-evidence.mjs",
     "wp31:javadoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-javadoc-unified-evidence.mjs",
     "wp31:godoc-unified:evidence": "pnpm run build && node scripts/prepare-wp31-godoc-unified-evidence.mjs",

@@ -24,6 +24,7 @@
     "./documentation-producer.schema.json": "./dist/schemas/documentation-producer.schema.json",
     "./documentation-producer-result.schema.json": "./dist/schemas/documentation-producer-result.schema.json",
     "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
+    "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
     "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",
     "./package.json": "./package.json"

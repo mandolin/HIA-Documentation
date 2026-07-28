@@ -3,6 +3,7 @@ import documentationProfileSchemaData from "./schemas/documentation-profile.sche
 import documentationProducerResultSchemaData from "./schemas/documentation-producer-result.schema.json" with { type: "json" };
 import documentationProducerSchemaData from "./schemas/documentation-producer.schema.json" with { type: "json" };
 import docSourceMapSchemaData from "./schemas/doc-source-map.schema.json" with { type: "json" };
+import generatedDocumentationBindingSchemaData from "./schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import hiaDocumentSchemaData from "./schemas/hia-document.schema.json" with { type: "json" };
 import projectManifestSchemaData from "./schemas/project-manifest.schema.json" with { type: "json" };
 
@@ -13,6 +14,7 @@ export const HIA_SCHEMA_KEYS = [
   "documentation-producer",
   "documentation-producer-result",
   "doc-source-map",
+  "generated-documentation-binding",
   "hia-document",
   "project-manifest"
 ] as const;
@@ -44,6 +46,7 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "documentation-producer": documentationProducerSchemaData,
   "documentation-producer-result": documentationProducerResultSchemaData,
   "doc-source-map": docSourceMapSchemaData,
+  "generated-documentation-binding": generatedDocumentationBindingSchemaData,
   "hia-document": hiaDocumentSchemaData,
   "project-manifest": projectManifestSchemaData
 };

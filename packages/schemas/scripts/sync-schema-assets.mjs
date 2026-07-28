@@ -21,7 +21,9 @@ import {
 } from "../../plugin-sdk/dist/index.js";
 import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
-  DOC_SOURCE_MAP_SCHEMA_VERSION
+  DOC_SOURCE_MAP_SCHEMA_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION
 } from "../../source-linkage/dist/index.js";
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -61,6 +63,14 @@ const definitions = [
     key: "doc-source-map",
     ownerPackage: "@hia-doc/source-linkage",
     schema: DOC_SOURCE_MAP_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+    fileName: "generated-documentation-binding.schema.json",
+    key: "generated-documentation-binding",
+    ownerPackage: "@hia-doc/source-linkage",
+    schema: GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
     stability: "draft"
   },
   {

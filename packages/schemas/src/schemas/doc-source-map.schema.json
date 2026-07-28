@@ -47,6 +47,12 @@
         "$ref": "#/$defs/sourceMap"
       }
     },
+    "generatedBindingSidecars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/generatedBindingSidecar"
+      }
+    },
     "chains": {
       "type": "array",
       "items": {
@@ -408,6 +414,12 @@
         "annotation": {
           "type": "object"
         },
+        "generatedBindingRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/generatedBindingRef"
+          }
+        },
         "sourceRefs": {
           "type": "array",
           "items": {
@@ -423,6 +435,46 @@
         "diagnostics": {
           "type": "array",
           "items": {}
+        }
+      }
+    },
+    "generatedBindingSidecar": {
+      "type": "object",
+      "required": [
+        "id",
+        "contract",
+        "contractVersion",
+        "path"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contract": {
+          "const": "generated-documentation-binding"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    },
+    "generatedBindingRef": {
+      "type": "object",
+      "required": [
+        "bindingId",
+        "sidecarId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "bindingId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sidecarId": {
+          "$ref": "#/$defs/nonEmptyString"
         }
       }
     },

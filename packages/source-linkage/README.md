@@ -12,6 +12,12 @@ It also provides an ordinary source map lookup layer based on `@jridgewell/trace
 
 It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_MAP_JSON_SCHEMA`, `DOC_SOURCE_MAP_SCHEMA_ID` and `DOC_SOURCE_MAP_SCHEMA_VERSION`. Structural schema validation does not replace the package's semantic path, privacy and reference diagnostics.
 
+`generated-documentation-binding@0.1.0-draft` is a separate neutral sidecar
+contract. The package exports its Draft 2020-12 schema and
+`validateGeneratedDocumentationBinding()`. A doc-source-map may declare only a
+safe sidecar reference plus binding ids; it never embeds the full binding model
+or source content. See `docs/generated-documentation-binding-contract.md`.
+
 ## Example
 
 ```ts

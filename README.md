@@ -32,6 +32,7 @@ pnpm run hia -- docs build --config hia.config.example.json
 开发者入口：
 
 - `docs/contract-index.md`: 主仓实现侧 contract 索引。
+- `docs/generated-documentation-binding-contract.md`: 生成式文档绑定 sidecar contract、隐私与 doc-source-map linkage 边界。
 - `docs/versioning.md`: package 与 contract 版本策略。
 - `docs/compatibility-matrix.md`: 当前 runtime、package、contract 和 fixture 兼容矩阵。
 - `docs/core-fixture-contract.md`: core schema、fixture 和 validator contract。

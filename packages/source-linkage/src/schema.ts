@@ -1,4 +1,9 @@
-import { DOC_SOURCE_MAP_CONTRACT, DOC_SOURCE_MAP_CONTRACT_VERSION } from "./constants.js";
+import {
+  DOC_SOURCE_MAP_CONTRACT,
+  DOC_SOURCE_MAP_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT,
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+} from "./constants.js";
 
 export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json";
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
@@ -29,6 +34,7 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
     artifacts: { type: "array", items: { $ref: "#/$defs/artifact" } },
     sources: { type: "array", items: { $ref: "#/$defs/source" } },
     sourceMaps: { type: "array", items: { $ref: "#/$defs/sourceMap" } },
+    generatedBindingSidecars: { type: "array", items: { $ref: "#/$defs/generatedBindingSidecar" } },
     chains: { type: "array", items: { $ref: "#/$defs/chain" } },
     entries: { type: "array", items: { $ref: "#/$defs/entry" } },
     privacy: { $ref: "#/$defs/privacy" },
@@ -186,9 +192,30 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         symbolId: { $ref: "#/$defs/nonEmptyString" },
         symbolKind: { $ref: "#/$defs/nonEmptyString" },
         annotation: { type: "object" },
+        generatedBindingRefs: { type: "array", items: { $ref: "#/$defs/generatedBindingRef" } },
         sourceRefs: { type: "array", items: { $ref: "#/$defs/sourceRef" } },
         artifactRefs: { type: "array", items: { $ref: "#/$defs/artifactRef" } },
         diagnostics: { type: "array", items: {} }
+      }
+    },
+    generatedBindingSidecar: {
+      type: "object",
+      required: ["id", "contract", "contractVersion", "path"],
+      additionalProperties: true,
+      properties: {
+        id: { $ref: "#/$defs/nonEmptyString" },
+        contract: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT },
+        contractVersion: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION },
+        path: { $ref: "#/$defs/safeRelativePath" }
+      }
+    },
+    generatedBindingRef: {
+      type: "object",
+      required: ["bindingId", "sidecarId"],
+      additionalProperties: false,
+      properties: {
+        bindingId: { $ref: "#/$defs/nonEmptyString" },
+        sidecarId: { $ref: "#/$defs/nonEmptyString" }
       }
     },
     rangeSource: {

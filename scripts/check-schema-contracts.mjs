@@ -43,6 +43,10 @@ import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_ID,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  validateGeneratedDocumentationBinding,
   validateDocSourceMap
 } from "../packages/source-linkage/dist/index.js";
 
@@ -149,13 +153,34 @@ const docSourceMap = await readJson("fixtures/project-mixed-alert.docmap.json");
 const docSourceMapDiagnostics = validateDocSourceMap(docSourceMap, { path: "fixtures/project-mixed-alert.docmap.json" });
 assert(docSourceMapDiagnostics.length === 0, `Doc source map fixture has diagnostics: ${JSON.stringify(docSourceMapDiagnostics, null, 2)}`);
 
+assert(
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$id === GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
+  "Generated documentation binding schema id drifted."
+);
+assert(
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.properties.contractVersion.const === GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  "Generated documentation binding contractVersion const drifted."
+);
+assert(
+  GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.required.includes("bindings")
+    && GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.required.includes("expansions")
+    && GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.required.includes("targets")
+    && GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.required.includes("diagnostics"),
+  "Generated documentation binding schema must retain its four neutral collections."
+);
+assert(
+  typeof validateGeneratedDocumentationBinding === "function",
+  "Generated documentation binding owner validator must be exported."
+);
+
 const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID, DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA],
-  [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA]
+  [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA],
+  [GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID, GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA]
 ]);
 assert(
   JSON.stringify(HIA_SCHEMA_CATALOG.schemas.map((entry) => entry.key)) === JSON.stringify([...HIA_SCHEMA_KEYS]),
@@ -170,4 +195,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
