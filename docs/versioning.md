@@ -48,6 +48,8 @@ This document defines the first versioning baseline for the HIA main repository 
 | Doc source map | `0.1.0-draft` | Draft | `doc-source-map` contract docs and satellite tools |
 | Doc source map schema | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
 | Generated documentation binding | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
+| Documentation locale resource | `0.1.0-draft` | Draft | `@hia-doc/core` |
+| Documentation locale-resolution sidecar | `0.1.0-draft` | Draft | `@hia-doc/core` |
 | Documentation producer descriptor/result | `0.1.0-draft` | Draft | `@hia-doc/plugin-sdk` |
 
 ## Change Rules

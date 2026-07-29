@@ -53,6 +53,12 @@
         "$ref": "#/$defs/generatedBindingSidecar"
       }
     },
+    "localeResolutionSidecars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/localeResolutionSidecar"
+      }
+    },
     "chains": {
       "type": "array",
       "items": {
@@ -453,6 +459,30 @@
         },
         "contract": {
           "const": "generated-documentation-binding"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    },
+    "localeResolutionSidecar": {
+      "type": "object",
+      "required": [
+        "id",
+        "contract",
+        "contractVersion",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contract": {
+          "const": "documentation-locale-resolution"
         },
         "contractVersion": {
           "const": "0.1.0-draft"

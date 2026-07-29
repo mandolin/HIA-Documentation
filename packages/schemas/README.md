@@ -24,6 +24,7 @@ The package exports its catalog and each schema as JSON:
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" with { type: "json" };
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
+import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 ```
 
@@ -40,6 +41,11 @@ Use `pnpm --filter @hia-doc/schemas sync:check` to verify the snapshots against 
 ## Validator Policy
 
 The package does not select or bundle a JSON Schema validator. Consumers may use a Draft 2020-12 implementation for structural validation and should use the owning runtime validator for semantic checks such as cross-reference, path and privacy rules.
+
+`documentation-locale-resource` and `documentation-locale-resolution` are owned by
+`@hia-doc/core`. Their schemas validate payload structure only; the core resolver and the
+root-bound reader profile enforce BCP 47 canonicalization, fallback order, realpath containment,
+limits and metadata-only privacy.
 
 ## Status
 

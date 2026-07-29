@@ -15,6 +15,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation locale resource | `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
 | HIA provider descriptor/request/result | `HIA_PROVIDER_*_CONTRACT_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
@@ -142,6 +144,8 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
 | Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
 | Generated documentation binding | `@hia-doc/source-linkage` | Owns the neutral sidecar schema, semantic validator, and read-only bidirectional index for declaration/expansion/target/diagnostic relations. `doc-source-map` keeps only safe sidecar and binding-id references; renderer/host projection remains a later stage. |
+| Documentation locale resource | `@hia-doc/core` | Owns the neutral DLR schema, pure BCP 47-aware validation/resolution and metadata-only locale-resolution sidecar. Stable identity is `resourceId + entryKey`; local filesystem access remains in an explicitly root-bound profile layer. |
+| Locale-resolution doc-source-map linkage | `@hia-doc/source-linkage` | `doc-source-map.localeResolutionSidecars` declares only sidecar identity, contract/version and safe relative artifact path. It never embeds a locator, resource body or resolved text. |
 | Documentation producer | `@hia-doc/plugin-sdk` | Owns descriptor/request/result types, schemas, semantic validation and single-run execution helper; it does not load modules or orchestrate builds. |
 | HIA provider adapter | `@hia-doc/provider-sdk` | Owns review-only provider descriptor/request/result types, schemas, semantic validation and execution guard. Providers may return proposals and metadata, but not direct edits, source bodies, tool calls or target repository mutations. |
 | HIA deterministic mock provider | `@hia-doc/provider-mock` | First offline provider implementation for host/runner/evidence tests. It produces stable review-only draft text and metadata without API keys, network calls, source bodies or direct edits. |

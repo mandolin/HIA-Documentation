@@ -22,6 +22,13 @@ read-only `binding -> generated targets` and `generated target -> bindings`
 queries. It never loads a sidecar path, executes expressions/locals, or starts
 a renderer or host projection. See `docs/generated-documentation-binding-contract.md`.
 
+`documentation-locale-resolution@0.1.0-draft` is another independent,
+metadata-only sidecar owned by `@hia-doc/core`. A doc-source-map may declare its
+stable id, contract/version, and safe relative artifact path through
+`localeResolutionSidecars`. It must not embed a DLR locator, resource body, or
+resolved text; `createDocSourceMapIndex()` validates that boundary without
+loading the sidecar.
+
 `createGeneratedDocumentationBindingHostProjection()` converts that index into
 the frozen `generated-documentation-binding-host-projection@0.1.0-draft` view
 model for renderer and host surfaces. The projection carries binding-to-target

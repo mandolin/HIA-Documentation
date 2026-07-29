@@ -13,11 +13,15 @@ DotNetDoc, and TSDoc should be preferred when available.
 - No Tree-sitter, Universal Ctags, or Doxygen runtime requirement in P1.
 - No embedded source content by default.
 - Output is intended to be replaceable by a dedicated `hia-*doc` artifact later.
+- The optional DLR reader is local, root-bound and read-only; it does not execute expressions,
+  fetch network resources, or migrate resource files.
 
 ## Contracts
 
 - `generic-docline-config@0.1.0-draft`
 - `generic-docline-extraction@0.1.0-draft`
+- `documentation-at-tag-locale-resource-profile@0.1.0-draft`
+- `documentation-xml-locale-resource-profile@0.1.0-draft`
 
 The package exports JSON Schema objects and lightweight validators:
 
@@ -32,6 +36,26 @@ import {
 
 The validators return HIA diagnostics and do not read files. Use them before
 running the scanner when accepting user-provided config.
+
+## Locale Resource Profiles
+
+The package supplies two deliberately small source-profile extractors over the neutral
+`documentation-locale-resource@0.1.0-draft` contract owned by `@hia-doc/core`:
+
+- At-tag: one file-level `@langSrc docs/resource.dlr` and self-closing literal
+  `<lang key="entry.key" src="docs/resource.dlr"/>` or `resource="stable.id"` fields.
+- XML-safe: one self-closing `<langResource src="docs/resource.dlr"/>` or
+  `resource="stable.id"` declaration plus the same self-closing literal `<lang key>` fields.
+
+`key` is always an entry key. `path` remains a logical field path and is never interpreted as a
+resource locator. `resource` and `src` are mutually exclusive. Interpolation, template expressions,
+URLs, archive members and non-literal attributes are rejected rather than evaluated.
+
+`readDocumentationLocaleResource()` requires an explicit absolute `resourceRoot`, validates a
+project-relative POSIX `.dlr` locator, checks realpath containment to reject symlink/junction
+escapes, and enforces byte/depth/entry/locale/text/time limits. Results and diagnostics omit raw
+paths and resource text. The XML profile is a generic source-text profile; it does not claim a
+.NET XML documentation adapter implementation.
 
 ## Minimal Config
 

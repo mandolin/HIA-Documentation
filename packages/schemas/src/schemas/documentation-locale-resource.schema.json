@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "kind",
+    "contractVersion",
+    "format",
+    "formatVersion",
+    "resourceId",
+    "defaultLocale",
+    "locales",
+    "entries"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "kind": {
+      "const": "documentation-locale-resource"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "format": {
+      "const": "documentation-locale-resource-json"
+    },
+    "formatVersion": {
+      "const": "0.1.0-draft"
+    },
+    "resourceId": {
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "type": "string"
+    },
+    "defaultLocale": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      }
+    },
+    "entries": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "localizedText"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "localizedText": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

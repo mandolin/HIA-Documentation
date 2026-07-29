@@ -20,6 +20,8 @@ import {
   type DocumentationProducerResult
 } from "@hia-doc/plugin-sdk";
 
+export * from "./locale-resource.js";
+
 /**
  * Contract name for generic doc-line scanner configuration.
  *

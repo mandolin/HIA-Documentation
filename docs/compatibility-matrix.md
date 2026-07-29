@@ -17,13 +17,13 @@ The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an expli
 
 | Package | Package version | Contract surfaces | Compatibility status |
 | --- | --- | --- | --- |
-| `@hia-doc/core` | private `0.0.0`, target `0.1.0`, MIT | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0` | Active pre-1.0 baseline; public release candidate. |
+| `@hia-doc/core` | private `0.0.0`, target `0.1.0`, MIT | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0`, DLR/resource-resolution `0.1.0-draft` | Active pre-1.0 baseline; public release candidate. |
 | `@hia-doc/config` | published `0.1.1`, MIT | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
 | `@hia-doc/profile` | private `0.0.0`, target `0.1.0`, MIT | profile schema `0.1.0-draft` | Draft profile runtime baseline; public release candidate. |
 | `@hia-doc/profiles` | private `0.0.0`, target `0.1.0`, MIT | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
 | `@hia-doc/plugin-sdk` | published `0.1.1`, MIT | documentation producer descriptor/result `0.1.0-draft` | W-P11.1 owner runtime; patch release carries producer result artifact compatibility. |
 | `@hia-doc/schemas` | published `0.1.1`, MIT | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; patch release carries updated producer-result and project-manifest schemas. |
-| `@hia-doc/source-linkage` | private `0.0.0`, target `0.1.0`, MIT | doc-source-map/schema `0.1.0-draft` | Active CLI/renderer/LSP query runtime; public release candidate. |
+| `@hia-doc/source-linkage` | private `0.0.0`, target `0.1.0`, MIT | doc-source-map/schema `0.1.0-draft`, metadata-only locale-resolution sidecar declaration | Active CLI/renderer/LSP query runtime; public release candidate. |
 | `@hia-doc/parser-jsdoc` | private `0.0.0`, target `0.1.0`, MIT | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
 | `@hia-doc/theme-default` | private `0.0.0`, target `0.1.0`, MIT | default renderer assets | Active renderer asset baseline; public release candidate. |
 | `@hia-doc/renderer-html` | private `0.0.0`, target `0.1.0`, MIT | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Active renderer baseline with single-document and project-page outputs; public release candidate. |
@@ -61,6 +61,8 @@ The `@hia-doc/*` packages remain private `0.0.0` in the workspace until an expli
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
 | Doc source map `0.1.0-draft` | satellite generators / fixtures | `@hia-doc/source-linkage`, CLI project build, renderer project summary | `fixtures/project-mixed-alert.docmap.json` plus distributed schema |
 | Generated documentation binding `0.1.0-draft` | generated-language adapters | `@hia-doc/source-linkage` validator and read-only bidirectional index; future host projections | distributed schema, neutral source-linkage fixture, and W-P52.4 Pug sidecar cross-check; no host projection yet |
+| Documentation locale resource `0.1.0-draft` | explicit root-bound local DLR profile | core resolver, generic doc-line profiles and future adapters | core/generic-docline security, fallback and legacy-bridge tests; distributed schema |
+| Documentation locale-resolution `0.1.0-draft` | core metadata-only sidecar factory | doc-source-map declaration and future host surfaces | core/source-linkage privacy tests and distributed schema; no resource body or resolved text |
 | Renderer manifest `0.1.0` | `@hia-doc/renderer-html` | CLI, IDE preview | CLI/renderer unit and e2e tests |
 | Project navigation index `0.1.0-draft` | `@hia-doc/renderer-html` | static portals and search | renderer/CLI project-build tests |
 | LSP profile capability data | `@hia-doc/lsp` | IDE shells | `packages/lsp/src/authoring.test.ts` |

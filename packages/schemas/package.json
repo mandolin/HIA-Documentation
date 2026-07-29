@@ -24,6 +24,8 @@
     "./documentation-producer.schema.json": "./dist/schemas/documentation-producer.schema.json",
     "./documentation-producer-result.schema.json": "./dist/schemas/documentation-producer-result.schema.json",
     "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
+    "./documentation-locale-resource.schema.json": "./dist/schemas/documentation-locale-resource.schema.json",
+    "./documentation-locale-resolution.schema.json": "./dist/schemas/documentation-locale-resolution.schema.json",
     "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
     "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",

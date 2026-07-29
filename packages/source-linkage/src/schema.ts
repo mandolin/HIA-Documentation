@@ -4,6 +4,10 @@ import {
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";
+import {
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
+} from "@hia-doc/core";
 
 export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json";
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
@@ -35,6 +39,7 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
     sources: { type: "array", items: { $ref: "#/$defs/source" } },
     sourceMaps: { type: "array", items: { $ref: "#/$defs/sourceMap" } },
     generatedBindingSidecars: { type: "array", items: { $ref: "#/$defs/generatedBindingSidecar" } },
+    localeResolutionSidecars: { type: "array", items: { $ref: "#/$defs/localeResolutionSidecar" } },
     chains: { type: "array", items: { $ref: "#/$defs/chain" } },
     entries: { type: "array", items: { $ref: "#/$defs/entry" } },
     privacy: { $ref: "#/$defs/privacy" },
@@ -206,6 +211,17 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         id: { $ref: "#/$defs/nonEmptyString" },
         contract: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT },
         contractVersion: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION },
+        path: { $ref: "#/$defs/safeRelativePath" }
+      }
+    },
+    localeResolutionSidecar: {
+      type: "object",
+      required: ["id", "contract", "contractVersion", "path"],
+      additionalProperties: false,
+      properties: {
+        id: { $ref: "#/$defs/nonEmptyString" },
+        contract: { const: DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT },
+        contractVersion: { const: DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION },
         path: { $ref: "#/$defs/safeRelativePath" }
       }
     },

@@ -8,6 +8,14 @@ import {
   validateHiaProjectManifest
 } from "../packages/config/dist/index.js";
 import {
+  DOCUMENTATION_LOCALE_RESOURCE_CONTRACT,
+  DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
+  DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+  DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID,
   HIA_DOCUMENT_SCHEMA,
   HIA_DOCUMENT_SCHEMA_ID,
   HIA_DOCUMENT_SCHEMA_VERSION
@@ -71,6 +79,20 @@ async function readProfileFixtures() {
 assert(HIA_DOCUMENT_SCHEMA.$id === HIA_DOCUMENT_SCHEMA_ID, "HIA document schema id drifted.");
 assert(HIA_DOCUMENT_SCHEMA_VERSION === "0.2.0", "Unexpected HIA document schema version.");
 assert(HIA_DOCUMENT_SCHEMA.properties.schemaVersion.const === HIA_DOCUMENT_SCHEMA_VERSION, "HIA document schemaVersion const drifted.");
+
+assert(DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA.$id === DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, "Documentation locale resource schema id drifted.");
+assert(
+  DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA.properties.kind.const === DOCUMENTATION_LOCALE_RESOURCE_CONTRACT
+    && DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+  "Documentation locale resource contract fields drifted."
+);
+assert(DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.$id === DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, "Documentation locale-resolution schema id drifted.");
+assert(
+  DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.contract.const === DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT
+    && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
+    && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.privacy.properties.allowResolvedText.const === false,
+  "Documentation locale-resolution metadata-only boundary drifted."
+);
 
 assert(HIA_PROJECT_MANIFEST_JSON_SCHEMA.$id === HIA_PROJECT_MANIFEST_SCHEMA_ID, "Project manifest schema id drifted.");
 assert(
@@ -175,6 +197,8 @@ assert(
 
 const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
+  [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
+  [DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
@@ -195,4 +219,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

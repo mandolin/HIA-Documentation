@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resolution-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "privacy",
+    "entries"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract": {
+      "const": "documentation-locale-resolution"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "allowRawLocator",
+        "allowResourceBody",
+        "allowResolvedText"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "allowRawLocator": {
+          "const": false
+        },
+        "allowResourceBody": {
+          "const": false
+        },
+        "allowResolvedText": {
+          "const": false
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "required": [
+        "kind",
+        "coverage"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "inline-locale",
+            "dlr-entry",
+            "source-default-text",
+            "legacy-adapter-bridge",
+            "unresolved"
+          ]
+        },
+        "coverage": {
+          "enum": [
+            "complete",
+            "missing"
+          ]
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "entryKey": {
+          "type": "string"
+        },
+        "sourceLocale": {
+          "type": "string"
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "documentId",
+        "fieldPath",
+        "requestedLocale",
+        "resolvedLocale",
+        "resolutionKind",
+        "confidence",
+        "provenance",
+        "diagnosticCodes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "documentId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "symbolId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "fieldPath": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "resourceId": {
+          "type": "string"
+        },
+        "entryKey": {
+          "type": "string"
+        },
+        "requestedLocale": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "resolvedLocale": {
+          "type": "string"
+        },
+        "resolutionKind": {
+          "enum": [
+            "direct",
+            "parent-fallback",
+            "configured-fallback",
+            "default-fallback",
+            "missing"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "none"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

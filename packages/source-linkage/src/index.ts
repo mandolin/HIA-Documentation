@@ -12,6 +12,8 @@ import {
 } from "@jridgewell/trace-mapping";
 import {
   createHiaDiagnostic,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
   type HiaDiagnostic,
   type HiaDiagnosticData,
   type HiaDiagnosticSeverity,
@@ -90,6 +92,14 @@ export interface DocSourceMapIndex {
    * sidecar bodies are not loaded here.
    */
   bindingSidecars: DocSourceMapGeneratedBindingSidecar[];
+  /**
+   * 中文：普通 doc-source-map 声明的 metadata-only locale-resolution sidecar；不加载
+   * resource body、locator 或 resolved text。
+   * English: Metadata-only locale-resolution sidecars declared by the ordinary
+   * doc-source-map; resource bodies, locators, and resolved text are not loaded.
+   */
+  localeResolutionSidecars: DocSourceMapLocaleResolutionSidecar[];
+  localeResolutionSidecarCount: number;
   contract: typeof DOC_SOURCE_MAP_CONTRACT;
   contractVersion?: string;
   diagnostics: HiaDiagnostic[];
@@ -142,6 +152,20 @@ export interface DocSourceMapGeneratedBindingRef {
  * doc-source-map.
  */
 export interface DocSourceMapGeneratedBindingSidecar {
+  contract?: string;
+  contractVersion?: string;
+  id: string;
+  path?: string;
+}
+
+/**
+ * 中文：普通 doc-source-map 对独立 locale-resolution sidecar 的最小声明。它只含
+ * identity、contract 与相对 artifact path，不承载 DLR data。
+ * English: Minimal ordinary doc-source-map declaration of an independent
+ * locale-resolution sidecar. It contains only identity, contract, and a relative
+ * artifact path; it never carries DLR data.
+ */
+export interface DocSourceMapLocaleResolutionSidecar {
   contract?: string;
   contractVersion?: string;
   id: string;
@@ -356,6 +380,8 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   const sourceMaps = collectIndexedNodes(value.sourceMaps).map(indexedNodeToSourceMapLink);
   // <lang><zh-CN>bindingSidecars 只声明独立 artifact；本函数不加载其 body，维持 sidecar privacy 边界。</zh-CN><en>bindingSidecars declares independent artifacts only; this function does not load their bodies, preserving the sidecar privacy boundary.</en></lang>
   const bindingSidecars = collectGeneratedBindingSidecars(value.generatedBindingSidecars);
+  // <lang><zh-CN>localeResolutionSidecars 只保留 metadata-only artifact declaration；它与 generated binding sidecar 不共享 body 或 contract。</zh-CN><en>localeResolutionSidecars retains metadata-only artifact declarations only; it shares neither body nor contract with generated-binding sidecars.</en></lang>
+  const localeResolutionSidecars = collectLocaleResolutionSidecars(value.localeResolutionSidecars);
   // <lang><zh-CN>artifactById 为 entry 校验提供稳定 O(1) 身份查找。</zh-CN><en>artifactById provides stable O(1) identity lookup for entry validation.</en></lang>
   const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
   // <lang><zh-CN>sourceById 为 source range 与来源链接建立独立查找表，不能与 artifact identity 混用。</zh-CN><en>sourceById establishes an independent lookup for source ranges and links and must not be conflated with artifact identity.</en></lang>
@@ -368,9 +394,11 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   collectPathDiagnostics(diagnostics, sources, options.path, "source");
   collectPathDiagnostics(diagnostics, sourceMaps, options.path, "sourceMap");
   collectPathDiagnostics(diagnostics, bindingSidecars, options.path, "generated binding sidecar");
+  collectPathDiagnostics(diagnostics, localeResolutionSidecars, options.path, "locale-resolution sidecar");
   // <lang><zh-CN>随后核验 contract reference、sidecar 声明与 sourcesContent policy，保持普通 map 只含 reference 的不变量。</zh-CN><en>Then validate contract references, sidecar declarations, and sourcesContent policy, preserving the invariant that ordinary maps hold references only.</en></lang>
   collectContractRefDiagnostics(diagnostics, value.artifacts, options.path);
   collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, options.path);
+  collectLocaleResolutionSidecarDiagnostics(diagnostics, value.localeResolutionSidecars, options.path);
   collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, options.path);
   // <lang><zh-CN>manifest 自带 diagnostic 仅被归一化为安全 HIA diagnostic，不信任其原始形状。</zh-CN><en>Manifest-supplied diagnostics are normalized into safe HIA diagnostics only; their raw shape is not trusted.</en></lang>
   diagnostics.push(...normalizeManifestDiagnostics(value.diagnostics, options.path));
@@ -410,6 +438,8 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     entryCount: entries.length,
     ...(id ? { id } : {}),
     linkedEntryCount: entries.filter(isLinkedEntry).length,
+    localeResolutionSidecars,
+    localeResolutionSidecarCount: localeResolutionSidecars.length,
     ...(options.path ? { path: options.path } : {}),
     sourceCount: sources.length,
     sourceMaps,
@@ -1012,6 +1042,32 @@ function collectGeneratedBindingSidecars(value: unknown): DocSourceMapGeneratedB
     });
 }
 
+function collectLocaleResolutionSidecars(value: unknown): DocSourceMapLocaleResolutionSidecar[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .filter(isRecord)
+    .map((item, index) => {
+      const sidecar: DocSourceMapLocaleResolutionSidecar = {
+        id: stringValue(item.id) ?? `locale-resolution-sidecar:${index + 1}`
+      };
+      const contract = stringValue(item.contract);
+      const contractVersion = stringValue(item.contractVersion);
+      const sidecarPath = stringValue(item.path);
+      if (contract) {
+        sidecar.contract = contract;
+      }
+      if (contractVersion) {
+        sidecar.contractVersion = contractVersion;
+      }
+      if (sidecarPath) {
+        sidecar.path = sidecarPath;
+      }
+      return sidecar;
+    });
+}
+
 function indexedNodeToSourceMapLink(node: IndexedNode): DocSourceMapSourceMapLink {
   return {
     id: node.id,
@@ -1102,6 +1158,50 @@ function collectGeneratedBindingSidecarDiagnostics(diagnostics: HiaDiagnostic[],
       ));
     }
   });
+}
+
+/**
+ * 中文：验证 locale-resolution sidecar 的纯 metadata declaration；它从不读取 sidecar
+ * 正文，也拒绝把 locator、resource body 或 text 内嵌在普通 doc-source-map。
+ * English: Validates a pure metadata locale-resolution sidecar declaration; it
+ * never reads the sidecar body and rejects locator, resource-body, or text
+ * embedding in an ordinary doc-source-map.
+ */
+function collectLocaleResolutionSidecarDiagnostics(diagnostics: HiaDiagnostic[], sidecars: unknown, targetPath: string | undefined): void {
+  if (!Array.isArray(sidecars)) {
+    return;
+  }
+  const ids = new Set<string>();
+  sidecars.filter(isRecord).forEach((sidecar, index) => {
+    const id = stringValue(sidecar.id);
+    const sidecarPath = stringValue(sidecar.path);
+    if (!id || ids.has(id) || sidecar.contract !== DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT || sidecar.contractVersion !== DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION || containsLocaleResolutionPrivateField(sidecar)) {
+      diagnostics.push(createSourceLinkageDiagnostic(
+        "DOC_SOURCE_MAP_LOCALE_RESOLUTION_SIDECAR_INVALID",
+        "locale-resolution sidecar must be a unique metadata-only declaration with the supported contract/version.",
+        "error",
+        appendTarget(targetPath, `localeResolutionSidecars.${index}`),
+        id ? { id } : undefined
+      ));
+    }
+    if (id) {
+      ids.add(id);
+    }
+    if (!sidecarPath || isUnsafeRelativePath(sidecarPath)) {
+      diagnostics.push(createSourceLinkageDiagnostic(
+        "DOC_SOURCE_MAP_UNSAFE_PATH",
+        "locale-resolution sidecar path must be a safe relative path.",
+        "error",
+        appendTarget(targetPath, `localeResolutionSidecars.${index}.path`),
+        id ? { id } : undefined
+      ));
+    }
+  });
+}
+
+function containsLocaleResolutionPrivateField(value: Record<string, unknown>): boolean {
+  const forbidden = new Set(["body", "content", "locator", "rawlocator", "resolvedtext", "src", "text"]);
+  return Object.keys(value).some((key) => forbidden.has(key.toLowerCase()));
 }
 
 function collectSourcesContentDiagnostics(
@@ -1232,6 +1332,8 @@ function createEmptyIndex(options: {
     entries: [],
     entryCount: 0,
     linkedEntryCount: 0,
+    localeResolutionSidecars: [],
+    localeResolutionSidecarCount: 0,
     ...(options.path ? { path: options.path } : {}),
     sourceCount: 0,
     sourceMaps: [],

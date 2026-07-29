@@ -6,6 +6,10 @@ import {
   HIA_PROJECT_MANIFEST_SCHEMA_VERSION
 } from "../../config/dist/index.js";
 import {
+  DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
+  DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
   HIA_DOCUMENT_SCHEMA_VERSION
 } from "../../core/dist/index.js";
@@ -71,6 +75,22 @@ const definitions = [
     key: "generated-documentation-binding",
     ownerPackage: "@hia-doc/source-linkage",
     schema: GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+    fileName: "documentation-locale-resource.schema.json",
+    key: "documentation-locale-resource",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
+    fileName: "documentation-locale-resolution.schema.json",
+    key: "documentation-locale-resolution",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
     stability: "draft"
   },
   {

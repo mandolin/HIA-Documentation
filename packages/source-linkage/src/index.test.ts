@@ -268,6 +268,46 @@ describe("@hia-doc/source-linkage", () => {
     expect(index.bindingSidecarCount).toBe(1);
     expect(index.diagnostics).toEqual([]);
   });
+
+  it("links metadata-only locale-resolution sidecars without embedding DLR data", () => {
+    const index = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [{ id: "artifact:html", path: "dist/card.html" }],
+      sources: [{ id: "source:template", path: "src/card.pug", sourcesContentPolicy: "none" }],
+      sourceMaps: [],
+      localeResolutionSidecars: [
+        {
+          id: "sidecar:locale:card",
+          contract: "documentation-locale-resolution",
+          contractVersion: "0.1.0-draft",
+          path: "dist/card.locale-resolution.json"
+        }
+      ],
+      entries: [],
+      privacy: { sourcesContentPolicy: "none" }
+    });
+    expect(index.status).toBe("available");
+    expect(index.localeResolutionSidecarCount).toBe(1);
+    expect(index.localeResolutionSidecars[0]).toMatchObject({ id: "sidecar:locale:card" });
+
+    const invalid = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [],
+      sources: [],
+      entries: [],
+      localeResolutionSidecars: [{
+        id: "sidecar:locale:invalid",
+        contract: "documentation-locale-resolution",
+        contractVersion: "0.1.0-draft",
+        path: "dist/locale-resolution.json",
+        text: "must not enter the ordinary map"
+      }]
+    });
+    expect(invalid.diagnostics.map((diagnostic) => diagnostic.code)).toContain("DOC_SOURCE_MAP_LOCALE_RESOLUTION_SIDECAR_INVALID");
+    expect(JSON.stringify(invalid.diagnostics)).not.toContain("must not enter the ordinary map");
+  });
 });
 
 function readFixture(name: string): unknown {
