@@ -2,6 +2,7 @@ export * from "./diagnostics.js";
 export * from "./fixtures.js";
 export * from "./i18n.js";
 export * from "./locale-resource.js";
+export * from "./documentation-terminology.js";
 export * from "./documentation-quality-review.js";
 export * from "./model.js";
 export * from "./protocol.js";

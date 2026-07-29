@@ -16,6 +16,10 @@ import {
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID,
+  DOCUMENTATION_TERMINOLOGY_CONTRACT,
+  DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION,
+  DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA,
+  DOCUMENTATION_TERMINOLOGY_SCHEMA_ID,
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT,
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
@@ -96,6 +100,16 @@ assert(
     && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
     && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.privacy.properties.allowResolvedText.const === false,
   "Documentation locale-resolution metadata-only boundary drifted."
+);
+// <lang><zh-CN>术语 contract 有两种 artifact kind；schema checker 锁定共同 identity 与 candidate privacy，不替代 owner lifecycle 校验。</zh-CN><en>The terminology contract has two artifact kinds; the schema checker freezes shared identity and candidate privacy without replacing owner lifecycle validation.</en></lang>
+assert(DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$id === DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, "Documentation terminology schema id drifted.");
+assert(
+  DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$defs.candidateSet.properties.contract.const === DOCUMENTATION_TERMINOLOGY_CONTRACT
+    && DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$defs.candidateSet.properties.contractVersion.const === DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION
+    && DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$defs.privacy.properties.allowObservedText.const === false
+    && DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$defs.privacy.properties.allowSourceBody.const === false
+    && DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$defs.privacy.properties.allowRawLocator.const === false,
+  "Documentation terminology metadata-only candidate boundary drifted."
 );
 assert(DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$id === DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, "Documentation quality-review schema id drifted.");
 assert(
@@ -215,6 +229,7 @@ const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA],
+  [DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA],
   [DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
@@ -236,4 +251,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

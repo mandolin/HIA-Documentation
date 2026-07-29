@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-terminology-0.1.0-draft.schema.json",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/candidateSet"
+    },
+    {
+      "$ref": "#/$defs/registry"
+    }
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "allowObservedText",
+        "allowRawLocator",
+        "allowSourceBody"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "allowObservedText": {
+          "const": false
+        },
+        "allowRawLocator": {
+          "const": false
+        },
+        "allowSourceBody": {
+          "const": false
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "annotationKind",
+        "fieldPath",
+        "occurrence",
+        "sourceDocumentId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "annotationKind": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "occurrence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "symbolId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "kind",
+        "profile"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "profile-candidate",
+            "generated-source-linkage"
+          ]
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "relationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "decision",
+        "reviewId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "reviewed",
+            "linked",
+            "ignored"
+          ]
+        },
+        "reviewId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "candidateId",
+        "extractionKind",
+        "locale",
+        "provenance",
+        "scope",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "candidateId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "extractionKind": {
+          "enum": [
+            "first-unwrapped-natural-language-phrase",
+            "profile-grammar-unknown"
+          ]
+        },
+        "locale": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "review": {
+          "$ref": "#/$defs/review"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "status": {
+          "enum": [
+            "detected",
+            "reviewed",
+            "linked",
+            "ignored"
+          ]
+        },
+        "termId": {
+          "pattern": "^term\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+          "type": "string"
+        }
+      }
+    },
+    "candidateSet": {
+      "type": "object",
+      "required": [
+        "candidates",
+        "contract",
+        "contractVersion",
+        "id",
+        "kind",
+        "privacy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidate"
+          }
+        },
+        "contract": {
+          "const": "documentation-terminology"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "const": "documentation-terminology-candidate-set"
+        },
+        "privacy": {
+          "$ref": "#/$defs/privacy"
+        }
+      }
+    },
+    "form": {
+      "type": "object",
+      "required": [
+        "canonical"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "canonical": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "synonyms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "registryEntry": {
+      "type": "object",
+      "required": [
+        "forms",
+        "lifecycle",
+        "provenance",
+        "termId",
+        "visibility"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "definition": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "forms": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/form"
+          }
+        },
+        "lifecycle": {
+          "enum": [
+            "proposed",
+            "approved",
+            "deprecated",
+            "rejected"
+          ]
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "kind",
+            "recordId"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "human-confirmed"
+            },
+            "recordId": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          }
+        },
+        "replaces": {
+          "type": "array",
+          "items": {
+            "pattern": "^term\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+            "type": "string"
+          }
+        },
+        "termId": {
+          "pattern": "^term\\.[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)*$",
+          "type": "string"
+        },
+        "visibility": {
+          "enum": [
+            "private",
+            "workspace",
+            "public"
+          ]
+        }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "id",
+        "kind",
+        "privacy",
+        "terms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "documentation-terminology"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "kind": {
+          "const": "documentation-terminology-registry"
+        },
+        "privacy": {
+          "$ref": "#/$defs/privacy"
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/registryEntry"
+          }
+        }
+      }
+    }
+  }
+}

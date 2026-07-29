@@ -9,6 +9,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - HIA document, node and symbol model.
 - Field-level i18n model with `key`/`path`, external resource references and fallback resolution metadata.
 - Neutral `documentation-locale-resource@0.1.0-draft` JSON contract, pure BCP 47-aware resolver and metadata-only locale-resolution sidecar contract.
+- Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
@@ -24,6 +25,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Protocol envelope: `HIA_PROTOCOL_ENVELOPE_VERSION`
 - Documentation locale resource: `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION`
 - Documentation locale-resolution sidecar: `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION`
+- Documentation terminology: `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION`
 - Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
 
 ## Documentation Locale Resources
@@ -40,6 +42,18 @@ resource. Use the `@hia-doc/generic-docline` root-bound reader/profile layer for
 
 The sidecar intentionally excludes resource bodies, raw locators and resolved text. An ordinary
 `doc-source-map` may link to its stable sidecar identity but must not become a DLR datastore.
+
+## Documentation Terminology
+
+`documentation-terminology` has two controlled artifact kinds: a body-free candidate set and a
+human-maintained registry. Candidate identity is derived from stable logical scope and profile
+provenance, never from an observed phrase, source path, range, AST, or hash. A `linked` candidate
+requires a human review record and an approved `term.*` registry entry.
+
+Registry forms and definitions remain controlled input. The core quality-input helper emits only
+logical scope, `TERM_*` codes, confidence and provenance for `documentation-quality-review`; it
+does not expose term forms, parse source comments, persist a registry, create edits, or call a
+network service. See `docs/documentation-terminology-contract.md` for the schema and lifecycle.
 
 ## Documentation Quality Review
 

@@ -67,6 +67,15 @@
     },
     {
       "contractVersion": "0.1.0-draft",
+      "key": "documentation-terminology",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./documentation-terminology.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-terminology-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-terminology-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "documentation-quality-review",
       "ownerPackage": "@hia-doc/core",
       "path": "./documentation-quality-review.schema.json",

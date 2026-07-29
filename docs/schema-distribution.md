@@ -16,6 +16,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
+| `documentation-terminology` | `@hia-doc/core` | draft |
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
@@ -37,6 +38,7 @@ import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import localeResolutionSchema from "@hia-doc/schemas/documentation-locale-resolution.schema.json" with { type: "json" };
+import terminologySchema from "@hia-doc/schemas/documentation-terminology.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import producerSchema from "@hia-doc/schemas/documentation-producer.schema.json" with { type: "json" };
 ```

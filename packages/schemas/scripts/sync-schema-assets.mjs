@@ -10,6 +10,8 @@ import {
   DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+  DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION,
+  DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA,
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
@@ -93,6 +95,15 @@ const definitions = [
     key: "documentation-locale-resolution",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>candidate-set 与受控 registry 共享一个中性 terminology schema；同步器必须成为 catalog 的唯一事实来源。</zh-CN><en>Candidate sets and controlled registries share one neutral terminology schema; the synchronizer must remain the catalog's single source of truth.</en></lang>
+  {
+    contractVersion: DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION,
+    fileName: "documentation-terminology.schema.json",
+    key: "documentation-terminology",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA,
     stability: "draft"
   },
   {

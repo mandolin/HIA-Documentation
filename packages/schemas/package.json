@@ -26,6 +26,7 @@
     "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
     "./documentation-locale-resource.schema.json": "./dist/schemas/documentation-locale-resource.schema.json",
     "./documentation-locale-resolution.schema.json": "./dist/schemas/documentation-locale-resolution.schema.json",
+    "./documentation-terminology.schema.json": "./dist/schemas/documentation-terminology.schema.json",
     "./documentation-quality-review.schema.json": "./dist/schemas/documentation-quality-review.schema.json",
     "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
