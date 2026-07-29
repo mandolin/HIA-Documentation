@@ -9,6 +9,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - HIA document, node and symbol model.
 - Field-level i18n model with `key`/`path`, external resource references and fallback resolution metadata.
 - Neutral `documentation-locale-resource@0.1.0-draft` JSON contract, pure BCP 47-aware resolver and metadata-only locale-resolution sidecar contract.
+- Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
@@ -23,6 +24,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Protocol envelope: `HIA_PROTOCOL_ENVELOPE_VERSION`
 - Documentation locale resource: `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION`
 - Documentation locale-resolution sidecar: `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION`
+- Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
 
 ## Documentation Locale Resources
 
@@ -38,5 +40,12 @@ resource. Use the `@hia-doc/generic-docline` root-bound reader/profile layer for
 
 The sidecar intentionally excludes resource bodies, raw locators and resolved text. An ordinary
 `doc-source-map` may link to its stable sidecar identity but must not become a DLR datastore.
+
+## Documentation Quality Review
+
+`documentation-quality-review` accepts only privacy-safe structural observations and diagnostic
+codes. Its findings always require human review and its action policy is fixed to `review-only`.
+It neither parses terminology, reads DLR files/sidecars, nor creates edits, migration plans or
+resource writes.
 
 See `docs/contract-index.md` and `docs/core-fixture-contract.md` in the repository root for the current contract baseline.

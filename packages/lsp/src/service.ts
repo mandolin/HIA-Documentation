@@ -11,7 +11,9 @@ import {
 } from "@hia-doc/config";
 import type {
   HiaDiagnostic,
-  HiaDocument
+  HiaDocument,
+  DocumentationQualityReviewInput,
+  DocumentationQualityReviewReport
 } from "@hia-doc/core";
 import {
   createHiaProfileSet
@@ -64,6 +66,10 @@ import {
   createHiaDocumentationEditProposals,
   type HiaDocumentationEditProposalsResult
 } from "./documentation-edit-proposals.js";
+import {
+  createHiaDocumentationQualityReviewDiagnostics,
+  getHiaDocumentationQualityReview
+} from "./quality-review.js";
 import type {
   HiaLspHostResultSource
 } from "./host-contract.js";
@@ -91,6 +97,7 @@ export interface HiaLspServiceOptions {
   profileDiagnostics?: HiaDiagnostic[];
   profiles?: HiaDocumentationProfile[];
   profileSet?: HiaProfileSet;
+  qualityReviewInputs?: ReadonlyMap<string, DocumentationQualityReviewInput>;
 }
 
 export interface HiaLspService {
@@ -109,6 +116,7 @@ export interface HiaLspService {
   getHover(uri: string, position?: Position): Hover | null;
   getIdeCapabilities(uri: string): HiaIdeCapabilitiesResult;
   getDocumentationEditProposals(uri: string): HiaDocumentationEditProposalsResult;
+  getDocumentationQualityReview(uri: string): DocumentationQualityReviewReport | undefined;
   getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult;
   getManagedProjectRelationGraph(uri: string): HiaProjectRelationGraphResult;
   getManagedResourceIndex(uri: string): HiaLspResourceIndex;
@@ -130,6 +138,8 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
   let initialized = false;
   let shutdownRequested = false;
   let workspaceRoots: string[] = [];
+  /** 中文：quality input 只能由显式上游注入；LSP 不通过 path 自动发现或读取 sidecar。 English: Quality input is injected only by an explicit upstream; LSP never discovers or reads sidecars by path. */
+  const qualityReviewInputs = options.qualityReviewInputs ?? new Map<string, DocumentationQualityReviewInput>();
 
   function createManagedDocument(uri: string, text: string, languageId = "json", version = 1): HiaLspManagedDocument {
     const document = TextDocument.create(uri, languageId, version, text);
@@ -137,11 +147,15 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
     const resourceIndex = createResourceIndexFromParsed(uri, parsed);
     const docSourceMapIndex = createDocSourceMapIndexFromParsed(uri, parsed);
     const projectRelationGraph = createProjectRelationGraphFromParsed(uri, parsed);
-    const diagnostics = docSourceMapIndex
+    const baseDiagnostics = docSourceMapIndex
       ? createDocSourceMapDiagnostics(docSourceMapIndex)
       : projectRelationGraph
         ? []
-      : validateTextDocumentWithResourceIndex(document, resourceIndex);
+        : validateTextDocumentWithResourceIndex(document, resourceIndex);
+    /** 中文：quality diagnostics 只追加到当前 document；缺 input 时显式保持为空，绝不由路径猜测。 English: Quality diagnostics append only to the current document; absent input stays empty and is never guessed from a path. */
+    const qualityInput = qualityReviewInputs.get(uri);
+    const qualityDiagnostics = qualityInput ? createHiaDocumentationQualityReviewDiagnostics(qualityInput) : [];
+    const diagnostics = [...baseDiagnostics, ...qualityDiagnostics];
 
     const managedDocument: HiaLspManagedDocument = {
       diagnostics,
@@ -278,6 +292,9 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
         context: createAuthoringContext(uri),
         source: document ? "managed-document" : "none"
       });
+    },
+    getDocumentationQualityReview(uri: string): DocumentationQualityReviewReport | undefined {
+      return getHiaDocumentationQualityReview(qualityReviewInputs.get(uri));
     },
     getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult {
       const managedIndex = documents.get(uri)?.docSourceMapIndex;

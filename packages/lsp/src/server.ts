@@ -23,6 +23,10 @@ import {
   HIA_LSP_DOCUMENTATION_EDIT_PROPOSALS_REQUEST,
   type HiaDocumentationEditProposalsParams
 } from "./documentation-edit-proposals.js";
+import {
+  HIA_LSP_DOCUMENTATION_QUALITY_REVIEW_REQUEST,
+  type HiaDocumentationQualityReviewParams
+} from "./quality-review.js";
 import { createHiaLspService } from "./service.js";
 import {
   HIA_LSP_DOCUMENT_SOURCE_MAP_INDEX_REQUEST,
@@ -77,6 +81,10 @@ export function startHiaLspServer(options: StartHiaLspServerOptions = {}): Conne
 
   connection.onRequest(HIA_LSP_DOCUMENTATION_EDIT_PROPOSALS_REQUEST, (params: HiaDocumentationEditProposalsParams) => {
     return service.getDocumentationEditProposals(params.uri);
+  });
+
+  connection.onRequest(HIA_LSP_DOCUMENTATION_QUALITY_REVIEW_REQUEST, (params: HiaDocumentationQualityReviewParams) => {
+    return service.getDocumentationQualityReview(params.uri);
   });
 
   connection.onCompletion((params) => {

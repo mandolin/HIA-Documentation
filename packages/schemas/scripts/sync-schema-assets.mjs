@@ -10,6 +10,8 @@ import {
   DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+  DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
+  DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
   HIA_DOCUMENT_SCHEMA_VERSION
 } from "../../core/dist/index.js";
@@ -91,6 +93,14 @@ const definitions = [
     key: "documentation-locale-resolution",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+    stability: "draft"
+  },
+  {
+    contractVersion: DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
+    fileName: "documentation-quality-review.schema.json",
+    key: "documentation-quality-review",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
     stability: "draft"
   },
   {

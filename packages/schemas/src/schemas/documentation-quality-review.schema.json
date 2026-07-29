@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-quality-review-0.1.0-draft.schema.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "observations",
+    "privacy"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract": {
+      "const": "documentation-quality-review"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "allowRawLocator",
+        "allowResourceBody",
+        "allowSourceBody",
+        "allowTermPhrase"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "allowRawLocator": {
+          "const": false
+        },
+        "allowResourceBody": {
+          "const": false
+        },
+        "allowSourceBody": {
+          "const": false
+        },
+        "allowTermPhrase": {
+          "const": false
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "sourceDocumentId"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sourceDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "symbolId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "occurrence": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "rop-observation",
+            "profile-diagnostic",
+            "locale-resolution-sidecar",
+            "generated-source-linkage"
+          ]
+        },
+        "sidecarId": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "required": [
+        "category",
+        "confidence",
+        "provenance",
+        "rule",
+        "scope",
+        "state"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "enum": [
+            "rop",
+            "terminology",
+            "locale-resource"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "none"
+          ]
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "rule": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "state": {
+          "enum": [
+            "observed",
+            "missing",
+            "unavailable"
+          ]
+        }
+      }
+    }
+  }
+}

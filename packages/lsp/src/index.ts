@@ -3,6 +3,7 @@ export * from "./diagnostics.js";
 export * from "./documentation-edit-proposals.js";
 export * from "./host-contract.js";
 export * from "./project-relations.js";
+export * from "./quality-review.js";
 export * from "./resources.js";
 export * from "./server.js";
 export * from "./service.js";
