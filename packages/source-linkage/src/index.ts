@@ -271,10 +271,35 @@ interface IndexedNode {
   path?: string;
 }
 
+/**
+ * 中文：从不受信任的 doc-source-map manifest 建立只读查询索引，并把结构、引用、路径、
+ * privacy 与版本问题统一投影为 diagnostics。该函数只消费调用方显式提供的 JSON 值：不会
+ * 读取 sourceMappingURL、generated binding sidecar 正文或 sourcesContent。
+ *
+ * English: Builds a read-only query index from an untrusted doc-source-map
+ * manifest and projects structure, reference, path, privacy, and version issues
+ * into diagnostics. It consumes only caller-provided JSON and never reads a
+ * sourceMappingURL, generated-binding sidecar body, or sourcesContent.
+ *
+ * @lang zh-CN 输入是 manifest 的未知运行时值；`options.path` 只用于 diagnostic 定位。
+ * 索引保留 ordinary doc-source-map 的最小 sidecar reference，完整 binding model 始终
+ * 留在独立 artifact，防止普通 map 意外承载 binding 正文或私有源码。
+ * @lang en Input is an unknown runtime manifest value; `options.path` is used
+ * only to locate diagnostics. The index retains ordinary doc-source-map minimal
+ * sidecar references, while the complete binding model stays in its independent
+ * artifact to prevent a normal map from carrying binding bodies or private source.
+ *
+ * @param value <lang><zh-CN>待验证的 manifest 运行时值。</zh-CN><en>Runtime manifest value to validate.</en></lang>
+ * @param options <lang><zh-CN>可选 diagnostic 路径上下文；默认空对象。</zh-CN><en>Optional diagnostic path context; defaults to an empty object.</en></lang>
+ * @returns <lang><zh-CN>可查询的索引；即使无效输入也返回带 diagnostics 的安全空索引。</zh-CN><en>Queryable index; invalid input still returns a safe empty index with diagnostics.</en></lang>
+ */
 export function createDocSourceMapIndex(value: unknown, options: DocSourceMapIndexOptions = {}): DocSourceMapIndex {
+  // <lang><zh-CN>诊断序列是本函数唯一的可观察验证副产物；后续 status 只能由它推导。</zh-CN><en>The diagnostic sequence is this function's sole observable validation byproduct; later status must be derived from it.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
 
+  // <lang><zh-CN>先拒绝非对象，避免后续属性读取绕过 manifest 边界或抛出未结构化异常。</zh-CN><en>Reject non-objects first so later property reads cannot bypass the manifest boundary or throw an unstructured exception.</en></lang>
   if (!isRecord(value)) {
+    // <lang><zh-CN>使用 source-linkage diagnostic 保留调用方 path，但不回显输入正文。</zh-CN><en>Use a source-linkage diagnostic that preserves caller path without echoing input bodies.</en></lang>
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
       "doc-source-map manifest must be a JSON object.",
@@ -282,6 +307,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       options.path
     ));
 
+    // <lang><zh-CN>无效根节点必须返回同一 index 形状，保证调用方不需要特殊空值分支。</zh-CN><en>An invalid root must return the same index shape so callers need no special null branch.</en></lang>
     return createEmptyIndex({
       diagnostics,
       ...(options.path ? { path: options.path } : {}),
@@ -289,7 +315,9 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     });
   }
 
+  // <lang><zh-CN>contract 标识确认该 JSON 属于 doc-source-map；错误不阻止收集其余可诊断结构。</zh-CN><en>The contract identifier confirms the JSON is a doc-source-map; an error does not stop collection of other diagnosable structure.</en></lang>
   if (value.contract !== DOC_SOURCE_MAP_CONTRACT) {
+    // <lang><zh-CN>仅在 diagnostic data 中归一化 contract 文本，缺失值保持空字符串而不是原始对象。</zh-CN><en>Normalize contract text only in diagnostic data; a missing value remains an empty string rather than the raw object.</en></lang>
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
       "doc-source-map manifest contract must be doc-source-map.",
@@ -301,7 +329,9 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     ));
   }
 
+  // <lang><zh-CN>contractVersion 是版本兼容性判定的可选文本，不把非字符串值转换为可用版本。</zh-CN><en>contractVersion is optional text for compatibility decisions; non-string values are not coerced into usable versions.</en></lang>
   const contractVersion = stringValue(value.contractVersion);
+  // <lang><zh-CN>版本不匹配时继续建立索引，以便调用方同时获得结构问题与 unsupported-version 状态。</zh-CN><en>Continue building when versions differ so callers receive both structural issues and unsupported-version status.</en></lang>
   if (contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION) {
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_UNSUPPORTED_VERSION",
@@ -314,29 +344,43 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     ));
   }
 
+  // <lang><zh-CN>privacy 是可选对象；非对象时回退空策略，后续默认禁止嵌入内容。</zh-CN><en>privacy is optional object data; non-objects fall back to an empty policy whose later default blocks embedded content.</en></lang>
   const privacy = isRecord(value.privacy) ? value.privacy : {};
+  // <lang><zh-CN>sourcesContentPolicy 决定 source 条目能否声明嵌入正文；默认 none 是隐私保守值。</zh-CN><en>sourcesContentPolicy decides whether source entries may declare embedded bodies; default none is the privacy-conservative value.</en></lang>
   const sourcesContentPolicy = stringValue(privacy.sourcesContentPolicy) ?? "none";
+  // <lang><zh-CN>artifacts 是供 entry artifact reference 解析的最小节点集合。</zh-CN><en>artifacts is the minimal node collection used to resolve entry artifact references.</en></lang>
   const artifacts = collectIndexedNodes(value.artifacts);
+  // <lang><zh-CN>sources 是供 entry source reference 解析的最小节点集合，不包含 source 正文。</zh-CN><en>sources is the minimal node collection used to resolve entry source references and contains no source body.</en></lang>
   const sources = collectIndexedNodes(value.sources);
+  // <lang><zh-CN>sourceMaps 只投影 ordinary source map 链接元数据，不能替代完整 binding model。</zh-CN><en>sourceMaps projects ordinary source-map link metadata only and cannot substitute for a complete binding model.</en></lang>
   const sourceMaps = collectIndexedNodes(value.sourceMaps).map(indexedNodeToSourceMapLink);
+  // <lang><zh-CN>bindingSidecars 只声明独立 artifact；本函数不加载其 body，维持 sidecar privacy 边界。</zh-CN><en>bindingSidecars declares independent artifacts only; this function does not load their bodies, preserving the sidecar privacy boundary.</en></lang>
   const bindingSidecars = collectGeneratedBindingSidecars(value.generatedBindingSidecars);
+  // <lang><zh-CN>artifactById 为 entry 校验提供稳定 O(1) 身份查找。</zh-CN><en>artifactById provides stable O(1) identity lookup for entry validation.</en></lang>
   const artifactById = new Map(artifacts.map((artifact) => [artifact.id, artifact]));
+  // <lang><zh-CN>sourceById 为 source range 与来源链接建立独立查找表，不能与 artifact identity 混用。</zh-CN><en>sourceById establishes an independent lookup for source ranges and links and must not be conflated with artifact identity.</en></lang>
   const sourceById = new Map(sources.map((source) => [source.id, source]));
+  // <lang><zh-CN>bindingSidecarById 只验证最小 sidecar reference 是否已声明，不解析 binding 内容。</zh-CN><en>bindingSidecarById validates only whether a minimal sidecar reference was declared and never parses binding content.</en></lang>
   const bindingSidecarById = new Map(bindingSidecars.map((sidecar) => [sidecar.id, sidecar]));
 
+  // <lang><zh-CN>先检查所有可公开路径，防止 artifact、source、map 或 sidecar 任一边界引入绝对/越界路径。</zh-CN><en>Check every public path first so no artifact, source, map, or sidecar boundary introduces an absolute or escaping path.</en></lang>
   collectPathDiagnostics(diagnostics, artifacts, options.path, "artifact");
   collectPathDiagnostics(diagnostics, sources, options.path, "source");
   collectPathDiagnostics(diagnostics, sourceMaps, options.path, "sourceMap");
   collectPathDiagnostics(diagnostics, bindingSidecars, options.path, "generated binding sidecar");
+  // <lang><zh-CN>随后核验 contract reference、sidecar 声明与 sourcesContent policy，保持普通 map 只含 reference 的不变量。</zh-CN><en>Then validate contract references, sidecar declarations, and sourcesContent policy, preserving the invariant that ordinary maps hold references only.</en></lang>
   collectContractRefDiagnostics(diagnostics, value.artifacts, options.path);
   collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, options.path);
   collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, options.path);
+  // <lang><zh-CN>manifest 自带 diagnostic 仅被归一化为安全 HIA diagnostic，不信任其原始形状。</zh-CN><en>Manifest-supplied diagnostics are normalized into safe HIA diagnostics only; their raw shape is not trusted.</en></lang>
   diagnostics.push(...normalizeManifestDiagnostics(value.diagnostics, options.path));
 
+  // <lang><zh-CN>entries 只能从对象数组创建；每一项通过三张身份表解析 source、artifact 与 sidecar reference。</zh-CN><en>entries can be created only from an object array; each item resolves source, artifact, and sidecar references through the three identity maps.</en></lang>
   const entries = Array.isArray(value.entries)
     ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, options.path))
     : [];
 
+  // <lang><zh-CN>非数组 entries 必须显式诊断，而不是把缺失误报为零条有效 entry。</zh-CN><en>Non-array entries must be diagnosed explicitly rather than misreporting absence as zero valid entries.</en></lang>
   if (!Array.isArray(value.entries)) {
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
@@ -346,11 +390,15 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     ));
   }
 
+  // <lang><zh-CN>hasErrors 汇总所有 error severity，是最终 invalid 状态的唯一硬条件。</zh-CN><en>hasErrors aggregates every error severity and is the sole hard condition for final invalid status.</en></lang>
   const hasErrors = diagnostics.some((diagnostic) => diagnostic.severity === "error");
+  // <lang><zh-CN>unsupportedVersion 只在结构无错误时生效，避免覆盖更严重的 invalid 结论。</zh-CN><en>unsupportedVersion applies only when structure has no errors, avoiding replacement of the more severe invalid conclusion.</en></lang>
   const unsupportedVersion = contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && !hasErrors;
 
+  // <lang><zh-CN>id 是可选 manifest 身份；空或非字符串值不进入返回索引。</zh-CN><en>id is optional manifest identity; empty or non-string values do not enter the returned index.</en></lang>
   const id = stringValue(value.id);
 
+  // <lang><zh-CN>最终对象只暴露已归一化 metadata、引用和 diagnostics；它不持有 manifest 原文、sidecar body 或 sourcesContent。</zh-CN><en>The final object exposes normalized metadata, references, and diagnostics only; it holds no manifest body, sidecar body, or sourcesContent.</en></lang>
   return {
     artifactCount: artifacts.length,
     bindingSidecarCount: bindingSidecars.length,
