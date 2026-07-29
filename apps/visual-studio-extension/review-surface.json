@@ -253,6 +253,35 @@
       "generatedDocumentationBindingProjection.checkedApplyWriteEnabled"
     ]
   },
+  "documentationQualityReview": {
+    "contract": "documentation-quality-review",
+    "contractVersion": "0.1.0-draft",
+    "status": "fixture-ready",
+    "inputMode": "visual-studio-documentation-quality-review-read-only",
+    "actionPolicy": "review-only",
+    "summary": {
+      "findingCount": 3,
+      "ropFindingCount": 1,
+      "terminologyFindingCount": 1,
+      "localeResourceFindingCount": 1,
+      "unavailableFindingCount": 1
+    },
+    "requiresHumanReview": true,
+    "sourceBodyIncluded": false,
+    "resourceBodyIncluded": false,
+    "termPhraseIncluded": false,
+    "rawLocatorIncluded": false,
+    "workspaceWriteAvailable": false,
+    "targetRepositoryMutation": false,
+    "providerNetworkExecuted": false,
+    "requiredFields": [
+      "documentationQualityReview.contract",
+      "documentationQualityReview.actionPolicy",
+      "documentationQualityReview.summary.findingCount",
+      "documentationQualityReview.requiresHumanReview",
+      "documentationQualityReview.workspaceWriteAvailable"
+    ]
+  },
   "views": [
     {
       "id": "review-list",

@@ -17,6 +17,11 @@ export const HIA_DEVTOOLS_AUTHORING_PROJECTION_CONTRACT = "hia-devtools-authorin
  * English: Read-only DevTools summary contract for W-P52 generated-binding relations.
  */
 export const HIA_DEVTOOLS_GENERATED_BINDING_PROJECTION_CONTRACT = "hia-devtools-generated-binding-projection-summary";
+/**
+ * 中文：DevTools 对 W-P57 documentation-quality-review 的只读摘要 contract。
+ * English: Read-only DevTools summary contract for W-P57 documentation-quality-review.
+ */
+export const HIA_DEVTOOLS_DOCUMENTATION_QUALITY_REVIEW_CONTRACT = "hia-devtools-documentation-quality-review-summary";
 
 /**
  * 将 browser-panel payload 规整为 DevTools panel 可渲染的 view model。
@@ -104,6 +109,7 @@ export function createHiaDevToolsReviewSurfaceViewModel(payload) {
     },
     applyPreview: createDevToolsApplyPreviewSummary(items),
     authoringProjection: createDevToolsAuthoringProjectionSummary(input),
+    documentationQualityReview: createDevToolsDocumentationQualityReviewSummary(input),
     generatedDocumentationBindingProjection: createDevToolsGeneratedBindingProjectionSummary(input),
     checkedApplyConfirmation: createDevToolsCheckedApplyConfirmationSummary(input),
     contract: HIA_DEVTOOLS_REVIEW_SURFACE_CONTRACT,
@@ -268,6 +274,75 @@ function createDevToolsGeneratedBindingProjectionSummary(payload) {
     targetRepositoryMutationAllowed: false,
     providerNetworkExecuted: false,
     sourcesContentPolicy: stringValue(privacy.sourcesContentPolicy) ?? "none"
+  };
+}
+
+/**
+ * 中文：规整 documentation-quality-review 为 DevTools 可显示的最小、安全摘要。
+ * English: Normalizes documentation-quality-review into the minimum safe summary displayable by DevTools.
+ *
+ * @remarks
+ * 中文：只复制 finding 的 identity、category、rule、logical scope 和三维审查质量；忽略 source/resource
+ * 正文、术语短语、locator、未知字段及任何写入提示。
+ * English: Copies only finding identity, category, rule, logical scope, and the three review-quality
+ * dimensions; ignores source/resource bodies, term phrases, locators, unknown fields, and write hints.
+ */
+function createDevToolsDocumentationQualityReviewSummary(payload) {
+  const input = selectDocumentationQualityReview(payload);
+  const summary = isRecord(input?.summary) ? input.summary : {};
+  const findings = arrayValue(input?.findings).map(normalizeDocumentationQualityReviewFinding);
+
+  return {
+    actionPolicy: "review-only",
+    contract: HIA_DEVTOOLS_DOCUMENTATION_QUALITY_REVIEW_CONTRACT,
+    findingCount: numberValue(summary.findingCount) ?? findings.length,
+    findings,
+    localeResourceFindingCount: numberValue(summary.localeResourceFindingCount) ?? findings.filter((finding) => finding.category === "locale-resource").length,
+    privacy: {
+      rawLocatorIncluded: false,
+      resourceBodyIncluded: false,
+      sourceBodyIncluded: false,
+      termPhraseIncluded: false
+    },
+    requiresHumanReview: true,
+    ropFindingCount: numberValue(summary.ropFindingCount) ?? findings.filter((finding) => finding.category === "rop").length,
+    status: stringValue(input?.status) ?? (input ? "available" : "not-available"),
+    terminologyFindingCount: numberValue(summary.terminologyFindingCount) ?? findings.filter((finding) => finding.category === "terminology").length,
+    unavailableFindingCount: numberValue(summary.unavailableFindingCount) ?? findings.filter((finding) => finding.reviewStatus === "unavailable").length,
+    writeAuthority: "disabled",
+    workspaceWriteAllowed: false
+  };
+}
+
+/**
+ * 中文：只接受 contract 已声明的 logical finding 字段，避免将 payload 的自由文本泄漏到面板。
+ * English: Accepts only contract-declared logical finding fields, preventing payload free text from leaking into the panel.
+ */
+function normalizeDocumentationQualityReviewFinding(value) {
+  const input = isRecord(value) ? value : {};
+  const provenance = isRecord(input.provenance) ? input.provenance : {};
+  const scope = isRecord(input.scope) ? input.scope : {};
+
+  return {
+    category: stringValue(input.category) ?? "unknown",
+    confidence: stringValue(input.confidence) ?? "none",
+    diagnosticCodes: stringArray(input.diagnosticCodes),
+    id: stringValue(input.id) ?? "quality-review:unknown",
+    provenance: {
+      kind: stringValue(provenance.kind) ?? "unknown",
+      sidecarId: stringValue(provenance.sidecarId)
+    },
+    requiresHumanReview: true,
+    reviewStatus: stringValue(input.reviewStatus) ?? "unavailable",
+    rule: stringValue(input.rule) ?? "unknown",
+    scope: {
+      fieldPath: stringValue(scope.fieldPath),
+      occurrence: numberValue(scope.occurrence) ?? 0,
+      profile: stringValue(scope.profile),
+      sourceDocumentId: stringValue(scope.sourceDocumentId) ?? "unknown",
+      symbolId: stringValue(scope.symbolId)
+    },
+    severity: stringValue(input.severity) ?? "info"
   };
 }
 
@@ -609,6 +684,24 @@ function selectGeneratedDocumentationBindingProjection(payload) {
 
   if (isRecord(input.result) && isRecord(input.result.generatedDocumentationBindingProjection)) {
     return input.result.generatedDocumentationBindingProjection;
+  }
+
+  return undefined;
+}
+
+/**
+ * 中文：从 browser payload 或 host result 中选择显式注入的 quality-review；不进行任何 resource/sidecar discovery。
+ * English: Selects explicitly injected quality-review from a browser payload or host result; performs no resource/sidecar discovery.
+ */
+function selectDocumentationQualityReview(payload) {
+  const input = isRecord(payload) ? payload : {};
+
+  if (isRecord(input.documentationQualityReview)) {
+    return input.documentationQualityReview;
+  }
+
+  if (isRecord(input.result) && isRecord(input.result.documentationQualityReview)) {
+    return input.result.documentationQualityReview;
   }
 
   return undefined;

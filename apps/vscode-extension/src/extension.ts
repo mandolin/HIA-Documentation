@@ -32,6 +32,7 @@ import {
   HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
+  HIA_SHOW_DOCUMENTATION_QUALITY_REVIEW_COMMAND,
   HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
@@ -44,6 +45,8 @@ import {
   createHiaHostApplyUxSurfaceChoices,
   createHiaVscodeAuthoringSurfaceChoices,
   createHiaVscodeAuthoringSurfaceReport,
+  createHiaVscodeDocumentationQualityReviewChoices,
+  createHiaVscodeDocumentationQualityReviewReport,
   createHiaVscodeGeneratedBindingRelationChoices,
   createHiaVscodeGeneratedBindingRelationReport,
   createHiaDocumentationCheckedApplyConfirmationPreview,
@@ -80,6 +83,8 @@ import {
   type HiaHostApplyUxSurfaceChoice,
   type HiaVscodeAuthoringSurfaceChoice,
   type HiaVscodeAuthoringSurfaceEvidenceSummary,
+  type HiaVscodeDocumentationQualityReviewChoice,
+  type HiaVscodeDocumentationQualityReviewEvidence,
   type HiaVscodeGeneratedBindingProjectionEvidence,
   type HiaVscodeGeneratedBindingRelationChoice,
   type HiaIdeCapabilitiesSummary,
@@ -298,6 +303,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const showGeneratedBindingRelationsCommand = vscode.commands.registerCommand(HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND, async () => {
     await showHiaGeneratedBindingRelations(outputChannel);
   });
+  const showDocumentationQualityReviewCommand = vscode.commands.registerCommand(HIA_SHOW_DOCUMENTATION_QUALITY_REVIEW_COMMAND, async () => {
+    await showHiaDocumentationQualityReview(outputChannel);
+  });
   const runWp53SelfSandboxPilotCommand = vscode.commands.registerCommand(HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND, async () => {
     await runHiaWp53SelfSandboxPilot(outputChannel);
   });
@@ -313,7 +321,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   client = new LanguageClient(HIA_CLIENT_ID, HIA_EXTENSION_NAME, serverOptions, clientOptions);
 
-  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, showGeneratedBindingRelationsCommand, runWp53SelfSandboxPilotCommand, codeActionProvider, {
+  context.subscriptions.push(outputChannel, showOutputCommand, buildDocsCommand, openPreviewCommand, openSourceLinkageCommand, openProjectRelationsCommand, validateWorkspaceCommand, openRelatedLocationCommand, showResourceActionCommand, copyResourceKeyCommand, reviewDocumentationProposalsCommand, showCheckedApplySandboxConfirmationCommand, showHostApplyUxIntakeCommand, showAuthoringSurfaceCommand, showGeneratedBindingRelationsCommand, showDocumentationQualityReviewCommand, runWp53SelfSandboxPilotCommand, codeActionProvider, {
     dispose: () => {
       void client?.stop();
       client = undefined;
@@ -1071,6 +1079,64 @@ async function showHiaGeneratedBindingRelations(outputChannel: vscode.OutputChan
 }
 
 /**
+ * 中文：在 VS Code 中只读展示 W-P57 documentation-quality-review finding。
+ * English: Shows W-P57 documentation-quality-review findings read-only in VS Code.
+ *
+ * @remarks
+ * 中文：只读取本仓库生成的 public-safe evidence；不会读取 DLR、sidecar 路径或 source/resource body，
+ * 也不会创建 code action、WorkspaceEdit 或任何 workspace 写入。
+ * English: Reads only repository-generated public-safe evidence; it neither reads DLRs, sidecar paths,
+ * or source/resource bodies nor creates code actions, WorkspaceEdits, or workspace writes.
+ */
+async function showHiaDocumentationQualityReview(outputChannel: vscode.OutputChannel): Promise<void> {
+  const workspaceRoot = resolveWorkspaceRoot();
+
+  if (!workspaceRoot) {
+    void vscode.window.showWarningMessage("Open the HIA main repo workspace before showing documentation quality review.");
+    return;
+  }
+
+  /** 中文：evidence 是显式生成的 host projection，不是 DLR/resource/source discovery。 English: Evidence is an explicitly generated host projection, not DLR/resource/source discovery. */
+  const evidencePath = path.join(workspaceRoot, "dist", "wp57-documentation-quality-review", "quality-review-projection.json");
+  let evidence: HiaVscodeDocumentationQualityReviewEvidence;
+
+  try {
+    evidence = JSON.parse(await readFile(evidencePath, "utf8")) as HiaVscodeDocumentationQualityReviewEvidence;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel.show(true);
+    outputChannel.appendLine(`HIA documentation quality review evidence / 文档质量审查证据读取失败: ${message}`);
+    void vscode.window.showWarningMessage("请先运行 pnpm run wp57:quality-review:evidence，再查看 documentation quality review。");
+    return;
+  }
+
+  outputChannel.show(true);
+  outputChannel.appendLine("HIA documentation quality review / 文档质量审查:");
+  const choices = createHiaVscodeDocumentationQualityReviewChoices(evidence).map((choice) => ({ ...choice, choice }));
+
+  if (choices.length === 0) {
+    for (const line of createHiaVscodeDocumentationQualityReviewReport(evidence)) {
+      outputChannel.appendLine(`- ${line}`);
+    }
+    void vscode.window.showWarningMessage("No documentation quality-review finding is available. See HIA output.");
+    return;
+  }
+
+  const selected = await vscode.window.showQuickPick<DocumentationQualityReviewQuickPickItem>(choices, {
+    placeHolder: "选择 documentation quality-review finding / quality-review 发现项"
+  });
+
+  if (!selected) {
+    return;
+  }
+
+  for (const line of createHiaVscodeDocumentationQualityReviewReport(evidence, selected.choice.finding)) {
+    outputChannel.appendLine(`- ${line}`);
+  }
+  void vscode.window.showInformationMessage("HIA documentation quality review 已写入输出；仅供人工审查，写入保持禁用。");
+}
+
+/**
  * 在 VS Code 的原生 picker 中完成 original source、generated artifact 与文档预览的导航。
  * Navigate original source, generated artifacts and documentation preview through native VS Code pickers.
  */
@@ -1653,6 +1719,11 @@ interface AuthoringSurfaceQuickPickItem extends HiaVscodeAuthoringSurfaceChoice,
 
 interface GeneratedBindingRelationQuickPickItem extends HiaVscodeGeneratedBindingRelationChoice, vscode.QuickPickItem {
   choice: HiaVscodeGeneratedBindingRelationChoice;
+}
+
+/** 中文：quality-review picker 的宿主 UI 项。English: Host UI item for the quality-review picker. */
+interface DocumentationQualityReviewQuickPickItem extends HiaVscodeDocumentationQualityReviewChoice, vscode.QuickPickItem {
+  choice: HiaVscodeDocumentationQualityReviewChoice;
 }
 
 interface ProjectIndexDocumentQuickPickItem extends vscode.QuickPickItem {

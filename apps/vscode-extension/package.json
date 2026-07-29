@@ -28,6 +28,7 @@
     "onCommand:hia.showHostApplyUxIntake",
     "onCommand:hia.showAuthoringSurface",
     "onCommand:hia.showGeneratedBindingRelations",
+    "onCommand:hia.showDocumentationQualityReview",
     "onCommand:hia.runWp53SelfSandboxPilot",
     "workspaceContains:**/*.hia.json",
     "workspaceContains:**/project-index.json"
@@ -91,6 +92,10 @@
       {
         "command": "hia.showGeneratedBindingRelations",
         "title": "HIA: Show Generated Binding Relations"
+      },
+      {
+        "command": "hia.showDocumentationQualityReview",
+        "title": "HIA: Show Documentation Quality Review"
       },
       {
         "command": "hia.runWp53SelfSandboxPilot",

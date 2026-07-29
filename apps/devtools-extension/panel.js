@@ -8,6 +8,7 @@ import {
 
 const state = {
   model: createHiaDevToolsPanelViewModel(undefined),
+  selectedDocumentationQualityReviewFindingId: "",
   selectedGeneratedBindingId: "",
   selectedRelationId: "",
   selectedReviewItemId: "",
@@ -60,6 +61,7 @@ async function loadPayloadText(text) {
   try {
     const payload = JSON.parse(text);
     state.model = createHiaDevToolsPanelViewModel(payload);
+    state.selectedDocumentationQualityReviewFindingId = state.model.review.documentationQualityReview.findings[0]?.id ?? "";
     state.selectedRelationId = state.model.relations[0]?.id ?? "";
     state.selectedGeneratedBindingId = state.model.review.generatedDocumentationBindingProjection.bindings[0]?.id ?? "";
     state.selectedReviewItemId = state.model.review.items[0]?.id ?? "";
@@ -91,7 +93,8 @@ function renderSummary() {
     ["Target Flow", state.model.review.targetCollaboration.collaborationModeCount],
     ["Host UX", state.model.review.hostApplyUx.uxRequirementRefCount],
     ["Authoring", state.model.review.authoringProjection.authoringModeCount],
-    ["Binding Targets", state.model.review.generatedDocumentationBindingProjection.targetCount]
+    ["Binding Targets", state.model.review.generatedDocumentationBindingProjection.targetCount],
+    ["Quality Findings", state.model.review.documentationQualityReview.findingCount]
   ];
 
   elements.summary.replaceChildren(...metrics.map(([label, value]) => {
@@ -114,6 +117,11 @@ function renderTabs() {
 }
 
 function renderNavigation() {
+  if (state.selectedView === "quality-review") {
+    renderDocumentationQualityReviewFindings();
+    return;
+  }
+
   if (state.selectedView === "bindings") {
     renderGeneratedBindingRelations();
     return;
@@ -125,6 +133,32 @@ function renderNavigation() {
   }
 
   renderRelations();
+}
+
+/**
+ * 中文：只读列出 quality-review finding；列表不显示 source/resource body、术语短语或 locator。
+ * English: Lists quality-review findings read-only without source/resource bodies, term phrases, or locators.
+ */
+function renderDocumentationQualityReviewFindings() {
+  const findings = state.model.review.documentationQualityReview.findings;
+
+  if (findings.length === 0) {
+    elements.list.replaceChildren(emptyElement("No documentation quality-review findings loaded."));
+    return;
+  }
+
+  elements.list.replaceChildren(...findings.map((finding) => {
+    const button = document.createElement("button");
+    button.className = "list-button";
+    button.type = "button";
+    button.setAttribute("aria-selected", String(finding.id === state.selectedDocumentationQualityReviewFindingId));
+    button.innerHTML = `<strong>${escapeHtml(finding.id)}</strong><span>${escapeHtml(`${finding.category} · ${finding.severity} · ${finding.reviewStatus}`)}</span>`;
+    button.addEventListener("click", () => {
+      state.selectedDocumentationQualityReviewFindingId = finding.id;
+      render();
+    });
+    return button;
+  }));
 }
 
 function renderGeneratedBindingRelations() {
@@ -190,6 +224,11 @@ function renderReviewItems() {
 }
 
 function renderDetail() {
+  if (state.selectedView === "quality-review") {
+    renderDocumentationQualityReviewDetail();
+    return;
+  }
+
   if (state.selectedView === "bindings") {
     renderGeneratedBindingDetail();
     return;
@@ -201,6 +240,38 @@ function renderDetail() {
   }
 
   renderRelationDetail();
+}
+
+/**
+ * 中文：显示一条 quality-review finding 的安全 logical metadata，并重复声明 review-only 边界。
+ * English: Displays safe logical metadata for one quality-review finding and repeats the review-only boundary.
+ */
+function renderDocumentationQualityReviewDetail() {
+  const projection = state.model.review.documentationQualityReview;
+  const finding = projection.findings.find((item) => item.id === state.selectedDocumentationQualityReviewFindingId);
+
+  if (!finding) {
+    elements.detail.replaceChildren(emptyElement("Select a documentation quality-review finding."));
+    return;
+  }
+
+  const scope = finding.scope;
+  const article = document.createElement("section");
+  article.innerHTML = `
+    <h2>Documentation Quality Review</h2>
+    <dl class="kv">
+      <dt>Finding</dt><dd>${escapeHtml(finding.id)}</dd>
+      <dt>Category</dt><dd>${escapeHtml(finding.category)}</dd>
+      <dt>Rule</dt><dd>${escapeHtml(finding.rule)}</dd>
+      <dt>Severity / status</dt><dd>${escapeHtml(`${finding.severity} / ${finding.reviewStatus}`)}</dd>
+      <dt>Confidence / provenance</dt><dd>${escapeHtml(`${finding.confidence} / ${finding.provenance.kind}`)}</dd>
+      <dt>Logical scope</dt><dd>${escapeHtml(`document=${scope.sourceDocumentId}; symbol=${scope.symbolId || "none"}; field=${scope.fieldPath || "none"}; profile=${scope.profile || "none"}; occurrence=${scope.occurrence}`)}</dd>
+      <dt>Diagnostics</dt><dd>${escapeHtml(finding.diagnosticCodes.join(", ") || "none")}</dd>
+      <dt>Policy</dt><dd>${escapeHtml(`${projection.actionPolicy}; human review required; write=${projection.writeAuthority}`)}</dd>
+      <dt>Privacy</dt><dd>source/resource body:no; term phrase:no; raw locator:no</dd>
+    </dl>
+  `;
+  elements.detail.replaceChildren(article);
 }
 
 function renderGeneratedBindingDetail() {

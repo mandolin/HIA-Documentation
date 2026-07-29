@@ -46,6 +46,14 @@
   <data name="GeneratedBindingRelationStableInstanceKeyCountLabel" xml:space="preserve"><value>Stable generated-binding instance keys</value></data>
   <data name="GeneratedBindingRelationTargetsVisibleLabel" xml:space="preserve"><value>Generated binding targets visible</value></data>
   <data name="GeneratedBindingRelationQualityVisibleLabel" xml:space="preserve"><value>Resolution/confidence/provenance visible</value></data>
+  <data name="DocumentationQualityReviewStatusLabel" xml:space="preserve"><value>Documentation quality review status</value></data>
+  <data name="DocumentationQualityReviewActionPolicyLabel" xml:space="preserve"><value>Quality review action policy</value></data>
+  <data name="DocumentationQualityReviewFindingCountLabel" xml:space="preserve"><value>Quality review findings</value></data>
+  <data name="DocumentationQualityReviewRopFindingCountLabel" xml:space="preserve"><value>ROP quality review findings</value></data>
+  <data name="DocumentationQualityReviewTerminologyFindingCountLabel" xml:space="preserve"><value>Terminology quality review findings</value></data>
+  <data name="DocumentationQualityReviewLocaleResourceFindingCountLabel" xml:space="preserve"><value>Locale-resource quality review findings</value></data>
+  <data name="DocumentationQualityReviewUnavailableFindingCountLabel" xml:space="preserve"><value>Unavailable quality review findings</value></data>
+  <data name="DocumentationQualityReviewHumanReviewLabel" xml:space="preserve"><value>Quality review requires human review</value></data>
   <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider review input</value></data>
   <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider result kinds</value></data>
   <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>Target-owner evidence</value></data>

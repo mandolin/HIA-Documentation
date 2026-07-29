@@ -46,6 +46,14 @@
   <data name="GeneratedBindingRelationStableInstanceKeyCountLabel" xml:space="preserve"><value>稳定生成式绑定实例键</value></data>
   <data name="GeneratedBindingRelationTargetsVisibleLabel" xml:space="preserve"><value>生成式绑定目标可见</value></data>
   <data name="GeneratedBindingRelationQualityVisibleLabel" xml:space="preserve"><value>解析/置信度/来源维度可见</value></data>
+  <data name="DocumentationQualityReviewStatusLabel" xml:space="preserve"><value>文档质量审查状态</value></data>
+  <data name="DocumentationQualityReviewActionPolicyLabel" xml:space="preserve"><value>质量审查操作策略</value></data>
+  <data name="DocumentationQualityReviewFindingCountLabel" xml:space="preserve"><value>质量审查发现项</value></data>
+  <data name="DocumentationQualityReviewRopFindingCountLabel" xml:space="preserve"><value>ROP 质量审查发现项</value></data>
+  <data name="DocumentationQualityReviewTerminologyFindingCountLabel" xml:space="preserve"><value>固有术语质量审查发现项</value></data>
+  <data name="DocumentationQualityReviewLocaleResourceFindingCountLabel" xml:space="preserve"><value>语言资源质量审查发现项</value></data>
+  <data name="DocumentationQualityReviewUnavailableFindingCountLabel" xml:space="preserve"><value>不可用质量审查发现项</value></data>
+  <data name="DocumentationQualityReviewHumanReviewLabel" xml:space="preserve"><value>质量审查需要人工审查</value></data>
   <data name="ProviderReviewStatusLabel" xml:space="preserve"><value>Provider 审查输入</value></data>
   <data name="ProviderTaxonomyLabel" xml:space="preserve"><value>Provider 结果类型</value></data>
   <data name="TargetOwnerStatusLabel" xml:space="preserve"><value>目标所有者证据</value></data>

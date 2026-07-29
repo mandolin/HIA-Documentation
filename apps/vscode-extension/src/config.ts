@@ -46,6 +46,11 @@ export const HIA_SHOW_AUTHORING_SURFACE_COMMAND = "hia.showAuthoringSurface";
  */
 export const HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND = "hia.showGeneratedBindingRelations";
 /**
+ * 中文：VS Code 中查看 metadata-only 文档质量审查 finding 的只读命令标识。
+ * English: Read-only VS Code command id for inspecting metadata-only documentation-quality-review findings.
+ */
+export const HIA_SHOW_DOCUMENTATION_QUALITY_REVIEW_COMMAND = "hia.showDocumentationQualityReview";
+/**
  * VS Code command id for the W-P53 host-owned self-sandbox apply-and-rollback pilot.
  *
  * 中文：VS Code 中仅用于 W-P53 主仓专用 synthetic sandbox apply-and-rollback 试点的命令标识。
@@ -952,6 +957,63 @@ export interface HiaVscodeGeneratedBindingRelationChoice {
   relation: HiaVscodeGeneratedBindingRelation;
 }
 
+/**
+ * 中文：W-P57 quality-review evidence envelope；只携带可公开审查的逻辑 metadata。
+ * English: W-P57 quality-review evidence envelope carrying only reviewable public logical metadata.
+ */
+export interface HiaVscodeDocumentationQualityReviewEvidence {
+  contract?: string;
+  contractVersion?: string;
+  phase?: string;
+  projection?: HiaVscodeDocumentationQualityReviewProjection;
+  status?: string;
+}
+
+/** 中文：VS Code 可呈现的中性质量审查 report。English: Neutral quality-review report renderable by VS Code. */
+export interface HiaVscodeDocumentationQualityReviewProjection {
+  actionPolicy?: string;
+  contract?: string;
+  contractVersion?: string;
+  findings?: HiaVscodeDocumentationQualityReviewFinding[];
+  id?: string;
+  privacy?: {
+    allowRawLocator?: boolean;
+    allowResourceBody?: boolean;
+    allowSourceBody?: boolean;
+    allowTermPhrase?: boolean;
+  };
+  summary?: {
+    findingCount?: number;
+    localeResourceFindingCount?: number;
+    requiresHumanReview?: boolean;
+    ropFindingCount?: number;
+    terminologyFindingCount?: number;
+    unavailableFindingCount?: number;
+  };
+}
+
+/** 中文：一条仅含 logical scope 的质量审查 finding。English: One quality-review finding containing logical scope only. */
+export interface HiaVscodeDocumentationQualityReviewFinding {
+  category?: string;
+  confidence?: string;
+  diagnosticCodes?: string[];
+  id?: string;
+  provenance?: { kind?: string; sidecarId?: string };
+  requiresHumanReview?: boolean;
+  reviewStatus?: string;
+  rule?: string;
+  scope?: { fieldPath?: string; occurrence?: number; profile?: string; sourceDocumentId?: string; symbolId?: string };
+  severity?: string;
+}
+
+/** 中文：quality-review QuickPick 选择项。English: Quality-review QuickPick choice. */
+export interface HiaVscodeDocumentationQualityReviewChoice {
+  description?: string;
+  detail?: string;
+  finding: HiaVscodeDocumentationQualityReviewFinding;
+  label: string;
+}
+
 export interface HiaDocumentationEditProposalsSummary {
   aiContextPackage?: HiaAiContextPackageSummary;
   draftCount?: number;
@@ -1771,6 +1833,77 @@ export function createHiaVscodeGeneratedBindingRelationReport(
     lines.push(`Target / 目标: ${target.id || "unknown"} · ${identity.kind || "unknown"}${identity.selector ? ` · ${identity.selector}` : ""}${identity.symbolId ? ` · ${identity.symbolId}` : ""}`);
   }
 
+  return lines;
+}
+
+/**
+ * 中文：将中性 quality-review finding 转为 VS Code 的只读 picker 选择项。
+ * English: Converts neutral quality-review findings into read-only VS Code picker choices.
+ */
+export function createHiaVscodeDocumentationQualityReviewChoices(
+  evidence: HiaVscodeDocumentationQualityReviewEvidence
+): HiaVscodeDocumentationQualityReviewChoice[] {
+  const findings = evidence.projection?.findings ?? [];
+
+  return findings.map((finding, index) => {
+    /** 中文：scope 是逻辑标识而非路径/范围；不要将其升级为 source locator。 English: Scope is logical identity rather than a path/range; do not promote it to a source locator. */
+    const scope = finding.scope?.symbolId || finding.scope?.fieldPath || finding.scope?.sourceDocumentId || "scope unavailable";
+    return {
+      description: `${finding.severity || "info"} · ${finding.reviewStatus || "unavailable"}`,
+      detail: `${finding.category || "unknown"} · ${finding.rule || "unknown"} · ${scope}`,
+      finding,
+      label: finding.id || `Quality review finding ${index + 1}`
+    };
+  });
+}
+
+/**
+ * 中文：创建 quality-review 的中英双语只读报告；不显示 source/resource text、term phrase 或 locator。
+ * English: Creates a bilingual read-only quality-review report without source/resource text, term phrases, or locators.
+ */
+export function createHiaVscodeDocumentationQualityReviewReport(
+  evidence: HiaVscodeDocumentationQualityReviewEvidence,
+  finding?: HiaVscodeDocumentationQualityReviewFinding
+): string[] {
+  const projection = evidence.projection || {};
+  const summary = projection.summary || {};
+  const selected = finding || projection.findings?.[0];
+  const lines = [
+    `Evidence / 证据: ${evidence.contract || "unknown"}@${evidence.contractVersion || "unknown"}`,
+    `Status / 状态: ${evidence.status || "unknown"}`,
+    `Phase / 阶段: ${evidence.phase || "W-P57"}`,
+    `Report / 报告: ${projection.contract || "documentation-quality-review"}@${projection.contractVersion || "unknown"}`,
+    `Report id / 报告标识: ${projection.id || "unknown"}`,
+    `Action policy / 操作策略: ${projection.actionPolicy || "review-only"}`,
+    `Findings / 发现项: ${formatOptionalNumber(summary.findingCount)}`,
+    `ROP / ROP: ${formatOptionalNumber(summary.ropFindingCount)}`,
+    `Terminology / 固有术语: ${formatOptionalNumber(summary.terminologyFindingCount)}`,
+    `Locale resource / 语言资源: ${formatOptionalNumber(summary.localeResourceFindingCount)}`,
+    `Unavailable / 不可用: ${formatOptionalNumber(summary.unavailableFindingCount)}`,
+    `Human review / 人工审查: ${summary.requiresHumanReview ? "required / 必需" : "not confirmed / 未确认"}`,
+    `Source body / 源码正文: ${projection.privacy?.allowSourceBody ? "allowed / 允许" : "denied / 禁止"}`,
+    `Resource body / 资源正文: ${projection.privacy?.allowResourceBody ? "allowed / 允许" : "denied / 禁止"}`,
+    `Term phrase / 术语短语: ${projection.privacy?.allowTermPhrase ? "allowed / 允许" : "denied / 禁止"}`,
+    `Raw locator / 原始定位符: ${projection.privacy?.allowRawLocator ? "allowed / 允许" : "denied / 禁止"}`
+  ];
+
+  if (!selected) {
+    return lines;
+  }
+
+  const scope = selected.scope || {};
+  lines.push(
+    `Finding / 发现项: ${selected.id || "unknown"}`,
+    `Category / 类别: ${selected.category || "unknown"}`,
+    `Rule / 规则: ${selected.rule || "unknown"}`,
+    `Severity / 严重度: ${selected.severity || "unknown"}`,
+    `Review status / 审查状态: ${selected.reviewStatus || "unknown"}`,
+    `Confidence / 置信度: ${selected.confidence || "unknown"}`,
+    `Provenance / 来源: ${selected.provenance?.kind || "unknown"}${selected.provenance?.sidecarId ? ` / ${selected.provenance.sidecarId}` : ""}`,
+    `Logical scope / 逻辑范围: document=${scope.sourceDocumentId || "unknown"}; symbol=${scope.symbolId || "none"}; field=${scope.fieldPath || "none"}; profile=${scope.profile || "none"}; occurrence=${scope.occurrence ?? 0}`,
+    `Diagnostic codes / 诊断码: ${(selected.diagnosticCodes || []).join(", ") || "none"}`,
+    `Human review / 人工审查: ${selected.requiresHumanReview ? "required / 必需" : "not confirmed / 未确认"}`
+  );
   return lines;
 }
 

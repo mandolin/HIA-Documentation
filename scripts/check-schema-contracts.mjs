@@ -101,7 +101,12 @@ assert(DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$id === DOCUMENTATION_QUALITY_RE
 assert(
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.properties.contract.const === DOCUMENTATION_QUALITY_REVIEW_CONTRACT
     && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION
-    && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.properties.privacy.properties.allowSourceBody.const === false,
+    // 中文：privacy 通过 JSON Schema $ref 复用定义；直接读取 properties.privacy 会绕过实际 deny-all 约束。
+    // English: Privacy reuses its JSON Schema $ref definition; reading properties.privacy directly would bypass the actual deny-all constraint.
+    && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$defs.privacy.properties.allowSourceBody.const === false
+    && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$defs.privacy.properties.allowResourceBody.const === false
+    && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$defs.privacy.properties.allowTermPhrase.const === false
+    && DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA.$defs.privacy.properties.allowRawLocator.const === false,
   "Documentation quality-review metadata-only boundary drifted."
 );
 
@@ -210,6 +215,7 @@ const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA],
+  [DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
@@ -230,4 +236,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

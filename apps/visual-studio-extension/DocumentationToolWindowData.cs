@@ -116,6 +116,30 @@ internal sealed class DocumentationToolWindowData : NotifyPropertyChangedObject,
         ];
         this.ReviewMetrics =
         [
+            Metric(
+                "DocumentationQualityReviewStatusLabel",
+                snapshot.DocumentationQualityReviewStatus),
+            Metric(
+                "DocumentationQualityReviewActionPolicyLabel",
+                snapshot.DocumentationQualityReviewActionPolicy),
+            Metric(
+                "DocumentationQualityReviewFindingCountLabel",
+                snapshot.DocumentationQualityReviewFindingCount),
+            Metric(
+                "DocumentationQualityReviewRopFindingCountLabel",
+                snapshot.DocumentationQualityReviewRopFindingCount),
+            Metric(
+                "DocumentationQualityReviewTerminologyFindingCountLabel",
+                snapshot.DocumentationQualityReviewTerminologyFindingCount),
+            Metric(
+                "DocumentationQualityReviewLocaleResourceFindingCountLabel",
+                snapshot.DocumentationQualityReviewLocaleResourceFindingCount),
+            Metric(
+                "DocumentationQualityReviewUnavailableFindingCountLabel",
+                snapshot.DocumentationQualityReviewUnavailableFindingCount),
+            Flag(
+                "DocumentationQualityReviewHumanReviewLabel",
+                snapshot.DocumentationQualityReviewRequiresHumanReview),
             Metric("ProviderReviewStatusLabel", snapshot.ProviderReviewStatus),
             Metric("ProviderTaxonomyLabel", snapshot.ProviderTaxonomyKindCount),
             Metric("TargetOwnerStatusLabel", snapshot.TargetOwnerStatus),

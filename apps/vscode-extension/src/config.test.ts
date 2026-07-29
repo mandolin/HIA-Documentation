@@ -19,6 +19,7 @@ import {
   HIA_RUN_WP53_SELF_SANDBOX_PILOT_COMMAND,
   HIA_SHOW_CHECKED_APPLY_SANDBOX_CONFIRMATION_COMMAND,
   HIA_SHOW_AUTHORING_SURFACE_COMMAND,
+  HIA_SHOW_DOCUMENTATION_QUALITY_REVIEW_COMMAND,
   HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND,
   HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND,
   HIA_SHOW_RESOURCE_ACTION_COMMAND,
@@ -31,6 +32,8 @@ import {
   createHiaHostApplyUxSurfaceChoices,
   createHiaVscodeAuthoringSurfaceChoices,
   createHiaVscodeAuthoringSurfaceReport,
+  createHiaVscodeDocumentationQualityReviewChoices,
+  createHiaVscodeDocumentationQualityReviewReport,
   createHiaVscodeGeneratedBindingRelationChoices,
   createHiaVscodeGeneratedBindingRelationReport,
   createHiaDocumentationCheckedApplyConfirmationChoices,
@@ -87,6 +90,7 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(HIA_SHOW_HOST_APPLY_UX_INTAKE_COMMAND).toBe("hia.showHostApplyUxIntake");
     expect(HIA_SHOW_AUTHORING_SURFACE_COMMAND).toBe("hia.showAuthoringSurface");
     expect(HIA_SHOW_GENERATED_BINDING_RELATIONS_COMMAND).toBe("hia.showGeneratedBindingRelations");
+    expect(HIA_SHOW_DOCUMENTATION_QUALITY_REVIEW_COMMAND).toBe("hia.showDocumentationQualityReview");
     expect(HIA_RESOURCE_INDEX_REQUEST).toBe("hia/documentResourceIndex");
     expect(HIA_DOCUMENT_SOURCE_MAP_INDEX_REQUEST).toBe("hia/documentSourceMapIndex");
     expect(HIA_PROJECT_RELATION_GRAPH_REQUEST).toBe("hia/projectRelationGraph");
@@ -915,6 +919,60 @@ describe("@hia-doc/vscode-extension config", () => {
     expect(report).toContain("Target / 目标: target:pug:colors:sky · generated-html-element · article.swatch · element:ColorSwatch");
     expect(report).toContain("Source body / 源码正文: not included / 未包含");
     expect(report).toContain("Sidecar path / sidecar 路径: not included / 未包含");
+  });
+
+  it("creates metadata-only documentation quality-review choices and reports", () => {
+    const evidence = {
+      contract: "hia-wp57-documentation-quality-review-evidence",
+      contractVersion: "0.1.0-draft",
+      phase: "W-P57.4",
+      status: "ready-for-wp57-fixture-privacy-and-evidence",
+      projection: {
+        actionPolicy: "review-only",
+        contract: "documentation-quality-review",
+        contractVersion: "0.1.0-draft",
+        id: "quality-review:wp57-fixture",
+        privacy: {
+          allowRawLocator: false,
+          allowResourceBody: false,
+          allowSourceBody: false,
+          allowTermPhrase: false
+        },
+        summary: {
+          findingCount: 3,
+          localeResourceFindingCount: 1,
+          requiresHumanReview: true,
+          ropFindingCount: 1,
+          terminologyFindingCount: 1,
+          unavailableFindingCount: 1
+        },
+        findings: [{
+          category: "terminology",
+          confidence: "none",
+          diagnosticCodes: ["TERM_GRAMMAR_UNAVAILABLE"],
+          id: "quality-review:fixture:document:field:terminology:grammar-state:0",
+          provenance: { kind: "profile-diagnostic" },
+          requiresHumanReview: true,
+          reviewStatus: "unavailable",
+          rule: "grammar-state",
+          scope: { fieldPath: "description", occurrence: 0, profile: "generic-docline", sourceDocumentId: "fixture:document" },
+          severity: "info"
+        }]
+      }
+    };
+    const choices = createHiaVscodeDocumentationQualityReviewChoices(evidence);
+    const report = createHiaVscodeDocumentationQualityReviewReport(evidence, choices[0]?.finding);
+
+    expect(choices).toHaveLength(1);
+    expect(choices[0]).toMatchObject({
+      description: "info · unavailable",
+      label: "quality-review:fixture:document:field:terminology:grammar-state:0"
+    });
+    expect(report).toContain("Action policy / 操作策略: review-only");
+    expect(report).toContain("Findings / 发现项: 3");
+    expect(report).toContain("Term phrase / 术语短语: denied / 禁止");
+    expect(report).toContain("Rule / 规则: grammar-state");
+    expect(report).toContain("Logical scope / 逻辑范围: document=fixture:document; symbol=none; field=description; profile=generic-docline; occurrence=0");
   });
 
   it("creates resource action preview reports", () => {

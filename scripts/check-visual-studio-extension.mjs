@@ -206,6 +206,7 @@ async function main() {
       applyPreview: reviewSurface.applyPreview,
       authoringProjection: reviewSurface.authoringProjection,
       generatedDocumentationBindingProjection: reviewSurface.generatedDocumentationBindingProjection,
+      documentationQualityReview: reviewSurface.documentationQualityReview,
       checkedApplyConfirmation: reviewSurface.checkedApplyConfirmation,
       hostApplyUx: reviewSurface.hostApplyUx,
       providerReviewPanel: reviewSurface.providerReviewPanel,
@@ -680,6 +681,25 @@ function assertReviewSurface(contract, reviewSurface) {
   assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sidecarPathIncluded, false, "Visual Studio generated binding projection must not expose sidecar paths.");
   assert.equal(reviewSurface?.generatedDocumentationBindingProjection?.sourcesContentPolicy, "none", "Visual Studio generated binding projection must preserve sourcesContent none.");
   assert.ok(Array.isArray(reviewSurface?.generatedDocumentationBindingProjection?.requiredFields) && reviewSurface.generatedDocumentationBindingProjection.requiredFields.includes("generatedDocumentationBindingProjection.checkedApplyWriteEnabled"), "Visual Studio generated binding projection must require write-disabled state.");
+  assert.equal(reviewSurface?.documentationQualityReview?.contract, "documentation-quality-review", "Visual Studio quality review projection must name the neutral contract.");
+  assert.equal(reviewSurface?.documentationQualityReview?.contractVersion, "0.1.0-draft", "Visual Studio quality review projection must pin its draft version.");
+  assert.equal(reviewSurface?.documentationQualityReview?.status, "fixture-ready", "Visual Studio quality review projection must expose fixture readiness.");
+  assert.equal(reviewSurface?.documentationQualityReview?.inputMode, "visual-studio-documentation-quality-review-read-only", "Visual Studio quality review projection must stay read-only.");
+  assert.equal(reviewSurface?.documentationQualityReview?.actionPolicy, "review-only", "Visual Studio quality review projection must require review-only policy.");
+  assert.equal(reviewSurface?.documentationQualityReview?.summary?.findingCount, 3, "Visual Studio quality review projection must expose three fixture findings.");
+  assert.equal(reviewSurface?.documentationQualityReview?.summary?.ropFindingCount, 1, "Visual Studio quality review projection must expose one ROP finding.");
+  assert.equal(reviewSurface?.documentationQualityReview?.summary?.terminologyFindingCount, 1, "Visual Studio quality review projection must expose one terminology finding.");
+  assert.equal(reviewSurface?.documentationQualityReview?.summary?.localeResourceFindingCount, 1, "Visual Studio quality review projection must expose one locale-resource finding.");
+  assert.equal(reviewSurface?.documentationQualityReview?.summary?.unavailableFindingCount, 1, "Visual Studio quality review projection must retain unavailable input state.");
+  assert.equal(reviewSurface?.documentationQualityReview?.requiresHumanReview, true, "Visual Studio quality review projection must require human review.");
+  assert.equal(reviewSurface?.documentationQualityReview?.sourceBodyIncluded, false, "Visual Studio quality review projection must not expose source bodies.");
+  assert.equal(reviewSurface?.documentationQualityReview?.resourceBodyIncluded, false, "Visual Studio quality review projection must not expose resource bodies.");
+  assert.equal(reviewSurface?.documentationQualityReview?.termPhraseIncluded, false, "Visual Studio quality review projection must not expose term phrases.");
+  assert.equal(reviewSurface?.documentationQualityReview?.rawLocatorIncluded, false, "Visual Studio quality review projection must not expose raw locators.");
+  assert.equal(reviewSurface?.documentationQualityReview?.workspaceWriteAvailable, false, "Visual Studio quality review projection must keep workspace write disabled.");
+  assert.equal(reviewSurface?.documentationQualityReview?.targetRepositoryMutation, false, "Visual Studio quality review projection must keep target mutation disabled.");
+  assert.equal(reviewSurface?.documentationQualityReview?.providerNetworkExecuted, false, "Visual Studio quality review projection must not execute provider network access.");
+  assert.ok(Array.isArray(reviewSurface?.documentationQualityReview?.requiredFields) && reviewSurface.documentationQualityReview.requiredFields.includes("documentationQualityReview.workspaceWriteAvailable"), "Visual Studio quality review projection must require write-disabled state.");
   assert.ok(hasSurface(contract, reviewSurface.surface.id), "Host contract must declare the Visual Studio review tool window.");
   assertSurfaceView(reviewSurface, "review-list");
   assertSurfaceView(reviewSurface, "review-detail");

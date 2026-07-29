@@ -93,7 +93,7 @@
       ]
     },
     "schemas": {
-      "minimumCount": 9,
+      "minimumCount": 10,
       "keys": [
         "documentation-profile",
         "documentation-producer",
@@ -101,6 +101,7 @@
         "doc-source-map",
         "documentation-locale-resource",
         "documentation-locale-resolution",
+        "documentation-quality-review",
         "generated-documentation-binding",
         "hia-document",
         "project-manifest"

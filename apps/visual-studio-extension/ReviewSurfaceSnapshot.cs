@@ -71,6 +71,30 @@ internal sealed class ReviewSurfaceSnapshot
 
     public bool GeneratedBindingRelationQualityVisible { get; private init; }
 
+    /// <summary><lang><zh-CN>文档质量审查投影的可用状态。</zh-CN><en>Availability state of the documentation-quality-review projection.</en></lang></summary>
+    public string DocumentationQualityReviewStatus { get; private init; } = "unavailable";
+
+    /// <summary><lang><zh-CN>质量审查投影固定的只读操作策略。</zh-CN><en>Fixed read-only action policy of the quality-review projection.</en></lang></summary>
+    public string DocumentationQualityReviewActionPolicy { get; private init; } = "review-only";
+
+    /// <summary><lang><zh-CN>可显示的质量审查 finding 总数。</zh-CN><en>Total number of displayable quality-review findings.</en></lang></summary>
+    public int DocumentationQualityReviewFindingCount { get; private init; }
+
+    /// <summary><lang><zh-CN>ROP 类质量审查 finding 数。</zh-CN><en>Number of ROP quality-review findings.</en></lang></summary>
+    public int DocumentationQualityReviewRopFindingCount { get; private init; }
+
+    /// <summary><lang><zh-CN>固有术语类质量审查 finding 数。</zh-CN><en>Number of terminology quality-review findings.</en></lang></summary>
+    public int DocumentationQualityReviewTerminologyFindingCount { get; private init; }
+
+    /// <summary><lang><zh-CN>语言资源类质量审查 finding 数。</zh-CN><en>Number of locale-resource quality-review findings.</en></lang></summary>
+    public int DocumentationQualityReviewLocaleResourceFindingCount { get; private init; }
+
+    /// <summary><lang><zh-CN>不能推断的 unavailable finding 数。</zh-CN><en>Number of unavailable findings that must not be inferred.</en></lang></summary>
+    public int DocumentationQualityReviewUnavailableFindingCount { get; private init; }
+
+    /// <summary><lang><zh-CN>所有质量审查 finding 是否仍要求人工审查。</zh-CN><en>Whether every quality-review finding continues to require human review.</en></lang></summary>
+    public bool DocumentationQualityReviewRequiresHumanReview { get; private init; }
+
     public string ProviderReviewStatus { get; private init; } = "unavailable";
 
     public int ProviderTaxonomyKindCount { get; private init; }
@@ -131,6 +155,12 @@ internal sealed class ReviewSurfaceSnapshot
                 root,
                 "generatedDocumentationBindingProjection");
             JsonElement generatedBindingSummary = ReadObject(generatedBinding, "summary");
+            JsonElement documentationQualityReview = ReadObject(
+                root,
+                "documentationQualityReview");
+            JsonElement documentationQualityReviewSummary = ReadObject(
+                documentationQualityReview,
+                "summary");
             JsonElement provider = ReadObject(root, "providerReviewPanel");
             JsonElement targetOwner = ReadObject(root, "targetOwnerEvidenceView");
             JsonElement hostUx = ReadObject(root, "hostApplyUx");
@@ -184,6 +214,30 @@ internal sealed class ReviewSurfaceSnapshot
                 GeneratedBindingRelationQualityVisible = ReadBoolean(
                     generatedBinding,
                     "threeQualityDimensionsVisible"),
+                DocumentationQualityReviewStatus = ReadString(
+                    documentationQualityReview,
+                    "status"),
+                DocumentationQualityReviewActionPolicy = ReadString(
+                    documentationQualityReview,
+                    "actionPolicy"),
+                DocumentationQualityReviewFindingCount = ReadInt32(
+                    documentationQualityReviewSummary,
+                    "findingCount"),
+                DocumentationQualityReviewRopFindingCount = ReadInt32(
+                    documentationQualityReviewSummary,
+                    "ropFindingCount"),
+                DocumentationQualityReviewTerminologyFindingCount = ReadInt32(
+                    documentationQualityReviewSummary,
+                    "terminologyFindingCount"),
+                DocumentationQualityReviewLocaleResourceFindingCount = ReadInt32(
+                    documentationQualityReviewSummary,
+                    "localeResourceFindingCount"),
+                DocumentationQualityReviewUnavailableFindingCount = ReadInt32(
+                    documentationQualityReviewSummary,
+                    "unavailableFindingCount"),
+                DocumentationQualityReviewRequiresHumanReview = ReadBoolean(
+                    documentationQualityReview,
+                    "requiresHumanReview"),
                 ProviderReviewStatus = ReadString(provider, "status"),
                 ProviderTaxonomyKindCount = ReadInt32(provider, "resultTaxonomyKindCount"),
                 TargetOwnerStatus = ReadString(targetOwner, "status"),
