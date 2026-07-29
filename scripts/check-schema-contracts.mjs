@@ -10,6 +10,10 @@ import {
 import {
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT,
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_SCHEMA_ID,
   DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID,
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT,
@@ -100,6 +104,17 @@ assert(
     && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
     && DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA.properties.privacy.properties.allowResolvedText.const === false,
   "Documentation locale-resolution metadata-only boundary drifted."
+);
+// <lang><zh-CN>W-P62 schema 同时拥有 controlled locator input 与 public discovery output；checker 只冻结 public output 的 deny-all privacy，不把 controlled input 误当作可公开 artifact。</zh-CN><en>The W-P62 schema contains controlled locator input and public discovery output; this checker freezes only the public output deny-all privacy and does not mistake controlled input for a publishable artifact.</en></lang>
+assert(DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$id === DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_SCHEMA_ID, "Documentation locale-resource declaration schema id drifted.");
+assert(
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.controlledDeclaration.properties.contract.const === DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT
+    && DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.controlledDeclaration.properties.contractVersion.const === DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION
+    && DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.publicDiscovery.properties.privacy.$ref === "#/$defs/privacy"
+    && DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.privacy.properties.allowRawLocator.const === false
+    && DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.privacy.properties.allowSourceBody.const === false
+    && DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA.$defs.privacy.properties.allowResourceBody.const === false,
+  "Documentation locale-resource declaration public discovery boundary drifted."
 );
 // <lang><zh-CN>术语 contract 有两种 artifact kind；schema checker 锁定共同 identity 与 candidate privacy，不替代 owner lifecycle 校验。</zh-CN><en>The terminology contract has two artifact kinds; the schema checker freezes shared identity and candidate privacy without replacing owner lifecycle validation.</en></lang>
 assert(DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA.$id === DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, "Documentation terminology schema id drifted.");
@@ -228,6 +243,7 @@ assert(
 const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
+  [DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA],
   [DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA],
   [DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA],
@@ -251,4 +267,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

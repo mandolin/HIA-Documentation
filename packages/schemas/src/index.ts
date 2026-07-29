@@ -4,6 +4,7 @@ import documentationProducerResultSchemaData from "./schemas/documentation-produ
 import documentationProducerSchemaData from "./schemas/documentation-producer.schema.json" with { type: "json" };
 import docSourceMapSchemaData from "./schemas/doc-source-map.schema.json" with { type: "json" };
 import documentationLocaleResourceSchemaData from "./schemas/documentation-locale-resource.schema.json" with { type: "json" };
+import documentationLocaleResourceDeclarationSchemaData from "./schemas/documentation-locale-resource-declaration.schema.json" with { type: "json" };
 import documentationLocaleResolutionSchemaData from "./schemas/documentation-locale-resolution.schema.json" with { type: "json" };
 import documentationTerminologySchemaData from "./schemas/documentation-terminology.schema.json" with { type: "json" };
 import documentationQualityReviewSchemaData from "./schemas/documentation-quality-review.schema.json" with { type: "json" };
@@ -21,6 +22,7 @@ export const HIA_SCHEMA_KEYS = [
   "generated-documentation-binding",
   "documentation-locale-resource",
   "documentation-locale-resolution",
+  "documentation-locale-resource-declaration",
   "documentation-terminology",
   "documentation-quality-review",
   "hia-document",
@@ -57,6 +59,7 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "generated-documentation-binding": generatedDocumentationBindingSchemaData,
   "documentation-locale-resource": documentationLocaleResourceSchemaData,
   "documentation-locale-resolution": documentationLocaleResolutionSchemaData,
+  "documentation-locale-resource-declaration": documentationLocaleResourceDeclarationSchemaData,
   "documentation-terminology": documentationTerminologySchemaData,
   "documentation-quality-review": documentationQualityReviewSchemaData,
   "hia-document": hiaDocumentSchemaData,

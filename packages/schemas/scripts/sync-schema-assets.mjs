@@ -7,6 +7,8 @@ import {
 } from "../../config/dist/index.js";
 import {
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION,
+  DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
@@ -95,6 +97,15 @@ const definitions = [
     key: "documentation-locale-resolution",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>受控 declaration 与 public discovery/sidecar 共用 schema；catalog 必须同步 owner 的 privacy union，而不能只分发一个 profile 私有形状。</zh-CN><en>Controlled declarations and public discovery/sidecars share one schema; the catalog must synchronize the owner's privacy union instead of distributing a profile-private shape.</en></lang>
+  {
+    contractVersion: DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION,
+    fileName: "documentation-locale-resource-declaration.schema.json",
+    key: "documentation-locale-resource-declaration",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA,
     stability: "draft"
   },
   // <lang><zh-CN>candidate-set 与受控 registry 共享一个中性 terminology schema；同步器必须成为 catalog 的唯一事实来源。</zh-CN><en>Candidate sets and controlled registries share one neutral terminology schema; the synchronizer must remain the catalog's single source of truth.</en></lang>

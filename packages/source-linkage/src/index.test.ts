@@ -308,6 +308,42 @@ describe("@hia-doc/source-linkage", () => {
     expect(invalid.diagnostics.map((diagnostic) => diagnostic.code)).toContain("DOC_SOURCE_MAP_LOCALE_RESOLUTION_SIDECAR_INVALID");
     expect(JSON.stringify(invalid.diagnostics)).not.toContain("must not enter the ordinary map");
   });
+
+  it("links metadata-only locale-discovery sidecars without embedding controlled declaration data", () => {
+    const index = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [],
+      sources: [],
+      entries: [],
+      localeDiscoverySidecars: [{
+        id: "sidecar:locale-discovery:card",
+        contract: "documentation-locale-resource-declaration",
+        contractVersion: "0.1.0-draft",
+        path: "dist/card.locale-discovery.json"
+      }]
+    });
+    expect(index.status).toBe("available");
+    expect(index.localeDiscoverySidecarCount).toBe(1);
+    expect(index.localeDiscoverySidecars[0]).toMatchObject({ id: "sidecar:locale-discovery:card" });
+
+    const invalid = createDocSourceMapIndex({
+      contract: "doc-source-map",
+      contractVersion: "0.1.0-draft",
+      artifacts: [],
+      sources: [],
+      entries: [],
+      localeDiscoverySidecars: [{
+        id: "sidecar:locale-discovery:invalid",
+        contract: "documentation-locale-resource-declaration",
+        contractVersion: "0.1.0-draft",
+        path: "dist/locale-discovery.json",
+        locator: "private/docs/user.dlr"
+      }]
+    });
+    expect(invalid.diagnostics.map((diagnostic) => diagnostic.code)).toContain("DOC_SOURCE_MAP_LOCALE_DISCOVERY_SIDECAR_INVALID");
+    expect(JSON.stringify(invalid.diagnostics)).not.toContain("private/docs/user.dlr");
+  });
 });
 
 function readFixture(name: string): unknown {

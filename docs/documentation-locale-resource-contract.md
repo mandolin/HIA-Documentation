@@ -30,6 +30,12 @@ POSIX `.dlr` 文件。它拒绝 absolute/drive/UNC/URI/query/fragment/traversal 
 contract/version 和 safe relative artifact path。`documentation-locale-resolution` sidecar
 不得包含 raw locator、resource body 或 resolved text。
 
+`documentation-locale-resource-declaration@0.1.0-draft` complements this contract with a controlled
+catalog declaration and a public-safe catalog-only discovery sidecar. It does not invoke the local
+reader: discovery proves only an exact allowlist match, never file existence, readability, resource
+validity, entry availability, or locale resolution. See
+`docs/documentation-locale-resource-declaration-contract.md`.
+
 ## Minimal Resource
 
 ```json

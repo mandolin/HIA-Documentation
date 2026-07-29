@@ -59,6 +59,12 @@
         "$ref": "#/$defs/localeResolutionSidecar"
       }
     },
+    "localeDiscoverySidecars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/localeDiscoverySidecar"
+      }
+    },
     "chains": {
       "type": "array",
       "items": {
@@ -483,6 +489,30 @@
         },
         "contract": {
           "const": "documentation-locale-resolution"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        }
+      }
+    },
+    "localeDiscoverySidecar": {
+      "type": "object",
+      "required": [
+        "id",
+        "contract",
+        "contractVersion",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contract": {
+          "const": "documentation-locale-resource-declaration"
         },
         "contractVersion": {
           "const": "0.1.0-draft"

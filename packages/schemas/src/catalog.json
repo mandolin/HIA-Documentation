@@ -67,6 +67,15 @@
     },
     {
       "contractVersion": "0.1.0-draft",
+      "key": "documentation-locale-resource-declaration",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./documentation-locale-resource-declaration.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-declaration-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-declaration-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "documentation-terminology",
       "ownerPackage": "@hia-doc/core",
       "path": "./documentation-terminology.schema.json",

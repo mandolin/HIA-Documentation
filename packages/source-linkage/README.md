@@ -29,6 +29,14 @@ stable id, contract/version, and safe relative artifact path through
 resolved text; `createDocSourceMapIndex()` validates that boundary without
 loading the sidecar.
 
+`documentation-locale-resource-declaration@0.1.0-draft` provides a separate
+public-safe discovery sidecar owned by `@hia-doc/core`. A doc-source-map may
+declare only its stable id, contract/version, and safe relative artifact path
+through `localeDiscoverySidecars`. It must not embed a controlled declaration,
+catalog locator, source range, source/resource body, or resolved text;
+`createDocSourceMapIndex()` validates the declaration without loading the
+sidecar or reading a DLR file.
+
 `createGeneratedDocumentationBindingHostProjection()` converts that index into
 the frozen `generated-documentation-binding-host-projection@0.1.0-draft` view
 model for renderer and host surfaces. The projection carries binding-to-target

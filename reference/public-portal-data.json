@@ -93,13 +93,14 @@
       ]
     },
     "schemas": {
-      "minimumCount": 11,
+      "minimumCount": 12,
       "keys": [
         "documentation-profile",
         "documentation-producer",
         "documentation-producer-result",
         "doc-source-map",
         "documentation-locale-resource",
+        "documentation-locale-resource-declaration",
         "documentation-locale-resolution",
         "documentation-terminology",
         "documentation-quality-review",

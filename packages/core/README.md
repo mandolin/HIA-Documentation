@@ -9,6 +9,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - HIA document, node and symbol model.
 - Field-level i18n model with `key`/`path`, external resource references and fallback resolution metadata.
 - Neutral `documentation-locale-resource@0.1.0-draft` JSON contract, pure BCP 47-aware resolver and metadata-only locale-resolution sidecar contract.
+- Neutral `documentation-locale-resource-declaration@0.1.0-draft` controlled catalog declaration and public-safe catalog-only discovery/sidecar contract.
 - Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
@@ -25,6 +26,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Protocol envelope: `HIA_PROTOCOL_ENVELOPE_VERSION`
 - Documentation locale resource: `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION`
 - Documentation locale-resolution sidecar: `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION`
+- Documentation locale-resource declaration/discovery: `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION`
 - Documentation terminology: `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION`
 - Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
 
@@ -42,6 +44,15 @@ resource. Use the `@hia-doc/generic-docline` root-bound reader/profile layer for
 
 The sidecar intentionally excludes resource bodies, raw locators and resolved text. An ordinary
 `doc-source-map` may link to its stable sidecar identity but must not become a DLR datastore.
+
+## Documentation Locale-Resource Declaration And Discovery
+
+`documentation-locale-resource-declaration` separates a controlled declaration catalog from public
+discovery. The controlled catalog may use a project-relative `.dlr` locator only for in-memory exact
+allowlist matching; the public discovery and sidecar retain logical ids, approved profile/version,
+provenance, diagnostics and a deny-all privacy policy. Discovery neither reads a file nor proves a
+resource exists or is valid. Physical roots, `realpath`, and resource parsing remain outside this core
+contract and require a separate reader invocation.
 
 ## Documentation Terminology
 

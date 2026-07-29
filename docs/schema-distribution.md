@@ -15,6 +15,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | draft |
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
+| `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
 | `documentation-terminology` | `@hia-doc/core` | draft |
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
@@ -37,6 +38,7 @@ Explicit JSON exports are available for non-runtime consumers:
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
+import localeResourceDeclarationSchema from "@hia-doc/schemas/documentation-locale-resource-declaration.schema.json" with { type: "json" };
 import localeResolutionSchema from "@hia-doc/schemas/documentation-locale-resolution.schema.json" with { type: "json" };
 import terminologySchema from "@hia-doc/schemas/documentation-terminology.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };

@@ -21,6 +21,7 @@ import {
 } from "@hia-doc/plugin-sdk";
 
 export * from "./locale-resource.js";
+export * from "./locale-resource-declaration.js";
 
 /**
  * Contract name for generic doc-line scanner configuration.

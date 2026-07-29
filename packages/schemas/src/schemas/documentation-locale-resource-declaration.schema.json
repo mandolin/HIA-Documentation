@@ -1,0 +1,358 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-declaration-0.1.0-draft.schema.json",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/controlledDeclaration"
+    },
+    {
+      "$ref": "#/$defs/publicDiscovery"
+    },
+    {
+      "$ref": "#/$defs/publicDiscoverySidecar"
+    }
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resourceId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+    },
+    "rootId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+    },
+    "locator": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?![\\\\/])(?![A-Za-z][A-Za-z0-9+.-]*:)(?!.*[?#])(?!.*(?:^|/)\\.{1,2}(?:/|$))[A-Za-z0-9._/-]+\\.dlr$"
+    },
+    "privacy": {
+      "type": "object",
+      "required": [
+        "allowRawLocator",
+        "allowRanges",
+        "allowResolvedText",
+        "allowResourceBody",
+        "allowSourceBody"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "allowRawLocator": {
+          "const": false
+        },
+        "allowRanges": {
+          "const": false
+        },
+        "allowResolvedText": {
+          "const": false
+        },
+        "allowResourceBody": {
+          "const": false
+        },
+        "allowSourceBody": {
+          "const": false
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "kind",
+        "declarationId",
+        "profile",
+        "profileVersion"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "declaration-catalog"
+        },
+        "declarationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "controlledDeclaration": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "kind",
+        "visibility",
+        "declarationId",
+        "sourceDocumentId",
+        "profile",
+        "profileVersion",
+        "resourceRootId",
+        "catalog",
+        "references"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "documentation-locale-resource-declaration"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "kind": {
+          "const": "controlled-declaration"
+        },
+        "visibility": {
+          "const": "controlled"
+        },
+        "declarationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resourceRootId": {
+          "$ref": "#/$defs/rootId"
+        },
+        "catalog": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "resourceId",
+              "locator"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "resourceId": {
+                "$ref": "#/$defs/resourceId"
+              },
+              "locator": {
+                "$ref": "#/$defs/locator"
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "resource": {
+                "$ref": "#/$defs/resourceId"
+              },
+              "src": {
+                "$ref": "#/$defs/locator"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "resource"
+                ]
+              },
+              {
+                "required": [
+                  "src"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "publicDiscovery": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "kind",
+        "visibility",
+        "discoveryId",
+        "declarationId",
+        "sourceDocumentId",
+        "profile",
+        "profileVersion",
+        "resourceRootId",
+        "resourceIds",
+        "bindings",
+        "diagnosticCodes",
+        "provenance",
+        "privacy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "documentation-locale-resource-declaration"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "kind": {
+          "const": "public-discovery"
+        },
+        "visibility": {
+          "const": "public"
+        },
+        "discoveryId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "declarationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resourceRootId": {
+          "$ref": "#/$defs/rootId"
+        },
+        "resourceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resourceId"
+          }
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          }
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "privacy": {
+          "$ref": "#/$defs/privacy"
+        }
+      }
+    },
+    "publicDiscoverySidecar": {
+      "type": "object",
+      "required": [
+        "contract",
+        "contractVersion",
+        "kind",
+        "visibility",
+        "id",
+        "discoveryId",
+        "declarationId",
+        "sourceDocumentId",
+        "profile",
+        "profileVersion",
+        "resourceRootId",
+        "resourceIds",
+        "diagnosticCodes",
+        "provenance",
+        "privacy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "const": "documentation-locale-resource-declaration"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        },
+        "kind": {
+          "const": "public-discovery-sidecar"
+        },
+        "visibility": {
+          "const": "public"
+        },
+        "id": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "discoveryId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "declarationId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "sourceDocumentId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profile": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "profileVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resourceRootId": {
+          "$ref": "#/$defs/rootId"
+        },
+        "resourceIds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resourceId"
+          }
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "privacy": {
+          "$ref": "#/$defs/privacy"
+        }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "required": [
+        "referenceId",
+        "resourceId",
+        "selectionKind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "referenceId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "resourceId": {
+          "$ref": "#/$defs/resourceId"
+        },
+        "selectionKind": {
+          "enum": [
+            "catalog-resource",
+            "catalog-src"
+          ]
+        }
+      }
+    }
+  }
+}

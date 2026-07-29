@@ -40,6 +40,7 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
     sourceMaps: { type: "array", items: { $ref: "#/$defs/sourceMap" } },
     generatedBindingSidecars: { type: "array", items: { $ref: "#/$defs/generatedBindingSidecar" } },
     localeResolutionSidecars: { type: "array", items: { $ref: "#/$defs/localeResolutionSidecar" } },
+    localeDiscoverySidecars: { type: "array", items: { $ref: "#/$defs/localeDiscoverySidecar" } },
     chains: { type: "array", items: { $ref: "#/$defs/chain" } },
     entries: { type: "array", items: { $ref: "#/$defs/entry" } },
     privacy: { $ref: "#/$defs/privacy" },
@@ -222,6 +223,17 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         id: { $ref: "#/$defs/nonEmptyString" },
         contract: { const: DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT },
         contractVersion: { const: DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION },
+        path: { $ref: "#/$defs/safeRelativePath" }
+      }
+    },
+    localeDiscoverySidecar: {
+      type: "object",
+      required: ["id", "contract", "contractVersion", "path"],
+      additionalProperties: false,
+      properties: {
+        id: { $ref: "#/$defs/nonEmptyString" },
+        contract: { const: "documentation-locale-resource-declaration" },
+        contractVersion: { const: "0.1.0-draft" },
         path: { $ref: "#/$defs/safeRelativePath" }
       }
     },
