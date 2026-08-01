@@ -15,6 +15,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
+| Target documentation continuity | `TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale resource | `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resource declaration/discovery | `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -146,6 +147,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
 | Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
 | Generated documentation binding | `@hia-doc/source-linkage` | Owns the neutral sidecar schema, semantic validator, and read-only bidirectional index for declaration/expansion/target/diagnostic relations. `doc-source-map` keeps only safe sidecar and binding-id references; renderer/host projection remains a later stage. |
+| Target documentation continuity | `@hia-doc/cli` | Compares two exact generated-docs evidence summaries through a pure metadata-only API and safe-relative CLI. It serializes only counts and fixed facts, keeps entry/producer identities in memory, and grants no target read/write/command/network/publish/adoption authority. 中文：首个 draft 只支持 `enterprise-business`，schema `$id` 仅是 owner-local identity，不表示已经在线分发。 |
 | Documentation locale resource | `@hia-doc/core` | Owns the neutral DLR schema, pure BCP 47-aware validation/resolution and metadata-only locale-resolution sidecar. Stable identity is `resourceId + entryKey`; local filesystem access remains in an explicitly root-bound profile layer. |
 | Documentation locale-resource declaration/discovery | `@hia-doc/core` | Owns the controlled declaration catalog and public-safe catalog-only discovery/sidecar contract. It binds already-parsed approved profile selections to logical ids, but does not read files, validate resource contents, or expose locators. |
 | Documentation terminology | `@hia-doc/core` | Owns the neutral candidate-set/controlled-registry schema and pure lifecycle/privacy validator. Profile owners supply already-parsed structural observations; quality input exposes no term phrase or registry form and remains review-only. |

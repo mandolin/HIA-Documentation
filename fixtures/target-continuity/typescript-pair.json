@@ -1,0 +1,139 @@
+{
+  "targetId": "enterprise-typescript-fixture",
+  "targetFamily": "enterprise-business",
+  "baseline": {
+    "contract": "hia-generated-docs-evidence-summary",
+    "contractVersion": "0.1.0-draft",
+    "status": "ready",
+    "requiredOutputs": {
+      "indexHtml": true,
+      "manifest": true,
+      "projectIndex": true
+    },
+    "project": {
+      "name": "enterprise-typescript-fixture",
+      "version": "1.0.0"
+    },
+    "entries": {
+      "total": 3,
+      "stableIds": [
+        "ts:fixture:application",
+        "ts:fixture:component",
+        "ts:fixture:service"
+      ],
+      "byView": {
+        "api": 3
+      },
+      "byKind": {
+        "class": 2,
+        "function": 1
+      },
+      "byProfile": {
+        "typescript": 3
+      }
+    },
+    "producers": [
+      {
+        "id": "typescript-docs",
+        "status": "success",
+        "artifactCount": 5
+      }
+    ],
+    "inputs": [
+      {
+        "kind": "typescript",
+        "source": "producer",
+        "producerId": "typescript-docs",
+        "artifactPolicy": "all"
+      }
+    ],
+    "coverage": {
+      "dotnetEntries": 0,
+      "jsEntries": 3,
+      "htmlEntries": 0,
+      "cssEntries": 0,
+      "markupEntries": 0,
+      "powershellEntries": 0,
+      "surfaceEntries": 3
+    },
+    "privacy": {
+      "sourcePresentation": "link",
+      "sourcesContentPolicy": "none",
+      "sourcesContentPresent": false,
+      "sourceBodyPresent": false,
+      "absolutePathLikeStringCount": 0
+    },
+    "warnings": {
+      "classificationArtifactPresent": true,
+      "buildWarningGateReady": true
+    }
+  },
+  "current": {
+    "contract": "hia-generated-docs-evidence-summary",
+    "contractVersion": "0.1.0-draft",
+    "status": "ready",
+    "requiredOutputs": {
+      "indexHtml": true,
+      "manifest": true,
+      "projectIndex": true
+    },
+    "project": {
+      "name": "enterprise-typescript-fixture",
+      "version": "1.1.0"
+    },
+    "entries": {
+      "total": 4,
+      "stableIds": [
+        "ts:fixture:application",
+        "ts:fixture:component",
+        "ts:fixture:controller",
+        "ts:fixture:service"
+      ],
+      "byView": {
+        "api": 4
+      },
+      "byKind": {
+        "class": 3,
+        "function": 1
+      },
+      "byProfile": {
+        "typescript": 4
+      }
+    },
+    "producers": [
+      {
+        "id": "typescript-docs",
+        "status": "success",
+        "artifactCount": 7
+      }
+    ],
+    "inputs": [
+      {
+        "kind": "typescript",
+        "source": "producer",
+        "producerId": "typescript-docs",
+        "artifactPolicy": "all"
+      }
+    ],
+    "coverage": {
+      "dotnetEntries": 0,
+      "jsEntries": 4,
+      "htmlEntries": 0,
+      "cssEntries": 0,
+      "markupEntries": 0,
+      "powershellEntries": 0,
+      "surfaceEntries": 4
+    },
+    "privacy": {
+      "sourcePresentation": "link",
+      "sourcesContentPolicy": "none",
+      "sourcesContentPresent": false,
+      "sourceBodyPresent": false,
+      "absolutePathLikeStringCount": 0
+    },
+    "warnings": {
+      "classificationArtifactPresent": true,
+      "buildWarningGateReady": true
+    }
+  }
+}

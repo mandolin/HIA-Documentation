@@ -1,0 +1,123 @@
+{
+  "contract": "target-documentation-continuity-refusal-matrix",
+  "contractVersion": "0.1.0-draft",
+  "cases": [
+    {
+      "id": "invalid-request-family",
+      "side": "current",
+      "operation": "invalid-request",
+      "field": "targetFamily",
+      "value": "future-family",
+      "expectedCode": "HIA_TARGET_CONTINUITY_REQUEST_INVALID"
+    },
+    {
+      "id": "future-contract-version",
+      "side": "current",
+      "operation": "set",
+      "field": "contractVersion",
+      "value": "0.2.0-draft",
+      "expectedCode": "HIA_TARGET_CONTINUITY_EVIDENCE_CONTRACT_INVALID"
+    },
+    {
+      "id": "unknown-top-level-field",
+      "side": "current",
+      "operation": "set",
+      "field": "futureField",
+      "value": false,
+      "expectedCode": "HIA_TARGET_CONTINUITY_EVIDENCE_SHAPE_INVALID"
+    },
+    {
+      "id": "not-ready",
+      "side": "current",
+      "operation": "set",
+      "field": "status",
+      "value": "incomplete",
+      "expectedCode": "HIA_TARGET_CONTINUITY_EVIDENCE_NOT_READY"
+    },
+    {
+      "id": "duplicate-stable-entry",
+      "side": "current",
+      "operation": "duplicate-entry",
+      "field": "entries.stableIds",
+      "expectedCode": "HIA_TARGET_CONTINUITY_STABLE_IDENTITY_INVALID"
+    },
+    {
+      "id": "removed-stable-entry",
+      "side": "current",
+      "operation": "remove-entry",
+      "field": "entries.stableIds",
+      "expectedCode": "HIA_TARGET_CONTINUITY_ENTRY_COVERAGE_REGRESSED"
+    },
+    {
+      "id": "required-output-regression",
+      "side": "current",
+      "operation": "set",
+      "field": "requiredOutputs.projectIndex",
+      "value": false,
+      "expectedCode": "HIA_TARGET_CONTINUITY_REQUIRED_OUTPUT_REGRESSED"
+    },
+    {
+      "id": "producer-failure",
+      "side": "current",
+      "operation": "set",
+      "field": "producers.0.status",
+      "value": "failure",
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRODUCER_COMPATIBILITY_INVALID"
+    },
+    {
+      "id": "producer-artifact-regression",
+      "side": "current",
+      "operation": "set",
+      "field": "producers.0.artifactCount",
+      "value": 1,
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRODUCER_COVERAGE_REGRESSED"
+    },
+    {
+      "id": "producer-removal",
+      "side": "current",
+      "operation": "remove-producer",
+      "field": "producers",
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRODUCER_COVERAGE_REGRESSED"
+    },
+    {
+      "id": "embedded-source-presentation",
+      "side": "current",
+      "operation": "set",
+      "field": "privacy.sourcePresentation",
+      "value": "embed",
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRIVACY_REFUSED"
+    },
+    {
+      "id": "source-body-claim",
+      "side": "current",
+      "operation": "set",
+      "field": "privacy.sourceBodyPresent",
+      "value": true,
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRIVACY_REFUSED"
+    },
+    {
+      "id": "forbidden-source-payload-key",
+      "side": "current",
+      "operation": "set",
+      "field": "sourceText",
+      "value": true,
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRIVACY_REFUSED"
+    },
+    {
+      "id": "forbidden-path-key",
+      "side": "current",
+      "operation": "set",
+      "field": "path",
+      "value": true,
+      "expectedCode": "HIA_TARGET_CONTINUITY_PRIVACY_REFUSED"
+    },
+    {
+      "id": "target-action-claim",
+      "side": "current",
+      "operation": "set",
+      "field": "targetCommandExecuted",
+      "value": true,
+      "expectedCode": "HIA_TARGET_CONTINUITY_PERMISSION_OR_ADOPTION_REFUSED"
+    }
+  ]
+}

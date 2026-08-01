@@ -67,6 +67,9 @@ import {
 import {
   runTargetDocumentationAcceptanceCommand
 } from "./target-acceptance.js";
+import {
+  runTargetDocumentationContinuityCommand
+} from "./target-continuity.js";
 
 /**
  * Target-portfolio acceptance foundation exported by the CLI package.
@@ -84,6 +87,32 @@ export {
   type TargetDocumentationPortfolioFamily
 } from "./target-acceptance.js";
 
+/**
+ * Target-project documentation continuity contract exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的目标项目文档连续性 contract；只比较两份 public-safe evidence summary。
+ * English: Target-project documentation continuity contract exported by the CLI package; it compares only two public-safe evidence summaries.
+ * @lang zh-CN pure API 不读取 target repository、source body 或 working state，也不授予 target action。
+ */
+export {
+  createTargetDocumentationContinuityReport,
+  isTargetDocumentationContinuityReport,
+  TARGET_DOCUMENTATION_CONTINUITY_CONTRACT,
+  TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION,
+  TARGET_DOCUMENTATION_CONTINUITY_DIAGNOSTIC_CODES,
+  TARGET_DOCUMENTATION_CONTINUITY_FAMILIES,
+  TARGET_DOCUMENTATION_CONTINUITY_JSON_SCHEMA,
+  TARGET_DOCUMENTATION_CONTINUITY_SCHEMA_ID,
+  type TargetDocumentationContinuityDiagnostic,
+  type TargetDocumentationContinuityDiagnosticCode,
+  type TargetDocumentationContinuityFamily,
+  type TargetDocumentationContinuityInputRef,
+  type TargetDocumentationContinuityProducerSummary,
+  type TargetDocumentationContinuityReport,
+  type TargetDocumentationContinuityRequest,
+  type TargetDocumentationContinuityRequiredOutput
+} from "./target-continuity.js";
+
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
 const HELP_TEXT = `HIA Documentation CLI
@@ -93,12 +122,14 @@ Usage:
   hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
   hia docs evidence [--docs-dir <dir>] [--out <file>]
   hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
+  hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
   docs build      Generate HTML documentation from a HIA document fixture.
   docs evidence   Summarize generated project documentation outputs without reading source bodies.
   docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
+  docs continuity Compare two public-safe documentation evidence summaries without reading target state.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -113,9 +144,11 @@ Options:
   --out <dir>         Output directory. Defaults to dist/docs.
   --docs-dir <dir>    Existing generated docs directory for docs evidence. Defaults to dist/docs.
   --evidence <file>   Existing generated documentation evidence summary for docs acceptance.
-  --target-id <id>    Stable public target identifier for docs acceptance.
+  --baseline <file>   Earlier generated documentation evidence summary for docs continuity.
+  --current <file>    Later generated documentation evidence summary for docs continuity.
+  --target-id <id>    Stable public target identifier for docs acceptance or continuity.
   --target-family <family>
-                      One of unicode-compatible, html-authoring, enterprise-business, or workspace-container.
+                      Acceptance supports four portfolio families; continuity currently requires enterprise-business.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
 `;
@@ -198,6 +231,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   // <lang><zh-CN>acceptance command 只读取 explicit evidence summary；wrapper 不传入 target path、manifest 或 source locator。</zh-CN><en>The acceptance command reads only an explicit evidence summary; the wrapper passes no target path, manifest, or source locator.</en></lang>
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "acceptance") {
     return runTargetDocumentationAcceptanceCommand(normalizedArgv.slice(2), io);
+  }
+
+  // <lang><zh-CN>continuity command 仅比较 caller 明确指定的两份 safe-relative evidence summary；不会发现或读取 target repository。</zh-CN><en>The continuity command compares only two caller-specified safe-relative evidence summaries; it never discovers or reads a target repository.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "continuity") {
+    return runTargetDocumentationContinuityCommand(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {

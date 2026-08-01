@@ -1,0 +1,141 @@
+{
+  "targetId": "enterprise-dotnet-fixture",
+  "targetFamily": "enterprise-business",
+  "baseline": {
+    "contract": "hia-generated-docs-evidence-summary",
+    "contractVersion": "0.1.0-draft",
+    "status": "ready",
+    "requiredOutputs": {
+      "indexHtml": true,
+      "manifest": true,
+      "projectIndex": true
+    },
+    "project": {
+      "name": "enterprise-dotnet-fixture",
+      "version": "2.0.0"
+    },
+    "entries": {
+      "total": 4,
+      "stableIds": [
+        "dotnet:fixture:controller",
+        "dotnet:fixture:entity",
+        "dotnet:fixture:interface",
+        "dotnet:fixture:service"
+      ],
+      "byView": {
+        "api": 4
+      },
+      "byKind": {
+        "class": 3,
+        "interface": 1
+      },
+      "byProfile": {
+        "dotnet": 4
+      }
+    },
+    "producers": [
+      {
+        "id": "dotnet-docs",
+        "status": "success",
+        "artifactCount": 6
+      }
+    ],
+    "inputs": [
+      {
+        "kind": "dotnet",
+        "source": "producer-result",
+        "producerId": "dotnet-docs",
+        "artifactPolicy": "all"
+      }
+    ],
+    "coverage": {
+      "dotnetEntries": 4,
+      "jsEntries": 0,
+      "htmlEntries": 0,
+      "cssEntries": 0,
+      "markupEntries": 0,
+      "powershellEntries": 0,
+      "surfaceEntries": 4
+    },
+    "privacy": {
+      "sourcePresentation": "none",
+      "sourcesContentPolicy": "none",
+      "sourcesContentPresent": false,
+      "sourceBodyPresent": false,
+      "absolutePathLikeStringCount": 0
+    },
+    "warnings": {
+      "classificationArtifactPresent": true,
+      "buildWarningGateReady": true
+    }
+  },
+  "current": {
+    "contract": "hia-generated-docs-evidence-summary",
+    "contractVersion": "0.1.0-draft",
+    "status": "ready",
+    "requiredOutputs": {
+      "indexHtml": true,
+      "manifest": true,
+      "projectIndex": true
+    },
+    "project": {
+      "name": "enterprise-dotnet-fixture",
+      "version": "2.1.0"
+    },
+    "entries": {
+      "total": 5,
+      "stableIds": [
+        "dotnet:fixture:controller",
+        "dotnet:fixture:entity",
+        "dotnet:fixture:interface",
+        "dotnet:fixture:repository",
+        "dotnet:fixture:service"
+      ],
+      "byView": {
+        "api": 5
+      },
+      "byKind": {
+        "class": 4,
+        "interface": 1
+      },
+      "byProfile": {
+        "dotnet": 5
+      }
+    },
+    "producers": [
+      {
+        "id": "dotnet-docs",
+        "status": "success",
+        "artifactCount": 9
+      }
+    ],
+    "inputs": [
+      {
+        "kind": "dotnet",
+        "source": "producer-result",
+        "producerId": "dotnet-docs",
+        "artifactPolicy": "all"
+      }
+    ],
+    "coverage": {
+      "dotnetEntries": 5,
+      "jsEntries": 0,
+      "htmlEntries": 0,
+      "cssEntries": 0,
+      "markupEntries": 0,
+      "powershellEntries": 0,
+      "surfaceEntries": 5
+    },
+    "privacy": {
+      "sourcePresentation": "none",
+      "sourcesContentPolicy": "none",
+      "sourcesContentPresent": false,
+      "sourceBodyPresent": false,
+      "absolutePathLikeStringCount": 0
+    },
+    "warnings": {
+      "classificationArtifactPresent": true,
+      "buildWarningGateReady": true
+    }
+  }
+}

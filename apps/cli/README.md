@@ -8,6 +8,7 @@ Current scope:
 - `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 - `hia docs evidence [--docs-dir <dir>] [--out <file>]`
 - `hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]`
+- `hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -20,6 +21,10 @@ Single-document modes validate the converted core document through `@hia-doc/cor
 The evidence command reads an already generated project documentation directory and writes a public-safe `hia-generated-docs-evidence-summary` JSON file. It summarizes required output files, entry counts, views, producer inputs, coverage counters and privacy checks without reading source bodies. It is intended for repeatable project adoption checks such as validating that DotNetDoc and JSDoc entries both appear in a unified site while `sourcesContent` remains absent.
 
 The acceptance command reads only that generated evidence summary. It produces a versioned `target-documentation-acceptance` report for one public target id and one of four portfolio families: `unicode-compatible`, `html-authoring`, `enterprise-business`, or `workspace-container`. The report checks required outputs, stable entry identities, successful producer summaries, and the no-embedded/no-fetched-source privacy boundary. It does not inspect source code, HTML, project manifests, credentials, or target working-tree state. Without `--out`, it writes the report to stdout; an explicit `--out` must be a safe relative path in the caller's workspace.
+
+The continuity command compares two exact `hia-generated-docs-evidence-summary@0.1.0-draft` inputs and emits `target-documentation-continuity@0.1.0-draft`. The first contract slice supports the `enterprise-business` family. Stable entry and producer identifiers are used only for in-memory set comparison; the report serializes counts, compatibility facts, fixed diagnostics, and explicit deny-all privacy/permission fields. It never discovers a target repository, reads source or artifact bodies, executes a target command, or claims adoption. The two input files and an optional output file must be distinct, safe relative paths under the caller's workspace.
+
+中文说明：`docs continuity` 用两份已经存在的公开安全 evidence summary 判断文档输出是否连续。它检查 required outputs、稳定 entry 覆盖、producer 成功状态与 artifact count、以及 `none`/`link` privacy boundary；报告不会写出 entry/producer identity、路径、正文或工作区状态，也不会把“证据可比较”提升为目标项目已采用。
 
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
@@ -37,6 +42,7 @@ pnpm run hia -- docs build --jsdoc-integration fixtures/jsdoc-integration.real-b
 pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project.json --out dist/project-docs
 pnpm run hia -- docs evidence --docs-dir dist/project-docs --out dist/project-docs/documentation-evidence.json
 pnpm run hia -- docs acceptance --evidence dist/project-docs/documentation-evidence.json --target-id sample-project --target-family unicode-compatible --out dist/project-docs/target-acceptance.json
+pnpm run hia -- docs continuity --baseline dist/project-docs/baseline-evidence.json --current dist/project-docs/current-evidence.json --target-id sample-enterprise-project --target-family enterprise-business --out dist/project-docs/target-continuity.json
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 
@@ -46,4 +52,6 @@ CLI options override values from `hia.config.json`. Paths in config files are re
 
 The CLI consumes core documents and project config, then writes renderer output to disk. It may add build-output files such as `hia-manifest.json`, but it does not change the renderer manifest contract.
 
-See `docs/contract-index.md` for the current CLI/config/renderer layering rule.
+The package exports the pure `createTargetDocumentationContinuityReport()` evaluator, the `isTargetDocumentationContinuityReport()` runtime guard, contract/version constants, a fixed diagnostic catalogue, and the owner-local Draft 2020-12 `TARGET_DOCUMENTATION_CONTINUITY_JSON_SCHEMA`. The schema `$id` is an identity only; it is not a promise that the schema is already distributed at that URL.
+
+See `docs/target-documentation-continuity-contract.md` for the continuity wire contract and `docs/contract-index.md` for the current CLI/config/renderer layering rule.
