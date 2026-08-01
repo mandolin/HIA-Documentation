@@ -64,6 +64,25 @@ import {
   type DocSourceMapIndexedEntry,
   type DocSourceMapSourceMapLink
 } from "@hia-doc/source-linkage";
+import {
+  runTargetDocumentationAcceptanceCommand
+} from "./target-acceptance.js";
+
+/**
+ * Target-portfolio acceptance foundation exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的 target-portfolio acceptance foundation。
+ * English: Target-portfolio acceptance foundation exported by the CLI package.
+ * @lang zh-CN API 只消费 generated-docs evidence summary；它不读取 target source/working state，也不执行 target action。
+ */
+export {
+  createTargetDocumentationAcceptanceReport,
+  TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT,
+  TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT_VERSION,
+  TARGET_DOCUMENTATION_PORTFOLIO_FAMILIES,
+  type TargetDocumentationAcceptanceReport,
+  type TargetDocumentationPortfolioFamily
+} from "./target-acceptance.js";
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
@@ -73,11 +92,13 @@ Usage:
   hia --help
   hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
   hia docs evidence [--docs-dir <dir>] [--out <file>]
+  hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
   docs build      Generate HTML documentation from a HIA document fixture.
   docs evidence   Summarize generated project documentation outputs without reading source bodies.
+  docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -91,6 +112,10 @@ Options:
                       Generated project-index.json used to attach relation graph payload data to the browser panel.
   --out <dir>         Output directory. Defaults to dist/docs.
   --docs-dir <dir>    Existing generated docs directory for docs evidence. Defaults to dist/docs.
+  --evidence <file>   Existing generated documentation evidence summary for docs acceptance.
+  --target-id <id>    Stable public target identifier for docs acceptance.
+  --target-family <family>
+                      One of unicode-compatible, html-authoring, enterprise-business, or workspace-container.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
 `;
@@ -143,6 +168,17 @@ interface ProducerRunSummary {
   }>;
 }
 
+/**
+ * Dispatch HIA CLI commands without granting target-repository mutation or implicit source access.
+ *
+ * 中文：分发 HIA CLI commands，但不授予 target-repository mutation 或 implicit source access。
+ * English: Dispatch HIA CLI commands without granting target-repository mutation or implicit source access.
+ *
+ * @param argv - raw process arguments or test-supplied command arguments. 原始 process arguments 或 test-supplied command arguments。
+ * @param io - controlled CLI IO adapter. 受控 CLI IO adapter。
+ * @returns process-style exit code. process-style exit code。
+ * @lang zh-CN command routing 只决定 HIA owner CLI 行为；任何 target workflow 仍由其 owner 单独选择和执行。
+ */
 export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo = createDefaultIo()): Promise<number> {
   const normalizedArgv = argv[0] === "--" ? argv.slice(1) : argv;
 
@@ -157,6 +193,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "evidence") {
     return runDocsEvidence(normalizedArgv.slice(2), io);
+  }
+
+  // <lang><zh-CN>acceptance command 只读取 explicit evidence summary；wrapper 不传入 target path、manifest 或 source locator。</zh-CN><en>The acceptance command reads only an explicit evidence summary; the wrapper passes no target path, manifest, or source locator.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "acceptance") {
+    return runTargetDocumentationAcceptanceCommand(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {
@@ -500,6 +541,7 @@ interface GeneratedDocsEvidenceSummary {
   };
   entries: {
     total: number;
+    stableIds: string[];
     byView: Record<string, number>;
     byKind: Record<string, number>;
     byProfile: Record<string, number>;
@@ -549,6 +591,12 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
   const manifest = await readOptionalJson(manifestPath, "HIA_CLI_DOCS_EVIDENCE_MANIFEST_READ_FAILED", diagnostics);
   const indexHtmlText = await readOptionalText(indexHtmlPath);
   const entries = isRecord(projectIndex) && Array.isArray(projectIndex.entries) ? projectIndex.entries.filter(isRecord) : [];
+  // <lang><zh-CN>stable ids 仅从 generated project-index 的 entry.id 复制；保留 duplicate 以供 target acceptance 拒绝，而不复制 title/source/range。</zh-CN><en>Copy stable ids only from generated project-index entry.id; preserve duplicates for target-acceptance refusal and copy no title/source/range.</en></lang>
+  const stableEntryIds = entries
+    .map((entry) => stringValue(entry.id))
+    .filter((entryId): entryId is string => Boolean(entryId))
+    .slice()
+    .sort((left, right) => left.localeCompare(right, "en"));
   const project = isRecord(projectIndex) && isRecord(projectIndex.project) ? projectIndex.project : {};
   const manifestBuild = isRecord(manifest) && isRecord(manifest.build) ? manifest.build : {};
   const manifestFiles = isRecord(manifest) && Array.isArray(manifest.files) ? manifest.files.filter(isRecord) : [];
@@ -620,6 +668,7 @@ async function createGeneratedDocsEvidenceSummary(docsDir: string): Promise<{
       project: projectSummary,
       entries: {
         total: entries.length,
+        stableIds: stableEntryIds,
         byView: countBy(entries, (entry) => stringValue(entry.view) ?? "all"),
         byKind: countBy(entries, (entry) => stringValue(entry.kind) ?? "unknown"),
         byProfile: countBy(entries, (entry) => profileIdFromProjectEntry(entry) ?? "unprofiled")

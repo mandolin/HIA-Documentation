@@ -595,6 +595,7 @@ describe("@hia-doc/cli", () => {
         status: string;
         entries: {
           total: number;
+          stableIds: string[];
           byView: Record<string, number>;
           byProfile: Record<string, number>;
         };
@@ -616,6 +617,8 @@ describe("@hia-doc/cli", () => {
       expect(evidence.contract).toBe("hia-generated-docs-evidence-summary");
       expect(evidence.status).toBe("ready");
       expect(evidence.entries.total).toBe(3);
+      expect(evidence.entries.stableIds).toHaveLength(3);
+      expect(new Set(evidence.entries.stableIds).size).toBe(3);
       expect(evidence.entries.byView).toMatchObject({ dotnet: 1, js: 2 });
       expect(evidence.entries.byProfile).toMatchObject({ jsdoc: 2 });
       expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2, powershellEntries: 0 });
