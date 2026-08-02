@@ -1,0 +1,41 @@
+{
+  "contract": "target-owner-adoption-kit",
+  "contractVersion": "0.1.0-draft",
+  "trialId": "synthetic-enterprise-baseline-current",
+  "targetId": "enterprise-typescript-fixture",
+  "targetFamily": "enterprise-business",
+  "ownerInput": {
+    "submitted": true,
+    "consent": "recorded-for-review",
+    "attestation": "target-owner-attested",
+    "decision": "owner-submitted-valid",
+    "redactionAttested": true
+  },
+  "providedContractRefs": [
+    "hia-generated-docs-evidence-summary@0.1.0-draft",
+    "target-documentation-acceptance@0.1.0-draft",
+    "target-documentation-continuity@0.1.0-draft",
+    "hia-owner-provided-evidence-packet@0.1.0-draft",
+    "hia-wp46-target-owner-handoff-report-packet@0.1.0-draft"
+  ],
+  "privacy": {
+    "sourceBodyIncluded": false,
+    "artifactBodyIncluded": false,
+    "evidenceBodyIncluded": false,
+    "commandOutputBodyIncluded": false,
+    "absoluteOrPrivatePathIncluded": false,
+    "credentialIncluded": false,
+    "workingStateIncluded": false,
+    "sourcesContentPolicy": "none"
+  },
+  "permissions": {
+    "targetRepositoryRead": false,
+    "targetRepositoryWrite": false,
+    "targetCommandExecuted": false,
+    "targetRuntimeOpened": false,
+    "targetBranchOrPrCreated": false,
+    "networkAccessed": false,
+    "packagePublished": false,
+    "targetAdoptionClaimed": false
+  }
+}

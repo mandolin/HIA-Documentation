@@ -10,6 +10,7 @@ Current scope:
 - `hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]`
 - `hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]`
 - `hia docs adoption-kit --request <file> [--out <file>]`
+- `hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -33,6 +34,10 @@ The continuity command compares two exact `hia-generated-docs-evidence-summary@0
 
 The adoption-kit command composes existing owner-mediated contracts into a reusable review artifact. It accepts no source, artifact, evidence, or command-output body and grants no target read/write/command, network, publish, or adoption authority. Its embedded `portalSummary` omits target, trial, and owner identities. Project builds may consume an exact non-refused report through `--adoption-kit`, but only when the project config explicitly enables the existing Portal IA contract.
 
+`docs enterprise-workflow` 把一个显式 enterprise adoption request 与成对可选的 baseline/current public-safe evidence summaries 组合为 `enterprise-baseline-current-owner-workflow@0.1.0-draft`。未收到 owner input 且未提供 pair 时输出可审计 deferred；owner 已提交时必须提供完整 pair，且 adoption kit 与 continuity 都通过才 ready。报告只保留 component status、counts、booleans 与独立 semantics，不嵌入 evidence、path、entry/producer identity 或正文。
+
+The enterprise workflow is an owner-local composition surface, not a target runner. All input/output paths are explicit, distinct, and safe-relative under caller cwd. It never discovers a target, contacts an owner, runs a target command, writes a target repository, accesses a network, publishes a package, or asserts adoption.
+
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
 `--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest. Project manifests can list existing `documentation-producer-result` files when a producer such as DotNetDoc has already emitted artifacts and the CLI only needs to render a unified project page.
@@ -51,6 +56,7 @@ pnpm run hia -- docs evidence --docs-dir dist/project-docs --out dist/project-do
 pnpm run hia -- docs acceptance --evidence dist/project-docs/documentation-evidence.json --target-id sample-project --target-family unicode-compatible --out dist/project-docs/target-acceptance.json
 pnpm run hia -- docs continuity --baseline dist/project-docs/baseline-evidence.json --current dist/project-docs/current-evidence.json --target-id sample-enterprise-project --target-family enterprise-business --out dist/project-docs/target-continuity.json
 pnpm run hia -- docs adoption-kit --request adoption-request.json --out owner-adoption-kit.json
+pnpm run hia -- docs enterprise-workflow --adoption-request adoption-request.json --baseline baseline-evidence.json --current current-evidence.json --out enterprise-owner-workflow.json
 pnpm run hia -- docs build --config hia.config.example.json --project-manifest fixtures/project-mixed.hia-project.json --adoption-kit owner-adoption-kit.json --out dist/project-docs
 pnpm run hia -- docs build --config hia.config.example.json
 ```
@@ -65,4 +71,6 @@ The package exports the pure `createTargetDocumentationContinuityReport()` evalu
 
 The package also exports `createTargetOwnerAdoptionKit()`, `isTargetOwnerAdoptionKitReport()`, the contract/version/family/decision/diagnostic constants, the `TargetOwnerAdoptionPortalSummary` type, and the owner-local Draft 2020-12 `TARGET_OWNER_ADOPTION_KIT_JSON_SCHEMA`. The kit is a composition and review contract with CLI and renderer consumers, not a target execution protocol.
 
-See `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
+The package exports `createEnterpriseBaselineCurrentOwnerWorkflow()`, `isEnterpriseBaselineCurrentOwnerWorkflowReport()`, its contract/version/diagnostic constants and the owner-local Draft 2020-12 `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_JSON_SCHEMA`. The report projects existing component outcomes and has no independent target authority.
+
+See `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.

@@ -75,6 +75,9 @@ import {
   isTargetOwnerAdoptionKitReport,
   runTargetOwnerAdoptionKitCommand
 } from "./owner-adoption-kit.js";
+import {
+  runEnterpriseBaselineCurrentOwnerWorkflowCommand
+} from "./enterprise-owner-workflow.js";
 
 /**
  * Target-portfolio acceptance foundation exported by the CLI package.
@@ -144,6 +147,29 @@ export {
   type TargetOwnerAdoptionPortalSummary
 } from "./owner-adoption-kit.js";
 
+/**
+ * Enterprise baseline/current owner workflow exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的企业 owner workflow；只组合显式 adoption metadata 与 public-safe evidence summary pair。
+ * English: CLI-exported enterprise owner workflow that composes only explicit adoption metadata and a public-safe evidence-summary pair.
+ * @lang zh-CN deferred/ready 都不声明 adoption，pure API 不读取目标仓库或执行目标命令。
+ */
+export {
+  createEnterpriseBaselineCurrentOwnerWorkflow,
+  isEnterpriseBaselineCurrentOwnerWorkflowReport,
+  ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT,
+  ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT_VERSION,
+  ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_DIAGNOSTIC_CODES,
+  ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_JSON_SCHEMA,
+  ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_SCHEMA_ID,
+  type EnterpriseBaselineCurrentOwnerWorkflowDiagnostic,
+  type EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode,
+  type EnterpriseBaselineCurrentOwnerWorkflowReport,
+  type EnterpriseBaselineCurrentOwnerWorkflowRequest,
+  type EnterpriseOwnerWorkflowAdoptionProjection,
+  type EnterpriseOwnerWorkflowContinuityProjection
+} from "./enterprise-owner-workflow.js";
+
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
 const HELP_TEXT = `HIA Documentation CLI
@@ -155,6 +181,7 @@ Usage:
   hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
   hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
   hia docs adoption-kit --request <file> [--out <file>]
+  hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
@@ -163,6 +190,7 @@ Commands:
   docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
   docs continuity Compare two public-safe documentation evidence summaries without reading target state.
   docs adoption-kit Compose an owner-operated review kit from explicit public-safe metadata.
+  docs enterprise-workflow Compose enterprise owner input with an optional public-safe baseline/current pair.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -179,6 +207,8 @@ Options:
   --evidence <file>   Existing generated documentation evidence summary for docs acceptance.
   --baseline <file>   Earlier generated documentation evidence summary for docs continuity.
   --current <file>    Later generated documentation evidence summary for docs continuity.
+  --adoption-request <file>
+                      Explicit target-owner adoption request for docs enterprise-workflow.
   --target-id <id>    Stable public target identifier for docs acceptance or continuity.
   --target-family <family>
                       Acceptance supports four portfolio families; continuity currently requires enterprise-business.
@@ -275,6 +305,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   // <lang><zh-CN>adoption-kit 只读取 caller 显式指定的 safe-relative metadata request；不发现 target、不联系 owner，也不声明 adoption。</zh-CN><en>The adoption-kit command reads only a caller-explicit safe-relative metadata request; it discovers no target, contacts no owner, and claims no adoption.</en></lang>
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "adoption-kit") {
     return runTargetOwnerAdoptionKitCommand(normalizedArgv.slice(2), io);
+  }
+
+  // <lang><zh-CN>enterprise-workflow 只读取 caller 明示的 adoption request 与可选 summary pair；不发现 target、不联系 owner、不声明 adoption。</zh-CN><en>The enterprise-workflow command reads only a caller-explicit adoption request and optional summary pair; it discovers no target, contacts no owner, and claims no adoption.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "enterprise-workflow") {
+    return runEnterpriseBaselineCurrentOwnerWorkflowCommand(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {

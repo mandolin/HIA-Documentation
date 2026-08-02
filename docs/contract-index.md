@@ -17,6 +17,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
 | Target documentation continuity | `TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Target-owner adoption kit | `TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION` | `0.1.0-draft` |
+| Enterprise baseline/current owner workflow | `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation portal information architecture | `DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale resource | `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resource declaration/discovery | `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -151,6 +152,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Generated documentation binding | `@hia-doc/source-linkage` | Owns the neutral sidecar schema, semantic validator, and read-only bidirectional index for declaration/expansion/target/diagnostic relations. `doc-source-map` keeps only safe sidecar and binding-id references; renderer/host projection remains a later stage. |
 | Target documentation continuity | `@hia-doc/cli` | Compares two exact generated-docs evidence summaries through a pure metadata-only API and safe-relative CLI. It serializes only counts and fixed facts, keeps entry/producer identities in memory, and grants no target read/write/command/network/publish/adoption authority. 中文：首个 draft 只支持 `enterprise-business`，schema `$id` 仅是 owner-local identity，不表示已经在线分发。 |
 | Target-owner adoption kit | `@hia-doc/cli` | Composes the existing acceptance/continuity/owner-evidence/workspace-handoff/Portal-IA references for `enterprise-business` and `workspace-container`. The CLI emits ready/deferred/refused review artifacts and a body/identity-free Portal summary; `@hia-doc/renderer-html` is a conditional structural consumer under explicit IA. 中文：它有 CLI/renderer 实际消费者，但不是 target execution protocol，且任何状态都不等于 adoption。 |
+| Enterprise baseline/current owner workflow | `@hia-doc/cli` | Composes one explicit enterprise adoption request with an optional complete baseline/current public-safe evidence pair. It projects only component statuses, counts, booleans, and independent semantics; absent owner input remains honestly deferred. 中文：它不读取/运行/写入目标仓库，不联系 owner，不嵌入 evidence body、identity 或 path，也不声明 adoption。 |
 | Documentation locale resource | `@hia-doc/core` | Owns the neutral DLR schema, pure BCP 47-aware validation/resolution and metadata-only locale-resolution sidecar. Stable identity is `resourceId + entryKey`; local filesystem access remains in an explicitly root-bound profile layer. |
 | Documentation locale-resource declaration/discovery | `@hia-doc/core` | Owns the controlled declaration catalog and public-safe catalog-only discovery/sidecar contract. It binds already-parsed approved profile selections to logical ids, but does not read files, validate resource contents, or expose locators. |
 | Documentation terminology | `@hia-doc/core` | Owns the neutral candidate-set/controlled-registry schema and pure lifecycle/privacy validator. Profile owners supply already-parsed structural observations; quality input exposes no term phrase or registry form and remains review-only. |
@@ -437,6 +439,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 
 - `docs/core-fixture-contract.md`
 - `docs/documentation-portal-information-architecture-contract.md`
+- `docs/enterprise-baseline-current-owner-workflow-contract.md`
 - `docs/versioning.md`
 - `docs/compatibility-matrix.md`
 - `docs/configuration.md`

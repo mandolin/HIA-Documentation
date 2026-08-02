@@ -1,0 +1,35 @@
+{
+  "contract": "target-owner-adoption-kit",
+  "contractVersion": "0.1.0-draft",
+  "trialId": "enterprise-owner-input-not-received",
+  "targetId": "hia-aspnetportal",
+  "targetFamily": "enterprise-business",
+  "ownerInput": {
+    "submitted": false,
+    "consent": "not-recorded",
+    "attestation": "not-provided",
+    "decision": "not-recorded",
+    "redactionAttested": false
+  },
+  "providedContractRefs": [],
+  "privacy": {
+    "sourceBodyIncluded": false,
+    "artifactBodyIncluded": false,
+    "evidenceBodyIncluded": false,
+    "commandOutputBodyIncluded": false,
+    "absoluteOrPrivatePathIncluded": false,
+    "credentialIncluded": false,
+    "workingStateIncluded": false,
+    "sourcesContentPolicy": "none"
+  },
+  "permissions": {
+    "targetRepositoryRead": false,
+    "targetRepositoryWrite": false,
+    "targetCommandExecuted": false,
+    "targetRuntimeOpened": false,
+    "targetBranchOrPrCreated": false,
+    "networkAccessed": false,
+    "packagePublished": false,
+    "targetAdoptionClaimed": false
+  }
+}
