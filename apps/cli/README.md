@@ -5,10 +5,11 @@ Command line entry for the HIA documentation system.
 Current scope:
 
 - `hia --help`
-- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
+- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 - `hia docs evidence [--docs-dir <dir>] [--out <file>]`
 - `hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]`
 - `hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]`
+- `hia docs adoption-kit --request <file> [--out <file>]`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -28,6 +29,10 @@ The continuity command compares two exact `hia-generated-docs-evidence-summary@0
 
 中文说明：`docs continuity` 用两份已经存在的公开安全 evidence summary 判断文档输出是否连续。它检查 required outputs、稳定 entry 覆盖、producer 成功状态与 artifact count、以及 `none`/`link` privacy boundary；报告不会写出 entry/producer identity、路径、正文或工作区状态，也不会把“证据可比较”提升为目标项目已采用。
 
+`docs adoption-kit` 从 caller cwd 下显式指定的 safe-relative JSON request 生成 `target-owner-adoption-kit@0.1.0-draft`。它为 `enterprise-business` 组合既有 continuity/acceptance/owner-evidence refs，为 `workspace-container` 组合既有 handoff/acceptance/Portal IA refs；没有 owner input 时诚实输出 `deferred-owner-input-missing`。`ready-for-owner-review` 只表示 metadata contract、owner attestation 与 privacy boundary 可进入 review，永远不表示目标项目已采用。
+
+The adoption-kit command composes existing owner-mediated contracts into a reusable review artifact. It accepts no source, artifact, evidence, or command-output body and grants no target read/write/command, network, publish, or adoption authority. Its embedded `portalSummary` omits target, trial, and owner identities. Project builds may consume an exact non-refused report through `--adoption-kit`, but only when the project config explicitly enables the existing Portal IA contract.
+
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
 `--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest. Project manifests can list existing `documentation-producer-result` files when a producer such as DotNetDoc has already emitted artifacts and the CLI only needs to render a unified project page.
@@ -45,6 +50,8 @@ pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project
 pnpm run hia -- docs evidence --docs-dir dist/project-docs --out dist/project-docs/documentation-evidence.json
 pnpm run hia -- docs acceptance --evidence dist/project-docs/documentation-evidence.json --target-id sample-project --target-family unicode-compatible --out dist/project-docs/target-acceptance.json
 pnpm run hia -- docs continuity --baseline dist/project-docs/baseline-evidence.json --current dist/project-docs/current-evidence.json --target-id sample-enterprise-project --target-family enterprise-business --out dist/project-docs/target-continuity.json
+pnpm run hia -- docs adoption-kit --request adoption-request.json --out owner-adoption-kit.json
+pnpm run hia -- docs build --config hia.config.example.json --project-manifest fixtures/project-mixed.hia-project.json --adoption-kit owner-adoption-kit.json --out dist/project-docs
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 
@@ -56,4 +63,6 @@ The CLI consumes core documents and project config, then writes renderer output 
 
 The package exports the pure `createTargetDocumentationContinuityReport()` evaluator, the `isTargetDocumentationContinuityReport()` runtime guard, contract/version constants, a fixed diagnostic catalogue, and the owner-local Draft 2020-12 `TARGET_DOCUMENTATION_CONTINUITY_JSON_SCHEMA`. The schema `$id` is an identity only; it is not a promise that the schema is already distributed at that URL.
 
-See `docs/target-documentation-continuity-contract.md` for the continuity wire contract and `docs/contract-index.md` for the current CLI/config/renderer layering rule.
+The package also exports `createTargetOwnerAdoptionKit()`, `isTargetOwnerAdoptionKitReport()`, the contract/version/family/decision/diagnostic constants, the `TargetOwnerAdoptionPortalSummary` type, and the owner-local Draft 2020-12 `TARGET_OWNER_ADOPTION_KIT_JSON_SCHEMA`. The kit is a composition and review contract with CLI and renderer consumers, not a target execution protocol.
+
+See `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.

@@ -53,6 +53,7 @@ import {
   type RenderProjectDocSourceMapRef,
   type RenderProjectEntry,
   type RenderProjectHtmlInput,
+  type RenderProjectOwnerAdoptionSummary,
   type RenderProjectProfileRef,
   type RenderProjectSourcePresentation,
   type RenderProjectView
@@ -70,6 +71,10 @@ import {
 import {
   runTargetDocumentationContinuityCommand
 } from "./target-continuity.js";
+import {
+  isTargetOwnerAdoptionKitReport,
+  runTargetOwnerAdoptionKitCommand
+} from "./owner-adoption-kit.js";
 
 /**
  * Target-portfolio acceptance foundation exported by the CLI package.
@@ -113,16 +118,43 @@ export {
   type TargetDocumentationContinuityRequiredOutput
 } from "./target-continuity.js";
 
+/**
+ * Target-owner adoption kit exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的 owner-operated adoption kit；只组合既有 contract ref 与 public-safe metadata。
+ * English: CLI-exported owner-operated adoption kit that composes only existing contract references and public-safe metadata.
+ * @lang zh-CN ready 状态仅表示可进入 owner review，绝不表示目标项目已采用或 HIA 获得目标执行权。
+ */
+export {
+  createTargetOwnerAdoptionKit,
+  isTargetOwnerAdoptionKitReport,
+  TARGET_OWNER_ADOPTION_KIT_CONTRACT,
+  TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION,
+  TARGET_OWNER_ADOPTION_KIT_DECISIONS,
+  TARGET_OWNER_ADOPTION_KIT_DIAGNOSTIC_CODES,
+  TARGET_OWNER_ADOPTION_KIT_FAMILIES,
+  TARGET_OWNER_ADOPTION_KIT_JSON_SCHEMA,
+  TARGET_OWNER_ADOPTION_KIT_SCHEMA_ID,
+  type TargetOwnerAdoptionKitDecision,
+  type TargetOwnerAdoptionKitDiagnostic,
+  type TargetOwnerAdoptionKitDiagnosticCode,
+  type TargetOwnerAdoptionKitFamily,
+  type TargetOwnerAdoptionKitReport,
+  type TargetOwnerAdoptionKitRequest,
+  type TargetOwnerAdoptionPortalSummary
+} from "./owner-adoption-kit.js";
+
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
 const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--out <dir>] [--locale <locale>]
   hia docs evidence [--docs-dir <dir>] [--out <file>]
   hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
   hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
+  hia docs adoption-kit --request <file> [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
@@ -130,6 +162,7 @@ Commands:
   docs evidence   Summarize generated project documentation outputs without reading source bodies.
   docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
   docs continuity Compare two public-safe documentation evidence summaries without reading target state.
+  docs adoption-kit Compose an owner-operated review kit from explicit public-safe metadata.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -239,6 +272,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
     return runTargetDocumentationContinuityCommand(normalizedArgv.slice(2), io);
   }
 
+  // <lang><zh-CN>adoption-kit 只读取 caller 显式指定的 safe-relative metadata request；不发现 target、不联系 owner，也不声明 adoption。</zh-CN><en>The adoption-kit command reads only a caller-explicit safe-relative metadata request; it discovers no target, contacts no owner, and claims no adoption.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "adoption-kit") {
+    return runTargetOwnerAdoptionKitCommand(normalizedArgv.slice(2), io);
+  }
+
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {
     return runBrowserPanel(normalizedArgv.slice(2), io);
   }
@@ -249,7 +287,7 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--adoption-kit", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -292,9 +330,18 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     io.cwd,
     configResult.baseDir
   );
+  const adoptionKitRelativePath = readOption(argv, "--adoption-kit");
   const locale = readOption(argv, "--locale") ?? docsConfig.locale;
   const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
   const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath, projectManifestPath);
+  if (adoptionKitRelativePath && (!isSafeCallerRelativePath(adoptionKitRelativePath) || !projectManifestPath)) {
+    buildOptionDiagnostics.push(createCliDiagnostic(
+      "HIA_CLI_OWNER_ADOPTION_KIT_INPUT_INVALID",
+      "docs build accepts --adoption-kit only as a safe relative path together with a project manifest.",
+      "error",
+      "docs.adoptionKit"
+    ));
+  }
   reportDiagnostics(buildOptionDiagnostics, io);
 
   if (buildOptionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -302,7 +349,7 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   }
 
   if (projectManifestPath) {
-    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, configResult.baseDir, locale, io);
+    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, configResult.baseDir, locale, adoptionKitRelativePath, io);
   }
 
   const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
@@ -476,6 +523,7 @@ async function runProjectDocsBuild(
   docsConfig: HiaDocsConfig,
   configBaseDir: string,
   locale: string | undefined,
+  adoptionKitRelativePath: string | undefined,
   io: CliIo
 ): Promise<number> {
   const manifestResult = await loadProjectManifest(projectManifestPath, io);
@@ -503,7 +551,17 @@ async function runProjectDocsBuild(
     docsConfig,
     configBaseDir
   );
-  const rendered = renderProjectHtmlDocument(preparedProjectInput, createRenderOptions(locale, docsConfig));
+  const ownerAdoption = adoptionKitRelativePath
+    ? await loadOwnerAdoptionPortalSummary(adoptionKitRelativePath, docsConfig, io)
+    : undefined;
+  if (adoptionKitRelativePath && !ownerAdoption) {
+    return 1;
+  }
+  // <lang><zh-CN>只把 validated portalSummary 加入 renderer input；完整 kit 的 target/trial identity 与 diagnostics 不进入 Portal。</zh-CN><en>Add only the validated portalSummary to renderer input; the full kit's target/trial identities and diagnostics never enter the Portal.</en></lang>
+  const rendered = renderProjectHtmlDocument({
+    ...preparedProjectInput,
+    ...(ownerAdoption ? { ownerAdoption } : {})
+  }, createRenderOptions(locale, docsConfig));
   reportDiagnostics(rendered.diagnostics, io);
 
   if (rendered.diagnostics.some((item) => item.severity === "error")) {
@@ -523,6 +581,38 @@ async function runProjectDocsBuild(
 
   io.stdout(`Generated ${rendered.files.length + 1} file(s) at ${outputDir}`);
   return 0;
+}
+
+/**
+ * @lang zh-CN 从 caller 显式 safe-relative report 中提取 exact、non-refused Portal summary。
+ * @lang en Extracts an exact, non-refused Portal summary from a caller-explicit safe-relative report.
+ *
+ * @param relativePath caller cwd 下的 report path。 / Report path under the caller cwd.
+ * @param docsConfig resolved HIA docs config。 / Resolved HIA docs config.
+ * @param io controlled CLI IO。 / Controlled CLI IO.
+ * @returns validated metadata-only summary，失败时返回 undefined。 / Validated metadata-only summary, or undefined on failure.
+ */
+async function loadOwnerAdoptionPortalSummary(
+  relativePath: string,
+  docsConfig: HiaDocsConfig,
+  io: CliIo
+): Promise<RenderProjectOwnerAdoptionSummary | undefined> {
+  if (!docsConfig.renderer?.informationArchitecture) {
+    io.stderr("[error:HIA_CLI_OWNER_ADOPTION_KIT_IA_REQUIRED] docs build requires explicit Portal information architecture for owner-adoption linkage.");
+    return undefined;
+  }
+  try {
+    // <lang><zh-CN>该 read 仅针对 caller 显式文件；不会扫描 manifest、target root 或相邻路径。</zh-CN><en>This read targets only the caller-explicit file; it scans no manifest, target root, or adjacent paths.</en></lang>
+    const candidate: unknown = JSON.parse(await readFile(path.resolve(io.cwd, relativePath), "utf8"));
+    if (!isTargetOwnerAdoptionKitReport(candidate) || candidate.status === "refused") {
+      io.stderr("[error:HIA_CLI_OWNER_ADOPTION_KIT_REPORT_INVALID] docs build requires an exact non-refused target-owner-adoption-kit report.");
+      return undefined;
+    }
+    return candidate.portalSummary;
+  } catch {
+    io.stderr("[error:HIA_CLI_OWNER_ADOPTION_KIT_REPORT_READ_FAILED] docs build could not read a valid target-owner adoption kit report.");
+    return undefined;
+  }
 }
 
 function createOutputManifest(rendered: ReturnType<typeof renderHtmlDocument>, manifestPath: string) {
@@ -2454,6 +2544,18 @@ function dedupePaths(values: string[]): string[] {
 function isPathInside(parent: string, child: string): boolean {
   const relative = path.relative(parent, child);
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+/**
+ * @lang zh-CN 验证 caller-owned optional metadata input 只能位于当前 cwd 的 safe-relative boundary。
+ * @lang en Validates that an optional caller-owned metadata input stays within the current cwd safe-relative boundary.
+ */
+function isSafeCallerRelativePath(value: string): boolean {
+  if (!value || path.isAbsolute(value) || value.includes("\0")) {
+    return false;
+  }
+  const normalized = path.normalize(value);
+  return normalized !== ".." && !normalized.startsWith(`..${path.sep}`) && !normalized.startsWith("\\\\");
 }
 
 function errorMessage(error: unknown): string {

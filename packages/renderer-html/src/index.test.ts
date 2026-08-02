@@ -1038,6 +1038,68 @@ describe("@hia-doc/renderer-html", () => {
     expect(unavailable).toContain("暂不可用");
   });
 
+  it("projects owner-adoption readiness only through explicit Portal IA metadata", () => {
+    const fixture = createWp85TypeScriptPortalFixture();
+    fixture.ownerAdoption = {
+      contract: "target-owner-adoption-kit",
+      contractVersion: "0.1.0-draft",
+      projection: "portal-metadata-only",
+      status: "ready-for-owner-review",
+      targetFamily: "workspace-container",
+      ownerInput: { submitted: true, consent: "recorded-for-review" },
+      contracts: { requiredCount: 5, providedCount: 5, missingCount: 0 },
+      workspaceHandoff: { repositoryOwnerCount: 3, handoffEdgeCount: 2, state: "owner-review-required" },
+      semantics: {
+        resolution: "owner-input-validated",
+        confidence: "caller-provided-unverified",
+        provenance: "metadata-only-owner-kit"
+      }
+    };
+    const result = renderProjectHtmlDocument(fixture, {
+      projectSite: { informationArchitecture: {} }
+    });
+    const projectIndexText = result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}";
+    const projectIndex = JSON.parse(projectIndexText) as {
+      ownerAdoption?: { status?: string; targetId?: string; trialId?: string };
+      entries: Array<{ id: string; contentPath: string }>;
+    };
+    const topicPath = projectIndex.entries[0]?.contentPath;
+    const topic = result.files.find((file) => file.path === topicPath)?.contents ?? "";
+
+    expect(projectIndex.ownerAdoption).toMatchObject({ status: "ready-for-owner-review" });
+    expect(projectIndex.ownerAdoption).not.toHaveProperty("targetId");
+    expect(projectIndex.ownerAdoption).not.toHaveProperty("trialId");
+    expect(topic).toContain("Owner Review Readiness</dt><dd>ready-for-owner-review");
+    expect(topic).toContain("Repository Owners / Handoff Edges</dt><dd>3 / 2");
+    expect(topic).toContain("target-owner-adoption-kit@0.1.0-draft");
+  });
+
+  it("fails closed when owner-adoption metadata bypasses IA or carries unknown fields", () => {
+    const fixture = createWp85TypeScriptPortalFixture();
+    fixture.ownerAdoption = {
+      contract: "target-owner-adoption-kit",
+      contractVersion: "0.1.0-draft",
+      projection: "portal-metadata-only",
+      status: "deferred-owner-input-missing",
+      targetFamily: "workspace-container",
+      ownerInput: { submitted: false, consent: "not-recorded" },
+      contracts: { requiredCount: 5, providedCount: 0, missingCount: 5 },
+      semantics: {
+        resolution: "owner-input-not-received",
+        confidence: "caller-provided-unverified",
+        provenance: "metadata-only-owner-kit"
+      }
+    };
+
+    expect(() => renderProjectHtmlDocument(fixture)).toThrow(/HIA_PORTAL_IA_OWNER_ADOPTION_REQUIRES_IA/u);
+
+    const leaked = fixture.ownerAdoption as typeof fixture.ownerAdoption & { sourceBody?: string };
+    leaked.sourceBody = "must-not-cross-the-boundary";
+    expect(() => renderProjectHtmlDocument(fixture, {
+      projectSite: { informationArchitecture: {} }
+    })).toThrow(/HIA_PORTAL_IA_OWNER_ADOPTION_INVALID/u);
+  });
+
   it("keeps the HIA-owned 2951-entry DotNet IA baseline fragmented and lazy", () => {
     const entries: RenderProjectEntry[] = Array.from({ length: 2951 }, (_, index) => ({
       id: `dotnet:wp85:${index}`,

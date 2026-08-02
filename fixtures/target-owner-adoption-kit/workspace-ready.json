@@ -1,0 +1,48 @@
+{
+  "contract": "target-owner-adoption-kit",
+  "contractVersion": "0.1.0-draft",
+  "trialId": "synthetic-workspace-handoff-review",
+  "targetId": "synthetic-workspace-container",
+  "targetFamily": "workspace-container",
+  "ownerInput": {
+    "submitted": true,
+    "consent": "recorded-for-review",
+    "attestation": "target-owner-attested",
+    "decision": "follow-up-required",
+    "redactionAttested": true
+  },
+  "providedContractRefs": [
+    "workspace-documentation-handoff@0.1.0-draft",
+    "hia-generated-docs-evidence-summary@0.1.0-draft",
+    "target-documentation-acceptance@0.1.0-draft",
+    "documentation-portal-information-architecture@0.1.0-draft",
+    "hia-owner-provided-evidence-packet@0.1.0-draft"
+  ],
+  "workspaceHandoff": {
+    "state": "owner-review-required",
+    "repositoryOwnerCount": 3,
+    "handoffEdgeCount": 2,
+    "runtimeDependencyTransfer": false,
+    "targetWriteRequired": false
+  },
+  "privacy": {
+    "sourceBodyIncluded": false,
+    "artifactBodyIncluded": false,
+    "evidenceBodyIncluded": false,
+    "commandOutputBodyIncluded": false,
+    "absoluteOrPrivatePathIncluded": false,
+    "credentialIncluded": false,
+    "workingStateIncluded": false,
+    "sourcesContentPolicy": "none"
+  },
+  "permissions": {
+    "targetRepositoryRead": false,
+    "targetRepositoryWrite": false,
+    "targetCommandExecuted": false,
+    "targetRuntimeOpened": false,
+    "targetBranchOrPrCreated": false,
+    "networkAccessed": false,
+    "packagePublished": false,
+    "targetAdoptionClaimed": false
+  }
+}

@@ -116,6 +116,11 @@ export interface RenderProjectHtmlInput {
    * Optional body-free W-P84 continuity summary; the renderer reads neither report files nor target state.
    */
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
+  /**
+   * @lang zh-CN optional W-P89 owner-adoption Portal 投影；只在显式 IA 下消费 metadata-only summary。
+   * @lang en Optional W-P89 owner-adoption Portal projection; consumes a metadata-only summary only under explicit IA.
+   */
+  ownerAdoption?: RenderProjectOwnerAdoptionSummary;
   diagnostics?: HiaDiagnostic[];
 }
 
@@ -154,6 +159,37 @@ export interface RenderProjectDocumentationContinuitySummary {
     resolution: "evidence-summary-pair-validated" | "unresolved";
     confidence: "caller-provided-unverified";
     provenance: "metadata-only-comparison";
+  };
+}
+
+/**
+ * @lang zh-CN Portal 可消费的 owner-adoption 最小投影；不含 target/trial/owner identity、path、body 或 adoption claim。
+ * @lang en Minimal Portal-consumable owner-adoption projection without target/trial/owner identity, paths, bodies, or adoption claims.
+ */
+export interface RenderProjectOwnerAdoptionSummary {
+  contract: "target-owner-adoption-kit";
+  contractVersion: "0.1.0-draft";
+  projection: "portal-metadata-only";
+  status: "ready-for-owner-review" | "deferred-owner-input-missing" | "refused";
+  targetFamily: "enterprise-business" | "workspace-container";
+  ownerInput: {
+    submitted: boolean;
+    consent: "not-recorded" | "recorded-for-review";
+  };
+  contracts: {
+    requiredCount: number;
+    providedCount: number;
+    missingCount: number;
+  };
+  workspaceHandoff?: {
+    repositoryOwnerCount: number;
+    handoffEdgeCount: number;
+    state: "owner-review-required";
+  };
+  semantics: {
+    resolution: "owner-input-validated" | "owner-input-not-received" | "unresolved";
+    confidence: "caller-provided-unverified";
+    provenance: "metadata-only-owner-kit";
   };
 }
 
@@ -421,6 +457,7 @@ export interface RenderProjectNavigationIndex {
   docSourceMaps: RenderProjectDocSourceMapRef[];
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
+  ownerAdoption?: RenderProjectOwnerAdoptionSummary;
   relationGraph?: RenderProjectRelationGraph;
   site?: {
     layout: RenderProjectSiteLayout;
@@ -602,6 +639,15 @@ function resolveProjectPortalContext(
     assertProjectDocumentationContinuitySummary(projectInput.documentationContinuity);
   }
 
+  if (projectInput.ownerAdoption) {
+    assertProjectOwnerAdoptionSummary(projectInput.ownerAdoption);
+    if (!explicitInformationArchitecture) {
+      throw new TypeError(
+        "HIA_PORTAL_IA_OWNER_ADOPTION_REQUIRES_IA: owner-adoption linkage requires explicit Portal information architecture."
+      );
+    }
+  }
+
   if (explicitInformationArchitecture && layout === "single-page") {
     throw new TypeError(
       "HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED: Explicit Portal IA is supported only with split-site in this draft."
@@ -651,6 +697,59 @@ function assertProjectDocumentationContinuitySummary(summary: RenderProjectDocum
     || !countsConsistent) {
     throw new TypeError(
       "HIA_PORTAL_IA_CONTINUITY_INVALID: continuity linkage must be an exact metadata-only count summary."
+    );
+  }
+}
+
+/**
+ * @lang zh-CN owner-adoption linkage 只接受 exact、count-consistent、identity/body-free 的 metadata 投影。
+ * @lang en Owner-adoption linkage accepts only an exact, count-consistent, identity- and body-free metadata projection.
+ */
+function assertProjectOwnerAdoptionSummary(summary: RenderProjectOwnerAdoptionSummary): void {
+  const rootFields = ["contract", "contractVersion", "projection", "status", "targetFamily", "ownerInput", "contracts", "semantics"];
+  const workspaceExpected = summary.targetFamily === "workspace-container";
+  const hasWorkspace = summary.workspaceHandoff !== undefined;
+  const validShape = isExactObject(summary, hasWorkspace ? [...rootFields, "workspaceHandoff"] : rootFields)
+    && isExactObject(summary.ownerInput, ["submitted", "consent"])
+    && isExactObject(summary.contracts, ["requiredCount", "providedCount", "missingCount"])
+    && isExactObject(summary.semantics, ["resolution", "confidence", "provenance"])
+    && (!hasWorkspace || (summary.workspaceHandoff !== undefined
+      && isExactObject(summary.workspaceHandoff, ["repositoryOwnerCount", "handoffEdgeCount", "state"])));
+  const counts = validShape
+    ? [summary.contracts.requiredCount, summary.contracts.providedCount, summary.contracts.missingCount]
+    : [];
+  const statusResolutionValid = (summary.status === "ready-for-owner-review"
+    && summary.ownerInput.submitted
+    && summary.contracts.missingCount === 0
+    && summary.semantics.resolution === "owner-input-validated")
+    || (summary.status === "deferred-owner-input-missing"
+      && !summary.ownerInput.submitted
+      && summary.semantics.resolution === "owner-input-not-received")
+    || (summary.status === "refused" && summary.semantics.resolution === "unresolved");
+  const workspaceValid = workspaceExpected
+    ? (summary.status !== "ready-for-owner-review" && !hasWorkspace) || (summary.workspaceHandoff !== undefined
+      && Number.isSafeInteger(summary.workspaceHandoff.repositoryOwnerCount)
+      && summary.workspaceHandoff.repositoryOwnerCount >= 2
+      && Number.isSafeInteger(summary.workspaceHandoff.handoffEdgeCount)
+      && summary.workspaceHandoff.handoffEdgeCount >= 1
+      && summary.workspaceHandoff.state === "owner-review-required")
+    : !hasWorkspace;
+  if (!validShape
+    || summary.contract !== "target-owner-adoption-kit"
+    || summary.contractVersion !== "0.1.0-draft"
+    || summary.projection !== "portal-metadata-only"
+    || !["ready-for-owner-review", "deferred-owner-input-missing", "refused"].includes(summary.status)
+    || !["enterprise-business", "workspace-container"].includes(summary.targetFamily)
+    || typeof summary.ownerInput.submitted !== "boolean"
+    || !["not-recorded", "recorded-for-review"].includes(summary.ownerInput.consent)
+    || counts.some((value) => !Number.isSafeInteger(value) || value < 0)
+    || summary.contracts.providedCount + summary.contracts.missingCount !== summary.contracts.requiredCount
+    || summary.semantics.confidence !== "caller-provided-unverified"
+    || summary.semantics.provenance !== "metadata-only-owner-kit"
+    || !statusResolutionValid
+    || !workspaceValid) {
+    throw new TypeError(
+      "HIA_PORTAL_IA_OWNER_ADOPTION_INVALID: owner-adoption linkage must be an exact metadata-only summary."
     );
   }
 }
@@ -852,6 +951,7 @@ function createProjectNavigationIndex(
       ? { generatedDocumentationBindingProjection: projectInput.generatedDocumentationBindingProjection }
       : {}),
     ...(projectInput.documentationContinuity ? { documentationContinuity: projectInput.documentationContinuity } : {}),
+    ...(projectInput.ownerAdoption ? { ownerAdoption: projectInput.ownerAdoption } : {}),
     site: {
       layout: options.projectSite?.layout ?? "split-site",
       ...(options.projectSite?.layout === "single-page" ? {} : {
@@ -1771,8 +1871,8 @@ function renderProjectSemanticTopicInternal(
     ),
     renderProjectTopicSection("metadata", labels.metadata, renderProjectTopicMetadata(entry, projectInput.project.productVersion)),
     renderProjectTopicSection("contract", labels.contract, renderProjectTopicContract(entry)),
-    renderProjectTopicSection("coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, labels)),
-    renderProjectTopicSection("provenance", labels.provenance, renderProjectTopicProvenance(projectInput.documentationContinuity, labels)),
+    renderProjectTopicSection("coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, projectInput.ownerAdoption, labels)),
+    renderProjectTopicSection("provenance", labels.provenance, renderProjectTopicProvenance(projectInput.documentationContinuity, projectInput.ownerAdoption, labels)),
     renderProjectTopicSection(
       "members",
       labels.members,
@@ -1844,17 +1944,28 @@ function renderProjectTopicContract(entry: RenderProjectEntry): string {
 /** continuity 缺失时不猜测成功，明确输出 unavailable。Never guesses continuity success; absence is rendered as unavailable. */
 function renderProjectTopicCoverage(
   continuity: RenderProjectDocumentationContinuitySummary | undefined,
+  ownerAdoption: RenderProjectOwnerAdoptionSummary | undefined,
   labels: DocumentationPortalLabels
 ): string {
-  if (!continuity) {
+  if (!continuity && !ownerAdoption) {
     return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
   }
   return [
     "<dl class=\"hia-project-meta\">",
-    `<dt>Status</dt><dd>${escapeHtml(continuity.status)}</dd>`,
-    `<dt>Entries</dt><dd>${escapeHtml(String(continuity.entries.baselineCount))} → ${escapeHtml(String(continuity.entries.currentCount))}</dd>`,
-    `<dt>Added / Removed / Unchanged</dt><dd>${escapeHtml(String(continuity.entries.addedCount))} / ${escapeHtml(String(continuity.entries.removedCount))} / ${escapeHtml(String(continuity.entries.unchangedCount))}</dd>`,
-    `<dt>Required Outputs</dt><dd>${continuity.requiredOutputsPreserved ? "preserved" : "not-preserved"}</dd>`,
+    ...(continuity ? [
+      `<dt>Continuity Status</dt><dd>${escapeHtml(continuity.status)}</dd>`,
+      `<dt>Entries</dt><dd>${escapeHtml(String(continuity.entries.baselineCount))} → ${escapeHtml(String(continuity.entries.currentCount))}</dd>`,
+      `<dt>Added / Removed / Unchanged</dt><dd>${escapeHtml(String(continuity.entries.addedCount))} / ${escapeHtml(String(continuity.entries.removedCount))} / ${escapeHtml(String(continuity.entries.unchangedCount))}</dd>`,
+      `<dt>Required Outputs</dt><dd>${continuity.requiredOutputsPreserved ? "preserved" : "not-preserved"}</dd>`
+    ] : []),
+    ...(ownerAdoption ? [
+      `<dt>Owner Review Readiness</dt><dd>${escapeHtml(ownerAdoption.status)}</dd>`,
+      `<dt>Owner Input / Consent</dt><dd>${ownerAdoption.ownerInput.submitted ? "submitted" : "not-submitted"} / ${escapeHtml(ownerAdoption.ownerInput.consent)}</dd>`,
+      `<dt>Contract References</dt><dd>${escapeHtml(String(ownerAdoption.contracts.providedCount))} / ${escapeHtml(String(ownerAdoption.contracts.requiredCount))}</dd>`,
+      ...(ownerAdoption.workspaceHandoff ? [
+        `<dt>Repository Owners / Handoff Edges</dt><dd>${escapeHtml(String(ownerAdoption.workspaceHandoff.repositoryOwnerCount))} / ${escapeHtml(String(ownerAdoption.workspaceHandoff.handoffEdgeCount))}</dd>`
+      ] : [])
+    ] : []),
     "</dl>"
   ].join("");
 }
@@ -1862,17 +1973,26 @@ function renderProjectTopicCoverage(
 /** provenance 只显示 exact contract 与三维 semantics，不回读 evidence body。Provenance shows only the exact contract and three semantic dimensions, without reading evidence bodies. */
 function renderProjectTopicProvenance(
   continuity: RenderProjectDocumentationContinuitySummary | undefined,
+  ownerAdoption: RenderProjectOwnerAdoptionSummary | undefined,
   labels: DocumentationPortalLabels
 ): string {
-  if (!continuity) {
+  if (!continuity && !ownerAdoption) {
     return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
   }
   return [
     "<dl class=\"hia-project-meta\">",
-    `<dt>Contract</dt><dd>${escapeHtml(continuity.contract)}@${escapeHtml(continuity.contractVersion)}</dd>`,
-    `<dt>Resolution</dt><dd>${escapeHtml(continuity.semantics.resolution)}</dd>`,
-    `<dt>Confidence</dt><dd>${escapeHtml(continuity.semantics.confidence)}</dd>`,
-    `<dt>Provenance</dt><dd>${escapeHtml(continuity.semantics.provenance)}</dd>`,
+    ...(continuity ? [
+      `<dt>Continuity Contract</dt><dd>${escapeHtml(continuity.contract)}@${escapeHtml(continuity.contractVersion)}</dd>`,
+      `<dt>Continuity Resolution</dt><dd>${escapeHtml(continuity.semantics.resolution)}</dd>`,
+      `<dt>Continuity Confidence</dt><dd>${escapeHtml(continuity.semantics.confidence)}</dd>`,
+      `<dt>Continuity Provenance</dt><dd>${escapeHtml(continuity.semantics.provenance)}</dd>`
+    ] : []),
+    ...(ownerAdoption ? [
+      `<dt>Owner Kit Contract</dt><dd>${escapeHtml(ownerAdoption.contract)}@${escapeHtml(ownerAdoption.contractVersion)}</dd>`,
+      `<dt>Owner Kit Resolution</dt><dd>${escapeHtml(ownerAdoption.semantics.resolution)}</dd>`,
+      `<dt>Owner Kit Confidence</dt><dd>${escapeHtml(ownerAdoption.semantics.confidence)}</dd>`,
+      `<dt>Owner Kit Provenance</dt><dd>${escapeHtml(ownerAdoption.semantics.provenance)}</dd>`
+    ] : []),
     "</dl>"
   ].join("");
 }
