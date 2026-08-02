@@ -7,10 +7,23 @@ export const HIA_PROJECT_MANIFEST_SCHEMA_ID = "https://mandolin.github.io/HIA-Do
 export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map", "documentation-producer-result"] as const;
 export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "dotnet", "powershell", "other"] as const;
 export const HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES = ["all", "relations-only"] as const;
+/** Manifest 可声明的中性 semantic path segment kinds。Neutral semantic-path segment kinds available to manifests. */
+export const HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS = [
+  "repository",
+  "package",
+  "layer",
+  "contract",
+  "operation",
+  "project",
+  "assembly",
+  "namespace",
+  "type"
+] as const;
 
 export type HiaProjectManifestInputKind = typeof HIA_PROJECT_MANIFEST_INPUT_KINDS[number];
 export type HiaProjectManifestDomain = typeof HIA_PROJECT_MANIFEST_DOMAINS[number];
 export type HiaProjectManifestArtifactPolicy = typeof HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES[number];
+export type HiaProjectManifestSemanticPathKind = typeof HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS[number];
 
 export interface HiaProjectDocsManifest {
   schemaVersion?: string;
@@ -35,6 +48,8 @@ export interface HiaProjectManifestProjectInfo {
    * Locale set available to a project aggregation page.
    */
   locales?: string[];
+  /** 产品版本只作为 topic metadata，不建立版本路由。Product version is topic metadata only and does not create version routing. */
+  productVersion?: string;
 }
 
 export interface HiaProjectManifestProfileRef {
@@ -61,6 +76,18 @@ export interface HiaProjectManifestInput {
    * Controls which producer-result artifacts join project aggregation; relations-only consumes relation augmentation only.
    */
   artifactPolicy?: HiaProjectManifestArtifactPolicy;
+  /**
+   * owner-reviewed 的中性导航前缀；renderer 不从 source/container path 猜测它。
+   * Owner-reviewed neutral navigation prefix; the renderer never guesses it from source or container paths.
+   */
+  semanticPath?: HiaProjectManifestSemanticPathSegment[];
+}
+
+/** Manifest input 中单个稳定、公开且无路径语义的 semantic segment。One stable, public, path-free semantic segment in a manifest input. */
+export interface HiaProjectManifestSemanticPathSegment {
+  kind: HiaProjectManifestSemanticPathKind;
+  id: string;
+  label: string;
 }
 
 export interface HiaProjectManifestProducerInput {
@@ -159,6 +186,7 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         name: { $ref: "#/$defs/nonEmptyString" },
         title: { $ref: "#/$defs/nonEmptyString" },
         defaultLocale: { $ref: "#/$defs/nonEmptyString" },
+        productVersion: { $ref: "#/$defs/nonEmptyString" },
         locales: {
           type: "array",
           minItems: 1,
@@ -234,7 +262,22 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
         domain: { enum: [...HIA_PROJECT_MANIFEST_DOMAINS] },
         profile: { $ref: "#/$defs/inputProfileRef" },
         sourceRoot: { $ref: "#/$defs/safeRelativePath" },
-        artifactPolicy: { enum: [...HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES] }
+        artifactPolicy: { enum: [...HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES] },
+        semanticPath: {
+          type: "array",
+          minItems: 1,
+          items: { $ref: "#/$defs/semanticPathSegment" }
+        }
+      }
+    },
+    semanticPathSegment: {
+      type: "object",
+      required: ["kind", "id", "label"],
+      additionalProperties: false,
+      properties: {
+        kind: { enum: [...HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS] },
+        id: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+        label: { type: "string", minLength: 1, maxLength: 160 }
       }
     }
   }
@@ -268,6 +311,15 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
     ));
   } else {
     validateProjectLocales(value.project, targetPrefix, diagnostics);
+    if (value.project.productVersion !== undefined
+      && (typeof value.project.productVersion !== "string" || value.project.productVersion.length === 0)) {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_FIELD_INVALID",
+        "Project docs manifest project.productVersion must be a non-empty string when provided.",
+        "error",
+        joinTarget(targetPrefix, "project.productVersion")
+      ));
+    }
   }
 
   const hasInputs = Array.isArray(value.inputs) && value.inputs.length > 0;
@@ -525,6 +577,10 @@ function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs
       }
     }
 
+    if (field === "inputs" && item.semanticPath !== undefined) {
+      validateSemanticPath(item.semanticPath, `${field}.${index}.semanticPath`, targetPrefix, diagnostics);
+    }
+
     if (typeof item.path !== "string" || item.path.length === 0 || isUnsafeRelativePath(item.path)) {
       diagnostics.push(createProjectManifestDiagnostic(
         "HIA_PROJECT_MANIFEST_PATH_INVALID",
@@ -534,6 +590,77 @@ function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs
       ));
     }
   });
+}
+
+/**
+ * 校验 manifest-only semantic path 的闭集、稳定 id 与公开 label 隐私边界。
+ * Validates the closed semantic path vocabulary, stable ids, and public-label privacy boundary.
+ */
+function validateSemanticPath(
+  value: unknown,
+  itemPath: string,
+  targetPrefix: string | undefined,
+  diagnostics: HiaDiagnostic[]
+): void {
+  if (!Array.isArray(value) || value.length === 0) {
+    diagnostics.push(createProjectManifestDiagnostic(
+      "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_INVALID",
+      `Project docs manifest ${itemPath} must be a non-empty array.`,
+      "error",
+      joinTarget(targetPrefix, itemPath)
+    ));
+    return;
+  }
+
+  const seenIds = new Set<string>();
+  value.forEach((segment, index) => {
+    const segmentPath = `${itemPath}.${index}`;
+    if (!isRecord(segment)) {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_INVALID",
+        `Project docs manifest ${segmentPath} must be an object.`,
+        "error",
+        joinTarget(targetPrefix, segmentPath)
+      ));
+      return;
+    }
+
+    // <lang zh-CN>segment 是 closed-world contract，避免 path/private extension 旁路进入公开索引。</lang>
+    // <lang en>A segment is closed-world so path/private extensions cannot bypass the public index boundary.</lang>
+    const fields = Object.keys(segment);
+    const hasUnknownField = fields.some((field) => field !== "kind" && field !== "id" && field !== "label");
+    const id = typeof segment.id === "string" ? segment.id : "";
+    const label = typeof segment.label === "string" ? segment.label : "";
+    const kind = segment.kind;
+    const idValid = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(id);
+    const labelValid = isSafeSemanticLabel(label);
+    const kindValid = HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS.includes(kind as HiaProjectManifestSemanticPathKind);
+
+    if (hasUnknownField || !kindValid || !idValid || !labelValid || seenIds.has(id)) {
+      diagnostics.push(createProjectManifestDiagnostic(
+        "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_INVALID",
+        `Project docs manifest ${segmentPath} must contain unique, safe kind/id/label fields.`,
+        "error",
+        joinTarget(targetPrefix, segmentPath)
+      ));
+    }
+    if (id) {
+      seenIds.add(id);
+    }
+  });
+}
+
+/** Public label 可含 npm display slash，但不能像绝对路径、URI 或 traversal。Public labels may contain npm display slashes but not absolute paths, URIs, or traversal. */
+function isSafeSemanticLabel(value: string): boolean {
+  if (!value || value.length > 160 || /[\u0000-\u001F\u007F]/u.test(value)) {
+    return false;
+  }
+  const normalized = value.replaceAll("\\", "/");
+  return !normalized.includes("../")
+    && normalized !== ".."
+    && !normalized.startsWith("/")
+    && !path.win32.isAbsolute(value)
+    && !/^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(normalized);
 }
 
 function isUnsafeRelativePath(value: string, allowCurrentDirectory = false): boolean {

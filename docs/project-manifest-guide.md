@@ -47,7 +47,8 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
     "name": "Mixed Project",
     "title": "Mixed Project Documentation",
     "defaultLocale": "en",
-    "locales": ["en", "zh-CN"]
+    "locales": ["en", "zh-CN"],
+    "productVersion": "2026.8"
   },
   "profiles": [
     {
@@ -63,7 +64,12 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
       "profile": {
         "profileId": "jsdoc",
         "profileVersion": "0.1.0-draft"
-      }
+      },
+      "semanticPath": [
+        { "kind": "repository", "id": "main-repo", "label": "Main Repository" },
+        { "kind": "package", "id": "renderer-html", "label": "@hia-doc/renderer-html" },
+        { "kind": "layer", "id": "presentation", "label": "Presentation Layer" }
+      ]
     }
   ]
 }
@@ -72,6 +78,14 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
 ### Project Locales
 
 `project.defaultLocale` and `project.locales` control the initial language and language switcher for a unified project page. The default locale must be included in the declared locale list. Entries without localized fields remain visible through their source summary; entries produced from JSDoc `@lang` data switch their description in place.
+
+`project.productVersion` is optional topic metadata. It does not create version routes, historical sites, or a version selector.
+
+### Semantic Path
+
+`inputs[].semanticPath` is an optional owner-reviewed navigation prefix. Each segment contains only a closed `kind`, path-free stable `id`, and public `label`. Allowed kinds are `repository`, `package`, `layer`, `contract`, `operation`, `project`, `assembly`, `namespace`, and `type`.
+
+The CLI projects these segments unchanged. It does not infer repository/package/layer identity from `path`, `sourceRoot`, producer output directories, or workspace-container layout. Duplicate segment ids, unknown kinds/fields, path-like ids, absolute/private labels, URI-like labels, and traversal-like labels fail closed.
 
 ## Input Kinds
 

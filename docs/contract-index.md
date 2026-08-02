@@ -16,6 +16,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
 | Target documentation continuity | `TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation portal information architecture | `DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale resource | `DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resource declaration/discovery | `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -433,6 +434,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 ## Related Docs
 
 - `docs/core-fixture-contract.md`
+- `docs/documentation-portal-information-architecture-contract.md`
 - `docs/versioning.md`
 - `docs/compatibility-matrix.md`
 - `docs/configuration.md`

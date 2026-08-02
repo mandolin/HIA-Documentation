@@ -26,6 +26,13 @@ CLI 按以下顺序解析配置：
     "renderer": {
       "title": "Project Documentation",
       "projectLayout": "split-site",
+      "uiLocale": "zh-CN",
+      "informationArchitecture": {
+        "contractVersion": "0.1.0-draft",
+        "contentGrouping": "semantic-container",
+        "loadingStrategy": "lazy",
+        "memberPlacement": "with-parent"
+      },
       "includeThemeAssets": true
     },
     "source": {
@@ -39,6 +46,8 @@ CLI 按以下顺序解析配置：
 `split-site` 的 `index.html` 只包含应用壳。导航分支、搜索索引、关系图和节点卡片分别位于 `navigation/`、`search/`、`relations/` 与 `entries/`，由浏览器按需读取。它必须通过 HTTP(S) 静态服务器访问，不能直接用 `file://` 获得完整功能。
 
 `single-page` 仍可用于兼容、小型文档或离线快照，但会把全部节点卡片写进同一个 HTML，不适合数千节点项目。
+
+显式 `informationArchitecture` 只支持 `split-site`。它把内容分组、获取时机与 member 呈现拆成三个独立开关；未提供该对象时保留既有 P3 输出。`uiLocale` 当前只接受 `zh-CN` 或 `en`，并且只覆盖本轮触碰的 Portal labels，不替代 content locale 或 source-comment locale。
 
 ### 关系增强型 producer result
 
@@ -137,6 +146,10 @@ CLI 按以下顺序解析配置：
 | `docs.renderer.title` | string | 覆盖 HTML 与输出 manifest 标题。 |
 | `docs.renderer.includeThemeAssets` | boolean | 是否输出默认主题 CSS/JS。 |
 | `docs.renderer.projectLayout` | `"split-site"` / `"single-page"` | 项目站输出布局，默认 `split-site`。 |
+| `docs.renderer.uiLocale` | `"zh-CN"` / `"en"` | Portal UI labels；缺省跟随已解析 content locale。 |
+| `docs.renderer.informationArchitecture.contentGrouping` | `"entry"` / `"semantic-container"` | 内容呈现边界，默认 `entry`。 |
+| `docs.renderer.informationArchitecture.loadingStrategy` | `"lazy"` / `"eager"` | fragment 获取策略，默认 `lazy`。 |
+| `docs.renderer.informationArchitecture.memberPlacement` | `"separate"` / `"with-parent"` | member 呈现位置，默认 `separate`。 |
 | `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `link`。 |
 | `docs.source.linkBaseUrl` | string | 仓库或浏览器源码链接基础 URL。 |
 | `docs.source.fetchBaseUrl` | string | `fetch` 模式必填的纯文本源码基础 URL。 |

@@ -168,6 +168,7 @@ interface ProjectAggregationResult {
     producerId?: string;
     source?: RuntimeProjectInputSource;
     artifactPolicy?: ProjectManifestInput["artifactPolicy"];
+    semanticPath?: ProjectManifestInput["semanticPath"];
   }>;
   producerResults?: ProducerRunSummary["results"];
 }
@@ -1382,6 +1383,7 @@ async function aggregateProjectDocs(
         path: input.path,
         ...(input.profile ? { profile: input.profile } : {}),
         ...(input.artifactPolicy ? { artifactPolicy: input.artifactPolicy } : {}),
+        ...(input.semanticPath ? { semanticPath: input.semanticPath } : {}),
         source: runtimeInput.source
       });
     }
@@ -1484,6 +1486,7 @@ async function aggregateProjectDocs(
         kind: materializedInput.input.kind ?? "unknown",
         path: materializedInput.input.path ?? "",
         ...(materializedInput.input.profile ? { profile: materializedInput.input.profile } : {}),
+        ...(materializedInput.input.semanticPath ? { semanticPath: materializedInput.input.semanticPath } : {}),
         ...(materializedInput.producerId ? { producerId: materializedInput.producerId } : {}),
         source: materializedInput.source
       })));
@@ -1508,7 +1511,8 @@ async function aggregateProjectDocs(
         ...(manifest.project?.id ? { id: manifest.project.id } : {}),
         ...(manifest.project?.title ? { title: manifest.project.title } : {}),
         ...(manifest.project?.defaultLocale ? { defaultLocale: manifest.project.defaultLocale } : {}),
-        ...(manifest.project?.locales ? { locales: manifest.project.locales } : {})
+        ...(manifest.project?.locales ? { locales: manifest.project.locales } : {}),
+        ...(manifest.project?.productVersion ? { productVersion: manifest.project.productVersion } : {})
       },
       profiles: profileRefs,
       docSourceMaps,
@@ -1873,7 +1877,8 @@ function producerResultArtifactToRuntimeInput(
       kind: inputKind,
       path: artifactPath,
       ...(domain ? { domain } : {}),
-      ...(profile ? { profile } : {})
+      ...(profile ? { profile } : {}),
+      ...(input.semanticPath ? { semanticPath: input.semanticPath } : {})
     },
     producerId: result.producer.id,
     source: "producer-result"
@@ -2108,7 +2113,8 @@ function hiaSymbolToProjectEntry(
       ...(document.schemaVersion ? { contract: "hia-core-document", contractVersion: document.schemaVersion } : {})
     },
     ...(sourceRef ? { source: sourceRef } : {}),
-    ...(hierarchy ? { hierarchy } : {})
+    ...(hierarchy ? { hierarchy } : {}),
+    ...(input.semanticPath ? { semanticPath: input.semanticPath } : {})
   };
 }
 
@@ -2159,7 +2165,8 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
           ...(sourceRangeSource ? { rangeSource: sourceRangeSource } : {}),
           ...(sourceConfidence ? { confidence: sourceConfidence } : {}),
           ...(sourcePreview ? { preview: sourcePreview } : {})
-        }
+        },
+        ...(input.semanticPath ? { semanticPath: input.semanticPath } : {})
       };
     });
 }
@@ -2486,6 +2493,10 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
 
   options.projectSite = {
     layout: docsConfig.renderer?.projectLayout ?? "split-site",
+    ...(docsConfig.renderer?.informationArchitecture
+      ? { informationArchitecture: { ...docsConfig.renderer.informationArchitecture } }
+      : {}),
+    ...(docsConfig.renderer?.uiLocale ? { uiLocale: docsConfig.renderer.uiLocale } : {}),
     source: {
       presentation: resolveProjectSourcePresentation(docsConfig),
       defaultExpanded: docsConfig.source?.defaultExpanded ?? false,

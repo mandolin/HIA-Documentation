@@ -160,6 +160,86 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("projects Portal IA config and manifest semantic paths into renderer output", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-portal-ia-"));
+    const outDir = path.join(root, "docs");
+    const configPath = path.join(root, "hia.config.json");
+    const manifestPath = path.join(root, "project.hia-project.json");
+    const inputPath = path.join(root, "basic.hia.json");
+    const messages: string[] = [];
+
+    try {
+      await writeFile(inputPath, await readFile(path.resolve("fixtures/basic.hia.json"), "utf8"), "utf8");
+      await writeFile(configPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          renderer: {
+            projectLayout: "split-site",
+            uiLocale: "zh-CN",
+            informationArchitecture: {
+              contract: "documentation-portal-information-architecture",
+              contractVersion: "0.1.0-draft",
+              contentGrouping: "semantic-container",
+              loadingStrategy: "eager",
+              memberPlacement: "with-parent"
+            }
+          }
+        }
+      }), "utf8");
+      await writeFile(manifestPath, JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: {
+          name: "CLI Portal IA Fixture",
+          productVersion: "2026.8"
+        },
+        inputs: [{
+          kind: "hia-document",
+          path: "basic.hia.json",
+          domain: "js",
+          semanticPath: [
+            { kind: "repository", id: "main-repo", label: "Main Repository" },
+            { kind: "package", id: "core", label: "@hia-doc/core" },
+            { kind: "layer", id: "protocol", label: "Protocol Layer" }
+          ]
+        }]
+      }), "utf8");
+
+      const exitCode = await runCli([
+        "docs",
+        "build",
+        "--config",
+        configPath,
+        "--project-manifest",
+        manifestPath,
+        "--out",
+        outDir
+      ], createTestIo(messages));
+      const projectIndex = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        entries: Array<{ semanticPath?: Array<{ kind: string; id: string }> }>;
+        navigationTree: unknown[];
+        site?: { informationArchitecture?: { contract?: string; loadingStrategy?: string } };
+      };
+      const rendererManifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
+        project?: { informationArchitecture?: { contract?: string; contractVersion?: string } };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(projectIndex.site?.informationArchitecture).toMatchObject({
+        contract: "documentation-portal-information-architecture",
+        loadingStrategy: "eager"
+      });
+      expect(projectIndex.entries.every((entry) => entry.semanticPath?.[0]?.kind === "repository")).toBe(true);
+      expect(JSON.stringify(projectIndex.navigationTree)).toContain('"kind":"repository"');
+      expect(rendererManifest.project?.informationArchitecture).toMatchObject({
+        contract: "documentation-portal-information-architecture",
+        contractVersion: "0.1.0-draft"
+      });
+      expect(await readFile(path.join(outDir, "content/eager.json"), "utf8")).toContain("documentation-portal-eager-fragment-index");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("builds a .NET unified project page from a DotNetDoc HIA document", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-dotnet-project-"));
     const outDir = path.join(root, "docs");

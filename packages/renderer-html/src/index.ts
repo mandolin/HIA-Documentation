@@ -15,6 +15,22 @@ import {
 } from "@hia-doc/core";
 import type { GeneratedDocumentationBindingHostProjection } from "@hia-doc/source-linkage";
 import { DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH, getDefaultThemeAssets } from "@hia-doc/theme-default";
+import {
+  DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT,
+  DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+  DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS,
+  getDocumentationPortalLabels,
+  resolveDocumentationPortalInformationArchitecture,
+  resolveDocumentationPortalUiLocale,
+  type DocumentationPortalInformationArchitectureContract,
+  type DocumentationPortalInformationArchitectureOptions,
+  type DocumentationPortalLabels,
+  type DocumentationPortalSemanticPathKind,
+  type DocumentationPortalSemanticPathSegment,
+  type DocumentationPortalUiLocale
+} from "./information-architecture.js";
+
+export * from "./information-architecture.js";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
 /**
@@ -64,6 +80,13 @@ export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
 export interface RenderProjectSiteOptions {
   /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
   layout?: RenderProjectSiteLayout;
+  /**
+   * 显式 IA 才启用 P4 slice；缺失时保持 P3 output path。
+   * Only explicit IA enables the P4 slice; omission preserves the P3 output path.
+   */
+  informationArchitecture?: DocumentationPortalInformationArchitectureOptions;
+  /** UI chrome locale，与 project content locale 独立。UI chrome locale, independent from the project content locale. */
+  uiLocale?: DocumentationPortalUiLocale;
   source?: {
     /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
     presentation?: RenderProjectSourcePresentation;
@@ -88,6 +111,11 @@ export interface RenderProjectHtmlInput {
    */
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   relationGraph?: RenderProjectRelationGraph;
+  /**
+   * optional、body-free 的 W-P84 continuity 摘要；renderer 不读取 report 文件或 target state。
+   * Optional body-free W-P84 continuity summary; the renderer reads neither report files nor target state.
+   */
+  documentationContinuity?: RenderProjectDocumentationContinuitySummary;
   diagnostics?: HiaDiagnostic[];
 }
 
@@ -105,6 +133,28 @@ export interface RenderProjectInfo {
    * Locales that can be switched within the project aggregation page.
    */
   locales?: string[];
+  /** 产品版本仅呈现为 metadata，不参与 route。Product version is displayed as metadata and never participates in routing. */
+  productVersion?: string;
+}
+
+/** Portal 可消费的最小 continuity summary；不携带 target identity、path、entry id 或正文。Minimal Portal continuity summary without target identity, paths, entry ids, or bodies. */
+export interface RenderProjectDocumentationContinuitySummary {
+  contract: "target-documentation-continuity";
+  contractVersion: "0.1.0-draft";
+  status: "accepted" | "refused";
+  entries: {
+    addedCount: number;
+    baselineCount: number;
+    currentCount: number;
+    removedCount: number;
+    unchangedCount: number;
+  };
+  requiredOutputsPreserved: boolean;
+  semantics: {
+    resolution: "evidence-summary-pair-validated" | "unresolved";
+    confidence: "caller-provided-unverified";
+    provenance: "metadata-only-comparison";
+  };
 }
 
 export interface RenderProjectProfileRef {
@@ -205,6 +255,8 @@ export interface RenderProjectEntry {
   hierarchy?: RenderProjectEntryHierarchyRef;
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
   diagnostics?: HiaDiagnostic[];
+  /** manifest input 显式提供的 owner-reviewed semantic prefix。Owner-reviewed semantic prefix explicitly supplied by the manifest input. */
+  semanticPath?: DocumentationPortalSemanticPathSegment[];
 }
 
 /**
@@ -292,11 +344,13 @@ export interface RenderHtmlManifest {
     name: string;
     views: RenderProjectView[];
     entryCounts: Record<string, number>;
+    productVersion?: string;
     navigationIndex?: RenderProjectNavigationIndexRef;
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
     generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
+    informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   };
 }
 
@@ -358,6 +412,7 @@ export interface RenderProjectNavigationIndex {
     name: string;
     title: string;
     views: RenderProjectView[];
+    productVersion?: string;
   };
   entries: RenderProjectNavigationEntry[];
   groups: RenderProjectNavigationGroup[];
@@ -365,6 +420,7 @@ export interface RenderProjectNavigationIndex {
   profiles: RenderProjectProfileRef[];
   docSourceMaps: RenderProjectDocSourceMapRef[];
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
+  documentationContinuity?: RenderProjectDocumentationContinuitySummary;
   relationGraph?: RenderProjectRelationGraph;
   site?: {
     layout: RenderProjectSiteLayout;
@@ -372,6 +428,7 @@ export interface RenderProjectNavigationIndex {
     searchIndexPath?: string;
     relationIndexPath?: string;
     sourcePresentation: RenderProjectSourcePresentation;
+    informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   };
 }
 
@@ -399,7 +456,8 @@ export type RenderProjectNavigationTreeNodeKind =
   | "relation"
   | "source-root"
   | "source-file"
-  | "entry";
+  | "entry"
+  | DocumentationPortalSemanticPathKind;
 
 /**
  * 项目级层级导航节点；用于把大型项目从平铺列表提升为可分域浏览的 API / 文件结构。
@@ -414,6 +472,8 @@ export interface RenderProjectNavigationTreeNode {
   children?: RenderProjectNavigationTreeNode[];
   childrenPath?: string;
   contentPath?: string;
+  presentationPath?: string;
+  memberAnchor?: string;
   entryId?: string;
   sourcePath?: string;
   symbolId?: string;
@@ -437,6 +497,11 @@ export interface RenderProjectNavigationEntry {
   symbolId?: string;
   hierarchy?: RenderProjectEntryHierarchyRef;
   contentPath?: string;
+  /** 实际 router fetch 位置；省略时与 canonical contentPath 相同。Actual router fetch location; omission means the canonical contentPath. */
+  presentationPath?: string;
+  /** stable member/entry anchor。稳定 member/entry anchor。 */
+  memberAnchor?: string;
+  semanticPath?: DocumentationPortalSemanticPathSegment[];
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
 
@@ -476,7 +541,8 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
   const siteLayout = options.projectSite?.layout ?? "split-site";
-  const navigationIndex = createProjectNavigationIndex(normalizedProjectInput, pageTitle, options);
+  const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
+  const navigationIndex = createProjectNavigationIndex(normalizedProjectInput, pageTitle, options, portalContext);
   const files: RenderedHtmlFile[] = siteLayout === "single-page"
     ? [
         {
@@ -486,7 +552,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
           role: "entry"
         }
       ]
-    : createProjectSplitSiteFiles(pageTitle, normalizedProjectInput, navigationIndex, options);
+    : createProjectSplitSiteFiles(pageTitle, normalizedProjectInput, navigationIndex, options, portalContext);
   files.push({
     path: "project-index.json",
     contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
@@ -510,6 +576,92 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
     diagnostics: normalizedProjectInput.diagnostics ?? [],
     manifest: createProjectManifest(normalizedProjectInput, files, pageTitle, options, navigationIndex)
   };
+}
+
+/** 当前 render 调用的 IA/locale/label resolved context。Resolved IA, locale, and label context for one render call. */
+interface RenderProjectPortalContext {
+  informationArchitecture?: DocumentationPortalInformationArchitectureContract;
+  labels: DocumentationPortalLabels;
+  uiLocale: DocumentationPortalUiLocale;
+}
+
+/**
+ * 在任何文件生成前完成 exact draft 与 single-page gate，避免 partial output。
+ * Resolves the exact draft and single-page gate before any files are generated, preventing partial output.
+ */
+function resolveProjectPortalContext(
+  projectInput: RenderProjectHtmlInput,
+  options: RenderHtmlOptions,
+  layout: RenderProjectSiteLayout
+): RenderProjectPortalContext {
+  const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
+  const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
+  const explicitInformationArchitecture = options.projectSite?.informationArchitecture;
+
+  if (projectInput.documentationContinuity) {
+    assertProjectDocumentationContinuitySummary(projectInput.documentationContinuity);
+  }
+
+  if (explicitInformationArchitecture && layout === "single-page") {
+    throw new TypeError(
+      "HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED: Explicit Portal IA is supported only with split-site in this draft."
+    );
+  }
+
+  return {
+    uiLocale,
+    labels: getDocumentationPortalLabels(uiLocale),
+    ...(explicitInformationArchitecture
+      ? {
+          informationArchitecture: resolveDocumentationPortalInformationArchitecture(
+            explicitInformationArchitecture,
+            uiLocale,
+            localeModel.selectedLocale
+          )
+        }
+      : {})
+  };
+}
+
+/** optional continuity linkage 只接受 exact、non-negative、body-free summary。Optional continuity linkage accepts only an exact, non-negative, body-free summary. */
+function assertProjectDocumentationContinuitySummary(summary: RenderProjectDocumentationContinuitySummary): void {
+  const validShape = isExactObject(summary, [
+    "contract",
+    "contractVersion",
+    "status",
+    "entries",
+    "requiredOutputsPreserved",
+    "semantics"
+  ])
+    && isExactObject(summary.entries, ["addedCount", "baselineCount", "currentCount", "removedCount", "unchangedCount"])
+    && isExactObject(summary.semantics, ["resolution", "confidence", "provenance"]);
+  const counts = validShape ? Object.values(summary.entries) : [];
+  const countsConsistent = validShape
+    && summary.entries.baselineCount === summary.entries.unchangedCount + summary.entries.removedCount
+    && summary.entries.currentCount === summary.entries.unchangedCount + summary.entries.addedCount;
+  if (!validShape
+    || summary.contract !== "target-documentation-continuity"
+    || summary.contractVersion !== "0.1.0-draft"
+    || !["accepted", "refused"].includes(summary.status)
+    || typeof summary.requiredOutputsPreserved !== "boolean"
+    || !["evidence-summary-pair-validated", "unresolved"].includes(summary.semantics.resolution)
+    || summary.semantics.confidence !== "caller-provided-unverified"
+    || summary.semantics.provenance !== "metadata-only-comparison"
+    || counts.some((value) => !Number.isSafeInteger(value) || value < 0)
+    || !countsConsistent) {
+    throw new TypeError(
+      "HIA_PORTAL_IA_CONTINUITY_INVALID: continuity linkage must be an exact metadata-only count summary."
+    );
+  }
+}
+
+/** closed-world runtime object shape 检查，防止 TypeScript 之外的 caller 注入 path/body/identity。Checks closed-world runtime object shapes so non-TypeScript callers cannot inject paths, bodies, or identities. */
+function isExactObject(value: unknown, allowedFields: readonly string[]): value is Record<string, unknown> {
+  return value !== null
+    && typeof value === "object"
+    && !Array.isArray(value)
+    && Object.keys(value).every((field) => allowedFields.includes(field))
+    && allowedFields.every((field) => Object.hasOwn(value, field));
 }
 
 /**
@@ -598,6 +750,7 @@ function createProjectManifest(
       name: projectInput.project.name,
       views,
       entryCounts: countEntriesByView(projectInput.entries),
+      ...(projectInput.project.productVersion ? { productVersion: projectInput.project.productVersion } : {}),
       navigationIndex: {
         contract: navigationIndex.contract,
         contractVersion: navigationIndex.contractVersion,
@@ -628,6 +781,9 @@ function createProjectManifest(
               path: "project-index.json"
             }
           }
+        : {}),
+      ...(navigationIndex.site?.informationArchitecture
+        ? { informationArchitecture: navigationIndex.site.informationArchitecture }
         : {})
     }
   };
@@ -636,7 +792,8 @@ function createProjectManifest(
 function createProjectNavigationIndex(
   projectInput: RenderProjectHtmlInput,
   pageTitle: string,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  portalContext: RenderProjectPortalContext
 ): RenderProjectNavigationIndex {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
@@ -651,7 +808,8 @@ function createProjectNavigationIndex(
       locales: localeModel.locales,
       name: projectInput.project.name,
       title: pageTitle,
-      views: collectProjectViews(projectInput.entries)
+      views: collectProjectViews(projectInput.entries),
+      ...(projectInput.project.productVersion ? { productVersion: projectInput.project.productVersion } : {})
     },
     entries: projectInput.entries
       .map((entry) => ({
@@ -668,16 +826,32 @@ function createProjectNavigationIndex(
         ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
         ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
         contentPath: createProjectEntryContentPath(entry.id),
+        ...(portalContext.informationArchitecture
+          ? {
+              presentationPath: createProjectEntryPresentationPath(
+                entry,
+                projectInput.entries,
+                portalContext.informationArchitecture
+              ),
+              memberAnchor: entry.id,
+              ...(entry.semanticPath ? { semanticPath: entry.semanticPath } : {})
+            }
+          : {}),
         ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {})
       }))
       .sort(compareProjectNavigationEntries),
     groups: collectProjectNavigationGroups(projectInput.entries),
-    navigationTree: collectProjectNavigationTree(projectInput.entries),
+    navigationTree: applyProjectNavigationPresentationPaths(
+      collectProjectNavigationTree(projectInput.entries, portalContext.informationArchitecture),
+      projectInput.entries,
+      portalContext.informationArchitecture
+    ),
     profiles: [...(projectInput.profiles ?? [])].sort(compareProjectProfiles),
     docSourceMaps: [...(projectInput.docSourceMaps ?? [])].sort(compareProjectDocSourceMaps),
     ...(projectInput.generatedDocumentationBindingProjection
       ? { generatedDocumentationBindingProjection: projectInput.generatedDocumentationBindingProjection }
       : {}),
+    ...(projectInput.documentationContinuity ? { documentationContinuity: projectInput.documentationContinuity } : {}),
     site: {
       layout: options.projectSite?.layout ?? "split-site",
       ...(options.projectSite?.layout === "single-page" ? {} : {
@@ -685,7 +859,10 @@ function createProjectNavigationIndex(
         searchIndexPath: "search/index.json",
         relationIndexPath: "relations/project.json"
       }),
-      sourcePresentation: options.projectSite?.source?.presentation ?? "link"
+      sourcePresentation: options.projectSite?.source?.presentation ?? "link",
+      ...(portalContext.informationArchitecture
+        ? { informationArchitecture: portalContext.informationArchitecture }
+        : {})
     },
     ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
       ? { relationGraph: projectInput.relationGraph }
@@ -701,17 +878,22 @@ function createProjectSplitSiteFiles(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
   navigationIndex: RenderProjectNavigationIndex,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  portalContext: RenderProjectPortalContext
 ): RenderedHtmlFile[] {
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
+  const informationArchitecture = portalContext.informationArchitecture;
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
-      contents: renderProjectSplitSiteHtml(pageTitle, projectInput, options),
+      contents: renderProjectSplitSiteHtml(pageTitle, projectInput, options, portalContext),
       contentType: "text/html; charset=utf-8",
       role: "entry"
     },
-    ...createProjectNavigationShardFiles(navigationIndex.navigationTree),
+    ...createProjectNavigationShardFiles(
+      navigationIndex.navigationTree,
+      informationArchitecture?.loadingStrategy ?? "lazy"
+    ),
     {
       path: "search/index.json",
       contents: `${JSON.stringify({
@@ -723,6 +905,12 @@ function createProjectSplitSiteFiles(
           kind: entry.kind,
           view: entry.view,
           contentPath: createProjectEntryContentPath(entry.id),
+          ...(informationArchitecture
+            ? {
+                presentationPath: createProjectEntryPresentationPath(entry, projectInput.entries, informationArchitecture),
+                memberAnchor: entry.id
+              }
+            : {}),
           searchText: createProjectEntrySearchText(entry)
         }))
       }, null, 2)}\n`,
@@ -737,21 +925,77 @@ function createProjectSplitSiteFiles(
     }
   ];
 
+  // <lang zh-CN>canonical entry fragment 始终生成，保证旧 deep link 与不识别 IA 的 consumer 可回退。</lang>
+  // <lang en>Canonical entry fragments are always emitted so old deep links and IA-unaware consumers retain a fallback.</lang>
   for (const entry of projectInput.entries) {
     files.push({
       path: createProjectEntryContentPath(entry.id),
-      contents: renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale),
+      contents: informationArchitecture
+        ? renderProjectSemanticTopic(
+            entry,
+            projectInput,
+            localeModel.locales,
+            localeModel.selectedLocale,
+            portalContext,
+            informationArchitecture.memberPlacement === "with-parent"
+          )
+        : renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale),
       contentType: "text/html; charset=utf-8",
       role: "asset"
+    });
+  }
+
+  // <lang zh-CN>semantic-container 只增加 presentation fragment，不替换 canonical fragment。</lang>
+  // <lang en>Semantic containers add presentation fragments without replacing canonical fragments.</lang>
+  if (informationArchitecture?.contentGrouping === "semantic-container") {
+    files.push(...createProjectSemanticContainerFiles(projectInput, localeModel, portalContext));
+  }
+
+  // <lang zh-CN>eager 以单一 index 预载 presentation fragment；canonical files 仍保持独立可寻址。</lang>
+  // <lang en>Eager delivery preloads presentation fragments through one index while canonical files remain independently addressable.</lang>
+  if (informationArchitecture?.loadingStrategy === "eager") {
+    const presentationPaths = new Set(
+      navigationIndex.entries.map((entry) => entry.presentationPath ?? entry.contentPath).filter((path): path is string => Boolean(path))
+    );
+    const fragments = files
+      .filter((file) => presentationPaths.has(file.path))
+      .map((file) => ({ path: file.path, contents: file.contents }))
+      .sort((left, right) => compareStableText(left.path, right.path));
+    files.push({
+      path: "content/eager.json",
+      contents: `${JSON.stringify({
+        contract: "documentation-portal-eager-fragment-index",
+        contractVersion: "0.1.0-draft",
+        fragments
+      }, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
     });
   }
 
   return files;
 }
 
-function createProjectNavigationShardFiles(nodes: RenderProjectNavigationTreeNode[]): RenderedHtmlFile[] {
+function createProjectNavigationShardFiles(
+  nodes: RenderProjectNavigationTreeNode[],
+  loadingStrategy: "lazy" | "eager"
+): RenderedHtmlFile[] {
   const files: RenderedHtmlFile[] = [];
   const emittedPaths = new Set<string>();
+
+  if (loadingStrategy === "eager") {
+    return [{
+      path: "navigation/root.json",
+      contents: `${JSON.stringify({
+        contract: "hia-project-navigation-shard",
+        contractVersion: "0.1.0-draft",
+        nodeId: "root",
+        children: nodes
+      }, null, 2)}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
+    }];
+  }
 
   const emitChildren = (nodeId: string, children: RenderProjectNavigationTreeNode[], root = false): void => {
     const shardPath = root ? "navigation/root.json" : createProjectNavigationChildrenPath(nodeId);
@@ -789,12 +1033,120 @@ function toLazyProjectNavigationNode(node: RenderProjectNavigationTreeNode): Ren
     ...(node.children && node.children.length > 0
       ? { childrenPath: createProjectNavigationChildrenPath(node.id) }
       : {}),
-    ...(node.entryId ? { contentPath: createProjectEntryContentPath(node.entryId) } : {})
+    ...(node.entryId && !node.contentPath ? { contentPath: createProjectEntryContentPath(node.entryId) } : {})
   };
 }
 
 function createProjectEntryContentPath(entryId: string): string {
   return `entries/${stableProjectArtifactName(entryId)}.html`;
+}
+
+/**
+ * 计算 additive presentation location；canonical contentPath 永远由 entry id 单独计算。
+ * Computes the additive presentation location; canonical contentPath is always computed independently from the entry id.
+ */
+function createProjectEntryPresentationPath(
+  entry: RenderProjectEntry,
+  entries: RenderProjectEntry[],
+  informationArchitecture: DocumentationPortalInformationArchitectureContract
+): string {
+  const presentationOwner = informationArchitecture.memberPlacement === "with-parent"
+    ? findProjectParentEntry(entry, entries) ?? entry
+    : entry;
+
+  if (informationArchitecture.contentGrouping === "semantic-container") {
+    return createProjectSemanticContainerPath(presentationOwner);
+  }
+  return createProjectEntryContentPath(presentationOwner.id);
+}
+
+/** semantic container id 只消费 manifest segment 或稳定 unscoped view，不读取 source path。Semantic container ids use manifest segments or a stable unscoped view, never source paths. */
+function createProjectSemanticContainerPath(entry: RenderProjectEntry): string {
+  const identity = entry.semanticPath && entry.semanticPath.length > 0
+    ? entry.semanticPath.map((segment) => `${segment.kind}:${segment.id}`).join("|")
+    : `unscoped:${entry.view}`;
+  return `semantic-containers/${stableProjectArtifactName(identity)}.html`;
+}
+
+/** 仅按显式 parentSymbolId/symbolId 解析父入口，不执行名称或路径猜测。Resolves a parent only by explicit parentSymbolId/symbolId, with no name or path inference. */
+function findProjectParentEntry(entry: RenderProjectEntry, entries: RenderProjectEntry[]): RenderProjectEntry | undefined {
+  const parentSymbolId = entry.hierarchy?.parentSymbolId;
+  return parentSymbolId ? entries.find((candidate) => candidate.symbolId === parentSymbolId) : undefined;
+}
+
+/** 把 canonical 与 presentation location 投影到 leaf node，保持 tree node identity 不变。Projects canonical and presentation locations onto leaf nodes without changing tree-node identity. */
+function applyProjectNavigationPresentationPaths(
+  nodes: RenderProjectNavigationTreeNode[],
+  entries: RenderProjectEntry[],
+  informationArchitecture: DocumentationPortalInformationArchitectureContract | undefined
+): RenderProjectNavigationTreeNode[] {
+  const entriesById = new Map(entries.map((entry) => [entry.id, entry]));
+  return nodes.map((node) => {
+    const entry = node.entryId ? entriesById.get(node.entryId) : undefined;
+    return {
+      ...node,
+      ...(node.children
+        ? { children: applyProjectNavigationPresentationPaths(node.children, entries, informationArchitecture) }
+        : {}),
+      ...(entry ? { contentPath: createProjectEntryContentPath(entry.id) } : {}),
+      ...(entry && informationArchitecture
+        ? {
+            presentationPath: createProjectEntryPresentationPath(entry, entries, informationArchitecture),
+            memberAnchor: entry.id
+          }
+        : {})
+    };
+  });
+}
+
+/**
+ * 按 presentation path 生成 container fragment；with-parent child 由 parent topic 的 members section 承载。
+ * Emits container fragments by presentation path; with-parent children are carried by the parent topic's members section.
+ */
+function createProjectSemanticContainerFiles(
+  projectInput: RenderProjectHtmlInput,
+  localeModel: ReturnType<typeof resolveProjectLocaleModel>,
+  portalContext: RenderProjectPortalContext
+): RenderedHtmlFile[] {
+  const informationArchitecture = portalContext.informationArchitecture;
+  if (!informationArchitecture) {
+    return [];
+  }
+
+  const groups = new Map<string, RenderProjectEntry[]>();
+  for (const entry of projectInput.entries) {
+    const path = createProjectEntryPresentationPath(entry, projectInput.entries, informationArchitecture);
+    const bucket = groups.get(path) ?? [];
+    bucket.push(entry);
+    groups.set(path, bucket);
+  }
+
+  return [...groups.entries()]
+    .sort(([left], [right]) => compareStableText(left, right))
+    .map(([path, entries]) => {
+      const visibleEntries = informationArchitecture.memberPlacement === "with-parent"
+        ? entries.filter((entry) => {
+            const parent = findProjectParentEntry(entry, projectInput.entries);
+            return !parent || createProjectEntryPresentationPath(parent, projectInput.entries, informationArchitecture) !== path;
+          })
+        : entries;
+      return {
+        path,
+        contents: visibleEntries
+          .sort(compareProjectNavigationEntries)
+          .map((entry) => renderProjectSemanticTopic(
+            entry,
+            projectInput,
+            localeModel.locales,
+            localeModel.selectedLocale,
+            portalContext,
+            informationArchitecture.memberPlacement === "with-parent"
+          ))
+          .join(""),
+        contentType: "text/html; charset=utf-8",
+        role: "asset" as const
+      };
+    });
 }
 
 function createProjectNavigationChildrenPath(nodeId: string): string {
@@ -870,34 +1222,14 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
 function renderProjectSplitSiteHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  portalContext: RenderProjectPortalContext
 ): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const views = collectProjectViews(projectInput.entries);
   const entryCounts = countEntriesByView(projectInput.entries);
-  const selectedChinese = localeModel.selectedLocale.toLowerCase().startsWith("zh");
-  const labels = selectedChinese
-    ? {
-        hierarchy: "层级导航",
-        loading: "正在加载文档导航...",
-        open: "打开",
-        relations: "项目关系",
-        select: "请从左侧层级树选择一个文档节点。",
-        search: "搜索",
-        searchPlaceholder: "名称、类型、源码或选择器",
-        requiresServer: "按需加载站点需要通过 HTTP(S) 提供；请使用本地静态服务器打开该目录。"
-      }
-    : {
-        hierarchy: "Hierarchy",
-        loading: "Loading documentation navigation...",
-        open: "Open",
-        relations: "Project relations",
-        select: "Select a documentation node from the hierarchy.",
-        search: "Search",
-        searchPlaceholder: "Name, kind, source, selector",
-        requiresServer: "The lazy site must be served over HTTP(S); open this directory through a local static server."
-      };
+  const labels = portalContext.labels;
 
   return [
     "<!doctype html>",
@@ -928,7 +1260,12 @@ function renderProjectSplitSiteHtml(
     `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${escapeHtml(labels.select)}</p></main>`,
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
-    renderProjectSplitSiteScript(labels.requiresServer, labels.open),
+    renderProjectSplitSiteScript(
+      labels.requiresServer,
+      labels.open,
+      portalContext.informationArchitecture?.loadingStrategy ?? "lazy",
+      labels.relations
+    ),
     "</body>",
     "</html>"
   ].join("");
@@ -991,11 +1328,16 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
   ];
 }
 
-function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: string): string {
+function renderProjectSplitSiteScript(
+  fileProtocolMessage: string,
+  openLabel: string,
+  loadingStrategy: "lazy" | "eager",
+  relationsLabel: string
+): string {
   return [
     "<script>",
     "(() => {",
-    "  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json' };",
+    `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json' };`,
     "  const treeHost = document.querySelector('[data-hia-project-tree]');",
     "  const contentHost = document.querySelector('[data-hia-project-content]');",
     "  const search = document.querySelector('[data-hia-project-search]');",
@@ -1003,6 +1345,7 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "  const viewButtons = Array.from(document.querySelectorAll('[data-hia-project-view]'));",
     "  let rootNodes = [];",
     "  let searchEntries = null;",
+    "  let eagerFragments = null;",
     "  let activeView = 'all';",
     "  async function readJson(target) {",
     "    const response = await fetch(target, { credentials: 'omit' });",
@@ -1029,8 +1372,12 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "  function createTreeNode(node) {",
     "    const item = document.createElement('li');",
     "    item.dataset.hiaProjectNav = node.views?.[0] || 'other';",
-    "    if (node.childrenPath) {",
+    "    item.dataset.hiaProjectNodeId = node.id || '';",
+    "    if (node.entryId) item.dataset.hiaProjectEntryId = node.entryId;",
+    "    const inlineChildren = Array.isArray(node.children) ? node.children : [];",
+    "    if (node.childrenPath || inlineChildren.length > 0) {",
     "      const details = document.createElement('details');",
+    "      details.dataset.hiaProjectDisclosure = node.id || '';",
     "      const summary = document.createElement('summary');",
     "      const summaryLabel = document.createElement('span');",
     "      summaryLabel.textContent = `${node.label} (${node.entryCount})`;",
@@ -1043,32 +1390,37 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "        openButton.addEventListener('click', (event) => {",
     "          event.preventDefault();",
     "          event.stopPropagation();",
-    "          loadEntry(node.entryId, node.contentPath, true);",
+    "          loadEntry(node, true);",
     "        });",
     "        summary.append(openButton);",
     "      }",
     "      details.append(summary);",
-    "      details.addEventListener('toggle', async () => {",
-    "        if (!details.open || details.dataset.loaded === 'true') return;",
+    "      if (inlineChildren.length > 0) {",
     "        details.dataset.loaded = 'true';",
-    "        const loading = document.createElement('p');",
-    "        loading.className = 'hia-project-loading';",
-    "        loading.textContent = '...';",
-    "        details.append(loading);",
-    "        try {",
-    "          const shard = await readJson(node.childrenPath);",
-    "          loading.replaceWith(createTreeList(Array.isArray(shard.children) ? shard.children : []));",
-    "        } catch (error) {",
-    "          loading.textContent = String(error?.message || error);",
-    "        }",
-    "      });",
+    "        details.append(createTreeList(inlineChildren));",
+    "      } else {",
+    "        details.addEventListener('toggle', async () => {",
+    "          if (!details.open || details.dataset.loaded === 'true') return;",
+    "          details.dataset.loaded = 'true';",
+    "          const loading = document.createElement('p');",
+    "          loading.className = 'hia-project-loading';",
+    "          loading.textContent = '...';",
+    "          details.append(loading);",
+    "          try {",
+    "            const shard = await readJson(node.childrenPath);",
+    "            loading.replaceWith(createTreeList(Array.isArray(shard.children) ? shard.children : []));",
+    "          } catch (error) {",
+    "            loading.textContent = String(error?.message || error);",
+    "          }",
+    "        });",
+    "      }",
     "      item.append(details);",
     "    } else if (node.entryId && node.contentPath) {",
     "      const button = document.createElement('button');",
     "      button.type = 'button';",
     "      button.className = 'hia-project-entry-link';",
     "      button.textContent = node.label;",
-    "      button.addEventListener('click', () => loadEntry(node.entryId, node.contentPath, true));",
+    "      button.addEventListener('click', () => loadEntry(node, true));",
     "      item.append(button);",
     "    } else {",
     "      const label = document.createElement('span');",
@@ -1090,16 +1442,46 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "    }",
     "  }",
     ...renderProjectSourceFetchClientLines("contentHost"),
-    "  async function loadEntry(entryId, contentPath, updateHash) {",
+    "  async function ensureEagerFragments() {",
+    "    if (config.loadingStrategy !== 'eager') return null;",
+    "    if (eagerFragments) return eagerFragments;",
+    "    const index = await readJson(config.eagerContent);",
+    "    eagerFragments = new Map((Array.isArray(index.fragments) ? index.fragments : []).map((fragment) => [fragment.path, fragment.contents]));",
+    "    return eagerFragments;",
+    "  }",
+    "  async function readFragment(path) {",
+    "    const eager = await ensureEagerFragments();",
+    "    if (eager?.has(path)) return eager.get(path);",
+    "    const response = await fetch(path, { credentials: 'omit' });",
+    "    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
+    "    return response.text();",
+    "  }",
+    "  function markActiveEntry(entryId) {",
+    "    for (const item of document.querySelectorAll('[data-hia-project-node-id]')) {",
+    "      delete item.dataset.hiaActiveEntry;",
+    "      for (const details of item.querySelectorAll(':scope > details')) delete details.dataset.hiaActiveAncestor;",
+    "    }",
+    "    const leaf = Array.from(document.querySelectorAll('[data-hia-project-entry-id]')).find((item) => item.dataset.hiaProjectEntryId === entryId);",
+    "    if (!leaf) return;",
+    "    leaf.dataset.hiaActiveEntry = 'true';",
+    "    for (const details of leaf.parentElement?.closest('details') ? [leaf.parentElement.closest('details')] : []) {",
+    "      let current = details;",
+    "      while (current) { current.open = true; current.dataset.hiaActiveAncestor = 'true'; current = current.parentElement?.closest('details'); }",
+    "    }",
+    "  }",
+    "  async function loadEntry(entry, updateHash) {",
     "    if (!contentHost) return;",
     "    contentHost.innerHTML = '<p class=\"hia-project-loading\">...</p>';",
     "    try {",
-    "      const response = await fetch(contentPath, { credentials: 'omit' });",
-    "      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
-    "      contentHost.innerHTML = await response.text();",
+    "      const contentPath = entry.presentationPath || entry.contentPath;",
+    "      contentHost.innerHTML = await readFragment(contentPath);",
     "      applyLocale();",
     "      bindSourceFetch();",
-    "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entryId)}`);",
+    "      const anchor = entry.memberAnchor || entry.entryId || entry.id;",
+    "      const target = Array.from(contentHost.querySelectorAll('[id]')).find((item) => item.id === anchor);",
+    "      target?.scrollIntoView({ block: 'start' });",
+    "      markActiveEntry(entry.entryId || entry.id);",
+    "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entry.entryId || entry.id)}`);",
     "    } catch (error) {",
     "      showLoadError(error);",
     "    }",
@@ -1118,7 +1500,7 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "      const matches = entries.filter((entry) => (activeView === 'all' || entry.view === activeView) && String(entry.searchText || '').includes(query)).slice(0, 200);",
     "      if (!treeHost) return;",
     "      treeHost.innerHTML = '';",
-    "      const nodes = matches.map((entry) => ({ id: entry.id, label: `${entry.name} · ${entry.kind}`, entryId: entry.id, contentPath: entry.contentPath, views: [entry.view], entryCount: 1 }));",
+    "      const nodes = matches.map((entry) => ({ id: entry.id, label: `${entry.name} · ${entry.kind}`, entryId: entry.id, contentPath: entry.contentPath, presentationPath: entry.presentationPath, memberAnchor: entry.memberAnchor, views: [entry.view], entryCount: 1 }));",
     "      treeHost.append(createTreeList(nodes));",
     "    } catch (error) { showLoadError(error); }",
     "  }",
@@ -1139,7 +1521,7 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "      const article = document.createElement('article');",
     "      article.className = 'hia-symbol';",
     "      const heading = document.createElement('h2');",
-    "      heading.textContent = 'Relations';",
+    `      heading.textContent = ${JSON.stringify(relationsLabel)};`,
     "      const summary = document.createElement('p');",
     "      summary.textContent = `${graph.nodeCount || 0} node(s), ${graph.relationCount || 0} relation(s).`;",
     "      article.append(heading, summary);",
@@ -1152,7 +1534,7 @@ function renderProjectSplitSiteScript(fileProtocolMessage: string, openLabel: st
     "    const hash = location.hash.startsWith('#entry=') ? decodeURIComponent(location.hash.slice(7)) : '';",
     "    if (hash) ensureSearchIndex().then((entries) => {",
     "      const entry = entries.find((candidate) => candidate.id === hash);",
-    "      if (entry) loadEntry(entry.id, entry.contentPath, false);",
+    "      if (entry) loadEntry({ ...entry, entryId: entry.id }, false);",
     "    });",
     "  }).catch(showLoadError);",
     "  viewButtons.find((button) => button.dataset.hiaProjectView === 'all')?.setAttribute('aria-pressed', 'true');",
@@ -1343,6 +1725,235 @@ function renderProjectEntry(entry: RenderProjectEntry, locales: string[], select
   ].join("");
 }
 
+/**
+ * 按固定 section order 渲染显式 IA topic；不适用 section 可省略，但 coverage/provenance 明示 unavailable。
+ * Renders an explicit IA topic in fixed section order; inapplicable sections may be omitted while coverage/provenance state unavailability explicitly.
+ */
+function renderProjectSemanticTopic(
+  entry: RenderProjectEntry,
+  projectInput: RenderProjectHtmlInput,
+  locales: string[],
+  selectedLocale: string,
+  portalContext: RenderProjectPortalContext,
+  includeMemberBodies: boolean
+): string {
+  return renderProjectSemanticTopicInternal(
+    entry,
+    projectInput,
+    locales,
+    selectedLocale,
+    portalContext,
+    includeMemberBodies,
+    new Set<string>()
+  );
+}
+
+/** 递归 member projection 保持 cycle-safe；cycle 时回退 canonical link。Recursive member projection is cycle-safe and falls back to canonical links on cycles. */
+function renderProjectSemanticTopicInternal(
+  entry: RenderProjectEntry,
+  projectInput: RenderProjectHtmlInput,
+  locales: string[],
+  selectedLocale: string,
+  portalContext: RenderProjectPortalContext,
+  includeMemberBodies: boolean,
+  ancestors: Set<string>
+): string {
+  const labels = portalContext.labels;
+  const nextAncestors = new Set(ancestors);
+  nextAncestors.add(entry.id);
+  const members = collectProjectEntryMembers(entry, projectInput.entries);
+  const sections = [
+    renderProjectTopicSection("summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale)),
+    renderProjectTopicSection(
+      "declaration",
+      labels.declaration,
+      entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : ""
+    ),
+    renderProjectTopicSection("metadata", labels.metadata, renderProjectTopicMetadata(entry, projectInput.project.productVersion)),
+    renderProjectTopicSection("contract", labels.contract, renderProjectTopicContract(entry)),
+    renderProjectTopicSection("coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, labels)),
+    renderProjectTopicSection("provenance", labels.provenance, renderProjectTopicProvenance(projectInput.documentationContinuity, labels)),
+    renderProjectTopicSection(
+      "members",
+      labels.members,
+      renderProjectTopicMembers(
+        members,
+        projectInput,
+        locales,
+        selectedLocale,
+        portalContext,
+        includeMemberBodies,
+        nextAncestors
+      )
+    ),
+    renderProjectTopicSection("relations", labels.relations, renderProjectTopicRelations(entry, projectInput.relationGraph)),
+    renderProjectTopicSection("source", labels.source, renderProjectTopicSource(entry)),
+    renderProjectTopicSection("diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(entry.diagnostics ?? []))
+  ].join("");
+  const searchText = createProjectEntrySearchText(entry);
+
+  return [
+    `<article class="hia-symbol hia-project-entry hia-project-topic" id="${escapeHtml(entry.id)}" data-hia-project-entry="${escapeHtml(entry.view)}" data-hia-project-search-text="${escapeHtml(searchText)}">`,
+    `<header class="hia-project-topic-header"><h2>${escapeHtml(entry.name)}</h2><span class="hia-kind">${escapeHtml(entry.kind)}</span><span class="hia-kind">${escapeHtml(formatProjectViewLabel(entry.view))}</span></header>`,
+    sections,
+    "</article>"
+  ].join("");
+}
+
+/** 空 section 不输出，从而保持“按适用性呈现”。Omits empty sections so topics remain applicability-aware. */
+function renderProjectTopicSection(
+  section: "summary" | "declaration" | "metadata" | "contract" | "coverage" | "provenance" | "members" | "relations" | "source" | "diagnostics",
+  label: string,
+  body: string
+): string {
+  return body
+    ? `<section class="hia-project-topic-section" data-hia-topic-section="${section}"><h3>${escapeHtml(label)}</h3>${body}</section>`
+    : "";
+}
+
+/** metadata 只含公开 entry/project facts；关系由 relations section 独立承载。Metadata contains public entry/project facts only; relations stay in their own section. */
+function renderProjectTopicMetadata(entry: RenderProjectEntry, productVersion: string | undefined): string {
+  const items = [
+    `<dt>Kind</dt><dd>${escapeHtml(entry.kind)}</dd>`,
+    `<dt>View</dt><dd>${escapeHtml(entry.view)}</dd>`,
+    productVersion ? `<dt>Product Version</dt><dd>${escapeHtml(productVersion)}</dd>` : "",
+    entry.input ? `<dt>Input</dt><dd>${escapeHtml(entry.input.kind)}</dd>` : "",
+    entry.input?.path ? `<dt>Input Path</dt><dd>${escapeHtml(entry.input.path)}</dd>` : "",
+    entry.profile ? `<dt>Profile</dt><dd>${escapeHtml(entry.profile.profileId)}${entry.profile.profileVersion ? `@${escapeHtml(entry.profile.profileVersion)}` : ""}</dd>` : "",
+    entry.hierarchy?.assembly ? `<dt>Assembly</dt><dd>${escapeHtml(entry.hierarchy.assembly)}</dd>` : "",
+    entry.hierarchy?.namespace ? `<dt>Namespace</dt><dd>${escapeHtml(entry.hierarchy.namespace)}</dd>` : "",
+    entry.hierarchy?.containingType ? `<dt>Containing Type</dt><dd>${escapeHtml(entry.hierarchy.containingType)}</dd>` : "",
+    entry.hierarchy?.symbolDocumentationId ? `<dt>Documentation ID</dt><dd>${escapeHtml(entry.hierarchy.symbolDocumentationId)}</dd>` : ""
+  ].join("");
+  return `<dl class="hia-project-meta">${items}</dl>`;
+}
+
+/** contract section 与 input locator 分离，避免 path 被误当 contract identity。Separates contract identity from the input locator so paths are not mistaken for contracts. */
+function renderProjectTopicContract(entry: RenderProjectEntry): string {
+  if (!entry.input?.contract && !entry.input?.contractVersion && !entry.input?.artifactId) {
+    return "";
+  }
+  const items = [
+    entry.input.contract ? `<dt>Contract</dt><dd>${escapeHtml(entry.input.contract)}</dd>` : "",
+    entry.input.contractVersion ? `<dt>Version</dt><dd>${escapeHtml(entry.input.contractVersion)}</dd>` : "",
+    entry.input.artifactId ? `<dt>Artifact</dt><dd>${escapeHtml(entry.input.artifactId)}</dd>` : ""
+  ].join("");
+  return `<dl class="hia-project-meta">${items}</dl>`;
+}
+
+/** continuity 缺失时不猜测成功，明确输出 unavailable。Never guesses continuity success; absence is rendered as unavailable. */
+function renderProjectTopicCoverage(
+  continuity: RenderProjectDocumentationContinuitySummary | undefined,
+  labels: DocumentationPortalLabels
+): string {
+  if (!continuity) {
+    return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
+  }
+  return [
+    "<dl class=\"hia-project-meta\">",
+    `<dt>Status</dt><dd>${escapeHtml(continuity.status)}</dd>`,
+    `<dt>Entries</dt><dd>${escapeHtml(String(continuity.entries.baselineCount))} → ${escapeHtml(String(continuity.entries.currentCount))}</dd>`,
+    `<dt>Added / Removed / Unchanged</dt><dd>${escapeHtml(String(continuity.entries.addedCount))} / ${escapeHtml(String(continuity.entries.removedCount))} / ${escapeHtml(String(continuity.entries.unchangedCount))}</dd>`,
+    `<dt>Required Outputs</dt><dd>${continuity.requiredOutputsPreserved ? "preserved" : "not-preserved"}</dd>`,
+    "</dl>"
+  ].join("");
+}
+
+/** provenance 只显示 exact contract 与三维 semantics，不回读 evidence body。Provenance shows only the exact contract and three semantic dimensions, without reading evidence bodies. */
+function renderProjectTopicProvenance(
+  continuity: RenderProjectDocumentationContinuitySummary | undefined,
+  labels: DocumentationPortalLabels
+): string {
+  if (!continuity) {
+    return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
+  }
+  return [
+    "<dl class=\"hia-project-meta\">",
+    `<dt>Contract</dt><dd>${escapeHtml(continuity.contract)}@${escapeHtml(continuity.contractVersion)}</dd>`,
+    `<dt>Resolution</dt><dd>${escapeHtml(continuity.semantics.resolution)}</dd>`,
+    `<dt>Confidence</dt><dd>${escapeHtml(continuity.semantics.confidence)}</dd>`,
+    `<dt>Provenance</dt><dd>${escapeHtml(continuity.semantics.provenance)}</dd>`,
+    "</dl>"
+  ].join("");
+}
+
+/** direct members 只通过 explicit symbol relation 收集。Collects direct members only through explicit symbol relations. */
+function collectProjectEntryMembers(entry: RenderProjectEntry, entries: RenderProjectEntry[]): RenderProjectEntry[] {
+  if (!entry.symbolId) {
+    return [];
+  }
+  return entries
+    .filter((candidate) => candidate.hierarchy?.parentSymbolId === entry.symbolId)
+    .sort(compareProjectNavigationEntries);
+}
+
+/** separate 输出 canonical links；with-parent 输出嵌套完整 topic，并对 cycle 回退 link。Separate mode emits canonical links; with-parent emits nested topics with cycle-safe link fallback. */
+function renderProjectTopicMembers(
+  members: RenderProjectEntry[],
+  projectInput: RenderProjectHtmlInput,
+  locales: string[],
+  selectedLocale: string,
+  portalContext: RenderProjectPortalContext,
+  includeMemberBodies: boolean,
+  ancestors: Set<string>
+): string {
+  if (members.length === 0) {
+    return "";
+  }
+  if (!includeMemberBodies) {
+    return `<ul class="hia-project-member-list">${members.map((member) => `<li><a href="${escapeHtml(createProjectEntryContentPath(member.id))}#${escapeHtml(member.id)}">${escapeHtml(member.name)}</a></li>`).join("")}</ul>`;
+  }
+  return `<div class="hia-project-member-topics">${members.map((member) => {
+    if (ancestors.has(member.id)) {
+      return `<p><a href="${escapeHtml(createProjectEntryContentPath(member.id))}#${escapeHtml(member.id)}">${escapeHtml(member.name)}</a></p>`;
+    }
+    return renderProjectSemanticTopicInternal(
+      member,
+      projectInput,
+      locales,
+      selectedLocale,
+      portalContext,
+      true,
+      ancestors
+    );
+  }).join("")}</div>`;
+}
+
+/** inheritance/implements 与 project relation graph 都只进入 relations section。Inheritance, implements, and project graph edges appear only in the relations section. */
+function renderProjectTopicRelations(
+  entry: RenderProjectEntry,
+  relationGraph: RenderProjectRelationGraph | undefined
+): string {
+  const semanticItems = [
+    ...(entry.hierarchy?.baseTypeIds ?? []).map((id) => `<li><span class="hia-kind">inherits</span> ${escapeHtml(id)}</li>`),
+    ...(entry.hierarchy?.interfaceIds ?? []).map((id) => `<li><span class="hia-kind">implements</span> ${escapeHtml(id)}</li>`)
+  ];
+  const entryNodeIds = new Set(
+    relationGraph?.nodes.filter((node) => node.entryId === entry.id).map((node) => node.id) ?? []
+  );
+  const graphItems = relationGraph?.relations
+    .filter((relation) => relation.entryId === entry.id || entryNodeIds.has(relation.from) || entryNodeIds.has(relation.to))
+    .map((relation) => `<li><span class="hia-kind">${escapeHtml(relation.kind)}</span> ${escapeHtml(relation.label)}</li>`) ?? [];
+  const items = [...semanticItems, ...graphItems].join("");
+  return items ? `<ul class="hia-project-relation-list">${items}</ul>` : "";
+}
+
+/** source 与 doc-source-map 保持既有 privacy policy；本函数不新增 source body。Source and doc-source-map retain the existing privacy policy; this function adds no source body. */
+function renderProjectTopicSource(entry: RenderProjectEntry): string {
+  return [
+    entry.source ? renderProjectEntrySource(entry.source, false) : "",
+    entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false) : ""
+  ].join("");
+}
+
+/** topic diagnostics 使用已有 structured diagnostic，空集合不输出。Topic diagnostics reuse structured diagnostics and omit an empty set. */
+function renderProjectTopicDiagnostics(diagnostics: HiaDiagnostic[]): string {
+  if (diagnostics.length === 0) {
+    return "";
+  }
+  return `<ul>${diagnostics.map((diagnostic) => `<li>${escapeHtml(diagnostic.severity)}:${escapeHtml(diagnostic.code)} - ${escapeHtml(diagnostic.message)}</li>`).join("")}</ul>`;
+}
+
 function renderProjectEntryHierarchy(hierarchy: RenderProjectEntryHierarchyRef): string {
   const details = [
     hierarchy.assembly ? `<dt>Assembly</dt><dd>${escapeHtml(hierarchy.assembly)}</dd>` : "",
@@ -1398,7 +2009,7 @@ function renderProjectEntryProfile(profile: RenderProjectProfileRef): string {
   return `<p class="hia-project-profile">Profile ${escapeHtml(profile.profileId)}${escapeHtml(version)}</p>`;
 }
 
-function renderProjectEntrySource(source: RenderProjectSourceRef): string {
+function renderProjectEntrySource(source: RenderProjectSourceRef, includeHeading = true): string {
   const range = source.range ? `:${source.range.start.line}${source.range.end ? `-${source.range.end.line}` : ""}` : "";
   const label = `${source.path}${range}`;
   const sourceLabel = source.linkUrl
@@ -1413,7 +2024,8 @@ function renderProjectEntrySource(source: RenderProjectSourceRef): string {
   const preview = source.preview ? renderProjectSourcePreview(source.preview, source.path) : "";
   const fetchPreview = source.fetchUrl ? renderProjectSourceFetch(source) : "";
 
-  return `<section class="hia-source-section"><h3>Source</h3><dl class="hia-project-meta">${sourceDetails}</dl>${preview}${fetchPreview}</section>`;
+  const heading = includeHeading ? "<h3>Source</h3>" : "";
+  return `<section class="hia-source-section">${heading}<dl class="hia-project-meta">${sourceDetails}</dl>${preview}${fetchPreview}</section>`;
 }
 
 function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
@@ -1436,7 +2048,7 @@ function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
   ].join("");
 }
 
-function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
+function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef, includeHeading = true): string {
   const sourceRange = docSourceMap.sourceRange ? `:${docSourceMap.sourceRange.start.line}${docSourceMap.sourceRange.end ? `-${docSourceMap.sourceRange.end.line}` : ""}` : "";
   const diagnostics = docSourceMap.diagnostics && docSourceMap.diagnostics.length > 0
     ? `<dt>Diagnostics</dt><dd>${escapeHtml(docSourceMap.diagnostics.join(", "))}</dd>`
@@ -1454,7 +2066,8 @@ function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourc
   ].join("");
   const actions = renderProjectDocSourceMapOpenRequests(docSourceMap);
 
-  return `<section class="hia-source-section"><h3>Doc Source Map</h3><dl class="hia-project-meta">${details}</dl>${actions}</section>`;
+  const heading = includeHeading ? "<h3>Doc Source Map</h3>" : "";
+  return `<section class="hia-source-section">${heading}<dl class="hia-project-meta">${details}</dl>${actions}</section>`;
 }
 
 function renderProjectSourcePreview(preview: RenderProjectSourcePreviewRef, fallbackPath: string): string {
@@ -1966,12 +2579,16 @@ interface ProjectNavigationTreeBuilder {
   views: Set<RenderProjectView>;
   children: ProjectNavigationTreeBuilder[];
   childrenById: Map<string, ProjectNavigationTreeBuilder>;
+  terminalChildren: RenderProjectNavigationTreeNode[];
   entryId?: string;
   sourcePath?: string;
   symbolId?: string;
 }
 
-function collectProjectNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+function collectProjectNavigationTree(
+  entries: RenderProjectEntry[],
+  informationArchitecture?: DocumentationPortalInformationArchitectureContract
+): RenderProjectNavigationTreeNode[] {
   return PROJECT_VIEW_ORDER
     .filter((view) => view !== "all")
     .flatMap((view) => {
@@ -1980,9 +2597,11 @@ function collectProjectNavigationTree(entries: RenderProjectEntry[]): RenderProj
         return [];
       }
 
-      const children = view === "dotnet"
-        ? collectDotNetNavigationTree(viewEntries)
-        : collectSemanticSourceNavigationTree(viewEntries);
+      const children = informationArchitecture
+        ? collectManifestSemanticNavigationTree(viewEntries, view)
+        : view === "dotnet"
+          ? collectDotNetNavigationTree(viewEntries)
+          : collectSemanticSourceNavigationTree(viewEntries);
 
       return [{
         id: `view:${view}`,
@@ -1995,7 +2614,10 @@ function collectProjectNavigationTree(entries: RenderProjectEntry[]): RenderProj
     });
 }
 
-function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+function collectDotNetNavigationTree(
+  entries: RenderProjectEntry[],
+  includeTypeRelations = true
+): RenderProjectNavigationTreeNode[] {
   const roots = new Map<string, ProjectNavigationTreeBuilder>();
 
   for (const entry of entries) {
@@ -2040,7 +2662,7 @@ function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProje
     if (isDotNetTypeNavigationEntry(entry)) {
       typeNode.entryId = entry.id;
       assignProjectTreeEntryRefs(typeNode, entry);
-      if (entry.kind === "dotnet-type") {
+      if (includeTypeRelations && entry.kind === "dotnet-type") {
         addDotNetInheritanceNodes(typeNode, entry);
       }
       continue;
@@ -2059,6 +2681,147 @@ function collectDotNetNavigationTree(entries: RenderProjectEntry[]): RenderProje
   }
 
   return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
+}
+
+/**
+ * 构造 manifest-only semantic prefix，再接既有语言 containment；显式 IA 不使用 source path 分组。
+ * Builds a manifest-only semantic prefix followed by language containment; explicit IA never groups by source path.
+ */
+function collectManifestSemanticNavigationTree(
+  entries: RenderProjectEntry[],
+  view: RenderProjectView
+): RenderProjectNavigationTreeNode[] {
+  const semanticRoots = new Map<string, ProjectNavigationTreeBuilder>();
+  const groupedEntries = new Map<string, { path: DocumentationPortalSemanticPathSegment[]; entries: RenderProjectEntry[] }>();
+
+  for (const entry of entries) {
+    assertRenderProjectSemanticPath(entry.semanticPath);
+    const path = entry.semanticPath ?? [];
+    const key = path.length > 0
+      ? path.map((segment) => `${segment.kind}:${segment.id}`).join("|")
+      : `unscoped:${view}`;
+    const group = groupedEntries.get(key) ?? { path, entries: [] };
+    group.entries.push(entry);
+    groupedEntries.set(key, group);
+  }
+
+  const unscopedChildren: RenderProjectNavigationTreeNode[] = [];
+  for (const [groupKey, group] of [...groupedEntries.entries()].sort(([left], [right]) => compareStableText(left, right))) {
+    const languageChildren = view === "dotnet"
+      ? collectDotNetNavigationTree(group.entries, false)
+      : collectSymbolContainmentNavigationTree(group.entries);
+    const namespacedChildren = languageChildren.map((node) => namespaceProjectNavigationNode(node, `semantic:${groupKey}`));
+
+    if (group.path.length === 0) {
+      unscopedChildren.push(...namespacedChildren);
+      continue;
+    }
+
+    let parentMap = semanticRoots;
+    let parentBuilder: ProjectNavigationTreeBuilder | undefined;
+    let qualifiedId = "semantic";
+    for (const segment of group.path) {
+      qualifiedId = `${qualifiedId}:${segment.kind}:${segment.id}`;
+      const builder = getOrCreateProjectTreeChild(parentMap, qualifiedId, segment.kind, segment.label);
+      for (const entry of group.entries) {
+        addProjectTreeEntry(builder, entry);
+      }
+      parentBuilder = builder;
+      parentMap = builder.childrenById;
+    }
+    if (parentBuilder) {
+      parentBuilder.terminalChildren.push(...namespacedChildren);
+    }
+  }
+
+  const semanticChildren = [...semanticRoots.values()].map(finalizeProjectTreeBuilder);
+  return sortProjectTreeNodes([...semanticChildren, ...unscopedChildren]);
+}
+
+/** 非 DotNet 显式 IA 下只使用 symbol containment，不回退到 source-root/source-file。Non-.NET explicit IA uses symbol containment only, without source grouping fallback. */
+function collectSymbolContainmentNavigationTree(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNode[] {
+  const roots = new Map<string, ProjectNavigationTreeBuilder>();
+  const nodesByEntryId = new Map<string, ProjectNavigationTreeBuilder>();
+  const entriesBySymbolId = new Map<string, RenderProjectEntry>();
+
+  for (const entry of entries) {
+    if (entry.symbolId) {
+      entriesBySymbolId.set(entry.symbolId, entry);
+    }
+    const entryNode = getOrCreateProjectTreeChild(
+      nodesByEntryId,
+      `entry:${entry.id}`,
+      isProjectTypeLikeKind(entry.kind) ? "type" : "entry",
+      entry.name
+    );
+    addProjectTreeEntry(entryNode, entry);
+    entryNode.entryId = entry.id;
+    assignProjectTreeEntryRefs(entryNode, entry);
+  }
+
+  for (const entry of entries) {
+    const entryNode = nodesByEntryId.get(`entry:${entry.id}`);
+    const parentEntry = entry.hierarchy?.parentSymbolId
+      ? entriesBySymbolId.get(entry.hierarchy.parentSymbolId)
+      : undefined;
+    const parentNode = parentEntry ? nodesByEntryId.get(`entry:${parentEntry.id}`) : undefined;
+    if (entryNode && parentEntry && parentNode && parentNode !== entryNode) {
+      parentNode.childrenById.set(entryNode.id, entryNode);
+      incrementProjectNavigationAncestorCounts(parentEntry, entriesBySymbolId, nodesByEntryId);
+    } else if (entryNode) {
+      roots.set(entryNode.id, entryNode);
+    }
+  }
+
+  return sortProjectTreeNodes([...roots.values()].map(finalizeProjectTreeBuilder));
+}
+
+/** 为跨 semantic container 的 shard node id 增加 namespace，entry id 本身保持不变。Namespaces shard node ids across semantic containers while preserving entry identity. */
+function namespaceProjectNavigationNode(
+  node: RenderProjectNavigationTreeNode,
+  namespace: string
+): RenderProjectNavigationTreeNode {
+  return {
+    ...node,
+    id: `${namespace}:${node.id}`,
+    ...(node.children
+      ? { children: node.children.map((child) => namespaceProjectNavigationNode(child, namespace)) }
+      : {})
+  };
+}
+
+/** direct renderer API 的 semantic path 同样 fail closed，防止绕过 manifest validator。Semantic paths passed directly to the renderer also fail closed. */
+function assertRenderProjectSemanticPath(path: DocumentationPortalSemanticPathSegment[] | undefined): void {
+  if (!path) {
+    return;
+  }
+  if (!Array.isArray(path) || path.length === 0) {
+    throw new TypeError("HIA_PORTAL_IA_SEMANTIC_PATH_INVALID: semanticPath must be a non-empty array.");
+  }
+  const seen = new Set<string>();
+  for (const segment of path) {
+    const exactSegment = isExactObject(segment, ["kind", "id", "label"]);
+    const normalizedLabel = exactSegment && typeof segment.label === "string"
+      ? segment.label.replaceAll("\\", "/")
+      : "";
+    const safeLabel = exactSegment
+      && Boolean(segment.label)
+      && segment.label.length <= 160
+      && !/[\u0000-\u001F\u007F]/u.test(segment.label)
+      && !normalizedLabel.includes("../")
+      && normalizedLabel !== ".."
+      && !normalizedLabel.startsWith("/")
+      && !/^[A-Za-z]:\//u.test(normalizedLabel)
+      && !/^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(normalizedLabel);
+    if (!exactSegment
+      || !DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS.includes(segment.kind)
+      || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(segment.id)
+      || !safeLabel
+      || seen.has(segment.id)) {
+      throw new TypeError("HIA_PORTAL_IA_SEMANTIC_PATH_INVALID: semanticPath must contain unique, public kind/id/label segments.");
+    }
+    seen.add(segment.id);
+  }
 }
 
 function addDotNetInheritanceNodes(typeNode: ProjectNavigationTreeBuilder, entry: RenderProjectEntry): void {
@@ -2195,7 +2958,8 @@ function getOrCreateProjectTreeChild(
     entryCount: 0,
     views: new Set<RenderProjectView>(),
     children: [],
-    childrenById: new Map<string, ProjectNavigationTreeBuilder>()
+    childrenById: new Map<string, ProjectNavigationTreeBuilder>(),
+    terminalChildren: []
   };
   map.set(id, created);
   return created;
@@ -2222,7 +2986,10 @@ function assignProjectTreeSourcePath(node: ProjectNavigationTreeBuilder, sourceP
 
 function finalizeProjectTreeBuilder(node: ProjectNavigationTreeBuilder): RenderProjectNavigationTreeNode {
   const childBuilders = node.childrenById.size > 0 ? [...node.childrenById.values()] : node.children;
-  const children = sortProjectTreeNodes(childBuilders.map(finalizeProjectTreeBuilder));
+  const children = sortProjectTreeNodes([
+    ...childBuilders.map(finalizeProjectTreeBuilder),
+    ...node.terminalChildren
+  ]);
 
   return {
     id: node.id,
@@ -2253,35 +3020,51 @@ function projectTreeKindOrder(kind: RenderProjectNavigationTreeNodeKind): number
     return 0;
   }
 
-  if (kind === "surface" || kind === "project") {
+  if (kind === "repository") {
+    return 1;
+  }
+
+  if (kind === "package") {
     return 2;
   }
 
-  if (kind === "namespace") {
+  if (kind === "layer") {
     return 3;
   }
 
-  if (kind === "type") {
+  if (kind === "contract" || kind === "operation") {
     return 4;
   }
 
-  if (kind === "relation") {
+  if (kind === "surface" || kind === "project") {
     return 5;
   }
 
   if (kind === "assembly") {
-    return 1;
-  }
-
-  if (kind === "source-root") {
     return 6;
   }
 
-  if (kind === "source-file") {
+  if (kind === "namespace") {
     return 7;
   }
 
-  return 8;
+  if (kind === "type") {
+    return 8;
+  }
+
+  if (kind === "relation") {
+    return 9;
+  }
+
+  if (kind === "source-root") {
+    return 10;
+  }
+
+  if (kind === "source-file") {
+    return 11;
+  }
+
+  return 12;
 }
 
 function getDotNetNavigationParts(entry: RenderProjectEntry): {

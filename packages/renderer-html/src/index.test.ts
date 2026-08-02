@@ -1,14 +1,77 @@
 import { describe, expect, it } from "vitest";
 import { createBasicFixtureDocument } from "@hia-doc/core";
 import {
+  DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT,
+  DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+  DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA,
+  DOCUMENTATION_PORTAL_TOPIC_SECTIONS,
   HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION,
   HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
   HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
   HIA_PROJECT_RELATION_GRAPH_CONTRACT,
   HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
   renderHtmlDocument,
-  renderProjectHtmlDocument
+  renderProjectHtmlDocument,
+  type RenderProjectEntry,
+  type RenderProjectHtmlInput
 } from "./index.js";
+
+/**
+ * W-P85 的固定 2 repository / 4 package / 4 layer / 16 entry TypeScript fixture。
+ * Deterministic W-P85 TypeScript fixture with 2 repositories, 4 packages, 4 layers, and 16 entries.
+ */
+function createWp85TypeScriptPortalFixture(): RenderProjectHtmlInput {
+  const entries: RenderProjectEntry[] = [];
+  for (let repositoryIndex = 0; repositoryIndex < 2; repositoryIndex += 1) {
+    for (let packageOffset = 0; packageOffset < 2; packageOffset += 1) {
+      const packageIndex = repositoryIndex * 2 + packageOffset;
+      const moduleSymbolId = `module:repo-${repositoryIndex}:package-${packageIndex}`;
+      for (let entryIndex = 0; entryIndex < 4; entryIndex += 1) {
+        const member = entryIndex > 0;
+        entries.push({
+          id: `ts:r${repositoryIndex}:p${packageIndex}:e${entryIndex}`,
+          name: member ? `operation${entryIndex}` : `package${packageIndex}Api`,
+          kind: member ? "function" : "module",
+          view: "js",
+          symbolId: member ? `${moduleSymbolId}:operation:${entryIndex}` : moduleSymbolId,
+          signature: member ? `export function operation${entryIndex}(): void` : undefined,
+          summary: member ? `Operation ${entryIndex}.` : `Package ${packageIndex} API.`,
+          input: {
+            kind: "hia-document",
+            path: `artifacts/package-${packageIndex}.hia.json`,
+            contract: "hia-core-document",
+            contractVersion: "0.1.0"
+          },
+          hierarchy: member ? { parentSymbolId: moduleSymbolId } : undefined,
+          semanticPath: [
+            { kind: "repository", id: `repo-${repositoryIndex}`, label: `Repository ${repositoryIndex}` },
+            { kind: "package", id: `package-${packageIndex}`, label: `@fixture/package-${packageIndex}` },
+            { kind: "layer", id: `layer-${packageIndex}`, label: `Layer ${packageIndex}` },
+            { kind: "contract", id: `contract-${packageIndex}`, label: `Contract ${packageIndex}` },
+            ...(member
+              ? [{ kind: "operation" as const, id: `operation-${entryIndex}`, label: `Operation ${entryIndex}` }]
+              : [])
+          ],
+          source: {
+            path: `src/package-${packageIndex}/entry-${entryIndex}.ts`,
+            language: "typescript",
+            linkUrl: `https://example.test/repository-${repositoryIndex}/package-${packageIndex}/entry-${entryIndex}.ts#L1`,
+            range: { start: { line: 1 }, end: { line: 3 } }
+          }
+        });
+      }
+    }
+  }
+  return {
+    project: {
+      name: "W-P85 TypeScript Portal Fixture",
+      defaultLocale: "en",
+      locales: ["en", "zh-CN"],
+      productVersion: "2026.8"
+    },
+    entries
+  };
+}
 
 describe("@hia-doc/renderer-html", () => {
   it("renders a themed index.html file and static assets", () => {
@@ -468,7 +531,7 @@ describe("@hia-doc/renderer-html", () => {
       ]
     });
     expect(indexHtml).toContain("data-hia-project-tree");
-    expect(indexHtml).toContain("fetch(contentPath");
+    expect(indexHtml).toContain("fetch(path");
     expect(indexHtml).not.toContain("data-hia-project-entry=\"js\"");
     expect(indexHtml).not.toContain("function buildProfileSummary(profile)");
     expect(entryFiles.find((file) => file.contents.includes("buildProfileSummary"))?.contents)
@@ -759,5 +822,257 @@ describe("@hia-doc/renderer-html", () => {
     expect(indexHtml).toContain("sourcesContent");
     expect(projectIndex).toContain("generatedDocumentationBindingProjection");
     expect(projectIndex).not.toContain("sourcesContent\": [");
+  });
+
+  it("exports and resolves the neutral Portal IA contract with fail-closed draft boundaries", () => {
+    expect(DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA.properties.contract.const)
+      .toBe(DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT);
+    expect(DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA.properties.contractVersion.const)
+      .toBe(DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION);
+    expect(DOCUMENTATION_PORTAL_TOPIC_SECTIONS).toEqual([
+      "summary",
+      "declaration",
+      "metadata",
+      "contract",
+      "coverage",
+      "provenance",
+      "members",
+      "relations",
+      "source",
+      "diagnostics"
+    ]);
+
+    expect(() => renderProjectHtmlDocument(createWp85TypeScriptPortalFixture(), {
+      projectSite: {
+        layout: "single-page",
+        informationArchitecture: {}
+      }
+    })).toThrow(/HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED/u);
+    expect(() => renderProjectHtmlDocument(createWp85TypeScriptPortalFixture(), {
+      projectSite: {
+        informationArchitecture: {
+          contractVersion: "0.2.0-draft" as "0.1.0-draft"
+        }
+      }
+    })).toThrow(/HIA_PORTAL_IA_UNSUPPORTED/u);
+
+    const unsafeSemanticPath = createWp85TypeScriptPortalFixture();
+    unsafeSemanticPath.entries[0]!.semanticPath = [
+      { kind: "repository", id: "private-path", label: "C:\\private\\fixture" }
+    ];
+    expect(() => renderProjectHtmlDocument(unsafeSemanticPath, {
+      projectSite: { informationArchitecture: {} }
+    })).toThrow(/HIA_PORTAL_IA_SEMANTIC_PATH_INVALID/u);
+
+    const leakedContinuity = createWp85TypeScriptPortalFixture() as RenderProjectHtmlInput & {
+      documentationContinuity: Record<string, unknown>;
+    };
+    leakedContinuity.documentationContinuity = {
+      contract: "target-documentation-continuity",
+      contractVersion: "0.1.0-draft",
+      status: "accepted",
+      entries: { addedCount: 0, baselineCount: 16, currentCount: 16, removedCount: 0, unchangedCount: 16 },
+      requiredOutputsPreserved: true,
+      semantics: {
+        resolution: "evidence-summary-pair-validated",
+        confidence: "caller-provided-unverified",
+        provenance: "metadata-only-comparison"
+      },
+      sourceBody: "must-not-cross-the-boundary"
+    };
+    expect(() => renderProjectHtmlDocument(leakedContinuity, {
+      projectSite: { informationArchitecture: {} }
+    })).toThrow(/HIA_PORTAL_IA_CONTINUITY_INVALID/u);
+  });
+
+  it("keeps canonical identity stable across all eight Portal IA combinations", () => {
+    const fixture = createWp85TypeScriptPortalFixture();
+    const baselines: Array<{
+      ids: string[];
+      canonicalPaths: string[];
+      relationCount: number;
+      searchIds: string[];
+      sourceLinkCount: number;
+    }> = [];
+    const groupings = ["entry", "semantic-container"] as const;
+    const loadings = ["lazy", "eager"] as const;
+    const placements = ["separate", "with-parent"] as const;
+
+    for (const contentGrouping of groupings) {
+      for (const loadingStrategy of loadings) {
+        for (const memberPlacement of placements) {
+          const result = renderProjectHtmlDocument(fixture, {
+            projectSite: {
+              layout: "split-site",
+              uiLocale: "en",
+              informationArchitecture: {
+                contract: DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT,
+                contractVersion: DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
+                contentGrouping,
+                loadingStrategy,
+                memberPlacement
+              }
+            }
+          });
+          const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+            entries: Array<{
+              contentPath: string;
+              id: string;
+              memberAnchor: string;
+              presentationPath: string;
+              semanticPath?: unknown[];
+              source?: { linkUrl?: string };
+            }>;
+            site?: { informationArchitecture?: { contentGrouping: string; loadingStrategy: string; memberPlacement: string } };
+          };
+          const searchIndex = JSON.parse(result.files.find((file) => file.path === "search/index.json")?.contents ?? "{}") as {
+            entries: Array<{ id: string; contentPath: string; presentationPath: string; memberAnchor: string }>;
+          };
+          const relationIndex = JSON.parse(result.files.find((file) => file.path === "relations/project.json")?.contents ?? "{}") as {
+            relationCount: number;
+          };
+          const rootShard = JSON.parse(result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "{}") as {
+            children?: Array<{ children?: unknown[]; childrenPath?: string }>;
+          };
+          const parent = projectIndex.entries.find((entry) => entry.id === "ts:r0:p0:e0");
+          const member = projectIndex.entries.find((entry) => entry.id === "ts:r0:p0:e1");
+
+          expect(projectIndex.site?.informationArchitecture).toMatchObject({
+            contentGrouping,
+            loadingStrategy,
+            memberPlacement
+          });
+          expect(projectIndex.entries.every((entry) => entry.semanticPath && entry.memberAnchor === entry.id)).toBe(true);
+          expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(16);
+          expect(result.files.some((file) => file.path === "content/eager.json")).toBe(loadingStrategy === "eager");
+          expect(result.files.some((file) => file.path.startsWith("semantic-containers/")))
+            .toBe(contentGrouping === "semantic-container");
+          expect(Boolean(rootShard.children?.[0]?.children)).toBe(loadingStrategy === "eager");
+          expect(Boolean(rootShard.children?.[0]?.childrenPath)).toBe(loadingStrategy === "lazy");
+          expect(member?.presentationPath === parent?.presentationPath).toBe(memberPlacement === "with-parent");
+          expect(result.files.find((file) => file.path === "index.html")?.contents).not.toContain("role=\"tree\"");
+
+          baselines.push({
+            ids: projectIndex.entries.map((entry) => entry.id).sort(),
+            canonicalPaths: projectIndex.entries.map((entry) => entry.contentPath).sort(),
+            relationCount: relationIndex.relationCount,
+            searchIds: searchIndex.entries.map((entry) => entry.id).sort(),
+            sourceLinkCount: projectIndex.entries.filter((entry) => entry.source?.linkUrl).length
+          });
+        }
+      }
+    }
+
+    expect(baselines).toHaveLength(8);
+    for (const candidate of baselines.slice(1)) {
+      expect(candidate).toEqual(baselines[0]);
+    }
+  });
+
+  it("renders manifest semantic hierarchy, fixed topic order, localized unavailable state, and metadata-only continuity", () => {
+    const fixture = createWp85TypeScriptPortalFixture();
+    fixture.documentationContinuity = {
+      contract: "target-documentation-continuity",
+      contractVersion: "0.1.0-draft",
+      status: "accepted",
+      entries: {
+        addedCount: 1,
+        baselineCount: 15,
+        currentCount: 16,
+        removedCount: 0,
+        unchangedCount: 15
+      },
+      requiredOutputsPreserved: true,
+      semantics: {
+        resolution: "evidence-summary-pair-validated",
+        confidence: "caller-provided-unverified",
+        provenance: "metadata-only-comparison"
+      }
+    };
+    const result = renderProjectHtmlDocument(fixture, {
+      projectSite: {
+        uiLocale: "zh-CN",
+        informationArchitecture: {
+          contentGrouping: "semantic-container",
+          loadingStrategy: "eager",
+          memberPlacement: "with-parent"
+        }
+      }
+    });
+    const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      navigationTree?: Array<{ children?: unknown[] }>;
+      documentationContinuity?: { contract?: string; entries?: { currentCount?: number } };
+    };
+    const serializedTree = JSON.stringify(projectIndex.navigationTree);
+    const parentPath = (JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      entries: Array<{ id: string; contentPath: string }>;
+    }).entries.find((entry) => entry.id === "ts:r0:p0:e0")?.contentPath;
+    const parentTopic = result.files.find((file) => file.path === parentPath)?.contents ?? "";
+    const orderedPresentSections = ["summary", "metadata", "contract", "coverage", "provenance", "members", "relations", "source"];
+    let previousIndex = -1;
+
+    expect(serializedTree).toContain('"kind":"repository"');
+    expect(serializedTree).toContain('"kind":"package"');
+    expect(serializedTree).toContain('"kind":"layer"');
+    expect(serializedTree).not.toContain('"kind":"source-root"');
+    expect(serializedTree).not.toContain('"kind":"relation"');
+    expect(projectIndex.documentationContinuity).toMatchObject({
+      contract: "target-documentation-continuity",
+      entries: { currentCount: 16 }
+    });
+    expect(parentTopic).toContain("Product Version</dt><dd>2026.8");
+    expect(parentTopic).toContain("target-documentation-continuity@0.1.0-draft");
+    expect(parentTopic).toContain("id=\"ts:r0:p0:e1\"");
+    for (const section of orderedPresentSections) {
+      const currentIndex = parentTopic.indexOf(`data-hia-topic-section=\"${section}\"`);
+      expect(currentIndex).toBeGreaterThan(previousIndex);
+      previousIndex = currentIndex;
+    }
+
+    const unavailable = renderProjectHtmlDocument(createWp85TypeScriptPortalFixture(), {
+      projectSite: {
+        uiLocale: "zh-CN",
+        informationArchitecture: {}
+      }
+    }).files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+    expect(unavailable).toContain("暂不可用");
+  });
+
+  it("keeps the HIA-owned 2951-entry DotNet IA baseline fragmented and lazy", () => {
+    const entries: RenderProjectEntry[] = Array.from({ length: 2951 }, (_, index) => ({
+      id: `dotnet:wp85:${index}`,
+      name: `Method${index}`,
+      kind: "dotnet-method",
+      view: "dotnet",
+      symbolId: `M:Fixture.Feature${Math.floor(index / 50)}.Type${Math.floor(index / 50)}.Method${index}`,
+      hierarchy: {
+        assembly: "Fixture",
+        namespace: `Fixture.Feature${Math.floor(index / 50)}`,
+        containingType: `Fixture.Feature${Math.floor(index / 50)}.Type${Math.floor(index / 50)}`
+      },
+      semanticPath: [
+        { kind: "repository", id: "dotnet-fixture", label: "DotNet Synthetic Fixture" },
+        { kind: "assembly", id: "fixture", label: "Fixture" }
+      ]
+    }));
+    const result = renderProjectHtmlDocument({
+      project: { name: "W-P85 DotNet Scale Fixture" },
+      entries
+    }, {
+      projectSite: {
+        informationArchitecture: {
+          contentGrouping: "entry",
+          loadingStrategy: "lazy",
+          memberPlacement: "separate"
+        }
+      }
+    });
+    const rootShard = result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "";
+
+    expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(2951);
+    expect(result.files.some((file) => file.path === "content/eager.json")).toBe(false);
+    expect(rootShard.length).toBeLessThan(1000);
+    expect(rootShard).toContain('"id": "view:dotnet"');
+    expect(rootShard).not.toContain("Method2950");
   });
 });

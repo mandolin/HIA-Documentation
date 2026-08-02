@@ -11,6 +11,9 @@ This package owns the default CSS and minimal browser-side script. It does not p
 - asset metadata for renderer output
 - minimal runtime locale switching for `[data-hia-locale]` blocks
 - project view segmented controls for unified project pages
+- native nested `<details>/<summary>` Portal IA disclosure, visible `:focus-visible` treatment, active-ancestor styling, and semantic topic slots
+
+The theme intentionally does not emit or style a WAI-ARIA `tree` contract. Arrow-key navigation and typeahead are not claimed by this first slice; native Tab and Enter/Space disclosure behavior remains authoritative.
 
 ## Font Policy
 

@@ -1,12 +1,19 @@
+/** 默认主题 CSS artifact path。Default theme CSS artifact path. */
 export const DEFAULT_THEME_CSS_PATH = "assets/hia-default.css";
+/** 默认主题 JavaScript artifact path。Default theme JavaScript artifact path. */
 export const DEFAULT_THEME_JS_PATH = "assets/hia-default.js";
 
+/** 单个静态主题资源。One static theme asset. */
 export interface HiaThemeAsset {
   path: string;
   contents: string;
   contentType: string;
 }
 
+/**
+ * 返回 renderer 可直接分发的默认主题资源副本。
+ * Returns default theme asset records ready for renderer distribution.
+ */
 export function getDefaultThemeAssets(): HiaThemeAsset[] {
   return [
     {
@@ -22,6 +29,7 @@ export function getDefaultThemeAssets(): HiaThemeAsset[] {
   ];
 }
 
+/** 默认主题 CSS；Portal IA 仍依赖 native HTML disclosure，不声明 ARIA tree。Default-theme CSS; Portal IA keeps native HTML disclosure and makes no ARIA-tree claim. */
 export const DEFAULT_THEME_CSS = `
 :root {
   color-scheme: light;
@@ -351,6 +359,26 @@ a {
   overflow-wrap: anywhere;
 }
 
+.hia-project-hierarchy-list details > summary:focus-visible,
+.hia-project-entry-link:focus-visible,
+.hia-project-secondary-action:focus-visible,
+.hia-project-view-button:focus-visible,
+.hia-source-fetch-button:focus-visible {
+  outline: 3px solid var(--hia-accent);
+  outline-offset: 2px;
+}
+
+.hia-project-hierarchy-list details[data-hia-active-ancestor="true"] > summary {
+  background: var(--hia-accent-soft);
+  border-radius: 4px;
+  color: var(--hia-accent);
+}
+
+.hia-project-hierarchy-list [data-hia-active-entry="true"] > .hia-project-entry-link,
+.hia-project-hierarchy-list [data-hia-active-entry="true"] > details > summary {
+  font-weight: 700;
+}
+
 .hia-project-tree-open {
   flex: none;
   font-size: .78rem;
@@ -449,6 +477,42 @@ a {
   padding: 1rem;
 }
 
+.hia-project-topic-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.hia-project-topic-header h2 {
+  flex: 1 1 100%;
+}
+
+.hia-project-topic-section {
+  border-top: 1px solid var(--hia-border);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.hia-project-topic-section > h3 {
+  margin: 0 0 .65rem;
+}
+
+.hia-project-member-topics {
+  display: grid;
+  gap: .75rem;
+}
+
+.hia-project-member-topics > .hia-project-topic {
+  border-left: 3px solid var(--hia-accent-soft);
+  margin: 0;
+}
+
+.hia-project-unavailable {
+  color: var(--hia-muted);
+  font-style: italic;
+}
+
 @media (max-width: 760px) {
   .hia-shell {
     display: block;
@@ -471,6 +535,7 @@ a {
 }
 `.trim();
 
+/** 默认主题的最小 locale switch runtime。Minimal locale-switch runtime for the default theme. */
 export const DEFAULT_THEME_JS = `
 (() => {
   document.documentElement.dataset.hiaTheme = "default";

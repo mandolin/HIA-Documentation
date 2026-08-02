@@ -10,6 +10,10 @@ describe("@hia-doc/theme-default", () => {
     expect(assets[0]?.contents).toContain(".hia-fallback-badge");
     expect(assets[0]?.contents).toContain(".hia-project-view-button");
     expect(assets[0]?.contents).toContain("[aria-pressed=\"true\"]");
+    expect(assets[0]?.contents).toContain(":focus-visible");
+    expect(assets[0]?.contents).toContain("data-hia-active-ancestor");
+    expect(assets[0]?.contents).toContain(".hia-project-topic-section");
+    expect(assets[0]?.contents).not.toContain("[role=\"tree\"]");
     expect(assets[1]?.contents).toContain("hiaTheme");
     expect(assets[1]?.contents).toContain("data-hia-locale-control");
   });

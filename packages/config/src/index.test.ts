@@ -4,6 +4,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   HIA_CONFIG_PROJECT_LAYOUTS,
+  HIA_CONFIG_PORTAL_CONTENT_GROUPINGS,
+  HIA_CONFIG_PORTAL_IA_CONTRACT,
+  HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION,
+  HIA_CONFIG_PORTAL_LOADING_STRATEGIES,
+  HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS,
+  HIA_CONFIG_PORTAL_UI_LOCALES,
   HIA_CONFIG_SOURCE_MODES,
   HIA_CONFIG_SOURCE_PRESENTATIONS,
   HIA_CONFIG_SCHEMA_VERSION,
@@ -124,6 +130,52 @@ describe("@hia-doc/config", () => {
     expect(disabledEmbed.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_PRESENTATION_DISABLED");
   });
 
+  it("accepts the exact Portal IA draft and keeps its three dimensions independent", () => {
+    const diagnostics = validateHiaProjectConfig({
+      docs: {
+        renderer: {
+          projectLayout: "split-site",
+          uiLocale: "zh-CN",
+          informationArchitecture: {
+            contract: HIA_CONFIG_PORTAL_IA_CONTRACT,
+            contractVersion: HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION,
+            contentGrouping: "semantic-container",
+            loadingStrategy: "eager",
+            memberPlacement: "with-parent"
+          }
+        }
+      }
+    });
+
+    expect(diagnostics).toEqual([]);
+    expect(HIA_CONFIG_PORTAL_CONTENT_GROUPINGS).toEqual(["entry", "semantic-container"]);
+    expect(HIA_CONFIG_PORTAL_LOADING_STRATEGIES).toEqual(["lazy", "eager"]);
+    expect(HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS).toEqual(["separate", "with-parent"]);
+    expect(HIA_CONFIG_PORTAL_UI_LOCALES).toEqual(["zh-CN", "en"]);
+  });
+
+  it("fails closed for unknown Portal IA drafts, enums, fields, locales, and explicit single-page use", () => {
+    const diagnostics = validateHiaProjectConfig({
+      docs: {
+        renderer: {
+          projectLayout: "single-page",
+          uiLocale: "fr",
+          informationArchitecture: {
+            contractVersion: "0.2.0-draft",
+            contentGrouping: "all",
+            adaptive: true
+          }
+        }
+      }
+    });
+    const codes = diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes).toContain("HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED");
+    expect(codes).toContain("HIA_CONFIG_IA_VERSION_UNSUPPORTED");
+    expect(codes).toContain("HIA_CONFIG_IA_FIELD_UNSUPPORTED");
+    expect(codes).toContain("HIA_CONFIG_FIELD_INVALID");
+  });
+
   it("accepts on-expand/manual fetch triggers and rejects unknown triggers", () => {
     const onExpand = validateHiaProjectConfig({
       docs: {
@@ -227,6 +279,42 @@ describe("@hia-doc/config", () => {
 
     expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_FIELD_INVALID");
     expect(hasConfigErrors(diagnostics)).toBe(true);
+  });
+
+  it("validates manifest-only semantic paths and product-version metadata", () => {
+    const accepted = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: {
+        name: "Portal IA Fixture",
+        productVersion: "2026.8"
+      },
+      inputs: [{
+        kind: "hia-document",
+        path: "artifacts/core.hia.json",
+        semanticPath: [
+          { kind: "repository", id: "main-repo", label: "Main Repository" },
+          { kind: "package", id: "core", label: "@hia-doc/core" },
+          { kind: "layer", id: "protocol", label: "Protocol Layer" }
+        ]
+      }]
+    });
+    const rejected = validateHiaProjectManifest({
+      schemaVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+      project: { name: "Unsafe Portal IA Fixture" },
+      inputs: [{
+        kind: "hia-document",
+        path: "artifacts/core.hia.json",
+        semanticPath: [
+          { kind: "repository", id: "duplicate", label: "Main" },
+          { kind: "package", id: "duplicate", label: "C:/private/repository" },
+          { kind: "unknown", id: "bad/path", label: "Bad", privatePath: "secret" }
+        ]
+      }]
+    });
+
+    expect(accepted).toEqual([]);
+    expect(rejected.map((diagnostic) => diagnostic.code)).toContain("HIA_PROJECT_MANIFEST_SEMANTIC_PATH_INVALID");
+    expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.$defs.semanticPathSegment.additionalProperties).toBe(false);
   });
 
   it("accepts producer-only project manifests", () => {

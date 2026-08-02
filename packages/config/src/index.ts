@@ -12,6 +12,21 @@ export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
 export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"] as const;
 export const HIA_CONFIG_SOURCE_FETCH_TRIGGERS = ["on-expand", "manual"] as const;
 export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
+/**
+ * Portal IA contract 的中性 identity；config 只验证 vocabulary，不成为 runtime contract owner。
+ * Neutral Portal IA contract identity; config validates vocabulary without becoming the runtime contract owner.
+ */
+export const HIA_CONFIG_PORTAL_IA_CONTRACT = "documentation-portal-information-architecture";
+/** Portal IA 首轮只接受 exact draft version。The first Portal IA slice accepts only this exact draft version. */
+export const HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION = "0.1.0-draft";
+/** 内容分组与获取时机保持正交。Content grouping remains orthogonal to acquisition timing. */
+export const HIA_CONFIG_PORTAL_CONTENT_GROUPINGS = ["entry", "semantic-container"] as const;
+/** fragment 获取策略闭集。Closed fragment acquisition strategy set. */
+export const HIA_CONFIG_PORTAL_LOADING_STRATEGIES = ["lazy", "eager"] as const;
+/** member 呈现位置闭集。Closed member presentation placement set. */
+export const HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS = ["separate", "with-parent"] as const;
+/** 首轮 touched-label catalog 支持的 UI locale。UI locales supported by the first touched-label catalog. */
+export const HIA_CONFIG_PORTAL_UI_LOCALES = ["zh-CN", "en"] as const;
 export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
 
 export interface HiaProjectConfig {
@@ -38,6 +53,30 @@ export interface HiaRendererHtmlConfig {
   includeThemeAssets?: boolean;
   /** 大型项目默认使用分片站点；单页模式仅用于兼容和小型输出。Large projects default to split-site; single-page is for compatibility and small outputs. */
   projectLayout?: typeof HIA_CONFIG_PROJECT_LAYOUTS[number];
+  /**
+   * 显式 Portal IA 配置；缺失时 renderer 保持 P3 兼容路径。
+   * Explicit Portal IA configuration; omission preserves the P3-compatible renderer path.
+   */
+  informationArchitecture?: HiaPortalInformationArchitectureConfig;
+  /** UI chrome 语言，与 content locale 分离。UI chrome locale, separate from content locale. */
+  uiLocale?: typeof HIA_CONFIG_PORTAL_UI_LOCALES[number];
+}
+
+/**
+ * Portal IA 的三个独立配置维度；所有字段均可省略并使用 contract defaults。
+ * Three independent Portal IA dimensions; every field may be omitted to use contract defaults.
+ */
+export interface HiaPortalInformationArchitectureConfig {
+  /** 可选 exact contract identity，用于显式能力钉住。Optional exact contract identity for explicit capability pinning. */
+  contract?: typeof HIA_CONFIG_PORTAL_IA_CONTRACT;
+  /** 可选 exact draft version；未知 draft fail closed。Optional exact draft version; unknown drafts fail closed. */
+  contractVersion?: typeof HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION;
+  /** 逻辑内容边界，不决定下载时机。Logical content boundary; does not decide download timing. */
+  contentGrouping?: typeof HIA_CONFIG_PORTAL_CONTENT_GROUPINGS[number];
+  /** fragment 获取时机，不改变 canonical identity。Fragment acquisition timing; does not change canonical identity. */
+  loadingStrategy?: typeof HIA_CONFIG_PORTAL_LOADING_STRATEGIES[number];
+  /** member 的呈现位置，不替换 canonical member route。Member presentation placement; does not replace its canonical route. */
+  memberPlacement?: typeof HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS[number];
 }
 
 export interface HiaThemeConfig {
@@ -214,6 +253,89 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
   validateOptionalString(value, "title", diagnostics, targetPath);
   validateOptionalBoolean(value, "includeThemeAssets", diagnostics, targetPath);
   validateOptionalEnum(value, "projectLayout", HIA_CONFIG_PROJECT_LAYOUTS, diagnostics, targetPath);
+  validateOptionalEnum(value, "uiLocale", HIA_CONFIG_PORTAL_UI_LOCALES, diagnostics, targetPath);
+
+  // <lang zh-CN>只有显式 IA 对象才进入 P4 runtime；未配置时继续走 P3。</lang>
+  // <lang en>Only an explicit IA object enters the P4 runtime; omission keeps the P3 path.</lang>
+  if (value.informationArchitecture !== undefined) {
+    validatePortalInformationArchitectureConfig(
+      value.informationArchitecture,
+      diagnostics,
+      `${targetPath}.informationArchitecture`
+    );
+
+    if (value.projectLayout === "single-page") {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED",
+        "docs.renderer.informationArchitecture is supported only with split-site in this draft.",
+        "error",
+        `${targetPath}.informationArchitecture`
+      ));
+    }
+  }
+}
+
+/**
+ * 校验 Portal IA exact draft 与三维闭集，拒绝尚无确定语义的扩展字段。
+ * Validates the exact Portal IA draft and its three closed dimensions, rejecting extension fields without defined semantics.
+ */
+function validatePortalInformationArchitectureConfig(
+  value: unknown,
+  diagnostics: HiaDiagnostic[],
+  targetPath: string
+): void {
+  if (!isRecord(value)) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_IA_INVALID",
+      "docs.renderer.informationArchitecture must be an object.",
+      "error",
+      targetPath
+    ));
+    return;
+  }
+
+  // <lang zh-CN>closed-world key 检查避免 draft consumer 静默接受未实现语义。</lang>
+  // <lang en>The closed-world key check prevents draft consumers from silently accepting unimplemented semantics.</lang>
+  const allowedFields = new Set([
+    "contract",
+    "contractVersion",
+    "contentGrouping",
+    "loadingStrategy",
+    "memberPlacement"
+  ]);
+  for (const field of Object.keys(value)) {
+    if (!allowedFields.has(field)) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_IA_FIELD_UNSUPPORTED",
+        `Unsupported Portal IA field: ${field}.`,
+        "error",
+        `${targetPath}.${field}`
+      ));
+    }
+  }
+
+  validateOptionalString(value, "contract", diagnostics, targetPath);
+  validateOptionalString(value, "contractVersion", diagnostics, targetPath);
+  validateOptionalEnum(value, "contentGrouping", HIA_CONFIG_PORTAL_CONTENT_GROUPINGS, diagnostics, targetPath);
+  validateOptionalEnum(value, "loadingStrategy", HIA_CONFIG_PORTAL_LOADING_STRATEGIES, diagnostics, targetPath);
+  validateOptionalEnum(value, "memberPlacement", HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS, diagnostics, targetPath);
+
+  if (typeof value.contract === "string" && value.contract !== HIA_CONFIG_PORTAL_IA_CONTRACT) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_IA_CONTRACT_UNSUPPORTED",
+      `Unsupported Portal IA contract: ${value.contract}.`,
+      "error",
+      `${targetPath}.contract`
+    ));
+  }
+  if (typeof value.contractVersion === "string" && value.contractVersion !== HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_IA_VERSION_UNSUPPORTED",
+      `Unsupported Portal IA contractVersion: ${value.contractVersion}.`,
+      "error",
+      `${targetPath}.contractVersion`
+    ));
+  }
 }
 
 function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
