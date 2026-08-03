@@ -13,7 +13,8 @@ import {
   renderHtmlDocument,
   renderProjectHtmlDocument,
   type RenderProjectEntry,
-  type RenderProjectHtmlInput
+  type RenderProjectHtmlInput,
+  type RenderProjectNavigationEntry
 } from "./index.js";
 
 /**
@@ -1112,11 +1113,40 @@ describe("@hia-doc/renderer-html", () => {
         namespace: `Fixture.Feature${Math.floor(index / 50)}`,
         containingType: `Fixture.Feature${Math.floor(index / 50)}.Type${Math.floor(index / 50)}`
       },
+      source: {
+        path: `src/Fixture/Feature${Math.floor(index / 50)}/Type${Math.floor(index / 50)}.cs`,
+        language: "csharp",
+        range: { start: { line: index + 1 } },
+        confidence: "high"
+      },
+      sourceUsability: {
+        relationId: `dotnetdoc:source-relation:wp95-${index}`,
+        resolution: "resolved",
+        confidence: "high",
+        provenance: {
+          producer: "@hia-doc/dotnetdoc-runner",
+          activity: "xml-doc-to-csharp-source",
+          contract: "dotnetdoc-source-relation",
+          contractVersion: "0.1.0-draft"
+        },
+        projectIdentity: {
+          id: "dotnet-project:fixtures-source-portal.components-portal.components.csproj",
+          path: "fixtures/source/Portal.Components/Portal.Components.csproj",
+          policy: "project-relative-owner-resolved"
+        },
+        privacy: {
+          sourcesContentPolicy: "none",
+          sourcePreviewPolicy: "none",
+          embedsSourcesContent: false
+        }
+      },
       semanticPath: [
         { kind: "repository", id: "dotnet-fixture", label: "DotNet Synthetic Fixture" },
         { kind: "assembly", id: "fixture", label: "Fixture" }
       ]
     }));
+    const leakedSourceUsability = entries[0].sourceUsability as NonNullable<RenderProjectEntry["sourceUsability"]> & { sourceBody?: string };
+    leakedSourceUsability.sourceBody = "must-not-cross-the-boundary";
     const result = renderProjectHtmlDocument({
       project: { name: "W-P85 DotNet Scale Fixture" },
       entries
@@ -1130,11 +1160,22 @@ describe("@hia-doc/renderer-html", () => {
       }
     });
     const rootShard = result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "";
+    const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
+      entries?: RenderProjectNavigationEntry[];
+    };
+    const firstTopic = result.files.find((file) => file.path === projectIndex.entries?.[0]?.contentPath)?.contents ?? "";
 
     expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(2951);
     expect(result.files.some((file) => file.path === "content/eager.json")).toBe(false);
     expect(rootShard.length).toBeLessThan(1000);
     expect(rootShard).toContain('"id": "view:dotnet"');
     expect(rootShard).not.toContain("Method2950");
+    expect(projectIndex.entries).toHaveLength(2951);
+    expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.resolution === "resolved")).toBe(true);
+    expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.projectIdentity?.policy === "project-relative-owner-resolved")).toBe(true);
+    expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.privacy.sourcesContentPolicy === "none")).toBe(true);
+    expect(firstTopic).toContain("Identity Policy");
+    expect(JSON.stringify(projectIndex)).not.toContain("must-not-cross-the-boundary");
+    expect(result.files.some((file) => file.contents.includes("must-not-cross-the-boundary"))).toBe(false);
   });
 });

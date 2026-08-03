@@ -56,6 +56,7 @@ import {
   type RenderProjectOwnerAdoptionSummary,
   type RenderProjectProfileRef,
   type RenderProjectSourcePresentation,
+  type RenderProjectSourceUsabilityRef,
   type RenderProjectView
 } from "@hia-doc/renderer-html";
 import {
@@ -242,7 +243,16 @@ interface IndexedProjectDocSourceMap {
 }
 
 interface DotNetSourceRelationArtifact {
+  contract?: unknown;
+  contractVersion?: unknown;
+  producer?: unknown;
+  privacy?: unknown;
   relations?: unknown[];
+}
+
+interface IndexedDotNetSourceRelation {
+  artifact: DotNetSourceRelationArtifact;
+  relation: Record<string, unknown>;
 }
 
 type RuntimeProjectInputSource = "manifest" | "producer" | "producer-result";
@@ -2043,7 +2053,7 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
   if (artifacts.length === 0) {
     return entries;
   }
-  const relationsBySymbolId = new Map<string, Record<string, unknown>>();
+  const relationsBySymbolId = new Map<string, IndexedDotNetSourceRelation>();
   for (const artifact of artifacts) {
     for (const item of artifact.relations ?? []) {
       if (!isRecord(item)) {
@@ -2054,15 +2064,16 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
       const declaration = isRecord(item.declaration) ? item.declaration : undefined;
       if (symbolId && declaration) {
         const current = relationsBySymbolId.get(symbolId);
-        if (!current || compareDotNetSourceRelationPreference(item, current) < 0) {
-          relationsBySymbolId.set(symbolId, item);
+        if (!current || compareDotNetSourceRelationPreference(item, current.relation) < 0) {
+          relationsBySymbolId.set(symbolId, { artifact, relation: item });
         }
       }
     }
   }
 
   return entries.map((entry) => {
-    const relation = entry.symbolId ? relationsBySymbolId.get(entry.symbolId) : undefined;
+    const indexedRelation = entry.symbolId ? relationsBySymbolId.get(entry.symbolId) : undefined;
+    const relation = indexedRelation?.relation;
     const declaration = isRecord(relation?.declaration) ? relation.declaration : undefined;
     const declarationPath = stringValue(declaration?.path);
     if (!declarationPath) {
@@ -2076,6 +2087,9 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
     const declarationSemantic = isRecord(declaration?.semantic) ? declaration.semantic : undefined;
     const declarationHierarchy = createProjectEntryHierarchyFromDotNetSemantic(declarationSemantic);
     const mergedHierarchy = mergeProjectEntryHierarchy(entry.hierarchy, declarationHierarchy);
+    const sourceUsability = indexedRelation
+      ? createProjectSourceUsabilityFromDotNetRelation(indexedRelation, entry.symbolId)
+      : undefined;
 
     return {
       ...entry,
@@ -2086,9 +2100,49 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
         ...(declarationRangeSource ? { rangeSource: declarationRangeSource } : {}),
         ...(declarationConfidence ? { confidence: declarationConfidence } : {})
       },
+      ...(sourceUsability ? { sourceUsability } : {}),
       ...(mergedHierarchy ? { hierarchy: mergedHierarchy } : {})
     };
   });
+}
+
+/**
+ * @lang zh-CN 将 DotNetDoc relation 的 allowlist metadata 投影为 renderer-neutral source usability，且不复制 source body。
+ * @lang en Projects allowlisted DotNetDoc relation metadata into renderer-neutral source usability without copying source bodies.
+ */
+function createProjectSourceUsabilityFromDotNetRelation(
+  indexed: IndexedDotNetSourceRelation,
+  symbolId: string | undefined
+): RenderProjectSourceUsabilityRef {
+  const relation = indexed.relation;
+  const artifact = indexed.artifact;
+  const relationProvenance = isRecord(relation.provenance) ? relation.provenance : {};
+  const artifactProducer = isRecord(artifact.producer) ? artifact.producer : {};
+  const projectIdentity = isRecord(relation.projectIdentity) ? relation.projectIdentity : undefined;
+  const projectId = stringValue(projectIdentity?.id);
+  const projectPath = stringValue(projectIdentity?.path);
+  const projectPolicy = stringValue(projectIdentity?.policy);
+  const relationId = stringValue(relation.id) ?? `dotnetdoc:source-relation:${symbolId ?? "entry"}`;
+
+  return {
+    relationId,
+    resolution: stringValue(relation.resolution) ?? "resolved",
+    confidence: stringValue(relation.confidence) ?? "low",
+    provenance: {
+      producer: stringValue(relationProvenance.producer) ?? stringValue(artifactProducer.name) ?? "@hia-doc/dotnetdoc-runner",
+      activity: stringValue(relationProvenance.activity) ?? stringValue(relation.relation) ?? "xml-doc-to-csharp-source",
+      contract: stringValue(relationProvenance.contract) ?? stringValue(artifact.contract) ?? "dotnetdoc-source-relation",
+      contractVersion: stringValue(relationProvenance.contractVersion) ?? stringValue(artifact.contractVersion) ?? "0.1.0-draft"
+    },
+    ...(projectId && projectPath && projectPolicy
+      ? { projectIdentity: { id: projectId, path: projectPath, policy: projectPolicy } }
+      : {}),
+    privacy: {
+      sourcesContentPolicy: "none",
+      sourcePreviewPolicy: "none",
+      embedsSourcesContent: false
+    }
+  };
 }
 
 /**

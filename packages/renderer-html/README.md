@@ -15,6 +15,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.
 - Emits default CSS/JS assets from `@hia-doc/theme-default`.
 - 项目模式额外输出 `project-index.json`，作为 portal/search 可消费的稳定中立索引；源码正文不会进入该索引。
+- DotNetDoc relation 可投影为 entry 的 `sourceUsability`：稳定 project-relative identity、resolution、confidence、provenance 与 `sourcesContentPolicy: none` 会进入 source topic 和 `project-index.json`；renderer 不据此读取、嵌入或远程抓取源码。
 - 显式 `projectSite.informationArchitecture` 可启用 `documentation-portal-information-architecture@0.1.0-draft`：`entry|semantic-container`、`lazy|eager`、`separate|with-parent` 三维独立；`contentPath` 保持 canonical，additive `presentationPath/memberAnchor` 驱动实际加载与定位。
 - 显式 IA 使用 manifest-only `semanticPath`、固定 kind-aware topic section 顺序、原生 nested disclosure 与 `zh-CN|en` touched-label catalog；不输出 `role=tree`，不读取 target state 或 continuity body。
 - 项目输入可选接受 `generatedDocumentationBindingProjection`（来自 `@hia-doc/source-linkage`）：HTML 与 `project-index.json` 只读呈现 binding → expansion → target、stable instance key、resolution/confidence/provenance 与诊断计数；不加载 sidecar path、不嵌入 source body/locals，也不把完整模型放回 ordinary doc-source-map。

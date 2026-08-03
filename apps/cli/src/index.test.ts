@@ -383,6 +383,14 @@ describe("@hia-doc/cli", () => {
         entries: Array<{
           id: string;
           source?: { path?: string; language?: string };
+          sourceUsability?: {
+            relationId: string;
+            resolution: string;
+            confidence: string;
+            projectIdentity?: { id: string; path: string; policy: string };
+            provenance: { producer: string; activity: string; contract: string; contractVersion: string };
+            privacy: { sourcesContentPolicy: string; sourcePreviewPolicy: string; embedsSourcesContent: boolean };
+          };
           hierarchy?: { assembly?: string; namespace?: string; baseTypeIds?: string[]; interfaceIds?: string[] };
         }>;
         navigationTree?: Array<{
@@ -398,12 +406,38 @@ describe("@hia-doc/cli", () => {
       expect(entryHtml).toContain("Portal security helper surface produced by DotNetDoc.");
       expect(entryHtml).toContain("src/Portal.Components/PortalSecurity.cs:12");
       expect(entryHtml).toContain("<dt>Language</dt><dd>csharp</dd>");
+      expect(entryHtml).toContain("Source Usability");
+      expect(entryHtml).toContain("src/Portal.Components/Portal.Components.csproj");
+      expect(entryHtml).toContain("project-relative-owner-resolved");
       expect(entryHtml).toContain("greet");
-      expect(projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"))?.source).toMatchObject({
+      const portalSecurityEntry = projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"));
+      expect(portalSecurityEntry?.source).toMatchObject({
         path: "src/Portal.Components/PortalSecurity.cs",
         language: "csharp"
       });
-      expect(projectIndex.entries.find((entry) => entry.id.includes("portalsecurity"))?.hierarchy).toMatchObject({
+      expect(portalSecurityEntry?.sourceUsability).toEqual({
+        relationId: "dotnetdoc:source-relation:t-portal.components.portalsecurity",
+        resolution: "resolved",
+        confidence: "high",
+        provenance: {
+          producer: "@hia-doc/dotnetdoc-runner",
+          activity: "xml-doc-to-csharp-source",
+          contract: "dotnetdoc-source-relation",
+          contractVersion: "0.1.0-draft"
+        },
+        projectIdentity: {
+          id: "dotnet-project:src-portal.components-portal.components.csproj",
+          path: "src/Portal.Components/Portal.Components.csproj",
+          policy: "project-relative-owner-resolved"
+        },
+        privacy: {
+          sourcesContentPolicy: "none",
+          sourcePreviewPolicy: "none",
+          embedsSourcesContent: false
+        }
+      });
+      expect(JSON.stringify(portalSecurityEntry)).not.toContain("sourceBody");
+      expect(portalSecurityEntry?.hierarchy).toMatchObject({
         assembly: "Portal.Components",
         namespace: "Portal.Components",
         baseTypeIds: ["T:System.Object"],

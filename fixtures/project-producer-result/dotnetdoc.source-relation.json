@@ -1,13 +1,30 @@
 {
   "contract": "dotnetdoc-source-relation",
   "contractVersion": "0.1.0-draft",
+  "producer": {
+    "name": "@hia-doc/dotnetdoc-runner",
+    "version": "0.1.8"
+  },
   "kind": "dotnetdoc-source-relation",
   "relation": "xml-doc-to-csharp-source",
+  "identityPolicy": {
+    "policy": "project-relative-owner-resolved",
+    "scope": "workspace",
+    "pathKind": "project-relative",
+    "absolutePathInIdentity": false,
+    "displayLabelInIdentity": false,
+    "localeInIdentity": false
+  },
   "summary": {
     "xmlMemberCount": 1,
     "sourceMemberCount": 1,
     "relationCount": 1,
     "unresolvedCount": 0
+  },
+  "privacy": {
+    "sourcesContentPolicy": "none",
+    "sourcePreviewPolicy": "none",
+    "embedsSourcesContent": false
   },
   "relations": [
     {
@@ -17,7 +34,19 @@
       "memberId": "T:Portal.Components.PortalSecurity",
       "kind": "dotnet-type",
       "name": "PortalSecurity",
+      "resolution": "resolved",
       "confidence": "high",
+      "provenance": {
+        "producer": "@hia-doc/dotnetdoc-runner",
+        "activity": "xml-doc-to-csharp-source",
+        "contract": "dotnetdoc-source-relation",
+        "contractVersion": "0.1.0-draft"
+      },
+      "projectIdentity": {
+        "id": "dotnet-project:src-portal.components-portal.components.csproj",
+        "path": "src/Portal.Components/Portal.Components.csproj",
+        "policy": "project-relative-owner-resolved"
+      },
       "hiaSymbol": {
         "id": "T:Portal.Components.PortalSecurity",
         "artifactPath": "Portal.Components.hia.json",
@@ -82,7 +111,19 @@
       "memberId": "T:Portal.Components.PortalSecurity",
       "kind": "dotnet-type",
       "name": "PortalSecurity",
+      "resolution": "resolved",
       "confidence": "high",
+      "provenance": {
+        "producer": "@hia-doc/dotnetdoc-runner",
+        "activity": "xml-doc-to-csharp-source",
+        "contract": "dotnetdoc-source-relation",
+        "contractVersion": "0.1.0-draft"
+      },
+      "projectIdentity": {
+        "id": "dotnet-project:src-portal.components-portal.components.csproj",
+        "path": "src/Portal.Components/Portal.Components.csproj",
+        "policy": "project-relative-owner-resolved"
+      },
       "match": {
         "mode": "documentation-id",
         "exactDocumentationId": true
