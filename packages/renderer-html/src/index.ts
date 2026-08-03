@@ -1,6 +1,10 @@
 import {
+  canonicalizeDocumentationLocale,
   getI18nField,
   resolveI18nFieldText,
+  validateDocumentationSourceCommentProjection,
+  type DocumentationSourceCommentContentPolicy,
+  type DocumentationSourceCommentProjection,
   type HiaDiagnostic,
   type HiaDocument,
   type HiaI18nField,
@@ -87,6 +91,14 @@ export interface RenderProjectSiteOptions {
   informationArchitecture?: DocumentationPortalInformationArchitectureOptions;
   /** UI chrome locale，与 project content locale 独立。UI chrome locale, independent from the project content locale. */
   uiLocale?: DocumentationPortalUiLocale;
+  /**
+   * @lang zh-CN
+   * source-comment locale 与正文授权；只有显式 IA 下才消费，且不从 UI/content locale 推断。
+   *
+   * @lang en
+   * Source-comment locale and body authorization, consumed only under explicit IA and never inferred from UI or content locale.
+   */
+  sourceCommentProjection?: RenderProjectSourceCommentProjectionOptions;
   source?: {
     /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
     presentation?: RenderProjectSourcePresentation;
@@ -97,6 +109,18 @@ export interface RenderProjectSiteOptions {
     /** fetch 模式单次最多显示的源码行数。Maximum source lines displayed by one fetch operation. */
     maxLines?: number;
   };
+}
+
+/**
+ * @lang zh-CN
+ * Portal P5 有界 slice 的 runtime 选项；P1 不支持 rich text 或 source fetch。
+ *
+ * @lang en
+ * Runtime options for the bounded Portal P5 slice; P1 supports neither rich text nor source fetch.
+ */
+export interface RenderProjectSourceCommentProjectionOptions {
+  contentPolicy?: DocumentationSourceCommentContentPolicy;
+  locale: string;
 }
 
 export interface RenderProjectHtmlInput {
@@ -292,6 +316,14 @@ export interface RenderProjectEntry {
    * @lang en Metadata-only source-usability projection from a source relation to the canonical entry; it grants no source-read capability.
    */
   sourceUsability?: RenderProjectSourceUsabilityRef;
+  /**
+   * @lang zh-CN
+   * 已由 owner producer 生成并通过中性 contract 校验的 source-comment projection。
+   *
+   * @lang en
+   * Source-comment projection already produced by an owner producer and validated against the neutral contract.
+   */
+  sourceCommentProjection?: DocumentationSourceCommentProjection;
   symbolId?: string;
   hierarchy?: RenderProjectEntryHierarchyRef;
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
@@ -579,6 +611,8 @@ export interface RenderProjectNavigationEntry {
   source?: Omit<RenderProjectSourceRef, "preview">;
   /** @lang zh-CN canonical navigation entry 上的 metadata-only source usability。 @lang en Metadata-only source usability on the canonical navigation entry. */
   sourceUsability?: RenderProjectSourceUsabilityRef;
+  /** @lang zh-CN 不含正文的 source-comment allowlist 摘要。 @lang en Body-free allowlisted source-comment summary. */
+  sourceCommentProjection?: RenderProjectSourceCommentProjectionSummary;
   symbolId?: string;
   hierarchy?: RenderProjectEntryHierarchyRef;
   contentPath?: string;
@@ -588,6 +622,30 @@ export interface RenderProjectNavigationEntry {
   memberAnchor?: string;
   semanticPath?: DocumentationPortalSemanticPathSegment[];
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
+}
+
+/**
+ * @lang zh-CN
+ * navigation/search consumer 可用的 metadata-only 摘要；不包含 projected text、source body 或 raw comment。
+ *
+ * @lang en
+ * Metadata-only summary for navigation consumers; it includes no projected text, source body, or raw comment.
+ */
+export interface RenderProjectSourceCommentProjectionSummary {
+  contract: string;
+  contractVersion: string;
+  defaultLocale: string;
+  entryCount: number;
+  projectionId: string;
+  requestedLocale: string;
+  resolvedCount: number;
+  status: "ready" | "refused";
+  privacy: {
+    projectedCommentTextIncluded: false;
+    rawCommentIncluded: false;
+    sourceBodyIncluded: false;
+    sourcesContentPolicy: "none";
+  };
 }
 
 export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOptions = {}): RenderHtmlResult {
@@ -667,6 +725,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
 interface RenderProjectPortalContext {
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   labels: DocumentationPortalLabels;
+  sourceCommentProjection?: Required<RenderProjectSourceCommentProjectionOptions>;
   uiLocale: DocumentationPortalUiLocale;
 }
 
@@ -682,6 +741,7 @@ function resolveProjectPortalContext(
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
   const explicitInformationArchitecture = options.projectSite?.informationArchitecture;
+  const sourceCommentProjection = options.projectSite?.sourceCommentProjection;
 
   if (projectInput.documentationContinuity) {
     assertProjectDocumentationContinuitySummary(projectInput.documentationContinuity);
@@ -696,6 +756,30 @@ function resolveProjectPortalContext(
     }
   }
 
+  if (sourceCommentProjection && !explicitInformationArchitecture) {
+    throw new TypeError(
+      "HIA_PORTAL_SOURCE_COMMENT_REQUIRES_IA: source-comment projection requires explicit Portal information architecture."
+    );
+  }
+
+  if (sourceCommentProjection) {
+    const canonical = canonicalizeDocumentationLocale(sourceCommentProjection.locale);
+    if (!canonical || canonical.usedLegacyUnderscore || canonical.canonical !== sourceCommentProjection.locale) {
+      throw new TypeError(
+        "HIA_PORTAL_SOURCE_COMMENT_LOCALE_INVALID: source-comment locale must be a canonical BCP 47 tag."
+      );
+    }
+    for (const entry of projectInput.entries) {
+      if (!entry.sourceCommentProjection) continue;
+      const validationDiagnostics = validateDocumentationSourceCommentProjection(entry.sourceCommentProjection);
+      if (validationDiagnostics.length > 0 || entry.sourceCommentProjection.requestedLocale !== canonical.canonical) {
+        throw new TypeError(
+          "HIA_PORTAL_SOURCE_COMMENT_PROJECTION_INVALID: source-comment projection must be valid and match the explicit locale."
+        );
+      }
+    }
+  }
+
   if (explicitInformationArchitecture && layout === "single-page") {
     throw new TypeError(
       "HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED: Explicit Portal IA is supported only with split-site in this draft."
@@ -705,6 +789,14 @@ function resolveProjectPortalContext(
   return {
     uiLocale,
     labels: getDocumentationPortalLabels(uiLocale),
+    ...(sourceCommentProjection
+      ? {
+          sourceCommentProjection: {
+            contentPolicy: sourceCommentProjection.contentPolicy ?? "none",
+            locale: sourceCommentProjection.locale
+          }
+        }
+      : {}),
     ...(explicitInformationArchitecture
       ? {
           informationArchitecture: resolveDocumentationPortalInformationArchitecture(
@@ -971,6 +1063,9 @@ function createProjectNavigationIndex(
         ...(entry.input ? { input: entry.input } : {}),
         ...(entry.source ? { source: omitProjectSourcePreview(entry.source) } : {}),
         ...(entry.sourceUsability ? { sourceUsability: selectProjectSourceUsability(entry.sourceUsability) } : {}),
+        ...(entry.sourceCommentProjection && portalContext.sourceCommentProjection
+          ? { sourceCommentProjection: selectProjectSourceCommentProjection(entry.sourceCommentProjection) }
+          : {}),
         ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
         ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
         contentPath: createProjectEntryContentPath(entry.id),
@@ -1317,7 +1412,7 @@ function omitProjectSourcePreview(source: RenderProjectSourceRef): Omit<RenderPr
   return sourceWithoutPreview;
 }
 
-function compareProjectNavigationEntries(left: RenderProjectNavigationEntry, right: RenderProjectNavigationEntry): number {
+function compareProjectNavigationEntries(left: Pick<RenderProjectEntry, "id">, right: Pick<RenderProjectEntry, "id">): number {
   return compareStableText(left.id, right.id);
 }
 
@@ -1938,7 +2033,7 @@ function renderProjectSemanticTopicInternal(
       )
     ),
     renderProjectTopicSection("relations", labels.relations, renderProjectTopicRelations(entry, projectInput.relationGraph)),
-    renderProjectTopicSection("source", labels.source, renderProjectTopicSource(entry)),
+    renderProjectTopicSection("source", labels.source, renderProjectTopicSource(entry, portalContext.sourceCommentProjection)),
     renderProjectTopicSection("diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(entry.diagnostics ?? []))
   ].join("");
   const searchText = createProjectEntrySearchText(entry);
@@ -2110,12 +2205,85 @@ function renderProjectTopicRelations(
 }
 
 /** source 与 doc-source-map 保持既有 privacy policy；本函数不新增 source body。Source and doc-source-map retain the existing privacy policy; this function adds no source body. */
-function renderProjectTopicSource(entry: RenderProjectEntry): string {
+function renderProjectTopicSource(
+  entry: RenderProjectEntry,
+  options: Required<RenderProjectSourceCommentProjectionOptions> | undefined
+): string {
   return [
     entry.source ? renderProjectEntrySource(entry.source, false) : "",
     entry.sourceUsability ? renderProjectEntrySourceUsability(entry.sourceUsability, false) : "",
-    entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false) : ""
+    entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false) : "",
+    entry.sourceCommentProjection && options ? renderProjectSourceCommentProjection(entry.sourceCommentProjection, options) : ""
   ].join("");
+}
+
+/**
+ * @lang zh-CN
+ * 将 source-comment projection 缩减为 navigation allowlist；正文与 producer 的正文授权事实都不进入 index。
+ *
+ * @lang en
+ * Reduces a source-comment projection to a navigation allowlist; neither bodies nor the producer body-authorization fact enters the index.
+ */
+function selectProjectSourceCommentProjection(
+  projection: DocumentationSourceCommentProjection
+): RenderProjectSourceCommentProjectionSummary {
+  return {
+    contract: projection.contract,
+    contractVersion: projection.contractVersion,
+    defaultLocale: projection.defaultLocale,
+    entryCount: projection.entries.length,
+    privacy: {
+      projectedCommentTextIncluded: false,
+      rawCommentIncluded: false,
+      sourceBodyIncluded: false,
+      sourcesContentPolicy: "none"
+    },
+    projectionId: projection.projectionId,
+    requestedLocale: projection.requestedLocale,
+    resolvedCount: projection.entries.filter((entry) => entry.resolution !== "missing").length,
+    status: projection.status
+  };
+}
+
+/**
+ * @lang zh-CN
+ * 渲染 metadata 与可选纯文本正文。正文必须同时得到 producer projection 与 renderer config 授权。
+ *
+ * @lang en
+ * Renders metadata and optional plain-text bodies. Bodies require authorization from both the producer projection and renderer config.
+ */
+function renderProjectSourceCommentProjection(
+  projection: DocumentationSourceCommentProjection,
+  options: Required<RenderProjectSourceCommentProjectionOptions>
+): string {
+  const bodyAuthorized = options.contentPolicy === "explicit-projected-text"
+    && projection.contentPolicy === "explicit-projected-text"
+    && projection.privacy.projectedCommentTextIncluded;
+  const metadata = [
+    `<dt>Comment Contract</dt><dd>${escapeHtml(`${projection.contract}@${projection.contractVersion}`)}</dd>`,
+    `<dt>Comment Locale</dt><dd>${escapeHtml(projection.requestedLocale)}</dd>`,
+    `<dt>Comment Status</dt><dd>${escapeHtml(projection.status)}</dd>`,
+    `<dt>Comment Entries</dt><dd>${escapeHtml(String(projection.entries.length))}</dd>`,
+    `<dt>Source Content Policy</dt><dd>${escapeHtml(projection.privacy.sourcesContentPolicy)}</dd>`
+  ].join("");
+  const entries = projection.entries.map((entry) => {
+    const range = entry.range
+      ? `<dt>Range</dt><dd>${escapeHtml(`${entry.range.start.line}:${entry.range.start.column}-${entry.range.end.line}:${entry.range.end.column}`)}</dd>`
+      : "";
+    const body = bodyAuthorized && entry.projectedText !== undefined
+      ? `<pre class="hia-source-comment"><code>${escapeHtml(entry.projectedText)}</code></pre>`
+      : "";
+    return [
+      `<article class="hia-source-comment-entry" data-hia-source-comment-id="${escapeHtml(entry.commentId)}">`,
+      `<dl class="hia-project-meta"><dt>Comment</dt><dd>${escapeHtml(entry.commentId)}</dd>`,
+      `<dt>Resolution</dt><dd>${escapeHtml(entry.resolution)}</dd>`,
+      `<dt>Confidence</dt><dd>${escapeHtml(entry.confidence)}</dd>`,
+      `<dt>Provenance</dt><dd>${escapeHtml(entry.provenance.kind)}</dd>${range}</dl>`,
+      body,
+      "</article>"
+    ].join("");
+  }).join("");
+  return `<section class="hia-source-section hia-source-comment-section"><dl class="hia-project-meta">${metadata}</dl>${entries}</section>`;
 }
 
 /** topic diagnostics 使用已有 structured diagnostic，空集合不输出。Topic diagnostics reuse structured diagnostics and omit an empty set. */

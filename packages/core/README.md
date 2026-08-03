@@ -29,6 +29,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Documentation locale-resource declaration/discovery: `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION`
 - Documentation terminology: `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION`
 - Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
+- Documentation source-comment projection: `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION`
 
 ## Documentation Locale Resources
 
@@ -72,5 +73,14 @@ network service. See `docs/documentation-terminology-contract.md` for the schema
 codes. Its findings always require human review and its action policy is fixed to `review-only`.
 It neither parses terminology, reads DLR files/sidecars, nor creates edits, migration plans or
 resource writes.
+
+## Documentation Source Comment Projection
+
+`documentation-source-comment-projection@0.1.0-draft` converts already-structured localized comments into a deterministic,
+plain-text projection. Stable comment identity excludes locale and text; resolution, confidence, and provenance remain
+separate. The pure evaluator performs no source read, parser execution, resource discovery, network access, or write.
+
+Content defaults to `none`. Source bodies, raw comments, and ordinary source-map `sourcesContent` are always excluded. See
+`docs/documentation-source-comment-projection-contract.md` for the double-opt-in Portal boundary.
 
 See `docs/contract-index.md` and `docs/core-fixture-contract.md` in the repository root for the current contract baseline.

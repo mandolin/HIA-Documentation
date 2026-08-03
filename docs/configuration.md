@@ -33,6 +33,12 @@ CLI 按以下顺序解析配置：
         "loadingStrategy": "lazy",
         "memberPlacement": "with-parent"
       },
+      "sourceCommentProjection": {
+        "contract": "documentation-source-comment-projection",
+        "contractVersion": "0.1.0-draft",
+        "locale": "zh-CN",
+        "contentPolicy": "none"
+      },
       "includeThemeAssets": true
     },
     "source": {
@@ -48,6 +54,10 @@ CLI 按以下顺序解析配置：
 `single-page` 仍可用于兼容、小型文档或离线快照，但会把全部节点卡片写进同一个 HTML，不适合数千节点项目。
 
 显式 `informationArchitecture` 只支持 `split-site`。它把内容分组、获取时机与 member 呈现拆成三个独立开关；未提供该对象时保留既有 P3 输出。`uiLocale` 当前只接受 `zh-CN` 或 `en`，并且只覆盖本轮触碰的 Portal labels，不替代 content locale 或 source-comment locale。
+
+`sourceCommentProjection.locale` 必须是 canonical BCP 47 tag，并且不会从 `uiLocale` 或 `docs.locale` 推断。默认
+`contentPolicy=none` 只显示 allowlisted metadata；`explicit-projected-text` 仍要求 producer projection 对同一 locale 显式
+包含纯文本正文。该配置不创建 source reader，也不解析源码注释。
 
 ### 关系增强型 producer result
 
@@ -150,6 +160,8 @@ CLI 按以下顺序解析配置：
 | `docs.renderer.informationArchitecture.contentGrouping` | `"entry"` / `"semantic-container"` | 内容呈现边界，默认 `entry`。 |
 | `docs.renderer.informationArchitecture.loadingStrategy` | `"lazy"` / `"eager"` | fragment 获取策略，默认 `lazy`。 |
 | `docs.renderer.informationArchitecture.memberPlacement` | `"separate"` / `"with-parent"` | member 呈现位置，默认 `separate`。 |
+| `docs.renderer.sourceCommentProjection.locale` | canonical BCP 47 string | 独立 source-comment locale；启用时必须同时提供显式 IA。 |
+| `docs.renderer.sourceCommentProjection.contentPolicy` | `"none"` / `"explicit-projected-text"` | 注释正文授权，默认 `none`；只接受已投影纯文本。 |
 | `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `link`。 |
 | `docs.source.linkBaseUrl` | string | 仓库或浏览器源码链接基础 URL。 |
 | `docs.source.fetchBaseUrl` | string | `fetch` 模式必填的纯文本源码基础 URL。 |

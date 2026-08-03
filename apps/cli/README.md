@@ -24,6 +24,11 @@ For explicit Portal IA, the CLI projects `docs.renderer.informationArchitecture`
 
 For DotNetDoc producer results, the CLI projects allowlisted source-relation metadata onto the canonical project entry as `sourceUsability`. The projection keeps project-relative identity, resolution, confidence, and provenance separate, forces `sourcesContentPolicy: none`, and never copies source bodies or creates source-reader authority.
 
+For HIA documents, a symbol may provide a prebuilt `documentation-source-comment-projection@0.1.0-draft` in
+`metadata.sourceCommentProjection`. The CLI validates the exact contract and containing document/symbol identities before
+passing it to the renderer. It does not discover a sidecar, open a source path, parse a comment, or execute source code.
+Portal comment rendering still requires explicit IA and an independent `docs.renderer.sourceCommentProjection` locale/policy.
+
 The evidence command reads an already generated project documentation directory and writes a public-safe `hia-generated-docs-evidence-summary` JSON file. It summarizes required output files, entry counts, views, producer inputs, coverage counters and privacy checks without reading source bodies. It is intended for repeatable project adoption checks such as validating that DotNetDoc and JSDoc entries both appear in a unified site while `sourcesContent` remains absent.
 
 The acceptance command reads only that generated evidence summary. It produces a versioned `target-documentation-acceptance` report for one public target id and one of four portfolio families: `unicode-compatible`, `html-authoring`, `enterprise-business`, or `workspace-container`. The report checks required outputs, stable entry identities, successful producer summaries, and the no-embedded/no-fetched-source privacy boundary. It does not inspect source code, HTML, project manifests, credentials, or target working-tree state. Without `--out`, it writes the report to stdout; an explicit `--out` must be a safe relative path in the caller's workspace.
@@ -75,4 +80,4 @@ The package also exports `createTargetOwnerAdoptionKit()`, `isTargetOwnerAdoptio
 
 The package exports `createEnterpriseBaselineCurrentOwnerWorkflow()`, `isEnterpriseBaselineCurrentOwnerWorkflowReport()`, its contract/version/diagnostic constants and the owner-local Draft 2020-12 `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_JSON_SCHEMA`. The report projects existing component outcomes and has no independent target authority.
 
-See `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
+See `docs/documentation-source-comment-projection-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.

@@ -1,6 +1,6 @@
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
-import { createHiaDiagnostic } from "@hia-doc/core";
+import { canonicalizeDocumentationLocale, createHiaDiagnostic } from "@hia-doc/core";
 import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
 
 export * from "./project-manifest.js";
@@ -27,6 +27,18 @@ export const HIA_CONFIG_PORTAL_LOADING_STRATEGIES = ["lazy", "eager"] as const;
 export const HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS = ["separate", "with-parent"] as const;
 /** 首轮 touched-label catalog 支持的 UI locale。UI locales supported by the first touched-label catalog. */
 export const HIA_CONFIG_PORTAL_UI_LOCALES = ["zh-CN", "en"] as const;
+/**
+ * @lang zh-CN
+ * source-comment projection 的精确中性 contract pin；config 不拥有 runtime contract。
+ *
+ * @lang en
+ * Exact neutral source-comment projection contract pin; config does not own the runtime contract.
+ */
+export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT = "documentation-source-comment-projection" as const;
+/** @lang zh-CN P1 只接受这一精确 draft。 @lang en P1 accepts this exact draft only. */
+export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION = "0.1.0-draft" as const;
+/** @lang zh-CN 正文默认关闭，显式模式仍只允许投影纯文本。 @lang en Bodies default off; explicit mode still permits projected plain text only. */
+export const HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES = ["none", "explicit-projected-text"] as const;
 export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
 
 export interface HiaProjectConfig {
@@ -58,8 +70,30 @@ export interface HiaRendererHtmlConfig {
    * Explicit Portal IA configuration; omission preserves the P3-compatible renderer path.
    */
   informationArchitecture?: HiaPortalInformationArchitectureConfig;
+  /**
+   * @lang zh-CN
+   * 显式 source-comment locale 与正文授权；与 UI locale、content locale 分离。
+   *
+   * @lang en
+   * Explicit source-comment locale and body authorization, separate from UI and content locales.
+   */
+  sourceCommentProjection?: HiaSourceCommentProjectionConfig;
   /** UI chrome 语言，与 content locale 分离。UI chrome locale, separate from content locale. */
   uiLocale?: typeof HIA_CONFIG_PORTAL_UI_LOCALES[number];
+}
+
+/**
+ * @lang zh-CN
+ * Portal P5 有界 slice 配置。locale 必填，避免从 UI/content locale 猜测注释语言。
+ *
+ * @lang en
+ * Bounded Portal P5 slice configuration. Locale is required so comment language is never inferred from UI or content locale.
+ */
+export interface HiaSourceCommentProjectionConfig {
+  contract?: typeof HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT;
+  contractVersion?: typeof HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION;
+  locale: string;
+  contentPolicy?: typeof HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES[number];
 }
 
 /**
@@ -272,6 +306,69 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
         `${targetPath}.informationArchitecture`
       ));
     }
+  }
+
+  if (value.sourceCommentProjection !== undefined) {
+    validateSourceCommentProjectionConfig(
+      value.sourceCommentProjection,
+      diagnostics,
+      `${targetPath}.sourceCommentProjection`
+    );
+    if (value.informationArchitecture === undefined) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_SOURCE_COMMENT_IA_REQUIRED",
+        "docs.renderer.sourceCommentProjection requires explicit informationArchitecture.",
+        "error",
+        `${targetPath}.sourceCommentProjection`
+      ));
+    }
+  }
+}
+
+/**
+ * @lang zh-CN
+ * 校验 source-comment projection 的 closed-world、精确版本与 canonical BCP 47 locale。
+ *
+ * @lang en
+ * Validates closed-world source-comment projection configuration, exact version, and canonical BCP 47 locale.
+ */
+function validateSourceCommentProjectionConfig(
+  value: unknown,
+  diagnostics: HiaDiagnostic[],
+  targetPath: string
+): void {
+  if (!isRecord(value)) {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_SOURCE_COMMENT_INVALID", "sourceCommentProjection must be an object.", "error", targetPath));
+    return;
+  }
+  const allowedFields = new Set(["contract", "contractVersion", "locale", "contentPolicy"]);
+  for (const field of Object.keys(value)) {
+    if (!allowedFields.has(field)) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_SOURCE_COMMENT_FIELD_UNSUPPORTED",
+        `Unsupported sourceCommentProjection field: ${field}.`,
+        "error",
+        `${targetPath}.${field}`
+      ));
+    }
+  }
+  validateOptionalString(value, "contract", diagnostics, targetPath);
+  validateOptionalString(value, "contractVersion", diagnostics, targetPath);
+  validateOptionalString(value, "locale", diagnostics, targetPath);
+  validateOptionalEnum(value, "contentPolicy", HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES, diagnostics, targetPath);
+  if (typeof value.locale !== "string" || value.locale.length === 0) {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_SOURCE_COMMENT_LOCALE_REQUIRED", "sourceCommentProjection.locale is required.", "error", `${targetPath}.locale`));
+  } else {
+    const canonical = canonicalizeDocumentationLocale(value.locale);
+    if (!canonical || canonical.usedLegacyUnderscore || canonical.canonical !== value.locale) {
+      diagnostics.push(createConfigDiagnostic("HIA_CONFIG_SOURCE_COMMENT_LOCALE_INVALID", "sourceCommentProjection.locale must be a canonical BCP 47 tag.", "error", `${targetPath}.locale`));
+    }
+  }
+  if (typeof value.contract === "string" && value.contract !== HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT) {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_SOURCE_COMMENT_CONTRACT_UNSUPPORTED", "Unsupported source-comment projection contract.", "error", `${targetPath}.contract`));
+  }
+  if (typeof value.contractVersion === "string" && value.contractVersion !== HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION) {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_SOURCE_COMMENT_VERSION_UNSUPPORTED", "Unsupported source-comment projection contractVersion.", "error", `${targetPath}.contractVersion`));
   }
 }
 

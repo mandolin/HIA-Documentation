@@ -16,6 +16,8 @@ import {
   DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA,
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
+  DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
+  DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
   HIA_DOCUMENT_SCHEMA_VERSION
 } from "../../core/dist/index.js";
@@ -123,6 +125,15 @@ const definitions = [
     key: "documentation-quality-review",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>source-comment projection 是独立 sidecar contract；普通 source map 不承载正文或完整模型。</zh-CN><en>The source-comment projection is an independent sidecar contract; ordinary source maps carry neither bodies nor the full model.</en></lang>
+  {
+    contractVersion: DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
+    fileName: "documentation-source-comment-projection.schema.json",
+    key: "documentation-source-comment-projection",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
     stability: "draft"
   },
   {

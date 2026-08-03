@@ -24,7 +24,9 @@ import {
 import {
   createBasicFixtureDocument,
   createHiaDiagnostic,
+  validateDocumentationSourceCommentProjection,
   validateHiaDocumentDetailed,
+  type DocumentationSourceCommentProjection,
   type HiaDiagnostic,
   type HiaDiagnosticData,
   type HiaDiagnosticSeverity,
@@ -1555,7 +1557,7 @@ async function aggregateProjectDocs(
         continue;
       }
 
-      entries.push(...document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, document, input, index)));
+      entries.push(...document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, document, input, index, diagnostics)));
       continue;
     }
 
@@ -1570,7 +1572,7 @@ async function aggregateProjectDocs(
         continue;
       }
 
-      entries.push(...result.document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, result.document, input, index, "js")));
+      entries.push(...result.document.symbols.map((symbol, index) => hiaSymbolToProjectEntry(symbol, result.document, input, index, diagnostics, "js")));
       continue;
     }
 
@@ -2265,6 +2267,7 @@ function hiaSymbolToProjectEntry(
   document: HiaDocument,
   input: ProjectManifestInput,
   index: number,
+  diagnostics: HiaDiagnostic[],
   fallbackView?: RenderProjectView
 ): RenderProjectEntry {
   const sourceRef = createProjectSourceFromHiaSymbol(symbol).source;
@@ -2275,6 +2278,7 @@ function hiaSymbolToProjectEntry(
     symbol.parentId ? { parentSymbolId: symbol.parentId } : undefined,
     semanticHierarchy
   );
+  const sourceCommentProjection = readHiaSymbolSourceCommentProjection(symbol, document, diagnostics);
 
   return {
     id: createProjectEntryId(input.kind ?? "hia-document", symbol.id || symbol.name, index),
@@ -2292,9 +2296,47 @@ function hiaSymbolToProjectEntry(
       ...(document.schemaVersion ? { contract: "hia-core-document", contractVersion: document.schemaVersion } : {})
     },
     ...(sourceRef ? { source: sourceRef } : {}),
+    ...(sourceCommentProjection ? { sourceCommentProjection } : {}),
     ...(hierarchy ? { hierarchy } : {}),
     ...(input.semanticPath ? { semanticPath: input.semanticPath } : {})
   };
+}
+
+/**
+ * @lang zh-CN
+ * 只消费 HIA symbol metadata 中已生成的中性 projection；本函数不读取源码、sidecar path 或 parser AST。
+ *
+ * @lang en
+ * Consumes only a prebuilt neutral projection from HIA symbol metadata; it reads no source, sidecar path, or parser AST.
+ */
+function readHiaSymbolSourceCommentProjection(
+  symbol: HiaSymbol,
+  document: HiaDocument,
+  diagnostics: HiaDiagnostic[]
+): DocumentationSourceCommentProjection | undefined {
+  const value = symbol.metadata?.sourceCommentProjection;
+  if (value === undefined) return undefined;
+  const validationDiagnostics = validateDocumentationSourceCommentProjection(value);
+  if (validationDiagnostics.length > 0) {
+    diagnostics.push(...validationDiagnostics.map((diagnostic) => createCliDiagnostic(
+      diagnostic.code,
+      diagnostic.message,
+      "error",
+      `symbols.${symbol.id}.metadata.sourceCommentProjection`
+    )));
+    return undefined;
+  }
+  const projection = value as DocumentationSourceCommentProjection;
+  if (projection.source.documentId !== document.id || projection.source.symbolId !== symbol.id) {
+    diagnostics.push(createCliDiagnostic(
+      "HIA_CLI_SOURCE_COMMENT_IDENTITY_MISMATCH",
+      "Source-comment projection documentId and symbolId must match the containing HIA symbol.",
+      "error",
+      `symbols.${symbol.id}.metadata.sourceCommentProjection.source`
+    ));
+    return undefined;
+  }
+  return structuredClone(projection);
 }
 
 function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectManifestInput): RenderProjectEntry[] {
@@ -2688,6 +2730,14 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
       ? { informationArchitecture: { ...docsConfig.renderer.informationArchitecture } }
       : {}),
     ...(docsConfig.renderer?.uiLocale ? { uiLocale: docsConfig.renderer.uiLocale } : {}),
+    ...(docsConfig.renderer?.sourceCommentProjection
+      ? {
+          sourceCommentProjection: {
+            contentPolicy: docsConfig.renderer.sourceCommentProjection.contentPolicy ?? "none",
+            locale: docsConfig.renderer.sourceCommentProjection.locale
+          }
+        }
+      : {}),
     source: {
       presentation: resolveProjectSourcePresentation(docsConfig),
       defaultExpanded: docsConfig.source?.defaultExpanded ?? false,

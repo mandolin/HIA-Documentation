@@ -93,6 +93,15 @@
       "stability": "draft"
     },
     {
+      "contractVersion": "0.1.0-draft",
+      "key": "documentation-source-comment-projection",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./documentation-source-comment-projection.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-source-comment-projection-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-source-comment-projection-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
       "contractVersion": "0.2.0",
       "key": "hia-document",
       "ownerPackage": "@hia-doc/core",

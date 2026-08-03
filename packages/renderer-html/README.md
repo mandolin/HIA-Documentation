@@ -20,6 +20,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - 显式 IA 使用 manifest-only `semanticPath`、固定 kind-aware topic section 顺序、原生 nested disclosure 与 `zh-CN|en` touched-label catalog；不输出 `role=tree`，不读取 target state 或 continuity body。
 - 项目输入可选接受 `generatedDocumentationBindingProjection`（来自 `@hia-doc/source-linkage`）：HTML 与 `project-index.json` 只读呈现 binding → expansion → target、stable instance key、resolution/confidence/provenance 与诊断计数；不加载 sidecar path、不嵌入 source body/locals，也不把完整模型放回 ordinary doc-source-map。
 - 显式 Portal IA 下，项目输入可选接受 `ownerAdoption`（由 `target-owner-adoption-kit@0.1.0-draft` 的 `portalSummary` 提供）：只呈现 owner-review readiness、family、contract counts、可选 handoff counts 与 resolution/confidence/provenance；不接收 target/trial/owner identity、路径、正文或 adoption claim。缺少显式 IA、unknown field、count/status 不一致时 fail closed。
+- 显式 IA 下可消费 `documentation-source-comment-projection@0.1.0-draft`。metadata 始终采用 allowlist；只有 producer projection 与 `projectSite.sourceCommentProjection` 对同一 locale 双重授权时才显示已转义的纯文本正文。`project-index.json` 永不包含 `projectedText`、raw comment 或 source body。
 - Returns a renderer manifest with entrypoint, locale and file metadata for CLI or other writers.
 
 ## Contract

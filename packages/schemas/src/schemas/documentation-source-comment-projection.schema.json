@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-source-comment-projection-0.1.0-draft.schema.json",
+  "title": "Documentation Source Comment Projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "status",
+    "projectionId",
+    "source",
+    "requestedLocale",
+    "defaultLocale",
+    "fallbackChain",
+    "contentPolicy",
+    "privacy",
+    "entries",
+    "diagnostics"
+  ],
+  "properties": {
+    "contract": {
+      "const": "documentation-source-comment-projection"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "refused"
+      ]
+    },
+    "projectionId": {
+      "$ref": "#/$defs/identity"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "requestedLocale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "defaultLocale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fallbackChain": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "contentPolicy": {
+      "enum": [
+        "none",
+        "explicit-projected-text"
+      ]
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "$defs": {
+    "identity": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line",
+        "column"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "documentId",
+        "symbolId",
+        "sourceId"
+      ],
+      "properties": {
+        "documentId": {
+          "$ref": "#/$defs/identity"
+        },
+        "symbolId": {
+          "$ref": "#/$defs/identity"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/identity"
+        },
+        "docSourceMapEntryId": {
+          "$ref": "#/$defs/identity"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "structured-source-comment",
+            "unresolved"
+          ]
+        },
+        "sourceLocale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commentId",
+        "stableCommentKey",
+        "kind",
+        "order",
+        "requestedLocale",
+        "resolution",
+        "confidence",
+        "provenance",
+        "diagnosticCodes"
+      ],
+      "properties": {
+        "commentId": {
+          "$ref": "#/$defs/identity"
+        },
+        "stableCommentKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1200
+        },
+        "kind": {
+          "enum": [
+            "line",
+            "block",
+            "documentation"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "range": {
+          "$ref": "#/$defs/range"
+        },
+        "requestedLocale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolvedLocale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolution": {
+          "enum": [
+            "exact",
+            "fallback",
+            "default",
+            "missing"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "declared",
+            "none"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "projectedText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "diagnosticCodes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourcesContentPolicy",
+        "sourceBodyIncluded",
+        "rawCommentIncluded",
+        "projectedCommentTextIncluded",
+        "richTextPolicy"
+      ],
+      "properties": {
+        "sourcesContentPolicy": {
+          "const": "none"
+        },
+        "sourceBodyIncluded": {
+          "const": false
+        },
+        "rawCommentIncluded": {
+          "const": false
+        },
+        "projectedCommentTextIncluded": {
+          "type": "boolean"
+        },
+        "richTextPolicy": {
+          "const": "plain-text-only"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "severity"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "targetPath": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

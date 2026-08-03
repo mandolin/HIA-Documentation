@@ -13,6 +13,10 @@ HIA 文档工具共享的配置 contract 与 loader。
 
 Portal IA 第一轮可在 `docs.renderer.informationArchitecture` 独立配置 `contentGrouping=entry|semantic-container`、`loadingStrategy=lazy|eager` 与 `memberPlacement=separate|with-parent`，并用 `docs.renderer.uiLocale=zh-CN|en` 选择本轮触碰的 UI labels。未知 draft/enum/field fail closed；显式 IA 与 `single-page` 的组合返回 `HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED`。未配置 IA 时保持既有 P3 行为。
 
+Portal source-comment P1 可通过 `docs.renderer.sourceCommentProjection` 显式设置 canonical BCP 47 `locale` 与
+`contentPolicy=none|explicit-projected-text`。该 locale 与 UI/content locale 独立，且配置必须同时启用显式 IA；未知字段、
+版本或非 canonical locale fail closed。config 只授予 renderer 消费已存在 projection 的权限，不授予源码读取或注释解析权限。
+
 The first contract is intentionally small. `hia.config.ts`, layered config merging and dynamic config evaluation are deferred.
 
 ## Contract

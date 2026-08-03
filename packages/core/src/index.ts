@@ -8,4 +8,5 @@ export * from "./documentation-quality-review.js";
 export * from "./model.js";
 export * from "./protocol.js";
 export * from "./schema.js";
+export * from "./source-comment-projection.js";
 export * from "./validator.js";

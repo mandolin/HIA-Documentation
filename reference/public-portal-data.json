@@ -104,6 +104,7 @@
         "documentation-locale-resolution",
         "documentation-terminology",
         "documentation-quality-review",
+        "documentation-source-comment-projection",
         "generated-documentation-binding",
         "hia-document",
         "project-manifest"

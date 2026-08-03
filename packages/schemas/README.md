@@ -26,6 +26,7 @@ import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" w
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
+import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
 ```
 
 The canonical public schema root is:
@@ -46,6 +47,9 @@ The package does not select or bundle a JSON Schema validator. Consumers may use
 `@hia-doc/core`. Their schemas validate payload structure only; the core resolver and the
 root-bound reader profile enforce BCP 47 canonicalization, fallback order, realpath containment,
 limits and metadata-only privacy.
+
+`documentation-source-comment-projection` is also owned by `@hia-doc/core`. Its runtime validator enforces canonical BCP 47
+tags, stable comment keys, closed-world privacy, and body-policy consistency beyond the structural schema.
 
 ## Status
 

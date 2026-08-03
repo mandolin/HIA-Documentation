@@ -241,6 +241,102 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("consumes a validated HIA source-comment projection without adding a source reader", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-source-comment-"));
+    const outDir = path.join(root, "docs");
+    const configPath = path.join(root, "hia.config.json");
+    const manifestPath = path.join(root, "project.hia-project.json");
+    const inputPath = path.join(root, "source-comments.hia.json");
+    const messages: string[] = [];
+
+    try {
+      const document = JSON.parse(await readFile(path.resolve("fixtures/basic.hia.json"), "utf8")) as {
+        id: string;
+        symbols: Array<{ id: string; metadata?: Record<string, unknown> }>;
+      };
+      const symbol = document.symbols.find((candidate) => candidate.id === "function:buildProfileSummary");
+      expect(symbol).toBeDefined();
+      // <lang><zh-CN>fixture 直接提供已完成的中性投影，CLI 不获得源码路径读取或注释解析权限。</zh-CN><en>The fixture supplies a completed neutral projection directly; the CLI gains no source-path read or comment-parser authority.</en></lang>
+      symbol!.metadata = {
+        sourceCommentProjection: {
+          contract: "documentation-source-comment-projection",
+          contractVersion: "0.1.0-draft",
+          status: "ready",
+          projectionId: "projection.profile.summary",
+          source: {
+            documentId: document.id,
+            symbolId: symbol!.id,
+            sourceId: "source.profile.service"
+          },
+          requestedLocale: "zh-CN",
+          defaultLocale: "en",
+          fallbackChain: ["zh-CN", "zh", "en"],
+          contentPolicy: "explicit-projected-text",
+          privacy: {
+            sourcesContentPolicy: "none",
+            sourceBodyIncluded: false,
+            rawCommentIncluded: false,
+            projectedCommentTextIncluded: true,
+            richTextPolicy: "plain-text-only"
+          },
+          entries: [{
+            commentId: "comment.summary",
+            stableCommentKey: `projection.profile.summary::${document.id}::${symbol!.id}::source.profile.service::comment.summary`,
+            kind: "documentation",
+            order: 0,
+            requestedLocale: "zh-CN",
+            resolvedLocale: "zh-CN",
+            resolution: "exact",
+            confidence: "declared",
+            provenance: { kind: "structured-source-comment", sourceLocale: "zh-CN" },
+            projectedText: "从 CLI 安全显示 <profile> 注释。",
+            diagnosticCodes: []
+          }],
+          diagnostics: []
+        }
+      };
+      await writeFile(inputPath, JSON.stringify(document), "utf8");
+      await writeFile(configPath, JSON.stringify({
+        schemaVersion: "0.1.0",
+        docs: {
+          renderer: {
+            informationArchitecture: {},
+            sourceCommentProjection: {
+              contract: "documentation-source-comment-projection",
+              contractVersion: "0.1.0-draft",
+              contentPolicy: "explicit-projected-text",
+              locale: "zh-CN"
+            }
+          }
+        }
+      }), "utf8");
+      await writeFile(manifestPath, JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: { name: "CLI Source Comment Fixture" },
+        inputs: [{ kind: "hia-document", path: "source-comments.hia.json", domain: "js" }]
+      }), "utf8");
+
+      const exitCode = await runCli([
+        "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--out", outDir
+      ], createTestIo(messages));
+      const projectIndexText = await readFile(path.join(outDir, "project-index.json"), "utf8");
+      const projectIndex = JSON.parse(projectIndexText) as {
+        entries: Array<{ name: string; contentPath: string; sourceCommentProjection?: { entryCount: number } }>;
+      };
+      const projectedEntry = projectIndex.entries.find((entry) => entry.name === "buildProfileSummary");
+      const entryHtml = await readFile(path.join(outDir, projectedEntry!.contentPath), "utf8");
+
+      expect(exitCode).toBe(0);
+      expect(projectedEntry?.sourceCommentProjection?.entryCount).toBe(1);
+      expect(entryHtml).toContain("从 CLI 安全显示 &lt;profile&gt; 注释。");
+      expect(projectIndexText).not.toContain("从 CLI 安全显示");
+      expect(projectIndexText).not.toContain("projectedText");
+      expect(projectIndexText).not.toMatch(/[A-Za-z]:\\/u);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("builds a .NET unified project page from a DotNetDoc HIA document", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-dotnet-project-"));
     const outDir = path.join(root, "docs");

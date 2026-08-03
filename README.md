@@ -90,7 +90,7 @@ JSDoc 用户侧集成包放在 `../HIA/jsdoc-plugin-hia-sys/`，JSDoc 主题放�
 
 ## 当前能力
 
-- `@hia-doc/core`: HIA document/node/symbol model、field-level i18n、source metadata、diagnostic registry、protocol envelope、schema draft、fixture helper 和轻量 validator。
+- `@hia-doc/core`: HIA document/node/symbol model、field-level i18n、source metadata、locale-aware source-comment projection、diagnostic registry、protocol envelope、schema draft、fixture helper 和轻量 validator。
 - `@hia-doc/config`: 加载并验证 `hia.config.json`，为 CLI、LSP 和 IDE 集成提供共享配置契约。
 - `@hia-doc/profile`: 加载并归一化 documentation profile draft，提供 tag/rule/mapping/diagnostic registry 查询、alias resolution 和 profile diagnostics。
 - `@hia-doc/profiles`: 分发 7 个 official stable/bridge profiles，提供 JSON subpath、catalog 和 defensive-copy API。
