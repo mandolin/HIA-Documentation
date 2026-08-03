@@ -81,6 +81,9 @@ import {
 import {
   runEnterpriseBaselineCurrentOwnerWorkflowCommand
 } from "./enterprise-owner-workflow.js";
+import {
+  runHtmlAuthoringSourceCommentIntegrationCommand
+} from "./html-authoring-source-comment-integration.js";
 
 /**
  * Target-portfolio acceptance foundation exported by the CLI package.
@@ -173,6 +176,29 @@ export {
   type EnterpriseOwnerWorkflowContinuityProjection
 } from "./enterprise-owner-workflow.js";
 
+/**
+ * HTML-authoring source-comment integration verification exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的 HTML-authoring 源码注释集成验证；只组合 exact handoff、projection 与显式 logical binding。
+ * English: CLI-exported HTML-authoring source-comment integration verification that combines only an exact handoff, projection, and explicit logical binding.
+ * @lang zh-CN pure API 与 CLI 都不读取 target/source/map body、不接入 host API，也不声明 adoption。
+ */
+export {
+  createHtmlAuthoringSourceCommentIntegrationReport,
+  isHtmlAuthoringSourceCommentIntegrationReport,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_DIAGNOSTIC_CODES,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_JSON_SCHEMA,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_REQUEST_CONTRACT,
+  HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_SCHEMA_ID,
+  type HtmlAuthoringSourceCommentIntegrationBinding,
+  type HtmlAuthoringSourceCommentIntegrationDiagnostic,
+  type HtmlAuthoringSourceCommentIntegrationDiagnosticCode,
+  type HtmlAuthoringSourceCommentIntegrationReport,
+  type HtmlAuthoringSourceCommentIntegrationRequest
+} from "./html-authoring-source-comment-integration.js";
+
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
 const HELP_TEXT = `HIA Documentation CLI
@@ -185,6 +211,7 @@ Usage:
   hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
   hia docs adoption-kit --request <file> [--out <file>]
   hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]
+  hia docs html-authoring-verify --request <file> [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
@@ -194,6 +221,7 @@ Commands:
   docs continuity Compare two public-safe documentation evidence summaries without reading target state.
   docs adoption-kit Compose an owner-operated review kit from explicit public-safe metadata.
   docs enterprise-workflow Compose enterprise owner input with an optional public-safe baseline/current pair.
+  docs html-authoring-verify Verify an exact HTML-authoring handoff, source-comment projection and explicit binding.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -322,6 +350,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   // <lang><zh-CN>enterprise-workflow 只读取 caller 明示的 adoption request 与可选 summary pair；不发现 target、不联系 owner、不声明 adoption。</zh-CN><en>The enterprise-workflow command reads only a caller-explicit adoption request and optional summary pair; it discovers no target, contacts no owner, and claims no adoption.</en></lang>
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "enterprise-workflow") {
     return runEnterpriseBaselineCurrentOwnerWorkflowCommand(normalizedArgv.slice(2), io);
+  }
+
+  // <lang><zh-CN>HTML-authoring verification 只读取 caller 明示的 safe-relative request；不读取 target/source/map body，也不接入 Tauri/Obsidian。</zh-CN><en>HTML-authoring verification reads only a caller-explicit safe-relative request; it reads no target/source/map body and integrates neither Tauri nor Obsidian.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "html-authoring-verify") {
+    return runHtmlAuthoringSourceCommentIntegrationCommand(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {

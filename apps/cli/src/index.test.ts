@@ -14,6 +14,7 @@ describe("@hia-doc/cli", () => {
     expect(messages.join("\n")).toContain("hia docs build");
     expect(messages.join("\n")).toContain("hia docs evidence");
     expect(messages.join("\n")).toContain("hia docs adoption-kit");
+    expect(messages.join("\n")).toContain("hia docs html-authoring-verify");
     expect(messages.join("\n")).toContain("hia browser panel");
   });
 

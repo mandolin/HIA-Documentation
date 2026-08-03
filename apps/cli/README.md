@@ -11,6 +11,7 @@ Current scope:
 - `hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]`
 - `hia docs adoption-kit --request <file> [--out <file>]`
 - `hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]`
+- `hia docs html-authoring-verify --request <file> [--out <file>]`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -45,6 +46,15 @@ The adoption-kit command composes existing owner-mediated contracts into a reusa
 
 The enterprise workflow is an owner-local composition surface, not a target runner. All input/output paths are explicit, distinct, and safe-relative under caller cwd. It never discovers a target, contacts an owner, runs a target command, writes a target repository, accesses a network, publishes a package, or asserts adoption.
 
+`docs html-authoring-verify` exact-validates one W-P80 HTML-authoring handoff, one W-P96 locale-aware source-comment
+projection, and one caller-explicit logical binding. The handoff entry and doc-source-map entry are verified independently;
+the command never guesses their relation from string form. Its report contains logical identity, locale metadata, counts,
+independent resolution/confidence/provenance, and fixed privacy/permission facts, but copies no projected text, source/raw
+comment, map/sidecar body, or path.
+
+中文说明：该命令只读取 caller cwd 下一个显式 safe-relative request，且只在 `--out` 明示时写入同一边界内的报告。
+它不发现或执行 HugeRTE/Obsidian 项目，不接入 Tauri IPC 或 Obsidian Vault，也不声明目标采用。
+
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 
 `--input`, `--jsdoc-integration` and `--project-manifest` are mutually exclusive. Use `--input` for already-normalized core documents, `--jsdoc-integration` for JSON produced by `@mandolin/jsdoc-plugin-hia-sys`, and `--project-manifest` for a multi-artifact project aggregation manifest. Project manifests can list existing `documentation-producer-result` files when a producer such as DotNetDoc has already emitted artifacts and the CLI only needs to render a unified project page.
@@ -64,6 +74,7 @@ pnpm run hia -- docs acceptance --evidence dist/project-docs/documentation-evide
 pnpm run hia -- docs continuity --baseline dist/project-docs/baseline-evidence.json --current dist/project-docs/current-evidence.json --target-id sample-enterprise-project --target-family enterprise-business --out dist/project-docs/target-continuity.json
 pnpm run hia -- docs adoption-kit --request adoption-request.json --out owner-adoption-kit.json
 pnpm run hia -- docs enterprise-workflow --adoption-request adoption-request.json --baseline baseline-evidence.json --current current-evidence.json --out enterprise-owner-workflow.json
+pnpm run hia -- docs html-authoring-verify --request html-authoring-integration-request.json --out html-authoring-integration-report.json
 pnpm run hia -- docs build --config hia.config.example.json --project-manifest fixtures/project-mixed.hia-project.json --adoption-kit owner-adoption-kit.json --out dist/project-docs
 pnpm run hia -- docs build --config hia.config.example.json
 ```
@@ -80,4 +91,9 @@ The package also exports `createTargetOwnerAdoptionKit()`, `isTargetOwnerAdoptio
 
 The package exports `createEnterpriseBaselineCurrentOwnerWorkflow()`, `isEnterpriseBaselineCurrentOwnerWorkflowReport()`, its contract/version/diagnostic constants and the owner-local Draft 2020-12 `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_JSON_SCHEMA`. The report projects existing component outcomes and has no independent target authority.
 
-See `docs/documentation-source-comment-projection-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
+The package also exports `createHtmlAuthoringSourceCommentIntegrationReport()`,
+`isHtmlAuthoringSourceCommentIntegrationReport()`, exact request/report constants, fixed diagnostics, public types, and the
+owner-local Draft 2020-12 `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_JSON_SCHEMA`. This is an HIA-side verification surface,
+not a target-host integration or execution protocol.
+
+See `docs/documentation-source-comment-projection-contract.md`, `docs/html-authoring-source-comment-integration-verification-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.

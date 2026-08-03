@@ -23,6 +23,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Documentation locale-resource declaration/discovery | `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation source-comment projection | `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |
+| HTML-authoring source-comment integration verification | `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation terminology | `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
 | HIA provider descriptor/request/result | `HIA_PROVIDER_*_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -158,6 +159,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Documentation locale-resource declaration/discovery | `@hia-doc/core` | Owns the controlled declaration catalog and public-safe catalog-only discovery/sidecar contract. It binds already-parsed approved profile selections to logical ids, but does not read files, validate resource contents, or expose locators. |
 | Documentation terminology | `@hia-doc/core` | Owns the neutral candidate-set/controlled-registry schema and pure lifecycle/privacy validator. Profile owners supply already-parsed structural observations; quality input exposes no term phrase or registry form and remains review-only. |
 | Documentation source-comment projection | `@hia-doc/core` | Owns the neutral schema, pure locale evaluator and privacy validator for already-structured comments. Stable identity excludes locale/text; ordinary source maps keep linkage only, while CLI/renderer gain no parser or source-reader authority. |
+| HTML-authoring source-comment integration verification | `@hia-doc/cli` | Exact-validates one W-P80 handoff, one W-P96 projection and one explicit logical binding. The report keeps resolution/confidence/provenance independent, copies no projected/source/map body, and grants no target/host/network/publish/adoption authority. 中文：`@hia-doc/htmdoc-runner` 只负责从 already-materialized extraction/map 构造 neutral projection request；普通 map 不承载完整 projection。 |
 | Locale-resolution doc-source-map linkage | `@hia-doc/source-linkage` | `doc-source-map.localeResolutionSidecars` declares only sidecar identity, contract/version and safe relative artifact path. It never embeds a locator, resource body or resolved text. |
 | Locale-discovery doc-source-map linkage | `@hia-doc/source-linkage` | `doc-source-map.localeDiscoverySidecars` declares only discovery-sidecar identity, contract/version and safe relative artifact path. It never embeds a controlled declaration, catalog locator, source range, source/resource body, or resolved text. |
 | Documentation producer | `@hia-doc/plugin-sdk` | Owns descriptor/request/result types, schemas, semantic validation and single-run execution helper; it does not load modules or orchestrate builds. |
@@ -442,6 +444,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 - `docs/core-fixture-contract.md`
 - `docs/documentation-portal-information-architecture-contract.md`
 - `docs/documentation-source-comment-projection-contract.md`
+- `docs/html-authoring-source-comment-integration-verification-contract.md`
 - `docs/enterprise-baseline-current-owner-workflow-contract.md`
 - `docs/versioning.md`
 - `docs/compatibility-matrix.md`
