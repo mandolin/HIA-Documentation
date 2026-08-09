@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createBasicFixtureDocument } from "@hia-doc/core";
 import {
+  DOCUMENTATION_PORTAL_THEME_CONTRACT,
+  DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION
+} from "@hia-doc/theme-default";
+import {
   DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT,
   DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
   DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA,
@@ -104,6 +108,10 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.files[0]?.contents).toContain("src/services/profile-service.js:48");
     expect(result.files[0]?.contents).toContain("Referenced Source Fragments");
     expect(result.files[0]?.contents).toContain("BUILD_PROFILE_SUMMARY");
+    expect(result.files[0]?.contents).toContain(`data-hia-theme-contract="${DOCUMENTATION_PORTAL_THEME_CONTRACT}"`);
+    expect(result.files[0]?.contents).toContain(`data-hia-theme-contract-version="${DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION}"`);
+    expect(result.files[0]?.contents).toContain("data-hia-theme-color-scheme-policy=\"system\"");
+    expect(result.files[0]?.contents).toContain("data-hia-theme-disclosure=\"native-details-summary\"");
   });
 
   it("can render a requested locale", () => {
@@ -111,7 +119,7 @@ describe("@hia-doc/renderer-html", () => {
     const result = renderHtmlDocument(document, { locale: "en-US" });
 
     expect(result.files[0]?.contents).toContain("Builds a user profile summary.");
-    expect(result.files[0]?.contents).toContain("<html lang=\"en-US\">");
+    expect(result.files[0]?.contents).toContain("<html lang=\"en-US\"");
     expect(result.files[0]?.contents).toContain("data-hia-fallback-from=\"en\"");
     expect(result.manifest.initialLocale).toBe("en-US");
   });
@@ -304,10 +312,26 @@ describe("@hia-doc/renderer-html", () => {
         relationCount?: number;
         relations?: Array<{ kind: string; from: string; to: string; label: string }>;
       };
+      site?: {
+        theme?: {
+          contract?: string;
+          contractVersion?: string;
+          name?: string;
+          colorSchemePolicy?: string;
+          disclosure?: string;
+        };
+      };
     };
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest.project?.views).toEqual(["all", "dotnet", "js", "css", "html"]);
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 4, js: 1, css: 1, html: 1, dotnet: 1 });
+    expect(result.manifest.project?.theme).toEqual({
+      contract: DOCUMENTATION_PORTAL_THEME_CONTRACT,
+      contractVersion: DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION,
+      name: "default",
+      colorSchemePolicy: "system",
+      disclosure: "native-details-summary"
+    });
     expect(result.manifest.initialLocale).toBe("en");
     expect(result.manifest.locales).toEqual(["en", "zh-CN"]);
     expect(result.manifest.project?.navigationIndex).toEqual({
@@ -329,6 +353,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(navigationIndex.relationGraph?.contractVersion).toBe(HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION);
     expect(navigationIndex.relationGraph?.nodeCount).toBe(9);
     expect(navigationIndex.relationGraph?.relationCount).toBe(5);
+    expect(navigationIndex.site?.theme).toEqual(result.manifest.project?.theme);
     expect(navigationIndex.relationGraph?.relations).toContainEqual(expect.objectContaining({
       kind: "documents-generated-artifact",
       from: "entry:html:alert",
@@ -408,7 +433,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("buildProfileSummary");
     expect(html).toContain("生成用户资料摘要。");
     expect(html).toContain("data-hia-locale-control");
-    expect(html).toContain("<html lang=\"en\">");
+    expect(html).toContain("<html lang=\"en\"");
     expect(html).toContain("css-component-style");
     expect(html).toContain("html-component");
     expect(html).toContain("maps/button.docmap.json");
@@ -416,6 +441,10 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).toContain("1/1 linked");
     expect(html).toContain("sourcesContentPolicy=none");
     expect(html).toContain("Source Preview src/profile.js:12-14");
+    expect(html).toContain("<details");
+    expect(html).toContain("<summary>");
+    expect(html).not.toContain("aria-expanded");
+    expect(html).not.toContain("role=\"tree\"");
     expect(html).toContain("function buildProfileSummary(profile)");
     expect(html).not.toContain("data-hia-project-search-text=\"dotnet:portal-menu portalmenu dotnet-type portal menu");
     expect(html).toContain("https://example.test/src/profile.js#L12");

@@ -1176,7 +1176,7 @@ describe("@hia-doc/cli", () => {
 
       expect(exitCode).toBe(0);
       expect(html).toContain("<title>Configured HIA Docs</title>");
-      expect(html).toContain("<html lang=\"en\">");
+      expect(html).toContain("<html lang=\"en\"");
       expect(manifest.title).toBe("Configured HIA Docs");
       expect(manifest.initialLocale).toBe("en");
       expect(manifest.files.at(-1)).toEqual({
@@ -1216,7 +1216,7 @@ describe("@hia-doc/cli", () => {
       const html = await readFile(path.join(root, "from-cli/index.html"), "utf8");
 
       expect(exitCode).toBe(0);
-      expect(html).toContain("<html lang=\"en\">");
+      expect(html).toContain("<html lang=\"en\"");
       await expect(readFile(path.join(root, "from-config/index.html"), "utf8")).rejects.toThrow();
     } finally {
       await rm(root, { force: true, recursive: true });

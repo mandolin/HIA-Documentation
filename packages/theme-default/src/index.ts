@@ -1,3 +1,190 @@
+/**
+ * @lang zh-CN 默认主题 contract 的中性名称；包名与 CSS 命名空间不改变该协议身份。
+ * @lang en Neutral name of the default-theme contract; neither the package name nor the CSS namespace changes this protocol identity.
+ */
+export const DOCUMENTATION_PORTAL_THEME_CONTRACT = "documentation-portal-theme";
+
+/**
+ * @lang zh-CN 默认主题 contract 的首个 exact draft 版本；未知版本不得按字符串猜测兼容。
+ * @lang en First exact draft version of the default-theme contract; consumers must not infer compatibility for unknown versions.
+ */
+export const DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION = "0.1.0-draft";
+
+/**
+ * @lang zh-CN W-P104 首批稳定的 semantic color token 名称。
+ * @lang en Stable semantic color-token names introduced by the W-P104 slice.
+ */
+export const DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES = [
+  "canvas",
+  "surface",
+  "surfaceMuted",
+  "border",
+  "text",
+  "textMuted",
+  "accent",
+  "accentContrast",
+  "accentSoft",
+  "accentHover",
+  "focusRing",
+  "codeBackground",
+  "codeText",
+  "danger"
+] as const;
+
+/**
+ * @lang zh-CN 主题 contract 可识别的 semantic color token 名称。
+ * @lang en Semantic color-token name recognized by the theme contract.
+ */
+export type DocumentationPortalThemeColorTokenName = typeof DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES[number];
+
+/**
+ * @lang zh-CN 一个完整 light 或 dark scheme 的颜色值；每项都按语义命名，不绑定具体组件。
+ * @lang en Complete color values for one light or dark scheme; every field is semantic rather than component-specific.
+ */
+export type DocumentationPortalThemeColorTokens = Readonly<Record<DocumentationPortalThemeColorTokenName, string>>;
+
+/**
+ * @lang zh-CN renderer 与静态 portal 可投射的最小 theme reference；不包含颜色值、用户偏好或私有状态。
+ * @lang en Minimal theme reference projected by renderers and static portals; it contains no color values, user preference, or private state.
+ */
+export interface DocumentationPortalThemeReference {
+  /** @lang zh-CN exact contract 名称。 @lang en Exact contract name. */
+  contract: typeof DOCUMENTATION_PORTAL_THEME_CONTRACT;
+  /** @lang zh-CN exact contract 版本。 @lang en Exact contract version. */
+  contractVersion: typeof DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION;
+  /** @lang zh-CN 当前内置主题名称。 @lang en Name of the current built-in theme. */
+  name: "default";
+  /** @lang zh-CN 颜色模式只跟随系统 preference。 @lang en Color mode follows only the system preference. */
+  colorSchemePolicy: "system";
+  /** @lang zh-CN disclosure 由原生 details/summary 与 open attribute 负责。 @lang en Disclosure is owned by native details/summary and the open attribute. */
+  disclosure: "native-details-summary";
+}
+
+/**
+ * @lang zh-CN W-P104 默认主题的版本化 contract；它冻结 token、disclosure、兼容性和 privacy 边界。
+ * @lang en Versioned W-P104 default-theme contract freezing token, disclosure, compatibility, and privacy boundaries.
+ */
+export interface DocumentationPortalThemeContract extends DocumentationPortalThemeReference {
+  /** @lang zh-CN 支持的构建时 token sets。 @lang en Supported build-time token sets. */
+  colorSchemes: readonly ["light", "dark"];
+  /** @lang zh-CN light/dark 的完整 semantic token 值。 @lang en Complete semantic token values for light and dark schemes. */
+  tokens: Readonly<Record<"light" | "dark", DocumentationPortalThemeColorTokens>>;
+  /** @lang zh-CN 旧 CSS consumer 可继续使用的 additive alias。 @lang en Additive aliases retained for legacy CSS consumers. */
+  legacyAliases: readonly string[];
+  /** @lang zh-CN 原生 disclosure 的状态与 fallback policy。 @lang en State and fallback policy for native disclosure. */
+  disclosurePolicy: {
+    /** @lang zh-CN DOM 状态唯一来源。 @lang en Sole source of DOM state. */
+    stateAuthority: "details-open-attribute";
+    /** @lang zh-CN expanded/collapsed 由 HTML accessibility mapping 提供。 @lang en Expanded/collapsed state comes from the HTML accessibility mapping. */
+    accessibilityState: "native-expanded-state";
+    /** @lang zh-CN 原生 summary 不重复写 authored aria-expanded。 @lang en Native summaries do not duplicate authored aria-expanded. */
+    authoredAriaExpanded: false;
+    /** @lang zh-CN disclosure toggle 不依赖 JavaScript。 @lang en Disclosure toggling does not require JavaScript. */
+    scriptRequired: false;
+    /** @lang zh-CN 打印介质呈现折叠内容。 @lang en Print media reveals disclosure content. */
+    printBehavior: "expand-content";
+  };
+  /** @lang zh-CN draft 演进与旧 CSS alias 规则。 @lang en Draft evolution and legacy CSS-alias rules. */
+  compatibility: {
+    /** @lang zh-CN draft consumer 只接受 exact version。 @lang en Draft consumers accept exact versions only. */
+    exactDraftRequired: true;
+    /** @lang zh-CN 新增 token 是兼容的 additive change。 @lang en Adding a token is a compatible additive change. */
+    additiveTokenChange: "compatible";
+    /** @lang zh-CN 删除、重命名或改变语义需要新 contract 版本。 @lang en Removal, rename, or semantic change requires a new contract version. */
+    semanticTokenChange: "new-contract-version";
+  };
+  /** @lang zh-CN theme metadata 固定不携带的敏感类别。 @lang en Sensitive categories permanently excluded from theme metadata. */
+  privacy: {
+    /** @lang zh-CN 不嵌入源码正文。 @lang en Source bodies are not embedded. */
+    sourceBodyIncluded: false;
+    /** @lang zh-CN 不嵌入原始注释正文。 @lang en Raw comment bodies are not embedded. */
+    rawCommentIncluded: false;
+    /** @lang zh-CN 不嵌入主机绝对路径。 @lang en Host absolute paths are not embedded. */
+    absolutePathIncluded: false;
+    /** @lang zh-CN 不嵌入凭据或 secret。 @lang en Credentials and secrets are not embedded. */
+    credentialIncluded: false;
+    /** @lang zh-CN 不持久化或投射用户主题偏好。 @lang en User theme preferences are neither persisted nor projected. */
+    persistedUserPreferenceIncluded: false;
+  };
+}
+
+/**
+ * @lang zh-CN 默认主题的 immutable-by-contract 描述；runtime consumer 不得原地改写。
+ * @lang en Immutable-by-contract description of the default theme; runtime consumers must not mutate it in place.
+ */
+export const DEFAULT_DOCUMENTATION_PORTAL_THEME = {
+  contract: DOCUMENTATION_PORTAL_THEME_CONTRACT,
+  contractVersion: DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION,
+  name: "default",
+  colorSchemePolicy: "system",
+  disclosure: "native-details-summary",
+  colorSchemes: ["light", "dark"],
+  tokens: {
+    light: {
+      canvas: "#f7f8fa",
+      surface: "#ffffff",
+      surfaceMuted: "#eef2f6",
+      border: "#8793a5",
+      text: "#172033",
+      textMuted: "#4f5e75",
+      accent: "#08736f",
+      accentContrast: "#ffffff",
+      accentSoft: "#d5f0eb",
+      accentHover: "#065f5b",
+      focusRing: "#005fcc",
+      codeBackground: "#101820",
+      codeText: "#d7f4ff",
+      danger: "#9b2c2c"
+    },
+    dark: {
+      canvas: "#10151f",
+      surface: "#18202c",
+      surfaceMuted: "#202a38",
+      border: "#7b899d",
+      text: "#eff4ff",
+      textMuted: "#c6d0df",
+      accent: "#6ee7da",
+      accentContrast: "#061a19",
+      accentSoft: "#153c3a",
+      accentHover: "#9af2e8",
+      focusRing: "#f7c948",
+      codeBackground: "#090f17",
+      codeText: "#d7f4ff",
+      danger: "#ffb4ab"
+    }
+  },
+  legacyAliases: [
+    "--hia-bg",
+    "--hia-surface",
+    "--hia-border",
+    "--hia-text",
+    "--hia-muted",
+    "--hia-accent",
+    "--hia-accent-soft",
+    "--hia-code-bg",
+    "--hia-code-text"
+  ],
+  disclosurePolicy: {
+    stateAuthority: "details-open-attribute",
+    accessibilityState: "native-expanded-state",
+    authoredAriaExpanded: false,
+    scriptRequired: false,
+    printBehavior: "expand-content"
+  },
+  compatibility: {
+    exactDraftRequired: true,
+    additiveTokenChange: "compatible",
+    semanticTokenChange: "new-contract-version"
+  },
+  privacy: {
+    sourceBodyIncluded: false,
+    rawCommentIncluded: false,
+    absolutePathIncluded: false,
+    credentialIncluded: false,
+    persistedUserPreferenceIncluded: false
+  }
+} as const satisfies DocumentationPortalThemeContract;
+
 /** 默认主题 CSS artifact path。Default theme CSS artifact path. */
 export const DEFAULT_THEME_CSS_PATH = "assets/hia-default.css";
 /** 默认主题 JavaScript artifact path。Default theme JavaScript artifact path. */
@@ -5,9 +192,28 @@ export const DEFAULT_THEME_JS_PATH = "assets/hia-default.js";
 
 /** 单个静态主题资源。One static theme asset. */
 export interface HiaThemeAsset {
+  /** @lang zh-CN renderer 输出中的相对资源路径。 @lang en Relative asset path in renderer output. */
   path: string;
+  /** @lang zh-CN UTF-8 静态资源正文。 @lang en UTF-8 static asset body. */
   contents: string;
+  /** @lang zh-CN 带字符集的 MIME 类型。 @lang en MIME type including its character set. */
   contentType: string;
+}
+
+/**
+ * @lang zh-CN 返回不含 token 值的默认 theme reference 副本，供 renderer 安全投射。
+ * @lang en Returns a copy of the default theme reference without token values for safe renderer projection.
+ *
+ * @returns 默认主题的公开 metadata-only reference。Public metadata-only reference for the default theme.
+ */
+export function getDefaultDocumentationPortalThemeReference(): DocumentationPortalThemeReference {
+  return {
+    contract: DEFAULT_DOCUMENTATION_PORTAL_THEME.contract,
+    contractVersion: DEFAULT_DOCUMENTATION_PORTAL_THEME.contractVersion,
+    name: DEFAULT_DOCUMENTATION_PORTAL_THEME.name,
+    colorSchemePolicy: DEFAULT_DOCUMENTATION_PORTAL_THEME.colorSchemePolicy,
+    disclosure: DEFAULT_DOCUMENTATION_PORTAL_THEME.disclosure
+  };
 }
 
 /**
@@ -32,17 +238,50 @@ export function getDefaultThemeAssets(): HiaThemeAsset[] {
 /** 默认主题 CSS；Portal IA 仍依赖 native HTML disclosure，不声明 ARIA tree。Default-theme CSS; Portal IA keeps native HTML disclosure and makes no ARIA-tree claim. */
 export const DEFAULT_THEME_CSS = `
 :root {
-  color-scheme: light;
-  --hia-bg: #f7f8fa;
-  --hia-surface: #ffffff;
-  --hia-border: #d7dde5;
-  --hia-text: #172033;
-  --hia-muted: #5d6b82;
-  --hia-accent: #087f7a;
-  --hia-accent-soft: #dff4ef;
-  --hia-code-bg: #101820;
-  --hia-code-text: #d7f4ff;
+  color-scheme: light dark;
+  --hia-color-canvas: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.canvas};
+  --hia-color-surface: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.surface};
+  --hia-color-surface-muted: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.surfaceMuted};
+  --hia-color-border: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.border};
+  --hia-color-text: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.text};
+  --hia-color-text-muted: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.textMuted};
+  --hia-color-accent: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.accent};
+  --hia-color-accent-contrast: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.accentContrast};
+  --hia-color-accent-soft: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.accentSoft};
+  --hia-color-accent-hover: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.accentHover};
+  --hia-color-focus-ring: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.focusRing};
+  --hia-color-code-background: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.codeBackground};
+  --hia-color-code-text: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.codeText};
+  --hia-color-danger: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.light.danger};
+  --hia-bg: var(--hia-color-canvas);
+  --hia-surface: var(--hia-color-surface);
+  --hia-border: var(--hia-color-border);
+  --hia-text: var(--hia-color-text);
+  --hia-muted: var(--hia-color-text-muted);
+  --hia-accent: var(--hia-color-accent);
+  --hia-accent-soft: var(--hia-color-accent-soft);
+  --hia-code-bg: var(--hia-color-code-background);
+  --hia-code-text: var(--hia-color-code-text);
   font-family: "Inter", "Noto Sans SC", "Source Han Sans SC", "Sarasa Gothic SC", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hia-color-canvas: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.canvas};
+    --hia-color-surface: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.surface};
+    --hia-color-surface-muted: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.surfaceMuted};
+    --hia-color-border: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.border};
+    --hia-color-text: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.text};
+    --hia-color-text-muted: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.textMuted};
+    --hia-color-accent: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.accent};
+    --hia-color-accent-contrast: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.accentContrast};
+    --hia-color-accent-soft: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.accentSoft};
+    --hia-color-accent-hover: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.accentHover};
+    --hia-color-focus-ring: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.focusRing};
+    --hia-color-code-background: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.codeBackground};
+    --hia-color-code-text: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.codeText};
+    --hia-color-danger: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.danger};
+  }
 }
 
 * {
@@ -70,7 +309,7 @@ a {
 .hia-sidebar {
   border-right: 1px solid var(--hia-border);
   padding: 1.5rem;
-  background: #eef2f6;
+  background: var(--hia-color-surface-muted);
 }
 
 .hia-project-split-site .hia-sidebar {
@@ -138,7 +377,7 @@ a {
 .hia-project-view-button[aria-pressed="true"] {
   background: var(--hia-accent);
   border-color: var(--hia-accent);
-  color: #ffffff;
+  color: var(--hia-color-accent-contrast);
 }
 
 .hia-project-search {
@@ -164,9 +403,11 @@ a {
   width: 100%;
 }
 
-.hia-project-search input:focus {
+.hia-project-search input:focus-visible,
+.hia-language-switch select:focus-visible {
   border-color: var(--hia-accent);
-  outline: 2px solid var(--hia-accent-soft);
+  outline: 3px solid var(--hia-color-focus-ring);
+  outline-offset: 2px;
 }
 
 .hia-language-switch {
@@ -306,7 +547,7 @@ a {
 }
 
 .hia-source-unresolved {
-  color: #9b2c2c;
+  color: var(--hia-color-danger);
 }
 
 .hia-project-source-preview {
@@ -359,12 +600,12 @@ a {
   overflow-wrap: anywhere;
 }
 
-.hia-project-hierarchy-list details > summary:focus-visible,
+details > summary:focus-visible,
 .hia-project-entry-link:focus-visible,
 .hia-project-secondary-action:focus-visible,
 .hia-project-view-button:focus-visible,
 .hia-source-fetch-button:focus-visible {
-  outline: 3px solid var(--hia-accent);
+  outline: 3px solid var(--hia-color-focus-ring);
   outline-offset: 2px;
 }
 
@@ -396,7 +637,7 @@ a {
 }
 
 .hia-project-load-error {
-  border-left: 3px solid #b42318;
+  border-left: 3px solid var(--hia-color-danger);
   padding-left: .75rem;
 }
 
@@ -412,7 +653,7 @@ a {
   background: var(--hia-accent);
   border: 1px solid var(--hia-accent);
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--hia-color-accent-contrast);
   cursor: pointer;
   font: inherit;
   font-size: .86rem;
@@ -421,8 +662,9 @@ a {
 }
 
 .hia-source-actions button:hover {
-  background: #065f5b;
-  border-color: #065f5b;
+  background: var(--hia-color-accent-hover);
+  border-color: var(--hia-color-accent-hover);
+  color: var(--hia-color-accent-contrast);
 }
 
 .hia-project-source-map-list {
@@ -511,6 +753,88 @@ a {
 .hia-project-unavailable {
   color: var(--hia-muted);
   font-style: italic;
+}
+
+@media (forced-colors: active) {
+  :root {
+    --hia-color-canvas: Canvas;
+    --hia-color-surface: Canvas;
+    --hia-color-surface-muted: Canvas;
+    --hia-color-border: CanvasText;
+    --hia-color-text: CanvasText;
+    --hia-color-text-muted: CanvasText;
+    --hia-color-accent: LinkText;
+    --hia-color-accent-contrast: Canvas;
+    --hia-color-accent-soft: Canvas;
+    --hia-color-accent-hover: LinkText;
+    --hia-color-focus-ring: Highlight;
+    --hia-color-code-background: Canvas;
+    --hia-color-code-text: CanvasText;
+    --hia-color-danger: MarkText;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: only light;
+    --hia-color-canvas: #ffffff;
+    --hia-color-surface: #ffffff;
+    --hia-color-surface-muted: #ffffff;
+    --hia-color-border: #000000;
+    --hia-color-text: #000000;
+    --hia-color-text-muted: #222222;
+    --hia-color-accent: #000000;
+    --hia-color-accent-contrast: #ffffff;
+    --hia-color-accent-soft: #ffffff;
+    --hia-color-code-background: #ffffff;
+    --hia-color-code-text: #000000;
+  }
+
+  body,
+  .hia-shell {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .hia-shell {
+    display: block;
+  }
+
+  .hia-sidebar,
+  .hia-project-split-site .hia-sidebar {
+    border: 0;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    position: static;
+  }
+
+  .hia-main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .hia-language-switch,
+  .hia-project-search,
+  .hia-project-secondary-action,
+  .hia-project-views,
+  .hia-source-actions {
+    display: none !important;
+  }
+
+  details:not([open]) > *:not(summary) {
+    display: block !important;
+  }
+
+  details > summary {
+    color: #000000;
+  }
+
+  a {
+    color: #000000;
+    text-decoration: underline;
+  }
 }
 
 @media (max-width: 760px) {

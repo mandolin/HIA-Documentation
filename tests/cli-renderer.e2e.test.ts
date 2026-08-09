@@ -37,7 +37,7 @@ describe("CLI to renderer e2e", () => {
 
       expect(exitCode).toBe(0);
       expect(messages.join("\n")).toContain("Generated 4 file");
-      expect(html).toContain("<html lang=\"en\">");
+      expect(html).toContain("<html lang=\"en\"");
       expect(html).toContain("Builds a user profile summary.");
       expect(html).toContain("Referenced Source Fragments");
       expect(html).toContain("src/services/profile-service.js:48");
@@ -95,7 +95,7 @@ describe("CLI to renderer e2e", () => {
 
       expect(exitCode).toBe(0);
       expect(html).toContain("<title>Configured E2E Docs</title>");
-      expect(html).toContain("<html lang=\"en\">");
+      expect(html).toContain("<html lang=\"en\"");
       expect(html).not.toMatch(/(?:^|[\s"'=])[A-Za-z]:[\\/]/);
       expect(manifest.title).toBe("Configured E2E Docs");
       expect(manifest.initialLocale).toBe("en");

@@ -18,7 +18,13 @@ import {
   type HiaSymbol
 } from "@hia-doc/core";
 import type { GeneratedDocumentationBindingHostProjection } from "@hia-doc/source-linkage";
-import { DEFAULT_THEME_CSS_PATH, DEFAULT_THEME_JS_PATH, getDefaultThemeAssets } from "@hia-doc/theme-default";
+import {
+  DEFAULT_THEME_CSS_PATH,
+  DEFAULT_THEME_JS_PATH,
+  getDefaultDocumentationPortalThemeReference,
+  getDefaultThemeAssets,
+  type DocumentationPortalThemeReference
+} from "@hia-doc/theme-default";
 import {
   DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT,
   DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION,
@@ -465,6 +471,8 @@ export interface RenderHtmlManifest {
     generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
+    /** @lang zh-CN 当前静态资源采用的 metadata-only theme reference。 @lang en Metadata-only theme reference used by the current static assets. */
+    theme?: DocumentationPortalThemeReference;
   };
 }
 
@@ -544,6 +552,8 @@ export interface RenderProjectNavigationIndex {
     relationIndexPath?: string;
     sourcePresentation: RenderProjectSourcePresentation;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
+    /** @lang zh-CN Portal consumer 的 exact theme identity 与 system preference policy。 @lang en Exact theme identity and system-preference policy for portal consumers. */
+    theme: DocumentationPortalThemeReference;
   };
 }
 
@@ -989,6 +999,7 @@ function createProjectManifest(
       name: projectInput.project.name,
       views,
       entryCounts: countEntriesByView(projectInput.entries),
+      theme: getDefaultDocumentationPortalThemeReference(),
       ...(projectInput.project.productVersion ? { productVersion: projectInput.project.productVersion } : {}),
       navigationIndex: {
         contract: navigationIndex.contract,
@@ -1098,6 +1109,7 @@ function createProjectNavigationIndex(
     ...(projectInput.ownerAdoption ? { ownerAdoption: projectInput.ownerAdoption } : {}),
     site: {
       layout: options.projectSite?.layout ?? "split-site",
+      theme: getDefaultDocumentationPortalThemeReference(),
       ...(options.projectSite?.layout === "single-page" ? {} : {
         navigationRootPath: "navigation/root.json",
         searchIndexPath: "search/index.json",
@@ -1428,6 +1440,25 @@ function compareStableText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
+/**
+ * @lang zh-CN 生成无脚本也可读取的 theme root metadata；字段只来自内置 exact reference。
+ * @lang en Renders theme-root metadata readable without scripts; every field comes from the built-in exact reference.
+ *
+ * @returns 适用于 `<html>` opening tag 的 escaped attributes。Escaped attributes for an opening `<html>` tag.
+ */
+function renderDefaultThemeRootAttributes(): string {
+  // <lang><zh-CN>每次取得新 reference，避免 renderer 修改 theme owner 的共享对象。</zh-CN><en>Obtain a fresh reference each time so the renderer cannot mutate the theme owner's shared object.</en></lang>
+  const theme = getDefaultDocumentationPortalThemeReference();
+
+  return [
+    `data-hia-theme="${escapeHtml(theme.name)}"`,
+    `data-hia-theme-contract="${escapeHtml(theme.contract)}"`,
+    `data-hia-theme-contract-version="${escapeHtml(theme.contractVersion)}"`,
+    `data-hia-theme-color-scheme-policy="${escapeHtml(theme.colorSchemePolicy)}"`,
+    `data-hia-theme-disclosure="${escapeHtml(theme.disclosure)}"`
+  ].join(" ");
+}
+
 function renderIndexHtml(pageTitle: string, document: HiaDocument, options: RenderHtmlOptions): string {
   const selectedLocale = options.locale || document.defaultLocale;
   const locales = normalizeLocales(document, selectedLocale);
@@ -1438,7 +1469,7 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(selectedLocale)}">`,
+    `<html lang="${escapeHtml(selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -1477,7 +1508,7 @@ function renderProjectSplitSiteHtml(
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}">`,
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -1815,7 +1846,7 @@ function renderProjectIndexHtml(
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}">`,
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",

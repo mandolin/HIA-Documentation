@@ -14,6 +14,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - Marks fallback text with `data-hia-fallback-from`.
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.
 - Emits default CSS/JS assets from `@hia-doc/theme-default`.
+- HTML root、renderer manifest 与 `project-index.json` 投射 metadata-only `documentation-portal-theme@0.1.0-draft` reference；renderer 不解释 token、不保存用户 preference，也不把 presentation state 写入 semantic IR。
 - 项目模式额外输出 `project-index.json`，作为 portal/search 可消费的稳定中立索引；源码正文不会进入该索引。
 - DotNetDoc relation 可投影为 entry 的 `sourceUsability`：稳定 project-relative identity、resolution、confidence、provenance 与 `sourcesContentPolicy: none` 会进入 source topic 和 `project-index.json`；renderer 不据此读取、嵌入或远程抓取源码。
 - 显式 `projectSite.informationArchitecture` 可启用 `documentation-portal-information-architecture@0.1.0-draft`：`entry|semantic-container`、`lazy|eager`、`separate|with-parent` 三维独立；`contentPath` 保持 canonical，additive `presentationPath/memberAnchor` 驱动实际加载与定位。
@@ -26,5 +27,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 ## Contract
 
 The renderer manifest schema version is exported as `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION`. Project navigation index identity is exported as `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT` and `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION`. Portal IA identity, exact draft version, vocabulary, types, resolver, touched-label catalog, and owner-local Draft 2020-12 schema are exported through `DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_*`. `RenderProjectOwnerAdoptionSummary` is a structural consumer view of the CLI-owned adoption-kit projection; the renderer does not own or reinterpret the full kit contract.
+
+Native `<details>/<summary>` remains the disclosure authority. Expanded state comes from `details[open]` and the browser accessibility mapping; the renderer does not duplicate authored `aria-expanded`. No-script and print fallback are supplied by the theme asset.
 
 Renderer output is separate from CLI filesystem output. See `docs/contract-index.md` for the current layering rule.
