@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1.0-draft",
-  "releaseTrain": "trusted-publisher-patch-rehearsal",
+  "releaseTrain": "trusted-publisher-patch-release",
   "scope": "@hia-doc",
   "registry": "https://registry.npmjs.org/",
   "runtimeNodeRange": ">=20.19.0",
@@ -25,7 +25,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 10,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/config",
@@ -33,7 +33,7 @@
       "targetVersion": "0.1.5",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/profile",
@@ -97,7 +97,7 @@
       "targetVersion": "0.1.4",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/schemas",
@@ -105,7 +105,7 @@
       "targetVersion": "0.1.4",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/lsp",
@@ -121,7 +121,7 @@
       "targetVersion": "0.1.6",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [
