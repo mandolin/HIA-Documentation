@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/cli",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Command line entry for the HIA documentation system.",
   "license": "MIT",
   "repository": {

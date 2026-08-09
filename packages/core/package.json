@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core HIA document model and early validation helpers.",
   "license": "MIT",
   "repository": {

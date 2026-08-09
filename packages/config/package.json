@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/config",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Project configuration contract and loader for HIA documentation tools.",
   "license": "MIT",
   "repository": {
