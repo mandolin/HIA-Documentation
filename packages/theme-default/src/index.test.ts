@@ -67,6 +67,9 @@ describe("@hia-doc/theme-default", () => {
     expect(css).toContain("@media (prefers-color-scheme: dark)");
     expect(css).toContain("@media (forced-colors: active)");
     expect(css).toContain("@media print");
+    // <lang><zh-CN>真实 BP 会产生长字段键；字段本身和窄屏 grid 都必须允许收缩。</zh-CN><en>Real BP output emits long field keys; both the field and narrow grid must be shrinkable.</en></lang>
+    expect(css).toMatch(/\.hia-i18n-field dt,\s*\.hia-i18n-field dd\s*\{[^}]*min-width: 0;[^}]*overflow-wrap: anywhere;/u);
+    expect(css).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.hia-i18n-field \{\s*grid-template-columns: minmax\(0, 1fr\);/u);
     expect(css).toContain("details:not([open]) > *:not(summary)");
     expect(css).toContain("--hia-bg: var(--hia-color-canvas)");
     expect(css).toContain("--hia-color-focus-ring");

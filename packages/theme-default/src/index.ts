@@ -528,6 +528,12 @@ a {
   font-size: .85rem;
 }
 
+.hia-i18n-field dt,
+.hia-i18n-field dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .hia-i18n-field dd {
   margin: 0;
 }
@@ -840,6 +846,11 @@ details > summary:focus-visible,
 @media (max-width: 760px) {
   .hia-shell {
     display: block;
+  }
+
+  /* <lang><zh-CN>窄屏把长字段键与正文改为单列，避免术语键撑大页面。</zh-CN><en>Stack long field keys and bodies on narrow screens so terminology keys cannot widen the page.</en></lang> */
+  .hia-i18n-field {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .hia-sidebar {
