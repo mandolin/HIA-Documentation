@@ -6,6 +6,8 @@ import {
   HIA_PROJECT_MANIFEST_SCHEMA_VERSION
 } from "../../config/dist/index.js";
 import {
+  BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
+  BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA,
@@ -47,6 +49,15 @@ const checkOnly = process.argv.includes("--check");
 const publicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 
 const definitions = [
+  // <lang><zh-CN>业务流程 schema 只承载 owner-authored 非执行事实；图语义与 code target registry 仍由 core pure validator/producer 校验。</zh-CN><en>The business-flow schema carries only owner-authored non-executable facts; core's pure validator/producer still enforces graph semantics and the code-target registry.</en></lang>
+  {
+    contractVersion: BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
+    fileName: "business-flow-documentation.schema.json",
+    key: "business-flow-documentation",
+    ownerPackage: "@hia-doc/core",
+    schema: BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
+    stability: "draft"
+  },
   {
     contractVersion: HIA_PROFILE_SCHEMA_VERSION,
     fileName: "documentation-profile.schema.json",

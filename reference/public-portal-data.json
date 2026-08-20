@@ -95,6 +95,7 @@
     "schemas": {
       "minimumCount": 12,
       "keys": [
+        "business-flow-documentation",
         "documentation-profile",
         "documentation-producer",
         "documentation-producer-result",

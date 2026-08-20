@@ -13,6 +13,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Neutral `documentation-presentation-profile@0.1.0-draft` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
+- Neutral `business-flow-documentation@0.1.0-draft` contract, semantic validator and deterministic non-executing producer for owner-authored business-flow facts.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
@@ -31,6 +32,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Documentation terminology: `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION`
 - Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
 - Documentation presentation profile: `DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION`
+- Business-flow documentation: `BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION`
 - Documentation source-comment projection: `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION`
 
 ## Documentation Locale Resources
@@ -94,5 +96,13 @@ read, body decoding, integrity hashing, cache write or fallback.
 
 The source reader state machine distinguishes ready, empty, denied, not-found, integrity-error, network-error and aborted
 outcomes. See `docs/documentation-presentation-profile-contract.md` for host responsibilities and adoption boundaries.
+
+## Business Flow Documentation
+
+`business-flow-documentation@0.1.0-draft` models owner-authored flows, typed nodes/relations, metadata-only evidence,
+code bindings, diagnostics, privacy and exact compatibility. The pure validator enforces the P1 acyclic branch/merge/
+exception graph. The producer resolves only a caller-supplied documentation-entry registry and returns frozen canonical
+facts, stable JSON and count-only evidence; it does not parse source, execute conditions, infer business truth, render a
+graph, or access targets. See `docs/business-flow-documentation-contract.md`.
 
 See `docs/contract-index.md` and `docs/core-fixture-contract.md` in the repository root for the current contract baseline.

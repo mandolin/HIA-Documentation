@@ -22,6 +22,7 @@ The package exports its catalog and each schema as JSON:
 
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
+import businessFlowSchema from "@hia-doc/schemas/business-flow-documentation.schema.json" with { type: "json" };
 import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" with { type: "json" };
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
@@ -55,6 +56,10 @@ tags, stable comment keys, closed-world privacy, and body-policy consistency bey
 `documentation-presentation-profile` is owned by `@hia-doc/core`. Its runtime validator enforces stable topic/navigation/relation
 identity, deterministic page partitioning, same-origin relative source assets, exact integrity metadata, theme capabilities,
 reader transitions, and the body-free privacy boundary beyond the structural schema.
+
+`business-flow-documentation` is owned by `@hia-doc/core`. Its runtime validator enforces stable identity, closed node/relation
+kinds, entry/end references, reachability, acyclicity, branch/merge/exception rules, independent quality dimensions,
+authorship, metadata-only evidence, code-binding references, privacy, and exact compatibility beyond the structural schema.
 
 ## Status
 

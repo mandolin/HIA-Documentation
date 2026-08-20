@@ -1,0 +1,934 @@
+{
+  "contract": "business-flow-documentation",
+  "contractVersion": "0.1.0-draft",
+  "flows": [
+    {
+      "id": "generic-device-operation-request",
+      "defaultLocale": "zh-CN",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "通用设备操作请求",
+        "en": "Generic device operation request"
+      },
+      "entryNodeId": "start.request-received",
+      "endNodeIds": [
+        "end.failed",
+        "end.rejected",
+        "end.success"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "actor.audit-service",
+      "flowId": "generic-device-operation-request",
+      "kind": "actor",
+      "actorKind": "system-role",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "审计服务",
+        "en": "Audit service"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "actor.business-service",
+      "flowId": "generic-device-operation-request",
+      "kind": "actor",
+      "actorKind": "system-role",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "业务服务",
+        "en": "Business service"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "actor.device-gateway",
+      "flowId": "generic-device-operation-request",
+      "kind": "actor",
+      "actorKind": "system-role",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "设备网关",
+        "en": "Device gateway"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "actor.operator",
+      "flowId": "generic-device-operation-request",
+      "kind": "actor",
+      "actorKind": "human-role",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "操作员角色",
+        "en": "Operator role"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "actor.policy-service",
+      "flowId": "generic-device-operation-request",
+      "kind": "actor",
+      "actorKind": "system-role",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "策略服务",
+        "en": "Policy service"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "artifact.audit-record",
+      "flowId": "generic-device-operation-request",
+      "kind": "artifact",
+      "artifactKind": "record",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "审计记录类型",
+        "en": "Audit record type"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "artifact.dispatch-receipt",
+      "flowId": "generic-device-operation-request",
+      "kind": "artifact",
+      "artifactKind": "message",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "下发回执类型",
+        "en": "Dispatch receipt type"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "artifact.operation-request",
+      "flowId": "generic-device-operation-request",
+      "kind": "artifact",
+      "artifactKind": "data",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "操作请求类型",
+        "en": "Operation request type"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "artifact.validation-result",
+      "flowId": "generic-device-operation-request",
+      "kind": "artifact",
+      "artifactKind": "data",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "校验结果类型",
+        "en": "Validation result type"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "decision.request-authorized",
+      "flowId": "generic-device-operation-request",
+      "kind": "decision",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "请求是否已授权",
+        "en": "Is the request authorized"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "decision.request-valid",
+      "flowId": "generic-device-operation-request",
+      "kind": "decision",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "请求是否有效",
+        "en": "Is the request valid"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "end.failed",
+      "flowId": "generic-device-operation-request",
+      "kind": "end",
+      "outcome": "failed",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "处理失败",
+        "en": "Processing failed"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "end.rejected",
+      "flowId": "generic-device-operation-request",
+      "kind": "end",
+      "outcome": "rejected",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "请求被拒绝",
+        "en": "Request rejected"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "end.success",
+      "flowId": "generic-device-operation-request",
+      "kind": "end",
+      "outcome": "success",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "处理成功",
+        "en": "Processing succeeded"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "merge.rejection-paths",
+      "flowId": "generic-device-operation-request",
+      "kind": "merge",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "汇合拒绝路径",
+        "en": "Merge rejection paths"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "start.request-received",
+      "flowId": "generic-device-operation-request",
+      "kind": "start",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "收到操作请求",
+        "en": "Operation request received"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.authorize-request",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "授权请求",
+        "en": "Authorize request"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.dispatch-operation",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "下发操作",
+        "en": "Dispatch operation"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.notify-failure",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "通知失败结果",
+        "en": "Notify failure outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.notify-rejection",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "通知拒绝结果",
+        "en": "Notify rejection outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.notify-success",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "通知成功结果",
+        "en": "Notify success outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.persist-success",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "记录成功结果",
+        "en": "Persist success outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.record-failure",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "记录失败结果",
+        "en": "Record failure outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.record-rejection",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "记录拒绝结果",
+        "en": "Record rejection outcome"
+      },
+      "authorship": "author-provided"
+    },
+    {
+      "id": "step.validate-request",
+      "flowId": "generic-device-operation-request",
+      "kind": "step",
+      "privacyClass": "public",
+      "labels": {
+        "zh-CN": "校验请求",
+        "en": "Validate request"
+      },
+      "authorship": "author-provided"
+    }
+  ],
+  "relations": [
+    {
+      "id": "control.01-received-to-validate",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "start.request-received",
+      "to": "step.validate-request",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.02-validate-to-validity",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.validate-request",
+      "to": "decision.request-valid",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.03-valid-to-authorize",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "branch",
+      "from": "decision.request-valid",
+      "to": "step.authorize-request",
+      "order": 0,
+      "caseKey": "valid",
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.04-invalid-to-rejection-merge",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "branch",
+      "from": "decision.request-valid",
+      "to": "merge.rejection-paths",
+      "order": 1,
+      "caseKey": "invalid",
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.05-authorize-to-decision",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.authorize-request",
+      "to": "decision.request-authorized",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.06-authorized-to-dispatch",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "branch",
+      "from": "decision.request-authorized",
+      "to": "step.dispatch-operation",
+      "order": 0,
+      "caseKey": "authorized",
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.07-denied-to-rejection-merge",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "branch",
+      "from": "decision.request-authorized",
+      "to": "merge.rejection-paths",
+      "order": 1,
+      "caseKey": "denied",
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.08-merge-to-rejection-record",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "merge.rejection-paths",
+      "to": "step.record-rejection",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.09-rejection-record-to-notify",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.record-rejection",
+      "to": "step.notify-rejection",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.10-rejection-notify-to-end",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.notify-rejection",
+      "to": "end.rejected",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.11-dispatch-to-success-record",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.dispatch-operation",
+      "to": "step.persist-success",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.12-dispatch-exception-to-failure",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "exception",
+      "from": "step.dispatch-operation",
+      "to": "step.record-failure",
+      "order": 1,
+      "caseKey": "dispatch-failed",
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.13-success-record-to-notify",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.persist-success",
+      "to": "step.notify-success",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.14-success-notify-to-end",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.notify-success",
+      "to": "end.success",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.15-failure-record-to-notify",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.record-failure",
+      "to": "step.notify-failure",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "control.16-failure-notify-to-end",
+      "flowId": "generic-device-operation-request",
+      "family": "control",
+      "kind": "sequence",
+      "from": "step.notify-failure",
+      "to": "end.failed",
+      "order": 0,
+      "authorship": "author-provided",
+      "quality": {
+        "resolution": "not-applicable",
+        "confidence": "high",
+        "provenance": {
+          "origin": "author-provided",
+          "evidenceRefs": [
+            "evidence.synthetic-author"
+          ]
+        }
+      }
+    },
+    {
+      "id": "responsibility.01-validate-by-business",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.validate-request",
+      "to": "actor.business-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.02-validity-by-business",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "decision.request-valid",
+      "to": "actor.business-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.03-authorize-by-policy",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.authorize-request",
+      "to": "actor.policy-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.04-authorization-by-policy",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "decision.request-authorized",
+      "to": "actor.policy-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.05-record-rejection-by-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.record-rejection",
+      "to": "actor.audit-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.06-dispatch-by-gateway",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.dispatch-operation",
+      "to": "actor.device-gateway",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.07-persist-success-by-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.persist-success",
+      "to": "actor.audit-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.08-record-failure-by-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.record-failure",
+      "to": "actor.audit-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.09-notify-rejection-by-business",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.notify-rejection",
+      "to": "actor.business-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.10-notify-success-by-business",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.notify-success",
+      "to": "actor.business-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "responsibility.11-notify-failure-by-business",
+      "flowId": "generic-device-operation-request",
+      "family": "responsibility",
+      "kind": "performed-by",
+      "from": "step.notify-failure",
+      "to": "actor.business-service",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.01-validate-reads-request",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "reads",
+      "from": "step.validate-request",
+      "to": "artifact.operation-request",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.02-validate-emits-result",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "emits",
+      "from": "step.validate-request",
+      "to": "artifact.validation-result",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.03-authorize-reads-request",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "reads",
+      "from": "step.authorize-request",
+      "to": "artifact.operation-request",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.04-authorize-reads-validation",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "reads",
+      "from": "step.authorize-request",
+      "to": "artifact.validation-result",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.05-rejection-writes-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "writes",
+      "from": "step.record-rejection",
+      "to": "artifact.audit-record",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.06-dispatch-reads-request",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "reads",
+      "from": "step.dispatch-operation",
+      "to": "artifact.operation-request",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.07-dispatch-emits-receipt",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "emits",
+      "from": "step.dispatch-operation",
+      "to": "artifact.dispatch-receipt",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.08-success-reads-receipt",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "reads",
+      "from": "step.persist-success",
+      "to": "artifact.dispatch-receipt",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.09-success-writes-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "writes",
+      "from": "step.persist-success",
+      "to": "artifact.audit-record",
+      "authorship": "author-provided"
+    },
+    {
+      "id": "data.10-failure-writes-audit",
+      "flowId": "generic-device-operation-request",
+      "family": "data",
+      "kind": "writes",
+      "from": "step.record-failure",
+      "to": "artifact.audit-record",
+      "authorship": "author-provided"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence.synthetic-author",
+      "kind": "author-declaration",
+      "privacyClass": "public",
+      "locatorKind": "logical-id",
+      "locator": "synthetic.flow.generic-device-operation-request",
+      "bodyIncluded": false
+    },
+    {
+      "id": "evidence.synthetic-producer",
+      "kind": "producer-resolution",
+      "privacyClass": "public",
+      "locatorKind": "logical-id",
+      "locator": "synthetic.index.business-flow-docs",
+      "bodyIncluded": false
+    }
+  ],
+  "codeBindings": [
+    {
+      "id": "binding.authorize-request",
+      "flowId": "generic-device-operation-request",
+      "businessNodeId": "step.authorize-request",
+      "targetKind": "doc-entry",
+      "targetId": "synthetic.policy.authorize-request",
+      "authorship": "producer-resolved",
+      "quality": {
+        "resolution": "resolved",
+        "confidence": "high",
+        "provenance": {
+          "origin": "producer-resolved",
+          "evidenceRefs": [
+            "evidence.synthetic-producer"
+          ]
+        }
+      }
+    },
+    {
+      "id": "binding.dispatch-operation",
+      "flowId": "generic-device-operation-request",
+      "businessNodeId": "step.dispatch-operation",
+      "targetKind": "doc-entry",
+      "targetId": "synthetic.gateway.dispatch-operation",
+      "authorship": "producer-resolved",
+      "quality": {
+        "resolution": "resolved",
+        "confidence": "high",
+        "provenance": {
+          "origin": "producer-resolved",
+          "evidenceRefs": [
+            "evidence.synthetic-producer"
+          ]
+        }
+      }
+    },
+    {
+      "id": "binding.persist-success",
+      "flowId": "generic-device-operation-request",
+      "businessNodeId": "step.persist-success",
+      "targetKind": "doc-entry",
+      "targetId": "synthetic.audit.persist-outcome",
+      "authorship": "producer-resolved",
+      "quality": {
+        "resolution": "resolved",
+        "confidence": "high",
+        "provenance": {
+          "origin": "producer-resolved",
+          "evidenceRefs": [
+            "evidence.synthetic-producer"
+          ]
+        }
+      }
+    },
+    {
+      "id": "binding.validate-request",
+      "flowId": "generic-device-operation-request",
+      "businessNodeId": "step.validate-request",
+      "targetKind": "doc-entry",
+      "targetId": "synthetic.business.validate-request",
+      "authorship": "producer-resolved",
+      "quality": {
+        "resolution": "resolved",
+        "confidence": "high",
+        "provenance": {
+          "origin": "producer-resolved",
+          "evidenceRefs": [
+            "evidence.synthetic-producer"
+          ]
+        }
+      }
+    }
+  ],
+  "diagnostics": [],
+  "privacy": {
+    "sourceBodyIncluded": false,
+    "sourceRangeIncluded": false,
+    "absolutePathIncluded": false,
+    "runtimePayloadIncluded": false,
+    "personalIdentityIncluded": false,
+    "credentialIncluded": false,
+    "targetIdentityIncluded": false
+  },
+  "compatibility": {
+    "versionMatch": "exact",
+    "unknownProperties": "reject",
+    "unknownKindPolicy": "reject",
+    "migrationPolicy": "explicit-pure-identity-preserving"
+  }
+}

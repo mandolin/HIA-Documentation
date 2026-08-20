@@ -20,6 +20,7 @@
       "import": "./dist/index.js"
     },
     "./catalog.json": "./dist/catalog.json",
+    "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
     "./documentation-profile.schema.json": "./dist/schemas/documentation-profile.schema.json",
     "./documentation-producer.schema.json": "./dist/schemas/documentation-producer.schema.json",
     "./documentation-producer-result.schema.json": "./dist/schemas/documentation-producer-result.schema.json",

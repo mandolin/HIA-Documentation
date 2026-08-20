@@ -4,6 +4,15 @@
   "schemas": [
     {
       "contractVersion": "0.1.0-draft",
+      "key": "business-flow-documentation",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./business-flow-documentation.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "documentation-profile",
       "ownerPackage": "@hia-doc/profile",
       "path": "./documentation-profile.schema.json",

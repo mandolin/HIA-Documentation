@@ -8,6 +8,9 @@ import {
   validateHiaProjectManifest
 } from "../packages/config/dist/index.js";
 import {
+  BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
+  BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
+  BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID,
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT,
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT,
@@ -255,6 +258,16 @@ assert(
   "Documentation source-comment projection contractVersion const drifted."
 );
 
+// <lang><zh-CN>业务流程 schema checker 锁定 exact draft、closed-world、非执行隐私与节点/关系闭集；引用和图不变量仍由 core runtime validator 负责。</zh-CN><en>The business-flow schema checker freezes the exact draft, closed world, non-executable privacy, and node/relation closed sets; core's runtime validator still owns references and graph invariants.</en></lang>
+assert(
+  BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA.$id === BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID
+    && BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA.properties.contractVersion.const === BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION
+    && BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA.additionalProperties === false
+    && BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA.$defs.privacy.properties.sourceBodyIncluded.const === false
+    && BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA.$defs.compatibility.properties.versionMatch.const === "exact",
+  "Business-flow documentation schema or privacy/compatibility boundary drifted."
+);
+
 // <lang><zh-CN>Presentation schema checker 锁定 multi-page/fetch 默认、closed-world 与 body-free privacy；跨字段 identity/source/theme 仍由 core runtime validator 负责。</zh-CN><en>The presentation schema checker freezes multi-page/fetch defaults, closed-world shape, and body-free privacy; the core runtime validator still owns cross-field identity/source/theme semantics.</en></lang>
 assert(
   DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$id === DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID,
@@ -270,6 +283,7 @@ assert(
 );
 
 const ownerSchemas = new Map([
+  [BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID, BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA],
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA],
@@ -298,4 +312,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation presentation profile schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 business-flow documentation schema, 1 documentation presentation profile schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

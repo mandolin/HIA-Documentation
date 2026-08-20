@@ -8,6 +8,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 
 | Catalog key | Owner package | Contract status |
 | --- | --- | --- |
+| `business-flow-documentation` | `@hia-doc/core` | draft |
 | `hia-document` | `@hia-doc/core` | active pre-1.0 |
 | `project-manifest` | `@hia-doc/config` | draft |
 | `documentation-profile` | `@hia-doc/profile` | draft |
@@ -38,6 +39,7 @@ Explicit JSON exports are available for non-runtime consumers:
 
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
+import businessFlowSchema from "@hia-doc/schemas/business-flow-documentation.schema.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import localeResourceDeclarationSchema from "@hia-doc/schemas/documentation-locale-resource-declaration.schema.json" with { type: "json" };
@@ -61,6 +63,7 @@ Canonical examples:
 
 ```text
 https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json
 ```
 

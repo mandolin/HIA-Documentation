@@ -1,0 +1,602 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json",
+  "title": "Business Flow Documentation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "flows",
+    "nodes",
+    "relations",
+    "evidence",
+    "codeBindings",
+    "diagnostics",
+    "privacy",
+    "compatibility"
+  ],
+  "properties": {
+    "contract": {
+      "const": "business-flow-documentation"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "flows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/flow"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "maxItems": 50000,
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "codeBindings": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/codeBinding"
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    }
+  },
+  "$defs": {
+    "labels": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 64,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "author-provided",
+            "producer-resolved"
+          ]
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resolution",
+        "confidence",
+        "provenance"
+      ],
+      "properties": {
+        "resolution": {
+          "enum": [
+            "resolved",
+            "unresolved",
+            "ambiguous",
+            "not-applicable"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low",
+            "unknown"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "defaultLocale",
+        "privacyClass",
+        "labels",
+        "entryNodeId",
+        "endNodeIds"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "defaultLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$"
+        },
+        "privacyClass": {
+          "enum": [
+            "public",
+            "internal",
+            "restricted"
+          ],
+          "default": "internal"
+        },
+        "labels": {
+          "$ref": "#/$defs/labels"
+        },
+        "entryNodeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "endNodeIds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+          }
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "flowId",
+        "kind",
+        "privacyClass",
+        "labels",
+        "authorship"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "flowId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "kind": {
+          "enum": [
+            "start",
+            "step",
+            "decision",
+            "merge",
+            "end",
+            "actor",
+            "artifact"
+          ]
+        },
+        "privacyClass": {
+          "enum": [
+            "public",
+            "internal",
+            "restricted"
+          ]
+        },
+        "labels": {
+          "$ref": "#/$defs/labels"
+        },
+        "authorship": {
+          "enum": [
+            "author-provided",
+            "producer-resolved"
+          ]
+        },
+        "actorKind": {
+          "enum": [
+            "human-role",
+            "system-role",
+            "organization-role"
+          ]
+        },
+        "artifactKind": {
+          "enum": [
+            "data",
+            "message",
+            "record",
+            "document"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "success",
+            "rejected",
+            "failed",
+            "cancelled"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "actor"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "actorKind"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "artifact"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "artifactKind"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "end"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "outcome"
+            ]
+          }
+        }
+      ]
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "flowId",
+        "family",
+        "kind",
+        "from",
+        "to",
+        "authorship"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "flowId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "family": {
+          "enum": [
+            "control",
+            "responsibility",
+            "data"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "sequence",
+            "branch",
+            "exception",
+            "performed-by",
+            "reads",
+            "writes",
+            "emits"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "caseKey": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "authorship": {
+          "enum": [
+            "author-provided",
+            "producer-resolved"
+          ]
+        },
+        "quality": {
+          "$ref": "#/$defs/quality"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "family": {
+                "const": "control"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "order",
+              "quality"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "branch",
+                  "exception"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "caseKey"
+            ]
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "privacyClass",
+        "locatorKind",
+        "locator",
+        "bodyIncluded"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "privacyClass": {
+          "enum": [
+            "public",
+            "internal",
+            "restricted"
+          ]
+        },
+        "locatorKind": {
+          "const": "logical-id"
+        },
+        "locator": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "bodyIncluded": {
+          "const": false
+        }
+      }
+    },
+    "codeBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "flowId",
+        "businessNodeId",
+        "targetKind",
+        "targetId",
+        "authorship",
+        "quality"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "flowId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "businessNodeId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "targetKind": {
+          "const": "doc-entry"
+        },
+        "targetId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+        },
+        "authorship": {
+          "const": "producer-resolved"
+        },
+        "quality": {
+          "$ref": "#/$defs/quality"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "severity"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "BFD_INVALID_CONTRACT",
+            "BFD_DUPLICATE_ID",
+            "BFD_UNKNOWN_REFERENCE",
+            "BFD_INVALID_ENTRY_OR_END",
+            "BFD_UNREACHABLE_CONTROL_NODE",
+            "BFD_CONTROL_CYCLE_UNSUPPORTED",
+            "BFD_BRANCH_INVARIANT",
+            "BFD_MERGE_INVARIANT",
+            "BFD_EXCEPTION_INVARIANT",
+            "BFD_AUTHORSHIP_BOUNDARY",
+            "BFD_QUALITY_DIMENSION_INVALID",
+            "BFD_PRIVACY_BOUNDARY",
+            "BFD_CODE_BINDING_UNRESOLVED",
+            "BFD_COMPATIBILITY_UNSUPPORTED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "targetPath": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceBodyIncluded",
+        "sourceRangeIncluded",
+        "absolutePathIncluded",
+        "runtimePayloadIncluded",
+        "personalIdentityIncluded",
+        "credentialIncluded",
+        "targetIdentityIncluded"
+      ],
+      "properties": {
+        "sourceBodyIncluded": {
+          "const": false
+        },
+        "sourceRangeIncluded": {
+          "const": false
+        },
+        "absolutePathIncluded": {
+          "const": false
+        },
+        "runtimePayloadIncluded": {
+          "const": false
+        },
+        "personalIdentityIncluded": {
+          "const": false
+        },
+        "credentialIncluded": {
+          "const": false
+        },
+        "targetIdentityIncluded": {
+          "const": false
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versionMatch",
+        "unknownProperties",
+        "unknownKindPolicy",
+        "migrationPolicy"
+      ],
+      "properties": {
+        "versionMatch": {
+          "const": "exact"
+        },
+        "unknownProperties": {
+          "const": "reject"
+        },
+        "unknownKindPolicy": {
+          "const": "reject"
+        },
+        "migrationPolicy": {
+          "const": "explicit-pure-identity-preserving"
+        }
+      }
+    }
+  }
+}
