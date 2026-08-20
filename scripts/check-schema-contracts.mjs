@@ -28,6 +28,9 @@ import {
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
   DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID,
+  DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
+  DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
+  DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_SCHEMA_ID,
@@ -252,6 +255,20 @@ assert(
   "Documentation source-comment projection contractVersion const drifted."
 );
 
+// <lang><zh-CN>Presentation schema checker 锁定 multi-page/fetch 默认、closed-world 与 body-free privacy；跨字段 identity/source/theme 仍由 core runtime validator 负责。</zh-CN><en>The presentation schema checker freezes multi-page/fetch defaults, closed-world shape, and body-free privacy; the core runtime validator still owns cross-field identity/source/theme semantics.</en></lang>
+assert(
+  DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$id === DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID,
+  "Documentation presentation profile schema id drifted."
+);
+assert(
+  DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION
+    && DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.additionalProperties === false
+    && DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$defs.pagePartition.properties.defaultMode.const === "multi-page"
+    && DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$defs.source.properties.defaultMode.const === "fetch"
+    && DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$defs.privacy.properties.sourceBodyInContract.const === false,
+  "Documentation presentation profile default or privacy boundary drifted."
+);
+
 const ownerSchemas = new Map([
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],
   [DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA],
@@ -259,6 +276,7 @@ const ownerSchemas = new Map([
   [DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID, DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA],
   [DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA],
   [DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA],
+  [DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID, DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA],
   [DOCUMENTATION_SOURCE_COMMENT_PROJECTION_SCHEMA_ID, DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
@@ -280,4 +298,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 documentation presentation profile schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

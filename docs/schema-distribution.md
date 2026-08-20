@@ -20,6 +20,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-terminology` | `@hia-doc/core` | draft |
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
+| `documentation-presentation-profile` | `@hia-doc/core` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
 
@@ -44,6 +45,7 @@ import localeResolutionSchema from "@hia-doc/schemas/documentation-locale-resolu
 import terminologySchema from "@hia-doc/schemas/documentation-terminology.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
+import presentationProfileSchema from "@hia-doc/schemas/documentation-presentation-profile.schema.json" with { type: "json" };
 import producerSchema from "@hia-doc/schemas/documentation-producer.schema.json" with { type: "json" };
 ```
 

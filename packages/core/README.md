@@ -12,6 +12,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-locale-resource-declaration@0.1.0-draft` controlled catalog declaration and public-safe catalog-only discovery/sidecar contract.
 - Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
+- Neutral `documentation-presentation-profile@0.1.0-draft` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
@@ -29,6 +30,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Documentation locale-resource declaration/discovery: `DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION`
 - Documentation terminology: `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION`
 - Documentation quality review: `DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION`
+- Documentation presentation profile: `DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION`
 - Documentation source-comment projection: `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION`
 
 ## Documentation Locale Resources
@@ -82,5 +84,15 @@ separate. The pure evaluator performs no source read, parser execution, resource
 
 Content defaults to `none`. Source bodies, raw comments, and ordinary source-map `sourcesContent` are always excluded. See
 `docs/documentation-source-comment-projection-contract.md` for the double-opt-in Portal boundary.
+
+## Documentation Presentation Profile
+
+`documentation-presentation-profile@0.1.0-draft` defines renderer-neutral page, source, theme, identity, privacy and
+compatibility facts. Multi-page and fetch are normative defaults; single-page is an explicit compatibility profile and
+`none` is an explicit body-free privacy state. The core fetch-plan builder is pure: it performs no network request, file
+read, body decoding, integrity hashing, cache write or fallback.
+
+The source reader state machine distinguishes ready, empty, denied, not-found, integrity-error, network-error and aborted
+outcomes. See `docs/documentation-presentation-profile-contract.md` for host responsibilities and adoption boundaries.
 
 See `docs/contract-index.md` and `docs/core-fixture-contract.md` in the repository root for the current contract baseline.

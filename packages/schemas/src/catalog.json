@@ -94,6 +94,15 @@
     },
     {
       "contractVersion": "0.1.0-draft",
+      "key": "documentation-presentation-profile",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./documentation-presentation-profile.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "documentation-source-comment-projection",
       "ownerPackage": "@hia-doc/core",
       "path": "./documentation-source-comment-projection.schema.json",

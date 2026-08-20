@@ -16,6 +16,8 @@ import {
   DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA,
   DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION,
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
+  DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
+  DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
@@ -125,6 +127,15 @@ const definitions = [
     key: "documentation-quality-review",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>跨 renderer presentation profile 只分发 neutral page/source/theme/privacy 语义，不承载 owner DOM、CSS 或 source body。</zh-CN><en>The cross-renderer presentation profile distributes only neutral page/source/theme/privacy semantics and carries no owner DOM, CSS, or source body.</en></lang>
+  {
+    contractVersion: DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
+    fileName: "documentation-presentation-profile.schema.json",
+    key: "documentation-presentation-profile",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
     stability: "draft"
   },
   // <lang><zh-CN>source-comment projection 是独立 sidecar contract；普通 source map 不承载正文或完整模型。</zh-CN><en>The source-comment projection is an independent sidecar contract; ordinary source maps carry neither bodies nor the full model.</en></lang>

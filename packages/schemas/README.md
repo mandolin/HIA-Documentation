@@ -26,6 +26,7 @@ import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" w
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
+import presentationProfileSchema from "@hia-doc/schemas/documentation-presentation-profile.schema.json" with { type: "json" };
 import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
 ```
 
@@ -50,6 +51,10 @@ limits and metadata-only privacy.
 
 `documentation-source-comment-projection` is also owned by `@hia-doc/core`. Its runtime validator enforces canonical BCP 47
 tags, stable comment keys, closed-world privacy, and body-policy consistency beyond the structural schema.
+
+`documentation-presentation-profile` is owned by `@hia-doc/core`. Its runtime validator enforces stable topic/navigation/relation
+identity, deterministic page partitioning, same-origin relative source assets, exact integrity metadata, theme capabilities,
+reader transitions, and the body-free privacy boundary beyond the structural schema.
 
 ## Status
 
