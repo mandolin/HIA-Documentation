@@ -9,7 +9,10 @@ import {
   HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION,
   HIA_CONFIG_PORTAL_LOADING_STRATEGIES,
   HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS,
+  HIA_CONFIG_PORTAL_SCHEMES,
+  HIA_CONFIG_PORTAL_SKINS,
   HIA_CONFIG_PORTAL_UI_LOCALES,
+  HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES,
   HIA_CONFIG_SOURCE_MODES,
   HIA_CONFIG_SOURCE_PRESENTATIONS,
   HIA_CONFIG_SCHEMA_VERSION,
@@ -40,11 +43,14 @@ describe("@hia-doc/config", () => {
             includeThemeAssets: true
           },
           theme: {
-            name: "default"
+            name: "default",
+            skin: "portal.classic",
+            scheme: "system"
           },
           source: {
             enabled: true,
             mode: "file",
+            publicAssetPolicy: "explicit-public",
             openMode: "same-tab"
           }
         }
@@ -62,6 +68,9 @@ describe("@hia-doc/config", () => {
       expect(HIA_CONFIG_SOURCE_PRESENTATIONS).toEqual(["none", "link", "embed", "fetch"]);
       expect(HIA_CONFIG_PROJECT_LAYOUTS).toEqual(["split-site", "single-page"]);
       expect(HIA_CONFIG_THEME_NAMES).toEqual(["default"]);
+      expect(HIA_CONFIG_PORTAL_SKINS).toEqual(["portal.classic", "portal.graphite", "portal.lumen"]);
+      expect(HIA_CONFIG_PORTAL_SCHEMES).toEqual(["system", "light", "dark"]);
+      expect(HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES).toEqual(["none", "explicit-public"]);
     } finally {
       await rm(root, { force: true, recursive: true });
     }
@@ -109,11 +118,27 @@ describe("@hia-doc/config", () => {
     expect(diagnostics.some((diagnostic) => diagnostic.severity === "warning")).toBe(true);
   });
 
-  it("requires a fetch base URL and rejects conflicting disabled source presentation", () => {
-    const missingFetchBase = validateHiaProjectConfig({
+  it("uses build-generated fetch assets and rejects remote fetch endpoints or disabled presentation conflicts", () => {
+    const generatedFetch = validateHiaProjectConfig({
       docs: {
         source: {
           presentation: "fetch"
+        }
+      }
+    });
+    const remoteFetch = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "fetch",
+          fetchBaseUrl: "https://raw.example.test/project"
+        }
+      }
+    });
+    const remoteLink = validateHiaProjectConfig({
+      docs: {
+        source: {
+          presentation: "link",
+          linkBaseUrl: "https://github.example.test/project/blob/main"
         }
       }
     });
@@ -126,8 +151,30 @@ describe("@hia-doc/config", () => {
       }
     });
 
-    expect(missingFetchBase.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_FETCH_BASE_REQUIRED");
+    expect(generatedFetch).toEqual([]);
+    expect(remoteFetch.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_FETCH_BASE_UNSUPPORTED");
+    expect(remoteLink.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_LINK_BASE_UNSUPPORTED");
     expect(disabledEmbed.map((diagnostic) => diagnostic.code)).toContain("HIA_CONFIG_SOURCE_PRESENTATION_DISABLED");
+  });
+
+  it("validates the Portal-owned skin, scheme, and explicit public asset policy as closed selections", () => {
+    const valid = validateHiaProjectConfig({
+      docs: {
+        theme: { name: "default", skin: "portal.graphite", scheme: "dark" },
+        source: { presentation: "fetch", publicAssetPolicy: "explicit-public" }
+      }
+    });
+    const invalid = validateHiaProjectConfig({
+      docs: {
+        theme: { skin: "classic", scheme: "sepia" },
+        source: { publicAssetPolicy: "private" }
+      }
+    });
+
+    expect(valid).toEqual([]);
+    expect(invalid.map((diagnostic) => diagnostic.code)).toEqual(expect.arrayContaining([
+      "HIA_CONFIG_FIELD_INVALID"
+    ]));
   });
 
   it("accepts the exact Portal IA draft and keeps its three dimensions independent", () => {
@@ -181,7 +228,6 @@ describe("@hia-doc/config", () => {
       docs: {
         source: {
           presentation: "fetch",
-          fetchBaseUrl: "https://raw.example.test/project",
           fetchTrigger: "on-expand"
         }
       }
@@ -190,7 +236,6 @@ describe("@hia-doc/config", () => {
       docs: {
         source: {
           presentation: "fetch",
-          fetchBaseUrl: "https://raw.example.test/project",
           fetchTrigger: "manual"
         }
       }
@@ -199,7 +244,6 @@ describe("@hia-doc/config", () => {
       docs: {
         source: {
           presentation: "fetch",
-          fetchBaseUrl: "https://raw.example.test/project",
           fetchTrigger: "immediate"
         }
       }

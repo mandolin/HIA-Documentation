@@ -41,15 +41,23 @@ CLI 按以下顺序解析配置：
       },
       "includeThemeAssets": true
     },
+    "theme": {
+      "name": "default",
+      "skin": "portal.classic",
+      "scheme": "system"
+    },
     "source": {
-      "presentation": "link",
-      "linkBaseUrl": "https://github.com/example/project/blob/main"
+      "presentation": "fetch",
+      "publicAssetPolicy": "explicit-public",
+      "localRoot": ".",
+      "fetchTrigger": "on-expand",
+      "maxLines": 400
     }
   }
 }
 ```
 
-`split-site` 的 `index.html` 只包含应用壳。导航分支、搜索索引、关系图和节点卡片分别位于 `navigation/`、`search/`、`relations/` 与 `entries/`，由浏览器按需读取。它必须通过 HTTP(S) 静态服务器访问，不能直接用 `file://` 获得完整功能。
+`split-site` 的 `index.html` 只包含应用壳。导航分支、搜索索引、关系图和节点卡片分别位于 `navigation/`、`search/`、`relations/` 与 `entries/`，由浏览器按需读取。它必须通过 HTTP(S) 静态服务器访问，不能直接用 `file://` 获得完整交互功能。禁用 JavaScript 时，入口页通过 `<noscript>` 指向 `pages/index.html`；`pages/` 还包含每个 topic 的独立原生 disclosure 页面，不会把数千节点重新内嵌进应用壳。默认 `fetch` 源码在这些页面中只降级为构建生成的同源内容寻址链接。
 
 `single-page` 仍可用于兼容、小型文档或离线快照，但会把全部节点卡片写进同一个 HTML，不适合数千节点项目。
 
@@ -81,24 +89,35 @@ CLI 按以下顺序解析配置：
 | 值 | 行为 |
 | --- | --- |
 | `none` | 保留源码定位元数据，不输出源码链接、动态加载地址或源码正文。 |
-| `link` | 默认策略。输出定位与外链，不把源码正文写入文档。 |
+| `link` | 输出指向构建生成的同源内容寻址纯文本资源的普通链接。 |
 | `embed` | 显式把源码片段写入对应 `entries/*.html`；适合受控的私有/本地文档。 |
-| `fetch` | 从 `fetchBaseUrl` 动态读取纯文本；默认在用户展开源码区域时加载，也可配置为按钮触发。 |
+| `fetch` | 默认策略。从构建生成的同源内容寻址资源读取纯文本；展开时加载，也可配置为按钮触发。 |
 
-### GitHub 或仓库链接
+`fetch` 与 `link` 共享同一 public asset pipeline：输出 `sources/{sha256}.txt`、content revision、SHA-384、byte/line
+facts 与局部 `sources/*.txt -text` 规则。reader 固定 `credentials=omit`、`mode=same-origin`、`redirect=error`，校验
+摘要和限额后只把正文作为文本显示。失败进入显式终态，不自动退回 `link` 或 `embed`。
+
+### 构建生成的 fetch
 
 ```json
 {
   "docs": {
     "source": {
-      "presentation": "link",
-      "linkBaseUrl": "https://github.com/mandolin/HIA-ASPNETPortal/blob/main"
+      "presentation": "fetch",
+      "publicAssetPolicy": "explicit-public",
+      "localRoot": ".",
+      "fetchTrigger": "on-expand",
+      "maxLines": 400
     }
   }
 }
 ```
 
-例如 DotNet source relation 提供 `src/Portal.Components/PortalSecurity.cs:12-24` 后，会生成指向相应 `.cs` 行号的链接，不再使用 XML documentation 文件作为最终源码入口。
+producer 已经携带的 preview 可直接进入构建；CLI 要从 locator 读取文件时，必须另有
+`publicAssetPolicy: "explicit-public"`。`localRoot` 相对配置文件解析；locator 必须是根内安全相对路径。未授权、越界、
+缺失或超限都会产生稳定 diagnostic，presentation profile 标记为 `refused`，但不会泄漏绝对路径或改用外部 URL。
+
+将 `presentation` 改成 `link` 会生成同一类同源静态资源，只把源码卡片呈现为普通链接；它不会恢复旧 GitHub/blob 外链。
 
 ### 显式嵌入
 
@@ -115,32 +134,35 @@ CLI 按以下顺序解析配置：
 }
 ```
 
-`localRoot` 相对配置文件解析。CLI 拒绝绝对 locator 和 `..` 越界路径。`embed` 会让源码正文进入发布产物；公开发布前应运行 release/privacy gate，并确认目标项目允许公开对应源码。
-
-### 动态读取 URL
-
-```json
-{
-  "docs": {
-    "source": {
-      "presentation": "fetch",
-      "fetchBaseUrl": "https://raw.githubusercontent.com/example/project/main",
-      "linkBaseUrl": "https://github.com/example/project/blob/main",
-      "fetchTrigger": "on-expand",
-      "maxLines": 400
-    }
-  }
-}
-```
-
-`fetchBaseUrl` 必须返回纯文本源码，并允许文档站来源通过 CORS 读取。GitHub `blob` 页面不能作为 `fetchBaseUrl`；应使用 raw URL 或目标项目自己的受控源码服务。
+`localRoot` 相对配置文件解析。CLI 拒绝绝对 locator 和 `..` 越界路径。CLI 文件读取同样要求
+`publicAssetPolicy: "explicit-public"`；`embed` 会让源码正文进入 entry HTML，公开发布前应运行 release/privacy gate 并确认
+对应源码允许公开。
 
 `fetchTrigger` 支持：
 
 - `on-expand`：默认值。用户展开源码小三角时立即加载。
 - `manual`：展开后显示“加载源码”按钮，点击后才加载。
 
-当 locator 只有起始行而没有结束行时，fetch reader 从起始行开始，最多显示 `maxLines` 行，不再把缺失结束行误当成只读取一行。精确 symbol 结束范围仍应由对应 doc line/source extractor 提供。
+当 locator 只有起始行而没有结束行时，CLI preparation 从起始行开始，最多发布 `maxLines` 行；reader 也独立执行同一显示
+上限。精确 symbol 结束范围仍应由对应 doc line/source extractor 提供。
+
+`fetchBaseUrl`、`linkBaseUrl` 与兼容 `baseUrl` 已停止提供 Portal endpoint。显式配置它们会得到
+`HIA_CONFIG_SOURCE_FETCH_BASE_UNSUPPORTED` 或 `HIA_CONFIG_SOURCE_LINK_BASE_UNSUPPORTED`，避免配置被静默忽略。
+
+## Portal 主题
+
+默认主题提供三套 Portal-owned skin，并与 scheme 正交：
+
+| 字段值 | 含义 |
+| --- | --- |
+| `portal.classic` | 中性经典布局，默认 skin。 |
+| `portal.graphite` | 更紧凑、低圆角的石墨风格。 |
+| `portal.lumen` | 较宽松、高圆角的明亮暖色风格。 |
+| `system` | 跟随 `prefers-color-scheme`，默认 scheme。 |
+| `light` / `dark` | 固定浅色或深色。 |
+
+HTML 根节点在脚本运行前就带有构建默认，因此禁用 JavaScript 仍可阅读。页面选择器可把本地阅读偏好保存到浏览器，但该
+偏好不进入 `documentation-presentation-profile.json`、renderer manifest、project/search index 或 semantic IR。
 
 ## 字段
 
@@ -162,14 +184,17 @@ CLI 按以下顺序解析配置：
 | `docs.renderer.informationArchitecture.memberPlacement` | `"separate"` / `"with-parent"` | member 呈现位置，默认 `separate`。 |
 | `docs.renderer.sourceCommentProjection.locale` | canonical BCP 47 string | 独立 source-comment locale；启用时必须同时提供显式 IA。 |
 | `docs.renderer.sourceCommentProjection.contentPolicy` | `"none"` / `"explicit-projected-text"` | 注释正文授权，默认 `none`；只接受已投影纯文本。 |
-| `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `link`。 |
-| `docs.source.linkBaseUrl` | string | 仓库或浏览器源码链接基础 URL。 |
-| `docs.source.fetchBaseUrl` | string | `fetch` 模式必填的纯文本源码基础 URL。 |
+| `docs.theme.skin` | `"portal.classic"` / `"portal.graphite"` / `"portal.lumen"` | 构建期无脚本默认 skin。 |
+| `docs.theme.scheme` | `"system"` / `"light"` / `"dark"` | 构建期无脚本默认 scheme。 |
+| `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `fetch`。 |
+| `docs.source.publicAssetPolicy` | `"none"` / `"explicit-public"` | CLI 文件读取与公开静态资源授权；默认 `none`。 |
+| `docs.source.linkBaseUrl` / `baseUrl` | deprecated string | 外部 link endpoint 已不支持；提供时返回迁移错误。 |
+| `docs.source.fetchBaseUrl` | deprecated string | 外部 fetch endpoint 已不支持；提供时返回迁移错误。 |
 | `docs.source.fetchTrigger` | `"on-expand"` / `"manual"` | fetch 加载触发方式，默认 `on-expand`。 |
-| `docs.source.localRoot` | string | `embed` 模式读取源码的本地根目录。 |
+| `docs.source.localRoot` | string | 显式公开授权下读取安全相对源码的本地根目录。 |
 | `docs.source.defaultExpanded` | boolean | 嵌入源码是否默认展开。 |
 | `docs.source.maxLines` | positive integer | 单个源码片段最大行数。 |
-| `docs.source.enabled` / `mode` / `baseUrl` | compatibility | 旧版兼容字段；新配置优先使用 `presentation` 与 `linkBaseUrl`。 |
+| `docs.source.enabled` / `mode` | compatibility | 旧版关闭状态兼容字段；新配置使用 `presentation`。 |
 
 校验错误使用共享 `HiaDiagnostic` 结构，包含稳定的 `code`、`severity`、`targetPath` 和可选机器可读 `data`。
 
@@ -178,5 +203,5 @@ CLI 按以下顺序解析配置：
 - `hia.config.ts`
 - 多层配置合并
 - watch/dev server 配置
-- 主题 skin 的完整机制
+- 第三方 theme marketplace 与用户自定义 token package
 - IDE 专属界面设置

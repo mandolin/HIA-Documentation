@@ -11,6 +11,8 @@ export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
 export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
 export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"] as const;
 export const HIA_CONFIG_SOURCE_FETCH_TRIGGERS = ["on-expand", "manual"] as const;
+/** @lang zh-CN CLI 可执行的 build-time 源码公开授权。 @lang en Build-time source-publication authorization executable by the CLI. */
+export const HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES = ["none", "explicit-public"] as const;
 export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
 /**
  * Portal IA contract 的中性 identity；config 只验证 vocabulary，不成为 runtime contract owner。
@@ -40,6 +42,10 @@ export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION = "0.1.0-draf
 /** @lang zh-CN 正文默认关闭，显式模式仍只允许投影纯文本。 @lang en Bodies default off; explicit mode still permits projected plain text only. */
 export const HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES = ["none", "explicit-projected-text"] as const;
 export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
+/** @lang zh-CN Portal owner 的内置 skin 闭集；不复用 JTH 私有 catalog。 @lang en Closed Portal-owned skin set; it does not reuse the private JTH catalog. */
+export const HIA_CONFIG_PORTAL_SKINS = ["portal.classic", "portal.graphite", "portal.lumen"] as const;
+/** @lang zh-CN skin 正交的 scheme 选择。 @lang en Scheme selection orthogonal to skin. */
+export const HIA_CONFIG_PORTAL_SCHEMES = ["system", "light", "dark"] as const;
 
 export interface HiaProjectConfig {
   schemaVersion?: string;
@@ -115,7 +121,10 @@ export interface HiaPortalInformationArchitectureConfig {
 
 export interface HiaThemeConfig {
   name?: string;
-  skin?: string;
+  /** @lang zh-CN 构建期无脚本默认 skin。 @lang en Build-time no-script default skin. */
+  skin?: typeof HIA_CONFIG_PORTAL_SKINS[number];
+  /** @lang zh-CN 构建期无脚本默认 scheme。 @lang en Build-time no-script default scheme. */
+  scheme?: typeof HIA_CONFIG_PORTAL_SCHEMES[number];
 }
 
 export interface HiaSourceLinkConfig {
@@ -123,16 +132,18 @@ export interface HiaSourceLinkConfig {
   enabled?: boolean;
   /** 旧版兼容模式；新配置应使用 presentation。Legacy compatibility mode; new configurations should use presentation. */
   mode?: typeof HIA_CONFIG_SOURCE_MODES[number];
-  /** linkBaseUrl 的兼容别名。Compatibility alias for linkBaseUrl. */
+  /** @deprecated W-P117 起外部 link endpoint 不再进入 Portal 输出。Since W-P117, external link endpoints no longer enter Portal output. */
   baseUrl?: string;
-  /** 浏览器源码链接的仓库或服务基础 URL。Repository or service base URL used for browser source links. */
+  /** @deprecated W-P117 起 link 只指向 build-generated same-origin asset。Since W-P117, link points only to build-generated same-origin assets. */
   linkBaseUrl?: string;
-  /** fetch 模式下返回纯文本源码的基础 URL。Base URL returning plain source text in fetch mode. */
+  /** @deprecated W-P117 起 fetch 只消费 build-generated same-origin asset；该字段只用于产生迁移 diagnostic。Since W-P117, fetch consumes only build-generated same-origin assets; this field remains only for migration diagnostics. */
   fetchBaseUrl?: string;
   /** fetch 模式的加载触发方式；默认展开源码区域时自动加载。Fetch loading trigger; defaults to loading when the source details are expanded. */
   fetchTrigger?: typeof HIA_CONFIG_SOURCE_FETCH_TRIGGERS[number];
   /** embed 模式读取相对源码路径时使用的本地根目录。Local root used to resolve relative source paths in embed mode. */
   localRoot?: string;
+  /** @lang zh-CN 显式授权 CLI 把安全相对源码片段发布为公开静态资源。 @lang en Explicitly authorizes the CLI to publish safe relative source excerpts as public static assets. */
+  publicAssetPolicy?: typeof HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES[number];
   /** 源码卡片呈现策略。Source-card presentation policy. */
   presentation?: typeof HIA_CONFIG_SOURCE_PRESENTATIONS[number];
   /** embed 模式生成的源码详情是否默认展开。Whether embedded source details are expanded by default. */
@@ -442,7 +453,8 @@ function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targe
   }
 
   validateOptionalString(value, "name", diagnostics, targetPath);
-  validateOptionalString(value, "skin", diagnostics, targetPath);
+  validateOptionalEnum(value, "skin", HIA_CONFIG_PORTAL_SKINS, diagnostics, targetPath);
+  validateOptionalEnum(value, "scheme", HIA_CONFIG_PORTAL_SCHEMES, diagnostics, targetPath);
 
   if (typeof value.name === "string" && !HIA_CONFIG_THEME_NAMES.includes(value.name as typeof HIA_CONFIG_THEME_NAMES[number])) {
     diagnostics.push(createConfigDiagnostic(
@@ -470,18 +482,29 @@ function validateSourceConfig(value: unknown, diagnostics: HiaDiagnostic[], targ
   validateOptionalString(value, "fetchBaseUrl", diagnostics, targetPath);
   validateOptionalEnum(value, "fetchTrigger", HIA_CONFIG_SOURCE_FETCH_TRIGGERS, diagnostics, targetPath);
   validateOptionalString(value, "localRoot", diagnostics, targetPath);
+  validateOptionalEnum(value, "publicAssetPolicy", HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES, diagnostics, targetPath);
   validateOptionalEnum(value, "mode", HIA_CONFIG_SOURCE_MODES, diagnostics, targetPath);
   validateOptionalEnum(value, "presentation", HIA_CONFIG_SOURCE_PRESENTATIONS, diagnostics, targetPath);
   validateOptionalBoolean(value, "defaultExpanded", diagnostics, targetPath);
   validateOptionalPositiveInteger(value, "maxLines", diagnostics, targetPath);
   validateOptionalEnum(value, "openMode", HIA_CONFIG_SOURCE_OPEN_MODES, diagnostics, targetPath);
 
-  if (value.presentation === "fetch" && (typeof value.fetchBaseUrl !== "string" || value.fetchBaseUrl.length === 0)) {
+  if (value.presentation === "fetch" && typeof value.fetchBaseUrl === "string" && value.fetchBaseUrl.length > 0) {
     diagnostics.push(createConfigDiagnostic(
-      "HIA_CONFIG_SOURCE_FETCH_BASE_REQUIRED",
-      "docs.source.fetchBaseUrl is required when docs.source.presentation is fetch.",
+      "HIA_CONFIG_SOURCE_FETCH_BASE_UNSUPPORTED",
+      "docs.source.fetchBaseUrl cannot provide fetch bodies; use build-generated same-origin public assets.",
       "error",
       `${targetPath}.fetchBaseUrl`
+    ));
+  }
+
+  if ((typeof value.linkBaseUrl === "string" && value.linkBaseUrl.length > 0)
+    || (typeof value.baseUrl === "string" && value.baseUrl.length > 0)) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_SOURCE_LINK_BASE_UNSUPPORTED",
+      "docs.source.linkBaseUrl/baseUrl cannot provide Portal source links; use build-generated same-origin public assets.",
+      "error",
+      `${targetPath}.${typeof value.linkBaseUrl === "string" && value.linkBaseUrl.length > 0 ? "linkBaseUrl" : "baseUrl"}`
     ));
   }
 

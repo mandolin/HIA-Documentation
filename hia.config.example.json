@@ -11,12 +11,17 @@
       "projectLayout": "split-site"
     },
     "theme": {
-      "name": "default"
+      "name": "default",
+      "skin": "portal.classic",
+      "scheme": "system"
     },
     "source": {
       "enabled": true,
       "mode": "file",
-      "presentation": "link",
+      "presentation": "fetch",
+      "publicAssetPolicy": "explicit-public",
+      "localRoot": ".",
+      "fetchTrigger": "on-expand",
       "openMode": "same-tab"
     }
   }

@@ -21,6 +21,18 @@ The build command reads config through `@hia-doc/config`, then renders one of th
 
 Single-document modes validate the converted core document through `@hia-doc/core`. Project mode keeps each source artifact explicit in the output manifest and renders a unified page with all/JS/CSS/HTML views. All modes report diagnostics, render through `@hia-doc/renderer-html`, write HTML/theme assets, and emit an output manifest. The default manifest path is `hia-manifest.json`.
 
+Project mode defaults to split-site pages and build-generated same-origin `fetch` source assets. A producer-provided preview is an
+explicit body input. Reading a safe relative locator from disk additionally requires
+`docs.source.publicAssetPolicy: "explicit-public"` and remains bounded by `localRoot`, range, and `maxLines`. `link` uses the same
+generated public asset through a normal anchor; `embed` writes the excerpt into entry HTML; `none` emits no source body or endpoint.
+Legacy external `fetchBaseUrl`/`linkBaseUrl` endpoints are rejected by config validation and never become a silent fallback.
+Split-site output also includes `pages/index.html` and one script-free topic page per entry. The application shell links to that
+fallback through `<noscript>`; a default `fetch` source becomes only a link to the same generated public asset on those pages.
+
+每次项目构建还会写出 exact-valid `documentation-presentation-profile.json`。默认主题提供 Classic、Graphite、Lumen 三套
+Portal skin 及 system/light/dark scheme；构建默认来自 `docs.theme.skin` / `docs.theme.scheme`，浏览器本地偏好不会回写
+profile、manifest 或 search index。
+
 For explicit Portal IA, the CLI projects `docs.renderer.informationArchitecture`, `docs.renderer.uiLocale`, `project.productVersion`, and each input's reviewed `semanticPath` into the renderer. It does not discover semantic containers from source paths. Producer-result artifacts inherit the parent manifest input's semantic path. See `docs/documentation-portal-information-architecture-contract.md`.
 
 For DotNetDoc producer results, the CLI projects allowlisted source-relation metadata onto the canonical project entry as `sourceUsability`. The projection keeps project-relative identity, resolution, confidence, and provenance separate, forces `sourcesContentPolicy: none`, and never copies source bodies or creates source-reader authority.

@@ -647,7 +647,7 @@ describe("@hia-doc/cli", () => {
     }
   });
 
-  it("builds clickable DotNet source links from declaration relations", async () => {
+  it("builds generated same-origin source links and refuses missing public assets", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-dotnet-source-link-"));
     const outDir = path.join(root, "docs");
     const configPath = path.join(root, "hia.config.json");
@@ -658,8 +658,7 @@ describe("@hia-doc/cli", () => {
         schemaVersion: "0.1.0",
         docs: {
           source: {
-            presentation: "link",
-            linkBaseUrl: "https://github.com/mandolin/HIA-ASPNETPortal/blob/main"
+            presentation: "link"
           }
         }
       }), "utf8");
@@ -674,18 +673,33 @@ describe("@hia-doc/cli", () => {
         outDir
       ], createTestIo(messages));
       const entryHtml = await readGeneratedEntryHtml(outDir);
+      const presentationProfile = JSON.parse(await readFile(
+        path.join(outDir, "documentation-presentation-profile.json"),
+        "utf8"
+      )) as {
+        diagnostics?: Array<{ code?: string }>;
+        source?: { assets?: unknown[]; mode?: string };
+        status?: string;
+      };
 
       expect(exitCode).toBe(0);
-      expect(entryHtml).toContain(
-        "https://github.com/mandolin/HIA-ASPNETPortal/blob/main/src/Portal.Components/PortalSecurity.cs#L12-L24"
-      );
+      expect(entryHtml).toMatch(/href="sources\/[a-f0-9]{64}\.txt"/u);
+      expect(entryHtml).not.toContain("https://github.com/");
       expect(entryHtml).not.toContain("bin/Portal.Components.xml");
+      expect(presentationProfile).toMatchObject({
+        status: "refused",
+        source: { mode: "link" }
+      });
+      expect(presentationProfile.source?.assets).toHaveLength(2);
+      expect(presentationProfile.diagnostics).toContainEqual(expect.objectContaining({
+        code: "PRESENTATION_SOURCE_ASSET_INVALID"
+      }));
     } finally {
       await rm(root, { force: true, recursive: true });
     }
   });
 
-  it("supports explicit embedded and URL-fetched project source modes", async () => {
+  it("supports explicit embedded and build-generated same-origin project source modes", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-source-modes-"));
     const embedOutDir = path.join(root, "embed-docs");
     const fetchOutDir = path.join(root, "fetch-docs");
@@ -700,6 +714,8 @@ describe("@hia-doc/cli", () => {
         docs: {
           source: {
             presentation: "embed",
+            publicAssetPolicy: "explicit-public",
+            localRoot: path.resolve("."),
             defaultExpanded: false,
             maxLines: 80
           }
@@ -710,7 +726,8 @@ describe("@hia-doc/cli", () => {
         docs: {
           source: {
             presentation: "fetch",
-            fetchBaseUrl: "https://raw.example.test/mandolin/project/main",
+            publicAssetPolicy: "explicit-public",
+            localRoot: path.resolve("."),
             fetchTrigger: "on-expand",
             maxLines: 80
           }
@@ -747,6 +764,12 @@ describe("@hia-doc/cli", () => {
       ], createTestIo(messages));
       const embedHtml = await readGeneratedEntryHtml(embedOutDir);
       const fetchHtml = await readGeneratedEntryHtml(fetchOutDir);
+      const fetchProfile = JSON.parse(await readFile(path.join(fetchOutDir, "documentation-presentation-profile.json"), "utf8")) as {
+        source?: { defaultMode?: string; mode?: string; assets?: Array<{ relativeUrl?: string; revision?: string }> };
+      };
+      const fetchAssetPaths = fetchProfile.source?.assets?.flatMap(({ relativeUrl }) => relativeUrl ? [relativeUrl] : []) ?? [];
+      const fetchAssets = await Promise.all(fetchAssetPaths.map(async (relativeUrl) =>
+        readFile(path.join(fetchOutDir, relativeUrl), "utf8")));
       const evidence = JSON.parse(await readFile(evidencePath, "utf8")) as {
         privacy?: {
           sourcePresentation?: string;
@@ -765,15 +788,17 @@ describe("@hia-doc/cli", () => {
         sourcesContentPolicy: "explicit-embed",
         sourceBodyPresent: true
       });
-      expect(fetchHtml).toContain(
-        "data-hia-source-fetch=\"https://raw.example.test/mandolin/project/main/examples/basic/src/greet.js\""
-      );
+      expect(fetchHtml).toMatch(/data-hia-source-fetch="sources\/[a-f0-9]{64}\.txt"/u);
+      expect(fetchHtml).toContain("data-hia-source-integrity=\"sha384-");
       expect(fetchHtml).toContain("data-hia-source-fetch-trigger=\"on-expand\"");
       expect(fetchHtml).toContain("data-hia-source-max-lines=\"80\"");
-      expect(fetchHtml).toContain("data-hia-source-start=\"17\"");
-      expect(fetchHtml).toContain("data-hia-source-end=\"22\"");
       expect(fetchHtml).not.toContain("data-hia-source-fetch-button");
       expect(fetchHtml).not.toContain("function greet(name)");
+      expect(fetchProfile.source).toMatchObject({ defaultMode: "fetch", mode: "fetch" });
+      expect(fetchProfile.source?.assets).toHaveLength(2);
+      expect(fetchProfile.source?.assets?.[0]?.revision).toMatch(/^content:[a-f0-9]{64}$/u);
+      expect(fetchAssets.some((content) => content.includes("function greet(name)"))).toBe(true);
+      expect(await readFile(path.join(fetchOutDir, ".gitattributes"), "utf8")).toContain("sources/*.txt -text");
     } finally {
       await rm(root, { force: true, recursive: true });
     }
@@ -835,7 +860,7 @@ describe("@hia-doc/cli", () => {
       expect(evidence.entries.byProfile).toMatchObject({ jsdoc: 2 });
       expect(evidence.coverage).toMatchObject({ dotnetEntries: 1, jsEntries: 2, powershellEntries: 0 });
       expect(evidence.privacy).toMatchObject({
-        sourcePresentation: "link",
+        sourcePresentation: "fetch",
         sourcesContentPolicy: "none",
         sourcesContentPresent: false,
         sourceBodyPresent: false,

@@ -190,9 +190,13 @@ describe("target-owner adoption kit contract", () => {
     try {
       await writeFile(path.join(root, "request.json"), JSON.stringify(await loadFixture("workspace-ready.json")), "utf8");
       await writeFile(path.join(root, "basic.hia.json"), await readFile(path.resolve("fixtures/basic.hia.json"), "utf8"), "utf8");
+      // <lang><zh-CN>本夹具只验证 adoption projection，显式关闭源码呈现以免未授权正文触发默认 fetch 的安全诊断。</zh-CN><en>This fixture validates adoption projection only, so source presentation is explicitly disabled to avoid the default fetch diagnostic for unauthorized text.</en></lang>
       await writeFile(path.join(root, "hia.config.json"), JSON.stringify({
         schemaVersion: "0.1.0",
         docs: {
+          source: {
+            presentation: "none"
+          },
           renderer: {
             projectLayout: "split-site",
             informationArchitecture: {

@@ -44,6 +44,31 @@ export type DocumentationPortalThemeColorTokenName = typeof DOCUMENTATION_PORTAL
 export type DocumentationPortalThemeColorTokens = Readonly<Record<DocumentationPortalThemeColorTokenName, string>>;
 
 /**
+ * @lang zh-CN Portal owner 的内置 skin identity；与 JTH-owned skin catalog 保持实现隔离。
+ * @lang en Built-in Portal-owner skin identities, implementation-isolated from the JTH-owned skin catalog.
+ */
+export const PORTAL_THEME_SKIN_IDS = ["portal.classic", "portal.graphite", "portal.lumen"] as const;
+
+/** @lang zh-CN skin 独立支持的颜色 scheme 闭集。 @lang en Closed color-scheme set supported independently by every skin. */
+export const PORTAL_THEME_SCHEMES = ["dark", "light", "system"] as const;
+
+/** @lang zh-CN Portal 内置 skin identity 类型。 @lang en Portal built-in skin identity type. */
+export type PortalThemeSkinId = typeof PORTAL_THEME_SKIN_IDS[number];
+/** @lang zh-CN Portal 颜色 scheme 类型。 @lang en Portal color-scheme type. */
+export type PortalThemeScheme = typeof PORTAL_THEME_SCHEMES[number];
+
+/**
+ * @lang zh-CN renderer-neutral 的 Portal skin capability；不包含 CSS selector、DOM 或 token value。
+ * @lang en Renderer-neutral Portal skin capability containing no CSS selector, DOM, or token value.
+ */
+export interface PortalThemeSkinCapability {
+  capabilities: string[];
+  skinId: PortalThemeSkinId;
+  supportedSchemes: PortalThemeScheme[];
+  tokenContract: string;
+}
+
+/**
  * @lang zh-CN renderer 与静态 portal 可投射的最小 theme reference；不包含颜色值、用户偏好或私有状态。
  * @lang en Minimal theme reference projected by renderers and static portals; it contains no color values, user preference, or private state.
  */
@@ -103,7 +128,7 @@ export interface DocumentationPortalThemeContract extends DocumentationPortalThe
     absolutePathIncluded: false;
     /** @lang zh-CN 不嵌入凭据或 secret。 @lang en Credentials and secrets are not embedded. */
     credentialIncluded: false;
-    /** @lang zh-CN 不持久化或投射用户主题偏好。 @lang en User theme preferences are neither persisted nor projected. */
+    /** @lang zh-CN contract metadata 不投射用户主题偏好。 @lang en Contract metadata does not project user theme preferences. */
     persistedUserPreferenceIncluded: false;
   };
 }
@@ -185,6 +210,114 @@ export const DEFAULT_DOCUMENTATION_PORTAL_THEME = {
   }
 } as const satisfies DocumentationPortalThemeContract;
 
+/**
+ * @lang zh-CN Portal owner 内部 skin 定义；token value 只进入 CSS asset，不进入 renderer manifest/profile。
+ * @lang en Portal-owner internal skin definition; token values enter only the CSS asset, never renderer manifests or profiles.
+ */
+interface PortalThemeSkinDefinition extends PortalThemeSkinCapability {
+  label: string;
+  density: string;
+  radius: string;
+  tokens: Readonly<Record<"light" | "dark", DocumentationPortalThemeColorTokens>>;
+}
+
+// <lang><zh-CN>三套皮肤独立定义视觉层次；共同 capability 与 token contract 保持跨变体语义一致。</zh-CN><en>The three skins define distinct visual hierarchy while sharing capabilities and the token contract across variants.</en></lang>
+const PORTAL_THEME_SKINS: readonly PortalThemeSkinDefinition[] = [
+  {
+    skinId: "portal.classic",
+    label: "Classic / 经典",
+    density: "1",
+    radius: "6px",
+    tokenContract: `${DOCUMENTATION_PORTAL_THEME_CONTRACT}@${DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION}`,
+    supportedSchemes: [...PORTAL_THEME_SCHEMES],
+    capabilities: ["native-disclosure", "no-script-default", "source-reader", "theme-selector"],
+    tokens: DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens
+  },
+  {
+    skinId: "portal.graphite",
+    label: "Graphite / 石墨",
+    density: ".94",
+    radius: "3px",
+    tokenContract: `${DOCUMENTATION_PORTAL_THEME_CONTRACT}@${DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION}`,
+    supportedSchemes: [...PORTAL_THEME_SCHEMES],
+    capabilities: ["native-disclosure", "no-script-default", "source-reader", "theme-selector"],
+    tokens: {
+      light: {
+        canvas: "#eef0f3", surface: "#fafafa", surfaceMuted: "#e1e5ea", border: "#69717c",
+        text: "#181b20", textMuted: "#4b525c", accent: "#4059a9", accentContrast: "#ffffff",
+        accentSoft: "#dce3fb", accentHover: "#30458c", focusRing: "#9a3e00", codeBackground: "#171a20",
+        codeText: "#edf1f7", danger: "#9a2e35"
+      },
+      dark: {
+        canvas: "#111318", surface: "#191c22", surfaceMuted: "#232730", border: "#89919d",
+        text: "#f2f4f7", textMuted: "#c4cad2", accent: "#a8b9ff", accentContrast: "#12182e",
+        accentSoft: "#29345d", accentHover: "#cad4ff", focusRing: "#ffbf69", codeBackground: "#080a0e",
+        codeText: "#edf1f7", danger: "#ffb3bb"
+      }
+    }
+  },
+  {
+    skinId: "portal.lumen",
+    label: "Lumen / 明亮",
+    density: "1.06",
+    radius: "12px",
+    tokenContract: `${DOCUMENTATION_PORTAL_THEME_CONTRACT}@${DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION}`,
+    supportedSchemes: [...PORTAL_THEME_SCHEMES],
+    capabilities: ["native-disclosure", "no-script-default", "source-reader", "theme-selector"],
+    tokens: {
+      light: {
+        canvas: "#fffaf0", surface: "#ffffff", surfaceMuted: "#f8efd9", border: "#9b835b",
+        text: "#2c2418", textMuted: "#685944", accent: "#9c4f00", accentContrast: "#ffffff",
+        accentSoft: "#ffe2b7", accentHover: "#783d00", focusRing: "#005fcc", codeBackground: "#252019",
+        codeText: "#fff5df", danger: "#a22b35"
+      },
+      dark: {
+        canvas: "#1d1811", surface: "#282117", surfaceMuted: "#352b1d", border: "#b8a078",
+        text: "#fff5df", textMuted: "#e1ceb0", accent: "#ffbd70", accentContrast: "#2a1600",
+        accentSoft: "#59401f", accentHover: "#ffd39e", focusRing: "#78c8ff", codeBackground: "#100d09",
+        codeText: "#fff5df", danger: "#ffb3bb"
+      }
+    }
+  }
+] as const;
+
+/**
+ * @lang zh-CN 返回深拷贝的 metadata-only skin catalog，供 neutral presentation profile 使用。
+ * @lang en Returns a deep-copied metadata-only skin catalog for neutral presentation profiles.
+ *
+ * @returns 不含 token value 与 owner selector 的确定性 catalog。Deterministic catalog without token values or owner selectors.
+ */
+export function getPortalThemeSkinCatalog(): PortalThemeSkinCapability[] {
+  return PORTAL_THEME_SKINS.map(({ capabilities, skinId, supportedSchemes, tokenContract }) => ({
+    skinId,
+    tokenContract,
+    supportedSchemes: [...supportedSchemes],
+    capabilities: [...capabilities]
+  }));
+}
+
+/**
+ * @lang zh-CN 返回一个内置 skin 的双语可见标签；未知值 fail closed 到 classic。
+ * @lang en Returns the bilingual visible label for a built-in skin; unknown values fail closed to classic.
+ *
+ * @param skinId - 待解析的 skin identity。Skin identity to resolve.
+ * @returns 可见标签。Visible label.
+ */
+export function getPortalThemeSkinLabel(skinId: PortalThemeSkinId): string {
+  return PORTAL_THEME_SKINS.find((skin) => skin.skinId === skinId)?.label ?? PORTAL_THEME_SKINS[0]!.label;
+}
+
+/**
+ * @lang zh-CN 返回内置 scheme 的双语可见标签。
+ * @lang en Returns the bilingual visible label for a built-in scheme.
+ *
+ * @param scheme - Portal scheme identity。Portal scheme identity.
+ * @returns 可见标签。Visible label.
+ */
+export function getPortalThemeSchemeLabel(scheme: PortalThemeScheme): string {
+  return ({ dark: "Dark / 深色", light: "Light / 浅色", system: "System / 跟随系统" })[scheme];
+}
+
 /** 默认主题 CSS artifact path。Default theme CSS artifact path. */
 export const DEFAULT_THEME_CSS_PATH = "assets/hia-default.css";
 /** 默认主题 JavaScript artifact path。Default theme JavaScript artifact path. */
@@ -235,6 +368,41 @@ export function getDefaultThemeAssets(): HiaThemeAsset[] {
   ];
 }
 
+/**
+ * @lang zh-CN 将 semantic token 名转换为稳定 CSS custom-property suffix。
+ * @lang en Converts a semantic token name to a stable CSS custom-property suffix.
+ * @param name - contract token name。Contract token name.
+ * @returns kebab-case CSS suffix。Kebab-case CSS suffix.
+ */
+function themeTokenCssName(name: DocumentationPortalThemeColorTokenName): string {
+  return name.replace(/[A-Z]/gu, (letter) => `-${letter.toLowerCase()}`);
+}
+
+/**
+ * @lang zh-CN 为一个 skin/scheme 生成纯 token rule；不包含 component selector。
+ * @lang en Generates a token-only rule for one skin/scheme without component selectors.
+ * @param selector - 仅由 owner 构造的 root selector。Owner-constructed root selector.
+ * @param skin - 内部 skin definition。Internal skin definition.
+ * @param scheme - concrete light/dark token set。Concrete light/dark token set.
+ * @returns 确定性 CSS rule。Deterministic CSS rule.
+ */
+function renderPortalSkinTokenRule(selector: string, skin: PortalThemeSkinDefinition, scheme: "light" | "dark"): string {
+  const tokenLines = DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES
+    .map((name) => `  --hia-color-${themeTokenCssName(name)}: ${skin.tokens[scheme][name]};`)
+    .join("\n");
+  return `${selector} {\n${tokenLines}\n  --hia-density: ${skin.density};\n  --hia-radius: ${skin.radius};\n}`;
+}
+
+/** @lang zh-CN 构造三 skin × 三 scheme 的 CSS token 投影。 @lang en Builds the CSS token projection for three skins by three schemes. */
+function renderPortalSkinCss(): string {
+  return PORTAL_THEME_SKINS.map((skin) => [
+    renderPortalSkinTokenRule(`:root[data-hia-skin="${skin.skinId}"]`, skin, "light"),
+    renderPortalSkinTokenRule(`:root[data-hia-skin="${skin.skinId}"][data-hia-scheme="light"]`, skin, "light"),
+    renderPortalSkinTokenRule(`:root[data-hia-skin="${skin.skinId}"][data-hia-scheme="dark"]`, skin, "dark"),
+    `@media (prefers-color-scheme: dark) {\n${renderPortalSkinTokenRule(`:root[data-hia-skin="${skin.skinId}"][data-hia-scheme="system"]`, skin, "dark")}\n}`
+  ].join("\n\n")).join("\n\n");
+}
+
 /** 默认主题 CSS；Portal IA 仍依赖 native HTML disclosure，不声明 ARIA tree。Default-theme CSS; Portal IA keeps native HTML disclosure and makes no ARIA-tree claim. */
 export const DEFAULT_THEME_CSS = `
 :root {
@@ -283,6 +451,8 @@ export const DEFAULT_THEME_CSS = `
     --hia-color-danger: ${DEFAULT_DOCUMENTATION_PORTAL_THEME.tokens.dark.danger};
   }
 }
+
+${renderPortalSkinCss()}
 
 * {
   box-sizing: border-box;
@@ -416,6 +586,31 @@ a {
   margin: 1rem 0;
 }
 
+.hia-theme-switch {
+  display: grid;
+  gap: .5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 1rem 0;
+}
+
+.hia-theme-switch label {
+  color: var(--hia-muted);
+  display: grid;
+  font-size: .82rem;
+  font-weight: 700;
+  gap: .3rem;
+}
+
+.hia-theme-switch select {
+  background: var(--hia-surface);
+  border: 1px solid var(--hia-border);
+  border-radius: var(--hia-radius, 6px);
+  color: var(--hia-text);
+  min-width: 0;
+  padding: .4rem .45rem;
+  width: 100%;
+}
+
 .hia-language-switch label {
   color: var(--hia-muted);
   font-size: .82rem;
@@ -439,7 +634,7 @@ a {
 .hia-symbol {
   background: var(--hia-surface);
   border: 1px solid var(--hia-border);
-  border-radius: 6px;
+  border-radius: var(--hia-radius, 6px);
   margin: 1rem 0;
   min-width: 0;
   padding: 1rem;
@@ -561,6 +756,7 @@ a {
 }
 
 .hia-source-fetch-button,
+.hia-source-reset-button,
 .hia-project-secondary-action,
 .hia-project-entry-link {
   appearance: none;
@@ -571,6 +767,7 @@ a {
 }
 
 .hia-source-fetch-button,
+.hia-source-reset-button,
 .hia-project-secondary-action {
   background: var(--hia-surface);
   color: var(--hia-text);
@@ -584,6 +781,7 @@ a {
 }
 
 .hia-source-fetch-button:hover,
+.hia-source-reset-button:hover,
 .hia-project-secondary-action:hover,
 .hia-project-entry-link:hover {
   border-color: var(--hia-accent);
@@ -610,7 +808,9 @@ details > summary:focus-visible,
 .hia-project-entry-link:focus-visible,
 .hia-project-secondary-action:focus-visible,
 .hia-project-view-button:focus-visible,
-.hia-source-fetch-button:focus-visible {
+.hia-source-fetch-button:focus-visible,
+.hia-source-reset-button:focus-visible,
+.hia-theme-switch select:focus-visible {
   outline: 3px solid var(--hia-color-focus-ring);
   outline-offset: 2px;
 }
@@ -742,6 +942,25 @@ details > summary:focus-visible,
   padding-top: 1rem;
 }
 
+.hia-project-topic-section > summary,
+.hia-project-member-card > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: .25rem 0;
+}
+
+.hia-project-topic-section > .hia-project-topic-section-body,
+.hia-project-member-card > .hia-project-member-card-body {
+  padding-top: .65rem;
+}
+
+.hia-project-member-card {
+  border: 1px solid var(--hia-border);
+  border-left: 3px solid var(--hia-accent);
+  border-radius: var(--hia-radius, 6px);
+  padding: .5rem .75rem;
+}
+
 .hia-project-topic-section > h3 {
   margin: 0 0 .65rem;
 }
@@ -762,7 +981,9 @@ details > summary:focus-visible,
 }
 
 @media (forced-colors: active) {
-  :root {
+  /* <lang><zh-CN>第二个 selector 与 skin/scheme rule 等 specificity，且后声明，保证系统颜色真正覆盖主题 token。</zh-CN><en>The second selector matches the skin/scheme rule specificity and appears later so system colors actually override theme tokens.</en></lang> */
+  :root,
+  :root[data-hia-skin][data-hia-scheme] {
     --hia-color-canvas: Canvas;
     --hia-color-surface: Canvas;
     --hia-color-surface-muted: Canvas;
@@ -781,7 +1002,9 @@ details > summary:focus-visible,
 }
 
 @media print {
-  :root {
+  /* <lang><zh-CN>显式匹配 skin/scheme specificity，避免打印仍继承暗色画布。</zh-CN><en>Explicitly match skin/scheme specificity so print output cannot retain a dark canvas.</en></lang> */
+  :root,
+  :root[data-hia-skin][data-hia-scheme] {
     color-scheme: only light;
     --hia-color-canvas: #ffffff;
     --hia-color-surface: #ffffff;
@@ -822,6 +1045,7 @@ details > summary:focus-visible,
   }
 
   .hia-language-switch,
+  .hia-theme-switch,
   .hia-project-search,
   .hia-project-secondary-action,
   .hia-project-views,
@@ -874,6 +1098,42 @@ details > summary:focus-visible,
 export const DEFAULT_THEME_JS = `
 (() => {
   document.documentElement.dataset.hiaTheme = "default";
+
+  const skinIds = ${JSON.stringify(PORTAL_THEME_SKIN_IDS)};
+  const schemes = ${JSON.stringify(PORTAL_THEME_SCHEMES)};
+  const skinControl = document.querySelector("[data-hia-skin-control]");
+  const schemeControl = document.querySelector("[data-hia-scheme-control]");
+  const skinStorageKey = "hia-doc.portal.skin";
+  const schemeStorageKey = "hia-doc.portal.scheme";
+
+  function readPreference(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  }
+
+  function writePreference(key, value) {
+    try { localStorage.setItem(key, value); } catch { /* <lang><zh-CN>偏好持久化是可选增强。</zh-CN><en>Preference persistence is optional.</en></lang> */ }
+  }
+
+  function applyThemeSelection(skin, scheme, persist) {
+    // <lang><zh-CN>未知存储值 fail closed 到构建期默认，不允许注入任意 data attribute。</zh-CN><en>Unknown stored values fail closed to build defaults and cannot inject arbitrary data attributes.</en></lang>
+    const selectedSkin = skinIds.includes(skin) ? skin : "portal.classic";
+    const selectedScheme = schemes.includes(scheme) ? scheme : "system";
+    document.documentElement.dataset.hiaSkin = selectedSkin;
+    document.documentElement.dataset.hiaScheme = selectedScheme;
+    if (skinControl) skinControl.value = selectedSkin;
+    if (schemeControl) schemeControl.value = selectedScheme;
+    if (persist) {
+      writePreference(skinStorageKey, selectedSkin);
+      writePreference(schemeStorageKey, selectedScheme);
+    }
+  }
+
+  // <lang><zh-CN>本地阅读偏好覆盖构建默认，但永不进入 profile、manifest 或 search index。</zh-CN><en>Local reading preferences override build defaults but never enter profiles, manifests, or search indexes.</en></lang>
+  const initialSkin = readPreference(skinStorageKey) || document.documentElement.dataset.hiaSkin || "portal.classic";
+  const initialScheme = readPreference(schemeStorageKey) || document.documentElement.dataset.hiaScheme || "system";
+  applyThemeSelection(initialSkin, initialScheme, false);
+  skinControl?.addEventListener("change", () => applyThemeSelection(skinControl.value, schemeControl?.value || initialScheme, true));
+  schemeControl?.addEventListener("change", () => applyThemeSelection(skinControl?.value || initialSkin, schemeControl.value, true));
 
   const control = document.querySelector("[data-hia-locale-control]");
   const localizedBlocks = Array.from(document.querySelectorAll("[data-hia-locale]"));

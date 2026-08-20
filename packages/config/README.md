@@ -9,7 +9,17 @@ HIA 文档工具共享的配置 contract 与 loader。
 - Validate the first JSON config contract.
 - Provide diagnostics in the same shape used by `@hia-doc/core`, including machine-readable `data` where useful.
 
-配置包表达项目与构建设置，不向核心 document IR 添加字段。统一项目站可通过 `docs.renderer.projectLayout` 选择分片/单页输出，并通过 `docs.source.presentation` 选择 `none`、`link`、`embed` 或 `fetch`。`fetch` 默认在源码详情展开时加载；需要额外确认动作时，可设置 `docs.source.fetchTrigger: "manual"`。
+配置包表达项目与构建设置，不向核心 document IR 添加字段。统一项目站默认使用 `split-site` 与 `fetch`；可通过
+`docs.renderer.projectLayout` 显式选择兼容用 `single-page`，并通过 `docs.source.presentation` 选择 `none`、`link`、
+`embed` 或 `fetch`。`fetch` 默认在源码详情展开时加载；需要额外确认动作时，可设置
+`docs.source.fetchTrigger: "manual"`。
+
+`fetch` 与 `link` 只指向构建生成的同源内容寻址资源。producer 已提供的 preview 可直接进入构建；CLI 从 `localRoot`
+读取源码还必须显式设置 `docs.source.publicAssetPolicy: "explicit-public"`。旧 `fetchBaseUrl`、`linkBaseUrl` 和 `baseUrl`
+不能作为 Portal endpoint，配置校验会给出迁移 diagnostic。
+
+Portal 内置 `portal.classic`、`portal.graphite`、`portal.lumen` 三个 skin；`docs.theme.scheme` 可独立选择
+`system`、`light` 或 `dark`。skin/scheme 只决定构建期无脚本默认，不改变 topic、page、navigation 或 relation identity。
 
 Portal IA 第一轮可在 `docs.renderer.informationArchitecture` 独立配置 `contentGrouping=entry|semantic-container`、`loadingStrategy=lazy|eager` 与 `memberPlacement=separate|with-parent`，并用 `docs.renderer.uiLocale=zh-CN|en` 选择本轮触碰的 UI labels。未知 draft/enum/field fail closed；显式 IA 与 `single-page` 的组合返回 `HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED`。未配置 IA 时保持既有 P3 行为。
 

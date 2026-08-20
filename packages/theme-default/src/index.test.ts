@@ -6,8 +6,12 @@ import {
   DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES,
   DOCUMENTATION_PORTAL_THEME_CONTRACT,
   DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION,
+  PORTAL_THEME_SCHEMES,
+  PORTAL_THEME_SKIN_IDS,
   getDefaultDocumentationPortalThemeReference,
-  getDefaultThemeAssets
+  getDefaultThemeAssets,
+  getPortalThemeSchemeLabel,
+  getPortalThemeSkinCatalog
 } from "./index.js";
 
 describe("@hia-doc/theme-default", () => {
@@ -47,6 +51,26 @@ describe("@hia-doc/theme-default", () => {
     expect(Object.values(DEFAULT_DOCUMENTATION_PORTAL_THEME.privacy).every((value) => value === false)).toBe(true);
   });
 
+  it("publishes three Portal-owned skins with independent scheme capability", () => {
+    // <lang><zh-CN>catalog 只投射 capability，不向 renderer 暴露可变 token 对象。</zh-CN><en>The catalog projects capabilities without exposing mutable token objects to the renderer.</en></lang>
+    const catalog = getPortalThemeSkinCatalog();
+
+    expect(PORTAL_THEME_SKIN_IDS).toEqual(["portal.classic", "portal.graphite", "portal.lumen"]);
+    expect(PORTAL_THEME_SCHEMES).toEqual(["dark", "light", "system"]);
+    expect(catalog.map(({ skinId }) => skinId)).toEqual(PORTAL_THEME_SKIN_IDS);
+    expect(PORTAL_THEME_SCHEMES.map(getPortalThemeSchemeLabel)).toEqual([
+      "Dark / 深色",
+      "Light / 浅色",
+      "System / 跟随系统"
+    ]);
+    expect(catalog.every(({ capabilities, supportedSchemes, tokenContract }) => (
+      capabilities.includes("native-disclosure")
+      && capabilities.includes("theme-selector")
+      && supportedSchemes.join(",") === PORTAL_THEME_SCHEMES.join(",")
+      && tokenContract === `${DOCUMENTATION_PORTAL_THEME_CONTRACT}@${DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION}`
+    ))).toBe(true);
+  });
+
   it("exposes compatible css and js assets with system and print fallbacks", () => {
     // <lang><zh-CN>asset order 与路径属于现有 renderer compatibility boundary。</zh-CN><en>Asset order and paths are part of the existing renderer compatibility boundary.</en></lang>
     const assets = getDefaultThemeAssets();
@@ -65,8 +89,14 @@ describe("@hia-doc/theme-default", () => {
     expect(css).toContain(".hia-project-topic-section");
     expect(css).toContain("color-scheme: light dark");
     expect(css).toContain("@media (prefers-color-scheme: dark)");
+    expect(css).toContain(':root[data-hia-skin="portal.graphite"]');
+    expect(css).toContain(':root[data-hia-skin="portal.lumen"]');
+    expect(css).toContain('[data-hia-scheme="dark"]');
+    expect(css).toContain('[data-hia-scheme="light"]');
     expect(css).toContain("@media (forced-colors: active)");
+    expect(css).toMatch(/@media \(forced-colors: active\) \{[\s\S]*?:root\[data-hia-skin\]\[data-hia-scheme\]/u);
     expect(css).toContain("@media print");
+    expect(css).toMatch(/@media print \{[\s\S]*?:root\[data-hia-skin\]\[data-hia-scheme\]/u);
     // <lang><zh-CN>真实 BP 会产生长字段键；字段本身和窄屏 grid 都必须允许收缩。</zh-CN><en>Real BP output emits long field keys; both the field and narrow grid must be shrinkable.</en></lang>
     expect(css).toMatch(/\.hia-i18n-field dt,\s*\.hia-i18n-field dd\s*\{[^}]*min-width: 0;[^}]*overflow-wrap: anywhere;/u);
     expect(css).toMatch(/@media \(max-width: 760px\) \{[\s\S]*?\.hia-i18n-field \{\s*grid-template-columns: minmax\(0, 1fr\);/u);
@@ -75,6 +105,9 @@ describe("@hia-doc/theme-default", () => {
     expect(css).toContain("--hia-color-focus-ring");
     expect(css).not.toContain("[role=\"tree\"]");
     expect(javascript).toContain("hiaTheme");
+    expect(javascript).toContain("data-hia-skin-control");
+    expect(javascript).toContain("data-hia-scheme-control");
+    expect(javascript).toContain("localStorage");
     expect(javascript).toContain("data-hia-locale-control");
     expect(javascript).not.toContain("aria-expanded");
     expect(javascript).not.toContain("preventDefault");

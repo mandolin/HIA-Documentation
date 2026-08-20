@@ -1,5 +1,10 @@
+import { Script } from "node:vm";
 import { describe, expect, it } from "vitest";
-import { createBasicFixtureDocument } from "@hia-doc/core";
+import {
+  compareDocumentationPresentationIdentity,
+  createBasicFixtureDocument,
+  validateDocumentationPresentationProfile
+} from "@hia-doc/core";
 import {
   DOCUMENTATION_PORTAL_THEME_CONTRACT,
   DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION
@@ -14,6 +19,7 @@ import {
   HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
   HIA_PROJECT_RELATION_GRAPH_CONTRACT,
   HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION,
+  PORTAL_PRESENTATION_PROFILE_PATH,
   renderHtmlDocument,
   renderProjectHtmlDocument,
   type RenderProjectEntry,
@@ -322,7 +328,13 @@ describe("@hia-doc/renderer-html", () => {
         };
       };
     };
-    expect(result.diagnostics).toEqual([]);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "PRESENTATION_SOURCE_ASSET_INVALID",
+        severity: "warning",
+        targetPath: "source.assets"
+      })
+    ]);
     expect(result.manifest.project?.views).toEqual(["all", "dotnet", "js", "css", "html"]);
     expect(result.manifest.project?.entryCounts).toMatchObject({ all: 4, js: 1, css: 1, html: 1, dotnet: 1 });
     expect(result.manifest.project?.theme).toEqual({
@@ -447,7 +459,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(html).not.toContain("role=\"tree\"");
     expect(html).toContain("function buildProfileSummary(profile)");
     expect(html).not.toContain("data-hia-project-search-text=\"dotnet:portal-menu portalmenu dotnet-type portal menu");
-    expect(html).toContain("https://example.test/src/profile.js#L12");
+    expect(html).not.toContain("https://example.test/src/profile.js#L12");
     expect(html).toContain("Doc Source Map");
     expect(html).toContain("Relations");
     expect(html).toContain("documents-source");
@@ -480,7 +492,12 @@ describe("@hia-doc/renderer-html", () => {
             path: "src/profile.js",
             language: "javascript",
             linkUrl: "https://example.test/src/profile.js#L1",
-            range: { start: { line: 1 }, end: { line: 40 } }
+            range: { start: { line: 1 }, end: { line: 2 } },
+            preview: {
+              content: "export const profile = {};\nexport default profile;",
+              language: "javascript",
+              range: { start: { line: 1 }, end: { line: 2 } }
+            }
           }
         },
         {
@@ -511,23 +528,52 @@ describe("@hia-doc/renderer-html", () => {
     const result = renderProjectHtmlDocument(input);
     const paths = result.files.map((file) => file.path);
     const indexHtml = result.files.find((file) => file.path === "index.html")?.contents ?? "";
+    // <lang><zh-CN>所有 inline owner scripts 必须能被真实 JavaScript parser 接受，避免注释或拼接截断导航。</zh-CN><en>Every inline owner script must parse as JavaScript so comments or concatenation cannot truncate navigation.</en></lang>
+    const inlineScripts = [...indexHtml.matchAll(/<script>([\s\S]*?)<\/script>/gu)].map((match) => match[1] ?? "");
     const projectIndex = JSON.parse(result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}") as {
-      site?: { layout?: string; sourcePresentation?: string };
+      site?: { layout?: string; sourcePresentation?: string; presentationProfile?: { path?: string } };
       navigationTree?: Array<{ id: string; children?: unknown[] }>;
+      entries?: Array<{ id: string; noScriptPagePath?: string }>;
+    };
+    const presentationProfile = JSON.parse(result.files.find((file) => file.path === PORTAL_PRESENTATION_PROFILE_PATH)?.contents ?? "{}") as {
+      source?: { defaultMode?: string; mode?: string; assets?: unknown[] };
+      theme?: { skins?: unknown[] };
     };
     const rootShard = JSON.parse(result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "{}") as {
       children?: Array<{ id: string; children?: unknown[]; childrenPath?: string }>;
     };
     const entryFiles = result.files.filter((file) => file.path.startsWith("entries/"));
+    const noScriptPagePath = projectIndex.entries?.find(({ id }) => id === "js:build")?.noScriptPagePath;
+    const noScriptIndexHtml = result.files.find((file) => file.path === "pages/index.html")?.contents ?? "";
+    const noScriptEntryHtml = result.files.find((file) => file.path === noScriptPagePath)?.contents ?? "";
 
     expect(paths).toContain("navigation/root.json");
+    expect(inlineScripts.length).toBeGreaterThan(0);
+    expect(() => inlineScripts.forEach((script) => new Script(script))).not.toThrow();
     expect(paths).toContain("search/index.json");
     expect(paths).toContain("relations/project.json");
+    expect(paths).toContain("pages/index.html");
+    expect(paths).toContain(PORTAL_PRESENTATION_PROFILE_PATH);
+    expect(paths).toContain(".gitattributes");
+    expect(paths.filter((candidate) => /^sources\/[a-f0-9]{64}\.txt$/u.test(candidate))).toHaveLength(2);
     expect(entryFiles).toHaveLength(2);
+    expect(paths.filter((candidate) => candidate.startsWith("pages/") && candidate !== "pages/index.html")).toHaveLength(2);
+    expect(noScriptPagePath).toMatch(/^pages\/.+-[a-f0-9]{8}\.html$/u);
+    expect(noScriptIndexHtml).toContain("Documentation pages / 文档页面");
+    expect(noScriptIndexHtml).not.toContain("<script");
+    expect(noScriptEntryHtml).toContain("buildProfileSummary");
+    expect(noScriptEntryHtml).toContain('href="../sources/');
+    expect(noScriptEntryHtml).toContain('href="../assets/hia-default.css"');
+    expect(noScriptEntryHtml).not.toContain("<script");
     expect(projectIndex.site).toEqual(expect.objectContaining({
       layout: "split-site",
-      sourcePresentation: "link"
+      sourcePresentation: "fetch",
+      presentationProfile: expect.objectContaining({ path: PORTAL_PRESENTATION_PROFILE_PATH })
     }));
+    expect(validateDocumentationPresentationProfile(presentationProfile)).toEqual([]);
+    expect(presentationProfile.source).toMatchObject({ defaultMode: "fetch", mode: "fetch" });
+    expect(presentationProfile.source?.assets).toHaveLength(2);
+    expect(presentationProfile.theme?.skins).toHaveLength(3);
     expect(rootShard.children).toEqual([
       expect.objectContaining({
         id: "view:js",
@@ -561,13 +607,16 @@ describe("@hia-doc/renderer-html", () => {
       ]
     });
     expect(indexHtml).toContain("data-hia-project-tree");
+    expect(indexHtml).toContain("data-hia-skin-control");
+    expect(indexHtml).toContain("data-hia-scheme-control");
+    expect(indexHtml).toContain('<noscript><p class="hia-noscript-notice"><a href="pages/index.html">');
     expect(indexHtml).toContain("fetch(path");
     expect(indexHtml).not.toContain("data-hia-project-entry=\"js\"");
     expect(indexHtml).not.toContain("function buildProfileSummary(profile)");
     expect(entryFiles.find((file) => file.contents.includes("buildProfileSummary"))?.contents)
-      .toContain("https://example.test/src/profile.js#L12");
+      .toMatch(/data-hia-source-fetch="sources\/[a-f0-9]{64}\.txt"/u);
     expect(entryFiles.find((file) => file.contents.includes("buildProfileSummary"))?.contents)
-      .not.toContain("function buildProfileSummary(profile)");
+      .not.toContain("https://example.test");
   });
 
   it("enforces none, link, embed and fetch source presentation at the renderer boundary", () => {
@@ -595,7 +644,7 @@ describe("@hia-doc/renderer-html", () => {
         }
       ]
     };
-    const entryHtml = (presentation: "none" | "link" | "embed" | "fetch") => {
+    const renderMode = (presentation: "none" | "link" | "embed" | "fetch") => {
       const result = renderProjectHtmlDocument(input, {
         projectSite: {
           source: {
@@ -603,19 +652,36 @@ describe("@hia-doc/renderer-html", () => {
           }
         }
       });
-      return result.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+      return {
+        result,
+        html: result.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "",
+        profile: JSON.parse(result.files.find((file) => file.path === PORTAL_PRESENTATION_PROFILE_PATH)?.contents ?? "{}")
+      };
     };
+    const modes = Object.fromEntries((["none", "link", "embed", "fetch"] as const).map((mode) => [mode, renderMode(mode)])) as Record<
+      "none" | "link" | "embed" | "fetch",
+      ReturnType<typeof renderMode>
+    >;
 
-    expect(entryHtml("none")).not.toContain("https://example.test");
-    expect(entryHtml("none")).not.toContain("function sourceMode()");
-    expect(entryHtml("link")).toContain("https://example.test/src/source-mode.js#L3");
-    expect(entryHtml("link")).not.toContain("function sourceMode()");
-    expect(entryHtml("embed")).toContain("function sourceMode()");
-    expect(entryHtml("embed")).not.toContain("data-hia-source-fetch");
-    expect(entryHtml("fetch")).toContain("data-hia-source-fetch=\"https://raw.example.test/src/source-mode.js\"");
-    expect(entryHtml("fetch")).toContain("data-hia-source-fetch-trigger=\"on-expand\"");
-    expect(entryHtml("fetch")).not.toContain("data-hia-source-fetch-button");
-    expect(entryHtml("fetch")).not.toContain("function sourceMode()");
+    expect(modes.none.html).not.toContain("https://example.test");
+    expect(modes.none.html).not.toContain("function sourceMode()");
+    expect(modes.link.html).toMatch(/href="sources\/[a-f0-9]{64}\.txt"/u);
+    expect(modes.link.html).not.toContain("https://example.test");
+    expect(modes.link.html).not.toContain("function sourceMode()");
+    expect(modes.embed.html).toContain("function sourceMode()");
+    expect(modes.embed.html).not.toContain("data-hia-source-fetch");
+    expect(modes.fetch.html).toMatch(/data-hia-source-fetch="sources\/[a-f0-9]{64}\.txt"/u);
+    expect(modes.fetch.html).toContain("data-hia-source-integrity=\"sha384-");
+    expect(modes.fetch.html).toContain("data-hia-source-state=\"idle\"");
+    expect(modes.fetch.html).toContain("data-hia-source-reset");
+    expect(modes.fetch.html).toContain("data-hia-source-fetch-trigger=\"on-expand\"");
+    expect(modes.fetch.html).not.toContain("data-hia-source-fetch-button");
+    expect(modes.fetch.html).not.toContain("function sourceMode()");
+    for (const mode of ["none", "link", "embed", "fetch"] as const) {
+      expect(validateDocumentationPresentationProfile(modes[mode].profile)).toEqual([]);
+    }
+    expect(compareDocumentationPresentationIdentity(modes.fetch.profile, modes.embed.profile)).toEqual([]);
+    expect(compareDocumentationPresentationIdentity(modes.fetch.profile, modes.link.profile)).toEqual([]);
 
     const manualFetch = renderProjectHtmlDocument(input, {
       projectSite: {
@@ -664,6 +730,41 @@ describe("@hia-doc/renderer-html", () => {
     }).files.find((file) => file.path === "index.html")?.contents ?? "";
     expect(singlePageFetch).toContain("function bindSourceFetch(root = document)");
     expect(singlePageFetch).toContain("bindSourceFetch();");
+
+    const missingAsset = renderProjectHtmlDocument({
+      project: { name: "Missing Source Asset" },
+      entries: [{
+        id: "js:missing",
+        name: "missing",
+        kind: "function",
+        view: "js",
+        source: { path: "src/missing.js", linkUrl: "https://example.test/src/missing.js" }
+      }]
+    });
+    const missingHtml = missingAsset.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
+    expect(missingAsset.diagnostics.map(({ code }) => code)).toContain("PRESENTATION_SOURCE_ASSET_INVALID");
+    expect(missingHtml).not.toContain("https://example.test");
+    expect(missingHtml).not.toContain("data-hia-source-fetch");
+  });
+
+  it("selects a Portal-owned skin and scheme without changing presentation identity", () => {
+    const input = createWp85TypeScriptPortalFixture();
+    const classic = renderProjectHtmlDocument(input, {
+      projectSite: { source: { presentation: "none" }, theme: { skinId: "portal.classic", scheme: "system" } }
+    });
+    const graphite = renderProjectHtmlDocument(input, {
+      projectSite: { source: { presentation: "none" }, theme: { skinId: "portal.graphite", scheme: "dark" } }
+    });
+    const classicProfile = JSON.parse(classic.files.find(({ path }) => path === PORTAL_PRESENTATION_PROFILE_PATH)?.contents ?? "{}");
+    const graphiteProfile = JSON.parse(graphite.files.find(({ path }) => path === PORTAL_PRESENTATION_PROFILE_PATH)?.contents ?? "{}");
+    const graphiteHtml = graphite.files.find(({ path }) => path === "index.html")?.contents ?? "";
+
+    expect(validateDocumentationPresentationProfile(graphiteProfile)).toEqual([]);
+    expect(compareDocumentationPresentationIdentity(classicProfile, graphiteProfile)).toEqual([]);
+    expect(graphiteHtml).toContain('data-hia-skin="portal.graphite"');
+    expect(graphiteHtml).toContain('data-hia-scheme="dark"');
+    expect(graphiteHtml).toContain('<option value="portal.graphite" selected>');
+    expect(graphiteHtml).toContain('<option value="dark" selected>');
   });
 
   it("separates ASP.NET surfaces and project structure from assembly API hierarchy", () => {
@@ -742,6 +843,8 @@ describe("@hia-doc/renderer-html", () => {
     const rootShard = result.files.find((file) => file.path === "navigation/root.json")?.contents ?? "";
 
     expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(3000);
+    expect(result.files.filter((file) => file.path.startsWith("pages/") && file.path !== "pages/index.html")).toHaveLength(3000);
+    expect(result.files.some((file) => file.path === "pages/index.html")).toBe(true);
     expect(result.files.some((file) => file.path === "search/index.json")).toBe(true);
     expect(result.files.some((file) => file.path === "relations/project.json")).toBe(true);
     expect(indexHtml.length).toBeLessThan(30000);

@@ -20,6 +20,11 @@ source body, filesystem path, credential, cookie, telemetry payload, or private 
 `single-page` is an explicit compatibility partition. `none` is an explicit privacy state and is not one of the three
 source reading modes used for product parity (`fetch`, `embed`, and `link`).
 
+The neutral profile does not prescribe an owner route layout. The Portal owner nevertheless provides a standalone
+no-script index and one page per topic for its default multi-page projection. This additive fallback reuses stable topic
+identity; it does not create a second semantic document model. In no-script output, `fetch` may degrade only to the same
+build-generated public asset as a normal link, never to an external locator or embedded private body.
+
 ## Identity
 
 `topicId`, `fragmentId`, `navigationId`, and `relationIds` remain stable across source mode, skin, scheme, and partition
@@ -76,5 +81,8 @@ Draft consumers must match the contract name and version exactly. Unknown proper
 or semantic rules requires a new contract version. Adding instance data that already satisfies this exact schema does not
 change the contract version; changing the meaning of an existing field does.
 
-This contract does not implement a browser source reader, renderer projection, theme skin, page router, cache, search
-indexer, standalone documentation generator, Portal, or deployment workflow.
+The neutral `@hia-doc/core` contract itself does not implement a browser source reader, renderer projection, theme skin,
+page router, cache, search indexer, standalone generator, Portal, or deployment workflow. `@hia-doc/renderer-html` and
+`@hia-doc/theme-default` are conforming owner implementations: they generate the exact profile, same-origin content-addressed
+assets, a digest-checking plain-text reader, three Portal-local skins, and native disclosure without moving owner DOM/CSS into
+this contract.

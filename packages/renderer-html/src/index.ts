@@ -21,8 +21,14 @@ import type { GeneratedDocumentationBindingHostProjection } from "@hia-doc/sourc
 import {
   DEFAULT_THEME_CSS_PATH,
   DEFAULT_THEME_JS_PATH,
+  PORTAL_THEME_SCHEMES,
+  PORTAL_THEME_SKIN_IDS,
   getDefaultDocumentationPortalThemeReference,
   getDefaultThemeAssets,
+  getPortalThemeSchemeLabel,
+  getPortalThemeSkinLabel,
+  type PortalThemeScheme,
+  type PortalThemeSkinId,
   type DocumentationPortalThemeReference
 } from "@hia-doc/theme-default";
 import {
@@ -39,8 +45,15 @@ import {
   type DocumentationPortalSemanticPathSegment,
   type DocumentationPortalUiLocale
 } from "./information-architecture.js";
+import {
+  PORTAL_PRESENTATION_PROFILE_PATH,
+  createPortalPresentationBundle,
+  type PortalPreparedSourceAsset,
+  type PortalPresentationBundle
+} from "./presentation-profile.js";
 
 export * from "./information-architecture.js";
+export * from "./presentation-profile.js";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
 /**
@@ -87,6 +100,12 @@ export type RenderProjectSiteLayout = "split-site" | "single-page";
 export type RenderProjectSourcePresentation = "none" | "link" | "embed" | "fetch";
 export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
 
+/** @lang zh-CN Portal 的构建时默认 skin/scheme；运行时选择不改变内容 identity。 @lang en Build-time Portal skin/scheme defaults; runtime selection does not change content identity. */
+export interface RenderProjectThemeOptions {
+  scheme?: PortalThemeScheme;
+  skinId?: PortalThemeSkinId;
+}
+
 export interface RenderProjectSiteOptions {
   /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
   layout?: RenderProjectSiteLayout;
@@ -105,6 +124,8 @@ export interface RenderProjectSiteOptions {
    * Source-comment locale and body authorization, consumed only under explicit IA and never inferred from UI or content locale.
    */
   sourceCommentProjection?: RenderProjectSourceCommentProjectionOptions;
+  /** @lang zh-CN Portal-owned skin 与独立 scheme 选择。 @lang en Portal-owned skin and independent scheme selection. */
+  theme?: RenderProjectThemeOptions;
   source?: {
     /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
     presentation?: RenderProjectSourcePresentation;
@@ -385,6 +406,8 @@ export interface RenderProjectSourceRef {
   language?: string;
   linkUrl?: string;
   path: string;
+  /** @lang zh-CN renderer 构造的 body-free public asset metadata；正文只存在于单独静态文件。 @lang en Body-free public-asset metadata built by the renderer; the body exists only in a separate static file. */
+  publicAsset?: PortalPreparedSourceAsset;
   preview?: RenderProjectSourcePreviewRef;
   range?: {
     start: { line: number; column?: number };
@@ -473,6 +496,8 @@ export interface RenderHtmlManifest {
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
     /** @lang zh-CN 当前静态资源采用的 metadata-only theme reference。 @lang en Metadata-only theme reference used by the current static assets. */
     theme?: DocumentationPortalThemeReference;
+    /** @lang zh-CN neutral presentation profile 的最小引用。 @lang en Minimal reference to the neutral presentation profile. */
+    presentationProfile?: RenderProjectPresentationProfileRef;
   };
 }
 
@@ -491,6 +516,15 @@ export interface RenderProjectNavigationIndexRef {
   contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
   entryCount: number;
   path: string;
+}
+
+/** @lang zh-CN manifest/index 指向 neutral presentation profile 的 body-free 引用。 @lang en Body-free manifest/index reference to the neutral presentation profile. */
+export interface RenderProjectPresentationProfileRef {
+  contract: string;
+  contractVersion: string;
+  path: typeof PORTAL_PRESENTATION_PROFILE_PATH;
+  profileId: string;
+  status: "ready" | "refused";
 }
 
 /**
@@ -551,6 +585,7 @@ export interface RenderProjectNavigationIndex {
     searchIndexPath?: string;
     relationIndexPath?: string;
     sourcePresentation: RenderProjectSourcePresentation;
+    presentationProfile: RenderProjectPresentationProfileRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
     /** @lang zh-CN Portal consumer 的 exact theme identity 与 system preference policy。 @lang en Exact theme identity and system-preference policy for portal consumers. */
     theme: DocumentationPortalThemeReference;
@@ -630,6 +665,14 @@ export interface RenderProjectNavigationEntry {
   presentationPath?: string;
   /** stable member/entry anchor。稳定 member/entry anchor。 */
   memberAnchor?: string;
+  /** @lang zh-CN 不依赖 JavaScript 的独立多页阅读路径。 @lang en Standalone multi-page reading path that does not require JavaScript. */
+  noScriptPagePath?: string;
+  /** @lang zh-CN neutral presentation profile 中的 topic identity。 @lang en Topic identity in the neutral presentation profile. */
+  presentationTopicId?: string;
+  /** @lang zh-CN neutral presentation profile 中的 page identity。 @lang en Page identity in the neutral presentation profile. */
+  presentationPageId?: string;
+  /** @lang zh-CN neutral presentation profile 中的 fragment identity。 @lang en Fragment identity in the neutral presentation profile. */
+  presentationFragmentId?: string;
   semanticPath?: DocumentationPortalSemanticPathSegment[];
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
@@ -688,30 +731,73 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
   };
 }
 
+/**
+ * @lang zh-CN
+ * 把统一项目输入渲染为默认 split-site 或显式 single-page，并生成 exact presentation profile、内容寻址源码资源和 manifest linkage。
+ *
+ * @lang en
+ * Renders unified project input as the default split site or explicit single page, including an exact presentation profile, content-addressed source assets, and manifest linkage.
+ *
+ * @param projectInput - 已结构化的项目、entry 与关系输入；renderer 不自行读取路径。Structured project, entry, and relation input; the renderer performs no path read.
+ * @param options - locale、IA、源码模式和 Portal theme 选择。Locale, IA, source-mode, and Portal-theme selections.
+ * @returns 完整的内存文件集、diagnostics 与 body-free manifest。Complete in-memory file set, diagnostics, and body-free manifest.
+ * @throws 当显式 IA/theme/source-comment 选择或 renderer 生成的 exact profile 非法时 fail closed。Fails closed when explicit IA/theme/source-comment selections or the renderer-generated exact profile are invalid.
+ */
 export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
-  const sourcePreparedProjectInput = applyProjectSourcePresentationPolicy(projectInput, options);
-  const normalizedProjectInput = normalizeProjectRelationGraphInput(sourcePreparedProjectInput);
+  // <lang><zh-CN>关系图先规范化，确保 presentation identity 使用最终 relation facts，而不是调用者数组顺序。</zh-CN><en>Normalize the relation graph first so presentation identity uses final relation facts rather than caller array order.</en></lang>
+  const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
   const siteLayout = options.projectSite?.layout ?? "split-site";
   const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
-  const navigationIndex = createProjectNavigationIndex(normalizedProjectInput, pageTitle, options, portalContext);
+  // <lang><zh-CN>bundle 是 profile、source asset 和 owner mapping 的唯一生成点；后续 HTML 只消费 body-free mapping。</zh-CN><en>The bundle is the sole generation point for profiles, source assets, and owner mappings; later HTML consumes only body-free mappings.</en></lang>
+  const presentationBundle = createPortalPresentationBundle({
+    projectId: normalizedProjectInput.project.id ?? `project:${normalizedProjectInput.project.name}`,
+    layout: siteLayout,
+    sourceMode: options.projectSite?.source?.presentation ?? "fetch",
+    maxLines: options.projectSite?.source?.maxLines ?? 400,
+    skinId: portalContext.theme.skinId,
+    scheme: portalContext.theme.scheme,
+    topics: normalizedProjectInput.entries.map((entry) => ({
+      entryId: entry.id,
+      topicKind: entry.kind,
+      relationIds: collectProjectPresentationRelationIds(entry, normalizedProjectInput.relationGraph)
+    })),
+    sources: normalizedProjectInput.entries
+      .filter((entry) => Boolean(entry.source))
+      .map((entry) => ({
+        entryId: entry.id,
+        sourcePath: entry.source!.path,
+        ...(entry.source!.preview?.content !== undefined ? { content: entry.source!.preview!.content } : {}),
+        ...(entry.source!.range?.start.line ? { startLine: entry.source!.range!.start.line } : {}),
+        ...(entry.source!.range?.end?.line ? { endLine: entry.source!.range!.end!.line } : {}),
+        ...(entry.docSourceMap?.entryId ? { sourceMapId: entry.docSourceMap.entryId } : {})
+      }))
+  });
+  const sourcePreparedProjectInput = applyProjectSourcePresentationPolicy(normalizedProjectInput, options, presentationBundle);
+  const renderedProjectInput: RenderProjectHtmlInput = {
+    ...sourcePreparedProjectInput,
+    diagnostics: [...(sourcePreparedProjectInput.diagnostics ?? []), ...presentationBundle.diagnostics]
+  };
+  const navigationIndex = createProjectNavigationIndex(renderedProjectInput, pageTitle, options, portalContext, presentationBundle);
   const files: RenderedHtmlFile[] = siteLayout === "single-page"
     ? [
         {
           path: "index.html",
-          contents: renderProjectIndexHtml(pageTitle, normalizedProjectInput, options),
+          contents: renderProjectIndexHtml(pageTitle, renderedProjectInput, options, portalContext),
           contentType: "text/html; charset=utf-8",
           role: "entry"
         }
       ]
-    : createProjectSplitSiteFiles(pageTitle, normalizedProjectInput, navigationIndex, options, portalContext);
+    : createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
   files.push({
     path: "project-index.json",
     contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
     contentType: "application/json; charset=utf-8",
     role: "index"
   });
+  // <lang><zh-CN>profile/source artifacts 在 navigation index 后追加；manifest 仍记录完整确定性文件清单。</zh-CN><en>Append profile/source artifacts after the navigation index while the manifest still records the full deterministic file inventory.</en></lang>
+  files.push(...presentationBundle.artifacts);
 
   if (includeThemeAssets) {
     for (const asset of getDefaultThemeAssets()) {
@@ -726,22 +812,29 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
 
   return {
     files,
-    diagnostics: normalizedProjectInput.diagnostics ?? [],
-    manifest: createProjectManifest(normalizedProjectInput, files, pageTitle, options, navigationIndex)
+    diagnostics: renderedProjectInput.diagnostics ?? [],
+    manifest: createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle)
   };
 }
 
-/** 当前 render 调用的 IA/locale/label resolved context。Resolved IA, locale, and label context for one render call. */
+/** @lang zh-CN 当前 render 调用的 IA、locale、labels 与 theme resolved context。 @lang en Resolved IA, locale, labels, and theme context for one render call. */
 interface RenderProjectPortalContext {
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   labels: DocumentationPortalLabels;
   sourceCommentProjection?: Required<RenderProjectSourceCommentProjectionOptions>;
+  theme: Required<RenderProjectThemeOptions>;
   uiLocale: DocumentationPortalUiLocale;
 }
 
 /**
- * 在任何文件生成前完成 exact draft 与 single-page gate，避免 partial output。
- * Resolves the exact draft and single-page gate before any files are generated, preventing partial output.
+ * @lang zh-CN 在任何文件生成前解析 theme/locale 并完成 exact IA、source-comment 与 single-page gate，避免 partial output。
+ * @lang en Resolves theme/locale and enforces exact IA, source-comment, and single-page gates before file generation, preventing partial output.
+ *
+ * @param projectInput - 待验证的结构化 project input。Structured project input to validate.
+ * @param options - renderer 调用选项。Renderer invocation options.
+ * @param layout - 已解析的页面布局。Resolved page layout.
+ * @returns 只含已验证选择的 context。Context containing validated selections only.
+ * @throws 对任何不受支持的显式选择 fail closed。Fails closed for every unsupported explicit selection.
  */
 function resolveProjectPortalContext(
   projectInput: RenderProjectHtmlInput,
@@ -752,6 +845,12 @@ function resolveProjectPortalContext(
   const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
   const explicitInformationArchitecture = options.projectSite?.informationArchitecture;
   const sourceCommentProjection = options.projectSite?.sourceCommentProjection;
+  const requestedSkin = options.projectSite?.theme?.skinId ?? "portal.classic";
+  const requestedScheme = options.projectSite?.theme?.scheme ?? "system";
+
+  if (!PORTAL_THEME_SKIN_IDS.includes(requestedSkin) || !PORTAL_THEME_SCHEMES.includes(requestedScheme)) {
+    throw new TypeError("HIA_PORTAL_THEME_SELECTION_INVALID: Portal skin and scheme must use the built-in closed catalog.");
+  }
 
   if (projectInput.documentationContinuity) {
     assertProjectDocumentationContinuitySummary(projectInput.documentationContinuity);
@@ -799,6 +898,7 @@ function resolveProjectPortalContext(
   return {
     uiLocale,
     labels: getDocumentationPortalLabels(uiLocale),
+    theme: { skinId: requestedSkin, scheme: requestedScheme },
     ...(sourceCommentProjection
       ? {
           sourceCommentProjection: {
@@ -914,33 +1014,41 @@ function isExactObject(value: unknown, allowedFields: readonly string[]): value 
 }
 
 /**
- * 在 renderer 公共入口执行源码呈现边界，保证直接库调用与 CLI 调用具有同一隐私语义。
- * Enforces source-presentation boundaries at the renderer API so direct library and CLI calls share the same privacy semantics.
+ * @lang zh-CN 在 renderer 公共入口执行源码呈现边界，剥离旧外链并只投影 bundle 已授权的正文或同源资源。
+ * @lang en Enforces source-presentation boundaries at the renderer API, stripping legacy external links and projecting only bundle-authorized bodies or same-origin assets.
+ *
+ * @param projectInput - 规范化后的 project input。Normalized project input.
+ * @param options - 显式 source presentation 选择。Explicit source-presentation selection.
+ * @param presentationBundle - 已 exact-valid 的 body-free owner mapping。Exact-valid body-free owner mapping.
+ * @returns 不改变 locator identity 的安全 project input。Safe project input preserving locator identity.
  */
 function applyProjectSourcePresentationPolicy(
   projectInput: RenderProjectHtmlInput,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  presentationBundle: PortalPresentationBundle
 ): RenderProjectHtmlInput {
-  const presentation = options.projectSite?.source?.presentation ?? "link";
+  const presentation = options.projectSite?.source?.presentation ?? "fetch";
   return {
     ...projectInput,
     entries: projectInput.entries.map((entry) => {
       if (!entry.source) {
         return entry;
       }
-      const { preview, fetchUrl, linkUrl, ...locator } = entry.source;
+      const { preview, fetchUrl: _legacyFetchUrl, linkUrl: _legacyLinkUrl, publicAsset: _existingPublicAsset, ...locator } = entry.source;
       const previewDefaultExpanded = options.projectSite?.source?.defaultExpanded ?? preview?.defaultExpanded;
+      const publicAsset = presentationBundle.sourceByEntryId.get(entry.id);
       const source: RenderProjectSourceRef = {
         ...locator,
-        ...(presentation !== "none" && linkUrl ? { linkUrl } : {}),
+        ...(presentation === "link" && publicAsset ? { linkUrl: publicAsset.relativeUrl, publicAsset } : {}),
         ...(presentation === "embed" && preview ? {
           preview: {
             ...preview,
             ...(previewDefaultExpanded !== undefined ? { defaultExpanded: previewDefaultExpanded } : {})
           }
         } : {}),
-        ...(presentation === "fetch" && fetchUrl ? {
-          fetchUrl,
+        ...(presentation === "fetch" && publicAsset ? {
+          fetchUrl: publicAsset.relativeUrl,
+          publicAsset,
           fetchTrigger: options.projectSite?.source?.fetchTrigger ?? entry.source.fetchTrigger ?? "on-expand",
           fetchMaxLines: options.projectSite?.source?.maxLines ?? entry.source.fetchMaxLines ?? 400
         } : {})
@@ -948,6 +1056,34 @@ function applyProjectSourcePresentationPolicy(
       return {
         ...entry,
         source
+      };
+    })
+  };
+}
+
+/**
+ * @lang zh-CN 为独立 no-script 页面移除 fetch runtime metadata，并把 build-generated link 调整为页面相对路径。
+ * @lang en Removes fetch-runtime metadata for standalone no-script pages and adjusts build-generated links to page-relative paths.
+ *
+ * @param projectInput - 已应用 source policy 的 project input。Project input after source policy application.
+ * @returns 不含不可用 fetch control 的 page input。Page input without unavailable fetch controls.
+ */
+function createProjectNoScriptProjectInput(projectInput: RenderProjectHtmlInput): RenderProjectHtmlInput {
+  return {
+    ...projectInput,
+    entries: projectInput.entries.map((entry) => {
+      if (!entry.source) {
+        return entry;
+      }
+      const { fetchUrl, publicAsset: _publicAsset, linkUrl, ...source } = entry.source;
+      // <lang><zh-CN>无脚本页面把同源 fetch asset 降级成普通链接；这不会恢复被拒绝的外部 locator。</zh-CN><en>The no-script page degrades a same-origin fetch asset to a regular link without restoring a rejected external locator.</en></lang>
+      const noScriptLinkUrl = linkUrl ?? fetchUrl;
+      return {
+        ...entry,
+        source: {
+          ...source,
+          ...(noScriptLinkUrl ? { linkUrl: `../${noScriptLinkUrl}` } : {})
+        }
       };
     })
   };
@@ -970,12 +1106,44 @@ function createManifest(document: HiaDocument, files: RenderedHtmlFile[], option
   };
 }
 
+/** @lang zh-CN 从已验证 bundle 构造 manifest/index 共用的最小 profile 引用。 @lang en Builds the minimal manifest/index profile reference from a validated bundle. */
+function createProjectPresentationProfileRef(
+  presentationBundle: PortalPresentationBundle
+): RenderProjectPresentationProfileRef {
+  return {
+    contract: presentationBundle.profile.contract,
+    contractVersion: presentationBundle.profile.contractVersion,
+    path: PORTAL_PRESENTATION_PROFILE_PATH,
+    profileId: presentationBundle.profile.profileId,
+    status: presentationBundle.profile.status
+  };
+}
+
+/**
+ * @lang zh-CN 收集与 entry 关联的稳定 relation ids；relation kind 不参与 containment。
+ * @lang en Collects stable relation ids associated with an entry; relation kind does not become containment.
+ */
+function collectProjectPresentationRelationIds(
+  entry: RenderProjectEntry,
+  relationGraph: RenderProjectRelationGraph | undefined
+): string[] {
+  const entryNodeIds = new Set(
+    relationGraph?.nodes.filter((node) => node.entryId === entry.id).map(({ id }) => id) ?? []
+  );
+  return (relationGraph?.relations ?? [])
+    .filter((relation) => relation.entryId === entry.id || entryNodeIds.has(relation.from) || entryNodeIds.has(relation.to))
+    .map(({ id }) => id)
+    .sort(compareStableText);
+}
+
+/** @lang zh-CN 构造含 profile linkage 的 body-free renderer manifest。 @lang en Builds a body-free renderer manifest with presentation-profile linkage. */
 function createProjectManifest(
   projectInput: RenderProjectHtmlInput,
   files: RenderedHtmlFile[],
   pageTitle: string,
   options: RenderHtmlOptions,
-  navigationIndex: RenderProjectNavigationIndex
+  navigationIndex: RenderProjectNavigationIndex,
+  presentationBundle: PortalPresentationBundle
 ): RenderHtmlManifest {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const views = collectProjectViews(projectInput.entries);
@@ -1000,6 +1168,7 @@ function createProjectManifest(
       views,
       entryCounts: countEntriesByView(projectInput.entries),
       theme: getDefaultDocumentationPortalThemeReference(),
+      presentationProfile: createProjectPresentationProfileRef(presentationBundle),
       ...(projectInput.project.productVersion ? { productVersion: projectInput.project.productVersion } : {}),
       navigationIndex: {
         contract: navigationIndex.contract,
@@ -1039,11 +1208,13 @@ function createProjectManifest(
   };
 }
 
+/** @lang zh-CN 构造 owner route index，并附加 neutral topic/page/fragment identity 和 profile 引用。 @lang en Builds the owner route index with neutral topic/page/fragment identities and a profile reference. */
 function createProjectNavigationIndex(
   projectInput: RenderProjectHtmlInput,
   pageTitle: string,
   options: RenderHtmlOptions,
-  portalContext: RenderProjectPortalContext
+  portalContext: RenderProjectPortalContext,
+  presentationBundle: PortalPresentationBundle
 ): RenderProjectNavigationIndex {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
@@ -1080,6 +1251,7 @@ function createProjectNavigationIndex(
         ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
         ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
         contentPath: createProjectEntryContentPath(entry.id),
+        ...(options.projectSite?.layout === "single-page" ? {} : { noScriptPagePath: createProjectNoScriptPagePath(entry.id) }),
         ...(portalContext.informationArchitecture
           ? {
               presentationPath: createProjectEntryPresentationPath(
@@ -1091,7 +1263,14 @@ function createProjectNavigationIndex(
               ...(entry.semanticPath ? { semanticPath: entry.semanticPath } : {})
             }
           : {}),
-        ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {})
+        ...(entry.docSourceMap ? { docSourceMap: entry.docSourceMap } : {}),
+        ...(presentationBundle.topicByEntryId.get(entry.id)
+          ? {
+              presentationTopicId: presentationBundle.topicByEntryId.get(entry.id)!.topicId,
+              presentationPageId: presentationBundle.topicByEntryId.get(entry.id)!.pageId,
+              presentationFragmentId: presentationBundle.topicByEntryId.get(entry.id)!.fragmentId
+            }
+          : {})
       }))
       .sort(compareProjectNavigationEntries),
     groups: collectProjectNavigationGroups(projectInput.entries),
@@ -1110,12 +1289,13 @@ function createProjectNavigationIndex(
     site: {
       layout: options.projectSite?.layout ?? "split-site",
       theme: getDefaultDocumentationPortalThemeReference(),
+      presentationProfile: createProjectPresentationProfileRef(presentationBundle),
       ...(options.projectSite?.layout === "single-page" ? {} : {
         navigationRootPath: "navigation/root.json",
         searchIndexPath: "search/index.json",
         relationIndexPath: "relations/project.json"
       }),
-      sourcePresentation: options.projectSite?.source?.presentation ?? "link",
+      sourcePresentation: options.projectSite?.source?.presentation ?? "fetch",
       ...(portalContext.informationArchitecture
         ? { informationArchitecture: portalContext.informationArchitecture }
         : {})
@@ -1127,8 +1307,8 @@ function createProjectNavigationIndex(
 }
 
 /**
- * 生成大型项目默认使用的 split-site 文件集合；入口页只保留应用壳。
- * Generates the split-site file set used by large projects by default; the entry page only keeps the application shell.
+ * @lang zh-CN 生成大型项目默认使用的 split-site 文件集合；入口页只保留应用壳，entry/source 正文保持分离。
+ * @lang en Generates the default split-site file set for large projects; the entry page retains only the shell while entry/source bodies remain separate.
  */
 function createProjectSplitSiteFiles(
   pageTitle: string,
@@ -1161,6 +1341,7 @@ function createProjectSplitSiteFiles(
           kind: entry.kind,
           view: entry.view,
           contentPath: createProjectEntryContentPath(entry.id),
+          noScriptPagePath: createProjectNoScriptPagePath(entry.id),
           ...(informationArchitecture
             ? {
                 presentationPath: createProjectEntryPresentationPath(entry, projectInput.entries, informationArchitecture),
@@ -1181,9 +1362,25 @@ function createProjectSplitSiteFiles(
     }
   ];
 
+  // <lang><zh-CN>no-script 入口与逐 topic 页面保持独立，不把数千节点重新塞回应用壳。</zh-CN><en>The no-script index and per-topic pages stay separate so thousands of nodes are not embedded back into the application shell.</en></lang>
+  const noScriptProjectInput = createProjectNoScriptProjectInput(projectInput);
+  // <lang><zh-CN>按稳定 entry id 建立单次索引，避免大型项目为每页线性扫描全部节点。</zh-CN><en>Build a one-time stable-entry index so large projects do not scan every node for every page.</en></lang>
+  const noScriptEntryById = new Map(noScriptProjectInput.entries.map((entry) => [entry.id, entry]));
+  files.push({
+    path: "pages/index.html",
+    contents: renderProjectNoScriptIndexHtml(pageTitle, noScriptProjectInput, localeModel.selectedLocale, portalContext),
+    contentType: "text/html; charset=utf-8",
+    role: "entry"
+  });
+
   // <lang zh-CN>canonical entry fragment 始终生成，保证旧 deep link 与不识别 IA 的 consumer 可回退。</lang>
   // <lang en>Canonical entry fragments are always emitted so old deep links and IA-unaware consumers retain a fallback.</lang>
   for (const entry of projectInput.entries) {
+    // <lang><zh-CN>索引与原输入由同一次确定性映射产生，因此对应 no-script entry 必须存在。</zh-CN><en>The index and original input come from the same deterministic mapping, so the matching no-script entry must exist.</en></lang>
+    const noScriptEntry = noScriptEntryById.get(entry.id);
+    if (!noScriptEntry) {
+      throw new Error(`HIA_RENDERER_NO_SCRIPT_ENTRY_MISSING: ${entry.id}`);
+    }
     files.push({
       path: createProjectEntryContentPath(entry.id),
       contents: informationArchitecture
@@ -1198,6 +1395,18 @@ function createProjectSplitSiteFiles(
         : renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale),
       contentType: "text/html; charset=utf-8",
       role: "asset"
+    });
+    files.push({
+      path: createProjectNoScriptPagePath(entry.id),
+      contents: renderProjectNoScriptEntryHtml(
+        pageTitle,
+        noScriptEntry,
+        noScriptProjectInput,
+        localeModel,
+        portalContext
+      ),
+      contentType: "text/html; charset=utf-8",
+      role: "entry"
     });
   }
 
@@ -1295,6 +1504,11 @@ function toLazyProjectNavigationNode(node: RenderProjectNavigationTreeNode): Ren
 
 function createProjectEntryContentPath(entryId: string): string {
   return `entries/${stableProjectArtifactName(entryId)}.html`;
+}
+
+/** @lang zh-CN 为每个 neutral topic 生成稳定的 no-script owner page route。 @lang en Generates a stable no-script owner page route for every neutral topic. */
+function createProjectNoScriptPagePath(entryId: string): string {
+  return `pages/${stableProjectArtifactName(entryId)}.html`;
 }
 
 /**
@@ -1444,9 +1658,10 @@ function compareStableText(left: string, right: string): number {
  * @lang zh-CN 生成无脚本也可读取的 theme root metadata；字段只来自内置 exact reference。
  * @lang en Renders theme-root metadata readable without scripts; every field comes from the built-in exact reference.
  *
+ * @param themeSelection - 可选的 Portal-owned build-time 默认 skin/scheme。Optional Portal-owned build-time default skin/scheme.
  * @returns 适用于 `<html>` opening tag 的 escaped attributes。Escaped attributes for an opening `<html>` tag.
  */
-function renderDefaultThemeRootAttributes(): string {
+function renderDefaultThemeRootAttributes(themeSelection?: Required<RenderProjectThemeOptions>): string {
   // <lang><zh-CN>每次取得新 reference，避免 renderer 修改 theme owner 的共享对象。</zh-CN><en>Obtain a fresh reference each time so the renderer cannot mutate the theme owner's shared object.</en></lang>
   const theme = getDefaultDocumentationPortalThemeReference();
 
@@ -1455,7 +1670,13 @@ function renderDefaultThemeRootAttributes(): string {
     `data-hia-theme-contract="${escapeHtml(theme.contract)}"`,
     `data-hia-theme-contract-version="${escapeHtml(theme.contractVersion)}"`,
     `data-hia-theme-color-scheme-policy="${escapeHtml(theme.colorSchemePolicy)}"`,
-    `data-hia-theme-disclosure="${escapeHtml(theme.disclosure)}"`
+    `data-hia-theme-disclosure="${escapeHtml(theme.disclosure)}"`,
+    ...(themeSelection
+      ? [
+          `data-hia-skin="${escapeHtml(themeSelection.skinId)}"`,
+          `data-hia-scheme="${escapeHtml(themeSelection.scheme)}"`
+        ]
+      : [])
   ].join(" ");
 }
 
@@ -1494,6 +1715,7 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
   ].join("");
 }
 
+/** @lang zh-CN 渲染带 no-script theme 默认和可见选择器的 split-site 应用壳。 @lang en Renders the split-site shell with a no-script theme default and visible selectors. */
 function renderProjectSplitSiteHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
@@ -1508,7 +1730,7 @@ function renderProjectSplitSiteHtml(
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -1521,6 +1743,7 @@ function renderProjectSplitSiteHtml(
     "<aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectName)}</h1>`,
     renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
+    renderProjectThemeControl(portalContext.theme),
     renderProjectViewControl(views, entryCounts),
     renderProjectGeneratedDocumentationBindingProjection(projectInput.generatedDocumentationBindingProjection),
     [
@@ -1532,7 +1755,7 @@ function renderProjectSplitSiteHtml(
     `<section class="hia-project-summary hia-project-hierarchy"><h2>${escapeHtml(labels.hierarchy)}</h2><div data-hia-project-tree><p class="hia-project-loading">${escapeHtml(labels.loading)}</p></div></section>`,
     `<button type="button" class="hia-project-secondary-action" data-hia-project-relations>${escapeHtml(labels.relations)}</button>`,
     "</aside>",
-    `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${escapeHtml(labels.select)}</p></main>`,
+    `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${escapeHtml(labels.select)}</p><noscript><p class="hia-noscript-notice"><a href="pages/index.html">No-script page index / 无脚本页面索引</a></p></noscript></main>`,
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
     renderProjectSplitSiteScript(
@@ -1547,51 +1770,179 @@ function renderProjectSplitSiteHtml(
 }
 
 /**
- * 生成 split-site 与 single-page 共用的 fetch 源码加载逻辑。
+ * @lang zh-CN 渲染独立 no-script 多页索引；它不内嵌 topic 正文，也不依赖 dynamic navigation shard。
+ * @lang en Renders the standalone no-script multi-page index without embedding topic bodies or depending on dynamic navigation shards.
+ */
+function renderProjectNoScriptIndexHtml(
+  pageTitle: string,
+  projectInput: RenderProjectHtmlInput,
+  selectedLocale: string,
+  portalContext: RenderProjectPortalContext
+): string {
+  const projectName = projectInput.project.title ?? projectInput.project.name;
+  const links = [...projectInput.entries].sort(compareProjectNavigationEntries).map((entry) => {
+    // <lang><zh-CN>page path 是由固定 `pages/` 前缀与 opaque basename 组成，不需要平台路径 API。</zh-CN><en>The page path consists of the fixed `pages/` prefix and an opaque basename, so no platform path API is needed.</en></lang>
+    const relativePage = `./${createProjectNoScriptPagePath(entry.id).slice("pages/".length)}`;
+    return `<li><a href="${escapeHtml(relativePage)}">${escapeHtml(entry.name)}</a> <small>${escapeHtml(entry.kind)} / ${escapeHtml(formatProjectViewLabel(entry.view))}</small></li>`;
+  }).join("");
+  return [
+    "<!doctype html>",
+    `<html lang="${escapeHtml(selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
+    "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+    `<title>${escapeHtml(pageTitle)} - No-script index</title>`,
+    "<link rel=\"icon\" href=\"data:,\"><link rel=\"stylesheet\" href=\"../assets/hia-default.css\"></head>",
+    "<body><div class=\"hia-shell hia-project-shell\"><aside class=\"hia-sidebar\">",
+    `<h1>${escapeHtml(projectName)}</h1><p><a href="../index.html">Interactive site / 交互站点</a></p>`,
+    `<p>${escapeHtml(getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${escapeHtml(getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
+    "</aside><main class=\"hia-main hia-project-main\"><h2>Documentation pages / 文档页面</h2>",
+    `<nav aria-label="Documentation pages"><ul>${links}</ul></nav>`,
+    "</main></div></body></html>"
+  ].join("");
+}
+
+/**
+ * @lang zh-CN 渲染一个可直接打开、无脚本仍可使用 native disclosure 阅读的 topic 页面。
+ * @lang en Renders a directly addressable topic page readable through native disclosure without JavaScript.
+ */
+function renderProjectNoScriptEntryHtml(
+  pageTitle: string,
+  entry: RenderProjectEntry,
+  projectInput: RenderProjectHtmlInput,
+  localeModel: ReturnType<typeof resolveProjectLocaleModel>,
+  portalContext: RenderProjectPortalContext
+): string {
+  const informationArchitecture = portalContext.informationArchitecture;
+  const article = informationArchitecture
+    ? renderProjectSemanticTopic(
+        entry,
+        projectInput,
+        localeModel.locales,
+        localeModel.selectedLocale,
+        portalContext,
+        informationArchitecture.memberPlacement === "with-parent"
+      )
+    : renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale);
+  return [
+    "<!doctype html>",
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
+    "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+    `<title>${escapeHtml(entry.name)} - ${escapeHtml(pageTitle)}</title>`,
+    "<link rel=\"icon\" href=\"data:,\"><link rel=\"stylesheet\" href=\"../assets/hia-default.css\"></head>",
+    "<body><div class=\"hia-shell hia-project-shell\"><aside class=\"hia-sidebar\">",
+    `<h1>${escapeHtml(projectInput.project.title ?? projectInput.project.name)}</h1>`,
+    "<p><a href=\"./index.html\">Page index / 页面索引</a></p><p><a href=\"../index.html\">Interactive site / 交互站点</a></p>",
+    `<p>${escapeHtml(getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${escapeHtml(getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
+    "</aside><main class=\"hia-main hia-project-main\">",
+    article,
+    "</main></div></body></html>"
+  ].join("");
+}
+
+/**
+ * @lang zh-CN 生成 split-site 与 single-page 共用的受限 fetch reader；默认展开时加载，也保留显式 manual 模式。
+ * @lang en Generates the constrained fetch reader shared by split-site and single-page output, loading on expansion by default while retaining explicit manual mode.
  *
- * @lang zh-CN 该脚本默认在 details 展开时加载源码，并保留 manual 按钮模式作为显式配置。
- * @lang en Generates the shared fetch-source loader for split-site and single-page layouts, loading on details expansion by default while retaining an explicit manual button mode.
+ * @param rootExpression - reader 扫描 `document` 或异步载入的 `contentHost`。Reader scan root: `document` or the asynchronously loaded `contentHost`.
+ * @returns 可直接嵌入 owner script 的确定性 JavaScript 行。Deterministic JavaScript lines embeddable in the owner script.
  */
 function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "document"): string[] {
   return [
-    "  async function loadSourceFetch(details) {",
-    "    if (details.dataset.loaded === 'true' || details.dataset.loading === 'true') return;",
-    "    const code = details.querySelector('code');",
-    "    const button = details.querySelector('[data-hia-source-fetch-button]');",
+    "  const sourceControllers = new WeakMap();",
+    "  const sourceTerminalStates = new Set(['ready', 'empty', 'denied', 'not-found', 'integrity-error', 'network-error', 'aborted']);",
+    "  function setSourceState(details, state, message = '') {",
+    "    const loadButton = details.querySelector('[data-hia-source-fetch-button]');",
+    "    const resetButton = details.querySelector('[data-hia-source-reset]');",
     "    const status = details.querySelector('[data-hia-source-fetch-status]');",
-    "    details.dataset.loading = 'true';",
-    "    details.setAttribute('aria-busy', 'true');",
-    "    if (status) {",
-    "      status.hidden = false;",
-    "      status.textContent = 'Loading source / 正在加载源码...';",
+    "    details.dataset.hiaSourceState = state;",
+    "    details.toggleAttribute('aria-busy', state === 'loading');",
+    "    if (status) { status.hidden = state === 'idle'; status.textContent = message; }",
+    "    if (loadButton) loadButton.hidden = state !== 'idle';",
+    "    if (resetButton) {",
+    "      resetButton.hidden = state === 'idle';",
+    "      resetButton.textContent = state === 'loading' ? 'Cancel / 取消' : 'Reset / 重置';",
     "    }",
+    "  }",
+    "  function sourceFailureState(response) {",
+    "    if (response.status === 401 || response.status === 403) return 'denied';",
+    "    if (response.status === 404) return 'not-found';",
+    "    return 'network-error';",
+    "  }",
+    "  function digestBase64(buffer) {",
+    "    return btoa(String.fromCharCode(...new Uint8Array(buffer)));",
+    "  }",
+    "  async function loadSourceFetch(details) {",
+    "    if ((details.dataset.hiaSourceState || 'idle') !== 'idle') return;",
+    "    const code = details.querySelector('code');",
+    "    const controller = new AbortController();",
+    "    const timeoutMs = Math.max(100, Number(details.dataset.hiaSourceTimeout || 10000));",
+    "    const timeout = setTimeout(() => controller.abort(), timeoutMs);",
+    "    sourceControllers.set(details, controller);",
+    "    setSourceState(details, 'loading', 'Loading source / 正在加载源码...');",
     "    try {",
-    "      const response = await fetch(details.dataset.hiaSourceFetch || '', { credentials: 'omit' });",
-    "      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
-    "      const lines = (await response.text()).split(/\\r?\\n/u);",
-    "      const start = Math.max(1, Number(details.dataset.hiaSourceStart || 1));",
-    "      const maxLines = Math.max(1, Number(details.dataset.hiaSourceMaxLines || 400));",
-    "      const declaredEnd = Number(details.dataset.hiaSourceEnd || 0);",
-    "      const end = declaredEnd >= start ? Math.min(declaredEnd, start + maxLines - 1) : start + maxLines - 1;",
-    "      if (code) code.textContent = lines.slice(start - 1, end).join('\\n');",
-    "      details.dataset.loaded = 'true';",
-    "      if (button) button.hidden = true;",
-    "      if (status) status.hidden = true;",
-    "    } catch (error) {",
-    "      if (status) status.textContent = `Source load failed / 源码加载失败: ${String(error?.message || error)}`;",
-    "      if (button) {",
-    "        button.hidden = false;",
-    "        button.textContent = 'Retry source / 重试加载源码';",
+    "      /* <lang><zh-CN>只允许文档站同源且无 userinfo 的 content-addressed endpoint。</zh-CN><en>Allow only a same-origin content-addressed endpoint without userinfo.</en></lang> */",
+    "      const target = new URL(details.dataset.hiaSourceFetch || '', document.baseURI);",
+    "      if (target.origin !== location.origin || target.username || target.password) {",
+    "        setSourceState(details, 'denied', 'Source request denied / 源码请求被拒绝');",
+    "        return;",
     "      }",
+    "      /* <lang><zh-CN>请求固定无凭据、同源且拒绝 redirect；signal 同时承担取消与超时。</zh-CN><en>The request is credential-free, same-origin, and redirect-denying; the signal covers cancellation and timeout.</en></lang> */",
+    "      const response = await fetch(target, { cache: 'default', credentials: 'omit', mode: 'same-origin', redirect: 'error', signal: controller.signal });",
+    "      if (!response.ok) {",
+    "        const state = sourceFailureState(response);",
+    "        setSourceState(details, state, `Source load failed / 源码加载失败: ${response.status} ${response.statusText}`);",
+    "        return;",
+    "      }",
+    "      /* <lang><zh-CN>先验证字节数与 SHA-384，再把公开 asset 解码为不可执行纯文本。</zh-CN><en>Verify byte length and SHA-384 before decoding the public asset as non-executable plain text.</en></lang> */",
+    "      const bytes = await response.arrayBuffer();",
+    "      const maxBytes = Math.max(1, Number(details.dataset.hiaSourceMaxBytes || 1048576));",
+    "      const expectedBytes = Number(details.dataset.hiaSourceByteLength || 0);",
+    "      if (bytes.byteLength > maxBytes || (expectedBytes >= 0 && bytes.byteLength !== expectedBytes)) {",
+    "        setSourceState(details, 'integrity-error', 'Source size verification failed / 源码大小校验失败');",
+    "        return;",
+    "      }",
+    "      const digest = await crypto.subtle.digest('SHA-384', bytes);",
+    "      if (`sha384-${digestBase64(digest)}` !== details.dataset.hiaSourceIntegrity) {",
+    "        setSourceState(details, 'integrity-error', 'Source integrity verification failed / 源码完整性校验失败');",
+    "        return;",
+    "      }",
+    "      /* <lang><zh-CN>非法 UTF-8 表示 asset 违反 text contract，归入 integrity-error。</zh-CN><en>Invalid UTF-8 violates the text-asset contract and maps to integrity-error.</en></lang> */",
+    "      let text;",
+    "      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }",
+    "      catch { setSourceState(details, 'integrity-error', 'Source text decoding failed / 源码文本解码失败'); return; }",
+    "      if (text.length === 0) {",
+    "        if (code) code.textContent = '';",
+    "        setSourceState(details, 'empty', 'Source asset is empty / 源码资源为空');",
+    "        return;",
+    "      }",
+    "      /* <lang><zh-CN>只投影配置允许的行数，绝不执行或加入搜索索引。</zh-CN><en>Project only the configured line limit, never executing or search-indexing the body.</en></lang> */",
+    "      const lines = text.split(/\\r?\\n/u);",
+    "      const maxLines = Math.max(1, Number(details.dataset.hiaSourceMaxLines || 400));",
+    "      if (code) code.textContent = lines.slice(0, maxLines).join('\\n');",
+    "      setSourceState(details, 'ready', 'Source ready / 源码已就绪');",
+    "    } catch (error) {",
+    "      const aborted = error?.name === 'AbortError';",
+    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'Source load aborted / 源码加载已取消' : `Source load failed / 源码加载失败: ${String(error?.message || error)}`);",
     "    } finally {",
-    "      delete details.dataset.loading;",
-    "      details.removeAttribute('aria-busy');",
+    "      clearTimeout(timeout);",
+    "      sourceControllers.delete(details);",
     "    }",
+    "  }",
+    "  /* <lang><zh-CN>终态必须显式 reset 回 idle；loading 状态的同一操作只负责取消。</zh-CN><en>Terminal states require an explicit reset to idle; the same action only cancels while loading.</en></lang> */",
+    "  function resetSourceFetch(details) {",
+    "    const state = details.dataset.hiaSourceState || 'idle';",
+    "    if (state === 'loading') { sourceControllers.get(details)?.abort(); return; }",
+    "    if (!sourceTerminalStates.has(state)) return;",
+    "    const code = details.querySelector('code');",
+    "    if (code) code.textContent = '';",
+    "    setSourceState(details, 'idle');",
     "  }",
     `  function bindSourceFetch(root = ${rootExpression}) {`,
     "    for (const details of root?.querySelectorAll('details[data-hia-source-fetch]') || []) {",
     "      const button = details.querySelector('[data-hia-source-fetch-button]');",
+    "      const resetButton = details.querySelector('[data-hia-source-reset]');",
     "      if (button) button.addEventListener('click', () => loadSourceFetch(details));",
+    "      if (resetButton) resetButton.addEventListener('click', () => resetSourceFetch(details));",
+    "      setSourceState(details, details.dataset.hiaSourceState || 'idle');",
     "      if (details.dataset.hiaSourceFetchTrigger !== 'manual') {",
     "        details.addEventListener('toggle', () => {",
     "          if (details.open) void loadSourceFetch(details);",
@@ -1821,7 +2172,8 @@ function renderProjectSplitSiteScript(
 function renderProjectIndexHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
-  options: RenderHtmlOptions
+  options: RenderHtmlOptions,
+  portalContext: RenderProjectPortalContext
 ): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
@@ -1846,7 +2198,7 @@ function renderProjectIndexHtml(
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
+    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -1859,6 +2211,7 @@ function renderProjectIndexHtml(
     "<aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectName)}</h1>`,
     renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
+    renderProjectThemeControl(portalContext.theme),
     renderProjectViewControl(views, entryCounts),
     renderProjectSearchControl(),
     renderProjectHierarchy(navigationTree),
@@ -1897,6 +2250,25 @@ function renderProjectSearchControl(): string {
     "<span>Search</span>",
     "<input type=\"search\" data-hia-project-search placeholder=\"Name, kind, source, selector\">",
     "</label>"
+  ].join("");
+}
+
+/**
+ * @lang zh-CN 渲染可见的 Portal-owned skin/scheme 选择器；无脚本默认由 `<html>` attributes 决定。
+ * @lang en Renders visible Portal-owned skin/scheme selectors; `<html>` attributes own the no-script default.
+ */
+function renderProjectThemeControl(theme: Required<RenderProjectThemeOptions>): string {
+  const skins = PORTAL_THEME_SKIN_IDS.map((skinId) => (
+    `<option value="${escapeHtml(skinId)}"${skinId === theme.skinId ? " selected" : ""}>${escapeHtml(getPortalThemeSkinLabel(skinId))}</option>`
+  )).join("");
+  const schemes = PORTAL_THEME_SCHEMES.map((scheme) => (
+    `<option value="${escapeHtml(scheme)}"${scheme === theme.scheme ? " selected" : ""}>${escapeHtml(getPortalThemeSchemeLabel(scheme))}</option>`
+  )).join("");
+  return [
+    "<div class=\"hia-theme-switch\" data-hia-theme-control>",
+    `<label>Skin / 皮肤<select data-hia-skin-control>${skins}</select></label>`,
+    `<label>Scheme / 配色<select data-hia-scheme-control>${schemes}</select></label>`,
+    "</div>"
   ].join("");
 }
 
@@ -2083,9 +2455,12 @@ function renderProjectTopicSection(
   label: string,
   body: string
 ): string {
-  return body
-    ? `<section class="hia-project-topic-section" data-hia-topic-section="${section}"><h3>${escapeHtml(label)}</h3>${body}</section>`
-    : "";
+  if (!body) {
+    return "";
+  }
+  // <lang><zh-CN>首要阅读区默认展开；其余区保持原生 disclosure，可同时打开且不依赖脚本。</zh-CN><en>Primary reading sections start open; remaining sections use native disclosure, allow concurrent expansion, and require no script.</en></lang>
+  const open = section === "summary" || section === "declaration" || section === "metadata" ? " open" : "";
+  return `<details class="hia-project-topic-section" data-hia-topic-section="${section}"${open}><summary><span>${escapeHtml(label)}</span></summary><div class="hia-project-topic-section-body">${body}</div></details>`;
 }
 
 /** metadata 只含公开 entry/project facts；关系由 relations section 独立承载。Metadata contains public entry/project facts only; relations stay in their own section. */
@@ -2204,15 +2579,20 @@ function renderProjectTopicMembers(
     if (ancestors.has(member.id)) {
       return `<p><a href="${escapeHtml(createProjectEntryContentPath(member.id))}#${escapeHtml(member.id)}">${escapeHtml(member.name)}</a></p>`;
     }
-    return renderProjectSemanticTopicInternal(
-      member,
-      projectInput,
-      locales,
-      selectedLocale,
-      portalContext,
-      true,
-      ancestors
-    );
+    return [
+      `<details class="hia-project-member-card"><summary><span>${escapeHtml(member.name)}</span> <small>${escapeHtml(member.kind)}</small></summary>`,
+      "<div class=\"hia-project-member-card-body\">",
+      renderProjectSemanticTopicInternal(
+        member,
+        projectInput,
+        locales,
+        selectedLocale,
+        portalContext,
+        true,
+        ancestors
+      ),
+      "</div></details>"
+    ].join("");
   }).join("")}</div>`;
 }
 
@@ -2450,22 +2830,33 @@ function selectProjectSourceUsability(sourceUsability: RenderProjectSourceUsabil
   };
 }
 
+/**
+ * @lang zh-CN 渲染一个只接受同源 publicAsset metadata 的源码 reader；缺少授权 asset 时不产生 fallback UI。
+ * @lang en Renders a source reader that accepts same-origin public-asset metadata only and emits no fallback UI when authorization is absent.
+ *
+ * @param source - 已经 source policy 处理的 body-free source reference。Body-free source reference already processed by source policy.
+ * @returns native details reader HTML；拒绝时为空字符串。Native details-reader HTML, or an empty string when refused.
+ */
 function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
+  const publicAsset = source.publicAsset;
+  if (!publicAsset || !source.fetchUrl) {
+    return "";
+  }
   const startLine = source.range?.start.line ?? 1;
   const endLine = source.range?.end?.line;
   const fetchTrigger = source.fetchTrigger ?? "on-expand";
   const maxLines = source.fetchMaxLines ?? 400;
   const caption = endLine ? `${source.path}:${startLine}-${endLine}` : `${source.path}:${startLine}`;
-  const endAttribute = endLine ? ` data-hia-source-end="${escapeHtml(String(endLine))}"` : "";
   const manualButton = fetchTrigger === "manual"
     ? "<button type=\"button\" class=\"hia-source-fetch-button\" data-hia-source-fetch-button>Load source / 加载源码</button>"
     : "";
   return [
-    `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl ?? "")}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-start="${escapeHtml(String(startLine))}"${endAttribute} data-hia-source-max-lines="${escapeHtml(String(maxLines))}">`,
+    `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl)}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-state="idle" data-hia-source-asset-id="${escapeHtml(publicAsset.assetId)}" data-hia-source-integrity="${escapeHtml(publicAsset.digest)}" data-hia-source-byte-length="${escapeHtml(String(publicAsset.byteLength))}" data-hia-source-max-bytes="1048576" data-hia-source-max-lines="${escapeHtml(String(maxLines))}" data-hia-source-timeout="10000">`,
     `<summary>${escapeHtml(caption)}</summary>`,
     manualButton,
     "<p class=\"hia-project-loading\" data-hia-source-fetch-status hidden></p>",
     `<pre class="hia-source-code"><code data-language="${escapeHtml(source.language ?? "")}"></code></pre>`,
+    "<button type=\"button\" class=\"hia-source-reset-button\" data-hia-source-reset hidden>Reset / 重置</button>",
     "</details>"
   ].join("");
 }
