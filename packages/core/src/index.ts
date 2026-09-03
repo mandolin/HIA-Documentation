@@ -1,4 +1,5 @@
 export * from "./business-flow-documentation.js";
+export * from "./business-flow-documentation-projection.js";
 export * from "./diagnostics.js";
 export * from "./fixtures.js";
 export * from "./i18n.js";

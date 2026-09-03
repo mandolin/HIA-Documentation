@@ -23,6 +23,7 @@ The package exports its catalog and each schema as JSON:
 ```ts
 import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import businessFlowSchema from "@hia-doc/schemas/business-flow-documentation.schema.json" with { type: "json" };
+import businessFlowProjectionSchema from "@hia-doc/schemas/business-flow-documentation-projection.schema.json" with { type: "json" };
 import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" with { type: "json" };
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
@@ -60,6 +61,10 @@ reader transitions, and the body-free privacy boundary beyond the structural sch
 `business-flow-documentation` is owned by `@hia-doc/core`. Its runtime validator enforces stable identity, closed node/relation
 kinds, entry/end references, reachability, acyclicity, branch/merge/exception rules, independent quality dimensions,
 authorship, metadata-only evidence, code-binding references, privacy, and exact compatibility beyond the structural schema.
+
+`business-flow-documentation-projection` is also owned by `@hia-doc/core`. Its runtime validator enforces whole-flow public
+privacy, deterministic human-linear traversal, explicit locale resolution, and exact identity parity between shared facts and
+AI graph-ready references. The schema intentionally carries no Portal layout or graph coordinates.
 
 ## Status
 

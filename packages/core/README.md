@@ -14,6 +14,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Neutral `documentation-presentation-profile@0.1.0-draft` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
 - Neutral `business-flow-documentation@0.1.0-draft` contract, semantic validator and deterministic non-executing producer for owner-authored business-flow facts.
+- Neutral `business-flow-documentation-projection@0.1.0-draft` contract with deterministic human-linear and AI graph-ready views over shared public facts.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
@@ -104,5 +105,10 @@ code bindings, diagnostics, privacy and exact compatibility. The pure validator 
 exception graph. The producer resolves only a caller-supplied documentation-entry registry and returns frozen canonical
 facts, stable JSON and count-only evidence; it does not parse source, execute conditions, infer business truth, render a
 graph, or access targets. See `docs/business-flow-documentation-contract.md`.
+
+`business-flow-documentation-projection@0.1.0-draft` turns validated facts into one public `sharedFacts` set plus
+human-linear and AI graph-ready references. Selection and locale are explicit; non-public flows, nodes, or referenced
+evidence refuse the whole projection. It does not generate HTML, layout coordinates, JSON-LD, or editable workflows.
+See `docs/business-flow-documentation-projection-contract.md`.
 
 See `docs/contract-index.md` and `docs/core-fixture-contract.md` in the repository root for the current contract baseline.

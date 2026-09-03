@@ -1,5 +1,6 @@
 import catalogData from "./catalog.json" with { type: "json" };
 import businessFlowDocumentationSchemaData from "./schemas/business-flow-documentation.schema.json" with { type: "json" };
+import businessFlowDocumentationProjectionSchemaData from "./schemas/business-flow-documentation-projection.schema.json" with { type: "json" };
 import documentationProfileSchemaData from "./schemas/documentation-profile.schema.json" with { type: "json" };
 import documentationProducerResultSchemaData from "./schemas/documentation-producer-result.schema.json" with { type: "json" };
 import documentationProducerSchemaData from "./schemas/documentation-producer.schema.json" with { type: "json" };
@@ -19,6 +20,7 @@ export const HIA_SCHEMA_CATALOG_VERSION = "0.1.0-draft";
 export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Documentation/schemas/";
 export const HIA_SCHEMA_KEYS = [
   "business-flow-documentation",
+  "business-flow-documentation-projection",
   "documentation-profile",
   "documentation-producer",
   "documentation-producer-result",
@@ -59,6 +61,7 @@ export interface HiaSchemaCatalog {
 
 const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "business-flow-documentation": businessFlowDocumentationSchemaData,
+  "business-flow-documentation-projection": businessFlowDocumentationProjectionSchemaData,
   "documentation-profile": documentationProfileSchemaData,
   "documentation-producer": documentationProducerSchemaData,
   "documentation-producer-result": documentationProducerResultSchemaData,

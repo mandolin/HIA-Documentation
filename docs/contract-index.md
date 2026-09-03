@@ -16,6 +16,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
 | Business-flow documentation | `BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION` | `0.1.0-draft` |
+| Business-flow documentation projection | `BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Target documentation continuity | `TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Target-owner adoption kit | `TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION` | `0.1.0-draft` |
 | Enterprise baseline/current owner workflow | `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -447,6 +448,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 ## Related Docs
 
 - `docs/business-flow-documentation-contract.md`
+- `docs/business-flow-documentation-projection-contract.md`
 - `docs/core-fixture-contract.md`
 - `docs/documentation-portal-information-architecture-contract.md`
 - `docs/documentation-source-comment-projection-contract.md`

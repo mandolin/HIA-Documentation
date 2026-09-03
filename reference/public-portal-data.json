@@ -96,6 +96,7 @@
       "minimumCount": 12,
       "keys": [
         "business-flow-documentation",
+        "business-flow-documentation-projection",
         "documentation-profile",
         "documentation-producer",
         "documentation-producer-result",

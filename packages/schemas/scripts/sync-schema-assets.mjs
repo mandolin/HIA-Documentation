@@ -8,6 +8,8 @@ import {
 import {
   BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
   BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
+  BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION,
+  BUSINESS_FLOW_DOCUMENTATION_PROJECTION_JSON_SCHEMA,
   DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION,
   DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA,
@@ -56,6 +58,15 @@ const definitions = [
     key: "business-flow-documentation",
     ownerPackage: "@hia-doc/core",
     schema: BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>双视图投影共享一份 public facts；schema 不携带 Portal layout、图坐标或目标身份。</zh-CN><en>The dual-view projection shares one public fact set; its schema carries no Portal layout, graph coordinates, or target identity.</en></lang>
+  {
+    contractVersion: BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION,
+    fileName: "business-flow-documentation-projection.schema.json",
+    key: "business-flow-documentation-projection",
+    ownerPackage: "@hia-doc/core",
+    schema: BUSINESS_FLOW_DOCUMENTATION_PROJECTION_JSON_SCHEMA,
     stability: "draft"
   },
   {

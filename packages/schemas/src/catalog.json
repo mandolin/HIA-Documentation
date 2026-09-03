@@ -13,6 +13,15 @@
     },
     {
       "contractVersion": "0.1.0-draft",
+      "key": "business-flow-documentation-projection",
+      "ownerPackage": "@hia-doc/core",
+      "path": "./business-flow-documentation-projection.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
+      "contractVersion": "0.1.0-draft",
       "key": "documentation-profile",
       "ownerPackage": "@hia-doc/profile",
       "path": "./documentation-profile.schema.json",
