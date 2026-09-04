@@ -1,0 +1,694 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json",
+  "title": "Documentation UI Locale Completeness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "status",
+    "profileId",
+    "localeScope",
+    "fallbackPolicy",
+    "messages",
+    "bundles",
+    "surfaces",
+    "requirements",
+    "evaluations",
+    "privacy",
+    "compatibility",
+    "diagnostics"
+  ],
+  "properties": {
+    "contract": {
+      "const": "documentation-ui-locale-completeness"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "incomplete"
+      ]
+    },
+    "profileId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+      "maxLength": 128
+    },
+    "localeScope": {
+      "$ref": "#/$defs/localeScope"
+    },
+    "fallbackPolicy": {
+      "$ref": "#/$defs/fallbackPolicy"
+    },
+    "messages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/message"
+      }
+    },
+    "bundles": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/bundle"
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/surface"
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50000,
+      "items": {
+        "$ref": "#/$defs/requirement"
+      }
+    },
+    "evaluations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/evaluation"
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "diagnostics": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      }
+    },
+    "localeArray": {
+      "type": "array",
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+        "maxLength": 64
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "messageId",
+        "placeholderNames",
+        "visibility"
+      ],
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$",
+          "maxLength": 128
+        },
+        "placeholderNames": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+          }
+        },
+        "visibility": {
+          "const": "public"
+        }
+      }
+    },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundleId",
+        "locale",
+        "messageIds"
+      ],
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "locale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "messageIds": {
+          "type": "array",
+          "maxItems": 10000,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$",
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "fallbackChain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uiLocale",
+        "fallbackLocales"
+      ],
+      "properties": {
+        "uiLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "fallbackLocales": {
+          "$ref": "#/$defs/localeArray"
+        }
+      }
+    },
+    "localeScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contentLocales",
+        "uiLocales",
+        "defaultUiLocale",
+        "contentAndUiIndependent",
+        "uiSelection",
+        "inferFromContentLocale",
+        "inferFromSystemLocale",
+        "languageTagProfile"
+      ],
+      "properties": {
+        "contentLocales": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+            "maxLength": 64
+          }
+        },
+        "uiLocales": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+            "maxLength": 64
+          }
+        },
+        "defaultUiLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "contentAndUiIndependent": {
+          "const": true
+        },
+        "uiSelection": {
+          "const": "caller-explicit"
+        },
+        "inferFromContentLocale": {
+          "const": false
+        },
+        "inferFromSystemLocale": {
+          "const": false
+        },
+        "languageTagProfile": {
+          "const": "bcp47-well-formed-subset"
+        }
+      }
+    },
+    "fallbackPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "resolutionOrder",
+        "requiredMessageResolution",
+        "chains"
+      ],
+      "properties": {
+        "mode": {
+          "const": "explicit-chain-only"
+        },
+        "resolutionOrder": {
+          "const": "exact-then-declared-chain"
+        },
+        "requiredMessageResolution": {
+          "const": "exact"
+        },
+        "chains": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/fallbackChain"
+          }
+        }
+      }
+    },
+    "surfaceMode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "channels"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "interactive",
+            "no-script"
+          ]
+        },
+        "channels": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "visible-text",
+              "accessible-name",
+              "status-message"
+            ]
+          }
+        }
+      }
+    },
+    "languageMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uiLocale",
+        "documentLanguage",
+        "partLanguages"
+      ],
+      "properties": {
+        "uiLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "documentLanguage": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "partLanguages": {
+          "$ref": "#/$defs/localeArray"
+        }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surfaceId",
+        "contentLocale",
+        "modes",
+        "languageMetadata"
+      ],
+      "properties": {
+        "surfaceId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "contentLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "modes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/surfaceMode"
+          }
+        },
+        "languageMetadata": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/languageMetadata"
+          }
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirementId",
+        "surfaceId",
+        "mode",
+        "stateId",
+        "channel",
+        "messageId"
+      ],
+      "properties": {
+        "requirementId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "surfaceId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "mode": {
+          "enum": [
+            "interactive",
+            "no-script"
+          ]
+        },
+        "stateId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "channel": {
+          "enum": [
+            "visible-text",
+            "accessible-name",
+            "status-message"
+          ]
+        },
+        "messageId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$",
+          "maxLength": 128
+        }
+      }
+    },
+    "requirementResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirementId",
+        "stateId",
+        "channel",
+        "messageId",
+        "resolution",
+        "placeholderStatus",
+        "status"
+      ],
+      "properties": {
+        "requirementId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "stateId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "channel": {
+          "enum": [
+            "visible-text",
+            "accessible-name",
+            "status-message"
+          ]
+        },
+        "messageId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9]*)+$",
+          "maxLength": 128
+        },
+        "resolution": {
+          "enum": [
+            "exact",
+            "declared-fallback",
+            "missing"
+          ]
+        },
+        "resolvedLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "placeholderStatus": {
+          "enum": [
+            "match",
+            "mismatch",
+            "unavailable"
+          ]
+        },
+        "status": {
+          "enum": [
+            "covered",
+            "incomplete"
+          ]
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirements",
+        "exact",
+        "fallback",
+        "missing",
+        "placeholderMismatch"
+      ],
+      "properties": {
+        "requirements": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "exact": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "fallback": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "missing": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "placeholderMismatch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surfaceId",
+        "mode",
+        "contentLocale",
+        "uiLocale",
+        "documentLanguage",
+        "partLanguages",
+        "status",
+        "summary",
+        "results"
+      ],
+      "properties": {
+        "surfaceId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$",
+          "maxLength": 128
+        },
+        "mode": {
+          "enum": [
+            "interactive",
+            "no-script"
+          ]
+        },
+        "contentLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "uiLocale": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "documentLanguage": {
+          "type": "string",
+          "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$",
+          "maxLength": 64
+        },
+        "partLanguages": {
+          "$ref": "#/$defs/localeArray"
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "incomplete"
+          ]
+        },
+        "summary": {
+          "$ref": "#/$defs/summary"
+        },
+        "results": {
+          "type": "array",
+          "maxItems": 50000,
+          "items": {
+            "$ref": "#/$defs/requirementResult"
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "messageTextIncluded",
+        "contentBodyIncluded",
+        "sourceBodyIncluded",
+        "absolutePathIncluded",
+        "credentialIncluded",
+        "personalIdentityIncluded",
+        "privateMessageIncluded",
+        "runtimeEnvironmentIncluded"
+      ],
+      "properties": {
+        "messageTextIncluded": {
+          "const": false
+        },
+        "contentBodyIncluded": {
+          "const": false
+        },
+        "sourceBodyIncluded": {
+          "const": false
+        },
+        "absolutePathIncluded": {
+          "const": false
+        },
+        "credentialIncluded": {
+          "const": false
+        },
+        "personalIdentityIncluded": {
+          "const": false
+        },
+        "privateMessageIncluded": {
+          "const": false
+        },
+        "runtimeEnvironmentIncluded": {
+          "const": false
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versionMatch",
+        "unknownProperties",
+        "unknownChannelPolicy",
+        "migrationPolicy"
+      ],
+      "properties": {
+        "versionMatch": {
+          "const": "exact"
+        },
+        "unknownProperties": {
+          "const": "reject"
+        },
+        "unknownChannelPolicy": {
+          "const": "reject"
+        },
+        "migrationPolicy": {
+          "const": "explicit-pure"
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "severity"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "ULC_INVALID_INPUT",
+            "ULC_INVALID_CONTRACT",
+            "ULC_LOCALE_SCOPE_INVALID",
+            "ULC_MESSAGE_IDENTITY_INVALID",
+            "ULC_PLACEHOLDER_MISMATCH",
+            "ULC_FALLBACK_UNDECLARED",
+            "ULC_REQUIRED_MESSAGE_FALLBACK",
+            "ULC_MESSAGE_MISSING",
+            "ULC_ACCESSIBILITY_INCOMPLETE",
+            "ULC_NO_SCRIPT_INCOMPLETE",
+            "ULC_PRIVACY_BOUNDARY",
+            "ULC_COMPATIBILITY_UNSUPPORTED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    }
+  }
+}

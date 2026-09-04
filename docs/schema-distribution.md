@@ -23,6 +23,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
 | `documentation-presentation-profile` | `@hia-doc/core` | draft |
+| `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
 
@@ -50,6 +51,7 @@ import terminologySchema from "@hia-doc/schemas/documentation-terminology.schema
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
 import presentationProfileSchema from "@hia-doc/schemas/documentation-presentation-profile.schema.json" with { type: "json" };
+import uiLocaleCompletenessSchema from "@hia-doc/schemas/documentation-ui-locale-completeness.schema.json" with { type: "json" };
 import producerSchema from "@hia-doc/schemas/documentation-producer.schema.json" with { type: "json" };
 ```
 
@@ -67,6 +69,7 @@ Canonical examples:
 https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json
 ```
 

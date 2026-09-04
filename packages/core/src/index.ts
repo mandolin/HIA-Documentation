@@ -8,6 +8,7 @@ export * from "./locale-resource-declaration.js";
 export * from "./documentation-terminology.js";
 export * from "./documentation-quality-review.js";
 export * from "./documentation-presentation-profile.js";
+export * from "./documentation-ui-locale-completeness.js";
 export * from "./model.js";
 export * from "./protocol.js";
 export * from "./schema.js";

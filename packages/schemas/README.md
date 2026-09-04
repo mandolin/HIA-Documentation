@@ -29,6 +29,7 @@ import producerResultSchema from "@hia-doc/schemas/documentation-producer-result
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import presentationProfileSchema from "@hia-doc/schemas/documentation-presentation-profile.schema.json" with { type: "json" };
+import uiLocaleCompletenessSchema from "@hia-doc/schemas/documentation-ui-locale-completeness.schema.json" with { type: "json" };
 import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
 ```
 
@@ -57,6 +58,11 @@ tags, stable comment keys, closed-world privacy, and body-policy consistency bey
 `documentation-presentation-profile` is owned by `@hia-doc/core`. Its runtime validator enforces stable topic/navigation/relation
 identity, deterministic page partitioning, same-origin relative source assets, exact integrity metadata, theme capabilities,
 reader transitions, and the body-free privacy boundary beyond the structural schema.
+
+`documentation-ui-locale-completeness` is also owned by `@hia-doc/core`. Its pure evaluator and runtime validator enforce
+separate content/UI locale scopes, explicit fallback chains, stable message and placeholder identities, the full
+surface × interactive/no-script × UI-locale matrix, language/accessibility metadata, exact required coverage, and a
+translation-free privacy boundary beyond the structural schema.
 
 `business-flow-documentation` is owned by `@hia-doc/core`. Its runtime validator enforces stable identity, closed node/relation
 kinds, entry/end references, reachability, acyclicity, branch/merge/exception rules, independent quality dimensions,

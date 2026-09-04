@@ -13,6 +13,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
 - Neutral `documentation-presentation-profile@0.1.0-draft` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
+- Neutral `documentation-ui-locale-completeness@0.1.0-draft` contract and pure gate for separate content/UI locale scopes, stable messages, exact required coverage, no-script and accessibility metadata.
 - Neutral `business-flow-documentation@0.1.0-draft` contract, semantic validator and deterministic non-executing producer for owner-authored business-flow facts.
 - Neutral `business-flow-documentation-projection@0.1.0-draft` contract with deterministic human-linear and AI graph-ready views over shared public facts.
 - Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
@@ -97,6 +98,14 @@ read, body decoding, integrity hashing, cache write or fallback.
 
 The source reader state machine distinguishes ready, empty, denied, not-found, integrity-error, network-error and aborted
 outcomes. See `docs/documentation-presentation-profile-contract.md` for host responsibilities and adoption boundaries.
+
+## Documentation UI Locale Completeness
+
+`documentation-ui-locale-completeness@0.1.0-draft` separates documentation content locales from renderer UI chrome locales.
+Its pure evaluator expands every surface × interactive/no-script × UI-locale combination and requires exact coverage for
+visible text, accessible names, applicable status messages, placeholders and programmatic language metadata. Explicit
+fallback remains observable but does not satisfy a required message. Reports contain message metadata only, never translated
+text, source/content bodies, paths, credentials or runtime locale state. See `docs/documentation-ui-locale-completeness-contract.md`.
 
 ## Business Flow Documentation
 

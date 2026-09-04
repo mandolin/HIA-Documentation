@@ -37,6 +37,9 @@ import {
   DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
   DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
   DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID,
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION,
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA,
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_SCHEMA_ID,
@@ -296,6 +299,16 @@ assert(
   "Documentation presentation profile default or privacy boundary drifted."
 );
 
+// <lang><zh-CN>UI locale schema checker 锁定显式 locale 分层、required exact、全 false privacy 与 closed-world；组合完整性仍由 core pure evaluator/validator 负责。</zh-CN><en>The UI-locale schema checker freezes explicit locale separation, required exact resolution, all-false privacy, and closed-world shape; core's pure evaluator/validator still owns combination completeness.</en></lang>
+assert(
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$id === DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID
+    && DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.properties.contractVersion.const === DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION
+    && DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.additionalProperties === false
+    && DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs.fallbackPolicy.properties.requiredMessageResolution.const === "exact"
+    && DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs.privacy.properties.messageTextIncluded.const === false,
+  "Documentation UI-locale completeness schema or privacy/fallback boundary drifted."
+);
+
 const ownerSchemas = new Map([
   [BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID, BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA],
   [BUSINESS_FLOW_DOCUMENTATION_PROJECTION_SCHEMA_ID, BUSINESS_FLOW_DOCUMENTATION_PROJECTION_JSON_SCHEMA],
@@ -306,6 +319,7 @@ const ownerSchemas = new Map([
   [DOCUMENTATION_TERMINOLOGY_SCHEMA_ID, DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA],
   [DOCUMENTATION_QUALITY_REVIEW_SCHEMA_ID, DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA],
   [DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID, DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA],
+  [DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID, DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA],
   [DOCUMENTATION_SOURCE_COMMENT_PROJECTION_SCHEMA_ID, DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA],
   [HIA_PROJECT_MANIFEST_SCHEMA_ID, HIA_PROJECT_MANIFEST_JSON_SCHEMA],
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
@@ -327,4 +341,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 business-flow documentation schema, 1 business-flow documentation projection schema, 1 documentation presentation profile schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 business-flow documentation schema, 1 business-flow documentation projection schema, 1 documentation presentation profile schema, 1 documentation UI-locale completeness schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

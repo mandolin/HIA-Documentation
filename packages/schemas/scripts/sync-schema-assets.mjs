@@ -22,6 +22,8 @@ import {
   DOCUMENTATION_QUALITY_REVIEW_JSON_SCHEMA,
   DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
   DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION,
+  DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION,
   DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA,
   HIA_DOCUMENT_SCHEMA,
@@ -158,6 +160,15 @@ const definitions = [
     key: "documentation-presentation-profile",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>UI locale completeness 只分发 metadata-only gate report；翻译正文、renderer DOM 与运行环境均不进入 schema。</zh-CN><en>UI-locale completeness distributes only metadata-only gate reports; translation text, renderer DOM, and runtime environment never enter the schema.</en></lang>
+  {
+    contractVersion: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION,
+    fileName: "documentation-ui-locale-completeness.schema.json",
+    key: "documentation-ui-locale-completeness",
+    ownerPackage: "@hia-doc/core",
+    schema: DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA,
     stability: "draft"
   },
   // <lang><zh-CN>source-comment projection 是独立 sidecar contract；普通 source map 不承载正文或完整模型。</zh-CN><en>The source-comment projection is an independent sidecar contract; ordinary source maps carry neither bodies nor the full model.</en></lang>

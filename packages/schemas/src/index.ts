@@ -11,6 +11,7 @@ import documentationLocaleResolutionSchemaData from "./schemas/documentation-loc
 import documentationTerminologySchemaData from "./schemas/documentation-terminology.schema.json" with { type: "json" };
 import documentationQualityReviewSchemaData from "./schemas/documentation-quality-review.schema.json" with { type: "json" };
 import documentationPresentationProfileSchemaData from "./schemas/documentation-presentation-profile.schema.json" with { type: "json" };
+import documentationUiLocaleCompletenessSchemaData from "./schemas/documentation-ui-locale-completeness.schema.json" with { type: "json" };
 import documentationSourceCommentProjectionSchemaData from "./schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
 import generatedDocumentationBindingSchemaData from "./schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import hiaDocumentSchemaData from "./schemas/hia-document.schema.json" with { type: "json" };
@@ -32,6 +33,7 @@ export const HIA_SCHEMA_KEYS = [
   "documentation-terminology",
   "documentation-quality-review",
   "documentation-presentation-profile",
+  "documentation-ui-locale-completeness",
   "documentation-source-comment-projection",
   "hia-document",
   "project-manifest"
@@ -73,6 +75,7 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "documentation-terminology": documentationTerminologySchemaData,
   "documentation-quality-review": documentationQualityReviewSchemaData,
   "documentation-presentation-profile": documentationPresentationProfileSchemaData,
+  "documentation-ui-locale-completeness": documentationUiLocaleCompletenessSchemaData,
   "documentation-source-comment-projection": documentationSourceCommentProjectionSchemaData,
   "hia-document": hiaDocumentSchemaData,
   "project-manifest": projectManifestSchemaData

@@ -32,6 +32,7 @@
     "./documentation-terminology.schema.json": "./dist/schemas/documentation-terminology.schema.json",
     "./documentation-quality-review.schema.json": "./dist/schemas/documentation-quality-review.schema.json",
     "./documentation-presentation-profile.schema.json": "./dist/schemas/documentation-presentation-profile.schema.json",
+    "./documentation-ui-locale-completeness.schema.json": "./dist/schemas/documentation-ui-locale-completeness.schema.json",
     "./documentation-source-comment-projection.schema.json": "./dist/schemas/documentation-source-comment-projection.schema.json",
     "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",

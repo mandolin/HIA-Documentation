@@ -27,6 +27,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 | Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation source-comment projection | `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation presentation profile | `DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation UI locale completeness | `DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION` | `0.1.0-draft` |
 | HTML-authoring source-comment integration verification | `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation terminology | `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -449,6 +450,7 @@ This page summarizes the first stable contract baseline implemented in this mono
 
 - `docs/business-flow-documentation-contract.md`
 - `docs/business-flow-documentation-projection-contract.md`
+- `docs/documentation-ui-locale-completeness-contract.md`
 - `docs/core-fixture-contract.md`
 - `docs/documentation-portal-information-architecture-contract.md`
 - `docs/documentation-source-comment-projection-contract.md`
