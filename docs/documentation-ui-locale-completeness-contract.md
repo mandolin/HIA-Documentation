@@ -50,4 +50,3 @@ Diagnostics use stable codes and structural paths without echoing source text.
 refusal. `validateDocumentationUiLocaleCompletenessReport()` validates closed-world shape, references, the full
 surface × mode × UI-locale matrix, counts, privacy, and compatibility. Draft consumers must match contract and version
 exactly; unknown properties and channels are rejected, and migrations must be explicit pure operations.
-

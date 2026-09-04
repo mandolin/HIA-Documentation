@@ -238,4 +238,3 @@ describe("documentation-ui-locale-completeness", () => {
     expect(result.report?.privacy.messageTextIncluded).toBe(false);
   });
 });
-
