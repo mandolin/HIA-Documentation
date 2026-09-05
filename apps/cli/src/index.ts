@@ -79,6 +79,10 @@ import {
   runTargetOwnerAdoptionKitCommand
 } from "./owner-adoption-kit.js";
 import {
+  isBusinessFlowDocumentationHandoffReport,
+  runBusinessFlowDocumentationHandoffCommand
+} from "./business-flow-documentation-handoff.js";
+import {
   runEnterpriseBaselineCurrentOwnerWorkflowCommand
 } from "./enterprise-owner-workflow.js";
 import {
@@ -154,6 +158,27 @@ export {
 } from "./owner-adoption-kit.js";
 
 /**
+ * Business-flow documentation handoff exported by the CLI package.
+ *
+ * 中文：由 CLI package 导出的中性业务流程 handoff；只包装 exact public projection，不授予 target action 或 adoption。
+ * English: Neutral business-flow handoff exported by the CLI package; it wraps only an exact public projection and grants no target action or adoption.
+ */
+export {
+  BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT,
+  BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT_VERSION,
+  BUSINESS_FLOW_DOCUMENTATION_HANDOFF_DIAGNOSTIC_CODES,
+  BUSINESS_FLOW_DOCUMENTATION_HANDOFF_JSON_SCHEMA,
+  BUSINESS_FLOW_DOCUMENTATION_HANDOFF_SCHEMA_ID,
+  createBusinessFlowDocumentationHandoff,
+  isBusinessFlowDocumentationHandoffReport,
+  validateBusinessFlowDocumentationHandoff,
+  type BusinessFlowDocumentationHandoffArtifact,
+  type BusinessFlowDocumentationHandoffDiagnostic,
+  type BusinessFlowDocumentationHandoffDiagnosticCode,
+  type BusinessFlowDocumentationHandoffReport
+} from "./business-flow-documentation-handoff.js";
+
+/**
  * Enterprise baseline/current owner workflow exported by the CLI package.
  *
  * 中文：由 CLI package 导出的企业 owner workflow；只组合显式 adoption metadata 与 public-safe evidence summary pair。
@@ -205,11 +230,12 @@ const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>]
   hia docs evidence [--docs-dir <dir>] [--out <file>]
   hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
   hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
   hia docs adoption-kit --request <file> [--out <file>]
+  hia docs business-flow-handoff --projection <file> [--out <file>]
   hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]
   hia docs html-authoring-verify --request <file> [--out <file>]
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
@@ -220,6 +246,7 @@ Commands:
   docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
   docs continuity Compare two public-safe documentation evidence summaries without reading target state.
   docs adoption-kit Compose an owner-operated review kit from explicit public-safe metadata.
+  docs business-flow-handoff Package an exact public business-flow projection for owner review.
   docs enterprise-workflow Compose enterprise owner input with an optional public-safe baseline/current pair.
   docs html-authoring-verify Verify an exact HTML-authoring handoff, source-comment projection and explicit binding.
   browser panel   Generate a static source-linked browser panel.
@@ -240,6 +267,8 @@ Options:
   --current <file>    Later generated documentation evidence summary for docs continuity.
   --adoption-request <file>
                       Explicit target-owner adoption request for docs enterprise-workflow.
+  --business-flow-handoff <file>
+                      Exact ready business-flow handoff consumed by an explicit-IA project build.
   --target-id <id>    Stable public target identifier for docs acceptance or continuity.
   --target-family <family>
                       Acceptance supports four portfolio families; continuity currently requires enterprise-business.
@@ -347,6 +376,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
     return runTargetOwnerAdoptionKitCommand(normalizedArgv.slice(2), io);
   }
 
+  // <lang><zh-CN>business-flow-handoff 只读取 caller 明示 public projection；不发现 target、不读取 source，也不声明 adoption。</zh-CN><en>The business-flow-handoff command reads only a caller-explicit public projection; it discovers no target, reads no source, and claims no adoption.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "business-flow-handoff") {
+    return runBusinessFlowDocumentationHandoffCommand(normalizedArgv.slice(2), io);
+  }
+
   // <lang><zh-CN>enterprise-workflow 只读取 caller 明示的 adoption request 与可选 summary pair；不发现 target、不联系 owner、不声明 adoption。</zh-CN><en>The enterprise-workflow command reads only a caller-explicit adoption request and optional summary pair; it discovers no target, contacts no owner, and claims no adoption.</en></lang>
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "enterprise-workflow") {
     return runEnterpriseBaselineCurrentOwnerWorkflowCommand(normalizedArgv.slice(2), io);
@@ -367,7 +401,7 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--adoption-kit", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--adoption-kit", "--business-flow-handoff", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -411,6 +445,7 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     configResult.baseDir
   );
   const adoptionKitRelativePath = readOption(argv, "--adoption-kit");
+  const businessFlowHandoffRelativePath = readOption(argv, "--business-flow-handoff");
   const locale = readOption(argv, "--locale") ?? docsConfig.locale;
   const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
   const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath, projectManifestPath);
@@ -422,6 +457,14 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
       "docs.adoptionKit"
     ));
   }
+  if (businessFlowHandoffRelativePath && (!isSafeCallerRelativePath(businessFlowHandoffRelativePath) || !projectManifestPath)) {
+    buildOptionDiagnostics.push(createCliDiagnostic(
+      "HIA_CLI_BUSINESS_FLOW_HANDOFF_INPUT_INVALID",
+      "docs build accepts --business-flow-handoff only as a safe relative path together with a project manifest.",
+      "error",
+      "docs.businessFlowHandoff"
+    ));
+  }
   reportDiagnostics(buildOptionDiagnostics, io);
 
   if (buildOptionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -429,7 +472,17 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   }
 
   if (projectManifestPath) {
-    return runProjectDocsBuild(projectManifestPath, outputDir, manifestPath, docsConfig, configResult.baseDir, locale, adoptionKitRelativePath, io);
+    return runProjectDocsBuild(
+      projectManifestPath,
+      outputDir,
+      manifestPath,
+      docsConfig,
+      configResult.baseDir,
+      locale,
+      adoptionKitRelativePath,
+      businessFlowHandoffRelativePath,
+      io
+    );
   }
 
   const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
@@ -604,6 +657,7 @@ async function runProjectDocsBuild(
   configBaseDir: string,
   locale: string | undefined,
   adoptionKitRelativePath: string | undefined,
+  businessFlowHandoffRelativePath: string | undefined,
   io: CliIo
 ): Promise<number> {
   const manifestResult = await loadProjectManifest(projectManifestPath, io);
@@ -637,10 +691,18 @@ async function runProjectDocsBuild(
   if (adoptionKitRelativePath && !ownerAdoption) {
     return 1;
   }
+  const businessFlowDocumentationProjection = businessFlowHandoffRelativePath
+    ? await loadBusinessFlowDocumentationHandoffProjection(businessFlowHandoffRelativePath, docsConfig, io)
+    : undefined;
+  if (businessFlowHandoffRelativePath && !businessFlowDocumentationProjection) {
+    return 1;
+  }
   // <lang><zh-CN>只把 validated portalSummary 加入 renderer input；完整 kit 的 target/trial identity 与 diagnostics 不进入 Portal。</zh-CN><en>Add only the validated portalSummary to renderer input; the full kit's target/trial identities and diagnostics never enter the Portal.</en></lang>
   const rendered = renderProjectHtmlDocument({
     ...preparedProjectInput,
-    ...(ownerAdoption ? { ownerAdoption } : {})
+    ...(ownerAdoption ? { ownerAdoption } : {}),
+    // <lang><zh-CN>handoff envelope、review 与 digest 留在 CLI trust boundary；Portal 只收到已二次验证的 W-P122 projection。</zh-CN><en>The handoff envelope, review facts, and digest stay at the CLI trust boundary; the Portal receives only the revalidated W-P122 projection.</en></lang>
+    ...(businessFlowDocumentationProjection ? { businessFlowDocumentationProjection } : {})
   }, createRenderOptions(locale, docsConfig));
   reportDiagnostics(rendered.diagnostics, io);
 
@@ -691,6 +753,38 @@ async function loadOwnerAdoptionPortalSummary(
     return candidate.portalSummary;
   } catch {
     io.stderr("[error:HIA_CLI_OWNER_ADOPTION_KIT_REPORT_READ_FAILED] docs build could not read a valid target-owner adoption kit report.");
+    return undefined;
+  }
+}
+
+/**
+ * @lang zh-CN 从 caller 显式 safe-relative handoff 中提取 exact、ready、digest-valid public projection。
+ * @lang en Extracts an exact, ready, digest-valid public projection from a caller-explicit safe-relative handoff.
+ * @param relativePath caller cwd 下的 handoff path。 / Handoff path under the caller cwd.
+ * @param docsConfig resolved HIA docs config。 / Resolved HIA docs config.
+ * @param io controlled CLI IO。 / Controlled CLI IO.
+ * @returns validated W-P122 projection，失败时返回 undefined。 / Validated W-P122 projection, or undefined on failure.
+ */
+async function loadBusinessFlowDocumentationHandoffProjection(
+  relativePath: string,
+  docsConfig: HiaDocsConfig,
+  io: CliIo
+): Promise<RenderProjectHtmlInput["businessFlowDocumentationProjection"] | undefined> {
+  if (!docsConfig.renderer?.informationArchitecture) {
+    io.stderr("[error:HIA_CLI_BUSINESS_FLOW_HANDOFF_IA_REQUIRED] docs build requires explicit Portal information architecture for business-flow linkage.");
+    return undefined;
+  }
+  try {
+    // <lang><zh-CN>该 read 只打开 caller 明示 handoff；不扫描 target、project input、source 或相邻目录。</zh-CN><en>This read opens only the caller-explicit handoff; it scans no target, project input, source, or adjacent directory.</en></lang>
+    const candidate: unknown = JSON.parse(await readFile(path.resolve(io.cwd, relativePath), "utf8"));
+    if (!isBusinessFlowDocumentationHandoffReport(candidate)
+      || candidate.status !== "ready-for-owner-review" || !candidate.projection) {
+      io.stderr("[error:HIA_CLI_BUSINESS_FLOW_HANDOFF_REPORT_INVALID] docs build requires an exact ready business-flow documentation handoff.");
+      return undefined;
+    }
+    return candidate.projection;
+  } catch {
+    io.stderr("[error:HIA_CLI_BUSINESS_FLOW_HANDOFF_REPORT_READ_FAILED] docs build could not read a valid business-flow documentation handoff.");
     return undefined;
   }
 }

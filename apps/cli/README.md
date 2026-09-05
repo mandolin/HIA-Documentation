@@ -5,11 +5,12 @@ Command line entry for the HIA documentation system.
 Current scope:
 
 - `hia --help`
-- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
+- `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 - `hia docs evidence [--docs-dir <dir>] [--out <file>]`
 - `hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]`
 - `hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]`
 - `hia docs adoption-kit --request <file> [--out <file>]`
+- `hia docs business-flow-handoff --projection <file> [--out <file>]`
 - `hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]`
 - `hia docs html-authoring-verify --request <file> [--out <file>]`
 
@@ -54,6 +55,16 @@ The continuity command compares two exact `hia-generated-docs-evidence-summary@0
 
 The adoption-kit command composes existing owner-mediated contracts into a reusable review artifact. It accepts no source, artifact, evidence, or command-output body and grants no target read/write/command, network, publish, or adoption authority. Its embedded `portalSummary` omits target, trial, and owner identities. Project builds may consume an exact non-refused report through `--adoption-kit`, but only when the project config explicitly enables the existing Portal IA contract.
 
+`docs business-flow-handoff` packages one exact public `business-flow-documentation-projection@0.1.0-draft` as a deterministic
+`business-flow-documentation-handoff@0.1.0-draft`. The packet embeds the projection and records stable-JSON SHA-256/UTF-8 byte
+facts, while owner input, consent, and adoption remain explicitly unrecorded or unasserted. Invalid projection input produces a
+refused report without a partial payload, digest, or counts.
+
+An explicit-IA project build may consume an exact ready packet through `--business-flow-handoff`. The CLI verifies the packet and
+passes only the public projection to the renderer. The Portal data plane stores it in `project-index.json`; its manifest keeps only
+contract/version/path/count metadata. No visible flow page, graph layout, target discovery, source read, expression execution,
+network access, or adoption claim is implied.
+
 `docs enterprise-workflow` 把一个显式 enterprise adoption request 与成对可选的 baseline/current public-safe evidence summaries 组合为 `enterprise-baseline-current-owner-workflow@0.1.0-draft`。未收到 owner input 且未提供 pair 时输出可审计 deferred；owner 已提交时必须提供完整 pair，且 adoption kit 与 continuity 都通过才 ready。报告只保留 component status、counts、booleans 与独立 semantics，不嵌入 evidence、path、entry/producer identity 或正文。
 
 The enterprise workflow is an owner-local composition surface, not a target runner. All input/output paths are explicit, distinct, and safe-relative under caller cwd. It never discovers a target, contacts an owner, runs a target command, writes a target repository, accesses a network, publishes a package, or asserts adoption.
@@ -85,9 +96,11 @@ pnpm run hia -- docs evidence --docs-dir dist/project-docs --out dist/project-do
 pnpm run hia -- docs acceptance --evidence dist/project-docs/documentation-evidence.json --target-id sample-project --target-family unicode-compatible --out dist/project-docs/target-acceptance.json
 pnpm run hia -- docs continuity --baseline dist/project-docs/baseline-evidence.json --current dist/project-docs/current-evidence.json --target-id sample-enterprise-project --target-family enterprise-business --out dist/project-docs/target-continuity.json
 pnpm run hia -- docs adoption-kit --request adoption-request.json --out owner-adoption-kit.json
+pnpm run hia -- docs business-flow-handoff --projection business-flow-projection.json --out business-flow-handoff.json
 pnpm run hia -- docs enterprise-workflow --adoption-request adoption-request.json --baseline baseline-evidence.json --current current-evidence.json --out enterprise-owner-workflow.json
 pnpm run hia -- docs html-authoring-verify --request html-authoring-integration-request.json --out html-authoring-integration-report.json
 pnpm run hia -- docs build --config hia.config.example.json --project-manifest fixtures/project-mixed.hia-project.json --adoption-kit owner-adoption-kit.json --out dist/project-docs
+pnpm run hia -- docs build --config hia.config.example.json --project-manifest fixtures/project-mixed.hia-project.json --business-flow-handoff business-flow-handoff.json --out dist/project-docs
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 
@@ -101,6 +114,11 @@ The package exports the pure `createTargetDocumentationContinuityReport()` evalu
 
 The package also exports `createTargetOwnerAdoptionKit()`, `isTargetOwnerAdoptionKitReport()`, the contract/version/family/decision/diagnostic constants, the `TargetOwnerAdoptionPortalSummary` type, and the owner-local Draft 2020-12 `TARGET_OWNER_ADOPTION_KIT_JSON_SCHEMA`. The kit is a composition and review contract with CLI and renderer consumers, not a target execution protocol.
 
+The package exports `createBusinessFlowDocumentationHandoff()`, `validateBusinessFlowDocumentationHandoff()`,
+`isBusinessFlowDocumentationHandoffReport()`, public packet types, exact identity/diagnostic constants, and the owner-local Draft
+2020-12 `BUSINESS_FLOW_DOCUMENTATION_HANDOFF_JSON_SCHEMA`. The schema references the distributed business-flow projection schema;
+its own `$id` remains owner-local identity in this draft.
+
 The package exports `createEnterpriseBaselineCurrentOwnerWorkflow()`, `isEnterpriseBaselineCurrentOwnerWorkflowReport()`, its contract/version/diagnostic constants and the owner-local Draft 2020-12 `ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_JSON_SCHEMA`. The report projects existing component outcomes and has no independent target authority.
 
 The package also exports `createHtmlAuthoringSourceCommentIntegrationReport()`,
@@ -108,4 +126,4 @@ The package also exports `createHtmlAuthoringSourceCommentIntegrationReport()`,
 owner-local Draft 2020-12 `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_JSON_SCHEMA`. This is an HIA-side verification surface,
 not a target-host integration or execution protocol.
 
-See `docs/documentation-source-comment-projection-contract.md`, `docs/html-authoring-source-comment-integration-verification-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
+See `docs/business-flow-documentation-handoff-contract.md`, `docs/documentation-source-comment-projection-contract.md`, `docs/html-authoring-source-comment-integration-verification-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.

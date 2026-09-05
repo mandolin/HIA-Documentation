@@ -2,7 +2,9 @@ import {
   canonicalizeDocumentationLocale,
   getI18nField,
   resolveI18nFieldText,
+  validateBusinessFlowDocumentationProjection,
   validateDocumentationSourceCommentProjection,
+  type BusinessFlowDocumentationProjection,
   type DocumentationSourceCommentContentPolicy,
   type DocumentationSourceCommentProjection,
   type HiaDiagnostic,
@@ -172,6 +174,14 @@ export interface RenderProjectHtmlInput {
    * @lang en Optional W-P89 owner-adoption Portal projection; consumes a metadata-only summary only under explicit IA.
    */
   ownerAdoption?: RenderProjectOwnerAdoptionSummary;
+  /**
+   * @lang zh-CN
+   * optional W-P122 public dual projection；W-P124 只将其投影到 Portal structured data plane，不据此定稿可见 flow UI。
+   *
+   * @lang en
+   * Optional W-P122 public dual projection; W-P124 projects it only to the Portal structured data plane and does not finalize a visible flow UI from it.
+   */
+  businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
   diagnostics?: HiaDiagnostic[];
 }
 
@@ -492,6 +502,8 @@ export interface RenderHtmlManifest {
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
     generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
+    /** @lang zh-CN `project-index.json` 内业务流程双投影的 body-free 引用。 @lang en Body-free reference to the business-flow dual projection in `project-index.json`. */
+    businessFlowDocumentationProjection?: RenderProjectBusinessFlowDocumentationProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
     /** @lang zh-CN 当前静态资源采用的 metadata-only theme reference。 @lang en Metadata-only theme reference used by the current static assets. */
@@ -554,6 +566,23 @@ export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
 }
 
 /**
+ * @lang zh-CN
+ * renderer manifest 对 public business-flow projection 的 body-free 引用与可审计计数；完整 payload 只存在于 project index。
+ *
+ * @lang en
+ * Body-free renderer-manifest reference and auditable counts for a public business-flow projection; the full payload exists only in the project index.
+ */
+export interface RenderProjectBusinessFlowDocumentationProjectionRef {
+  contract: "business-flow-documentation-projection";
+  contractVersion: "0.1.0-draft";
+  flowCount: number;
+  humanItemCount: number;
+  nodeCount: number;
+  path: "project-index.json";
+  relationCount: number;
+}
+
+/**
  * 供 portal 使用的、无 HTML 表示细节的项目入口索引。
  * Project entry index without HTML presentation details, intended for portal consumption.
  */
@@ -578,6 +607,8 @@ export interface RenderProjectNavigationIndex {
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
   ownerAdoption?: RenderProjectOwnerAdoptionSummary;
+  /** @lang zh-CN exact-valid public human/AI 双投影；可见表示等待独立设计基线。 @lang en Exact-valid public human/AI dual projection whose visible representation awaits an independent design baseline. */
+  businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
   relationGraph?: RenderProjectRelationGraph;
   site?: {
     layout: RenderProjectSiteLayout;
@@ -865,6 +896,20 @@ function resolveProjectPortalContext(
     }
   }
 
+  if (projectInput.businessFlowDocumentationProjection) {
+    // <lang><zh-CN>在生成任何文件前复用 W-P122 owner validator；renderer 不修复、补全或推断 flow facts。</zh-CN><en>Reuse the W-P122 owner validator before generating any file; the renderer repairs, completes, or infers no flow facts.</en></lang>
+    if (validateBusinessFlowDocumentationProjection(projectInput.businessFlowDocumentationProjection).length > 0) {
+      throw new TypeError(
+        "HIA_PORTAL_IA_BUSINESS_FLOW_INVALID: business-flow linkage must be an exact public projection."
+      );
+    }
+    if (!explicitInformationArchitecture) {
+      throw new TypeError(
+        "HIA_PORTAL_IA_BUSINESS_FLOW_REQUIRES_IA: business-flow linkage requires explicit Portal information architecture."
+      );
+    }
+  }
+
   if (sourceCommentProjection && !explicitInformationArchitecture) {
     throw new TypeError(
       "HIA_PORTAL_SOURCE_COMMENT_REQUIRES_IA: source-comment projection requires explicit Portal information architecture."
@@ -1120,6 +1165,26 @@ function createProjectPresentationProfileRef(
 }
 
 /**
+ * @lang zh-CN 从已验证 W-P122 projection 构造 manifest 的 body-free ref/count。
+ * @lang en Builds a body-free manifest reference and counts from a validated W-P122 projection.
+ * @param projection exact-valid public dual projection。 / Exact-valid public dual projection.
+ * @returns 不含 label、node、edge 或 evidence body 的引用。 / Reference containing no labels, nodes, edges, or evidence bodies.
+ */
+function createProjectBusinessFlowProjectionRef(
+  projection: BusinessFlowDocumentationProjection
+): RenderProjectBusinessFlowDocumentationProjectionRef {
+  return {
+    contract: projection.contract,
+    contractVersion: projection.contractVersion,
+    flowCount: projection.sharedFacts.flows.length,
+    humanItemCount: projection.humanLinear.flows.reduce((total, flow) => total + flow.items.length, 0),
+    nodeCount: projection.sharedFacts.nodes.length,
+    path: "project-index.json",
+    relationCount: projection.sharedFacts.relations.length
+  };
+}
+
+/**
  * @lang zh-CN 收集与 entry 关联的稳定 relation ids；relation kind 不参与 containment。
  * @lang en Collects stable relation ids associated with an entry; relation kind does not become containment.
  */
@@ -1188,6 +1253,13 @@ function createProjectManifest(
               status: projectInput.generatedDocumentationBindingProjection.status,
               targetCount: projectInput.generatedDocumentationBindingProjection.summary.targetCount
             }
+          }
+        : {}),
+      ...(projectInput.businessFlowDocumentationProjection
+        ? {
+            businessFlowDocumentationProjection: createProjectBusinessFlowProjectionRef(
+              projectInput.businessFlowDocumentationProjection
+            )
           }
         : {}),
       ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
@@ -1286,6 +1358,9 @@ function createProjectNavigationIndex(
       : {}),
     ...(projectInput.documentationContinuity ? { documentationContinuity: projectInput.documentationContinuity } : {}),
     ...(projectInput.ownerAdoption ? { ownerAdoption: projectInput.ownerAdoption } : {}),
+    ...(projectInput.businessFlowDocumentationProjection
+      ? { businessFlowDocumentationProjection: projectInput.businessFlowDocumentationProjection }
+      : {}),
     site: {
       layout: options.projectSite?.layout ?? "split-site",
       theme: getDefaultDocumentationPortalThemeReference(),
