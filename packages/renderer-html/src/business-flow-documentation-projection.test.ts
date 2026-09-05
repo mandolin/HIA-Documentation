@@ -32,7 +32,7 @@ describe("business-flow Portal structured consumer", () => {
   it("preserves the exact human/AI projection in project-index and emits only a body-free manifest ref", () => {
     // <lang><zh-CN>空 IA object 仍是 caller 显式采用结构化 Portal contract 的信号。</zh-CN><en>An empty IA object still signals caller-explicit adoption of the structured Portal contract.</en></lang>
     const result = renderProjectHtmlDocument(createFixture(), {
-      projectSite: { informationArchitecture: {}, source: { presentation: "none" } }
+      projectSite: { informationArchitecture: {}, source: { presentation: "none" }, uiLocale: "en" }
     });
     // <lang><zh-CN>project index 用于核对完整 projection parity。</zh-CN><en>The project index is used to verify full projection parity.</en></lang>
     const projectIndex = JSON.parse(result.files.find(({ path }) => path === "project-index.json")?.contents ?? "{}") as {
@@ -66,7 +66,7 @@ describe("business-flow Portal structured consumer", () => {
     projection.targetPrivateLayout = "must-not-cross";
     invalid.businessFlowDocumentationProjection = projection;
     expect(() => renderProjectHtmlDocument(invalid, {
-      projectSite: { informationArchitecture: {} }
+      projectSite: { informationArchitecture: {}, uiLocale: "en" }
     })).toThrow(/HIA_PORTAL_IA_BUSINESS_FLOW_INVALID/u);
   });
 });

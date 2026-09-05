@@ -978,14 +978,16 @@ describe("@hia-doc/renderer-html", () => {
     expect(() => renderProjectHtmlDocument(createWp85TypeScriptPortalFixture(), {
       projectSite: {
         layout: "single-page",
-        informationArchitecture: {}
+        informationArchitecture: {},
+        uiLocale: "en"
       }
     })).toThrow(/HIA_CONFIG_IA_SINGLE_PAGE_UNSUPPORTED/u);
     expect(() => renderProjectHtmlDocument(createWp85TypeScriptPortalFixture(), {
       projectSite: {
         informationArchitecture: {
           contractVersion: "0.2.0-draft" as "0.1.0-draft"
-        }
+        },
+        uiLocale: "en"
       }
     })).toThrow(/HIA_PORTAL_IA_UNSUPPORTED/u);
 
@@ -994,7 +996,7 @@ describe("@hia-doc/renderer-html", () => {
       { kind: "repository", id: "private-path", label: "C:\\private\\fixture" }
     ];
     expect(() => renderProjectHtmlDocument(unsafeSemanticPath, {
-      projectSite: { informationArchitecture: {} }
+      projectSite: { informationArchitecture: {}, uiLocale: "en" }
     })).toThrow(/HIA_PORTAL_IA_SEMANTIC_PATH_INVALID/u);
 
     const leakedContinuity = createWp85TypeScriptPortalFixture() as RenderProjectHtmlInput & {
@@ -1014,7 +1016,7 @@ describe("@hia-doc/renderer-html", () => {
       sourceBody: "must-not-cross-the-boundary"
     };
     expect(() => renderProjectHtmlDocument(leakedContinuity, {
-      projectSite: { informationArchitecture: {} }
+      projectSite: { informationArchitecture: {}, uiLocale: "en" }
     })).toThrow(/HIA_PORTAL_IA_CONTINUITY_INVALID/u);
   });
 
@@ -1153,7 +1155,7 @@ describe("@hia-doc/renderer-html", () => {
       contract: "target-documentation-continuity",
       entries: { currentCount: 16 }
     });
-    expect(parentTopic).toContain("Product Version</dt><dd>2026.8");
+    expect(parentTopic).toContain('data-hia-ui-message="portal.metadata.productversion">产品版本</span></dt><dd>2026.8');
     expect(parentTopic).toContain("target-documentation-continuity@0.1.0-draft");
     expect(parentTopic).toContain("id=\"ts:r0:p0:e1\"");
     for (const section of orderedPresentSections) {
@@ -1189,7 +1191,7 @@ describe("@hia-doc/renderer-html", () => {
       }
     };
     const result = renderProjectHtmlDocument(fixture, {
-      projectSite: { informationArchitecture: {} }
+      projectSite: { informationArchitecture: {}, uiLocale: "en" }
     });
     const projectIndexText = result.files.find((file) => file.path === "project-index.json")?.contents ?? "{}";
     const projectIndex = JSON.parse(projectIndexText) as {
@@ -1202,8 +1204,8 @@ describe("@hia-doc/renderer-html", () => {
     expect(projectIndex.ownerAdoption).toMatchObject({ status: "ready-for-owner-review" });
     expect(projectIndex.ownerAdoption).not.toHaveProperty("targetId");
     expect(projectIndex.ownerAdoption).not.toHaveProperty("trialId");
-    expect(topic).toContain("Owner Review Readiness</dt><dd>ready-for-owner-review");
-    expect(topic).toContain("Repository Owners / Handoff Edges</dt><dd>3 / 2");
+    expect(topic).toContain('data-hia-ui-message="portal.coverage.ownerreadiness">Owner review readiness</span></dt><dd>ready-for-owner-review');
+    expect(topic).toContain('data-hia-ui-message="portal.coverage.handoffs">Repository owners / handoff edges</span></dt><dd>3 / 2');
     expect(topic).toContain("target-owner-adoption-kit@0.1.0-draft");
   });
 
@@ -1229,7 +1231,7 @@ describe("@hia-doc/renderer-html", () => {
     const leaked = fixture.ownerAdoption as typeof fixture.ownerAdoption & { sourceBody?: string };
     leaked.sourceBody = "must-not-cross-the-boundary";
     expect(() => renderProjectHtmlDocument(fixture, {
-      projectSite: { informationArchitecture: {} }
+      projectSite: { informationArchitecture: {}, uiLocale: "en" }
     })).toThrow(/HIA_PORTAL_IA_OWNER_ADOPTION_INVALID/u);
   });
 
@@ -1284,6 +1286,7 @@ describe("@hia-doc/renderer-html", () => {
       entries
     }, {
       projectSite: {
+        uiLocale: "en",
         informationArchitecture: {
           contentGrouping: "entry",
           loadingStrategy: "lazy",
@@ -1306,7 +1309,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.resolution === "resolved")).toBe(true);
     expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.projectIdentity?.policy === "project-relative-owner-resolved")).toBe(true);
     expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.privacy.sourcesContentPolicy === "none")).toBe(true);
-    expect(firstTopic).toContain("Identity Policy");
+    expect(firstTopic).toContain('data-hia-ui-message="portal.source.identitypolicy">Identity policy</span></dt><dd>project-relative-owner-resolved');
     expect(JSON.stringify(projectIndex)).not.toContain("must-not-cross-the-boundary");
     expect(result.files.some((file) => file.contents.includes("must-not-cross-the-boundary"))).toBe(false);
   });

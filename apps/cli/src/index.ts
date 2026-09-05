@@ -2866,6 +2866,9 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
       ? { informationArchitecture: { ...docsConfig.renderer.informationArchitecture } }
       : {}),
     ...(docsConfig.renderer?.uiLocale ? { uiLocale: docsConfig.renderer.uiLocale } : {}),
+    ...(docsConfig.renderer?.uiLocaleCompleteness
+      ? { uiLocaleCompleteness: { ...docsConfig.renderer.uiLocaleCompleteness } }
+      : {}),
     ...(docsConfig.renderer?.sourceCommentProjection
       ? {
           sourceCommentProjection: {

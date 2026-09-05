@@ -199,6 +199,7 @@ describe("target-owner adoption kit contract", () => {
           },
           renderer: {
             projectLayout: "split-site",
+            uiLocale: "en",
             informationArchitecture: {
               contract: "documentation-portal-information-architecture",
               contractVersion: "0.1.0-draft"

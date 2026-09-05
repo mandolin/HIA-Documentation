@@ -178,6 +178,10 @@ describe("@hia-doc/cli", () => {
           renderer: {
             projectLayout: "split-site",
             uiLocale: "zh-CN",
+            uiLocaleCompleteness: {
+              profileId: "hia-jsdoc.portal-bridge",
+              surfaceId: "hia-jsdoc.portal-bridge"
+            },
             informationArchitecture: {
               contract: "documentation-portal-information-architecture",
               contractVersion: "0.1.0-draft",
@@ -222,8 +226,15 @@ describe("@hia-doc/cli", () => {
         site?: { informationArchitecture?: { contract?: string; loadingStrategy?: string } };
       };
       const rendererManifest = JSON.parse(await readFile(path.join(outDir, "hia-manifest.json"), "utf8")) as {
-        project?: { informationArchitecture?: { contract?: string; contractVersion?: string } };
+        project?: {
+          informationArchitecture?: { contract?: string; contractVersion?: string };
+          uiLocaleCompleteness?: { path?: string; profileId?: string; status?: string; surfaceId?: string };
+        };
       };
+      const uiLocaleCompletenessText = await readFile(
+        path.join(outDir, "documentation-ui-locale-completeness.json"),
+        "utf8"
+      );
 
       expect(exitCode).toBe(0);
       expect(projectIndex.site?.informationArchitecture).toMatchObject({
@@ -236,6 +247,14 @@ describe("@hia-doc/cli", () => {
         contract: "documentation-portal-information-architecture",
         contractVersion: "0.1.0-draft"
       });
+      expect(rendererManifest.project?.uiLocaleCompleteness).toMatchObject({
+        path: "documentation-ui-locale-completeness.json",
+        profileId: "hia-jsdoc.portal-bridge",
+        status: "complete",
+        surfaceId: "hia-jsdoc.portal-bridge"
+      });
+      expect(uiLocaleCompletenessText).not.toContain("搜索");
+      expect(uiLocaleCompletenessText).not.toContain("Search");
       expect(await readFile(path.join(outDir, "content/eager.json"), "utf8")).toContain("documentation-portal-eager-fragment-index");
     } finally {
       await rm(root, { force: true, recursive: true });
@@ -302,6 +321,7 @@ describe("@hia-doc/cli", () => {
         docs: {
           renderer: {
             informationArchitecture: {},
+            uiLocale: "zh-CN",
             sourceCommentProjection: {
               contract: "documentation-source-comment-projection",
               contractVersion: "0.1.0-draft",

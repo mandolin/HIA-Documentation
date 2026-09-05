@@ -183,6 +183,10 @@ describe("@hia-doc/config", () => {
         renderer: {
           projectLayout: "split-site",
           uiLocale: "zh-CN",
+          uiLocaleCompleteness: {
+            profileId: "hia-jsdoc.portal-bridge",
+            surfaceId: "hia-jsdoc.portal-bridge"
+          },
           informationArchitecture: {
             contract: HIA_CONFIG_PORTAL_IA_CONTRACT,
             contractVersion: HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION,
@@ -199,6 +203,26 @@ describe("@hia-doc/config", () => {
     expect(HIA_CONFIG_PORTAL_LOADING_STRATEGIES).toEqual(["lazy", "eager"]);
     expect(HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS).toEqual(["separate", "with-parent"]);
     expect(HIA_CONFIG_PORTAL_UI_LOCALES).toEqual(["zh-CN", "en"]);
+  });
+
+  it("requires an explicit UI locale for IA and validates completeness identity independently", () => {
+    const diagnostics = validateHiaProjectConfig({
+      docs: {
+        renderer: {
+          informationArchitecture: {},
+          uiLocaleCompleteness: {
+            profileId: "private/path",
+            surfaceId: "hia-jsdoc.portal-bridge",
+            messages: { title: "must-not-cross" }
+          }
+        }
+      }
+    });
+    const codes = diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes).toContain("HIA_CONFIG_UI_LOCALE_REQUIRED");
+    expect(codes).toContain("HIA_CONFIG_UI_LOCALE_COMPLETENESS_ID_INVALID");
+    expect(codes).toContain("HIA_CONFIG_UI_LOCALE_COMPLETENESS_FIELD_UNSUPPORTED");
   });
 
   it("fails closed for unknown Portal IA drafts, enums, fields, locales, and explicit single-page use", () => {

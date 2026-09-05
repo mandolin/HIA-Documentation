@@ -5,6 +5,7 @@ import {
   validateBusinessFlowDocumentationProjection,
   validateDocumentationSourceCommentProjection,
   type BusinessFlowDocumentationProjection,
+  type DocumentationUiLocaleCompletenessReport,
   type DocumentationSourceCommentContentPolicy,
   type DocumentationSourceCommentProjection,
   type HiaDiagnostic,
@@ -53,8 +54,18 @@ import {
   type PortalPreparedSourceAsset,
   type PortalPresentationBundle
 } from "./presentation-profile.js";
+import {
+  DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID,
+  DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH,
+  DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID,
+  DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES,
+  createDocumentationPortalUiLocaleAdoption,
+  resolveDocumentationPortalUiMessage,
+  type DocumentationPortalUiLocaleAdoption
+} from "./portal-ui-locale.js";
 
 export * from "./information-architecture.js";
+export * from "./portal-ui-locale.js";
 export * from "./presentation-profile.js";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
@@ -120,6 +131,14 @@ export interface RenderProjectSiteOptions {
   uiLocale?: DocumentationPortalUiLocale;
   /**
    * @lang zh-CN
+   * W-P123 report 的 owner-neutral profile/surface identity；仅显式 IA 消费，译文与 DOM 结构不进入该 descriptor。
+   *
+   * @lang en
+   * Owner-neutral profile/surface identity for the W-P123 report; consumed only by explicit IA and carries no translation or DOM structure.
+   */
+  uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessOptions;
+  /**
+   * @lang zh-CN
    * source-comment locale 与正文授权；只有显式 IA 下才消费，且不从 UI/content locale 推断。
    *
    * @lang en
@@ -138,6 +157,12 @@ export interface RenderProjectSiteOptions {
     /** fetch 模式单次最多显示的源码行数。Maximum source lines displayed by one fetch operation. */
     maxLines?: number;
   };
+}
+
+/** @lang zh-CN Portal UI locale report 的可覆盖 identity。 @lang en Overridable identities for the Portal UI-locale report. */
+export interface RenderProjectUiLocaleCompletenessOptions {
+  profileId?: string;
+  surfaceId?: string;
 }
 
 /**
@@ -506,11 +531,26 @@ export interface RenderHtmlManifest {
     businessFlowDocumentationProjection?: RenderProjectBusinessFlowDocumentationProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
+    /** @lang zh-CN W-P123 metadata-only report 的 body-free 引用。 @lang en Body-free reference to the W-P123 metadata-only report. */
+    uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessRef;
     /** @lang zh-CN 当前静态资源采用的 metadata-only theme reference。 @lang en Metadata-only theme reference used by the current static assets. */
     theme?: DocumentationPortalThemeReference;
     /** @lang zh-CN neutral presentation profile 的最小引用。 @lang en Minimal reference to the neutral presentation profile. */
     presentationProfile?: RenderProjectPresentationProfileRef;
   };
+}
+
+/** @lang zh-CN manifest/index 共享的 UI locale completeness body-free 引用。 @lang en UI-locale-completeness body-free reference shared by the manifest and project index. */
+export interface RenderProjectUiLocaleCompletenessRef {
+  contract: DocumentationUiLocaleCompletenessReport["contract"];
+  contractVersion: DocumentationUiLocaleCompletenessReport["contractVersion"];
+  evaluationCount: number;
+  exactCount: number;
+  path: typeof DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH;
+  profileId: string;
+  status: DocumentationUiLocaleCompletenessReport["status"];
+  surfaceId: string;
+  uiLocaleCount: number;
 }
 
 export interface RenderHtmlManifestFile {
@@ -618,6 +658,8 @@ export interface RenderProjectNavigationIndex {
     sourcePresentation: RenderProjectSourcePresentation;
     presentationProfile: RenderProjectPresentationProfileRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
+    /** @lang zh-CN 当前 Portal surface 的 W-P123 report 引用。 @lang en W-P123 report reference for the current Portal surface. */
+    uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessRef;
     /** @lang zh-CN Portal consumer 的 exact theme identity 与 system preference policy。 @lang en Exact theme identity and system-preference policy for portal consumers. */
     theme: DocumentationPortalThemeReference;
   };
@@ -698,6 +740,8 @@ export interface RenderProjectNavigationEntry {
   memberAnchor?: string;
   /** @lang zh-CN 不依赖 JavaScript 的独立多页阅读路径。 @lang en Standalone multi-page reading path that does not require JavaScript. */
   noScriptPagePath?: string;
+  /** @lang zh-CN 按 UI locale 直接寻址的无脚本页面；与正文 locale 保持分层。 @lang en Direct no-script pages by UI locale, separate from content locale. */
+  noScriptLocalePages?: Array<{ uiLocale: DocumentationPortalUiLocale; path: string }>;
   /** @lang zh-CN neutral presentation profile 中的 topic identity。 @lang en Topic identity in the neutral presentation profile. */
   presentationTopicId?: string;
   /** @lang zh-CN neutral presentation profile 中的 page identity。 @lang en Page identity in the neutral presentation profile. */
@@ -821,6 +865,15 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
         }
       ]
     : createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
+  // <lang><zh-CN>完整性 report 在所有可见/无脚本文件生成后追加，但 adoption 本身已在生成前通过 gate。</zh-CN><en>Append the completeness report after visible/no-script files, while the adoption itself has already passed its pre-render gate.</en></lang>
+  if (portalContext.uiLocaleAdoption) {
+    files.push({
+      path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH,
+      contents: `${portalContext.uiLocaleAdoption.reportJson}\n`,
+      contentType: "application/json; charset=utf-8",
+      role: "index"
+    });
+  }
   files.push({
     path: "project-index.json",
     contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
@@ -844,7 +897,15 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   return {
     files,
     diagnostics: renderedProjectInput.diagnostics ?? [],
-    manifest: createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle)
+    manifest: createProjectManifest(
+      renderedProjectInput,
+      files,
+      pageTitle,
+      options,
+      navigationIndex,
+      presentationBundle,
+      portalContext
+    )
   };
 }
 
@@ -854,6 +915,7 @@ interface RenderProjectPortalContext {
   labels: DocumentationPortalLabels;
   sourceCommentProjection?: Required<RenderProjectSourceCommentProjectionOptions>;
   theme: Required<RenderProjectThemeOptions>;
+  uiLocaleAdoption?: DocumentationPortalUiLocaleAdoption;
   uiLocale: DocumentationPortalUiLocale;
 }
 
@@ -873,8 +935,19 @@ function resolveProjectPortalContext(
   layout: RenderProjectSiteLayout
 ): RenderProjectPortalContext {
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
-  const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
   const explicitInformationArchitecture = options.projectSite?.informationArchitecture;
+  if (explicitInformationArchitecture && !options.projectSite?.uiLocale) {
+    throw new TypeError(
+      "HIA_PORTAL_UI_LOCALE_REQUIRED: Explicit Portal information architecture requires a caller-explicit UI locale."
+    );
+  }
+  if (options.projectSite?.uiLocaleCompleteness && !explicitInformationArchitecture) {
+    throw new TypeError(
+      "HIA_PORTAL_UI_LOCALE_IA_REQUIRED: UI locale completeness identity requires explicit Portal information architecture."
+    );
+  }
+  // <lang><zh-CN>非 IA 调用保留历史 fallback；adopted explicit IA 永远由上面的 caller-explicit gate 提供值。</zh-CN><en>Non-IA calls retain the historical fallback; adopted explicit IA always receives its value from the caller-explicit gate above.</en></lang>
+  const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
   const sourceCommentProjection = options.projectSite?.sourceCommentProjection;
   const requestedSkin = options.projectSite?.theme?.skinId ?? "portal.classic";
   const requestedScheme = options.projectSite?.theme?.scheme ?? "system";
@@ -940,10 +1013,22 @@ function resolveProjectPortalContext(
     );
   }
 
+  // <lang><zh-CN>只有显式 IA surface 构造 W-P123 report；legacy P3/single-page 不伪报 completeness。</zh-CN><en>Only explicit-IA surfaces build a W-P123 report; legacy P3/single-page output does not claim completeness.</en></lang>
+  const uiLocaleAdoption = explicitInformationArchitecture
+    ? createDocumentationPortalUiLocaleAdoption({
+        contentLocale: localeModel.selectedLocale,
+        contentLocales: localeModel.locales,
+        defaultUiLocale: uiLocale,
+        profileId: options.projectSite?.uiLocaleCompleteness?.profileId ?? DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID,
+        surfaceId: options.projectSite?.uiLocaleCompleteness?.surfaceId ?? DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID
+      })
+    : undefined;
+
   return {
     uiLocale,
     labels: getDocumentationPortalLabels(uiLocale),
     theme: { skinId: requestedSkin, scheme: requestedScheme },
+    ...(uiLocaleAdoption ? { uiLocaleAdoption } : {}),
     ...(sourceCommentProjection
       ? {
           sourceCommentProjection: {
@@ -1165,6 +1250,34 @@ function createProjectPresentationProfileRef(
 }
 
 /**
+ * @lang zh-CN
+ * 从已通过 W-P123 gate 的 adoption 构造 manifest/index 共用的 body-free 引用和计数。
+ *
+ * @lang en
+ * Builds the body-free manifest/index reference and counts from a W-P123 gate-complete adoption.
+ *
+ * @param adoption <lang><zh-CN>当前 Portal surface 的完整性结果。</lang><en>Completeness result for the current Portal surface.</en></lang>
+ * @returns <lang><zh-CN>不含 message text 或内容正文的引用。</lang><en>Reference containing no message text or content body.</en></lang>
+ */
+function createProjectUiLocaleCompletenessRef(
+  adoption: DocumentationPortalUiLocaleAdoption
+): RenderProjectUiLocaleCompletenessRef {
+  // <lang><zh-CN>P1 每次 adoption 只有一个 owner surface；evaluator 已保证集合非空。</zh-CN><en>Each P1 adoption owns one surface; the evaluator has already guaranteed a non-empty set.</en></lang>
+  const surfaceId = adoption.report.surfaces[0]!.surfaceId;
+  return {
+    contract: adoption.report.contract,
+    contractVersion: adoption.report.contractVersion,
+    evaluationCount: adoption.summary.evaluations,
+    exactCount: adoption.summary.exact,
+    path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH,
+    profileId: adoption.report.profileId,
+    status: adoption.report.status,
+    surfaceId,
+    uiLocaleCount: adoption.summary.uiLocales
+  };
+}
+
+/**
  * @lang zh-CN 从已验证 W-P122 projection 构造 manifest 的 body-free ref/count。
  * @lang en Builds a body-free manifest reference and counts from a validated W-P122 projection.
  * @param projection exact-valid public dual projection。 / Exact-valid public dual projection.
@@ -1208,7 +1321,8 @@ function createProjectManifest(
   pageTitle: string,
   options: RenderHtmlOptions,
   navigationIndex: RenderProjectNavigationIndex,
-  presentationBundle: PortalPresentationBundle
+  presentationBundle: PortalPresentationBundle,
+  portalContext: RenderProjectPortalContext
 ): RenderHtmlManifest {
   const projectId = projectInput.project.id ?? `project:${projectInput.project.name}`;
   const views = collectProjectViews(projectInput.entries);
@@ -1275,6 +1389,9 @@ function createProjectManifest(
         : {}),
       ...(navigationIndex.site?.informationArchitecture
         ? { informationArchitecture: navigationIndex.site.informationArchitecture }
+        : {}),
+      ...(portalContext.uiLocaleAdoption
+        ? { uiLocaleCompleteness: createProjectUiLocaleCompletenessRef(portalContext.uiLocaleAdoption) }
         : {})
     }
   };
@@ -1324,6 +1441,14 @@ function createProjectNavigationIndex(
         ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
         contentPath: createProjectEntryContentPath(entry.id),
         ...(options.projectSite?.layout === "single-page" ? {} : { noScriptPagePath: createProjectNoScriptPagePath(entry.id) }),
+        ...(portalContext.uiLocaleAdoption && options.projectSite?.layout !== "single-page"
+          ? {
+              noScriptLocalePages: DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES.map((uiLocale) => ({
+                uiLocale,
+                path: createProjectLocalizedNoScriptPagePath(entry.id, uiLocale)
+              }))
+            }
+          : {}),
         ...(portalContext.informationArchitecture
           ? {
               presentationPath: createProjectEntryPresentationPath(
@@ -1373,6 +1498,9 @@ function createProjectNavigationIndex(
       sourcePresentation: options.projectSite?.source?.presentation ?? "fetch",
       ...(portalContext.informationArchitecture
         ? { informationArchitecture: portalContext.informationArchitecture }
+        : {}),
+      ...(portalContext.uiLocaleAdoption
+        ? { uiLocaleCompleteness: createProjectUiLocaleCompletenessRef(portalContext.uiLocaleAdoption) }
         : {})
     },
     ...(projectInput.relationGraph && projectInput.relationGraph.relationCount > 0
@@ -1447,6 +1575,24 @@ function createProjectSplitSiteFiles(
     contentType: "text/html; charset=utf-8",
     role: "entry"
   });
+  // <lang><zh-CN>采用 W-P123 的 surface 为每个 UI locale 生成真实静态入口；legacy 默认路径仍保留。</zh-CN><en>A W-P123-adopted surface emits a real static entry for every UI locale while retaining the legacy default path.</en></lang>
+  if (portalContext.uiLocaleAdoption) {
+    for (const uiLocale of DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES) {
+      const localizedContext = withProjectUiLocale(portalContext, uiLocale);
+      files.push({
+        path: `pages/${uiLocale}/index.html`,
+        contents: renderProjectNoScriptIndexHtml(
+          pageTitle,
+          noScriptProjectInput,
+          localeModel.selectedLocale,
+          localizedContext,
+          true
+        ),
+        contentType: "text/html; charset=utf-8",
+        role: "entry"
+      });
+    }
+  }
 
   // <lang zh-CN>canonical entry fragment 始终生成，保证旧 deep link 与不识别 IA 的 consumer 可回退。</lang>
   // <lang en>Canonical entry fragments are always emitted so old deep links and IA-unaware consumers retain a fallback.</lang>
@@ -1483,6 +1629,24 @@ function createProjectSplitSiteFiles(
       contentType: "text/html; charset=utf-8",
       role: "entry"
     });
+    if (portalContext.uiLocaleAdoption) {
+      for (const uiLocale of DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES) {
+        const localizedContext = withProjectUiLocale(portalContext, uiLocale);
+        files.push({
+          path: createProjectLocalizedNoScriptPagePath(entry.id, uiLocale),
+          contents: renderProjectNoScriptEntryHtml(
+            pageTitle,
+            noScriptEntry,
+            noScriptProjectInput,
+            localeModel,
+            localizedContext,
+            true
+          ),
+          contentType: "text/html; charset=utf-8",
+          role: "entry"
+        });
+      }
+    }
   }
 
   // <lang zh-CN>semantic-container 只增加 presentation fragment，不替换 canonical fragment。</lang>
@@ -1584,6 +1748,17 @@ function createProjectEntryContentPath(entryId: string): string {
 /** @lang zh-CN 为每个 neutral topic 生成稳定的 no-script owner page route。 @lang en Generates a stable no-script owner page route for every neutral topic. */
 function createProjectNoScriptPagePath(entryId: string): string {
   return `pages/${stableProjectArtifactName(entryId)}.html`;
+}
+
+/**
+ * @lang zh-CN 为一个 UI locale 生成可直接访问的无脚本 owner page route。
+ * @lang en Generates a directly addressable no-script owner-page route for one UI locale.
+ */
+function createProjectLocalizedNoScriptPagePath(
+  entryId: string,
+  uiLocale: DocumentationPortalUiLocale
+): string {
+  return `pages/${uiLocale}/${stableProjectArtifactName(entryId)}.html`;
 }
 
 /**
@@ -1790,6 +1965,130 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
   ].join("");
 }
 
+/** @lang zh-CN UI message 的非执行占位符值。 @lang en Non-executable placeholder values for a UI message. */
+type RenderProjectUiMessageValues = Readonly<Record<string, string | number>>;
+
+/**
+ * @lang zh-CN
+ * 渲染一个带稳定 identity 的 UI 文本节点；译文先按纯文本解析，再进行 HTML 转义。
+ *
+ * @lang en
+ * Renders a UI text node with a stable identity; translation is resolved as plain text before HTML escaping.
+ */
+function renderProjectUiMessage(
+  portalContext: RenderProjectPortalContext,
+  messageId: string,
+  values: RenderProjectUiMessageValues = {},
+  fallback = ""
+): string {
+  if (!portalContext.uiLocaleAdoption) {
+    return escapeHtml(fallback);
+  }
+  const valueAttribute = Object.keys(values).length > 0
+    ? ` data-hia-ui-values="${escapeHtml(JSON.stringify(values))}"`
+    : "";
+  const text = resolveDocumentationPortalUiMessage(
+    portalContext.uiLocaleAdoption,
+    portalContext.uiLocale,
+    messageId,
+    values
+  );
+  return `<span data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}>${escapeHtml(text)}</span>`;
+}
+
+/** @lang zh-CN 解析 attribute/dynamic state 使用的 UI 纯文本，并为 legacy surface 保留既有 fallback。 @lang en Resolves UI plain text for attributes/dynamic state while retaining the existing fallback for legacy surfaces. */
+function resolveProjectUiPlainText(
+  portalContext: RenderProjectPortalContext,
+  messageId: string,
+  values: RenderProjectUiMessageValues = {},
+  fallback = ""
+): string {
+  return portalContext.uiLocaleAdoption
+    ? resolveDocumentationPortalUiMessage(portalContext.uiLocaleAdoption, portalContext.uiLocale, messageId, values)
+    : fallback;
+}
+
+/** @lang zh-CN 为共享 legacy/adopted renderer helper 选择带 marker 的消息或原有文本。 @lang en Selects a marked message or original text for renderer helpers shared by legacy and adopted surfaces. */
+function renderOptionalProjectUiMessage(
+  portalContext: RenderProjectPortalContext | undefined,
+  messageId: string,
+  fallback: string,
+  values: RenderProjectUiMessageValues = {}
+): string {
+  return portalContext
+    ? renderProjectUiMessage(portalContext, messageId, values, fallback)
+    : escapeHtml(fallback);
+}
+
+/**
+ * @lang zh-CN
+ * 为不能包裹 span 的元素生成稳定 message marker，并返回已转义文本。
+ *
+ * @lang en
+ * Creates a stable message marker for elements that cannot wrap a span and returns escaped text.
+ */
+function renderProjectUiMarkedText(
+  portalContext: RenderProjectPortalContext,
+  messageId: string,
+  values: RenderProjectUiMessageValues = {}
+): { attributes: string; text: string } {
+  if (!portalContext.uiLocaleAdoption) {
+    return { attributes: "", text: "" };
+  }
+  const valueAttribute = Object.keys(values).length > 0
+    ? ` data-hia-ui-values="${escapeHtml(JSON.stringify(values))}"`
+    : "";
+  return {
+    attributes: ` data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}`,
+    text: escapeHtml(resolveDocumentationPortalUiMessage(
+      portalContext.uiLocaleAdoption,
+      portalContext.uiLocale,
+      messageId,
+      values
+    ))
+  };
+}
+
+/**
+ * @lang zh-CN 复制 context 并只替换显式 UI locale，供 no-script locale 页面复用同一已验证 bundle/report。
+ * @lang en Copies a context while replacing only its explicit UI locale so no-script locale pages reuse one validated bundle/report.
+ */
+function withProjectUiLocale(
+  portalContext: RenderProjectPortalContext,
+  uiLocale: DocumentationPortalUiLocale
+): RenderProjectPortalContext {
+  return {
+    ...portalContext,
+    uiLocale,
+    labels: getDocumentationPortalLabels(uiLocale)
+  };
+}
+
+/** @lang zh-CN 渲染彼此独立的 UI/content locale 原生控件。 @lang en Renders independent native UI/content-locale controls. */
+function renderProjectLocaleControls(
+  contentLocales: string[],
+  selectedContentLocale: string,
+  portalContext: RenderProjectPortalContext
+): string {
+  if (!portalContext.uiLocaleAdoption) {
+    return renderLocaleControl(contentLocales, selectedContentLocale);
+  }
+  const uiOptions = DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES.map((locale) => (
+    `<option value="${escapeHtml(locale)}"${locale === portalContext.uiLocale ? " selected" : ""}>${escapeHtml(locale)}</option>`
+  )).join("");
+  const contentOptions = contentLocales.map((locale) => (
+    `<option value="${escapeHtml(locale)}"${locale === selectedContentLocale ? " selected" : ""}>${escapeHtml(locale)}</option>`
+  )).join("");
+  return [
+    "<div class=\"hia-language-switch hia-project-language-switch\">",
+    `<label for="hia-ui-locale-control">${renderProjectUiMessage(portalContext, "portal.locale.uilabel")}</label>`,
+    `<select id="hia-ui-locale-control" data-hia-ui-locale-control data-hia-ui-aria="portal.locale.uiaccessible" aria-label="${escapeHtml(resolveDocumentationPortalUiMessage(portalContext.uiLocaleAdoption!, portalContext.uiLocale, "portal.locale.uiaccessible"))}">${uiOptions}</select>`,
+    `<label for="hia-locale-control">${renderProjectUiMessage(portalContext, "portal.locale.contentlabel")}</label>`,
+    `<select id="hia-locale-control" data-hia-locale-control data-hia-ui-aria="portal.locale.contentaccessible" aria-label="${escapeHtml(resolveDocumentationPortalUiMessage(portalContext.uiLocaleAdoption!, portalContext.uiLocale, "portal.locale.contentaccessible"))}">${contentOptions}</select>`,
+    "</div>"
+  ].join("");
+}
+
 /** @lang zh-CN 渲染带 no-script theme 默认和可见选择器的 split-site 应用壳。 @lang en Renders the split-site shell with a no-script theme default and visible selectors. */
 function renderProjectSplitSiteHtml(
   pageTitle: string,
@@ -1805,7 +2104,7 @@ function renderProjectSplitSiteHtml(
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
+    `<html lang="${escapeHtml(portalContext.uiLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -1817,28 +2116,23 @@ function renderProjectSplitSiteHtml(
     "<div class=\"hia-shell hia-project-shell hia-project-split-site\">",
     "<aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectName)}</h1>`,
-    renderLocaleControl(localeModel.locales, localeModel.selectedLocale),
-    renderProjectThemeControl(portalContext.theme),
-    renderProjectViewControl(views, entryCounts),
-    renderProjectGeneratedDocumentationBindingProjection(projectInput.generatedDocumentationBindingProjection),
+    renderProjectLocaleControls(localeModel.locales, localeModel.selectedLocale, portalContext),
+    renderProjectThemeControl(portalContext.theme, portalContext),
+    renderProjectViewControl(views, entryCounts, portalContext),
+    renderProjectGeneratedDocumentationBindingProjection(projectInput.generatedDocumentationBindingProjection, portalContext),
     [
       "<label class=\"hia-project-search\">",
-      `<span>${escapeHtml(labels.search)}</span>`,
-      `<input type="search" data-hia-project-search placeholder="${escapeHtml(labels.searchPlaceholder)}">`,
+      `<span>${renderProjectUiMessage(portalContext, "portal.search.label", {}, labels.search)}</span>`,
+      `<input type="search" data-hia-project-search${portalContext.uiLocaleAdoption ? " data-hia-ui-placeholder=\"portal.search.placeholder\" data-hia-ui-aria=\"portal.search.accessible\"" : ""} placeholder="${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.search.placeholder", {}, labels.searchPlaceholder))}" aria-label="${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.search.accessible", {}, labels.search))}">`,
       "</label>"
     ].join(""),
-    `<section class="hia-project-summary hia-project-hierarchy"><h2>${escapeHtml(labels.hierarchy)}</h2><div data-hia-project-tree><p class="hia-project-loading">${escapeHtml(labels.loading)}</p></div></section>`,
-    `<button type="button" class="hia-project-secondary-action" data-hia-project-relations>${escapeHtml(labels.relations)}</button>`,
+    `<section class="hia-project-summary hia-project-hierarchy"><h2>${renderProjectUiMessage(portalContext, "portal.navigation.hierarchy", {}, labels.hierarchy)}</h2><div data-hia-project-tree><p class="hia-project-loading" role="status">${renderProjectUiMessage(portalContext, "portal.navigation.loading", {}, labels.loading)}</p></div></section>`,
+    `<button type="button" class="hia-project-secondary-action" data-hia-project-relations>${renderProjectUiMessage(portalContext, "portal.navigation.relations", {}, labels.relations)}</button>`,
     "</aside>",
-    `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${escapeHtml(labels.select)}</p><noscript><p class="hia-noscript-notice"><a href="pages/index.html">No-script page index / 无脚本页面索引</a></p></noscript></main>`,
+    `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${renderProjectUiMessage(portalContext, "portal.navigation.select", {}, labels.select)}</p><noscript><p class="hia-noscript-notice"><a href="pages/index.html">${renderProjectUiMessage(portalContext, "portal.navigation.noscriptlink", {}, "No-script page index / 无脚本页面索引")}</a></p></noscript></main>`,
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
-    renderProjectSplitSiteScript(
-      labels.requiresServer,
-      labels.open,
-      portalContext.informationArchitecture?.loadingStrategy ?? "lazy",
-      labels.relations
-    ),
+    renderProjectSplitSiteScript(portalContext, portalContext.informationArchitecture?.loadingStrategy ?? "lazy"),
     "</body>",
     "</html>"
   ].join("");
@@ -1851,8 +2145,9 @@ function renderProjectSplitSiteHtml(
 function renderProjectNoScriptIndexHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
-  selectedLocale: string,
-  portalContext: RenderProjectPortalContext
+  selectedContentLocale: string,
+  portalContext: RenderProjectPortalContext,
+  localizedRoute = false
 ): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
   const links = [...projectInput.entries].sort(compareProjectNavigationEntries).map((entry) => {
@@ -1860,17 +2155,38 @@ function renderProjectNoScriptIndexHtml(
     const relativePage = `./${createProjectNoScriptPagePath(entry.id).slice("pages/".length)}`;
     return `<li><a href="${escapeHtml(relativePage)}">${escapeHtml(entry.name)}</a> <small>${escapeHtml(entry.kind)} / ${escapeHtml(formatProjectViewLabel(entry.view))}</small></li>`;
   }).join("");
+  const documentLocale = portalContext.uiLocaleAdoption ? portalContext.uiLocale : selectedContentLocale;
+  const interactivePath = localizedRoute ? "../../index.html" : "../index.html";
+  const stylesheetPath = localizedRoute ? "../../assets/hia-default.css" : "../assets/hia-default.css";
+  const alternateLinks = portalContext.uiLocaleAdoption
+    ? DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES
+        .filter((locale) => locale !== portalContext.uiLocale)
+        .map((locale) => {
+          const path = localizedRoute ? `../${locale}/index.html` : `./${locale}/index.html`;
+          const label = resolveProjectUiPlainText(
+            portalContext,
+            "portal.noscript.localealternate",
+            { locale },
+            locale
+          );
+          return `<a href="${escapeHtml(path)}" lang="${escapeHtml(locale)}">${escapeHtml(label)}</a>`;
+        })
+        .join(" · ")
+    : "";
+  const skinMessageId = `portal.theme.skin.${portalContext.theme.skinId.slice("portal.".length)}`;
+  const schemeMessageId = `portal.theme.scheme.${portalContext.theme.scheme}`;
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
+    `<html lang="${escapeHtml(documentLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
     "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
-    `<title>${escapeHtml(pageTitle)} - No-script index</title>`,
-    "<link rel=\"icon\" href=\"data:,\"><link rel=\"stylesheet\" href=\"../assets/hia-default.css\"></head>",
+    `<title>${escapeHtml(pageTitle)} - ${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.noscript.indextitle", {}, "No-script index"))}</title>`,
+    `<link rel="icon" href="data:,"><link rel="stylesheet" href="${escapeHtml(stylesheetPath)}"></head>`,
     "<body><div class=\"hia-shell hia-project-shell\"><aside class=\"hia-sidebar\">",
-    `<h1>${escapeHtml(projectName)}</h1><p><a href="../index.html">Interactive site / 交互站点</a></p>`,
-    `<p>${escapeHtml(getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${escapeHtml(getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
-    "</aside><main class=\"hia-main hia-project-main\"><h2>Documentation pages / 文档页面</h2>",
-    `<nav aria-label="Documentation pages"><ul>${links}</ul></nav>`,
+    `<h1>${escapeHtml(projectName)}</h1><p><a href="${escapeHtml(interactivePath)}">${renderProjectUiMessage(portalContext, "portal.noscript.interactive", {}, "Interactive site / 交互站点")}</a></p>`,
+    alternateLinks ? `<p>${alternateLinks}</p>` : "",
+    `<p>${renderProjectUiMessage(portalContext, "portal.theme.skinlabel", {}, "Skin")}：${renderProjectUiMessage(portalContext, skinMessageId, {}, getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${renderProjectUiMessage(portalContext, "portal.theme.schemelabel", {}, "Scheme")}：${renderProjectUiMessage(portalContext, schemeMessageId, {}, getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
+    `</aside><main class="hia-main hia-project-main"><h2>${renderProjectUiMessage(portalContext, "portal.noscript.pagesheading", {}, "Documentation pages / 文档页面")}</h2>`,
+    `<nav aria-label="${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.noscript.pagesaccessible", {}, "Documentation pages"))}"${portalContext.uiLocaleAdoption ? " data-hia-ui-aria=\"portal.noscript.pagesaccessible\"" : ""}><ul>${links}</ul></nav>`,
     "</main></div></body></html>"
   ].join("");
 }
@@ -1884,7 +2200,8 @@ function renderProjectNoScriptEntryHtml(
   entry: RenderProjectEntry,
   projectInput: RenderProjectHtmlInput,
   localeModel: ReturnType<typeof resolveProjectLocaleModel>,
-  portalContext: RenderProjectPortalContext
+  portalContext: RenderProjectPortalContext,
+  localizedRoute = false
 ): string {
   const informationArchitecture = portalContext.informationArchitecture;
   const article = informationArchitecture
@@ -1897,16 +2214,35 @@ function renderProjectNoScriptEntryHtml(
         informationArchitecture.memberPlacement === "with-parent"
       )
     : renderProjectEntry(entry, localeModel.locales, localeModel.selectedLocale);
+  const documentLocale = portalContext.uiLocaleAdoption ? portalContext.uiLocale : localeModel.selectedLocale;
+  const pageIndexPath = "./index.html";
+  const interactivePath = localizedRoute ? "../../index.html" : "../index.html";
+  const stylesheetPath = localizedRoute ? "../../assets/hia-default.css" : "../assets/hia-default.css";
+  const alternateLinks = portalContext.uiLocaleAdoption
+    ? DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES
+        .filter((locale) => locale !== portalContext.uiLocale)
+        .map((locale) => {
+          const path = localizedRoute
+            ? `../${locale}/${stableProjectArtifactName(entry.id)}.html`
+            : `./${locale}/${stableProjectArtifactName(entry.id)}.html`;
+          const label = resolveProjectUiPlainText(portalContext, "portal.noscript.localealternate", { locale }, locale);
+          return `<a href="${escapeHtml(path)}" lang="${escapeHtml(locale)}">${escapeHtml(label)}</a>`;
+        })
+        .join(" · ")
+    : "";
+  const skinMessageId = `portal.theme.skin.${portalContext.theme.skinId.slice("portal.".length)}`;
+  const schemeMessageId = `portal.theme.scheme.${portalContext.theme.scheme}`;
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(localeModel.selectedLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
+    `<html lang="${escapeHtml(documentLocale)}" ${renderDefaultThemeRootAttributes(portalContext.theme)}>`,
     "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
     `<title>${escapeHtml(entry.name)} - ${escapeHtml(pageTitle)}</title>`,
-    "<link rel=\"icon\" href=\"data:,\"><link rel=\"stylesheet\" href=\"../assets/hia-default.css\"></head>",
+    `<link rel="icon" href="data:,"><link rel="stylesheet" href="${escapeHtml(stylesheetPath)}"></head>`,
     "<body><div class=\"hia-shell hia-project-shell\"><aside class=\"hia-sidebar\">",
     `<h1>${escapeHtml(projectInput.project.title ?? projectInput.project.name)}</h1>`,
-    "<p><a href=\"./index.html\">Page index / 页面索引</a></p><p><a href=\"../index.html\">Interactive site / 交互站点</a></p>",
-    `<p>${escapeHtml(getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${escapeHtml(getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
+    `<p><a href="${pageIndexPath}">${renderProjectUiMessage(portalContext, "portal.noscript.pageindex", {}, "Page index / 页面索引")}</a></p><p><a href="${escapeHtml(interactivePath)}">${renderProjectUiMessage(portalContext, "portal.noscript.interactive", {}, "Interactive site / 交互站点")}</a></p>`,
+    alternateLinks ? `<p>${alternateLinks}</p>` : "",
+    `<p>${renderProjectUiMessage(portalContext, "portal.theme.skinlabel", {}, "Skin")}：${renderProjectUiMessage(portalContext, skinMessageId, {}, getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${renderProjectUiMessage(portalContext, "portal.theme.schemelabel", {}, "Scheme")}：${renderProjectUiMessage(portalContext, schemeMessageId, {}, getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
     "</aside><main class=\"hia-main hia-project-main\">",
     article,
     "</main></div></body></html>"
@@ -1924,17 +2260,27 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
   return [
     "  const sourceControllers = new WeakMap();",
     "  const sourceTerminalStates = new Set(['ready', 'empty', 'denied', 'not-found', 'integrity-error', 'network-error', 'aborted']);",
-    "  function setSourceState(details, state, message = '') {",
+    "  function sourceUiMessage(messageId, fallback, values = {}) {",
+    "    return typeof uiMessage === 'function' && typeof config !== 'undefined' && config.ui ? uiMessage(messageId, values, fallback) : fallback;",
+    "  }",
+    "  function setSourceState(details, state, messageId = '', fallback = '', values = {}) {",
     "    const loadButton = details.querySelector('[data-hia-source-fetch-button]');",
     "    const resetButton = details.querySelector('[data-hia-source-reset]');",
     "    const status = details.querySelector('[data-hia-source-fetch-status]');",
     "    details.dataset.hiaSourceState = state;",
     "    details.toggleAttribute('aria-busy', state === 'loading');",
-    "    if (status) { status.hidden = state === 'idle'; status.textContent = message; }",
+    "    if (status) {",
+    "      status.hidden = state === 'idle';",
+    "      if (messageId) status.dataset.hiaUiMessage = messageId; else delete status.dataset.hiaUiMessage;",
+    "      if (Object.keys(values).length > 0) status.dataset.hiaUiValues = JSON.stringify(values); else delete status.dataset.hiaUiValues;",
+    "      status.textContent = messageId ? sourceUiMessage(messageId, fallback, values) : '';",
+    "    }",
     "    if (loadButton) loadButton.hidden = state !== 'idle';",
     "    if (resetButton) {",
     "      resetButton.hidden = state === 'idle';",
-    "      resetButton.textContent = state === 'loading' ? 'Cancel / 取消' : 'Reset / 重置';",
+    "      const resetMessageId = state === 'loading' ? 'portal.source.cancel' : 'portal.source.reset';",
+    "      resetButton.dataset.hiaUiMessage = resetMessageId;",
+    "      resetButton.textContent = sourceUiMessage(resetMessageId, state === 'loading' ? 'Cancel' : 'Reset');",
     "    }",
     "  }",
     "  function sourceFailureState(response) {",
@@ -1952,19 +2298,20 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "    const timeoutMs = Math.max(100, Number(details.dataset.hiaSourceTimeout || 10000));",
     "    const timeout = setTimeout(() => controller.abort(), timeoutMs);",
     "    sourceControllers.set(details, controller);",
-    "    setSourceState(details, 'loading', 'Loading source / 正在加载源码...');",
+    "    setSourceState(details, 'loading', 'portal.source.status.loading', 'Loading source...');",
     "    try {",
     "      /* <lang><zh-CN>只允许文档站同源且无 userinfo 的 content-addressed endpoint。</zh-CN><en>Allow only a same-origin content-addressed endpoint without userinfo.</en></lang> */",
     "      const target = new URL(details.dataset.hiaSourceFetch || '', document.baseURI);",
     "      if (target.origin !== location.origin || target.username || target.password) {",
-    "        setSourceState(details, 'denied', 'Source request denied / 源码请求被拒绝');",
+    "        setSourceState(details, 'denied', 'portal.source.status.denied', 'Source request denied.');",
     "        return;",
     "      }",
     "      /* <lang><zh-CN>请求固定无凭据、同源且拒绝 redirect；signal 同时承担取消与超时。</zh-CN><en>The request is credential-free, same-origin, and redirect-denying; the signal covers cancellation and timeout.</en></lang> */",
     "      const response = await fetch(target, { cache: 'default', credentials: 'omit', mode: 'same-origin', redirect: 'error', signal: controller.signal });",
     "      if (!response.ok) {",
     "        const state = sourceFailureState(response);",
-    "        setSourceState(details, state, `Source load failed / 源码加载失败: ${response.status} ${response.statusText}`);",
+    "        const detail = `${response.status} ${response.statusText}`;",
+    "        setSourceState(details, state, 'portal.source.status.failed', `Source load failed: ${detail}`, { detail });",
     "        return;",
     "      }",
     "      /* <lang><zh-CN>先验证字节数与 SHA-384，再把公开 asset 解码为不可执行纯文本。</zh-CN><en>Verify byte length and SHA-384 before decoding the public asset as non-executable plain text.</en></lang> */",
@@ -1972,31 +2319,32 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "      const maxBytes = Math.max(1, Number(details.dataset.hiaSourceMaxBytes || 1048576));",
     "      const expectedBytes = Number(details.dataset.hiaSourceByteLength || 0);",
     "      if (bytes.byteLength > maxBytes || (expectedBytes >= 0 && bytes.byteLength !== expectedBytes)) {",
-    "        setSourceState(details, 'integrity-error', 'Source size verification failed / 源码大小校验失败');",
+    "        setSourceState(details, 'integrity-error', 'portal.source.status.size', 'Source size verification failed.');",
     "        return;",
     "      }",
     "      const digest = await crypto.subtle.digest('SHA-384', bytes);",
     "      if (`sha384-${digestBase64(digest)}` !== details.dataset.hiaSourceIntegrity) {",
-    "        setSourceState(details, 'integrity-error', 'Source integrity verification failed / 源码完整性校验失败');",
+    "        setSourceState(details, 'integrity-error', 'portal.source.status.integrity', 'Source integrity verification failed.');",
     "        return;",
     "      }",
     "      /* <lang><zh-CN>非法 UTF-8 表示 asset 违反 text contract，归入 integrity-error。</zh-CN><en>Invalid UTF-8 violates the text-asset contract and maps to integrity-error.</en></lang> */",
     "      let text;",
     "      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }",
-    "      catch { setSourceState(details, 'integrity-error', 'Source text decoding failed / 源码文本解码失败'); return; }",
+    "      catch { setSourceState(details, 'integrity-error', 'portal.source.status.decode', 'Source text decoding failed.'); return; }",
     "      if (text.length === 0) {",
     "        if (code) code.textContent = '';",
-    "        setSourceState(details, 'empty', 'Source asset is empty / 源码资源为空');",
+    "        setSourceState(details, 'empty', 'portal.source.status.empty', 'Source asset is empty.');",
     "        return;",
     "      }",
     "      /* <lang><zh-CN>只投影配置允许的行数，绝不执行或加入搜索索引。</zh-CN><en>Project only the configured line limit, never executing or search-indexing the body.</en></lang> */",
     "      const lines = text.split(/\\r?\\n/u);",
     "      const maxLines = Math.max(1, Number(details.dataset.hiaSourceMaxLines || 400));",
     "      if (code) code.textContent = lines.slice(0, maxLines).join('\\n');",
-    "      setSourceState(details, 'ready', 'Source ready / 源码已就绪');",
+    "      setSourceState(details, 'ready', 'portal.source.status.ready', 'Source ready.');",
     "    } catch (error) {",
     "      const aborted = error?.name === 'AbortError';",
-    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'Source load aborted / 源码加载已取消' : `Source load failed / 源码加载失败: ${String(error?.message || error)}`);",
+    "      const detail = String(error?.message || error);",
+    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'portal.source.status.aborted' : 'portal.source.status.failed', aborted ? 'Source load aborted.' : `Source load failed: ${detail}`, aborted ? {} : { detail });",
     "    } finally {",
     "      clearTimeout(timeout);",
     "      sourceControllers.delete(details);",
@@ -2030,34 +2378,70 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
 }
 
 function renderProjectSplitSiteScript(
-  fileProtocolMessage: string,
-  openLabel: string,
-  loadingStrategy: "lazy" | "eager",
-  relationsLabel: string
+  portalContext: RenderProjectPortalContext,
+  loadingStrategy: "lazy" | "eager"
 ): string {
+  // <lang><zh-CN>只有 adopted surface 嵌入 public plain-text bundle；metadata-only report 仍不含译文。</zh-CN><en>Only adopted surfaces embed the public plain-text bundle; the metadata-only report still contains no translations.</en></lang>
+  const uiConfig = portalContext.uiLocaleAdoption
+    ? {
+        bundles: portalContext.uiLocaleAdoption.bundles,
+        initialLocale: portalContext.uiLocale,
+        supportedLocales: DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES
+      }
+    : null;
+  const fileProtocolMessage = resolveProjectUiPlainText(
+    portalContext,
+    "portal.navigation.requiresserver",
+    {},
+    portalContext.labels.requiresServer
+  );
   return [
     "<script>",
     "(() => {",
-    `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json' };`,
+    `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json', ui: ${JSON.stringify(uiConfig)} };`,
     "  const treeHost = document.querySelector('[data-hia-project-tree]');",
     "  const contentHost = document.querySelector('[data-hia-project-content]');",
     "  const search = document.querySelector('[data-hia-project-search]');",
-    "  const locale = document.querySelector('[data-hia-locale-control]');",
+    "  const contentLocale = document.querySelector('[data-hia-locale-control]');",
+    "  const uiLocale = document.querySelector('[data-hia-ui-locale-control]');",
     "  const viewButtons = Array.from(document.querySelectorAll('[data-hia-project-view]'));",
     "  let rootNodes = [];",
     "  let searchEntries = null;",
     "  let eagerFragments = null;",
     "  let activeView = 'all';",
+    "  function uiMessage(messageId, values = {}, fallback = messageId) {",
+    "    const selected = String(uiLocale?.value || config.ui?.initialLocale || document.documentElement.lang || 'en');",
+    "    const template = config.ui?.bundles?.[selected]?.[messageId] || fallback;",
+    "    return template.replace(/\\{([A-Za-z][A-Za-z0-9_]*)\\}/gu, (_match, name) => String(values[name] ?? `{${name}}`));",
+    "  }",
+    "  function readUiValues(node) {",
+    "    try { return JSON.parse(node.getAttribute('data-hia-ui-values') || '{}'); } catch { return {}; }",
+    "  }",
+    "  function applyUiLocale(root = document) {",
+    "    if (!config.ui) return;",
+    "    const selected = String(uiLocale?.value || config.ui.initialLocale);",
+    "    if (!config.ui.supportedLocales.includes(selected)) return;",
+    "    document.documentElement.lang = selected;",
+    "    for (const node of root.querySelectorAll('[data-hia-ui-message]')) node.textContent = uiMessage(node.getAttribute('data-hia-ui-message'), readUiValues(node));",
+    "    for (const node of root.querySelectorAll('[data-hia-ui-placeholder]')) node.setAttribute('placeholder', uiMessage(node.getAttribute('data-hia-ui-placeholder')));",
+    "    for (const node of root.querySelectorAll('[data-hia-ui-aria]')) node.setAttribute('aria-label', uiMessage(node.getAttribute('data-hia-ui-aria')));",
+    "    try { localStorage.setItem('hia-doc-portal-ui-locale', selected); } catch {}",
+    "    document.dispatchEvent(new CustomEvent('hia:ui-locale-change', { detail: { uiLocale: selected } }));",
+    "  }",
     "  async function readJson(target) {",
     "    const response = await fetch(target, { credentials: 'omit' });",
     "    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);",
     "    return response.json();",
     "  }",
     "  function showLoadError(error) {",
-    `    const hint = location.protocol === 'file:' ? ${JSON.stringify(fileProtocolMessage)} : String(error?.message || error);`,
+    `    const detail = location.protocol === 'file:' ? ${JSON.stringify(fileProtocolMessage)} : String(error?.message || error);`,
+    "    const hint = location.protocol === 'file:' ? detail : uiMessage('portal.navigation.loaderror', { detail }, detail);",
     "    if (contentHost) contentHost.innerHTML = '';",
     "    const message = document.createElement('p');",
     "    message.className = 'hia-project-load-error';",
+    "    message.setAttribute('role', 'status');",
+    "    message.dataset.hiaUiMessage = location.protocol === 'file:' ? 'portal.navigation.requiresserver' : 'portal.navigation.loaderror';",
+    "    if (location.protocol !== 'file:') message.dataset.hiaUiValues = JSON.stringify({ detail });",
     "    message.textContent = hint;",
     "    (contentHost || treeHost)?.append(message);",
     "  }",
@@ -2087,7 +2471,8 @@ function renderProjectSplitSiteScript(
     "        const openButton = document.createElement('button');",
     "        openButton.type = 'button';",
     "        openButton.className = 'hia-project-entry-link hia-project-tree-open';",
-    `        openButton.textContent = ${JSON.stringify(openLabel)};`,
+    "        openButton.dataset.hiaUiMessage = 'portal.navigation.open';",
+    `        openButton.textContent = uiMessage('portal.navigation.open', {}, ${JSON.stringify(portalContext.labels.open)});`,
     "        openButton.addEventListener('click', (event) => {",
     "          event.preventDefault();",
     "          event.stopPropagation();",
@@ -2105,7 +2490,9 @@ function renderProjectSplitSiteScript(
     "          details.dataset.loaded = 'true';",
     "          const loading = document.createElement('p');",
     "          loading.className = 'hia-project-loading';",
-    "          loading.textContent = '...';",
+    "          loading.setAttribute('role', 'status');",
+    "          loading.dataset.hiaUiMessage = 'portal.navigation.loading';",
+    `          loading.textContent = uiMessage('portal.navigation.loading', {}, ${JSON.stringify(portalContext.labels.loading)});`,
     "          details.append(loading);",
     "          try {",
     "            const shard = await readJson(node.childrenPath);",
@@ -2133,11 +2520,16 @@ function renderProjectSplitSiteScript(
     "  function renderRoot() {",
     "    if (!treeHost) return;",
     "    treeHost.innerHTML = '';",
-    "    treeHost.append(createTreeList(rootNodes));",
+    "    if (rootNodes.length > 0) { treeHost.append(createTreeList(rootNodes)); return; }",
+    "    /* <lang><zh-CN>空项目仍生成带稳定 message identity 的可翻译状态。</zh-CN><en>An empty project still renders a translatable state with a stable message identity.</en></lang> */",
+    "    const empty = document.createElement('p');",
+    "    empty.className = 'hia-project-empty';",
+    "    empty.dataset.hiaUiMessage = 'portal.common.noentries';",
+    "    empty.textContent = uiMessage('portal.common.noentries', {}, 'No project documentation entries.');",
+    "    treeHost.append(empty);",
     "  }",
-    "  function applyLocale() {",
-    "    const selected = String(locale?.value || document.documentElement.lang || 'und');",
-    "    document.documentElement.lang = selected;",
+    "  function applyContentLocale() {",
+    "    const selected = String(contentLocale?.value || 'und');",
     "    for (const block of document.querySelectorAll('[data-hia-locale]')) {",
     "      block.hidden = block.getAttribute('data-hia-locale') !== selected;",
     "    }",
@@ -2172,11 +2564,12 @@ function renderProjectSplitSiteScript(
     "  }",
     "  async function loadEntry(entry, updateHash) {",
     "    if (!contentHost) return;",
-    "    contentHost.innerHTML = '<p class=\"hia-project-loading\">...</p>';",
+    `    contentHost.innerHTML = \`<p class="hia-project-loading" role="status" data-hia-ui-message="portal.navigation.loading">\${uiMessage('portal.navigation.loading', {}, ${JSON.stringify(portalContext.labels.loading)})}</p>\`;`,
     "    try {",
     "      const contentPath = entry.presentationPath || entry.contentPath;",
     "      contentHost.innerHTML = await readFragment(contentPath);",
-    "      applyLocale();",
+    "      applyContentLocale();",
+    "      applyUiLocale(contentHost);",
     "      bindSourceFetch();",
     "      const anchor = entry.memberAnchor || entry.entryId || entry.id;",
     "      const target = Array.from(contentHost.querySelectorAll('[id]')).find((item) => item.id === anchor);",
@@ -2202,7 +2595,15 @@ function renderProjectSplitSiteScript(
     "      if (!treeHost) return;",
     "      treeHost.innerHTML = '';",
     "      const nodes = matches.map((entry) => ({ id: entry.id, label: `${entry.name} · ${entry.kind}`, entryId: entry.id, contentPath: entry.contentPath, presentationPath: entry.presentationPath, memberAnchor: entry.memberAnchor, views: [entry.view], entryCount: 1 }));",
-    "      treeHost.append(createTreeList(nodes));",
+    "      if (nodes.length > 0) { treeHost.append(createTreeList(nodes)); return; }",
+    "      /* <lang><zh-CN>筛选空结果使用 polite status，同时保留独立的 message identity。</zh-CN><en>An empty filter result uses a polite status while retaining its own message identity.</en></lang> */",
+    "      const empty = document.createElement('p');",
+    "      empty.className = 'hia-project-empty';",
+    "      empty.setAttribute('role', 'status');",
+    "      empty.setAttribute('aria-live', 'polite');",
+    "      empty.dataset.hiaUiMessage = 'portal.common.nomatches';",
+    "      empty.textContent = uiMessage('portal.common.nomatches', {}, 'No entries match the current filters.');",
+    "      treeHost.append(empty);",
     "    } catch (error) { showLoadError(error); }",
     "  }",
     "  for (const button of viewButtons) {",
@@ -2213,7 +2614,8 @@ function renderProjectSplitSiteScript(
     "    });",
     "  }",
     "  search?.addEventListener('input', runSearch);",
-    "  locale?.addEventListener('change', applyLocale);",
+    "  contentLocale?.addEventListener('change', applyContentLocale);",
+    "  uiLocale?.addEventListener('change', () => applyUiLocale());",
     "  document.querySelector('[data-hia-project-relations]')?.addEventListener('click', async () => {",
     "    try {",
     "      const graph = await readJson(config.relations);",
@@ -2222,9 +2624,12 @@ function renderProjectSplitSiteScript(
     "      const article = document.createElement('article');",
     "      article.className = 'hia-symbol';",
     "      const heading = document.createElement('h2');",
-    `      heading.textContent = ${JSON.stringify(relationsLabel)};`,
+    "      heading.dataset.hiaUiMessage = 'portal.navigation.relations';",
+    `      heading.textContent = uiMessage('portal.navigation.relations', {}, ${JSON.stringify(portalContext.labels.relations)});`,
     "      const summary = document.createElement('p');",
-    "      summary.textContent = `${graph.nodeCount || 0} node(s), ${graph.relationCount || 0} relation(s).`;",
+    "      summary.dataset.hiaUiMessage = 'portal.navigation.relationsummary';",
+    "      summary.dataset.hiaUiValues = JSON.stringify({ nodes: graph.nodeCount || 0, relations: graph.relationCount || 0 });",
+    "      summary.textContent = uiMessage('portal.navigation.relationsummary', { nodes: graph.nodeCount || 0, relations: graph.relationCount || 0 }, `${graph.nodeCount || 0} nodes, ${graph.relationCount || 0} relations`);",
     "      article.append(heading, summary);",
     "      contentHost.append(article);",
     "    } catch (error) { showLoadError(error); }",
@@ -2238,6 +2643,14 @@ function renderProjectSplitSiteScript(
     "      if (entry) loadEntry({ ...entry, entryId: entry.id }, false);",
     "    });",
     "  }).catch(showLoadError);",
+    "  if (config.ui && uiLocale) {",
+    "    try {",
+    "      const saved = localStorage.getItem('hia-doc-portal-ui-locale');",
+    "      if (saved && config.ui.supportedLocales.includes(saved)) uiLocale.value = saved;",
+    "    } catch {}",
+    "  }",
+    "  applyContentLocale();",
+    "  applyUiLocale();",
     "  viewButtons.find((button) => button.dataset.hiaProjectView === 'all')?.setAttribute('aria-pressed', 'true');",
     "})();",
     "</script>"
@@ -2311,9 +2724,13 @@ function renderProjectIndexHtml(
   ].join("");
 }
 
-function renderProjectViewControl(views: RenderProjectView[], entryCounts: Record<string, number>): string {
+function renderProjectViewControl(
+  views: RenderProjectView[],
+  entryCounts: Record<string, number>,
+  portalContext?: RenderProjectPortalContext
+): string {
   const buttons = views
-    .map((view) => `<button type="button" class="hia-project-view-button" data-hia-project-view="${escapeHtml(view)}">${escapeHtml(formatProjectViewLabel(view))}<span>${escapeHtml(String(entryCounts[view] ?? 0))}</span></button>`)
+    .map((view) => `<button type="button" class="hia-project-view-button" data-hia-project-view="${escapeHtml(view)}">${renderOptionalProjectUiMessage(portalContext, `portal.view.${view}`, formatProjectViewLabel(view))}<span>${escapeHtml(String(entryCounts[view] ?? 0))}</span></button>`)
     .join("");
 
   return `<div class="hia-project-views">${buttons}</div>`;
@@ -2332,17 +2749,28 @@ function renderProjectSearchControl(): string {
  * @lang zh-CN 渲染可见的 Portal-owned skin/scheme 选择器；无脚本默认由 `<html>` attributes 决定。
  * @lang en Renders visible Portal-owned skin/scheme selectors; `<html>` attributes own the no-script default.
  */
-function renderProjectThemeControl(theme: Required<RenderProjectThemeOptions>): string {
-  const skins = PORTAL_THEME_SKIN_IDS.map((skinId) => (
-    `<option value="${escapeHtml(skinId)}"${skinId === theme.skinId ? " selected" : ""}>${escapeHtml(getPortalThemeSkinLabel(skinId))}</option>`
-  )).join("");
-  const schemes = PORTAL_THEME_SCHEMES.map((scheme) => (
-    `<option value="${escapeHtml(scheme)}"${scheme === theme.scheme ? " selected" : ""}>${escapeHtml(getPortalThemeSchemeLabel(scheme))}</option>`
-  )).join("");
+function renderProjectThemeControl(
+  theme: Required<RenderProjectThemeOptions>,
+  portalContext?: RenderProjectPortalContext
+): string {
+  const skins = PORTAL_THEME_SKIN_IDS.map((skinId) => {
+    const messageId = `portal.theme.skin.${skinId.slice("portal.".length)}`;
+    const marked = portalContext?.uiLocaleAdoption
+      ? renderProjectUiMarkedText(portalContext, messageId, {})
+      : { attributes: "", text: escapeHtml(getPortalThemeSkinLabel(skinId)) };
+    return `<option value="${escapeHtml(skinId)}"${skinId === theme.skinId ? " selected" : ""}${marked.attributes}>${marked.text}</option>`;
+  }).join("");
+  const schemes = PORTAL_THEME_SCHEMES.map((scheme) => {
+    const messageId = `portal.theme.scheme.${scheme}`;
+    const marked = portalContext?.uiLocaleAdoption
+      ? renderProjectUiMarkedText(portalContext, messageId, {})
+      : { attributes: "", text: escapeHtml(getPortalThemeSchemeLabel(scheme)) };
+    return `<option value="${escapeHtml(scheme)}"${scheme === theme.scheme ? " selected" : ""}${marked.attributes}>${marked.text}</option>`;
+  }).join("");
   return [
     "<div class=\"hia-theme-switch\" data-hia-theme-control>",
-    `<label>Skin / 皮肤<select data-hia-skin-control>${skins}</select></label>`,
-    `<label>Scheme / 配色<select data-hia-scheme-control>${schemes}</select></label>`,
+    `<label>${renderOptionalProjectUiMessage(portalContext, "portal.theme.skinlabel", "Skin / 皮肤")}<select data-hia-skin-control>${skins}</select></label>`,
+    `<label>${renderOptionalProjectUiMessage(portalContext, "portal.theme.schemelabel", "Scheme / 配色")}<select data-hia-scheme-control>${schemes}</select></label>`,
     "</div>"
   ].join("");
 }
@@ -2487,18 +2915,21 @@ function renderProjectSemanticTopicInternal(
   nextAncestors.add(entry.id);
   const members = collectProjectEntryMembers(entry, projectInput.entries);
   const sections = [
-    renderProjectTopicSection("summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale)),
+    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale), portalContext),
     renderProjectTopicSection(
       "declaration",
+      "portal.section.declaration",
       labels.declaration,
-      entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : ""
+      entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "",
+      portalContext
     ),
-    renderProjectTopicSection("metadata", labels.metadata, renderProjectTopicMetadata(entry, projectInput.project.productVersion)),
-    renderProjectTopicSection("contract", labels.contract, renderProjectTopicContract(entry)),
-    renderProjectTopicSection("coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, projectInput.ownerAdoption, labels)),
-    renderProjectTopicSection("provenance", labels.provenance, renderProjectTopicProvenance(projectInput.documentationContinuity, projectInput.ownerAdoption, labels)),
+    renderProjectTopicSection("metadata", "portal.section.metadata", labels.metadata, renderProjectTopicMetadata(entry, projectInput.project.productVersion, portalContext), portalContext),
+    renderProjectTopicSection("contract", "portal.section.contract", labels.contract, renderProjectTopicContract(entry, portalContext), portalContext),
+    renderProjectTopicSection("coverage", "portal.section.coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, projectInput.ownerAdoption, portalContext), portalContext),
+    renderProjectTopicSection("provenance", "portal.section.provenance", labels.provenance, renderProjectTopicProvenance(projectInput.documentationContinuity, projectInput.ownerAdoption, portalContext), portalContext),
     renderProjectTopicSection(
       "members",
+      "portal.section.members",
       labels.members,
       renderProjectTopicMembers(
         members,
@@ -2508,11 +2939,12 @@ function renderProjectSemanticTopicInternal(
         portalContext,
         includeMemberBodies,
         nextAncestors
-      )
+      ),
+      portalContext
     ),
-    renderProjectTopicSection("relations", labels.relations, renderProjectTopicRelations(entry, projectInput.relationGraph)),
-    renderProjectTopicSection("source", labels.source, renderProjectTopicSource(entry, portalContext.sourceCommentProjection)),
-    renderProjectTopicSection("diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(entry.diagnostics ?? []))
+    renderProjectTopicSection("relations", "portal.section.relations", labels.relations, renderProjectTopicRelations(entry, projectInput.relationGraph, portalContext), portalContext),
+    renderProjectTopicSection("source", "portal.section.source", labels.source, renderProjectTopicSource(entry, portalContext), portalContext),
+    renderProjectTopicSection("diagnostics", "portal.section.diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(entry.diagnostics ?? []), portalContext)
   ].join("");
   const searchText = createProjectEntrySearchText(entry);
 
@@ -2527,43 +2959,49 @@ function renderProjectSemanticTopicInternal(
 /** 空 section 不输出，从而保持“按适用性呈现”。Omits empty sections so topics remain applicability-aware. */
 function renderProjectTopicSection(
   section: "summary" | "declaration" | "metadata" | "contract" | "coverage" | "provenance" | "members" | "relations" | "source" | "diagnostics",
+  messageId: string,
   label: string,
-  body: string
+  body: string,
+  portalContext: RenderProjectPortalContext
 ): string {
   if (!body) {
     return "";
   }
   // <lang><zh-CN>首要阅读区默认展开；其余区保持原生 disclosure，可同时打开且不依赖脚本。</zh-CN><en>Primary reading sections start open; remaining sections use native disclosure, allow concurrent expansion, and require no script.</en></lang>
   const open = section === "summary" || section === "declaration" || section === "metadata" ? " open" : "";
-  return `<details class="hia-project-topic-section" data-hia-topic-section="${section}"${open}><summary><span>${escapeHtml(label)}</span></summary><div class="hia-project-topic-section-body">${body}</div></details>`;
+  return `<details class="hia-project-topic-section" data-hia-topic-section="${section}"${open}><summary>${renderProjectUiMessage(portalContext, messageId, {}, label)}</summary><div class="hia-project-topic-section-body">${body}</div></details>`;
 }
 
 /** metadata 只含公开 entry/project facts；关系由 relations section 独立承载。Metadata contains public entry/project facts only; relations stay in their own section. */
-function renderProjectTopicMetadata(entry: RenderProjectEntry, productVersion: string | undefined): string {
+function renderProjectTopicMetadata(
+  entry: RenderProjectEntry,
+  productVersion: string | undefined,
+  portalContext: RenderProjectPortalContext
+): string {
   const items = [
-    `<dt>Kind</dt><dd>${escapeHtml(entry.kind)}</dd>`,
-    `<dt>View</dt><dd>${escapeHtml(entry.view)}</dd>`,
-    productVersion ? `<dt>Product Version</dt><dd>${escapeHtml(productVersion)}</dd>` : "",
-    entry.input ? `<dt>Input</dt><dd>${escapeHtml(entry.input.kind)}</dd>` : "",
-    entry.input?.path ? `<dt>Input Path</dt><dd>${escapeHtml(entry.input.path)}</dd>` : "",
-    entry.profile ? `<dt>Profile</dt><dd>${escapeHtml(entry.profile.profileId)}${entry.profile.profileVersion ? `@${escapeHtml(entry.profile.profileVersion)}` : ""}</dd>` : "",
-    entry.hierarchy?.assembly ? `<dt>Assembly</dt><dd>${escapeHtml(entry.hierarchy.assembly)}</dd>` : "",
-    entry.hierarchy?.namespace ? `<dt>Namespace</dt><dd>${escapeHtml(entry.hierarchy.namespace)}</dd>` : "",
-    entry.hierarchy?.containingType ? `<dt>Containing Type</dt><dd>${escapeHtml(entry.hierarchy.containingType)}</dd>` : "",
-    entry.hierarchy?.symbolDocumentationId ? `<dt>Documentation ID</dt><dd>${escapeHtml(entry.hierarchy.symbolDocumentationId)}</dd>` : ""
+    `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.kind", {}, "Kind")}</dt><dd>${escapeHtml(entry.kind)}</dd>`,
+    `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.view", {}, "View")}</dt><dd>${escapeHtml(entry.view)}</dd>`,
+    productVersion ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.productversion", {}, "Product Version")}</dt><dd>${escapeHtml(productVersion)}</dd>` : "",
+    entry.input ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.input", {}, "Input")}</dt><dd>${escapeHtml(entry.input.kind)}</dd>` : "",
+    entry.input?.path ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.inputpath", {}, "Input Path")}</dt><dd>${escapeHtml(entry.input.path)}</dd>` : "",
+    entry.profile ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.profile", {}, "Profile")}</dt><dd>${escapeHtml(entry.profile.profileId)}${entry.profile.profileVersion ? `@${escapeHtml(entry.profile.profileVersion)}` : ""}</dd>` : "",
+    entry.hierarchy?.assembly ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.assembly", {}, "Assembly")}</dt><dd>${escapeHtml(entry.hierarchy.assembly)}</dd>` : "",
+    entry.hierarchy?.namespace ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.namespace", {}, "Namespace")}</dt><dd>${escapeHtml(entry.hierarchy.namespace)}</dd>` : "",
+    entry.hierarchy?.containingType ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.containingtype", {}, "Containing Type")}</dt><dd>${escapeHtml(entry.hierarchy.containingType)}</dd>` : "",
+    entry.hierarchy?.symbolDocumentationId ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.documentationid", {}, "Documentation ID")}</dt><dd>${escapeHtml(entry.hierarchy.symbolDocumentationId)}</dd>` : ""
   ].join("");
   return `<dl class="hia-project-meta">${items}</dl>`;
 }
 
 /** contract section 与 input locator 分离，避免 path 被误当 contract identity。Separates contract identity from the input locator so paths are not mistaken for contracts. */
-function renderProjectTopicContract(entry: RenderProjectEntry): string {
+function renderProjectTopicContract(entry: RenderProjectEntry, portalContext: RenderProjectPortalContext): string {
   if (!entry.input?.contract && !entry.input?.contractVersion && !entry.input?.artifactId) {
     return "";
   }
   const items = [
-    entry.input.contract ? `<dt>Contract</dt><dd>${escapeHtml(entry.input.contract)}</dd>` : "",
-    entry.input.contractVersion ? `<dt>Version</dt><dd>${escapeHtml(entry.input.contractVersion)}</dd>` : "",
-    entry.input.artifactId ? `<dt>Artifact</dt><dd>${escapeHtml(entry.input.artifactId)}</dd>` : ""
+    entry.input.contract ? `<dt>${renderProjectUiMessage(portalContext, "portal.section.contract", {}, "Contract")}</dt><dd>${escapeHtml(entry.input.contract)}</dd>` : "",
+    entry.input.contractVersion ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.version", {}, "Version")}</dt><dd>${escapeHtml(entry.input.contractVersion)}</dd>` : "",
+    entry.input.artifactId ? `<dt>${renderProjectUiMessage(portalContext, "portal.metadata.artifact", {}, "Artifact")}</dt><dd>${escapeHtml(entry.input.artifactId)}</dd>` : ""
   ].join("");
   return `<dl class="hia-project-meta">${items}</dl>`;
 }
@@ -2572,25 +3010,25 @@ function renderProjectTopicContract(entry: RenderProjectEntry): string {
 function renderProjectTopicCoverage(
   continuity: RenderProjectDocumentationContinuitySummary | undefined,
   ownerAdoption: RenderProjectOwnerAdoptionSummary | undefined,
-  labels: DocumentationPortalLabels
+  portalContext: RenderProjectPortalContext
 ): string {
   if (!continuity && !ownerAdoption) {
-    return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
+    return `<p class="hia-project-unavailable">${renderProjectUiMessage(portalContext, "portal.common.unavailable", {}, portalContext.labels.unavailable)}</p>`;
   }
   return [
     "<dl class=\"hia-project-meta\">",
     ...(continuity ? [
-      `<dt>Continuity Status</dt><dd>${escapeHtml(continuity.status)}</dd>`,
-      `<dt>Entries</dt><dd>${escapeHtml(String(continuity.entries.baselineCount))} → ${escapeHtml(String(continuity.entries.currentCount))}</dd>`,
-      `<dt>Added / Removed / Unchanged</dt><dd>${escapeHtml(String(continuity.entries.addedCount))} / ${escapeHtml(String(continuity.entries.removedCount))} / ${escapeHtml(String(continuity.entries.unchangedCount))}</dd>`,
-      `<dt>Required Outputs</dt><dd>${continuity.requiredOutputsPreserved ? "preserved" : "not-preserved"}</dd>`
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.continuitystatus", {}, "Continuity Status")}</dt><dd>${escapeHtml(continuity.status)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.entries", {}, "Entries")}</dt><dd>${escapeHtml(String(continuity.entries.baselineCount))} → ${escapeHtml(String(continuity.entries.currentCount))}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.delta", {}, "Added / Removed / Unchanged")}</dt><dd>${escapeHtml(String(continuity.entries.addedCount))} / ${escapeHtml(String(continuity.entries.removedCount))} / ${escapeHtml(String(continuity.entries.unchangedCount))}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.requiredoutputs", {}, "Required Outputs")}</dt><dd>${renderProjectUiMessage(portalContext, continuity.requiredOutputsPreserved ? "portal.coverage.preserved" : "portal.coverage.notpreserved", {}, continuity.requiredOutputsPreserved ? "preserved" : "not-preserved")}</dd>`
     ] : []),
     ...(ownerAdoption ? [
-      `<dt>Owner Review Readiness</dt><dd>${escapeHtml(ownerAdoption.status)}</dd>`,
-      `<dt>Owner Input / Consent</dt><dd>${ownerAdoption.ownerInput.submitted ? "submitted" : "not-submitted"} / ${escapeHtml(ownerAdoption.ownerInput.consent)}</dd>`,
-      `<dt>Contract References</dt><dd>${escapeHtml(String(ownerAdoption.contracts.providedCount))} / ${escapeHtml(String(ownerAdoption.contracts.requiredCount))}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.ownerreadiness", {}, "Owner Review Readiness")}</dt><dd>${escapeHtml(ownerAdoption.status)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.ownerinput", {}, "Owner Input / Consent")}</dt><dd>${renderProjectUiMessage(portalContext, ownerAdoption.ownerInput.submitted ? "portal.coverage.submitted" : "portal.coverage.notsubmitted", {}, ownerAdoption.ownerInput.submitted ? "submitted" : "not-submitted")} / ${escapeHtml(ownerAdoption.ownerInput.consent)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.contractrefs", {}, "Contract References")}</dt><dd>${escapeHtml(String(ownerAdoption.contracts.providedCount))} / ${escapeHtml(String(ownerAdoption.contracts.requiredCount))}</dd>`,
       ...(ownerAdoption.workspaceHandoff ? [
-        `<dt>Repository Owners / Handoff Edges</dt><dd>${escapeHtml(String(ownerAdoption.workspaceHandoff.repositoryOwnerCount))} / ${escapeHtml(String(ownerAdoption.workspaceHandoff.handoffEdgeCount))}</dd>`
+        `<dt>${renderProjectUiMessage(portalContext, "portal.coverage.handoffs", {}, "Repository Owners / Handoff Edges")}</dt><dd>${escapeHtml(String(ownerAdoption.workspaceHandoff.repositoryOwnerCount))} / ${escapeHtml(String(ownerAdoption.workspaceHandoff.handoffEdgeCount))}</dd>`
       ] : [])
     ] : []),
     "</dl>"
@@ -2601,24 +3039,24 @@ function renderProjectTopicCoverage(
 function renderProjectTopicProvenance(
   continuity: RenderProjectDocumentationContinuitySummary | undefined,
   ownerAdoption: RenderProjectOwnerAdoptionSummary | undefined,
-  labels: DocumentationPortalLabels
+  portalContext: RenderProjectPortalContext
 ): string {
   if (!continuity && !ownerAdoption) {
-    return `<p class="hia-project-unavailable">${escapeHtml(labels.unavailable)}</p>`;
+    return `<p class="hia-project-unavailable">${renderProjectUiMessage(portalContext, "portal.common.unavailable", {}, portalContext.labels.unavailable)}</p>`;
   }
   return [
     "<dl class=\"hia-project-meta\">",
     ...(continuity ? [
-      `<dt>Continuity Contract</dt><dd>${escapeHtml(continuity.contract)}@${escapeHtml(continuity.contractVersion)}</dd>`,
-      `<dt>Continuity Resolution</dt><dd>${escapeHtml(continuity.semantics.resolution)}</dd>`,
-      `<dt>Continuity Confidence</dt><dd>${escapeHtml(continuity.semantics.confidence)}</dd>`,
-      `<dt>Continuity Provenance</dt><dd>${escapeHtml(continuity.semantics.provenance)}</dd>`
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.continuitycontract", {}, "Continuity Contract")}</dt><dd>${escapeHtml(continuity.contract)}@${escapeHtml(continuity.contractVersion)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.continuityresolution", {}, "Continuity Resolution")}</dt><dd>${escapeHtml(continuity.semantics.resolution)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.continuityconfidence", {}, "Continuity Confidence")}</dt><dd>${escapeHtml(continuity.semantics.confidence)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.continuityprovenance", {}, "Continuity Provenance")}</dt><dd>${escapeHtml(continuity.semantics.provenance)}</dd>`
     ] : []),
     ...(ownerAdoption ? [
-      `<dt>Owner Kit Contract</dt><dd>${escapeHtml(ownerAdoption.contract)}@${escapeHtml(ownerAdoption.contractVersion)}</dd>`,
-      `<dt>Owner Kit Resolution</dt><dd>${escapeHtml(ownerAdoption.semantics.resolution)}</dd>`,
-      `<dt>Owner Kit Confidence</dt><dd>${escapeHtml(ownerAdoption.semantics.confidence)}</dd>`,
-      `<dt>Owner Kit Provenance</dt><dd>${escapeHtml(ownerAdoption.semantics.provenance)}</dd>`
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.ownercontract", {}, "Owner Kit Contract")}</dt><dd>${escapeHtml(ownerAdoption.contract)}@${escapeHtml(ownerAdoption.contractVersion)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.ownerresolution", {}, "Owner Kit Resolution")}</dt><dd>${escapeHtml(ownerAdoption.semantics.resolution)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.ownerconfidence", {}, "Owner Kit Confidence")}</dt><dd>${escapeHtml(ownerAdoption.semantics.confidence)}</dd>`,
+      `<dt>${renderProjectUiMessage(portalContext, "portal.provenance.ownerprovenance", {}, "Owner Kit Provenance")}</dt><dd>${escapeHtml(ownerAdoption.semantics.provenance)}</dd>`
     ] : []),
     "</dl>"
   ].join("");
@@ -2674,11 +3112,12 @@ function renderProjectTopicMembers(
 /** inheritance/implements 与 project relation graph 都只进入 relations section。Inheritance, implements, and project graph edges appear only in the relations section. */
 function renderProjectTopicRelations(
   entry: RenderProjectEntry,
-  relationGraph: RenderProjectRelationGraph | undefined
+  relationGraph: RenderProjectRelationGraph | undefined,
+  portalContext: RenderProjectPortalContext
 ): string {
   const semanticItems = [
-    ...(entry.hierarchy?.baseTypeIds ?? []).map((id) => `<li><span class="hia-kind">inherits</span> ${escapeHtml(id)}</li>`),
-    ...(entry.hierarchy?.interfaceIds ?? []).map((id) => `<li><span class="hia-kind">implements</span> ${escapeHtml(id)}</li>`)
+    ...(entry.hierarchy?.baseTypeIds ?? []).map((id) => `<li><span class="hia-kind">${renderProjectUiMessage(portalContext, "portal.relation.inherits", {}, "inherits")}</span> ${escapeHtml(id)}</li>`),
+    ...(entry.hierarchy?.interfaceIds ?? []).map((id) => `<li><span class="hia-kind">${renderProjectUiMessage(portalContext, "portal.relation.implements", {}, "implements")}</span> ${escapeHtml(id)}</li>`)
   ];
   const entryNodeIds = new Set(
     relationGraph?.nodes.filter((node) => node.entryId === entry.id).map((node) => node.id) ?? []
@@ -2693,13 +3132,15 @@ function renderProjectTopicRelations(
 /** source 与 doc-source-map 保持既有 privacy policy；本函数不新增 source body。Source and doc-source-map retain the existing privacy policy; this function adds no source body. */
 function renderProjectTopicSource(
   entry: RenderProjectEntry,
-  options: Required<RenderProjectSourceCommentProjectionOptions> | undefined
+  portalContext: RenderProjectPortalContext
 ): string {
   return [
-    entry.source ? renderProjectEntrySource(entry.source, false) : "",
-    entry.sourceUsability ? renderProjectEntrySourceUsability(entry.sourceUsability, false) : "",
-    entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false) : "",
-    entry.sourceCommentProjection && options ? renderProjectSourceCommentProjection(entry.sourceCommentProjection, options) : ""
+    entry.source ? renderProjectEntrySource(entry.source, false, portalContext) : "",
+    entry.sourceUsability ? renderProjectEntrySourceUsability(entry.sourceUsability, false, portalContext) : "",
+    entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false, portalContext) : "",
+    entry.sourceCommentProjection && portalContext.sourceCommentProjection
+      ? renderProjectSourceCommentProjection(entry.sourceCommentProjection, portalContext.sourceCommentProjection, portalContext)
+      : ""
   ].join("");
 }
 
@@ -2740,31 +3181,32 @@ function selectProjectSourceCommentProjection(
  */
 function renderProjectSourceCommentProjection(
   projection: DocumentationSourceCommentProjection,
-  options: Required<RenderProjectSourceCommentProjectionOptions>
+  options: Required<RenderProjectSourceCommentProjectionOptions>,
+  portalContext?: RenderProjectPortalContext
 ): string {
   const bodyAuthorized = options.contentPolicy === "explicit-projected-text"
     && projection.contentPolicy === "explicit-projected-text"
     && projection.privacy.projectedCommentTextIncluded;
   const metadata = [
-    `<dt>Comment Contract</dt><dd>${escapeHtml(`${projection.contract}@${projection.contractVersion}`)}</dd>`,
-    `<dt>Comment Locale</dt><dd>${escapeHtml(projection.requestedLocale)}</dd>`,
-    `<dt>Comment Status</dt><dd>${escapeHtml(projection.status)}</dd>`,
-    `<dt>Comment Entries</dt><dd>${escapeHtml(String(projection.entries.length))}</dd>`,
-    `<dt>Source Content Policy</dt><dd>${escapeHtml(projection.privacy.sourcesContentPolicy)}</dd>`
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.commentcontract", "Comment Contract")}</dt><dd>${escapeHtml(`${projection.contract}@${projection.contractVersion}`)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.commentlocale", "Comment Locale")}</dt><dd>${escapeHtml(projection.requestedLocale)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.commentstatus", "Comment Status")}</dt><dd>${escapeHtml(projection.status)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.commententries", "Comment Entries")}</dt><dd>${escapeHtml(String(projection.entries.length))}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.contentpolicy", "Source Content Policy")}</dt><dd>${escapeHtml(projection.privacy.sourcesContentPolicy)}</dd>`
   ].join("");
   const entries = projection.entries.map((entry) => {
     const range = entry.range
-      ? `<dt>Range</dt><dd>${escapeHtml(`${entry.range.start.line}:${entry.range.start.column}-${entry.range.end.line}:${entry.range.end.column}`)}</dd>`
+      ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.range", "Range")}</dt><dd>${escapeHtml(`${entry.range.start.line}:${entry.range.start.column}-${entry.range.end.line}:${entry.range.end.column}`)}</dd>`
       : "";
     const body = bodyAuthorized && entry.projectedText !== undefined
       ? `<pre class="hia-source-comment"><code>${escapeHtml(entry.projectedText)}</code></pre>`
       : "";
     return [
       `<article class="hia-source-comment-entry" data-hia-source-comment-id="${escapeHtml(entry.commentId)}">`,
-      `<dl class="hia-project-meta"><dt>Comment</dt><dd>${escapeHtml(entry.commentId)}</dd>`,
-      `<dt>Resolution</dt><dd>${escapeHtml(entry.resolution)}</dd>`,
-      `<dt>Confidence</dt><dd>${escapeHtml(entry.confidence)}</dd>`,
-      `<dt>Provenance</dt><dd>${escapeHtml(entry.provenance.kind)}</dd>${range}</dl>`,
+      `<dl class="hia-project-meta"><dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.comment", "Comment")}</dt><dd>${escapeHtml(entry.commentId)}</dd>`,
+      `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.resolution", "Resolution")}</dt><dd>${escapeHtml(entry.resolution)}</dd>`,
+      `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.confidence", "Confidence")}</dt><dd>${escapeHtml(entry.confidence)}</dd>`,
+      `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.section.provenance", "Provenance")}</dt><dd>${escapeHtml(entry.provenance.kind)}</dd>${range}</dl>`,
       body,
       "</article>"
     ].join("");
@@ -2835,22 +3277,26 @@ function renderProjectEntryProfile(profile: RenderProjectProfileRef): string {
   return `<p class="hia-project-profile">Profile ${escapeHtml(profile.profileId)}${escapeHtml(version)}</p>`;
 }
 
-function renderProjectEntrySource(source: RenderProjectSourceRef, includeHeading = true): string {
+function renderProjectEntrySource(
+  source: RenderProjectSourceRef,
+  includeHeading = true,
+  portalContext?: RenderProjectPortalContext
+): string {
   const range = source.range ? `:${source.range.start.line}${source.range.end ? `-${source.range.end.line}` : ""}` : "";
   const label = `${source.path}${range}`;
   const sourceLabel = source.linkUrl
     ? `<a href="${escapeHtml(source.linkUrl)}">${escapeHtml(label)}</a>`
     : escapeHtml(label);
   const sourceDetails = [
-    `<dt>Source</dt><dd>${sourceLabel}</dd>`,
-    source.language ? `<dt>Language</dt><dd>${escapeHtml(source.language)}</dd>` : "",
-    source.rangeSource ? `<dt>Range Source</dt><dd>${escapeHtml(source.rangeSource)}</dd>` : "",
-    source.confidence ? `<dt>Confidence</dt><dd>${escapeHtml(source.confidence)}</dd>` : ""
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.section.source", "Source")}</dt><dd>${sourceLabel}</dd>`,
+    source.language ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.language", "Language")}</dt><dd>${escapeHtml(source.language)}</dd>` : "",
+    source.rangeSource ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.rangesource", "Range Source")}</dt><dd>${escapeHtml(source.rangeSource)}</dd>` : "",
+    source.confidence ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.confidence", "Confidence")}</dt><dd>${escapeHtml(source.confidence)}</dd>` : ""
   ].join("");
-  const preview = source.preview ? renderProjectSourcePreview(source.preview, source.path) : "";
-  const fetchPreview = source.fetchUrl ? renderProjectSourceFetch(source) : "";
+  const preview = source.preview ? renderProjectSourcePreview(source.preview, source.path, portalContext) : "";
+  const fetchPreview = source.fetchUrl ? renderProjectSourceFetch(source, portalContext) : "";
 
-  const heading = includeHeading ? "<h3>Source</h3>" : "";
+  const heading = includeHeading ? `<h3>${renderOptionalProjectUiMessage(portalContext, "portal.section.source", "Source")}</h3>` : "";
   return `<section class="hia-source-section">${heading}<dl class="hia-project-meta">${sourceDetails}</dl>${preview}${fetchPreview}</section>`;
 }
 
@@ -2858,18 +3304,22 @@ function renderProjectEntrySource(source: RenderProjectSourceRef, includeHeading
  * @lang zh-CN 只渲染 source-usability allowlist metadata，不生成 link、fetch request、preview 或 source body。
  * @lang en Renders only allowlisted source-usability metadata and creates no link, fetch request, preview, or source body.
  */
-function renderProjectEntrySourceUsability(sourceUsability: RenderProjectSourceUsabilityRef, includeHeading = true): string {
+function renderProjectEntrySourceUsability(
+  sourceUsability: RenderProjectSourceUsabilityRef,
+  includeHeading = true,
+  portalContext?: RenderProjectPortalContext
+): string {
   const projectIdentity = sourceUsability.projectIdentity;
   const details = [
-    `<dt>Resolution</dt><dd>${escapeHtml(sourceUsability.resolution)}</dd>`,
-    `<dt>Confidence</dt><dd>${escapeHtml(sourceUsability.confidence)}</dd>`,
-    projectIdentity ? `<dt>Project</dt><dd>${escapeHtml(projectIdentity.path)}</dd>` : "",
-    projectIdentity ? `<dt>Project Identity</dt><dd>${escapeHtml(projectIdentity.id)}</dd>` : "",
-    projectIdentity ? `<dt>Identity Policy</dt><dd>${escapeHtml(projectIdentity.policy)}</dd>` : "",
-    `<dt>Provenance</dt><dd>${escapeHtml(`${sourceUsability.provenance.producer}:${sourceUsability.provenance.activity}`)}</dd>`,
-    `<dt>Source Content Policy</dt><dd>${escapeHtml(sourceUsability.privacy.sourcesContentPolicy)}</dd>`
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.resolution", "Resolution")}</dt><dd>${escapeHtml(sourceUsability.resolution)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.confidence", "Confidence")}</dt><dd>${escapeHtml(sourceUsability.confidence)}</dd>`,
+    projectIdentity ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.project", "Project")}</dt><dd>${escapeHtml(projectIdentity.path)}</dd>` : "",
+    projectIdentity ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.projectidentity", "Project Identity")}</dt><dd>${escapeHtml(projectIdentity.id)}</dd>` : "",
+    projectIdentity ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.identitypolicy", "Identity Policy")}</dt><dd>${escapeHtml(projectIdentity.policy)}</dd>` : "",
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.section.provenance", "Provenance")}</dt><dd>${escapeHtml(`${sourceUsability.provenance.producer}:${sourceUsability.provenance.activity}`)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.contentpolicy", "Source Content Policy")}</dt><dd>${escapeHtml(sourceUsability.privacy.sourcesContentPolicy)}</dd>`
   ].join("");
-  const heading = includeHeading ? "<h3>Source Usability</h3>" : "";
+  const heading = includeHeading ? `<h3>${renderOptionalProjectUiMessage(portalContext, "portal.source.usability", "Source Usability")}</h3>` : "";
   return `<section class="hia-source-section hia-source-usability-section">${heading}<dl class="hia-project-meta">${details}</dl></section>`;
 }
 
@@ -2912,7 +3362,10 @@ function selectProjectSourceUsability(sourceUsability: RenderProjectSourceUsabil
  * @param source - 已经 source policy 处理的 body-free source reference。Body-free source reference already processed by source policy.
  * @returns native details reader HTML；拒绝时为空字符串。Native details-reader HTML, or an empty string when refused.
  */
-function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
+function renderProjectSourceFetch(
+  source: RenderProjectSourceRef,
+  portalContext?: RenderProjectPortalContext
+): string {
   const publicAsset = source.publicAsset;
   if (!publicAsset || !source.fetchUrl) {
     return "";
@@ -2923,42 +3376,50 @@ function renderProjectSourceFetch(source: RenderProjectSourceRef): string {
   const maxLines = source.fetchMaxLines ?? 400;
   const caption = endLine ? `${source.path}:${startLine}-${endLine}` : `${source.path}:${startLine}`;
   const manualButton = fetchTrigger === "manual"
-    ? "<button type=\"button\" class=\"hia-source-fetch-button\" data-hia-source-fetch-button>Load source / 加载源码</button>"
+    ? `<button type="button" class="hia-source-fetch-button" data-hia-source-fetch-button>${renderOptionalProjectUiMessage(portalContext, "portal.source.load", "Load source / 加载源码")}</button>`
     : "";
   return [
     `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl)}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-state="idle" data-hia-source-asset-id="${escapeHtml(publicAsset.assetId)}" data-hia-source-integrity="${escapeHtml(publicAsset.digest)}" data-hia-source-byte-length="${escapeHtml(String(publicAsset.byteLength))}" data-hia-source-max-bytes="1048576" data-hia-source-max-lines="${escapeHtml(String(maxLines))}" data-hia-source-timeout="10000">`,
     `<summary>${escapeHtml(caption)}</summary>`,
     manualButton,
-    "<p class=\"hia-project-loading\" data-hia-source-fetch-status hidden></p>",
+    `<p class="hia-project-loading" data-hia-source-fetch-status role="status" aria-live="polite"${portalContext?.uiLocaleAdoption ? " data-hia-ui-message=\"portal.source.status.loading\"" : ""} hidden></p>`,
     `<pre class="hia-source-code"><code data-language="${escapeHtml(source.language ?? "")}"></code></pre>`,
-    "<button type=\"button\" class=\"hia-source-reset-button\" data-hia-source-reset hidden>Reset / 重置</button>",
+    `<button type="button" class="hia-source-reset-button" data-hia-source-reset hidden>${renderOptionalProjectUiMessage(portalContext, "portal.source.reset", "Reset / 重置")}</button>`,
     "</details>"
   ].join("");
 }
 
-function renderProjectEntryDocSourceMap(docSourceMap: RenderProjectEntryDocSourceMapRef, includeHeading = true): string {
+function renderProjectEntryDocSourceMap(
+  docSourceMap: RenderProjectEntryDocSourceMapRef,
+  includeHeading = true,
+  portalContext?: RenderProjectPortalContext
+): string {
   const sourceRange = docSourceMap.sourceRange ? `:${docSourceMap.sourceRange.start.line}${docSourceMap.sourceRange.end ? `-${docSourceMap.sourceRange.end.line}` : ""}` : "";
   const diagnostics = docSourceMap.diagnostics && docSourceMap.diagnostics.length > 0
-    ? `<dt>Diagnostics</dt><dd>${escapeHtml(docSourceMap.diagnostics.join(", "))}</dd>`
+    ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.diagnostics", "Diagnostics")}</dt><dd>${escapeHtml(docSourceMap.diagnostics.join(", "))}</dd>`
     : "";
   const details = [
-    `<dt>Manifest</dt><dd>${escapeHtml(docSourceMap.path)}</dd>`,
-    `<dt>Entry</dt><dd>${escapeHtml(docSourceMap.entryId)}</dd>`,
-    docSourceMap.sourcePath ? `<dt>Original Source</dt><dd>${escapeHtml(docSourceMap.sourcePath)}${escapeHtml(sourceRange)}</dd>` : "",
-    docSourceMap.sourceRangeSource ? `<dt>Range Source</dt><dd>${escapeHtml(docSourceMap.sourceRangeSource)}</dd>` : "",
-    docSourceMap.sourceConfidence ? `<dt>Source Confidence</dt><dd>${escapeHtml(docSourceMap.sourceConfidence)}</dd>` : "",
-    docSourceMap.artifactPath ? `<dt>Generated Artifact</dt><dd>${escapeHtml(docSourceMap.artifactPath)}</dd>` : "",
-    docSourceMap.artifactSelector ? `<dt>Selector</dt><dd>${escapeHtml(docSourceMap.artifactSelector)}</dd>` : "",
-    docSourceMap.artifactConfidence ? `<dt>Artifact Confidence</dt><dd>${escapeHtml(docSourceMap.artifactConfidence)}</dd>` : "",
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.manifest", "Manifest")}</dt><dd>${escapeHtml(docSourceMap.path)}</dd>`,
+    `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.entry", "Entry")}</dt><dd>${escapeHtml(docSourceMap.entryId)}</dd>`,
+    docSourceMap.sourcePath ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.original", "Original Source")}</dt><dd>${escapeHtml(docSourceMap.sourcePath)}${escapeHtml(sourceRange)}</dd>` : "",
+    docSourceMap.sourceRangeSource ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.rangesource", "Range Source")}</dt><dd>${escapeHtml(docSourceMap.sourceRangeSource)}</dd>` : "",
+    docSourceMap.sourceConfidence ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.sourceconfidence", "Source Confidence")}</dt><dd>${escapeHtml(docSourceMap.sourceConfidence)}</dd>` : "",
+    docSourceMap.artifactPath ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.generatedartifact", "Generated Artifact")}</dt><dd>${escapeHtml(docSourceMap.artifactPath)}</dd>` : "",
+    docSourceMap.artifactSelector ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.selector", "Selector")}</dt><dd>${escapeHtml(docSourceMap.artifactSelector)}</dd>` : "",
+    docSourceMap.artifactConfidence ? `<dt>${renderOptionalProjectUiMessage(portalContext, "portal.source.artifactconfidence", "Artifact Confidence")}</dt><dd>${escapeHtml(docSourceMap.artifactConfidence)}</dd>` : "",
     diagnostics
   ].join("");
-  const actions = renderProjectDocSourceMapOpenRequests(docSourceMap);
+  const actions = renderProjectDocSourceMapOpenRequests(docSourceMap, portalContext);
 
   const heading = includeHeading ? "<h3>Doc Source Map</h3>" : "";
   return `<section class="hia-source-section">${heading}<dl class="hia-project-meta">${details}</dl>${actions}</section>`;
 }
 
-function renderProjectSourcePreview(preview: RenderProjectSourcePreviewRef, fallbackPath: string): string {
+function renderProjectSourcePreview(
+  preview: RenderProjectSourcePreviewRef,
+  fallbackPath: string,
+  portalContext?: RenderProjectPortalContext
+): string {
   if (!preview.content) {
     return "";
   }
@@ -2971,23 +3432,26 @@ function renderProjectSourcePreview(preview: RenderProjectSourcePreviewRef, fall
 
   return [
     `<details class="hia-source-preview hia-project-source-preview"${open}>`,
-    `<summary>Source Preview ${escapeHtml(caption)}</summary>`,
+    `<summary>${renderOptionalProjectUiMessage(portalContext, "portal.source.preview", `Source Preview ${caption}`, { caption })}</summary>`,
     `<pre class="hia-source-code"${language}><code>${escapeHtml(preview.content)}</code></pre>`,
     "</details>"
   ].join("");
 }
 
-function renderProjectDocSourceMapOpenRequests(docSourceMap: RenderProjectEntryDocSourceMapRef): string {
+function renderProjectDocSourceMapOpenRequests(
+  docSourceMap: RenderProjectEntryDocSourceMapRef,
+  portalContext?: RenderProjectPortalContext
+): string {
   const sourceLabel = docSourceMap.sourcePath && docSourceMap.sourceRange
     ? `${docSourceMap.sourcePath}:${docSourceMap.sourceRange.start.line}${docSourceMap.sourceRange.start.column ? `:${docSourceMap.sourceRange.start.column}` : ""}`
     : docSourceMap.sourcePath;
   const generatedLabel = docSourceMap.artifactPath ?? "";
   const buttons = [
     sourceLabel
-      ? `<button type="button" data-hia-open-request="source" data-hia-open-path="${escapeHtml(docSourceMap.sourcePath ?? "")}" data-hia-open-line="${escapeHtml(String(docSourceMap.sourceRange?.start.line ?? ""))}" data-hia-open-column="${escapeHtml(String(docSourceMap.sourceRange?.start.column ?? ""))}">Open Source ${escapeHtml(sourceLabel)}</button>`
+      ? `<button type="button" data-hia-open-request="source" data-hia-open-path="${escapeHtml(docSourceMap.sourcePath ?? "")}" data-hia-open-line="${escapeHtml(String(docSourceMap.sourceRange?.start.line ?? ""))}" data-hia-open-column="${escapeHtml(String(docSourceMap.sourceRange?.start.column ?? ""))}">${renderOptionalProjectUiMessage(portalContext, "portal.source.opensource", `Open Source ${sourceLabel}`, { target: sourceLabel })}</button>`
       : "",
     generatedLabel
-      ? `<button type="button" data-hia-open-request="generated" data-hia-open-path="${escapeHtml(generatedLabel)}">Open Generated ${escapeHtml(generatedLabel)}</button>`
+      ? `<button type="button" data-hia-open-request="generated" data-hia-open-path="${escapeHtml(generatedLabel)}">${renderOptionalProjectUiMessage(portalContext, "portal.source.opengenerated", `Open Generated ${generatedLabel}`, { target: generatedLabel })}</button>`
       : ""
   ].filter(Boolean).join("");
 
@@ -3048,17 +3512,18 @@ function renderProjectDocSourceMaps(docSourceMaps: RenderProjectDocSourceMapRef[
  * paths, instance-key state, targets, and quality dimensions.
  */
 function renderProjectGeneratedDocumentationBindingProjection(
-  projection: GeneratedDocumentationBindingHostProjection | undefined
+  projection: GeneratedDocumentationBindingHostProjection | undefined,
+  portalContext?: RenderProjectPortalContext
 ): string {
   if (!projection) {
     return "";
   }
 
   const summaryItems = [
-    `<li><span>Bindings / 绑定</span><strong>${escapeHtml(String(projection.summary.bindingCount))}</strong></li>`,
-    `<li><span>Expansions / 展开</span><strong>${escapeHtml(String(projection.summary.expansionCount))}</strong></li>`,
-    `<li><span>Targets / 目标</span><strong>${escapeHtml(String(projection.summary.targetCount))}</strong></li>`,
-    `<li><span>Diagnostics / 诊断</span><strong>${escapeHtml(String(projection.summary.diagnosticCount))}</strong></li>`,
+    `<li><span>${renderOptionalProjectUiMessage(portalContext, "portal.binding.bindings", "Bindings / 绑定")}</span><strong>${escapeHtml(String(projection.summary.bindingCount))}</strong></li>`,
+    `<li><span>${renderOptionalProjectUiMessage(portalContext, "portal.binding.expansions", "Expansions / 展开")}</span><strong>${escapeHtml(String(projection.summary.expansionCount))}</strong></li>`,
+    `<li><span>${renderOptionalProjectUiMessage(portalContext, "portal.binding.targets", "Targets / 目标")}</span><strong>${escapeHtml(String(projection.summary.targetCount))}</strong></li>`,
+    `<li><span>${renderOptionalProjectUiMessage(portalContext, "portal.binding.diagnostics", "Diagnostics / 诊断")}</span><strong>${escapeHtml(String(projection.summary.diagnosticCount))}</strong></li>`,
     `<li><span>sourcesContent</span><strong>${escapeHtml(projection.privacy.sourcesContentPolicy)}</strong></li>`
   ].join("");
   const bindings = projection.bindings.map((binding) => {
@@ -3067,7 +3532,7 @@ function renderProjectGeneratedDocumentationBindingProjection(
     const expansions = binding.expansions
       .map((expansion) => {
         const key = expansion.instanceKey.displayKey ?? expansion.instanceKey.status;
-        return `<li>${escapeHtml(expansion.id)} · key=${escapeHtml(key)} · ${escapeHtml(expansion.quality.resolutionKind)} / ${escapeHtml(expansion.quality.confidence)} / ${escapeHtml(expansion.quality.provenanceCoverage)} · ${escapeHtml(String(expansion.targetIds.length))} target(s)</li>`;
+        return `<li>${escapeHtml(expansion.id)} · key=${escapeHtml(key)} · ${escapeHtml(expansion.quality.resolutionKind)} / ${escapeHtml(expansion.quality.confidence)} / ${escapeHtml(expansion.quality.provenanceCoverage)} · ${renderOptionalProjectUiMessage(portalContext, "portal.binding.targetcount", `${expansion.targetIds.length} target(s)`, { count: expansion.targetIds.length })}</li>`;
       })
       .join("");
     const targets = binding.targets
@@ -3078,18 +3543,18 @@ function renderProjectGeneratedDocumentationBindingProjection(
       `<strong>${escapeHtml(binding.id)}</strong>`,
       `<p>${escapeHtml(binding.sourceIntent.kind)}${binding.sourceIntent.field ? ` / ${escapeHtml(binding.sourceIntent.field)}` : ""} · ${escapeHtml(memberPath)} · ${escapeHtml(quality)}</p>`,
       `<p>scope=${escapeHtml(binding.scopeId)} · ${escapeHtml(binding.composition.relation)} / ${escapeHtml(binding.composition.mergePolicy)}</p>`,
-      expansions ? `<details><summary>Expansions / 展开 (${escapeHtml(String(binding.expansions.length))})</summary><ul>${expansions}</ul></details>` : "",
-      targets ? `<details><summary>Targets / 目标 (${escapeHtml(String(binding.targets.length))})</summary><ul>${targets}</ul></details>` : "",
+      expansions ? `<details><summary>${renderOptionalProjectUiMessage(portalContext, "portal.binding.expansions", "Expansions / 展开")} (${escapeHtml(String(binding.expansions.length))})</summary><ul>${expansions}</ul></details>` : "",
+      targets ? `<details><summary>${renderOptionalProjectUiMessage(portalContext, "portal.binding.targets", "Targets / 目标")} (${escapeHtml(String(binding.targets.length))})</summary><ul>${targets}</ul></details>` : "",
       "</li>"
     ].join("");
   }).join("");
 
   return [
     "<section class=\"hia-project-summary hia-generated-binding-relations\">",
-    "<h2>Generated Documentation Bindings / 生成式文档绑定</h2>",
+    `<h2>${renderOptionalProjectUiMessage(portalContext, "portal.binding.heading", "Generated Documentation Bindings / 生成式文档绑定")}</h2>`,
     `<p>${escapeHtml(projection.contract)}@${escapeHtml(projection.contractVersion)} · ${escapeHtml(projection.status)}</p>`,
     `<ul class=\"hia-project-group-list\">${summaryItems}</ul>`,
-    bindings ? `<ul class=\"hia-project-relation-list\">${bindings}</ul>` : "<p>No binding relations available.</p>",
+    bindings ? `<ul class=\"hia-project-relation-list\">${bindings}</ul>` : `<p>${renderOptionalProjectUiMessage(portalContext, "portal.binding.none", "No binding relations available.")}</p>`,
     "</section>"
   ].join("");
 }
@@ -4311,7 +4776,7 @@ function renderLocalizedBlock(
     : "";
 
   return [
-    `<p class="hia-localized-text" data-hia-locale="${escapeHtml(locale)}"${fallbackAttrs}${hidden}>`,
+    `<p class="hia-localized-text" data-hia-locale="${escapeHtml(locale)}" lang="${escapeHtml(locale)}"${fallbackAttrs}${hidden}>`,
     escapeHtml(resolved.text),
     fallbackBadge,
     "</p>"

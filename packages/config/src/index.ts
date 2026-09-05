@@ -86,6 +86,26 @@ export interface HiaRendererHtmlConfig {
   sourceCommentProjection?: HiaSourceCommentProjectionConfig;
   /** UI chrome 语言，与 content locale 分离。UI chrome locale, separate from content locale. */
   uiLocale?: typeof HIA_CONFIG_PORTAL_UI_LOCALES[number];
+  /**
+   * @lang zh-CN
+   * W-P123 完整性报告的公开 profile/surface identity；只声明 owner 接入身份，不携带翻译正文。
+   *
+   * @lang en
+   * Public profile/surface identity for the W-P123 completeness report; it declares owner adoption without carrying translations.
+   */
+  uiLocaleCompleteness?: HiaPortalUiLocaleCompletenessConfig;
+}
+
+/**
+ * @lang zh-CN
+ * Portal UI locale 完整性报告的稳定身份配置。字段值是公开 ID，不是文件系统路径。
+ *
+ * @lang en
+ * Stable identity configuration for the Portal UI-locale completeness report. Values are public IDs, not filesystem paths.
+ */
+export interface HiaPortalUiLocaleCompletenessConfig {
+  profileId?: string;
+  surfaceId?: string;
 }
 
 /**
@@ -300,6 +320,22 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
   validateOptionalEnum(value, "projectLayout", HIA_CONFIG_PROJECT_LAYOUTS, diagnostics, targetPath);
   validateOptionalEnum(value, "uiLocale", HIA_CONFIG_PORTAL_UI_LOCALES, diagnostics, targetPath);
 
+  if (value.uiLocaleCompleteness !== undefined) {
+    validatePortalUiLocaleCompletenessConfig(
+      value.uiLocaleCompleteness,
+      diagnostics,
+      `${targetPath}.uiLocaleCompleteness`
+    );
+    if (value.informationArchitecture === undefined) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_UI_LOCALE_COMPLETENESS_IA_REQUIRED",
+        "docs.renderer.uiLocaleCompleteness requires explicit informationArchitecture.",
+        "error",
+        `${targetPath}.uiLocaleCompleteness`
+      ));
+    }
+  }
+
   // <lang zh-CN>只有显式 IA 对象才进入 P4 runtime；未配置时继续走 P3。</lang>
   // <lang en>Only an explicit IA object enters the P4 runtime; omission keeps the P3 path.</lang>
   if (value.informationArchitecture !== undefined) {
@@ -317,6 +353,14 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
         `${targetPath}.informationArchitecture`
       ));
     }
+    if (value.uiLocale === undefined) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_UI_LOCALE_REQUIRED",
+        "docs.renderer.uiLocale is required with explicit informationArchitecture.",
+        "error",
+        `${targetPath}.uiLocale`
+      ));
+    }
   }
 
   if (value.sourceCommentProjection !== undefined) {
@@ -331,6 +375,52 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
         "docs.renderer.sourceCommentProjection requires explicit informationArchitecture.",
         "error",
         `${targetPath}.sourceCommentProjection`
+      ));
+    }
+  }
+}
+
+/**
+ * @lang zh-CN
+ * 校验 owner adoption identity 的 closed-world 结构和 public-safe 稳定 ID，拒绝路径与任意扩展字段。
+ *
+ * @lang en
+ * Validates the closed-world owner-adoption identity and public-safe stable IDs, rejecting paths and arbitrary extension fields.
+ */
+function validatePortalUiLocaleCompletenessConfig(
+  value: unknown,
+  diagnostics: HiaDiagnostic[],
+  targetPath: string
+): void {
+  if (!isRecord(value)) {
+    diagnostics.push(createConfigDiagnostic(
+      "HIA_CONFIG_UI_LOCALE_COMPLETENESS_INVALID",
+      "uiLocaleCompleteness must be an object.",
+      "error",
+      targetPath
+    ));
+    return;
+  }
+  const allowedFields = new Set(["profileId", "surfaceId"]);
+  for (const field of Object.keys(value)) {
+    if (!allowedFields.has(field)) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_UI_LOCALE_COMPLETENESS_FIELD_UNSUPPORTED",
+        `Unsupported uiLocaleCompleteness field: ${field}.`,
+        "error",
+        `${targetPath}.${field}`
+      ));
+    }
+  }
+  for (const field of allowedFields) {
+    const identity = value[field];
+    if (identity === undefined) continue;
+    if (typeof identity !== "string" || !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u.test(identity)) {
+      diagnostics.push(createConfigDiagnostic(
+        "HIA_CONFIG_UI_LOCALE_COMPLETENESS_ID_INVALID",
+        `uiLocaleCompleteness.${field} must be a public stable identifier.`,
+        "error",
+        `${targetPath}.${field}`
       ));
     }
   }

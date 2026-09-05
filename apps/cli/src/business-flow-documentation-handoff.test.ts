@@ -178,6 +178,7 @@ describe("business-flow documentation handoff", () => {
           source: { presentation: "none" },
           renderer: {
             projectLayout: "split-site",
+            uiLocale: "en",
             informationArchitecture: {
               contract: "documentation-portal-information-architecture",
               contractVersion: "0.1.0-draft"
@@ -265,6 +266,7 @@ describe("business-flow documentation handoff", () => {
         docs: {
           source: { presentation: "none" },
           renderer: {
+            uiLocale: "en",
             informationArchitecture: {
               contract: "documentation-portal-information-architecture",
               contractVersion: "0.1.0-draft"

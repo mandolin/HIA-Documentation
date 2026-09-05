@@ -54,7 +54,8 @@ describe("renderer source-comment projection", () => {
     const result = renderProjectHtmlDocument(createFixture(), {
       projectSite: {
         informationArchitecture: {},
-        sourceCommentProjection: { contentPolicy: "explicit-projected-text", locale: "zh-CN" }
+        sourceCommentProjection: { contentPolicy: "explicit-projected-text", locale: "zh-CN" },
+        uiLocale: "zh-CN"
       }
     });
     const entry = result.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
@@ -73,12 +74,13 @@ describe("renderer source-comment projection", () => {
     const result = renderProjectHtmlDocument(createFixture(), {
       projectSite: {
         informationArchitecture: {},
-        sourceCommentProjection: { contentPolicy: "none", locale: "zh-CN" }
+        sourceCommentProjection: { contentPolicy: "none", locale: "zh-CN" },
+        uiLocale: "zh-CN"
       }
     });
     const entry = result.files.find((file) => file.path.startsWith("entries/"))?.contents ?? "";
-    expect(entry).toContain("Comment Contract");
-    expect(entry).toContain("Comment Locale");
+    expect(entry).toContain('data-hia-ui-message="portal.source.commentcontract">注释契约</span></dt><dd>documentation-source-comment-projection@0.1.0-draft');
+    expect(entry).toContain('data-hia-ui-message="portal.source.commentlocale">注释语言</span></dt><dd>zh-CN');
     expect(entry).not.toContain("安全生成");
   });
 
@@ -88,7 +90,7 @@ describe("renderer source-comment projection", () => {
     })).toThrow(/HIA_PORTAL_SOURCE_COMMENT_REQUIRES_IA/u);
 
     expect(() => renderProjectHtmlDocument(createFixture(), {
-      projectSite: { informationArchitecture: {}, sourceCommentProjection: { locale: "en" } }
+      projectSite: { informationArchitecture: {}, sourceCommentProjection: { locale: "en" }, uiLocale: "en" }
     })).toThrow(/HIA_PORTAL_SOURCE_COMMENT_PROJECTION_INVALID/u);
   });
 });
