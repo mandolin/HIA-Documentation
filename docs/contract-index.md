@@ -1,6 +1,6 @@
 # HIA Contract Index
 
-This page summarizes the first stable contract baseline implemented in this monorepo.
+This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 and draft contracts are not stable API promises; package versions and contract versions must be checked independently.
 
 ## Version Snapshot
 

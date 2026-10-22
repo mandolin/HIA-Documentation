@@ -1,6 +1,6 @@
 # HIA Versioning Strategy
 
-This document defines the first versioning baseline for the HIA main repository and official satellite packages.
+This document describes package and serializable-contract versioning for the HIA main repository and official satellite packages. Pre-1.0 and draft versions are not stable API promises.
 
 ## Principles
 
@@ -14,15 +14,28 @@ This document defines the first versioning baseline for the HIA main repository 
 
 ## Package Versions
 
-| Package group | Current state | Version policy |
+These values describe checked-in package manifests, not a live npm registry lookup. A publishable manifest does not prove that its version is available in the registry, and a package version does not make every exported contract stable.
+
+| Package | Manifest version | Publication / version policy |
 | --- | --- | --- |
-| `main-repo` root | private `0.0.0` | Not published. Version is a workspace marker. |
-| `@hia-doc/*` packages in `main-repo` | private `0.0.0`; first public target `0.1.0` | Keep `0.0.0` and `private: true` until a package is explicitly approved for publication. First release package order is defined in `release/public-packages.json`. |
-| `@mandolin/jsdoc-plugin-hia-sys` | public `0.1.0` | Public npm SemVer. Patch for compatible fixes, minor for additive features, major for breaking output/config behavior. |
-| `@mandolin/jsdoc-theme-hia` | public `0.1.0` | Public npm SemVer. Patch for compatible fixes, minor for additive theme features, major for breaking template/asset behavior. |
-| `HIA/hia-htmdoc` | private workspace `0.0.0` | Satellite incubation. Contract versions are more important than package versions until publication. |
-| `HIA/hia-cssdoc` | private workspace `0.0.0` | Satellite incubation. Contract versions are more important than package versions until publication. |
-| `HIA/hia-sassdoc` | private workspace `0.0.0` | Satellite incubation. Contract versions are more important than package versions until publication. |
+| main-repo root | private 0.0.0 | Workspace marker; not an npm product. |
+| `@hia-doc/core` | `0.1.1` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/config` | `0.1.5` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/profile` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/parser-jsdoc` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/plugin-sdk` | `0.1.2` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/source-linkage` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/theme-default` | `0.1.2` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/browser-panel` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/profiles` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/renderer-html` | `0.1.4` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/schemas` | `0.1.4` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/lsp` | `0.1.0` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/cli` | `0.1.6` | Publishable manifest; contract versions remain independent. |
+| @mandolin/jsdoc-plugin-hia-sys | 0.1.3 | Publishable manifest; independently versioned JSDoc integration. |
+| @mandolin/jsdoc-theme-hia | 0.1.2 | Publishable manifest; independently versioned JSDoc theme. |
+
+A private satellite workspace root is a container marker. Its child packages have their own versions and publication flags; do not infer their publication state from the workspace root. See the [compatibility matrix](compatibility-matrix.md) and each package manifest.
 
 ## Contract Versions
 
@@ -42,7 +55,7 @@ This document defines the first versioning baseline for the HIA main repository 
 | JSDoc Integration input | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` and `@mandolin/jsdoc-plugin-hia-sys` |
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
 | JSDoc adapter metadata | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
-| Project docs manifest | `0.1.0-draft` | Draft | `@hia-doc/cli` |
+| Project docs manifest | `0.1.0-draft` | Draft | `@hia-doc/config` |
 | HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
 | CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
 | Doc source map | `0.1.0-draft` | Draft | `doc-source-map` contract docs and satellite tools |
@@ -88,7 +101,7 @@ Once published, a canonical `$id` is immutable. A contract version change that r
 
 ## Dependency Versions
 
-The pinned local toolchain is:
+The checked-in local toolchain is shown below. Node.js 20 is [end of life](https://nodejs.org/en/about/previous-releases); this legacy pin is not a production support recommendation or proof that a supported LTS release has been qualified.
 
 | Tool | Version |
 | --- | --- |
@@ -109,6 +122,6 @@ Before publishing a public package or changing a release-facing contract:
 
 See `docs/release-gate.md` for exact commands.
 
-Official profile distribution policy is documented in `docs/profile-distribution.md`; schema catalog policy is documented in `docs/schema-distribution.md`. Package versions, catalog versions and individual contract/profile versions remain independent. The distribution packages exist in the workspace but remain private until their public release blockers are closed.
+Official profile distribution policy is documented in `docs/profile-distribution.md`; schema catalog policy is documented in `docs/schema-distribution.md`. Package versions, catalog versions and individual contract/profile versions remain independent. Publication flags and versions must be read from each package manifest and the release manifest; current registry availability and integrity require release-specific verification.
 
-Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: packages currently target Node `>=20.19.0`, while npm Trusted Publishing uses a Node 24.x workflow with npm `^11.5.1`.
+Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: the checked-in package engine lower bound is Node `>=20.19.0`, while the npm Trusted Publishing workflow selects Node 24.x and npm `^11.15.0`. These installation constraints do not constitute a tested support matrix.
