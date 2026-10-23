@@ -16,6 +16,11 @@ const schemas = listHiaSchemas();
 
 Every returned schema is a defensive copy.
 
+Current keys resolve to the current owner definition. Exact historical schema
+IDs resolve to their preserved definitions, even after a current entry changes
+version. This lookup does not migrate documents or infer compatibility with
+unknown versions. `listHiaSchemas()` continues to list current schemas only.
+
 ## JSON Exports
 
 The package exports its catalog and each schema as JSON:
@@ -40,6 +45,12 @@ https://mandolin.github.io/HIA-Documentation/schemas/
 ```
 
 Every catalog entry exposes a versioned `publicUrl` equal to the schema `$id`. The Pages site also publishes package-style unversioned aliases for convenient retrieval; aliases do not replace canonical ids.
+
+Historical canonical addresses retain their original schema bytes. The Pages
+artifact includes `schemas/history.json` with exact identities and SHA-256
+digests. The build rejects digest drift and conflicting current definitions
+before replacing its local output. These checks preserve retrieval; owner
+runtime validators still decide whether a particular input version is supported.
 
 Use `pnpm --filter @hia-doc/schemas sync:check` to verify the snapshots against their owner package exports. Use `sync` only after intentionally changing an owner schema.
 
@@ -74,4 +85,7 @@ AI graph-ready references. The schema intentionally carries no Portal layout or 
 
 ## Status
 
-This workspace package is not yet a public npm release. The GitHub Pages namespace, `@hia-doc` scope and MIT license are approved, and the initial Pages deployment is online. New producer schemas will become public when the W-P11.1 changes are committed and the schema workflow succeeds. Public npm publication still requires release versions, operational npm ownership and Trusted Publishing setup.
+Package versions, contract versions and registry availability are separate.
+Read each catalog entry's contract version and stability; the presence of a
+historical schema does not promote a draft to stable. Registry availability and
+release qualification must be verified for the exact package version consumed.

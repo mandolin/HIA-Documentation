@@ -75,6 +75,32 @@ https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0
 
 The Pages artifact also includes unversioned package-style aliases such as `hia-document.schema.json`. Schema references should use the versioned `$id`; aliases are retrieval conveniences only.
 
+## Historical identities
+
+`getHiaSchema()` resolves exact archived IDs independently of current catalog
+entries and returns defensive copies. Current keys and `listHiaSchemas()` retain
+their existing current-definition semantics. No lookup changes an input document
+or assumes compatibility with a different contract version.
+
+Historical snapshots are kept under `packages/schemas/src/history/`, with a
+separate index containing canonical identity, exact contract version and SHA-256.
+The initial eight snapshots were retrieved from their public canonical URLs and
+checked for semantic equality with their owner definitions. Their byte digests
+are pinned independently in regression tests. They retain the publicly served
+formatting, which can differ from the current source snapshot formatting.
+
+The Pages build validates every historical snapshot before replacing its local
+artifact and publishes `schemas/history.json`. A current definition may share a
+historical identity only when its schema definition is unchanged. A new version
+uses a new identity; the previous fixed URL keeps its original bytes. The owner
+synchronizer updates current snapshots only and never rewrites history. If a
+compiler changes JSON formatting in emitted history, the digest gate fails;
+restore the saved original bytes rather than updating their expected digests.
+
+An archived draft remains a draft. Structural validation should select the
+schema matching the input's exact version; semantic acceptance still belongs to
+the owner runtime validator.
+
 ## Validation Policy
 
 JSON Schema validates serializable structure. It does not replace owner runtime checks for alias resolution, cross-artifact references, unsafe paths, source-content privacy or other semantic rules.
@@ -111,8 +137,11 @@ The `schema-pages.yml` workflow publishes the single `dist/reference-pages` arti
 
 ## Publication Status
 
-`@hia-doc/schemas` is currently private `0.0.0` with a first public target of `0.1.0`. The package scope is `@hia-doc`, the repository license is MIT and the GitHub Pages `$id` namespace is approved. A custom domain and GitHub organization are not required. Public npm publication still requires operational npm ownership and Trusted Publishing setup.
-
-GitHub Pages is enabled and the initial four-schema deployment is online. Newly added owner schemas are published by the same workflow after their changes reach `main`.
+The checked-in `@hia-doc/schemas` manifest is publishable `0.1.4`; this describes
+source metadata, not a fresh registry availability check. The package scope is
+`@hia-doc`, the repository license is MIT and the canonical Pages namespace is
+`https://mandolin.github.io/HIA-Documentation/schemas/`. The current catalog has
+17 owner schemas. New snapshots reach the public site only after the build and
+deployment workflow succeeds; local generation alone does not prove deployment.
 
 The public package release plan, publish order and post-publish smoke are documented in `docs/public-package-release-plan.md`.

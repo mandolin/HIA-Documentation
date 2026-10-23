@@ -1,0 +1,351 @@
+{
+  "contract": "documentation-ui-locale-completeness",
+  "contractVersion": "0.1.0-draft",
+  "status": "complete",
+  "profileId": "docs.default-portal",
+  "localeScope": {
+    "contentLocales": [
+      "zh-CN"
+    ],
+    "uiLocales": [
+      "en",
+      "zh-CN"
+    ],
+    "defaultUiLocale": "zh-CN",
+    "contentAndUiIndependent": true,
+    "uiSelection": "caller-explicit",
+    "inferFromContentLocale": false,
+    "inferFromSystemLocale": false,
+    "languageTagProfile": "bcp47-well-formed-subset"
+  },
+  "fallbackPolicy": {
+    "mode": "explicit-chain-only",
+    "resolutionOrder": "exact-then-declared-chain",
+    "requiredMessageResolution": "exact",
+    "chains": [
+      {
+        "uiLocale": "en",
+        "fallbackLocales": [
+          "zh-CN"
+        ]
+      },
+      {
+        "uiLocale": "zh-CN",
+        "fallbackLocales": []
+      }
+    ]
+  },
+  "messages": [
+    {
+      "messageId": "navigation.home",
+      "placeholderNames": [],
+      "visibility": "public"
+    },
+    {
+      "messageId": "navigation.search",
+      "placeholderNames": [],
+      "visibility": "public"
+    },
+    {
+      "messageId": "status.results",
+      "placeholderNames": [
+        "count"
+      ],
+      "visibility": "public"
+    }
+  ],
+  "bundles": [
+    {
+      "bundleId": "bundle.en",
+      "locale": "en",
+      "messageIds": [
+        "navigation.home",
+        "navigation.search",
+        "status.results"
+      ]
+    },
+    {
+      "bundleId": "bundle.zh-cn",
+      "locale": "zh-CN",
+      "messageIds": [
+        "navigation.home",
+        "navigation.search",
+        "status.results"
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "surfaceId": "surface.default-portal",
+      "contentLocale": "zh-CN",
+      "modes": [
+        {
+          "mode": "interactive",
+          "channels": [
+            "visible-text",
+            "accessible-name",
+            "status-message"
+          ]
+        },
+        {
+          "mode": "no-script",
+          "channels": [
+            "visible-text",
+            "accessible-name"
+          ]
+        }
+      ],
+      "languageMetadata": [
+        {
+          "uiLocale": "en",
+          "documentLanguage": "zh-CN",
+          "partLanguages": [
+            "en"
+          ]
+        },
+        {
+          "uiLocale": "zh-CN",
+          "documentLanguage": "zh-CN",
+          "partLanguages": []
+        }
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "requirementId": "req.interactive.home",
+      "surfaceId": "surface.default-portal",
+      "mode": "interactive",
+      "stateId": "default",
+      "channel": "visible-text",
+      "messageId": "navigation.home"
+    },
+    {
+      "requirementId": "req.interactive.results",
+      "surfaceId": "surface.default-portal",
+      "mode": "interactive",
+      "stateId": "results",
+      "channel": "status-message",
+      "messageId": "status.results"
+    },
+    {
+      "requirementId": "req.interactive.search",
+      "surfaceId": "surface.default-portal",
+      "mode": "interactive",
+      "stateId": "default",
+      "channel": "accessible-name",
+      "messageId": "navigation.search"
+    },
+    {
+      "requirementId": "req.noscript.home",
+      "surfaceId": "surface.default-portal",
+      "mode": "no-script",
+      "stateId": "default",
+      "channel": "visible-text",
+      "messageId": "navigation.home"
+    },
+    {
+      "requirementId": "req.noscript.search",
+      "surfaceId": "surface.default-portal",
+      "mode": "no-script",
+      "stateId": "default",
+      "channel": "accessible-name",
+      "messageId": "navigation.search"
+    }
+  ],
+  "evaluations": [
+    {
+      "surfaceId": "surface.default-portal",
+      "mode": "interactive",
+      "contentLocale": "zh-CN",
+      "uiLocale": "en",
+      "documentLanguage": "zh-CN",
+      "partLanguages": [
+        "en"
+      ],
+      "status": "complete",
+      "summary": {
+        "requirements": 3,
+        "exact": 3,
+        "fallback": 0,
+        "missing": 0,
+        "placeholderMismatch": 0
+      },
+      "results": [
+        {
+          "requirementId": "req.interactive.home",
+          "stateId": "default",
+          "channel": "visible-text",
+          "messageId": "navigation.home",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "en"
+        },
+        {
+          "requirementId": "req.interactive.results",
+          "stateId": "results",
+          "channel": "status-message",
+          "messageId": "status.results",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "en"
+        },
+        {
+          "requirementId": "req.interactive.search",
+          "stateId": "default",
+          "channel": "accessible-name",
+          "messageId": "navigation.search",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "en"
+        }
+      ]
+    },
+    {
+      "surfaceId": "surface.default-portal",
+      "mode": "interactive",
+      "contentLocale": "zh-CN",
+      "uiLocale": "zh-CN",
+      "documentLanguage": "zh-CN",
+      "partLanguages": [],
+      "status": "complete",
+      "summary": {
+        "requirements": 3,
+        "exact": 3,
+        "fallback": 0,
+        "missing": 0,
+        "placeholderMismatch": 0
+      },
+      "results": [
+        {
+          "requirementId": "req.interactive.home",
+          "stateId": "default",
+          "channel": "visible-text",
+          "messageId": "navigation.home",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "zh-CN"
+        },
+        {
+          "requirementId": "req.interactive.results",
+          "stateId": "results",
+          "channel": "status-message",
+          "messageId": "status.results",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "zh-CN"
+        },
+        {
+          "requirementId": "req.interactive.search",
+          "stateId": "default",
+          "channel": "accessible-name",
+          "messageId": "navigation.search",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "zh-CN"
+        }
+      ]
+    },
+    {
+      "surfaceId": "surface.default-portal",
+      "mode": "no-script",
+      "contentLocale": "zh-CN",
+      "uiLocale": "en",
+      "documentLanguage": "zh-CN",
+      "partLanguages": [
+        "en"
+      ],
+      "status": "complete",
+      "summary": {
+        "requirements": 2,
+        "exact": 2,
+        "fallback": 0,
+        "missing": 0,
+        "placeholderMismatch": 0
+      },
+      "results": [
+        {
+          "requirementId": "req.noscript.home",
+          "stateId": "default",
+          "channel": "visible-text",
+          "messageId": "navigation.home",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "en"
+        },
+        {
+          "requirementId": "req.noscript.search",
+          "stateId": "default",
+          "channel": "accessible-name",
+          "messageId": "navigation.search",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "en"
+        }
+      ]
+    },
+    {
+      "surfaceId": "surface.default-portal",
+      "mode": "no-script",
+      "contentLocale": "zh-CN",
+      "uiLocale": "zh-CN",
+      "documentLanguage": "zh-CN",
+      "partLanguages": [],
+      "status": "complete",
+      "summary": {
+        "requirements": 2,
+        "exact": 2,
+        "fallback": 0,
+        "missing": 0,
+        "placeholderMismatch": 0
+      },
+      "results": [
+        {
+          "requirementId": "req.noscript.home",
+          "stateId": "default",
+          "channel": "visible-text",
+          "messageId": "navigation.home",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "zh-CN"
+        },
+        {
+          "requirementId": "req.noscript.search",
+          "stateId": "default",
+          "channel": "accessible-name",
+          "messageId": "navigation.search",
+          "resolution": "exact",
+          "placeholderStatus": "match",
+          "status": "covered",
+          "resolvedLocale": "zh-CN"
+        }
+      ]
+    }
+  ],
+  "privacy": {
+    "messageTextIncluded": false,
+    "contentBodyIncluded": false,
+    "sourceBodyIncluded": false,
+    "absolutePathIncluded": false,
+    "credentialIncluded": false,
+    "personalIdentityIncluded": false,
+    "privateMessageIncluded": false,
+    "runtimeEnvironmentIncluded": false
+  },
+  "compatibility": {
+    "versionMatch": "exact",
+    "unknownProperties": "reject",
+    "unknownChannelPolicy": "reject",
+    "migrationPolicy": "explicit-pure"
+  },
+  "diagnostics": []
+}

@@ -1,0 +1,162 @@
+{
+  "contract": "documentation-presentation-profile",
+  "contractVersion": "0.1.0-draft",
+  "status": "ready",
+  "profileId": "profile.fixture.fetch.reader",
+  "pagePartition": {
+    "defaultMode": "multi-page",
+    "mode": "multi-page",
+    "pageTopicKinds": [
+      "guide",
+      "module",
+      "type"
+    ],
+    "leafTopicPolicy": "fragment",
+    "topics": [
+      {
+        "topicId": "topic.module.cookies",
+        "topicKind": "module",
+        "pageId": "page.module.cookies",
+        "fragmentId": "topic-module-cookies",
+        "navigationId": "nav.module.cookies",
+        "relationIds": [
+          "relation.module-to-api"
+        ],
+        "order": 0,
+        "canonicalReference": "page.module.cookies#topic-module-cookies"
+      },
+      {
+        "topicId": "topic.api.get",
+        "topicKind": "member",
+        "pageId": "page.module.cookies",
+        "fragmentId": "topic-api-get",
+        "navigationId": "nav.api.get",
+        "relationIds": [
+          "relation.module-to-api"
+        ],
+        "order": 1,
+        "canonicalReference": "page.module.cookies#topic-api-get"
+      }
+    ]
+  },
+  "identityPolicy": {
+    "stableFields": [
+      "topicId",
+      "fragmentId",
+      "navigationId",
+      "relationIds"
+    ],
+    "pageIdProjection": "partition-mode-only",
+    "sourceModeAffectsIdentity": false,
+    "skinAffectsIdentity": false,
+    "schemeAffectsIdentity": false
+  },
+  "source": {
+    "defaultMode": "fetch",
+    "mode": "fetch",
+    "fallbackPolicy": "none",
+    "readerPolicy": {
+      "endpointPolicy": "same-origin-relative",
+      "credentials": "omit",
+      "requestMode": "same-origin",
+      "redirect": "error",
+      "cache": "default",
+      "bodyExecution": false,
+      "limits": {
+        "maxBytes": 262144,
+        "maxLines": 800,
+        "timeoutMs": 8000
+      }
+    },
+    "assets": [
+      {
+        "assetId": "asset.src.api",
+        "sourceId": "source.src.api",
+        "sourceMapId": "source-map.src.api",
+        "revision": "0123456789abcdef0123456789abcdef01234567",
+        "classification": "public",
+        "relativeUrl": "./sources/0123456789abcdef/src/api.mjs",
+        "mediaType": "text/javascript",
+        "byteLength": 4096,
+        "lineCount": 120,
+        "digest": {
+          "algorithm": "sha384",
+          "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        }
+      }
+    ]
+  },
+  "theme": {
+    "skinId": "fixture.reader",
+    "scheme": "system",
+    "requiredCapabilities": [
+      "native-disclosure",
+      "semantic-tokens",
+      "source-reader"
+    ],
+    "skins": [
+      {
+        "skinId": "fixture.graphite",
+        "tokenContract": "documentation-semantic-tokens@0.1.0-draft",
+        "supportedSchemes": [
+          "dark",
+          "light",
+          "system"
+        ],
+        "capabilities": [
+          "native-disclosure",
+          "print",
+          "semantic-tokens",
+          "source-reader"
+        ]
+      },
+      {
+        "skinId": "fixture.reader",
+        "tokenContract": "documentation-semantic-tokens@0.1.0-draft",
+        "supportedSchemes": [
+          "dark",
+          "light",
+          "system"
+        ],
+        "capabilities": [
+          "native-disclosure",
+          "print",
+          "semantic-tokens",
+          "source-reader"
+        ]
+      },
+      {
+        "skinId": "fixture.reference",
+        "tokenContract": "documentation-semantic-tokens@0.1.0-draft",
+        "supportedSchemes": [
+          "dark",
+          "light",
+          "system"
+        ],
+        "capabilities": [
+          "native-disclosure",
+          "print",
+          "semantic-tokens",
+          "source-reader"
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "sourceExposure": "public-explicit",
+    "sourceBodyInContract": false,
+    "sourceBodyInSearchIndex": false,
+    "absolutePathsIncluded": false,
+    "credentialsIncluded": false,
+    "cookiesRequired": false,
+    "privateSidecarsIncluded": false,
+    "telemetryEnabled": false
+  },
+  "compatibility": {
+    "versionMatch": "exact",
+    "unknownProperties": "reject",
+    "identityChange": "new-contract-version",
+    "semanticChange": "new-contract-version"
+  },
+  "diagnostics": []
+}

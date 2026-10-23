@@ -1,9 +1,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const catalog = JSON.parse(await readFile(path.join(rootDir, "packages", "schemas", "src", "catalog.json"), "utf8"));
+// <lang><zh-CN>线上历史字节必须与仓库固定索引一致，不能只检查当前 catalog 仍可访问。</zh-CN><en>Published historical bytes must match the repository's fixed index, beyond checking availability of the current catalog.</en></lang>
+const schemaHistory = JSON.parse(await readFile(path.join(rootDir, "packages", "schemas", "src", "history", "index.json"), "utf8"));
 const configuredBaseUrl = process.env.HIA_REFERENCE_PAGES_URL ?? "https://mandolin.github.io/HIA-Documentation/";
 const publicBaseUrl = new URL(configuredBaseUrl.endsWith("/") ? configuredBaseUrl : `${configuredBaseUrl}/`);
 const reportOnly = process.argv.includes("--report-only");
@@ -14,7 +17,7 @@ let lastError;
 for (let attempt = 1; attempt <= (reportOnly ? 1 : maxAttempts); attempt += 1) {
   try {
     const result = await checkPublication();
-    console.log(`Reference Pages online check passed: ${result.routeCount} public routes and ${catalog.schemas.length} canonical schemas with aliases.`);
+    console.log(`Reference Pages online check passed: ${result.routeCount} public routes, ${catalog.schemas.length} current schemas with aliases and ${schemaHistory.schemas.length} historical byte digests.`);
     process.exit(0);
   } catch (error) {
     lastError = error;
@@ -140,6 +143,17 @@ async function checkPublication() {
 
     const aliasSchema = await fetchJson(`schemas/${entry.path.replace(/^\.\//, "")}`);
     assert(aliasSchema.$id === entry.schemaId, `${entry.key}: package-style alias does not resolve to the canonical schema.`);
+  }
+
+  // <lang><zh-CN>索引与每份旧 canonical 文件分别核验；JSON 内容相同但字节被重写也必须失败。</zh-CN><en>Verify the index and each old canonical file separately; rewritten bytes must fail even when parsed JSON is equivalent.</en></lang>
+  const publishedHistory = await fetchJson("schemas/history.json");
+  assert(JSON.stringify(publishedHistory) === JSON.stringify(schemaHistory), "Published schema history index drifted.");
+  for (const entry of schemaHistory.schemas) {
+    // <lang><zh-CN>文件名取自已审查的本地索引，不使用线上响应给出的任意 URL。</zh-CN><en>Use filenames from the reviewed local index rather than arbitrary URLs supplied by a network response.</en></lang>
+    const response = await fetchWithCacheBust(`schemas/${entry.fileName}`, "application/schema+json, application/json");
+    const bytes = Buffer.from(await response.arrayBuffer());
+    assert(createHash("sha256").update(bytes).digest("hex") === entry.sha256, `${entry.key}: historical schema bytes drifted.`);
+    assert(JSON.parse(bytes.toString("utf8")).$id === entry.schemaId, `${entry.key}: historical schema identity drifted.`);
   }
 
   return { routeCount: routeExpectations.length };
