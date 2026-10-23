@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  # 中文：每日重新构建并部署线上站点；只构建归档不能满足168小时发布年龄门禁。
+  # English: Rebuild and deploy the live site daily; an artifact-only build cannot satisfy the 168-hour publication-age gate.
+  schedule:
+    - cron: "23 3 * * *"
   workflow_dispatch:
 
 permissions:

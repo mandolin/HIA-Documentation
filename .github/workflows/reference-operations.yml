@@ -1,6 +1,12 @@
 name: Reference operations
 
 on:
+  # 中文：按成功部署事件衔接健康检查，不依赖GitHub两条定时任务的实际先后顺序。
+  # English: Chain health checks to successful deployment events rather than relying on the execution order of two GitHub schedules.
+  workflow_run:
+    workflows: ["HIA Reference Pages"]
+    branches: [main]
+    types: [completed]
   schedule:
     - cron: "41 4 * * *"
   workflow_dispatch:
@@ -24,12 +30,18 @@ concurrency:
 jobs:
   monitor:
     name: Monitor public reference
+    # 中文：部署失败/取消不冒充部署后验收；独立定时和手动监控仍可检测线上问题。
+    # English: Failed/cancelled deployments are not post-deployment acceptance; independent scheduled/manual monitoring can still detect live issues.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
+          # 中文：事件检查器与触发部署的代码版本一致；其它入口使用自身提交。
+          # English: Align the event-driven checker with the triggering deployment revision; other entry points use their own commit.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           persist-credentials: false
 
       - name: Set up Node.js

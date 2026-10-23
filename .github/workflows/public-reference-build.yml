@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - main
-  schedule:
-    - cron: "23 3 * * *"
+  # 中文：每日刷新由schema-pages.yml统一负责；本工作流保留push/手动的独立归档验证。
+  # English: schema-pages.yml owns daily refresh; this workflow retains independent artifact validation on push/manual runs.
   workflow_dispatch:
 
 permissions:

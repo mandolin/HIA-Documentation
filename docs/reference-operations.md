@@ -61,7 +61,13 @@ Hard failures include contract drift, privacy drift, missing routes, schema name
 
 ## GitHub Actions
 
-The `Reference operations` workflow runs daily and can be triggered manually. Manual runs can enable strict source freshness.
+The `HIA Reference Pages` workflow rebuilds, validates, deploys and checks the public site daily at 03:23 UTC. It also runs on pushes to `main` and manual dispatch. The separate `Public reference build` workflow retains push/manual artifact validation; creating its archive alone does not refresh the live site.
+
+The read-only `Reference operations` workflow runs after a successful `HIA Reference Pages` completion on `main`, using the deployment's source commit for its checker. It also runs independently every day at 04:41 UTC and can be triggered manually. Manual runs can enable strict source freshness. Failed or cancelled deployments do not count as successful post-deployment checks.
+
+Schedules are best-effort GitHub events and can be delayed. The completion event provides the ordering; the independent daily monitor still detects expired or broken deployments if refresh stops. Public repositories must also keep scheduled workflows enabled. A missed refresh is repaired by rebuilding and deploying through `HIA Reference Pages`, with the 48/168-hour thresholds retained.
+
+中文摘要：每日刷新必须走完整的构建、验证、部署和线上复核。仅生成归档不会更新线上发布时间。运维检查在成功部署后按对应提交运行，并保留独立每日/手动入口；48小时告警和168小时失败阈值不变。GitHub定时事件可能延迟或停用，不能用两条cron的理论时刻代替实际部署完成事件。
 
 This workflow is read-only. It does not deploy, mutate package state, or require the GitHub App private key used by the public reference build workflow.
 
