@@ -45,6 +45,8 @@ const profiles = listOfficialHiaProfiles();
 
 The accessors return defensive copies so project-specific customization cannot mutate package-owned data.
 
+The runtime validates declared fields before admitting profiles into a set, and skips invalid entries while retaining diagnostics. Runtime query results retain caller references; they do not acquire the defensive-copy ownership of official distribution accessors. See [input validation and remaining composition limits](profile-input-validation.md).
+
 Every profile and the catalog also has an explicit JSON export:
 
 ```ts

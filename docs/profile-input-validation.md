@@ -1,0 +1,33 @@
+# Documentation Profile Input Validation
+
+`@hia-doc/profile` reads `documentation-profile@0.1.0-draft`. Its schema identity, npm package version, catalog version and each individual `profileVersion` are separate. Input validation improvements do not promote the contract or the seven bundled official profiles to a stable release.
+
+## Validation boundary
+
+`validateHiaProfile(value, options?)` checks ordinary JSON, the exact supported schema version, declared field shapes and existing local semantics such as unique tag/rule/diagnostic IDs and `messages.default`.
+
+- Required fields must be present. Declared optional fields are checked when present, including every string-list item and localized message value.
+- Open extension fields remain allowed when they contain ordinary JSON. Empty arrays and empty localized message strings remain valid where the schema permits them. `optionsSchema`, capabilities and domain metadata are not executed or interpreted.
+- Standard dense arrays, ordinary objects, null-prototype objects and shared acyclic subgraphs are allowed. Cycles, non-finite numbers, undefined, functions, symbol values, BigInt, accessors, hidden object data, custom serialization hooks and class instances are rejected.
+- Symbol keys are outside the JSON wire model. Reflection errors become an invalid-input diagnostic. Proxy reflection can have caller-controlled side effects: this validator is not an execution sandbox.
+- Validation does not mutate, freeze, normalize or migrate its input. An empty diagnostic array proves only this documented validation scope.
+
+`options.path` is caller-owned context retained in diagnostic locations. Invalid schema-version and profile-ID messages do not echo the rejected values. Valid domain identifiers and trusted caller context can still appear in diagnostics; callers remain responsible for public-safe output.
+
+## Profile-set admission and ownership
+
+`createHiaProfileSet({ profiles })` requires an own enumerable data `profiles` property holding a standard dense array. It reads array data descriptors without invoking caller-defined iterators or element getters. Invalid containers return an empty map with `HIA_PROFILE_SET_INVALID`.
+
+Each member is validated before registration. Invalid members contribute diagnostics and are skipped; they cannot reserve an ID or prevent valid peers from being registered. Duplicate IDs retain the first **valid** entry and produce `HIA_PROFILE_DUPLICATE_ID`.
+
+The returned map is new, but accepted profiles and registry query results retain caller references. The caller must treat them as immutable while in use, or rebuild and revalidate the set after changes. In contrast, `@hia-doc/profiles` accessors return defensive copies of package-owned official data.
+
+Known missing parent, alias-target and mapping-diagnostic references retain their existing diagnostics. Full inheritance conflicts, inheritance cycles and alias cycles are not comprehensively validated. Multi-parent collision precedence remains unsuitable as a stable public guarantee: inherited tag listing and individual tag lookup currently differ. Avoid conflicting inherited definitions until composition semantics are finalized. The four layer names do not automatically sort profiles or establish precedence.
+
+## File loading and privacy
+
+`loadHiaProfileFromFile(path)` reads UTF-8 JSON once and never rewrites it. A parsed non-object root produces `HIA_PROFILE_INVALID`. File read or JSON parse failures produce a fixed `HIA_PROFILE_READ_FAILED` message without raw exception text or source excerpts.
+
+The returned `path` and failure diagnostic `data.profilePath` retain the caller's original path. These fields are not sanitized and must be handled before public disclosure. The loader is not a filesystem sandbox and does not fetch remote profiles, resolve packages or materialize artifacts automatically.
+
+See [official profile distribution](profile-distribution.md) for package boundaries and [migration guidance](migration-guide.md) for project adoption.

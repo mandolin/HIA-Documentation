@@ -5,6 +5,11 @@
 This file records unreleased and released user-visible changes. Registry availability is determined by the release record and npm
 registry status for each version.
 
+## 未发布 / Unreleased
+
+- 文档化配置规范运行时补齐既有字段/数组项和普通JSON检查；无效集合成员留诊断并跳过，不能占用有效身份。文件解析错误不再回显源码片段，调用者路径上下文仍保留。schema、官方配置和包版本不变；完整继承/别名语义尚未稳定。
+- Documentation profile runtime checks now cover existing declared fields, list items and ordinary JSON. Invalid set members retain diagnostics and are skipped without reserving valid IDs. Parse errors no longer echo source excerpts; caller path context remains. Schema, official profile and package versions are unchanged; complete inheritance/alias semantics remain unstabilized. See [validation and ownership](docs/profile-input-validation.md).
+
 ## 2026-08-09 — Enterprise source usability
 
 ### 发布版本 / Released versions

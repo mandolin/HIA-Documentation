@@ -10,6 +10,8 @@ This guide describes the first migration paths into HIA documentation profiles a
 - Keep legacy vocabulary as aliases, deprecated tags, raw metadata or migration diagnostics instead of creating parallel standards.
 - Prefer explicit project manifests over implicit scanning.
 
+Before registering custom documentation profiles, review [input validation and ownership](profile-input-validation.md). Invalid members are skipped with diagnostics; check errors before consuming a profile set. Avoid conflicting multi-parent tag definitions until composition precedence is finalized.
+
 ## JSDoc Projects
 
 Existing JSDoc projects can adopt HIA through the published packages:
