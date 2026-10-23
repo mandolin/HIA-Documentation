@@ -59,6 +59,14 @@ These thresholds are intentionally operational, not semantic. A stale public ref
 
 Hard failures include contract drift, privacy drift, missing routes, schema namespace drift, invalid source provenance, and an expired publication age.
 
+### Transient HTTP failures
+
+Public site GET requests have at most three attempts with a 15-second timeout per attempt, including body consumption. Only network/timeout failures and HTTP 408, 429, 500, 502, 503 or 504 retry. Default backoff is one then two seconds; a valid `Retry-After` delay or HTTP date is capped at five seconds. Persistent failures still fail the workflow. Retry diagnostics omit URL queries and raw transport error text.
+
+JSON parsing, page markers, schema identities, privacy checks, source freshness and age thresholds are evaluated with their existing rules. Invalid content and permanent HTTP failures such as 404 are not retried. The GitHub source-ref lookup retains its separate freshness policy.
+
+中文摘要：只对公开站点只读请求的瞬态传输故障有限重试，不重启整套检查；每资源最多三次、每次15秒、退避最多5秒。持续故障仍失败，正文/契约/隐私错误、404及48/168小时门槛保持原判据。
+
 ## GitHub Actions
 
 The `HIA Reference Pages` workflow rebuilds, validates, deploys and checks the public site daily at 03:23 UTC. It also runs on pushes to `main` and manual dispatch. The separate `Public reference build` workflow retains push/manual artifact validation; creating its archive alone does not refresh the live site.

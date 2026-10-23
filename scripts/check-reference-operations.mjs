@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readReferenceText } from "./reference-http.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultBaseUrl = process.env.HIA_REFERENCE_PAGES_URL ?? "https://mandolin.github.io/HIA-Documentation/";
@@ -201,23 +202,22 @@ async function fetchLatestCommit(repository, ref) {
 }
 
 async function fetchJson(value) {
-  const response = await fetchWithCacheBust(value, "application/schema+json, application/json");
-  return response.json();
+  // <lang><zh-CN>JSON解析在传输重试之外，坏正文不能靠重复请求掩盖。</zh-CN><en>Parse JSON outside transport retries so malformed content cannot be hidden by repeat requests.</en></lang>
+  return JSON.parse(await fetchWithCacheBust(value, "application/schema+json, application/json"));
 }
 
 async function fetchText(value) {
-  const response = await fetchWithCacheBust(value, "text/html, text/plain");
-  return response.text();
+  return fetchWithCacheBust(value, "text/html, text/plain");
 }
 
+/** @lang zh-CN 建立单资源cache-bust地址；仅传输层可有限重试，校验条件不变。
+ * @lang en Builds one resource's cache-busting URL; only transport may retry within bounds, without changing validation conditions.
+ */
 async function fetchWithCacheBust(value, accept) {
+  // <lang><zh-CN>URL来自已配置公开根与既有固定路由，传输器不记录query。</zh-CN><en>The URL comes from the configured public root and existing fixed routes; transport logs omit its query.</en></lang>
   const url = new URL(value, publicBaseUrl);
   url.searchParams.set("hia_reference_operations_check", Date.now().toString());
-  const response = await fetch(url, { headers: { accept } });
-  if (!response.ok) {
-    throw new Error(`${url.origin}${url.pathname} returned HTTP ${response.status}.`);
-  }
-  return response;
+  return readReferenceText(url, accept);
 }
 
 function printSummary() {
