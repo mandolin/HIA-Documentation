@@ -61,7 +61,8 @@ export interface HiaSchemaCatalogEntry {
   path: string;
   publicUrl: string;
   schemaId: string;
-  stability: "active-pre-1.0" | "draft";
+  /** @lang zh-CN 候选稳定定义与正式发行状态分离，stable-candidate不证明包已发布。 @lang en Candidate contract stability is separate from formal release status; stable-candidate does not prove package publication. */
+  stability: "active-pre-1.0" | "draft" | "stable-candidate";
 }
 
 export interface HiaSchemaCatalog {

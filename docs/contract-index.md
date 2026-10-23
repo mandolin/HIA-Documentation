@@ -30,7 +30,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Documentation UI locale completeness | `DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION` | `0.1.0-draft` |
 | HTML-authoring source-comment integration verification | `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation terminology | `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION` | `0.1.0-draft` |
-| Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `1.0.0` candidate; exact legacy reader `0.1.0-draft` |
 | HIA provider descriptor/request/result | `HIA_PROVIDER_*_CONTRACT_VERSION` | `0.1.0-draft` |
 | Renderer manifest | `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION` | `0.1.0` |
 | Project navigation index | `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION` | `0.1.0-draft` |

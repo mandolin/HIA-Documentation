@@ -63,7 +63,7 @@ A private satellite workspace root is a container marker. Its child packages hav
 | Generated documentation binding | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
 | Documentation locale resource | `0.1.0-draft` | Draft | `@hia-doc/core` |
 | Documentation locale-resolution sidecar | `0.1.0-draft` | Draft | `@hia-doc/core` |
-| Documentation producer descriptor/result | `0.1.0-draft` | Draft | `@hia-doc/plugin-sdk` |
+| Documentation producer descriptor/result | `1.0.0` | Stable definition candidate; exact legacy `0.1.0-draft` reader support | `@hia-doc/plugin-sdk` |
 
 ## Change Rules
 
@@ -101,11 +101,14 @@ Once published, a canonical `$id` is immutable. A contract version change that r
 
 ## Dependency Versions
 
-The checked-in local toolchain is shown below. Node.js 20 is [end of life](https://nodejs.org/en/about/previous-releases); this legacy pin is not a production support recommendation or proof that a supported LTS release has been qualified.
+The checked-in local toolchain is shown below. Development uses Node.js 24 LTS;
+CI verifies the latest patches of Node.js 22/24 on Ubuntu 24.04 and Windows
+Server 2025. Existing package engine declarations remain a separate migration
+boundary and are not a recommendation to use [end-of-life Node.js releases](https://nodejs.org/en/about/previous-releases).
 
 | Tool | Version |
 | --- | --- |
-| Node.js | `20.20.2` through `.mise.toml`; package engine requires `>=20.19.0`. |
+| Node.js | `24.22.1` through `.mise.toml`; existing package engines still declare `>=20.19.0` pending package stabilization. |
 | pnpm | `10.34.4` |
 
 See `docs/dependency-license-audit.md` for direct dependency versions and license policy.
@@ -123,5 +126,11 @@ Before publishing a public package or changing a release-facing contract:
 See `docs/release-gate.md` for exact commands.
 
 Official profile distribution policy is documented in `docs/profile-distribution.md`; schema catalog policy is documented in `docs/schema-distribution.md`. Package versions, catalog versions and individual contract/profile versions remain independent. Publication flags and versions must be read from each package manifest and the release manifest; current registry availability and integrity require release-specific verification.
+
+Producer descriptor/result `1.0.0` definitions are candidates, not proof of a
+published package or formal system release. Their exact legacy reader policy,
+immutable schema identities and migration rules are documented in
+[Documentation Producer API](documentation-producers.md). The catalog's
+`stable-candidate` label preserves that distinction.
 
 Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: the checked-in package engine lower bound is Node `>=20.19.0`, while the npm Trusted Publishing workflow selects Node 24.x and npm `^11.15.0`. These installation constraints do not constitute a tested support matrix.

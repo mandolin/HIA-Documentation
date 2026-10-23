@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-producer-1.0.0.schema.json",
   "title": "Documentation Producer Descriptor",
   "type": "object",
   "additionalProperties": false,
@@ -19,7 +19,7 @@
       "const": "documentation-producer"
     },
     "contractVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "id": {
       "type": "string",

@@ -85,7 +85,8 @@ const definitions = [
     key: "documentation-producer",
     ownerPackage: "@hia-doc/plugin-sdk",
     schema: DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA,
-    stability: "draft"
+    // <lang><zh-CN>已完成独立接口/兼容审查的1.0定义候选，不代表SDK包或系统正式发行。</zh-CN><en>A 1.0 definition candidate with its own interface/compatibility review, not a formal SDK or system release.</en></lang>
+    stability: "stable-candidate"
   },
   {
     contractVersion: DOCUMENTATION_PRODUCER_RESULT_CONTRACT_VERSION,
@@ -93,7 +94,8 @@ const definitions = [
     key: "documentation-producer-result",
     ownerPackage: "@hia-doc/plugin-sdk",
     schema: DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA,
-    stability: "draft"
+    // <lang><zh-CN>结果reader支持明确历史版本，current schema仍精确约束1.0.0。</zh-CN><en>The result reader supports an explicit historical version while the current schema still constrains exactly 1.0.0.</en></lang>
+    stability: "stable-candidate"
   },
   {
     contractVersion: DOC_SOURCE_MAP_SCHEMA_VERSION,

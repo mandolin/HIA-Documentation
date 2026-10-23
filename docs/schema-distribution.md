@@ -13,8 +13,8 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `hia-document` | `@hia-doc/core` | active pre-1.0 |
 | `project-manifest` | `@hia-doc/config` | draft |
 | `documentation-profile` | `@hia-doc/profile` | draft |
-| `documentation-producer` | `@hia-doc/plugin-sdk` | draft |
-| `documentation-producer-result` | `@hia-doc/plugin-sdk` | draft |
+| `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
+| `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
@@ -26,6 +26,11 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
+
+`stable-candidate` identifies a reviewed candidate contract definition. It does
+not assert package publication, a formal system release, or stability of every
+other API in the owning package. Producer compatibility and migration are
+specified in the [producer API guide](documentation-producers.md).
 
 ## Consumption
 

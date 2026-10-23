@@ -204,7 +204,7 @@ assert(
   "Documentation producer descriptor schema id drifted."
 );
 assert(
-  DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_VERSION === "0.1.0-draft",
+  DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_VERSION === "1.0.0",
   "Unexpected documentation producer descriptor schema version."
 );
 assert(
@@ -212,7 +212,7 @@ assert(
   "Documentation producer result schema id drifted."
 );
 assert(
-  DOCUMENTATION_PRODUCER_RESULT_SCHEMA_VERSION === "0.1.0-draft",
+  DOCUMENTATION_PRODUCER_RESULT_SCHEMA_VERSION === "1.0.0",
   "Unexpected documentation producer result schema version."
 );
 const producerDescriptor = await readJson("fixtures/producer/basic.producer-descriptor.json");

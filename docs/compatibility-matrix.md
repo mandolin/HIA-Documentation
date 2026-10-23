@@ -29,7 +29,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | `@hia-doc/config` | `0.1.5`, MIT; publishable manifest | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
 | `@hia-doc/profile` | `0.1.0`, MIT; publishable manifest | profile schema `0.1.0-draft` | Draft profile runtime baseline; public release candidate. |
 | `@hia-doc/profiles` | `0.1.0`, MIT; publishable manifest | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
-| `@hia-doc/plugin-sdk` | `0.1.2`, MIT; publishable manifest | documentation producer descriptor/result `0.1.0-draft` | Producer descriptor/result runtime; draft contract guarantees remain unchanged. |
+| `@hia-doc/plugin-sdk` | `0.1.2`, MIT; publishable manifest | documentation producer descriptor/result `1.0.0` candidates; exact `0.1.0-draft` reader support | Candidate source definitions; existing published package contents are not modified. See producer migration guide. |
 | `@hia-doc/schemas` | `0.1.4`, MIT; publishable manifest | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; patch release carries updated producer-result and project-manifest schemas. |
 | `@hia-doc/source-linkage` | `0.1.0`, MIT; publishable manifest | doc-source-map/schema `0.1.0-draft`, metadata-only locale-resolution sidecar declaration | Active CLI/renderer/LSP query runtime; public release candidate. |
 | `@hia-doc/parser-jsdoc` | `0.1.0`, MIT; publishable manifest | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
@@ -64,7 +64,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | Documentation profile `0.1.0-draft` | `@hia-doc/profiles` official JSON | profile runtime, LSP capability/completion | `packages/profiles/src/profiles/*.json` |
 | Official profile distribution `0.1.0-draft` | `@hia-doc/profiles` | project manifest authors, LSP/IDE consumers | catalog, package tests and `docs/profile-distribution.md` |
 | Schema distribution `0.1.0-draft` | `@hia-doc/schemas` snapshots | JSON Schema consumers and contract tooling | owner/snapshot equality gate and `docs/schema-distribution.md` |
-| Documentation producer/result `0.1.0-draft` | `@hia-doc/plugin-sdk`, future `hia-*doc` producers | CLI orchestration, CI and adapter tooling | `fixtures/producer/*.json` plus owner/distribution schemas |
+| Documentation producer/result `1.0.0` candidates and exact legacy `0.1.0-draft` | `@hia-doc/plugin-sdk`, documentation producers | CLI orchestration, CI and adapter tooling | Current/legacy semantic and type consumers, fixed historical inputs, owner/distribution schemas; [migration guide](documentation-producers.md) |
 | Project docs manifest `0.1.0-draft` | explicit user/fixture manifest | CLI project build | `fixtures/project-mixed.hia-project.json` |
 | HTMDoc extraction `0.1.0-draft` | `hia-htmdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.htmdoc.json` |
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
