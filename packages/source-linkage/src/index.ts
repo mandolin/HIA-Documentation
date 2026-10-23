@@ -533,11 +533,17 @@ export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, op
 }
 
 /**
- * 查询 doc-source-map 索引中的文档化语义链路。
- * Query documentation linkage entries from a doc-source-map index.
+ * @lang zh-CN 查询已通过版本与隐私检查的文档化语义链路；无效或不支持版本的索引只返回诊断和状态。
+ * @lang en Queries documentation linkage after version and privacy validation; invalid or unsupported indexes return diagnostics and status only.
+ * @param index <lang><zh-CN>由 createDocSourceMapIndex 建立的只读索引。</zh-CN><en>Read-only index created by createDocSourceMapIndex.</en></lang>
+ * @param query <lang><zh-CN>可选筛选条件；默认匹配全部可用条目。</zh-CN><en>Optional filters; defaults to all available entries.</en></lang>
+ * @returns <lang><zh-CN>筛选结果与原诊断；非 available 状态的 entries 始终为空。无文件或网络副作用。</zh-CN><en>Filtered results and original diagnostics; entries are always empty for non-available states. No file or network side effects.</en></lang>
  */
 export function queryDocSourceMapIndex(index: DocSourceMapIndex, query: DocSourceMapQuery = {}): DocSourceMapQueryResult {
-  const entries = index.entries.filter((entry) => matchesDocSourceMapQuery(entry, query));
+  // <lang><zh-CN>状态门禁先于筛选，避免版本 warning 或隐私 error 的索引仍返回可消费映射。</zh-CN><en>Gate by status before filtering so indexes with version warnings or privacy errors cannot return consumable mappings.</en></lang>
+  const entries = index.status === "available"
+    ? index.entries.filter((entry) => matchesDocSourceMapQuery(entry, query))
+    : [];
 
   return {
     diagnostics: index.diagnostics,
@@ -1301,6 +1307,15 @@ function containsLocaleDiscoveryPrivateField(value: Record<string, unknown>): bo
   return Object.keys(value).some((key) => forbidden.has(key.toLowerCase()));
 }
 
+/**
+ * @lang zh-CN 按每个 source 的显式策略校验正文；缺省继承 manifest 策略，不把空正文视为缺失。
+ * @lang en Validates bodies against each source's explicit policy, inheriting the manifest policy by default and treating empty bodies as present.
+ * @param diagnostics <lang><zh-CN>追加错误的本次调用诊断列表。</zh-CN><en>Invocation-local diagnostics receiving errors.</en></lang>
+ * @param sources <lang><zh-CN>未知输入中的来源数组；非数组不在此处处理。</zh-CN><en>Source array from untrusted input; non-arrays are handled elsewhere.</en></lang>
+ * @param manifestPolicy <lang><zh-CN>manifest 默认策略。</zh-CN><en>Manifest default policy.</en></lang>
+ * @param targetPath <lang><zh-CN>可选诊断路径前缀。</zh-CN><en>Optional diagnostic path prefix.</en></lang>
+ * @returns <lang><zh-CN>无返回值；只追加不含正文的诊断。</zh-CN><en>No return value; only appends body-free diagnostics.</en></lang>
+ */
 function collectSourcesContentDiagnostics(
   diagnostics: HiaDiagnostic[],
   sources: unknown,
@@ -1312,13 +1327,17 @@ function collectSourcesContentDiagnostics(
   }
 
   sources.filter(isRecord).forEach((source, index) => {
+    // <lang><zh-CN>source 策略优先；缺失时继承 manifest 的隐私保守默认。</zh-CN><en>The source policy takes precedence, otherwise inheriting the manifest's privacy-conservative default.</en></lang>
     const sourcePolicy = stringValue(source.sourcesContentPolicy) ?? manifestPolicy;
-    const embedsContent = typeof source.content === "string" || Array.isArray(source.sourcesContent);
+    // <lang><zh-CN>schema 的 sourcesContent 是字符串；同时保留旧数组/content 输入的拒绝检查，空字符串也携带正文字段。</zh-CN><en>The schema's sourcesContent is a string; retain refusal checks for legacy array/content input as well, including empty strings.</en></lang>
+    const embedsContent = typeof source.content === "string" || typeof source.sourcesContent === "string" || Array.isArray(source.sourcesContent);
 
+    // <lang><zh-CN>只有显式 embed/redacted 才允许正文存在；这里只校验策略，不读取或复制正文。</zh-CN><en>Only explicit embed/redacted permits a body; this checks policy without reading or copying the body.</en></lang>
     if (!embedsContent || sourcePolicy === "embed" || sourcePolicy === "redacted") {
       return;
     }
 
+    // <lang><zh-CN>错误只包含策略和路径，避免在诊断中泄露被拒绝的源码。</zh-CN><en>The error includes only policy and path so diagnostics cannot leak refused source text.</en></lang>
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_SOURCES_CONTENT_BLOCKED",
       "doc-source-map source content is blocked unless sourcesContentPolicy explicitly opts in.",

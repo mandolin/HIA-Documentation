@@ -12,6 +12,19 @@ It also provides an ordinary source map lookup layer based on `@jridgewell/trace
 
 It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_MAP_JSON_SCHEMA`, `DOC_SOURCE_MAP_SCHEMA_ID` and `DOC_SOURCE_MAP_SCHEMA_VERSION`. Structural schema validation does not replace the package's semantic path, privacy and reference diagnostics.
 
+## Version and privacy checks
+
+`createDocSourceMapIndex()` retains diagnostics and an explicit `invalid` or
+`unsupported-version` status when input is unusable. Query functions return no
+entries for either status, including the symbol/source/artifact convenience
+functions and combined queries. Inspect the index for diagnostics; do not treat
+a version warning as permission to consume mappings.
+
+Source bodies in `content` or `sourcesContent`, including empty strings, require
+an explicit `embed` or `redacted` policy. The normalized index and query results
+never contain these bodies. Ordinary source-map handling has its own validation
+and does not grant permission to use an invalid documentation source map.
+
 `generated-documentation-binding@0.1.0-draft` is a separate neutral sidecar
 contract. The package exports its Draft 2020-12 schema and
 `validateGeneratedDocumentationBinding()`. A doc-source-map may declare only a
