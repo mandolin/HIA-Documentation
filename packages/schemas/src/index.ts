@@ -109,8 +109,8 @@ export function listHiaSchemas(): HiaJsonSchema[] {
  * @returns <lang><zh-CN>独立深拷贝；未知身份返回 undefined。不访问文件或网络。</zh-CN><en>Independent deep copy, or undefined for unknown identities. No file or network access.</en></lang>
  */
 export function getHiaSchema(keyOrId: HiaSchemaKey | string): HiaJsonSchema | undefined {
-  // <lang><zh-CN>无版本 key 始终遵循当前 owner，保持已有调用方式。</zh-CN><en>Unversioned keys always follow the current owner, preserving existing calls.</en></lang>
-  const byKey = schemasByKey[keyOrId as HiaSchemaKey];
+  // <lang><zh-CN>无版本 key 只匹配当前 owner 的自有属性；继承的 constructor/__proto__ 不是 schema 身份。</zh-CN><en>Unversioned keys match only the current owner's own properties; inherited constructor/__proto__ values are not schema identities.</en></lang>
+  const byKey = Object.hasOwn(schemasByKey, keyOrId) ? schemasByKey[keyOrId as HiaSchemaKey] : undefined;
   if (byKey) {
     return structuredClone(byKey);
   }

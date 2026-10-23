@@ -48,6 +48,10 @@ async function expectInvalidIndex(mutate: (index: { formatVersion: string; schem
 }
 
 describe("historical schema distribution", () => {
+  it.each(["toString", "constructor", "__proto__", "hasOwnProperty", "valueOf"])("returns undefined for inherited object key %s", (key) => {
+    // <lang><zh-CN>未知字符串不应从 Object.prototype 取得对象或函数，也不能触发 structuredClone 异常。</zh-CN><en>Unknown strings must not retrieve objects or functions from Object.prototype or trigger structuredClone errors.</en></lang>
+    expect(getHiaSchema(key)).toBeUndefined();
+  });
   it("keeps the old identity resolvable after the current catalog moves to a new identity", () => {
     // <lang><zh-CN>仅在本测试内模拟 owner 升级；finally 恢复当前 catalog，避免污染其它断言。</zh-CN><en>Simulate an owner upgrade within this test only; finally restores the current catalog to avoid contaminating other assertions.</en></lang>
     const entry = HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "hia-document")!;
