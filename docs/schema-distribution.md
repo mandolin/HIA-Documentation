@@ -150,3 +150,7 @@ source metadata, not a fresh registry availability check. The package scope is
 deployment workflow succeeds; local generation alone does not prove deployment.
 
 The public package release plan, publish order and post-publish smoke are documented in `docs/public-package-release-plan.md`.
+
+## Core Document Candidate
+
+The current core-document canonical schema is hia-document-1.0.0.schema.json. The fixed hia-document-0.2.0.schema.json archive retains its original bytes. The current root accepts exact 1.0.0/0.2.0 text/source submodels; runtime legacy reading does not mutate old artifacts. See [Core document migration](core-document-migration.md). This schema candidate does not publish a new npm package version.

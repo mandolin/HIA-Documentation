@@ -138,13 +138,13 @@
       "stability": "draft"
     },
     {
-      "contractVersion": "0.2.0",
+      "contractVersion": "1.0.0",
       "key": "hia-document",
       "ownerPackage": "@hia-doc/core",
       "path": "./hia-document.schema.json",
-      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json",
-      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json",
-      "stability": "active-pre-1.0"
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.json",
+      "stability": "stable-candidate"
     },
     {
       "contractVersion": "0.1.0-draft",

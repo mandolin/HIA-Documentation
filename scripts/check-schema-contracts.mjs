@@ -104,7 +104,7 @@ async function readProfileFixtures() {
 }
 
 assert(HIA_DOCUMENT_SCHEMA.$id === HIA_DOCUMENT_SCHEMA_ID, "HIA document schema id drifted.");
-assert(HIA_DOCUMENT_SCHEMA_VERSION === "0.2.0", "Unexpected HIA document schema version.");
+assert(HIA_DOCUMENT_SCHEMA_VERSION === "1.0.0", "Unexpected HIA document schema version.");
 assert(HIA_DOCUMENT_SCHEMA.properties.schemaVersion.const === HIA_DOCUMENT_SCHEMA_VERSION, "HIA document schemaVersion const drifted.");
 
 assert(DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA.$id === DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID, "Documentation locale resource schema id drifted.");

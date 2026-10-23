@@ -41,10 +41,10 @@ A private satellite workspace root is a container marker. Its child packages hav
 
 | Surface | Version | Stability | Owner |
 | --- | --- | --- | --- |
-| Core document schema | `0.2.0` | Active pre-1.0 contract | `@hia-doc/core` |
-| Text i18n model | `0.2.0` | Active pre-1.0 contract | `@hia-doc/core` |
-| Source model | `0.2.0` | Active pre-1.0 contract | `@hia-doc/core` |
-| Protocol envelope | `0.1.0` | Active pre-1.0 contract | `@hia-doc/core` |
+| Core document schema | `1.0.0` source candidate; exact legacy `0.2.0` | Source contract candidate | `@hia-doc/core` |
+| Text i18n model | `1.0.0` source candidate; exact legacy `0.2.0` | Source contract candidate | `@hia-doc/core` |
+| Source model | `1.0.0` source candidate; exact legacy `0.2.0` | Source contract candidate | `@hia-doc/core` |
+| Protocol envelope | `1.0.0` source candidate; exact legacy `0.1.0` | Source contract candidate | `@hia-doc/core` |
 | Config schema | `0.1.0` | Active pre-1.0 contract | `@hia-doc/config` |
 | Documentation profile schema | `0.1.0-draft` | Draft | `@hia-doc/profile` |
 | Official profile catalog | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
@@ -134,3 +134,5 @@ immutable schema identities and migration rules are documented in
 `stable-candidate` label preserves that distinction.
 
 Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: the checked-in package engine lower bound is Node `>=20.19.0`, while the npm Trusted Publishing workflow selects Node 24.x and npm `^11.15.0`. These installation constraints do not constitute a tested support matrix.
+
+Core foundation compatibility, constructor defaults and ownership are documented in [Core document migration](core-document-migration.md). Exact envelope version types do not replace payload validation; package/registry identity remains independent.

@@ -48,7 +48,7 @@ describe("@hia-doc/core", () => {
     expect(HIA_DOCUMENT_SCHEMA.$defs.symbol.required).toEqual(["id", "name", "kind"]);
     expect(HIA_DOCUMENT_SCHEMA.$defs.sourceMetadata.required).toEqual(["model", "modelVersion", "mode"]);
     expect(HIA_DOCUMENT_SCHEMA.$defs.sourceMetadata.properties.modelVersion).toEqual({
-      const: HIA_SOURCE_MODEL_VERSION
+      enum: [HIA_SOURCE_MODEL_VERSION, "0.2.0"]
     });
     expect(HIA_DOCUMENT_SCHEMA.$defs.sourcePrimaryBlock.properties.rangeSource).toEqual({
       enum: [...HIA_SOURCE_RANGE_SOURCES]

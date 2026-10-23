@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { validateHiaDocumentDetailed } from "@hia-doc/core";
+import { HIA_SOURCE_MODEL_VERSION, validateHiaDocumentDetailed } from "@hia-doc/core";
 import {
   JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
   JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
@@ -56,7 +56,8 @@ describe("@hia-doc/parser-jsdoc", () => {
     expect(document.symbols[0]?.i18n?.fields.description?.key).toBe("greet.description");
     expect(document.symbols[0]?.i18n?.fields.description?.path).toBe("api.greet");
     expect(document.symbols[0]?.source?.model).toBe("hia-source");
-    expect(document.symbols[0]?.source?.modelVersion).toBe("0.2.0");
+    // <lang><zh-CN>新转换结果采用当前core writer身份；历史输入fixture仍保留原版本。</zh-CN><en>New conversion results use the current core writer identity; historical input fixtures retain their original versions.</en></lang>
+    expect(document.symbols[0]?.source?.modelVersion).toBe(HIA_SOURCE_MODEL_VERSION);
     expect(document.symbols[0]?.source?.definedIn?.relativePath).toBe("examples/basic/src/greet.js");
     expect(document.symbols[0]?.source?.references?.[0]?.fragment).not.toHaveProperty("filePath");
     expect(document.symbols[0]?.source?.references?.[0]?.fragment).toMatchObject({

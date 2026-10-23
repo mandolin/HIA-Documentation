@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @lang zh-CN 核心JSON文档的只读边界检查；开放扩展字段但不执行输入的getter/序列化钩子。
+ * @lang en Read-only boundary checks for core JSON documents; allows extension fields without executing input getters/serialization hooks.
+ */
+import { isJsonDataGraph } from "./json-data.js";
 import {
   HIA_CORE_CONTRACT_VERSION,
   HIA_SOURCE_CONFIDENCE_LEVELS,
@@ -25,16 +31,32 @@ import type {
   HiaSymbol
 } from "./model.js";
 
+/** @lang zh-CN 独立校验结果；仅无error级诊断时valid为true，不表示文件存在或正文已脱敏。
+ * @lang en Independent validation result; valid is true only without error diagnostics, not proof of file existence or text redaction.
+ */
 export interface HiaValidationResult {
   valid: boolean;
   diagnostics: HiaDiagnostic[];
 }
 
+/**
+ * @lang zh-CN 校验普通JSON文档并返回新诊断数组，不修改输入或读取文件。
+ * @lang en Validates an ordinary JSON document and returns new diagnostics without mutation or file access.
+ * @param document <lang><zh-CN>未知内存输入；无效数据产生诊断，不回显未知版本正文。</zh-CN><en>Unknown in-memory input; invalid data produces diagnostics without reflecting unknown-version text.</en></lang>
+ * @returns <lang><zh-CN>新数组，空数组表示此校验层有效；不包含领域正文自动脱敏保证。</zh-CN><en>New array; empty means valid at this layer, without automatic domain-text redaction guarantees.</en></lang>
+ */
 export function validateHiaDocument(document: unknown): HiaDiagnostic[] {
   return validateHiaDocumentDetailed(document).diagnostics;
 }
 
+/**
+ * @lang zh-CN 先拒绝非JSON/环/访问器，再校验精确版本、模型、相对路径和安全整数；保留输入引用。
+ * @lang en Rejects non-JSON values, cycles and accessors before checking exact versions, models, relative paths and safe integers, preserving input references.
+ * @param document <lang><zh-CN>待检查值，扩展字段和metadata仅检查JSON/声明形状，不解释领域语义。</zh-CN><en>Value to check; extensions and metadata receive JSON/declared-shape checks, not domain interpretation.</en></lang>
+ * @returns <lang><zh-CN>新结果；不迁移原对象、不I/O，不证明真实路径、沙箱隔离或完整隐私。</zh-CN><en>New result, without in-place migration or I/O; does not prove physical paths, sandbox isolation or complete privacy.</en></lang>
+ */
 export function validateHiaDocumentDetailed(document: unknown): HiaValidationResult {
+  // <lang><zh-CN>每次调用独立收集诊断，不复用或写入输入的diagnostics。</zh-CN><en>Collect diagnostics per invocation without reusing or writing the input diagnostics.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
 
   if (!isRecord(document)) {
@@ -46,6 +68,10 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
     };
   }
 
+  // <lang><zh-CN>先检查整个wire图，避免形状遍历进入环或执行访问器，并保持错误不携带不可信键。</zh-CN><en>Check the entire wire graph before shape traversal can enter cycles or execute accessors, keeping untrusted keys out of errors.</en></lang>
+  if (!isJsonDataGraph(document)) {
+    return { valid: false, diagnostics: [createDiagnostic("HIA_DOCUMENT_JSON_INVALID", "HIA document must contain ordinary finite acyclic JSON data.", "error")] };
+  }
   requireString(document, "schemaVersion", diagnostics);
   requireString(document, "id", diagnostics);
   requireString(document, "title", diagnostics);
@@ -54,10 +80,10 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
   requireArray(document, "nodes", diagnostics);
   requireArray(document, "symbols", diagnostics);
 
-  if (document.schemaVersion && document.schemaVersion !== HIA_CORE_CONTRACT_VERSION) {
+  if (document.schemaVersion && document.schemaVersion !== HIA_CORE_CONTRACT_VERSION && document.schemaVersion !== "0.2.0") {
     diagnostics.push(createDiagnostic(
       "HIA_SCHEMA_VERSION_UNSUPPORTED",
-      `Unsupported HIA schemaVersion: ${String(document.schemaVersion)}.`,
+      "Unsupported HIA schemaVersion.",
       "error",
       "schemaVersion"
     ));
@@ -78,6 +104,7 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
 
   validateFallbackLocale(document.fallbackLocale, diagnostics, "fallbackLocale");
   validateDiagnostics(document.diagnostics, diagnostics, "diagnostics");
+  validateMetadata(document.metadata, diagnostics, "metadata");
 
   if (Array.isArray(document.nodes)) {
     validateNodes(document.nodes, diagnostics, "nodes");
@@ -93,9 +120,14 @@ export function validateHiaDocumentDetailed(document: unknown): HiaValidationRes
   };
 }
 
+/** @lang zh-CN 以显式栈保留深度优先顺序，有限深树不依赖JS递归调用栈。
+ * @lang en Uses an explicit stack to retain depth-first order without relying on the JavaScript call stack for finite deep trees.
+ */
 function validateNodes(nodes: unknown[], diagnostics: HiaDiagnostic[], targetPath: string): void {
-  for (const [index, node] of nodes.entries()) {
-    const itemPath = `${targetPath}.${index}`;
+  // <lang><zh-CN>逆序入栈保持原数组的逐项深度优先诊断顺序；位置由可信字段和序号组成。</zh-CN><en>Reverse insertion preserves original depth-first diagnostic order; locations contain trusted fields and ordinals.</en></lang>
+  const pending = nodes.map((node, index) => ({ node, itemPath: `${targetPath}.${index}` })).reverse();
+  while (pending.length > 0) {
+    const { node, itemPath } = pending.pop()!;
 
     if (!isRecord(node)) {
       diagnostics.push(createDiagnostic("HIA_NODE_INVALID", "HIA node must be an object.", "error", itemPath));
@@ -113,7 +145,10 @@ function validateNodes(nodes: unknown[], diagnostics: HiaDiagnostic[], targetPat
       if (!Array.isArray(typedNode.children)) {
         diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${itemPath}.children must be an array.`, "error", `${itemPath}.children`));
       } else {
-        validateNodes(typedNode.children, diagnostics, `${itemPath}.children`);
+        // <lang><zh-CN>子节点仍引用原输入，不克隆或改写节点。</zh-CN><en>Children still reference the original input without cloning or rewriting nodes.</en></lang>
+        for (let index = typedNode.children.length - 1; index >= 0; index -= 1) {
+          pending.push({ node: typedNode.children[index], itemPath: `${itemPath}.children.${index}` });
+        }
       }
     }
   }
@@ -137,15 +172,16 @@ function validateSymbols(symbols: unknown[], diagnostics: HiaDiagnostic[]): void
     validateOptionalString(symbol, "longname", diagnostics, targetPath);
     validateOptionalString(symbol, "parentId", diagnostics, targetPath);
     validateOptionalString(symbol, "signature", diagnostics, targetPath);
-    validateOptionalString(symbol, "summary", diagnostics, targetPath);
+    validateOptionalString(symbol, "summary", diagnostics, targetPath, true);
+    validateMetadata(symbol.metadata, diagnostics, `${targetPath}.metadata`);
     validateOptionalStringArray(typedSymbol.path, diagnostics, `${targetPath}.path`);
     validateDiagnostics(typedSymbol.diagnostics, diagnostics, `${targetPath}.diagnostics`);
 
-    if (typedSymbol.i18n) {
+    if (typedSymbol.i18n !== undefined) {
       validateI18nModel(typedSymbol.i18n, diagnostics, `${targetPath}.i18n`);
     }
 
-    if (typedSymbol.source) {
+    if (typedSymbol.source !== undefined) {
       validateSourceMetadata(typedSymbol.source, diagnostics, `${targetPath}.source`);
     }
   }
@@ -169,16 +205,16 @@ function validateI18nModel(model: HiaI18nModel, diagnostics: HiaDiagnostic[], ta
   if (model.model && model.model !== HIA_TEXT_I18N_MODEL) {
     diagnostics.push(createDiagnostic(
       "HIA_I18N_MODEL_UNSUPPORTED",
-      `Unsupported i18n model: ${model.model}.`,
+      "Unsupported i18n model.",
       "error",
       `${targetPath}.model`
     ));
   }
 
-  if (model.modelVersion && model.modelVersion !== HIA_TEXT_I18N_MODEL_VERSION) {
+  if (model.modelVersion && model.modelVersion !== HIA_TEXT_I18N_MODEL_VERSION && model.modelVersion !== "0.2.0") {
     diagnostics.push(createDiagnostic(
       "HIA_I18N_MODEL_VERSION_UNSUPPORTED",
-      `Unsupported i18n modelVersion: ${model.modelVersion}.`,
+      "Unsupported i18n modelVersion.",
       "error",
       `${targetPath}.modelVersion`
     ));
@@ -198,6 +234,7 @@ function validateI18nModel(model: HiaI18nModel, diagnostics: HiaDiagnostic[], ta
   }
 
   validateFallbackLocale(model.fallbackLocale, diagnostics, `${targetPath}.fallbackLocale`);
+  validateOptionalString(model, "mode", diagnostics, targetPath);
   validateI18nFields(model.fields, diagnostics, `${targetPath}.fields`);
   validateI18nResources(model.resources, diagnostics, `${targetPath}.resources`);
   validateDiagnostics(model.diagnostics, diagnostics, `${targetPath}.diagnostics`);
@@ -210,7 +247,8 @@ function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targe
   }
 
   for (const [fieldPath, field] of Object.entries(fields)) {
-    const itemPath = `${targetPath}.${fieldPath}`;
+    // <lang><zh-CN>常规字段保留精确位置；形似私有路径的动态键只定位安全父节点。</zh-CN><en>Ordinary fields retain precise locations; path-like dynamic keys locate only the safe parent.</en></lang>
+    const itemPath = safeMapLocation(targetPath, fieldPath);
 
     if (!isRecord(field)) {
       diagnostics.push(createDiagnostic("HIA_I18N_FIELD_INVALID", "i18n field must be an object.", "error", itemPath));
@@ -223,6 +261,8 @@ function validateI18nFields(fields: unknown, diagnostics: HiaDiagnostic[], targe
     requireString(field, "defaultLocale", diagnostics, itemPath);
     validateOptionalString(field, "key", diagnostics, itemPath);
     validateOptionalString(field, "path", diagnostics, itemPath);
+    validateOptionalString(field, "defaultText", diagnostics, itemPath, true);
+    validateOptionalString(field, "source", diagnostics, itemPath);
 
     if (typedField.fieldPath && typedField.fieldPath !== fieldPath) {
       diagnostics.push(createDiagnostic(
@@ -264,16 +304,16 @@ function validateSourceMetadata(source: HiaSourceMetadata, diagnostics: HiaDiagn
   if (source.model && source.model !== HIA_SOURCE_MODEL) {
     diagnostics.push(createDiagnostic(
       "HIA_SOURCE_MODEL_UNSUPPORTED",
-      `Unsupported source model: ${source.model}.`,
+      "Unsupported source model.",
       "error",
       `${targetPath}.model`
     ));
   }
 
-  if (source.modelVersion && source.modelVersion !== HIA_SOURCE_MODEL_VERSION) {
+  if (source.modelVersion && source.modelVersion !== HIA_SOURCE_MODEL_VERSION && source.modelVersion !== "0.2.0") {
     diagnostics.push(createDiagnostic(
       "HIA_SOURCE_MODEL_VERSION_UNSUPPORTED",
-      `Unsupported source modelVersion: ${source.modelVersion}.`,
+      "Unsupported source modelVersion.",
       "error",
       `${targetPath}.modelVersion`
     ));
@@ -281,19 +321,21 @@ function validateSourceMetadata(source: HiaSourceMetadata, diagnostics: HiaDiagn
 
   validateStringEnum(source.mode, HIA_SOURCE_MODES, "HIA_SOURCE_MODE_UNSUPPORTED", diagnostics, `${targetPath}.mode`);
 
-  if (source.definedIn) {
+  if (source.definedIn !== undefined && !isRecord(source.definedIn)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_INVALID", "source.definedIn must be an object when present.", "error", `${targetPath}.definedIn`));
+  } else if (source.definedIn !== undefined) {
     const definedIn = source.definedIn as unknown as Record<string, unknown>;
 
     requireString(definedIn, "kind", diagnostics, `${targetPath}.definedIn`);
     validateLiteral(definedIn.kind, "defined-in", "HIA_SOURCE_KIND_INVALID", diagnostics, `${targetPath}.definedIn.kind`);
-    validateRelativePath(String(source.definedIn.relativePath || ""), diagnostics, `${targetPath}.definedIn.relativePath`);
+    validateRelativePath(source.definedIn.relativePath, diagnostics, `${targetPath}.definedIn.relativePath`);
     validateOptionalString(definedIn, "language", diagnostics, `${targetPath}.definedIn`);
     validatePosition(source.definedIn.position, diagnostics, `${targetPath}.definedIn.position`);
     validateRange(source.definedIn.range, diagnostics, `${targetPath}.definedIn.range`);
     validateSourceLink(source.definedIn.link, diagnostics, `${targetPath}.definedIn.link`);
   }
 
-  if (source.primaryBlock) {
+  if (source.primaryBlock !== undefined && source.primaryBlock !== null) {
     validateSourceBlock(source.primaryBlock, "primary-block", diagnostics, `${targetPath}.primaryBlock`, false);
   }
 
@@ -343,7 +385,7 @@ function validateSourceReference(reference: HiaSourceReference, diagnostics: Hia
     ));
   }
 
-  if (reference.fragment) {
+  if (reference.fragment !== undefined) {
     validateSourceFragment(reference.fragment, diagnostics, `${targetPath}.fragment`);
   }
 
@@ -359,7 +401,8 @@ function validateSourceFragment(fragment: HiaSourceFragment, diagnostics: HiaDia
   requireString(fragment, "kind", diagnostics, targetPath);
   requireString(fragment, "id", diagnostics, targetPath);
   requireString(fragment, "relativePath", diagnostics, targetPath);
-  requireString(fragment, "content", diagnostics, targetPath);
+  requireString(fragment, "content", diagnostics, targetPath, true);
+  validateMetadata(fragment.origin, diagnostics, `${targetPath}.origin`);
   validateSourceBlock(fragment, "source-fragment", diagnostics, targetPath, true);
 }
 
@@ -376,7 +419,7 @@ function validateSourceBlock(
   }
 
   requireString(block, "kind", diagnostics, targetPath);
-  requireString(block, "content", diagnostics, targetPath);
+  requireString(block, "content", diagnostics, targetPath, true);
   requireString(block, "rangeSource", diagnostics, targetPath);
   requireString(block, "confidence", diagnostics, targetPath);
   validateLiteral(block.kind, expectedKind, "HIA_SOURCE_KIND_INVALID", diagnostics, `${targetPath}.kind`);
@@ -389,10 +432,13 @@ function validateSourceBlock(
   }
 
   if (requirePathAndRange || block.relativePath !== undefined) {
-    validateRelativePath(String(block.relativePath || ""), diagnostics, `${targetPath}.relativePath`);
+    validateRelativePath(block.relativePath, diagnostics, `${targetPath}.relativePath`);
   }
 
-  if (requirePathAndRange || block.range !== undefined) {
+  // <lang><zh-CN>命名片段的range为必需，不能借可选range验证器的undefined分支绕过。</zh-CN><en>A named fragment requires range and cannot bypass it through the optional-range validator's undefined branch.</en></lang>
+  if (requirePathAndRange && block.range === undefined) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_RANGE_INVALID", "Named source fragments require a range.", "error", `${targetPath}.range`));
+  } else if (block.range !== undefined) {
     validateRange(block.range, diagnostics, `${targetPath}.range`);
   }
 
@@ -429,7 +475,7 @@ function validateI18nResources(resources: unknown, diagnostics: HiaDiagnostic[],
     }
 
     requireString(resource, "path", diagnostics, itemPath);
-    validateI18nResourcePath(String(resource.path || ""), diagnostics, `${itemPath}.path`);
+    validateI18nResourcePath(resource.path, diagnostics, `${itemPath}.path`);
     validateOptionalString(resource, "kind", diagnostics, itemPath);
     validateOptionalString(resource, "locale", diagnostics, itemPath);
     validateOptionalString(resource, "format", diagnostics, itemPath);
@@ -457,9 +503,11 @@ function validateLangBlocks(blocks: unknown, diagnostics: HiaDiagnostic[], targe
 
     const typedBlock = block as unknown as HiaLangBlock;
     requireString(block, "kind", diagnostics, itemPath);
+    validateLiteral(typedBlock.kind, "lang-block", "HIA_I18N_BLOCK_INVALID", diagnostics, `${itemPath}.kind`);
     requireString(block, "locale", diagnostics, itemPath);
     requireString(block, "fieldPath", diagnostics, itemPath);
-    requireString(block, "text", diagnostics, itemPath);
+    requireString(block, "text", diagnostics, itemPath, true);
+    validateOptionalString(block, "source", diagnostics, itemPath);
     validateTextRange(typedBlock.rangeInComment ?? undefined, diagnostics, `${itemPath}.rangeInComment`);
   }
 }
@@ -484,9 +532,10 @@ function validateLangInlineSegments(segments: unknown, diagnostics: HiaDiagnosti
 
     const typedSegment = segment as unknown as HiaLangInlineSegment;
     requireString(segment, "kind", diagnostics, itemPath);
+    validateLiteral(typedSegment.kind, "lang-inline", "HIA_I18N_SEGMENT_INVALID", diagnostics, `${itemPath}.kind`);
     requireString(segment, "id", diagnostics, itemPath);
     requireString(segment, "fieldPath", diagnostics, itemPath);
-    requireString(segment, "raw", diagnostics, itemPath);
+    requireString(segment, "raw", diagnostics, itemPath, true);
     validateOptionalString(segment, "key", diagnostics, itemPath);
     validateOptionalString(segment, "path", diagnostics, itemPath);
 
@@ -511,7 +560,7 @@ function validateTextResolutions(resolutions: unknown, diagnostics: HiaDiagnosti
   }
 
   for (const [locale, resolution] of Object.entries(resolutions)) {
-    const itemPath = `${targetPath}.${locale}`;
+    const itemPath = safeMapLocation(targetPath, locale);
 
     if (!isRecord(resolution)) {
       diagnostics.push(createDiagnostic("HIA_I18N_RESOLUTION_INVALID", "i18n resolution must be an object.", "error", itemPath));
@@ -519,7 +568,7 @@ function validateTextResolutions(resolutions: unknown, diagnostics: HiaDiagnosti
     }
 
     requireString(resolution, "requestedLocale", diagnostics, itemPath);
-    requireString(resolution, "resolvedLocale", diagnostics, itemPath);
+    requireString(resolution, "resolvedLocale", diagnostics, itemPath, true);
     requireArray(resolution, "fallbackChain", diagnostics, itemPath);
 
     if (Array.isArray(resolution.fallbackChain)) {
@@ -535,7 +584,7 @@ function validateTextResolutions(resolutions: unknown, diagnostics: HiaDiagnosti
     }
 
     validateOptionalString(resolution, "sourceKind", diagnostics, itemPath);
-    validateOptionalString(resolution, "sourceLocale", diagnostics, itemPath);
+    validateOptionalString(resolution, "sourceLocale", diagnostics, itemPath, true);
     validateOptionalString(resolution, "source", diagnostics, itemPath);
   }
 }
@@ -547,7 +596,7 @@ function validateLocalizedText(value: Record<string, unknown>, diagnostics: HiaD
         "HIA_I18N_LOCALIZED_TEXT_INVALID",
         "localizedText entries must map non-empty locale keys to string values.",
         "error",
-        `${targetPath}.${locale || "<empty>"}`
+        safeMapLocation(targetPath, locale)
       ));
     }
   }
@@ -669,20 +718,23 @@ function validateSourcePreview(value: unknown, diagnostics: HiaDiagnostic[], tar
     diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath}.defaultExpanded must be a boolean.`, "error", `${targetPath}.defaultExpanded`));
   }
 
-  validateOptionalString(value, "content", diagnostics, targetPath);
+  validateOptionalString(value, "content", diagnostics, targetPath, true);
   validateOptionalString(value, "language", diagnostics, targetPath);
   validateRange(value.range as { start: HiaSourcePosition; end: HiaSourcePosition } | undefined, diagnostics, `${targetPath}.range`);
 }
 
-function validateRelativePath(value: string, diagnostics: HiaDiagnostic[], targetPath: string): void {
-  if (!value) {
+/** @lang zh-CN 仅验证相对定位器的词法边界，不读取文件或解析真实链接目标。
+ * @lang en Checks lexical relative-locator boundaries only, without reading files or resolving physical targets.
+ */
+function validateRelativePath(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (typeof value !== "string" || !value) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_PATH_MISSING", "Source relativePath is required.", "error", targetPath));
     return;
   }
 
   const normalized = value.replaceAll("\\", "/");
 
-  if (/^[A-Za-z]:[\\/]/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
     diagnostics.push(createDiagnostic("HIA_SOURCE_ABSOLUTE_PATH", "Source paths must be relative.", "error", targetPath));
     return;
   }
@@ -692,15 +744,18 @@ function validateRelativePath(value: string, diagnostics: HiaDiagnostic[], targe
   }
 }
 
-function validateI18nResourcePath(value: string, diagnostics: HiaDiagnostic[], targetPath: string): void {
-  if (!value) {
+/** @lang zh-CN 国际化资源保持项目内相对定位器，畸形值不通过String钩子转换。
+ * @lang en Keeps i18n resources as project-relative locators without coercing malformed values through String hooks.
+ */
+function validateI18nResourcePath(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (typeof value !== "string" || !value) {
     diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_PATH_MISSING", "i18n resource path is required.", "error", targetPath));
     return;
   }
 
   const normalized = value.replaceAll("\\", "/");
 
-  if (/^[A-Za-z]:[\\/]/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:/.test(value) || normalized.startsWith("/") || normalized.startsWith("//")) {
     diagnostics.push(createDiagnostic("HIA_I18N_RESOURCE_ABSOLUTE_PATH", "i18n resource paths must be relative.", "error", targetPath));
     return;
   }
@@ -736,25 +791,26 @@ function validateRange(range: { start: HiaSourcePosition; end: HiaSourcePosition
 }
 
 function validatePosition(position: HiaSourcePosition | undefined, diagnostics: HiaDiagnostic[], targetPath: string): boolean {
-  if (!position || !Number.isInteger(position.line) || position.line < 1) {
-    diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position line must be a positive integer.", "error", targetPath));
+  if (!position || !Number.isSafeInteger(position.line) || position.line < 1) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position line must be a positive safe integer.", "error", targetPath));
     return false;
   }
 
-  if (position.column !== undefined && (!Number.isInteger(position.column) || position.column < 1)) {
-    diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position column must be a positive integer when present.", "error", `${targetPath}.column`));
+  if (position.column !== undefined && (!Number.isSafeInteger(position.column) || position.column < 1)) {
+    diagnostics.push(createDiagnostic("HIA_SOURCE_POSITION_INVALID", "Source position column must be a positive safe integer when present.", "error", `${targetPath}.column`));
     return false;
   }
 
   return true;
 }
 
-function validateTextRange(range: { start: number; end: number } | null | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
-  if (range === undefined || range === null) {
+function validateTextRange(range: { start: number; end: number } | undefined, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  // <lang><zh-CN>comment range的null已在调用点按明确可空契约转换为undefined；inline range不能接受null。</zh-CN><en>Nullable comment ranges are explicitly converted to undefined at the call site; inline ranges cannot accept null.</en></lang>
+  if (range === undefined) {
     return;
   }
 
-  if (!isRecord(range) || !Number.isInteger(range.start) || !Number.isInteger(range.end) || range.start < 0 || range.end < range.start) {
+  if (!isRecord(range) || !Number.isSafeInteger(range.start) || !Number.isSafeInteger(range.end) || range.start < 0 || range.end < range.start) {
     diagnostics.push(createDiagnostic("HIA_TEXT_RANGE_INVALID", `${targetPath} must contain a valid start/end pair.`, "error", targetPath));
   }
 }
@@ -783,29 +839,58 @@ function validateLiteral(
   }
 }
 
-function requireString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {
-  if (typeof record[field] !== "string" || String(record[field]).length === 0) {
+/** @lang zh-CN token默认非空，自由文本可显式允许空串；要求自有字段，不进行隐式字符串转换。
+ * @lang en Tokens are nonempty by default; free text may explicitly allow empty strings, with own fields required and no implicit coercion.
+ */
+function requireString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = "", allowEmpty = false): void {
+  const value = record[field];
+  if (!Object.hasOwn(record, field) || typeof value !== "string" || (!allowEmpty && value.length === 0)) {
     const targetPath = prefix ? `${prefix}.${field}` : field;
     diagnostics.push(createDiagnostic("HIA_FIELD_MISSING", `HIA document requires a non-empty ${targetPath}.`, "error", targetPath));
   }
 }
 
-function validateOptionalString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {
+/** @lang zh-CN 验证出现时的字符串；自由文本允许空串但不接受其它JSON原语。
+ * @lang en Validates strings when present; free text may be empty but cannot be another JSON primitive.
+ */
+function validateOptionalString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = "", allowEmpty = false): void {
   const value = record[field];
 
-  if (value !== undefined && (typeof value !== "string" || value.length === 0)) {
+  if (value !== undefined && (typeof value !== "string" || (!allowEmpty && value.length === 0))) {
     const targetPath = prefix ? `${prefix}.${field}` : field;
     diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be a non-empty string.`, "error", targetPath));
   }
 }
 
+/** @lang zh-CN 必需数组只能由自有属性提供，不能从原型补足wire字段。
+ * @lang en Required arrays must be own properties rather than prototype-supplied wire fields.
+ */
 function requireArray(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix = ""): void {
-  if (!Array.isArray(record[field])) {
+  if (!Object.hasOwn(record, field) || !Array.isArray(record[field])) {
     const targetPath = prefix ? `${prefix}.${field}` : field;
     diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", `${targetPath} must be an array.`, "error", targetPath));
   }
 }
 
+/** @lang zh-CN metadata只检查对象形状；领域键、内容和隐私责任仍归生产者。
+ * @lang en Checks metadata object shape only; domain keys, content and privacy remain producer responsibilities.
+ */
+function validateMetadata(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {
+  if (value !== undefined && !isRecord(value)) {
+    diagnostics.push(createDiagnostic("HIA_FIELD_INVALID", "Metadata must be an object when present.", "error", targetPath));
+  }
+}
+
+/** @lang zh-CN 常规字段路径精确保留；不可信路径式键只定位父节点，避免诊断泄漏。
+ * @lang en Preserves ordinary field paths precisely while locating untrusted path-like keys at the parent to avoid diagnostic leaks.
+ */
+function safeMapLocation(parent: string, key: string): string {
+  return /^[A-Za-z_][A-Za-z0-9_.[\]-]*$/.test(key) && !key.includes("..") ? `${parent}.${key}` : parent;
+}
+
+/** @lang zh-CN 构造独立公开诊断；调用者只传入固定文案和已净化位置，不附输入正文。
+ * @lang en Constructs independent public diagnostics from fixed messages and sanitized locations without attaching input text.
+ */
 function createDiagnostic(code: string, message: string, severity: HiaDiagnosticSeverity, targetPath?: string): HiaDiagnostic {
   const diagnostic: HiaDiagnostic = { code, message, severity };
 

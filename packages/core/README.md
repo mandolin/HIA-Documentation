@@ -1,6 +1,6 @@
 # @hia-doc/core
 
-Core HIA document model, field-level i18n types, source metadata types, JSON Schema draft, fixture helpers and validation helpers.
+Core HIA document model, field-level i18n types, source metadata types, versioned JSON Schemas, fixture helpers and validation helpers.
 
 This package is intentionally independent from CLI, renderer, IDE, and language-adapter packages. It is the shared base that later HIA packages consume.
 
@@ -16,12 +16,22 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-ui-locale-completeness@0.1.0-draft` contract and pure gate for separate content/UI locale scopes, stable messages, exact required coverage, no-script and accessibility metadata.
 - Neutral `business-flow-documentation@0.1.0-draft` contract, semantic validator and deterministic non-executing producer for owner-authored business-flow facts.
 - Neutral `business-flow-documentation-projection@0.1.0-draft` contract with deterministic human-linear and AI graph-ready views over shared public facts.
-- Source metadata model `0.2.0` for `definedIn`, source blocks, references, fragments, link and preview policy.
+- Source metadata model `1.0.0` candidate, with an exact legacy `0.2.0` reader, for `definedIn`, source blocks, references, fragments, link and preview policy.
 - Diagnostic shape, diagnostic code registry and minimal protocol envelope helpers.
 - JSON Schema draft exported as `HIA_DOCUMENT_SCHEMA`.
 - Runtime validation through `validateHiaDocumentDetailed()`.
 - Fixture helpers and JSON fixtures for renderer, CLI and LSP tests.
 
+
+## Core Document Candidates
+
+Core document, text internationalization, source provenance and generic-envelope writer contracts have 1.0.0 source candidates. Document readers retain exact 0.2.0 compatibility; envelope types also represent exact 0.1.0. New roots can carry known legacy submodels without rewriting producer-owned objects.
+
+The package manifest remains 0.1.1: a registry installation at that version does not include unreleased source changes. Evaluate candidates from a reviewed revision or its packed artifacts. Other core-domain contracts retain their own draft/experimental status.
+
+中文摘要：基础契约1.0.0候选与包版本分开；旧输入/历史schema保留，校验不会自动迁移或脱敏领域正文。
+
+See [Core document compatibility and migration](../../docs/core-document-migration.md) for exact versions, JSON boundaries, default values, reference ownership, diagnostic behavior and limitations.
 ## Contract Versions
 
 - Core document schema: `HIA_CORE_CONTRACT_VERSION`

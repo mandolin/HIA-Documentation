@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.json",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -14,7 +14,7 @@
   "additionalProperties": true,
   "properties": {
     "schemaVersion": {
-      "const": "0.2.0"
+      "const": "1.0.0"
     },
     "id": {
       "$ref": "#/$defs/nonEmptyString"
@@ -216,7 +216,10 @@
           "const": "hia-text-i18n"
         },
         "modelVersion": {
-          "const": "0.2.0"
+          "enum": [
+            "1.0.0",
+            "0.2.0"
+          ]
         },
         "defaultLocale": {
           "$ref": "#/$defs/nonEmptyString"
@@ -427,11 +430,13 @@
       "properties": {
         "start": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "end": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 9007199254740991
         }
       }
     },
@@ -484,11 +489,13 @@
       "properties": {
         "line": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "maximum": 9007199254740991
         },
         "column": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "maximum": 9007199254740991
         }
       }
     },
@@ -760,7 +767,10 @@
           "const": "hia-source"
         },
         "modelVersion": {
-          "const": "0.2.0"
+          "enum": [
+            "1.0.0",
+            "0.2.0"
+          ]
         },
         "mode": {
           "enum": [

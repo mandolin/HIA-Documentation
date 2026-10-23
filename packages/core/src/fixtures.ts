@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 文档构造器与公开合成fixture；不读取真实项目或将构造结果自动视为已验证。
+ * @lang en Document builders and public synthetic fixtures; do not read real projects or automatically treat constructed results as validated.
+ */
 import {
   HIA_CORE_CONTRACT_VERSION,
   HIA_SOURCE_MODEL,
@@ -7,6 +12,11 @@ import {
 } from "./model.js";
 import type { HiaDocument, HiaDocumentInput, HiaI18nModel, HiaSymbol } from "./model.js";
 
+/**
+ * @lang zh-CN 返回本源码的包名和核心writer契约身份，不查询注册表。
+ * @lang en Returns this source's package name and core writer identity without registry queries.
+ * @returns <lang><zh-CN>新对象，版本是源码契约而非已发布包版本，无I/O。</zh-CN><en>New object with the source contract version rather than the published package version, without I/O.</en></lang>
+ */
 export function getCoreRuntimeInfo() {
   return {
     packageName: "@hia-doc/core",
@@ -14,7 +24,14 @@ export function getCoreRuntimeInfo() {
   };
 }
 
+/**
+ * @lang zh-CN 创建当前版本文档外壳，传入数组/metadata保留引用，不做验证、深拷贝或冻结。
+ * @lang en Creates a current-version document shell retaining array/metadata references without validation, deep copying or freezing.
+ * @param input <lang><zh-CN>默认空；id/title为hia.document/HIA Document，默认语言en，locales缺省为默认语言，nodes/symbols缺省为空。</zh-CN><en>Empty by default; id/title default to hia.document/HIA Document, default locale to en, locales to that locale, and nodes/symbols to empty arrays.</en></lang>
+ * @returns <lang><zh-CN>新外壳；可选fallback/diagnostics/metadata按原有真值规则加入，无I/O，wire使用前需校验。</zh-CN><en>New shell; optional fallback/diagnostics/metadata follow existing truthiness inclusion rules, without I/O, requiring validation before wire use.</en></lang>
+ */
 export function createHiaDocument(input: HiaDocumentInput = {}): HiaDocument {
+  // <lang><zh-CN>本次构造的缺省语言和集合可共享调用者引用，后续修改由调用者负责。</zh-CN><en>Invocation defaults and collections may share caller references; callers own later mutation.</en></lang>
   const defaultLocale = input.defaultLocale ?? "en";
   const locales = input.locales ?? [defaultLocale];
   const document: HiaDocument = {
@@ -42,7 +59,13 @@ export function createHiaDocument(input: HiaDocumentInput = {}): HiaDocument {
   return document;
 }
 
+/**
+ * @lang zh-CN 新建包含中英文、来源与源码引用的公开合成fixture，无真实项目数据。
+ * @lang en Creates a new public synthetic fixture with Chinese/English text, provenance and source references, without real project data.
+ * @returns <lang><zh-CN>独立可变fixture对象；每次调用新建，无I/O。</zh-CN><en>Independent mutable fixture newly created per invocation, without I/O.</en></lang>
+ */
 export function createBasicFixtureDocument(): HiaDocument {
+  // <lang><zh-CN>本次调用独立创建的公开模块fixture，包含合成双语正文而非真实业务数据。</zh-CN><en>Create an independent public module fixture with synthetic bilingual text, not real business data.</en></lang>
   const moduleSymbol: HiaSymbol = {
     id: "module:webtest",
     kind: "module",
@@ -82,6 +105,7 @@ export function createBasicFixtureDocument(): HiaDocument {
     }
   };
 
+  // <lang><zh-CN>独立函数fixture演示定义定位、主源码块和片段引用，所有正文均为公开合成示例。</zh-CN><en>The independent function fixture demonstrates definition locations, a primary block and fragment references using public synthetic examples only.</en></lang>
   const functionSymbol: HiaSymbol = {
     id: "function:buildProfileSummary",
     kind: "function",
@@ -210,6 +234,9 @@ export function createBasicFixtureDocument(): HiaDocument {
   });
 }
 
+/** @lang zh-CN 把fixture的成对正文投影为独立字段模型和解析事实，不读取外部语言资源。
+ * @lang en Projects paired fixture text into independent field models and resolution facts without reading external locale resources.
+ */
 function createSymbolI18n(fields: Record<string, { zhCN: string; en: string }>): HiaI18nModel {
   return {
     enabled: true,

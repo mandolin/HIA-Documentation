@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 核心文档当前canonical schema；历史schema由固定字节归档保留，运行时补充语义边界。
+ * @lang en Current canonical core-document schema; fixed-byte archives retain historical schemas, with runtime guards adding semantic boundaries.
+ */
 import {
   HIA_CORE_CONTRACT_VERSION,
   HIA_SOURCE_CONFIDENCE_LEVELS,
@@ -9,9 +14,20 @@ import {
   HIA_TEXT_I18N_MODEL_VERSION
 } from "./model.js";
 
-export const HIA_DOCUMENT_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json";
+/** @lang zh-CN 当前1.0.0候选schema的固定身份，不能替换历史0.2.0地址。
+ * @lang en Fixed identity of the current 1.0.0 candidate schema, without replacing the historical 0.2.0 address.
+ */
+export const HIA_DOCUMENT_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.json";
+/** @lang zh-CN 当前根schema版本，与核心document writer对齐；不是包版本。
+ * @lang en Current root-schema version aligned with the core-document writer, not a package version.
+ */
 export const HIA_DOCUMENT_SCHEMA_VERSION = HIA_CORE_CONTRACT_VERSION;
 
+/**
+ * @lang zh-CN 可序列化JSON Schema 2020-12；根只验证当前版本，子模型明确兼容旧0.2.0，扩展字段开放。
+ * @lang en Serializable JSON Schema 2020-12; the root validates only the current version, explicitly accepting legacy 0.2.0 submodels while allowing extensions.
+ * @remarks <lang><zh-CN>这是共享只读约定对象，未运行时冻结；路径逃逸、范围顺序和已解析源码引用快照仍需validateHiaDocumentDetailed。</zh-CN><en>This is a shared object with a read-only usage convention, not runtime-frozen; traversal paths, range order and resolved source-reference snapshots still need validateHiaDocumentDetailed.</en></lang>
+ */
 export const HIA_DOCUMENT_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: HIA_DOCUMENT_SCHEMA_ID,
@@ -112,6 +128,7 @@ export const HIA_DOCUMENT_SCHEMA = {
         metadata: { type: "object" }
       }
     },
+    // <lang><zh-CN>根与子模型独立版本；新根可以消费适配器仍持有的旧语言模型，不原地改号。</zh-CN><en>The root and submodel version independently; a new root can consume legacy adapter locale models without rewriting their versions.</en></lang>
     i18nModel: {
       type: "object",
       required: ["enabled", "model", "modelVersion", "defaultLocale", "locales", "fields"],
@@ -119,7 +136,7 @@ export const HIA_DOCUMENT_SCHEMA = {
       properties: {
         enabled: { type: "boolean" },
         model: { const: HIA_TEXT_I18N_MODEL },
-        modelVersion: { const: HIA_TEXT_I18N_MODEL_VERSION },
+        modelVersion: { enum: [HIA_TEXT_I18N_MODEL_VERSION, "0.2.0"] },
         defaultLocale: { $ref: "#/$defs/nonEmptyString" },
         fallbackLocale: { $ref: "#/$defs/fallbackLocale" },
         locales: { $ref: "#/$defs/localeList" },
@@ -221,13 +238,14 @@ export const HIA_DOCUMENT_SCHEMA = {
         rangeInField: { $ref: "#/$defs/textRange" }
       }
     },
+    // <lang><zh-CN>字符串偏移必须可在JS中精确表示；范围顺序由runtime guard补充。</zh-CN><en>String offsets must be exactly representable in JavaScript; the runtime guard additionally checks range order.</en></lang>
     textRange: {
       type: "object",
       required: ["start", "end"],
       additionalProperties: false,
       properties: {
-        start: { type: "integer", minimum: 0 },
-        end: { type: "integer", minimum: 0 }
+        start: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER },
+        end: { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER }
       }
     },
     textResolution: {
@@ -248,13 +266,14 @@ export const HIA_DOCUMENT_SCHEMA = {
         source: { $ref: "#/$defs/nonEmptyString" }
       }
     },
+    // <lang><zh-CN>沿用1-based行列并限制为安全整数，不改变原有列计量单位。</zh-CN><en>Retain one-based lines/columns and constrain them to safe integers without changing the established column unit.</en></lang>
     sourcePosition: {
       type: "object",
       required: ["line"],
       additionalProperties: true,
       properties: {
-        line: { type: "integer", minimum: 1 },
-        column: { type: "integer", minimum: 1 }
+        line: { type: "integer", minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+        column: { type: "integer", minimum: 1, maximum: Number.MAX_SAFE_INTEGER }
       }
     },
     sourceRange: {
@@ -363,13 +382,14 @@ export const HIA_DOCUMENT_SCHEMA = {
         }
       }
     },
+    // <lang><zh-CN>新根允许精确旧版源码子模型，来源正文与privacy仍由owner治理。</zh-CN><en>The new root accepts the exact legacy source submodel; owners still govern source text and privacy.</en></lang>
     sourceMetadata: {
       type: "object",
       required: ["model", "modelVersion", "mode"],
       additionalProperties: true,
       properties: {
         model: { const: HIA_SOURCE_MODEL },
-        modelVersion: { const: HIA_SOURCE_MODEL_VERSION },
+        modelVersion: { enum: [HIA_SOURCE_MODEL_VERSION, "0.2.0"] },
         mode: { enum: [...HIA_SOURCE_MODES] },
         definedIn: { $ref: "#/$defs/sourceDefinedIn" },
         primaryBlock: {

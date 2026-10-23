@@ -6,9 +6,9 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 
 | Surface | Export / file | Version |
 | --- | --- | --- |
-| Core document schema | `HIA_CORE_CONTRACT_VERSION` / `HIA_DOCUMENT_SCHEMA_VERSION` | `0.2.0` |
-| Text i18n model | `HIA_TEXT_I18N_MODEL_VERSION` | `0.2.0` |
-| Source model | `HIA_SOURCE_MODEL_VERSION` | `0.2.0` |
+| Core document schema | `HIA_CORE_CONTRACT_VERSION` / `HIA_DOCUMENT_SCHEMA_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
+| Text i18n model | `HIA_TEXT_I18N_MODEL_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
+| Source model | `HIA_SOURCE_MODEL_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
 | Config schema | `HIA_CONFIG_SCHEMA_VERSION` | `0.1.0` |
 | Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `0.1.0-draft` |
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
@@ -137,7 +137,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Target-owner dry-run evidence | `scripts/prepare-wp41-target-owner-dry-run-evidence.mjs` | `0.1.0-draft` |
 | W-P41 closeout W-P42/W-P43 inputs evidence | `scripts/prepare-wp41-closeout-wp42-wp43-inputs.mjs` | `0.1.0-draft` |
 | Visual Studio host skeleton | `apps/visual-studio-extension/host-contract.json` | `0.1.0-draft` |
-| Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `0.1.0` |
+| Protocol envelope | `HIA_PROTOCOL_ENVELOPE_VERSION` | `1.0.0` source candidate; exact legacy `0.1.0` |
 | JSDoc Integration input | `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION` | `0.1.0` |
 | JSDoc adapter bridge | `JSDOC_ADAPTER_CORE_BRIDGE_VERSION` | `0.1.0` |
 | JSDoc adapter metadata | `JSDOC_ADAPTER_METADATA_SCHEMA_VERSION` | `0.1.0` |
@@ -475,3 +475,5 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 - `docs/ide-integration-boundary.md`
 - `docs/adapter-authoring-notes.md`
 - Package READMEs under `packages/*/README.md` and `apps/*/README.md`
+
+Core foundation compatibility, constructor defaults and ownership are documented in [Core document migration](core-document-migration.md). Exact envelope version types do not replace payload validation; package/registry identity remains independent.

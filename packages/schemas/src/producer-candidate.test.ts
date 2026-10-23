@@ -25,8 +25,9 @@ describe.each(["documentation-producer", "documentation-producer-result"])("cand
 });
 
 describe("candidate catalog boundary", () => {
-  it("marks only the two reviewed definitions as candidates and lists current schemas once", () => {
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate").map(({ key }) => key)).toEqual(["documentation-producer", "documentation-producer-result"]);
+  it("marks only individually reviewed definitions as candidates and lists current schemas once", () => {
+    // <lang><zh-CN>核心document在独立基础接口审查后加入候选，不能自动推广其它未审契约。</zh-CN><en>The core document joins the candidates after its separate foundation review; other unreviewed contracts are not promoted automatically.</en></lang>
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate").map(({ key }) => key)).toEqual(["documentation-producer", "documentation-producer-result", "hia-document"]);
     expect(listHiaSchemas()).toHaveLength(17);
     expect(new Set(listHiaSchemas().map(({ $id }) => $id)).size).toBe(17);
   });

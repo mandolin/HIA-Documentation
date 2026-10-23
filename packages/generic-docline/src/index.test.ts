@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { runDocumentationProducer } from "@hia-doc/plugin-sdk";
+import { HIA_CORE_CONTRACT_VERSION } from "@hia-doc/core";
 import {
   GENERIC_DOCLINE_CONFIG_CONTRACT,
   GENERIC_DOCLINE_CONFIG_JSON_SCHEMA,
@@ -73,7 +74,8 @@ describe("@hia-doc/generic-docline", () => {
       expect(extraction.adapterSlots.some((slot) => slot.id === "tree-sitter" && slot.status === "reserved")).toBe(true);
 
       const hia = genericDocLineToHiaDocument(extraction, { title: "Toy Generic Docs" });
-      expect(hia.schemaVersion).toBe("0.2.0");
+      // <lang><zh-CN>核心转换输出使用当前writer，原提取契约版本独立保持。</zh-CN><en>Core conversion output uses the current writer while the extraction contract remains independently versioned.</en></lang>
+      expect(hia.schemaVersion).toBe(HIA_CORE_CONTRACT_VERSION);
       expect(hia.symbols[0]?.source?.definedIn?.language).toBe("toy");
       expect(hia.symbols[0]?.source?.definedIn?.relativePath).toBe("src/sample.toy");
       expect(hia.symbols.every((symbol) => !("summary" in symbol) || symbol.summary)).toBe(true);

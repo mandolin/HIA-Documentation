@@ -188,7 +188,8 @@ const definitions = [
     key: "hia-document",
     ownerPackage: "@hia-doc/core",
     schema: HIA_DOCUMENT_SCHEMA,
-    stability: "active-pre-1.0"
+    // <lang><zh-CN>核心根已具备候选实现及精确旧reader，不等同包或系统正式发行。</zh-CN><en>The core root has a candidate implementation and exact legacy reader, not a formal package/system release.</en></lang>
+    stability: "stable-candidate"
   },
   {
     contractVersion: HIA_PROJECT_MANIFEST_SCHEMA_VERSION,

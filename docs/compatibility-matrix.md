@@ -25,7 +25,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 
 | Package | Package version | Contract surfaces | Compatibility status |
 | --- | --- | --- | --- |
-| `@hia-doc/core` | `0.1.1`, MIT; publishable manifest | core document `0.2.0`, i18n `0.2.0`, source `0.2.0`, protocol `0.1.0`, DLR/resource-resolution and UI-locale completeness `0.1.0-draft` | Active pre-1.0 baseline; public release candidate. |
+| `@hia-doc/core` | `0.1.1`, MIT; publishable manifest | core document / text i18n / source / protocol `1.0.0` source candidates; exact legacy `0.2.0` document/submodels and `0.1.0` envelope types, DLR/resource-resolution and UI-locale completeness `0.1.0-draft` | Active pre-1.0 baseline; public release candidate. |
 | `@hia-doc/config` | `0.1.5`, MIT; publishable manifest | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
 | `@hia-doc/profile` | `0.1.0`, MIT; publishable manifest | profile schema `0.1.0-draft` | Draft profile runtime baseline; public release candidate. |
 | `@hia-doc/profiles` | `0.1.0`, MIT; publishable manifest | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
@@ -101,3 +101,5 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 - Profile-defined diagnostic rule execution.
 - Browser/DevTools compatibility matrix.
 - Vue/React/CSS-in-JS/Storybook bridge compatibility matrix.
+
+Core foundation fixtures with 0.2.0 remain exact legacy inputs; current writers emit 1.0.0. Envelope type compatibility does not validate payloads. See [Core document migration](core-document-migration.md) for the candidate matrix and ownership boundaries.

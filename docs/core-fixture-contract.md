@@ -1,6 +1,6 @@
 # Core IR Schema and Fixture Contract
 
-Status: draft for the first formal core IR/schema, i18n resource and source/reference pass.
+Status: 1.0.0 source candidates for the core document and text/source foundation; historical 0.2.0 fixtures remain compatibility inputs.
 
 ## Purpose
 
@@ -10,11 +10,11 @@ The first formal schema pass keeps TypeScript types as the authoring source, `HI
 
 ## Versions
 
-- Core document `schemaVersion`: `0.2.0`.
-- `HIA_CORE_CONTRACT_VERSION`: `0.2.0`.
-- `HIA_DOCUMENT_SCHEMA_VERSION`: `0.2.0`.
-- Text i18n model version: `0.2.0`.
-- Source model version: `0.2.0`.
+- Core document `schemaVersion`: `1.0.0`. Exact legacy 0.2.0 remains readable.
+- `HIA_CORE_CONTRACT_VERSION`: `1.0.0`. Exact legacy 0.2.0 remains readable.
+- `HIA_DOCUMENT_SCHEMA_VERSION`: `1.0.0`. Exact legacy 0.2.0 remains readable.
+- Text i18n model version: `1.0.0`. Exact legacy 0.2.0 remains readable.
+- Source model version: `1.0.0`. Exact legacy 0.2.0 remains readable.
 
 The core document version and schema version are aligned in this pass. Text i18n now has a formal field/resource/key/path layer. Source remains an independent submodel and now has a formal source block, reference, relative path and preview/link contract.
 
@@ -206,9 +206,9 @@ The current JSON Schema draft covers:
 The runtime validator additionally enforces:
 
 - `defaultLocale` must be included in `locales`
-- source modelVersion must match the current `HIA_SOURCE_MODEL_VERSION`
+- source modelVersion must be exact 1.0.0 or the known legacy 0.2.0
 - source paths must not be local absolute paths and must not escape through `..`
-- source positions use positive 1-based line/column values
+- source positions use positive 1-based safe-integer line/column values
 - source ranges must not end before they start
 - source blocks must use supported `rangeSource` and `confidence` values
 - resolved source references must include a fragment snapshot
@@ -232,3 +232,7 @@ The converted document must:
 - remove unsafe path strings and `filePath` fields from metadata and diagnostic data
 
 Future adapters should add equivalent input and compatibility fixtures before being treated as stable core consumers.
+
+## Candidate Compatibility
+
+JSON examples carrying 0.2.0 on this page are preserved legacy inputs, not current writer output. Current writers emit 1.0.0; the new root schema explicitly accepts known legacy submodels. See [Core document migration](core-document-migration.md) for JSON-data preflight, empty free text, exact versions, fixed historical IDs, reference ownership and validation limits.
