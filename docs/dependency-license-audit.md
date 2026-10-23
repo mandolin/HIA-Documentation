@@ -48,8 +48,14 @@ staging，不属于新的源码直接依赖声明。W-P51.4 的 Visual Studio VS
 
 | Tool | Version | Purpose | License |
 | --- | --- | --- | --- |
-| `node` | `20.20.2` | Pinned runtime for local development and CI parity. | MIT |
+| `node` | `24.22.1` | Pinned Node.js 24 LTS development runtime; CI also validates Node.js 22 LTS. | MIT |
 | `pnpm` | `10.34.4` | Pinned workspace package manager. | MIT |
+
+The Node.js pin was reviewed against the [versioned upstream license](https://github.com/nodejs/node/blob/v24.22.1/LICENSE) on 2026-10-23.
+Node.js has its own bundled third-party notices; the MIT project license does
+not replace those notices. This tool pin introduces no new application dependency.
+The older `@types/node` range below is a type declaration baseline, not production
+support for Node.js 20.
 
 ## Direct Dependencies
 

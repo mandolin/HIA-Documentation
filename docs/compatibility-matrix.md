@@ -6,12 +6,18 @@ This matrix records the current compatibility baseline for the main repository, 
 
 | Surface | Supported / pinned | Status | Verification |
 | --- | --- | --- | --- |
-| Node.js for `main-repo` | `>=20.19.0`; pinned local tool `20.20.2` | Legacy configuration | `pnpm run release:gate` |
+| Node.js for `main-repo` development / CI | Local `24.22.1`; CI latest `22.x` / `24.x` on Ubuntu 24.04 and Windows Server 2025 | LTS candidate verification matrix | `pnpm run release:gate` in each combination |
+| Existing main package engine declarations | `>=20.19.0` | Legacy installation range; tightening accompanies package stabilization | Package manifests and release plan must agree |
 | pnpm for `main-repo` | `10.34.4` | Pinned | `pnpm install --frozen-lockfile` in CI |
 | Node.js for public JSDoc packages | Package engines declare `>=18` | Legacy installation constraint | satellite package CI / release gates |
 | VS Code API | `^1.92.0` | Development baseline | `apps/vscode-extension` build and tests |
 
 These rows identify configuration and verification entry points; they are not results from a current test run. Node.js 18/20 are [end of life](https://nodejs.org/en/about/previous-releases). Legacy engine ranges and pins must not be read as production support recommendations.
+
+The local development pin was researched on 2026-10-23. Supported release-line
+verification uses the latest 22/24 patches; CI resolves those patches through
+`setup-node`. Windows Server CI does not substitute for a real Windows 11 host
+check. Publication continues to use Node.js 24 and the declared npm baseline.
 
 ## Main Repository Packages
 

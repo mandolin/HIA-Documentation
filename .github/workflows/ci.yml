@@ -16,8 +16,15 @@ concurrency:
 
 jobs:
   release-gate:
-    name: Release gate
-    runs-on: ubuntu-latest
+    name: Release gate / ${{ matrix.os }} / Node.js ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    # 中文：四个组合分别报告结果；一个失败不能取消其余支持线的证据。
+    # English: Report all four combinations independently; one failure must not cancel evidence for the remaining supported lines.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        node: [22.x, 24.x]
 
     steps:
       - name: Check out repository
@@ -26,7 +33,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: ${{ matrix.node }}
 
       - name: Enable pnpm
         run: |

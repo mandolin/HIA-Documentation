@@ -1,3 +1,5 @@
 [tools]
-node = "20.20.2"
+# 中文：开发使用 Node.js 24 LTS；CI 同时验证 22/24 最新补丁。
+# English: Develop on Node.js 24 LTS; CI also validates the latest patches of 22/24.
+node = "24.22.1"
 pnpm = "10.34.4"

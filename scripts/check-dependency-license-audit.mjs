@@ -84,9 +84,9 @@ const directDependencyAudit = [
 const toolAudit = [
   {
     name: "node",
-    version: "20.20.2",
+    version: "24.22.1",
     license: "MIT",
-    purpose: "Pinned runtime for local development and CI parity."
+    purpose: "Pinned Node.js 24 LTS development runtime; CI also validates Node.js 22 LTS."
   },
   {
     name: "pnpm",
@@ -215,16 +215,24 @@ function assertDirectDependencyAudit() {
   }
 }
 
+/**
+ * @lang zh-CN 校验开发工具的版本声明与已审计许可证；不读取注册表或安装工具。
+ * @lang en Checks development tool versions against audited licenses without querying registries or installing tools.
+ * @returns <lang><zh-CN>无返回值；声明漂移或许可证不被允许时抛出断言错误。</zh-CN><en>No return value; throws an assertion error for declaration drift or disallowed licenses.</en></lang>
+ */
 function assertToolAudit() {
+  // <lang><zh-CN>根清单确定包管理器身份；mise 配置确定开发 Node.js，不把 types 包版本当成运行时支持线。</zh-CN><en>The root manifest determines package manager identity and mise determines development Node.js; the types package version does not determine runtime support.</en></lang>
   const rootPackage = readJson("package.json");
   const miseConfig = fs.readFileSync(path.join(root, ".mise.toml"), "utf8");
 
+  // <lang><zh-CN>每项工具继续经过原许可证白名单检查，版本迁移不豁免许可审计。</zh-CN><en>Every tool still passes the existing license allowlist; version migration does not waive the license audit.</en></lang>
   for (const entry of toolAudit) {
     assertAllowedLicense(entry);
   }
 
+  // <lang><zh-CN>明确固定维护工具版本，禁止仅为通过检查删除或放宽断言。</zh-CN><en>Pin maintenance tool versions explicitly rather than removing or relaxing assertions to pass.</en></lang>
   assert.equal(rootPackage.packageManager, "pnpm@10.34.4");
-  assert.match(miseConfig, /node\s*=\s*"20\.20\.2"/);
+  assert.match(miseConfig, /node\s*=\s*"24\.22\.1"/);
   assert.match(miseConfig, /pnpm\s*=\s*"10\.34\.4"/);
 }
 
