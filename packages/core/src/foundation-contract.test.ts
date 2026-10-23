@@ -239,6 +239,19 @@ describe("core own-property and diagnostic privacy", () => {
  * @lang en Additional review of iterative graphs, malformed optional values and builder reference ownership.
  */
 describe("core foundation traversal and ownership", () => {
+  it("returns invalid diagnostics for a revoked root proxy without throwing", () => {
+    const revocable = Proxy.revocable({}, {});
+    revocable.revoke();
+    expect(() => validateHiaDocumentDetailed(revocable.proxy)).not.toThrow();
+    expect(validateHiaDocumentDetailed(revocable.proxy).valid).toBe(false);
+  });
+  it("does not execute a non-enumerable model accessor after JSON preflight", () => {
+    const document = wire();
+    let reads = 0;
+    Object.defineProperty(document, "title", { enumerable: false, get: () => { reads += 1; return "Unsafe hidden title"; } });
+    expect(validateHiaDocumentDetailed(document).valid).toBe(false);
+    expect(reads).toBe(0);
+  });
   it("validates a finite deep tree and metadata graph without recursive-stack dependence", () => {
     const document = wire();
     // <lang><zh-CN>两条5000层合成链分别覆盖节点和不透明metadata；无真实项目或正文。</zh-CN><en>Two synthetic 5000-level chains cover nodes and opaque metadata, without real projects or text.</en></lang>

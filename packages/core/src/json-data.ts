@@ -54,8 +54,9 @@ export function isJsonDataGraph(value: unknown): boolean {
       } else {
         // <lang><zh-CN>只读取可枚举自有数据属性，JSON值的语义不延伸到metadata领域正文。</zh-CN><en>Read only enumerable own data properties; JSON-value semantics do not interpret domain text in metadata.</en></lang>
         for (const descriptor of Object.values(descriptors)) {
-          if (!descriptor.enumerable) continue;
+          // <lang><zh-CN>隐藏访问器也可能是后续模型读取的已知字段，必须在跳过非枚举数据前拒绝。</zh-CN><en>Hidden accessors may still be known fields read by later model checks, so reject them before skipping non-enumerable data.</en></lang>
           if (!Object.hasOwn(descriptor, "value")) return false;
+          if (!descriptor.enumerable) continue;
           values.push(descriptor.value);
         }
       }

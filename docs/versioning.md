@@ -55,7 +55,7 @@ A private satellite workspace root is a container marker. Its child packages hav
 | JSDoc Integration input | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` and `@mandolin/jsdoc-plugin-hia-sys` |
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
 | JSDoc adapter metadata | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
-| Project docs manifest | `0.1.0-draft` | Draft | `@hia-doc/config` |
+| Project docs manifest | `1.0.0` source candidate; exact legacy `0.1.0-draft` | Source contract candidate | `@hia-doc/config` |
 | HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
 | CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
 | Doc source map | `0.1.0-draft` | Draft | `doc-source-map` contract docs and satellite tools |

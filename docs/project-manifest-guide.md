@@ -14,7 +14,7 @@ The CLI does not scan source files or discover producer packages in project mode
 
 ## Current Status
 
-The project docs manifest shape is `0.1.0-draft`.
+The current project docs manifest source candidate is `1.0.0`, with exact `0.1.0-draft` runtime compatibility. Bundled historical fixtures retain their original draft roots; package and registry identity remain independent. See [Project Manifest Migration](project-manifest-migration.md).
 
 `@hia-doc/config` exports the machine-readable manifest contract:
 
@@ -41,7 +41,7 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
 
 ```json
 {
-  "schemaVersion": "0.1.0-draft",
+  "schemaVersion": "1.0.0",
   "project": {
     "id": "project:mixed",
     "name": "Mixed Project",
@@ -106,7 +106,7 @@ Use `producers` when source files should be converted to documentation artifacts
 
 ```json
 {
-  "schemaVersion": "0.1.0-draft",
+  "schemaVersion": "1.0.0",
   "project": {
     "name": "Producer Project"
   },
@@ -151,7 +151,7 @@ Use `documentation-producer-result` when a target project already ran a producer
 
 ```json
 {
-  "schemaVersion": "0.1.0-draft",
+  "schemaVersion": "1.0.0",
   "project": {
     "name": "Portal Documentation",
     "title": "Portal Documentation"

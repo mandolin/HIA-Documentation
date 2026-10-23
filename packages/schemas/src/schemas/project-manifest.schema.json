@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -33,7 +33,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "project": {
       "$ref": "#/$defs/project"
@@ -79,7 +79,10 @@
             "const": ".."
           },
           {
-            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+            "pattern": "^(?:[\\\\/]|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "[\\u0000-\\u001F\\u007F]"
           },
           {
             "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
@@ -96,7 +99,10 @@
             "const": ".."
           },
           {
-            "pattern": "^(?:[A-Za-z]:|/|\\\\\\\\|[A-Za-z][A-Za-z0-9+.-]*:)"
+            "pattern": "^(?:[\\\\/]|[A-Za-z][A-Za-z0-9+.-]*:)"
+          },
+          {
+            "pattern": "[\\u0000-\\u001F\\u007F]"
           },
           {
             "pattern": "(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)"
@@ -258,6 +264,27 @@
         "path"
       ],
       "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "artifactPolicy"
+            ],
+            "properties": {
+              "artifactPolicy": {
+                "const": "relations-only"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "documentation-producer-result"
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "kind": {
           "enum": [

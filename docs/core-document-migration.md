@@ -59,7 +59,7 @@ Type aliases represent only admitted exact versions. Keep unknown decoded input 
 
 ## Ordinary JSON Data
 
-Document validation accepts finite primitives, dense standard arrays, ordinary objects and null-prototype objects with ordinary data properties. Shared acyclic objects are allowed. It rejects cycles, undefined values, functions, BigInt, non-finite numbers, class instances, sparse arrays, array-method shadowing, enumerable accessors and custom serialization hooks.
+Document validation accepts finite primitives, dense standard arrays, ordinary objects and null-prototype objects with ordinary data properties. Shared acyclic objects are allowed. It rejects cycles, undefined values, functions, BigInt, non-finite numbers, class instances, sparse arrays, array-method shadowing, accessors including non-enumerable model accessors, and custom serialization hooks. A revoked root proxy produces invalid-input diagnostics rather than escaping as an exception.
 
 Metadata remains opaque domain data. Its declared object shape and JSON compatibility are checked; its keys and prose are not reinterpreted or automatically redacted. Unknown root extension fields are retained.
 

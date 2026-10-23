@@ -154,3 +154,7 @@ The public package release plan, publish order and post-publish smoke are docume
 ## Core Document Candidate
 
 The current core-document canonical schema is hia-document-1.0.0.schema.json. The fixed hia-document-0.2.0.schema.json archive retains its original bytes. The current root accepts exact 1.0.0/0.2.0 text/source submodels; runtime legacy reading does not mutate old artifacts. See [Core document migration](core-document-migration.md). This schema candidate does not publish a new npm package version.
+
+## Project Manifest Candidate
+
+The current project-manifest schema uses the fixed hia-project-manifest-1.0.0.schema.json identity. The legacy hia-project-manifest-0.1.0-draft.schema.json archive retains its original bytes and constraints. Current keys/aliases resolve to the new root; exact legacy reading does not mutate inputs. This fourth catalog candidate does not promote documentation profiles, other contracts or package releases. See [Project Manifest Migration](project-manifest-migration.md).

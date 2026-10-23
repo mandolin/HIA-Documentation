@@ -10,6 +10,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Text i18n model | `HIA_TEXT_I18N_MODEL_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
 | Source model | `HIA_SOURCE_MODEL_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
 | Config schema | `HIA_CONFIG_SCHEMA_VERSION` | `0.1.0` |
+| Project docs manifest | `HIA_PROJECT_MANIFEST_SCHEMA_VERSION` | `1.0.0` source candidate; exact legacy `0.1.0-draft` |
 | Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `0.1.0-draft` |
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
@@ -176,7 +177,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | HIA local provider runner | `@hia-doc/provider-runner` | Converts bounded review payloads into provider-safe requests and returns provider output as review payload augmentation. It does not produce WorkspaceEdit data, source bodies, tool calls or target repository mutations. |
 | Renderer manifest | `@hia-doc/renderer-html` | Renderer output summary. CLI may wrap it into a build output manifest. |
 | Project navigation index | `@hia-doc/renderer-html` | Presentation-neutral project entry index for static portals and search; it excludes inline source previews. |
-| Project docs manifest | `@hia-doc/cli` | CLI input contract for aggregating JS, CSS, HTML extraction and doc-source-map artifacts into one rendered project page. It is outside core IR. |
+| Project docs manifest | `@hia-doc/config` | Owns the manifest schema and pure validation; the CLI reads it to aggregate explicit artifacts or invoke explicit producers. It is outside core IR. See [Project Manifest Migration](project-manifest-migration.md). |
 | LSP resource index | `@hia-doc/lsp` | IDE view model derived from core documents. It is not a core source of truth. |
 | LSP host result metadata | `@hia-doc/lsp` | Additive metadata on selected `hia/*` custom request responses for request version, capability, result source and empty-state handling. |
 | LSP documentation edit proposals | `@hia-doc/lsp` | Public-safe, reviewable proposal view model for AI-assisted authoring. It does not carry private source text or directly applicable WorkspaceEdit output. |

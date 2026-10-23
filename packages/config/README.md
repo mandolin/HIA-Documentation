@@ -2,6 +2,12 @@
 
 HIA 文档工具共享的配置 contract 与 loader。
 
+## Project Manifest Source Candidate
+
+The project-manifest contract is a `1.0.0` source candidate with exact `0.1.0-draft` runtime compatibility. It is separate from the project-config schema and documentation-profile runtime. Package `0.1.5` and registry availability are not promoted by a source contract change.
+
+中文：项目清单纯守卫检查已声明字段、普通JSON图、路径与既有跨字段约束，不读取文件或执行生产器；输入与metadata引用不被改写。顶层profile引用可只含元信息，无path时不要求文件或自动下载。详见[清单迁移与边界](../../docs/project-manifest-migration.md)。
+
 当前范围 / Current scope:
 
 - Auto-discover `hia.config.json` from the current working directory.

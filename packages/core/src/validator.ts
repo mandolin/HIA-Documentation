@@ -902,6 +902,13 @@ function createDiagnostic(code: string, message: string, severity: HiaDiagnostic
   return diagnostic;
 }
 
+/** @lang zh-CN 根输入可能为已撤销Proxy，最初对象识别也须转为无正文的拒绝而非抛出。
+ * @lang en Root input may be a revoked proxy; initial record identification must reject without reflecting text or throwing.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  try {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  } catch {
+    return false;
+  }
 }

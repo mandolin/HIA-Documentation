@@ -197,7 +197,8 @@ const definitions = [
     key: "project-manifest",
     ownerPackage: "@hia-doc/config",
     schema: HIA_PROJECT_MANIFEST_JSON_SCHEMA,
-    stability: "draft"
+    // <lang><zh-CN>项目清单完成独立边界/语义/类型审查后加入候选，不代表config包全部接口或正式发行已完成。</zh-CN><en>The project manifest joins the candidates after its own boundary/semantic/type review, not completion of all config APIs or formal publication.</en></lang>
+    stability: "stable-candidate"
   }
 ];
 
