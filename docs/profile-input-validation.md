@@ -22,7 +22,11 @@ Each member is validated before registration. Invalid members contribute diagnos
 
 The returned map is new, but accepted profiles and registry query results retain caller references. The caller must treat them as immutable while in use, or rebuild and revalidate the set after changes. In contrast, `@hia-doc/profiles` accessors return defensive copies of package-owned official data.
 
-Known missing parent, alias-target and mapping-diagnostic references retain their existing diagnostics. Full inheritance conflicts, inheritance cycles and alias cycles are not comprehensively validated. Multi-parent collision precedence remains unsuitable as a stable public guarantee: inherited tag listing and individual tag lookup currently differ. Avoid conflicting inherited definitions until composition semantics are finalized. The four layer names do not automatically sort profiles or establish precedence.
+Inheritance cycles now produce `HIA_PROFILE_EXTENDS_CYCLE`. Inherited tag listings and semantic tag/rule/diagnostic queries refuse graphs with a reachable cycle, while raw profile metadata and local tag listings remain inspectable. Shared ancestors and repeated parent references are not cycles. Iterative traversal handles deep finite graphs without recursive call-stack growth.
+
+Alias chains must reach an existing terminal tag. Missing endpoints retain `HIA_PROFILE_ALIAS_TARGET_UNKNOWN`; cycles produce `HIA_PROFILE_ALIAS_CYCLE`. Invalid chains return `undefined` even with `includeAliases: true`. Valid results retain caller references and the exact visited alias names, excluding the terminal tag. Mapping references to unknown diagnostic codes retain warning severity.
+
+Multi-parent collision precedence remains unsuitable as a stable public guarantee: inherited tag listing and individual tag lookup currently differ. Avoid conflicting inherited definitions until composition semantics are finalized. The four layer names do not automatically sort profiles or establish precedence. See [composition and query boundaries](profile-composition.md) for error behavior and ownership.
 
 ## File loading and privacy
 

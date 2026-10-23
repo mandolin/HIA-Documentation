@@ -47,6 +47,8 @@ The accessors return defensive copies so project-specific customization cannot m
 
 The runtime validates declared fields before admitting profiles into a set, and skips invalid entries while retaining diagnostics. Runtime query results retain caller references; they do not acquire the defensive-copy ownership of official distribution accessors. See [input validation and remaining composition limits](profile-input-validation.md).
 
+The exported catalog object, literal ID array and direct JSON module exports are shared, unfrozen metadata. Treat them as read-only or clone them before customization. The defensive-copy guarantee applies to profile accessors and separately created official profile sets; it does not turn every direct module export into an isolated object.
+
 Every profile and the catalog also has an explicit JSON export:
 
 ```ts
@@ -71,10 +73,11 @@ When a build requires an explicit profile artifact, the manifest should still pr
 
 ## Version Boundaries
 
-Three versions remain independent:
+Four versions remain independent:
 
 - npm package version: distribution release cadence;
 - `catalogVersion`: catalog shape and package indexing contract;
+- `schemaVersion` / `profileSchemaVersion`: the documentation profile file structure actually used by the bundled JSON;
 - `profileVersion`: semantics of an individual profile.
 
 An additive package release does not automatically change every `profileVersion`. A breaking profile change must update that profile's version, fixtures, compatibility matrix and migration guidance.
@@ -107,7 +110,7 @@ pnpm run release:gate
 
 ## Publication Status
 
-`@hia-doc/profiles` is currently a private workspace distribution package, not a public npm release. Public publication requires:
+The checked-in `@hia-doc/profiles` manifest is publishable. A source candidate or a local tarball does not establish registry availability or formal release qualification. Public publication requires:
 
 - operational ownership of the approved `@hia-doc` npm scope;
 - release metadata and package versions for both `@hia-doc/profile` and `@hia-doc/profiles`;

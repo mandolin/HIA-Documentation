@@ -1,8 +1,10 @@
 # @hia-doc/profiles
 
-Official documentation profile distribution for HIA documentation tools.
+Official documentation profile JSON, catalog metadata and defensive-copy accessors. Profile accessors and separately created runtime sets return independent profile copies. Catalog constants, the literal ID array and direct JSON module exports remain shared, unfrozen metadata and should be treated as read-only.
 
-The package contains the stable and bridge profile JSON files proven by the main repository release gate. It is separate from `@hia-doc/profile`, which owns profile loading, validation and registry queries.
+The bundled profile schema, catalog and individual profile versions remain `0.1.0-draft`; the `stable` layer name does not itself establish a stable release. Runtime inheritance/alias errors are reported through profile-set diagnostics. See [distribution and version boundaries](../../docs/profile-distribution.md) and [composition limits](../../docs/profile-composition.md).
+
+The package is separate from `@hia-doc/profile`, which owns profile loading, validation and registry queries.
 
 ## API
 
@@ -33,4 +35,4 @@ The distributed files use `documentation-profile@0.1.0-draft`. Profile contract 
 
 ## Status
 
-This workspace package is not yet a public npm release. The canonical `@hia-doc` scope and MIT license are approved; publication still requires operational npm scope ownership, stable owner/distribution package versions, Trusted Publishing ownership and a registry install smoke.
+The manifest is publishable. Source changes and local tarballs do not prove registry availability or stable-release qualification. Publication requires approved release versions, npm scope ownership, Trusted Publishing ownership and a registry install smoke. The package uses the MIT license.

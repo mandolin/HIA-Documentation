@@ -19,6 +19,8 @@ Official profile JSON is distributed by `@hia-doc/profiles`. This package delibe
 
 The runtime accepts the exact `documentation-profile@0.1.0-draft` identity and checks ordinary JSON plus declared fields. Open JSON extensions and schema-permitted empty arrays/message strings remain allowed. Invalid profile-set members contribute diagnostics and are skipped; the first valid entry owns a duplicate ID. Accepted profiles and query results retain caller references.
 
-File read/parse errors use fixed messages without source excerpts. Caller-provided paths remain in returned path/context fields and require caller handling before public disclosure. Validation is not an execution or filesystem sandbox, and complete inheritance/alias conflict semantics are not yet a stable contract.
+File read/parse errors use fixed messages without source excerpts. Caller-provided paths remain in returned path/context fields and require caller handling before public disclosure. Inheritance cycles and missing/cyclic alias chains produce errors and no resolved semantic result; deep finite inheritance uses iterative traversal. Validation is not an execution or filesystem sandbox. Multi-parent collision precedence remains a draft limitation.
 
 See [input validation, ownership and limitations](../../docs/profile-input-validation.md) for the full boundary.
+
+See [composition and query behavior](../../docs/profile-composition.md) for defaults, cycle diagnostics and remaining precedence limits.

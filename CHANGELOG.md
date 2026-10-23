@@ -7,6 +7,9 @@ registry status for each version.
 
 ## 未发布 / Unreleased
 
+- 文档化配置规范新增继承环与别名环诊断；失效别名不再返回伪成功，深层继承改为显式栈遍历。官方分发API补充所有权/版本说明及回归，schema与包版本保持草案；多父冲突优先级仍待定案。
+- Documentation profiles now report inheritance/alias cycles, refuse invalid alias resolutions and traverse deep inheritance with an explicit stack. Official distribution APIs document ownership/version boundaries with regression coverage. Schema/package identities remain unchanged; multi-parent collision precedence remains unresolved.
+
 - 文档化配置规范运行时补齐既有字段/数组项和普通JSON检查；无效集合成员留诊断并跳过，不能占用有效身份。文件解析错误不再回显源码片段，调用者路径上下文仍保留。schema、官方配置和包版本不变；完整继承/别名语义尚未稳定。
 - Documentation profile runtime checks now cover existing declared fields, list items and ordinary JSON. Invalid set members retain diagnostics and are skipped without reserving valid IDs. Parse errors no longer echo source excerpts; caller path context remains. Schema, official profile and package versions are unchanged; complete inheritance/alias semantics remain unstabilized. See [validation and ownership](docs/profile-input-validation.md).
 

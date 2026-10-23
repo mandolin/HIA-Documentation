@@ -35,7 +35,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run --root ../.. packages/profiles/src/index.test.ts"
+    "test": "vitest run --root ../.. packages/profiles/src"
   },
   "dependencies": {
     "@hia-doc/profile": "workspace:*"

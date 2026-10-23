@@ -7,14 +7,22 @@ import { readFile } from "node:fs/promises";
 import { createHiaDiagnostic } from "@hia-doc/core";
 import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
 import { isProfileJsonDataGraph } from "./profile-json-data.js";
+import { traverseProfileInheritance } from "./profile-graph.js";
 
+/** @lang zh-CN 本运行时精确支持的草案wire版本，与单份profileVersion/包版本独立。 @lang en Exact draft wire version supported by this runtime, independent of individual profileVersion/package versions. */
 export const HIA_PROFILE_SCHEMA_VERSION = "0.1.0-draft";
+/** @lang zh-CN 语义分层闭集，不自动排序或建立继承优先级；常量应只读使用。 @lang en Closed semantic layers, without automatic ordering or inheritance precedence; treat the constant as read-only. */
 export const HIA_PROFILE_LAYERS = ["stable", "compat", "bridge", "extension"] as const;
+/** @lang zh-CN 标签生命周期闭集，alias状态要求目标引用；常量应只读使用。 @lang en Closed tag lifecycle states, with alias status requiring a target reference; treat the constant as read-only. */
 export const HIA_PROFILE_TAG_STATUSES = ["stable", "alias", "deprecated", "reserved", "experimental"] as const;
+/** @lang zh-CN 标签适用位置闭集，不代表解析器自动具备所有位置的实现。 @lang en Closed tag scopes, without implying that parsers implement every scope. */
 export const HIA_PROFILE_TAG_SCOPES = ["block", "inline", "file", "region", "directive"] as const;
+/** @lang zh-CN 声明诊断的严重度闭集，error用于阻止无效输入消费。 @lang en Closed declared diagnostic severities, with error used to block invalid-input consumption. */
 export const HIA_PROFILE_DIAGNOSTIC_SEVERITIES = ["info", "warning", "error"] as const;
+/** @lang zh-CN 草案schema的完整canonical身份，不是运行时网络抓取指令。 @lang en Complete canonical identity of the draft schema, not a runtime network-fetch instruction. */
 export const HIA_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json";
 
+/** @lang zh-CN 2020-12结构定义，不裁决继承环/别名链等运行时语义；导出对象应只读使用，未在运行时冻结。 @lang en 2020-12 structural definition, excluding runtime semantics such as inheritance cycles/alias chains; treat this unfrozen exported object as read-only. */
 export const HIA_PROFILE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: HIA_PROFILE_SCHEMA_ID,
@@ -152,34 +160,55 @@ export const HIA_PROFILE_JSON_SCHEMA = {
   }
 } as const;
 
+/** @lang zh-CN 四种已声明语义层的字面类型。 @lang en Literal type of the four declared semantic layers. */
 export type HiaProfileLayer = typeof HIA_PROFILE_LAYERS[number];
+/** @lang zh-CN 已声明标签生命周期的字面类型。 @lang en Literal type of declared tag lifecycle states. */
 export type HiaProfileTagStatus = typeof HIA_PROFILE_TAG_STATUSES[number];
+/** @lang zh-CN 五类标签位置的字面类型。 @lang en Literal type of the five tag scopes. */
 export type HiaProfileTagScope = typeof HIA_PROFILE_TAG_SCOPES[number];
+/** @lang zh-CN 声明诊断的字面严重度类型。 @lang en Literal severity type for declared diagnostics. */
 export type HiaProfileDiagnosticSeverity = typeof HIA_PROFILE_DIAGNOSTIC_SEVERITIES[number];
+/** @lang zh-CN 兼容输入的开放对象视图，unknown值仍须经过普通JSON检查，不是有效JSON证明。 @lang en Open object view for compatible inputs; unknown values still require ordinary-JSON validation and are not proof of valid JSON. */
 export type HiaProfileJsonObject = Record<string, unknown>;
 
+/** @lang zh-CN 草案配置的兼容输入视图，宽string字段不代表通过版本/闭集校验；有效对象由调用者拥有。 @lang en Compatible draft input view; broad string fields do not prove version/closed-set validation, and valid objects remain caller-owned. */
 export interface HiaDocumentationProfile {
+  /** @lang zh-CN 精确wire身份；静态string保留旧输入兼容，runtime只接受当前草案。 @lang en Exact wire identity; static string retains legacy input compatibility, while runtime accepts only the current draft. */
   schemaVersion: string;
+  /** @lang zh-CN 小写字母/数字/点/下划线/短横线身份，集合内唯一。 @lang en Identity using lowercase letters/digits/dot/underscore/hyphen, unique within a set. */
   profileId: string;
+  /** @lang zh-CN 配置自身语义版本，非空文本，不由schema版本推导。 @lang en The profile's semantic version, nonempty text independent of schema version. */
   profileVersion: string;
+  /** @lang zh-CN 展示名称，不作为注册表主键。 @lang en Display name, not a registry key. */
   displayName: string;
+  /** @lang zh-CN 语义层，runtime检查四项闭集，不自动赋予排序或覆盖权。 @lang en Semantic layer, checked against four values at runtime without automatic ordering or override authority. */
   layer: HiaProfileLayer | string;
+  /** @lang zh-CN 精确父身份列表，可为空；不自动读取文件或解析版本范围。 @lang en Exact parent identity list, possibly empty, without automatic file loading or version-range resolution. */
   extends: string[];
+  /** @lang zh-CN 消费/产生的契约引用，仅检查外壳，不自动验证对应artifact。 @lang en Consumed/produced contract references, with envelope checks only and no automatic artifact validation. */
   contracts: HiaProfileContractRef[];
+  /** @lang zh-CN 适用数据面文本列表。 @lang en List of applicable data-surface names. */
   targets: string[];
+  /** @lang zh-CN 本地标签声明，继承查询不回写此数组。 @lang en Local tag declarations, never rewritten by inherited queries. */
   tags: HiaProfileTagDefinition[];
+  /** @lang zh-CN 本地规则声明，不由此runtime执行。 @lang en Local rule declarations, not executed by this runtime. */
   rules: HiaProfileRuleDefinition[];
+  /** @lang zh-CN 本地映射声明，不自动执行或深合并。 @lang en Local mapping declarations, without automatic execution or deep merging. */
   mappings: HiaProfileMappingDefinition[];
+  /** @lang zh-CN 本地诊断声明，与校验过程产生的诊断数组不同。 @lang en Local diagnostic declarations, distinct from diagnostics emitted by validation. */
   diagnostics: HiaProfileDiagnosticDefinition[];
+  /** @lang zh-CN 能力元数据普通JSON，不自动授予宿主能力或权限。 @lang en Ordinary-JSON capability metadata, without automatic host capabilities or permissions. */
   capabilities: HiaProfileJsonObject;
 }
 
+/** @lang zh-CN 契约名称与可选版本/角色的开放引用外壳，不解析版本范围或网络位置。 @lang en Open reference envelope containing contract name and optional version/role, without version-range or network resolution. */
 export interface HiaProfileContractRef {
   name: string;
   version?: string;
   role?: string;
 }
 
+/** @lang zh-CN 本地标签外壳；aliasFor参与链解析，其它约束/映射正文保留给领域消费者。 @lang en Local tag envelope; aliasFor participates in chain resolution while other constraints/mapping content remain for domain consumers. */
 export interface HiaProfileTagDefinition {
   name: string;
   status: HiaProfileTagStatus | string;
@@ -195,6 +224,7 @@ export interface HiaProfileTagDefinition {
   metadata?: HiaProfileJsonObject;
 }
 
+/** @lang zh-CN 规则外壳；optionsSchema不在此执行，messages须含string default且其它值可为空string。 @lang en Rule envelope; optionsSchema is not executed here, and messages requires a string default while other values may be empty strings. */
 export interface HiaProfileRuleDefinition {
   ruleId: string;
   category?: string;
@@ -207,6 +237,7 @@ export interface HiaProfileRuleDefinition {
   metadata?: HiaProfileJsonObject;
 }
 
+/** @lang zh-CN 映射文本与策略元数据，不构成可执行代码；diagnostics只检查声明引用。 @lang en Mapping text and policy metadata, not executable code; diagnostics only checks declaration references. */
 export interface HiaProfileMappingDefinition {
   from: string;
   to: string;
@@ -217,6 +248,7 @@ export interface HiaProfileMappingDefinition {
   diagnostics?: string[];
 }
 
+/** @lang zh-CN 可查询的诊断声明；relatedLocations保持任意普通JSON数组，不解释为文件读取授权。 @lang en Queryable diagnostic declaration; relatedLocations remains an arbitrary ordinary-JSON array and grants no file-reading permission. */
 export interface HiaProfileDiagnosticDefinition {
   code: string;
   severity: HiaProfileDiagnosticSeverity | string;
@@ -227,31 +259,37 @@ export interface HiaProfileDiagnosticDefinition {
   suggestions?: string[];
 }
 
+/** @lang zh-CN 校验的调用者上下文；path原样加入字段定位，不是自动脱敏路径。 @lang en Caller context for validation; path is retained in field locations without automatic sanitization. */
 export interface HiaProfileLoadOptions {
   path?: string;
 }
 
+/** @lang zh-CN 文件加载的兼容结果视图；先检查diagnostics，profile可能是原始非法对象或空占位，类型本身不是校验通过证明。 @lang en Compatible file-load result view; inspect diagnostics first, because profile may be an invalid raw object or empty placeholder and its type is not validation proof. */
 export interface HiaLoadedProfile {
   profile: HiaDocumentationProfile;
   diagnostics: HiaDiagnostic[];
   path?: string;
 }
 
+/** @lang zh-CN 集合的静态配置列表输入；runtime仍防御非法容器/成员。 @lang en Static profile-list input for a set; runtime still defends against invalid containers/members. */
 export interface HiaProfileSetInput {
   profiles: HiaDocumentationProfile[];
 }
 
+/** @lang zh-CN 新注册表及校验诊断；成员保留原引用，语义无效成员仍可检查元数据，使用期间须保持不变。 @lang en New registry and validation diagnostics; members retain original references, semantically invalid entries remain inspectable as metadata, and data must stay unchanged during use. */
 export interface HiaProfileSet {
   profiles: Map<string, HiaDocumentationProfile>;
   diagnostics: HiaDiagnostic[];
 }
 
+/** @lang zh-CN 精确标签查询，includeAliases默认false；不自动猜测大小写、命名别名或版本。 @lang en Exact tag query, with includeAliases defaulting to false and no inference of case, naming aliases or versions. */
 export interface HiaProfileTagQuery {
   profileId: string;
   tagName: string;
   includeAliases?: boolean;
 }
 
+/** @lang zh-CN 完整解析的原引用结果：profile是查询根，tag为起点，resolvedTag为终点；新aliasChain只含经过的别名、不含规范终点。 @lang en Original-reference result of complete resolution: profile is the query root, tag the starting point and resolvedTag the endpoint; the new aliasChain includes visited aliases but excludes the canonical endpoint. */
 export interface HiaResolvedProfileTag {
   profile: HiaDocumentationProfile;
   tag: HiaProfileTagDefinition;
@@ -369,7 +407,7 @@ function validateProfileFields(value: Record<string, unknown>, options: HiaProfi
  * @lang zh-CN 仅注册结构有效的配置并检查已知引用；无效成员留诊断但不占用身份，首个有效同名项优先。
  * @lang en Registers structurally valid profiles and checks known references; invalid members retain diagnostics without reserving IDs, and the first valid duplicate wins.
  * @param input <lang><zh-CN>自有数据profiles稠密数组；配置与查询结果保持调用者原引用，不冻结或深拷贝。</zh-CN><en>Own-data dense profiles array; profiles and query results retain caller references without freezing or deep copies.</en></lang>
- * @returns <lang><zh-CN>新Map与诊断；非法容器返回空Map及SET_INVALID。层不自动排序；完整继承冲突与别名环不在本接纳检查内。</zh-CN><en>A new Map and diagnostics; invalid containers return an empty Map with SET_INVALID. Layers are not automatically sorted; full inheritance conflicts and alias cycles are outside admission checks.</en></lang>
+ * @returns <lang><zh-CN>新Map与诊断；非法容器返回空Map及SET_INVALID，继承环/失效别名有错误诊断。层不自动排序；多父冲突优先级仍待定案。</zh-CN><en>A new Map and diagnostics; invalid containers return an empty Map with SET_INVALID, and inheritance cycles/invalid aliases have error diagnostics. Layers are not automatically sorted; multi-parent collision precedence awaits a decision.</en></lang>
  */
 export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
   // <lang><zh-CN>注册表属于本次集合，成员所有权仍属于调用者；先快照容器描述符，避免迭代器/getter执行。</zh-CN><en>The registry belongs to this set, while members remain caller-owned; snapshot container descriptors first to avoid iterator/getter execution.</en></lang>
@@ -403,6 +441,12 @@ export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
     }
   }
 
+  // <lang><zh-CN>一次全图迭代检查识别每条祖先回边，避免把共享祖先误报为环或对深图递归溢出。</zh-CN><en>A single iterative graph check identifies ancestor back edges without misclassifying shared ancestors or overflowing on deep graphs.</en></lang>
+  const inheritance = traverseProfileInheritance(profiles, profiles.values());
+  for (const cycle of inheritance.cycles) {
+    diagnostics.push(createProfileDiagnostic("HIA_PROFILE_EXTENDS_CYCLE", "Documentation profile inheritance contains a cycle.", "error", `${cycle.profileId}.extends.${cycle.parentIndex}`, { profileId: cycle.profileId, cycleProfileIds: cycle.profileIds }));
+  }
+
   for (const profile of profiles.values()) {
     for (const parentId of profile.extends) {
       if (!profiles.has(parentId)) {
@@ -425,18 +469,28 @@ export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
   };
 }
 
+/** @lang zh-CN 判断是否存在error严重度；warning/info不会单独阻止消费。 @lang en Checks for error severity; warning/info alone do not block consumption. */
 export function hasProfileErrors(diagnostics: readonly HiaDiagnostic[]): boolean {
   return diagnostics.some((diagnostic) => diagnostic.severity === "error");
 }
 
+/** @lang zh-CN 读取注册表元数据原引用，即使有语义错误也可检查；未知身份返回undefined，不代表配置已通过语义验收。 @lang en Reads registry metadata by original reference, including entries with semantic errors; unknown identities return undefined, and retrieval does not prove semantic acceptance. */
 export function getHiaProfile(profileSet: HiaProfileSet, profileId: string): HiaDocumentationProfile | undefined {
   return profileSet.profiles.get(profileId);
 }
 
+/** @lang zh-CN 返回排序后的身份新数组，不改变Map顺序或根据layer筛选。 @lang en Returns a new sorted identity array without changing Map order or filtering by layer. */
 export function listHiaProfileIds(profileSet: HiaProfileSet): string[] {
   return [...profileSet.profiles.keys()].sort();
 }
 
+/**
+ * @lang zh-CN 返回按标签名排序的新数组，成员保持原引用；默认只检查本地定义，含继承时有环返回空数组。
+ * @lang en Returns a new name-sorted array retaining original member references; defaults to local definitions, while inherited queries return an empty array on cycles.
+ * @param profileSet <lang><zh-CN>调用者不得在查询中修改的已接纳集合。</zh-CN><en>An admitted set that callers must not mutate during the query.</en></lang>
+ * @param profileId <lang><zh-CN>精确身份；未知身份返回空数组。</zh-CN><en>Exact identity; unknown identities return an empty array.</en></lang>
+ * @param options <lang><zh-CN>includeInherited默认false；本地元数据可在环诊断后继续检查。</zh-CN><en>includeInherited defaults to false; local metadata remains inspectable after cycle diagnostics.</en></lang>
+ */
 export function listHiaProfileTags(profileSet: HiaProfileSet, profileId: string, options: { includeInherited?: boolean } = {}): HiaProfileTagDefinition[] {
   const profile = getHiaProfile(profileSet, profileId);
   if (!profile) {
@@ -450,34 +504,30 @@ export function listHiaProfileTags(profileSet: HiaProfileSet, profileId: string,
   return tags.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/**
+ * @lang zh-CN 在有限无环继承图中解析标签与别名；失效或循环链不返回伪成功。
+ * @lang en Resolves tags and aliases in finite acyclic inheritance graphs without returning false success for invalid or cyclic chains.
+ * @param profileSet <lang><zh-CN>成员保持原引用，使用期间须保持不变。</zh-CN><en>Members retain original references and must remain unchanged during use.</en></lang>
+ * @param query <lang><zh-CN>精确配置/标签名；includeAliases默认false，只有true才允许返回有效别名解析。</zh-CN><en>Exact profile/tag names; includeAliases defaults to false and must be true to return a valid alias resolution.</en></lang>
+ * @returns <lang><zh-CN>原始配置/标签/最终标签与新aliasChain；未知、缺失目标、继承环或别名环返回undefined，不修改输入。</zh-CN><en>Original profile/tag/final-tag references and a new aliasChain; unknown entries, missing targets, inheritance cycles or alias cycles return undefined without mutations.</en></lang>
+ */
 export function resolveHiaProfileTag(profileSet: HiaProfileSet, query: HiaProfileTagQuery): HiaResolvedProfileTag | undefined {
   const profile = getHiaProfile(profileSet, query.profileId);
   if (!profile) {
     return undefined;
   }
 
-  const tag = findTagInProfileTree(profile, profileSet.profiles, query.tagName);
+  // <lang><zh-CN>本次查询只建立一次可达标签索引，避免别名每跳重新遍历深图。</zh-CN><en>Build a reachable-tag index once per query instead of traversing the deep graph on every alias hop.</en></lang>
+  const tags = indexProfileTags(profile, profileSet.profiles);
+  const tag = tags?.get(query.tagName);
   if (!tag) {
     return undefined;
   }
 
-  const aliasChain: string[] = [];
-  let resolvedTag = tag;
-  const seen = new Set<string>();
-
-  while (resolvedTag.aliasFor) {
-    if (seen.has(resolvedTag.name)) {
-      break;
-    }
-
-    seen.add(resolvedTag.name);
-    aliasChain.push(resolvedTag.name);
-    const next = findTagInProfileTree(profile, profileSet.profiles, resolvedTag.aliasFor);
-    if (!next) {
-      break;
-    }
-    resolvedTag = next;
-  }
+  // <lang><zh-CN>解析结果携带失效原因；查询只返回完整终止链，错误由集合诊断面报告。</zh-CN><en>The resolution carries failure reasons; queries return only fully terminating chains while set diagnostics report errors.</en></lang>
+  const resolution = resolveProfileAlias(tags!, tag);
+  if (resolution.failure) return undefined;
+  const { aliasChain, resolvedTag } = resolution;
 
   if (!query.includeAliases && aliasChain.length > 0) {
     return undefined;
@@ -491,6 +541,7 @@ export function resolveHiaProfileTag(profileSet: HiaProfileSet, query: HiaProfil
   };
 }
 
+/** @lang zh-CN 返回继承规则原引用；未知配置/规则或可达继承环返回undefined，不执行规则。 @lang en Returns an inherited rule by original reference; unknown profiles/rules or reachable inheritance cycles return undefined without executing rules. */
 export function getHiaProfileRule(profileSet: HiaProfileSet, profileId: string, ruleId: string): HiaProfileRuleDefinition | undefined {
   const profile = getHiaProfile(profileSet, profileId);
   if (!profile) {
@@ -499,6 +550,7 @@ export function getHiaProfileRule(profileSet: HiaProfileSet, profileId: string, 
   return collectInheritedRules(profile, profileSet.profiles).find((rule) => rule.ruleId === ruleId);
 }
 
+/** @lang zh-CN 返回继承诊断声明原引用；未知配置/代码或可达继承环返回undefined，不生成用户诊断。 @lang en Returns an inherited diagnostic declaration by original reference; unknown profiles/codes or reachable inheritance cycles return undefined without generating user diagnostics. */
 export function getHiaProfileDiagnostic(profileSet: HiaProfileSet, profileId: string, code: string): HiaProfileDiagnosticDefinition | undefined {
   const profile = getHiaProfile(profileSet, profileId);
   if (!profile) {
@@ -710,17 +762,26 @@ function readProfileCandidates(input: unknown): unknown[] | undefined {
   }
 }
 
+/** @lang zh-CN 检查本地别名的完整终止链和既有映射引用；有继承环时避免派生伪结果/重复下游噪声。 @lang en Checks complete termination of local aliases and existing mapping references, avoiding false results and cascading noise when inheritance cycles exist. */
 function validateProfileReferences(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaDiagnostic[] {
+  // <lang><zh-CN>无引用的配置不逐根遍历全图，使深层无别名配置集合仍保持线性接纳。</zh-CN><en>Profiles without references avoid per-root graph traversal, keeping admission linear for deep alias-free sets.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
+  const hasReferences = profile.tags.some((tag) => tag.aliasFor) || profile.mappings.some((mapping) => mapping.diagnostics?.length);
+  if (!hasReferences) return diagnostics;
+  const tags = indexProfileTags(profile, profiles);
+  if (!tags) return diagnostics;
 
-  for (const tag of profile.tags) {
-    if (tag.aliasFor && !findTagInProfileTree(profile, profiles, tag.aliasFor)) {
+  for (const [index, tag] of profile.tags.entries()) {
+    if (!tag.aliasFor) continue;
+    // <lang><zh-CN>同一解析函数供公开查询和诊断复用，缺失终点/环均不能停在中间标签后冒充成功。</zh-CN><en>Queries and diagnostics share one resolver so missing endpoints/cycles cannot stop at intermediate tags and masquerade as success.</en></lang>
+    const resolution = resolveProfileAlias(tags, tag);
+    if (resolution.failure) {
       diagnostics.push(createProfileDiagnostic(
-        "HIA_PROFILE_ALIAS_TARGET_UNKNOWN",
-        `Alias tag "${tag.name}" points to unknown tag "${tag.aliasFor}".`,
+        resolution.failure === "cycle" ? "HIA_PROFILE_ALIAS_CYCLE" : "HIA_PROFILE_ALIAS_TARGET_UNKNOWN",
+        resolution.failure === "cycle" ? "Profile alias chain contains a cycle." : "Profile alias chain points to an unknown tag.",
         "error",
-        `${profile.profileId}.tags.${tag.name}`,
-        { profileId: profile.profileId, tagName: tag.name, aliasFor: tag.aliasFor }
+        `${profile.profileId}.tags.${index}.aliasFor`,
+        { profileId: profile.profileId, tagName: tag.name, aliasFor: tag.aliasFor, aliasChain: resolution.aliasChain }
       ));
     }
   }
@@ -742,85 +803,59 @@ function validateProfileReferences(profile: HiaDocumentationProfile, profiles: M
   return diagnostics;
 }
 
-function collectInheritedTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, seen = new Set<string>()): HiaProfileTagDefinition[] {
-  if (seen.has(profile.profileId)) {
-    return [];
-  }
-
-  seen.add(profile.profileId);
-  const tags: HiaProfileTagDefinition[] = [];
-
-  for (const parentId of profile.extends) {
-    const parent = profiles.get(parentId);
-    if (parent) {
-      tags.push(...collectInheritedTags(parent, profiles, seen));
-    }
-  }
-
-  tags.push(...profile.tags);
-  return dedupeByName(tags);
+/** @lang zh-CN 以原列表的后序/后声明覆盖规则收集标签，继承环返回空；优先级定案前不改现有列表选择。 @lang en Collects tags with the existing postorder/later-declaration list rule, returning empty on inheritance cycles without changing list selection before a precedence decision. */
+function collectInheritedTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileTagDefinition[] {
+  const traversal = traverseProfileInheritance(profiles, [profile]);
+  return traversal.cycles.length ? [] : dedupeByName(traversal.postorder.flatMap((entry) => entry.tags));
 }
 
-function collectInheritedRules(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, seen = new Set<string>()): HiaProfileRuleDefinition[] {
-  if (seen.has(profile.profileId)) {
-    return [];
-  }
-
-  seen.add(profile.profileId);
-  const rules: HiaProfileRuleDefinition[] = [];
-
-  for (const parentId of profile.extends) {
-    const parent = profiles.get(parentId);
-    if (parent) {
-      rules.push(...collectInheritedRules(parent, profiles, seen));
-    }
-  }
-
-  rules.push(...profile.rules);
-  return dedupeById(rules, "ruleId");
+/** @lang zh-CN 保持现有后序规则覆盖与原引用，使用显式栈处理深图/拒绝环。 @lang en Preserves existing postorder rule overrides and references, using an explicit stack for deep graphs and cycle rejection. */
+function collectInheritedRules(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileRuleDefinition[] {
+  const traversal = traverseProfileInheritance(profiles, [profile]);
+  return traversal.cycles.length ? [] : dedupeById(traversal.postorder.flatMap((entry) => entry.rules), "ruleId");
 }
 
-function collectInheritedDiagnostics(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, seen = new Set<string>()): HiaProfileDiagnosticDefinition[] {
-  if (seen.has(profile.profileId)) {
-    return [];
-  }
-
-  seen.add(profile.profileId);
-  const diagnostics: HiaProfileDiagnosticDefinition[] = [];
-
-  for (const parentId of profile.extends) {
-    const parent = profiles.get(parentId);
-    if (parent) {
-      diagnostics.push(...collectInheritedDiagnostics(parent, profiles, seen));
-    }
-  }
-
-  diagnostics.push(...profile.diagnostics);
-  return dedupeById(diagnostics, "code");
+/** @lang zh-CN 保持现有后序诊断覆盖与原引用，环不产生可消费的继承声明。 @lang en Preserves existing postorder diagnostic overrides and references, with cycles producing no consumable inherited declarations. */
+function collectInheritedDiagnostics(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileDiagnosticDefinition[] {
+  const traversal = traverseProfileInheritance(profiles, [profile]);
+  return traversal.cycles.length ? [] : dedupeById(traversal.postorder.flatMap((entry) => entry.diagnostics), "code");
 }
 
-function findTagInProfileTree(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, tagName: string, seen = new Set<string>()): HiaProfileTagDefinition | undefined {
-  if (seen.has(profile.profileId)) {
-    return undefined;
+/** @lang zh-CN 查询侧先保持旧先序首命中规则，只解决终止性/环边界；待优先级确认后统一到列表。 @lang en Initially preserves the old preorder first-match lookup rule while fixing termination/cycles, pending confirmation before alignment with listing. */
+function indexProfileTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): Map<string, HiaProfileTagDefinition> | undefined {
+  const traversal = traverseProfileInheritance(profiles, [profile]);
+  if (traversal.cycles.length) return undefined;
+  // <lang><zh-CN>Map按字面名称查询，constructor/__proto__等不命中Object原型。</zh-CN><en>Map looks up literal names so constructor/__proto__ cannot hit Object prototypes.</en></lang>
+  const tags = new Map<string, HiaProfileTagDefinition>();
+  for (const entry of traversal.preorder) {
+    for (const tag of entry.tags) if (!tags.has(tag.name)) tags.set(tag.name, tag);
   }
-
-  seen.add(profile.profileId);
-  const local = profile.tags.find((tag) => tag.name === tagName);
-  if (local) {
-    return local;
-  }
-
-  for (const parentId of profile.extends) {
-    const parent = profiles.get(parentId);
-    const found = parent ? findTagInProfileTree(parent, profiles, tagName, seen) : undefined;
-    if (found) {
-      return found;
-    }
-  }
-
-  return undefined;
+  return tags;
 }
 
+/** @lang zh-CN 内部别名结果区分完整成功与失效原因，避免可选终点被误当有效解析。 @lang en Internal alias results distinguish complete success from failure reasons so an optional endpoint cannot be mistaken for valid resolution. */
+type ProfileAliasResolution =
+  | { failure?: undefined; aliasChain: string[]; resolvedTag: HiaProfileTagDefinition }
+  | { failure: "cycle" | "missing"; aliasChain: string[] };
+
+/** @lang zh-CN 迭代追踪有限别名链；每跳至多访问一次身份，不修改任何标签。 @lang en Iteratively follows finite alias chains, visiting each identity at most once without mutating tags. */
+function resolveProfileAlias(tags: Map<string, HiaProfileTagDefinition>, start: HiaProfileTagDefinition): ProfileAliasResolution {
+  // <lang><zh-CN>seen属于本次起点解析；链保存原始别名名，成功终点不计入aliasChain。</zh-CN><en>seen belongs to this starting-point resolution; the chain retains original alias names and excludes successful endpoints.</en></lang>
+  const seen = new Set<string>();
+  const aliasChain: string[] = [];
+  let current = start;
+  while (current.aliasFor) {
+    if (seen.has(current.name)) return { failure: "cycle", aliasChain };
+    seen.add(current.name);
+    aliasChain.push(current.name);
+    const next = tags.get(current.aliasFor);
+    if (!next) return { failure: "missing", aliasChain };
+    current = next;
+  }
+  return { aliasChain, resolvedTag: current };
+}
+
+/** @lang zh-CN 查询有效继承诊断视图，不把继承环当空父项继续合成。 @lang en Queries a valid inherited diagnostic view rather than treating cycles as empty parents and continuing composition. */
 function findDiagnosticInProfileTree(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, code: string): HiaProfileDiagnosticDefinition | undefined {
   return collectInheritedDiagnostics(profile, profiles).find((diagnostic) => diagnostic.code === code);
 }
