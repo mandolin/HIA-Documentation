@@ -178,7 +178,7 @@ export function defineDocumentationProducer<T extends DocumentationProducer>(pro
 /**
  * @lang zh-CN 验证后至多调用一次 producer；有效结果保留原对象/版本，执行失败、中止或无效结果转为当前版本的安全失败。
  * @lang en Invokes a producer at most once after validation; valid results retain their object/version, while execution failure, cancellation or invalid results become safe current-version failures.
- * @param producer <lang><zh-CN>已明确加载的可信模块；SDK在此重新验证描述。</zh-CN><en>Explicitly loaded trusted module whose descriptor is revalidated here.</en></lang>
+ * @param producer <lang><zh-CN>已明确加载的可信模块；SDK重新验证并为本次调用独立保存描述。</zh-CN><en>Explicitly loaded trusted module whose descriptor is revalidated and independently captured for this invocation.</en></lang>
  * @param request <lang><zh-CN>内存绝对根与相对输入定位器；无效时不调用producer。</zh-CN><en>In-memory absolute roots and relative input locators; invalid requests prevent invocation.</en></lang>
  * @param context <lang><zh-CN>默认空对象；回调/信号原样传入，在调用前与settle后检查中止。</zh-CN><en>Defaults to an empty object; callbacks/signal pass through, with abort checked before invocation and after settlement.</en></lang>
  * @returns <lang><zh-CN>验证后的原结果或无产物的failed结果；异常原文不进入SDK创建的公开诊断。</zh-CN><en>Validated original result or an artifact-free failed result; raw thrown details never enter SDK-created public diagnostics.</en></lang>
@@ -205,17 +205,25 @@ export async function runDocumentationProducer(
     ]));
   }
 
+  // <lang><zh-CN>本次调用保存已验证描述及类目/能力的独立副本；producer在执行中修改原对象不能改变验收身份或失败产物。</zh-CN><en>Keep an invocation-local copy of the validated descriptor, kinds and capabilities; producer mutations during execution cannot change admitted identity or failure results.</en></lang>
+  const descriptor: DocumentationProducerDescriptor = {
+    ...producer.descriptor,
+    inputKinds: [...producer.descriptor.inputKinds],
+    outputKinds: [...producer.descriptor.outputKinds],
+    capabilities: { ...producer.descriptor.capabilities }
+  };
+
   // <lang><zh-CN>请求需与此描述的输入kind对应；失败只返回诊断，不运行模块。</zh-CN><en>The request must match this descriptor's input kinds; failures return diagnostics without running the module.</en></lang>
   const requestDiagnostics = validateDocumentationProducerRequest(request, {
-    descriptor: producer.descriptor
+    descriptor: descriptor
   });
   if (hasDocumentationProducerErrors(requestDiagnostics)) {
-    return createFailedProducerResult(producer.descriptor, requestDiagnostics);
+    return createFailedProducerResult(descriptor, requestDiagnostics);
   }
 
   // <lang><zh-CN>已中止的请求不能开始执行，也不回显signal.reason等任意私有值。</zh-CN><en>Already-aborted requests cannot start execution and never echo arbitrary private values such as signal.reason.</en></lang>
   if (context.signal?.aborted) {
-    return createFailedProducerResult(producer.descriptor, [
+    return createFailedProducerResult(descriptor, [
       createProducerDiagnostic(
         "DOCUMENTATION_PRODUCER_ABORTED",
         "Documentation producer was aborted before execution.",
@@ -232,7 +240,7 @@ export async function runDocumentationProducer(
   } catch (error) {
     // <lang><zh-CN>只保留中止分类，异常message/stack/reason可能含私有根路径或凭据。</zh-CN><en>Retain only the abort classification because message/stack/reason may contain private roots or credentials.</en></lang>
     const aborted = context.signal?.aborted || isAbortError(error);
-    return createFailedProducerResult(producer.descriptor, [
+    return createFailedProducerResult(descriptor, [
       createProducerDiagnostic(
         aborted ? "DOCUMENTATION_PRODUCER_ABORTED" : "DOCUMENTATION_PRODUCER_EXECUTION_FAILED",
         aborted
@@ -245,17 +253,17 @@ export async function runDocumentationProducer(
 
   // <lang><zh-CN>producer可忽略signal后正常resolve；已观察到中止时，晚到结果仍不能成为可消费成功。</zh-CN><en>A producer may ignore its signal and resolve normally; after observed cancellation a late result still cannot become consumable success.</en></lang>
   if (context.signal?.aborted) {
-    return createFailedProducerResult(producer.descriptor, [
+    return createFailedProducerResult(descriptor, [
       createProducerDiagnostic("DOCUMENTATION_PRODUCER_ABORTED", "Documentation producer was aborted during execution.", "error")
     ]);
   }
 
   // <lang><zh-CN>结果还需匹配实际执行的producer身份、输出kind、状态与路径/JSON边界。</zh-CN><en>The result must also match the executed producer identity, output kinds, status, and path/JSON boundaries.</en></lang>
   const resultDiagnostics = validateDocumentationProducerResult(value, {
-    descriptor: producer.descriptor
+    descriptor: descriptor
   });
   if (hasDocumentationProducerErrors(resultDiagnostics)) {
-    return createFailedProducerResult(producer.descriptor, resultDiagnostics);
+    return createFailedProducerResult(descriptor, resultDiagnostics);
   }
 
   // <lang><zh-CN>不递归改号、不克隆产物或诊断，保留已验证producer的身份与引用语义。</zh-CN><en>Do not recursively renumber or clone artifacts/diagnostics; preserve the validated producer's identity and reference semantics.</en></lang>

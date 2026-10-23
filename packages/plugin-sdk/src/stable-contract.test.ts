@@ -83,6 +83,34 @@ describe("producer 1.0.0 candidate compatibility", () => {
 });
 
 describe("producer execution boundaries", () => {
+  it("keeps admitted identity safe if the producer mutates its descriptor before throwing", async () => {
+    // <lang><zh-CN>模块可变配置不能把未验证的私有身份写进SDK自建失败结果。</zh-CN><en>Mutable module configuration must not insert an unvalidated private identity into an SDK-created failure result.</en></lang>
+    const descriptor = fixture("descriptor", "0.1.0-draft") as DocumentationProducerDescriptor;
+    const initialId = descriptor.id;
+    const producer = defineDocumentationProducer({ descriptor, produce: async () => { descriptor.id = "C:\\private\\secret-marker"; throw new Error("private"); } });
+    const result = await runDocumentationProducer(producer, request);
+    expect(result.status).toBe("failed");
+    expect(result.producer.id).toBe(initialId);
+    expect(JSON.stringify(result)).not.toContain("secret-marker");
+    expect(validateDocumentationProducerResult(result)).toEqual([]);
+  });
+  it("compares results against the descriptor admitted before execution", async () => {
+    // <lang><zh-CN>执行中把描述和返回同时改为另一身份，不应绕过最初调用的身份约束。</zh-CN><en>Changing both descriptor and return identity during execution must not bypass the original invocation's identity constraint.</en></lang>
+    const descriptor = fixture("descriptor", "0.1.0-draft") as DocumentationProducerDescriptor;
+    const producer = defineDocumentationProducer({ descriptor, produce: async () => { descriptor.id = "changed-producer"; const result = fixture("result", "0.1.0-draft"); result.producer.id = descriptor.id; return result; } });
+    const result = await runDocumentationProducer(producer, request);
+    expect(result.status).toBe("failed");
+    expect(result.diagnostics.map(({ code }) => code)).toContain("DOCUMENTATION_PRODUCER_IDENTITY_MISMATCH");
+    expect(result.producer.id).toBe("fixture-doc");
+  });
+  it("does not accept output kinds added to a mutable descriptor during execution", async () => {
+    // <lang><zh-CN>允许类目数组必须独立保存，浅拷贝整个描述仍会共享原数组。</zh-CN><en>Admitted kind arrays need independent copies; a shallow copy of the descriptor alone would still share the original arrays.</en></lang>
+    const descriptor = fixture("descriptor", "0.1.0-draft") as DocumentationProducerDescriptor;
+    const producer = defineDocumentationProducer({ descriptor, produce: async () => { descriptor.outputKinds.push("late-output"); const result = fixture("result", "0.1.0-draft"); result.artifacts[0].kind = "late-output"; return result; } });
+    const result = await runDocumentationProducer(producer, request);
+    expect(result.status).toBe("failed");
+    expect(result.diagnostics.map(({ code }) => code)).toContain("DOCUMENTATION_PRODUCER_OUTPUT_KIND_UNDECLARED");
+  });
   it.each(["descriptor", "result"] as const)("does not echo an unknown %s field name into public diagnostics", (kind) => {
     // <lang><zh-CN>未知字段名也可能包含私有路径，闭集拒绝不应把它变成公开错误正文。</zh-CN><en>Unknown field names can contain private paths; closed-field rejection must not turn them into public error text.</en></lang>
     const value = fixture(kind, "0.1.0-draft");

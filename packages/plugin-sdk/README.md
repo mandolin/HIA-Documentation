@@ -59,6 +59,9 @@ retain their original object and wire version; artifact-owned contract reference
 are preserved. Kit-created failure results use `1.0.0` and omit raw thrown details.
 Cancellation is checked before execution and after settlement; it does not stop
 an ignored promise or roll back producer effects.
+Each invocation captures its validated descriptor, including separate kind arrays
+and capabilities, so producer mutations cannot change that invocation's admitted
+identity, allowed outputs or kit-created failure identity.
 
 Use `DocumentationProducerDiagnostic` for native diagnostic `metadata` and
 `source` fields. These fields must contain JSON-compatible data, and producers

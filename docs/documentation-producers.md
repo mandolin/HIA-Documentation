@@ -68,6 +68,12 @@ Producer and artifact identities use lower-case letters, digits, `.`, `_` and `-
 
 The runner checks definition errors before request errors and cancellation. A pre-aborted valid invocation never starts the producer. During execution, the producer receives the original request/context and may write files, emit progress or perform other host-authorized work. The kit itself performs no file or network I/O and offers no module discovery, command spawning, sandbox, timeout, transaction or rollback.
 
+Each invocation captures its validated descriptor with independent input/output
+kind arrays and capabilities. Mutating the producer's original descriptor during
+execution cannot change that call's admitted identity, result validation or
+kit-created failure identity. Later calls revalidate the then-current definition.
+This isolation does not provide producer reentrancy or serialize concurrent I/O.
+
 After the producer settles, an observed aborted signal takes precedence over a late successful return. Rejected `AbortError` values are also classified as aborted. Cancellation is cooperative: the kit waits for the producer to settle and does not terminate an ignored promise or undo work already performed. Signal reasons and raw thrown messages/stacks are omitted from kit-created public failures.
 
 A valid result is returned by reference, preserving its exact current or historical wire version, diagnostics and artifact references. The kit's own failure writer emits `1.0.0`, drops candidate artifacts and uses fixed safe execution messages. It does not automatically upgrade valid legacy results.
