@@ -61,4 +61,9 @@ jobs:
           ls -la "$RUNNER_TEMP/hia-pack"
 
       - name: Publish package tarball
-        run: npm publish "$RUNNER_TEMP"/hia-pack/*.tgz --access public --provenance --registry=https://registry.npmjs.org/
+        # 中文：记录工具版本及OIDC交换结果，避免最终PUT错误掩盖认证原因；不输出环境变量或原始调试文件。
+        # English: Record tool versions and OIDC exchange outcomes so a final PUT error cannot hide authentication failures; never dump environment variables or raw debug files.
+        run: |
+          node --version
+          npm --version
+          npm publish "$RUNNER_TEMP"/hia-pack/*.tgz --access public --provenance --registry=https://registry.npmjs.org/ --loglevel=verbose
