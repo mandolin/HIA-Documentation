@@ -25,17 +25,17 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 
 | Package | Package version | Contract surfaces | Compatibility status |
 | --- | --- | --- | --- |
-| `@hia-doc/core` | `0.1.2`, MIT; publishable manifest | core document / text i18n / source / protocol `1.0.0` source candidates; exact legacy `0.2.0` document/submodels and `0.1.0` envelope types, DLR/resource-resolution and UI-locale completeness `0.1.0-draft` | Active pre-1.0 baseline; public release candidate. |
-| `@hia-doc/config` | `0.1.6`, MIT; publishable manifest | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
+| `@hia-doc/core` | `0.1.2`, MIT; published | core document / text i18n / source / protocol `1.0.0` source candidates; exact legacy `0.2.0` document/submodels and `0.1.0` envelope types, DLR/resource-resolution and UI-locale completeness `0.1.0-draft` | Active pre-1.0 baseline; published package, with contract candidates independently managed. |
+| `@hia-doc/config` | `0.1.6`, MIT; published | config schema `0.1.0` | Published pre-1.0 package with safe brand colors, skin aliases and shared-asset routing. |
 | `@hia-doc/profile` | `0.1.0`, MIT; publishable manifest | profile schema `1.0.0` source candidate, exact legacy `0.1.0-draft` reader | Structural and registry APIs with [validation and ownership limits](profile-input-validation.md) and [consistent composition](profile-composition.md); npm/domain-profile releases remain separate. |
 | `@hia-doc/profiles` | `0.1.0`, MIT; publishable manifest | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
 | `@hia-doc/plugin-sdk` | `0.1.2`, MIT; publishable manifest | documentation producer descriptor/result `1.0.0` candidates; exact `0.1.0-draft` reader support | Candidate source definitions; existing published package contents are not modified. See producer migration guide. |
 | `@hia-doc/schemas` | `0.1.4`, MIT; publishable manifest | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; patch release carries updated producer-result and project-manifest schemas. |
-| `@hia-doc/source-linkage` | `0.1.1`, MIT; publishable manifest | doc-source-map/schema `0.1.0-draft`, metadata-only locale-resolution sidecar declaration | Active CLI/renderer/LSP query runtime; public release candidate. |
+| `@hia-doc/source-linkage` | `0.1.1`, MIT; published | doc-source-map/schema `0.1.0-draft`, metadata-only locale-resolution sidecar declaration | Published CLI/renderer/LSP query runtime and binding-projection public types. |
 | `@hia-doc/parser-jsdoc` | `0.1.0`, MIT; publishable manifest | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
-| `@hia-doc/theme-default` | `0.1.3`, MIT; publishable manifest | default renderer assets | Active renderer asset baseline; public release candidate. |
-| `@hia-doc/renderer-html` | `0.1.5`, MIT; publishable manifest | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Active renderer baseline with single-document and project-page outputs; public release candidate. |
-| `@hia-doc/cli` | `0.1.7`, MIT; publishable manifest | config, core document, JSDoc Integration, project docs manifest draft | Active CLI baseline; patch release can ingest documentation producer result artifacts into unified HTML output. |
+| `@hia-doc/theme-default` | `0.1.3`, MIT; published | default renderer assets | Published brand-color assets and responsive API signature/title wrapping. |
+| `@hia-doc/renderer-html` | `0.1.5`, MIT; published | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Published complete localized entry rendering, document/project branding and shared-asset references. |
+| `@hia-doc/cli` | `0.1.7`, MIT; published | config, core document, JSDoc Integration, project docs manifest draft | Published theme configuration consumer and explicit shared-theme asset writer; supports producer-result ingestion. |
 | `@hia-doc/lsp` | `0.1.0`, MIT; publishable manifest | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline; public release candidate. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 | `@hia-doc/browser-panel` | `0.1.0`, MIT; publishable manifest | Browser panel API | Browser-panel component; full IDE product support is separate. |

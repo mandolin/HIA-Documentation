@@ -7,20 +7,6 @@ registry status for each version.
 
 ## 未发布 / Unreleased
 
-### Documentation repair candidates — 2026-10-24
-
-Package targets: core `0.1.2`, config `0.1.6`, source-linkage `0.1.1`, theme-default `0.1.3`, renderer-html `0.1.5`, CLI `0.1.7`.
-As of 2026-10-25, core/config/theme targets are published; source-linkage/renderer/CLI targets remain pending. Do not treat this as a complete available CLI upgrade.
-中文：已发布与待发布包详见[发行状态](docs/public-package-release-plan.md)；完整CLI依赖链尚未发行完毕。
-The core runtime and source-linkage public types are included so a clean registry consumer can load the renderer and compile its declarations.
-Existing source definition candidates retain their documented compatibility boundaries; package patches do not declare the system 1.0.0 release.
-中文：六包构成完整依赖闭包，保留既有精确兼容reader。以下条目/品牌/共享资产修复随本批发行，以registry收据为准。
-
-- 新增安全品牌颜色资源API与`hia docs theme-assets --out`显式唯一写入命令；独立单文档/项目构建可用同站external资源路由共享一份CSS/JS，按HTML深度引用。theme.name支持已实现skin别名，显式skin优先。普通本地资源构建同样消费颜色覆盖。
-- Adds validated brand-color assets and an explicit sole-writer command. Same-site external routing deduplicates CSS/JS across independent document/project builds with depth-correct references. Implemented theme names alias skins; explicit skin wins. Local document/project builds also consume color overrides.
-- 项目多页、无脚本成员页和显式信息架构条目保留全部非空本地化字段（含未知扩展），与单文档共用主字段及附加字段逻辑；只有summary时只呈现一次。签名在窄屏自动换行。公共`RenderHtmlOptions.theme`支持颜色与皮肤/配色，逐字段兼容旧项目选项。
-- Project, no-script and explicit-IA entry pages preserve all nonempty localized fields, including unknown extensions, sharing primary/additional-field logic with documents. Summary-only primary content appears once. Signatures wrap on narrow screens. Public `RenderHtmlOptions.theme` provides colors and per-field skin/scheme compatibility.
-
 - 文档化配置规范增加独立的1.0.0源码定义候选，精确兼容旧0.1.0-draft reader；历史canonical原字节保持。新schema表达既有aliasFor/default消息约束，新增精确版本类型和完整字段双语文档。七份官方领域配置、包版本及系统正式发行独立管理。
 - Documentation profiles now expose an independent 1.0.0 source definition candidate with exact legacy 0.1.0-draft reader support and unchanged historical canonical bytes. The new schema expresses existing alias-target/default-message constraints; exact version typing and bilingual field documentation are added. Official domain profiles, package versions and system releases remain independent.
 
@@ -32,6 +18,22 @@ Existing source definition candidates retain their documented compatibility boun
 
 - 文档化配置规范运行时补齐既有字段/数组项和普通JSON检查；无效集合成员留诊断并跳过，不能占用有效身份。文件解析错误不再回显源码片段，调用者路径上下文仍保留。该次输入修复保持原schema、官方配置和包身份；后续继承和候选变更见上方。
 - Documentation profile runtime checks now cover existing declared fields, list items and ordinary JSON. Invalid set members retain diagnostics and are skipped without reserving valid IDs. Parse errors no longer echo source excerpts; caller path context remains. That input repair retained schema, official profile and package identities; see subsequent composition and candidate changes above. See [validation and ownership](docs/profile-input-validation.md).
+
+## 2026-10-25 — Documentation rendering repair
+
+### 发布版本 / Released versions
+
+Released packages: core `0.1.2`, config `0.1.6`, source-linkage `0.1.1`, theme-default `0.1.3`, renderer-html `0.1.5`, CLI `0.1.7`.
+All six versions are published on npm and tagged latest. A fresh CLI/DotNetDoc registry consumer passes on Node.js 22 and 24.
+中文：六包完整依赖链已发布并经全新安装验收，详见[发行状态](docs/public-package-release-plan.md)。
+The core runtime and source-linkage public types are included so a clean registry consumer can load the renderer and compile its declarations.
+Existing source definition candidates retain their documented compatibility boundaries; package patches do not declare the system 1.0.0 release.
+中文：六包构成完整依赖闭包，保留既有精确兼容reader。以下条目/品牌/共享资产修复随本批发行，以registry收据为准。
+
+- 新增安全品牌颜色资源API与`hia docs theme-assets --out`显式唯一写入命令；独立单文档/项目构建可用同站external资源路由共享一份CSS/JS，按HTML深度引用。theme.name支持已实现skin别名，显式skin优先。普通本地资源构建同样消费颜色覆盖。
+- Adds validated brand-color assets and an explicit sole-writer command. Same-site external routing deduplicates CSS/JS across independent document/project builds with depth-correct references. Implemented theme names alias skins; explicit skin wins. Local document/project builds also consume color overrides.
+- 项目多页、无脚本成员页和显式信息架构条目保留全部非空本地化字段（含未知扩展），与单文档共用主字段及附加字段逻辑；只有summary时只呈现一次。签名在窄屏自动换行。公共`RenderHtmlOptions.theme`支持颜色与皮肤/配色，逐字段兼容旧项目选项。
+- Project, no-script and explicit-IA entry pages preserve all nonempty localized fields, including unknown extensions, sharing primary/additional-field logic with documents. Summary-only primary content appears once. Signatures wrap on narrow screens. Public `RenderHtmlOptions.theme` provides colors and per-field skin/scheme compatibility.
 
 ## 2026-08-09 — Enterprise source usability
 

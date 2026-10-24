@@ -10,9 +10,9 @@ pnpm run distribution:check
 
 ## Current State
 
-### Documentation repair release — 2026-10-24
+### Documentation repair release — 2026-10-25
 
-| Package | Candidate version | Role |
+| Package | Published version | Role |
 | --- | --- | --- |
 | `@hia-doc/core` | `0.1.2` | Supplies the presentation/i18n contract APIs required by the current renderer; exact legacy readers remain available. |
 | `@hia-doc/config` | `0.1.6` | Validates brand colors, built-in skin aliases and explicit shared-asset routing. |
@@ -21,10 +21,18 @@ pnpm run distribution:check
 | `@hia-doc/renderer-html` | `0.1.5` | Preserves all localized entry fields and supports document/project branding. |
 | `@hia-doc/cli` | `0.1.7` | Consumes theme configuration and exposes the shared-asset writer. |
 
-Registry verification on 2026-10-25 confirms core `0.1.2`, config `0.1.6` and theme-default `0.1.3` are published.
-Source-linkage `0.1.1` was rejected by npm at publication; its package-specific Trusted Publisher authorization requires maintainer review.
-Renderer-html `0.1.5` and CLI `0.1.7` remain unpublished pending that dependency. The complete upgrade set is not yet available.
-中文：核心、配置和默认主题已发布；源码关联包遇到包级发布授权问题，渲染器及CLI等待依赖，当前不能宣称完整修复版可安装。
+Registry verification on 2026-10-25 confirms all six versions above are published and tagged `latest`.
+A fresh registry install of CLI `0.1.7` and DotNetDoc runner `0.1.10` passes Node.js 22/24 checks for real source signatures,
+complete localized fields, shared branded assets and strict public TypeScript declarations.
+中文：六个主仓包及六个DotNetDoc `0.1.10`包均已发布；完整安装链、下载完整性及来源关联已复核。
+
+For a .NET documentation tool directory, pin the two direct tools:
+
+```sh
+npm install --save-dev --save-exact @hia-doc/cli@0.1.7 @hia-doc/dotnetdoc-runner@0.1.10 --registry=https://registry.npmjs.org/
+```
+
+See [shared theme assets and brand colors](shared-theme-assets.md) for configuration and multipage usage.
 
 These form one dependency-ordered repair set: core, config/source-linkage/theme, renderer, CLI. Registry availability must be verified
 after each Trusted Publisher run. Other package targets remain unchanged. This package patch does not declare a system 1.0.0 release.

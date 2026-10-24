@@ -1,7 +1,8 @@
 # 共享主题资产与品牌颜色
 
 多个独立文档构建可以共享同一份主题CSS/JavaScript。每次构建只写自己的输出目录；共享文件由显式的唯一写入者生成。
-这些新增接口尚未随现有registry版本发布，请以发行记录确认可安装版本。
+这些能力已随CLI `0.1.7`、HTML渲染器 `0.1.5`、默认主题 `0.1.3`和配置包 `0.1.6`发布。
+处理.NET文档时，同时使用DotNetDoc运行器 `0.1.10`，以获得完整注释字段和可靠签名。
 
 ## 配置与命令
 
@@ -76,4 +77,5 @@ References are relocated for every page depth; manifests list only locally owned
 Colors are closed hex-valued semantic tokens consumed by both the explicit asset command and ordinary document/project builds.
 Both renderers expose `theme: { colors, skinId, scheme }`; root selection takes per-field precedence over legacy `projectSite.theme`.
 Project entry pages preserve all nonempty localized fields, including unknown extensions, with the primary field rendered once.
-Direct single-artifact pagination remains unavailable; use the existing project-manifest route. These additions are unreleased.
+Direct single-artifact pagination remains unavailable; use the existing project-manifest route.
+These additions are available in CLI `0.1.7`, renderer-html `0.1.5`, theme-default `0.1.3` and config `0.1.6`; use DotNetDoc runner `0.1.10` for .NET input.

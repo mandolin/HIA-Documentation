@@ -68,7 +68,7 @@
       "targetVersion": "0.1.1",
       "publishOrder": 30,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/theme-default",
@@ -100,7 +100,7 @@
       "targetVersion": "0.1.5",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/schemas",
@@ -124,7 +124,7 @@
       "targetVersion": "0.1.7",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [
