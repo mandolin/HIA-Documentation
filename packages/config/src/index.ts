@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 只加载静态项目配置并验证已实现选项，资源URL不授予文件写入或远程执行权限。
+ * @lang en Loads static project configuration and validates implemented options; resource URLs grant neither filesystem writes nor remote execution.
+ */
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { canonicalizeDocumentationLocale, createHiaDiagnostic } from "@hia-doc/core";
@@ -41,7 +46,10 @@ export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT = "documentation-sour
 export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION = "0.1.0-draft" as const;
 /** @lang zh-CN 正文默认关闭，显式模式仍只允许投影纯文本。 @lang en Bodies default off; explicit mode still permits projected plain text only. */
 export const HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES = ["none", "explicit-projected-text"] as const;
-export const HIA_CONFIG_THEME_NAMES = ["default"] as const;
+/** @lang zh-CN 已实现的默认主题及skin别名；未知主题继续产生兼容warning，不动态加载代码。 @lang en Implemented default theme and skin aliases; unknown themes retain compatibility warnings without dynamic code loading. */
+export const HIA_CONFIG_THEME_NAMES = ["default", "portal.classic", "portal.graphite", "portal.lumen"] as const;
+/** @lang zh-CN 镜像主题owner的semantic颜色词汇；配置校验不成为主题实现owner。 @lang en Mirrors the theme owner's semantic color vocabulary without making config validation the theme implementation owner. */
+export const HIA_CONFIG_THEME_COLOR_NAMES = ["canvas", "surface", "surfaceMuted", "border", "text", "textMuted", "accent", "accentContrast", "accentSoft", "accentHover", "focusRing", "codeBackground", "codeText", "danger"] as const;
 /** @lang zh-CN Portal owner 的内置 skin 闭集；不复用 JTH 私有 catalog。 @lang en Closed Portal-owned skin set; it does not reuse the private JTH catalog. */
 export const HIA_CONFIG_PORTAL_SKINS = ["portal.classic", "portal.graphite", "portal.lumen"] as const;
 /** @lang zh-CN skin 正交的 scheme 选择。 @lang en Scheme selection orthogonal to skin. */
@@ -139,12 +147,26 @@ export interface HiaPortalInformationArchitectureConfig {
   memberPlacement?: typeof HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS[number];
 }
 
+/** @lang zh-CN 主题选择、安全品牌颜色与资源所有权配置，不动态执行主题代码。 @lang en Theme selection, safe brand colors and resource ownership without dynamic theme-code execution. */
 export interface HiaThemeConfig {
+  /** @lang zh-CN default或已实现skin的别名；显式skin优先，未知名称兼容回退。 @lang en Default or an implemented skin alias; explicit skin wins and unknown names retain compatibility fallback. */
   name?: string;
   /** @lang zh-CN 构建期无脚本默认 skin。 @lang en Build-time no-script default skin. */
   skin?: typeof HIA_CONFIG_PORTAL_SKINS[number];
   /** @lang zh-CN 构建期无脚本默认 scheme。 @lang en Build-time no-script default scheme. */
   scheme?: typeof HIA_CONFIG_PORTAL_SCHEMES[number];
+  /** @lang zh-CN 明确的安全hex品牌颜色；省略时保留内置palette，不接收CSS代码。 @lang en Explicit safe hex brand colors; omission retains built-in palettes and accepts no CSS code. */
+  colors?: Partial<Record<typeof HIA_CONFIG_THEME_COLOR_NAMES[number], string>>;
+  /** @lang zh-CN 外部共享资源只声明同站URL引用，不授予向父目录写文件权限。 @lang en External shared assets declare same-site URL references only, granting no parent-directory file writes. */
+  assets?: HiaThemeAssetsConfig;
+}
+
+/** @lang zh-CN 主题资源唯一所有者策略；默认local，external由独立的theme-assets命令或宿主提供资源。 @lang en Theme-asset ownership policy, defaulting to local; external assets are provided by a separate theme-assets command or host. */
+export interface HiaThemeAssetsConfig {
+  /** @lang zh-CN local随构建输出，external只生成引用。 @lang en Local emits with the build, while external emits references only. */
+  mode?: "local" | "external";
+  /** @lang zh-CN external必需的同站资源目录URL，可为相对或站点根相对，不是文件系统路径。 @lang en Same-site asset-directory URL required for external mode, relative or site-root-relative, never a filesystem path. */
+  baseUrl?: string;
 }
 
 export interface HiaSourceLinkConfig {
@@ -546,6 +568,15 @@ function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targe
   validateOptionalEnum(value, "skin", HIA_CONFIG_PORTAL_SKINS, diagnostics, targetPath);
   validateOptionalEnum(value, "scheme", HIA_CONFIG_PORTAL_SCHEMES, diagnostics, targetPath);
 
+  // <lang><zh-CN>新增边界读取自有描述符，不以getter或静默忽略非法颜色/资产选项换绿色。</zh-CN><en>Read own descriptors for new boundaries without getters or silently ignoring invalid color/asset options.</en></lang>
+  for (const field of ["colors", "assets"] as const) {
+    const property = Object.getOwnPropertyDescriptor(value, field);
+    if (!property) continue;
+    if (!property.enumerable || !("value" in property) || !(field === "colors" ? isSafeThemeColors(property.value) : isSafeThemeAssets(property.value))) {
+      diagnostics.push(createConfigDiagnostic("HIA_CONFIG_THEME_OPTIONS_INVALID", "Theme colors/assets must be ordinary supported data with safe literal values.", "error", `${targetPath}.${field}`));
+    }
+  }
+
   if (typeof value.name === "string" && !HIA_CONFIG_THEME_NAMES.includes(value.name as typeof HIA_CONFIG_THEME_NAMES[number])) {
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_THEME_UNSUPPORTED",
@@ -558,6 +589,39 @@ function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targe
       }
     ));
   }
+}
+
+/** @lang zh-CN 新主题选项只接受无访问器的普通自有数据；反射异常不回显。 @lang en New theme options accept only ordinary own data without accessors, never echoing reflection errors. */
+function themeOptionData(value: unknown): Record<string, unknown> | undefined {
+  try {
+    if (!value || typeof value !== "object" || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) return undefined;
+    const result: Record<string, unknown> = Object.create(null);
+    for (const name of Reflect.ownKeys(value)) {
+      const property = Object.getOwnPropertyDescriptor(value, name);
+      if (typeof name !== "string" || !property?.enumerable || !("value" in property)) return undefined;
+      result[name] = property.value;
+    }
+    return result;
+  } catch { return undefined; }
+}
+
+/** @lang zh-CN 检查封闭semantic颜色名及hex值，不解析CSS表达式。 @lang en Checks closed semantic color names and hex values without parsing CSS expressions. */
+function isSafeThemeColors(value: unknown): boolean {
+  const colors = themeOptionData(value);
+  return Boolean(colors && Object.entries(colors).every(([name, color]) => HIA_CONFIG_THEME_COLOR_NAMES.includes(name as typeof HIA_CONFIG_THEME_COLOR_NAMES[number]) && typeof color === "string" && color.trim() === color && /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(color)));
+}
+
+/** @lang zh-CN 资源引用必须同站且无query/hash；相对父路径只用于URL，不用于写入。 @lang en Asset references must remain same-site without queries/fragments; parent-relative segments are URLs only, never write paths. */
+function isSafeThemeAssets(value: unknown): boolean {
+  const assets = themeOptionData(value);
+  if (!assets || Object.keys(assets).some((name) => !["mode", "baseUrl"].includes(name))) return false;
+  const mode = assets.mode ?? "local";
+  if (mode === "local") return assets.baseUrl === undefined;
+  if (mode !== "external" || typeof assets.baseUrl !== "string" || !assets.baseUrl || /[\s\\<>"']/u.test(assets.baseUrl) || assets.baseUrl.startsWith("//") || /^[a-z][a-z0-9+.-]*:/iu.test(assets.baseUrl)) return false;
+  try {
+    const url = new URL(assets.baseUrl, "https://hia.invalid/base/");
+    return url.origin === "https://hia.invalid" && !url.search && !url.hash;
+  } catch { return false; }
 }
 
 function validateSourceConfig(value: unknown, diagnostics: HiaDiagnostic[], targetPath: string): void {

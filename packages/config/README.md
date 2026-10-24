@@ -2,6 +2,9 @@
 
 HIA 文档工具共享的配置 contract 与 loader。
 
+共享资源可通过`docs.theme.assets`配置同站URL，品牌颜色通过`docs.theme.colors`交给显式资源生成命令。
+详见[共享资产和安全颜色](../../docs/shared-theme-assets.md)。项目模式的`docs.theme.name`可使用已实现的skin名称作为别名，显式`skin`优先；未知名称继续警告并回退默认，不加载任意provider。
+
 ## Project Manifest Source Candidate
 
 The project-manifest contract is a `1.0.0` source candidate with exact `0.1.0-draft` runtime compatibility. It is separate from the project-config schema and documentation-profile runtime. Package `0.1.5` and registry availability are not promoted by a source contract change.

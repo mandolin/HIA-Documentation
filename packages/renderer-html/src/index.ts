@@ -21,6 +21,7 @@ import {
   type HiaSymbol
 } from "@hia-doc/core";
 import type { GeneratedDocumentationBindingHostProjection } from "@hia-doc/source-linkage";
+import { relocateDefaultThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
 import {
   DEFAULT_THEME_CSS_PATH,
   DEFAULT_THEME_JS_PATH,
@@ -67,6 +68,7 @@ import {
 export * from "./information-architecture.js";
 export * from "./portal-ui-locale.js";
 export * from "./presentation-profile.js";
+export { renderThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
 
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
 /**
@@ -101,6 +103,8 @@ export interface RenderHtmlOptions {
   locale?: string;
   title?: string;
   includeThemeAssets?: boolean;
+  /** @lang zh-CN 默认本地资源；external只引用同站共享资源，不越过输出根写文件。 @lang en Defaults to local assets; external references same-site shared assets without writing outside the output root. */
+  themeAssets?: ThemeAssetRouting;
   /**
    * 统一项目文档站的输出与源码呈现策略；普通单文档渲染忽略该字段。
    * Output and source-presentation policy for unified project sites; ignored by single-document rendering.
@@ -799,10 +803,12 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
     }
   }
 
+  // <lang><zh-CN>资源路由在manifest前完成，使文件清单只包含本次真正拥有的文件。</zh-CN><en>Route assets before the manifest so the inventory contains only files owned by this output.</en></lang>
+  const routedFiles = relocateDefaultThemeAssets(files, options.themeAssets);
   return {
-    files,
+    files: routedFiles,
     diagnostics: [],
-    manifest: createManifest(document, files, options)
+    manifest: createManifest(document, routedFiles, options)
   };
 }
 
@@ -894,12 +900,14 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
     }
   }
 
+  // <lang><zh-CN>共享模式删除副本并重定位全部完整页面引用，manifest不再声称拥有外部文件。</zh-CN><en>Shared mode removes copies and relocates complete-page references; the manifest no longer claims external-file ownership.</en></lang>
+  const routedFiles = relocateDefaultThemeAssets(files, options.themeAssets);
   return {
-    files,
+    files: routedFiles,
     diagnostics: renderedProjectInput.diagnostics ?? [],
     manifest: createProjectManifest(
       renderedProjectInput,
-      files,
+      routedFiles,
       pageTitle,
       options,
       navigationIndex,

@@ -1,0 +1,63 @@
+# 共享主题资产与品牌颜色
+
+多个独立文档构建可以共享同一份主题CSS/JavaScript。每次构建只写自己的输出目录；共享文件由显式的唯一写入者生成。
+这些新增接口尚未随现有registry版本发布，请以发行记录确认可安装版本。
+
+## 配置与命令
+
+例如站点包含`site/half-a/zh-CN/`、`site/half-b/en/`等半边，公共资源位于`site/assets/`：
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "docs": {
+    "theme": {
+      "scheme": "light",
+      "colors": { "accent": "#0f4f82" },
+      "assets": { "mode": "external", "baseUrl": "../../assets/" }
+    }
+  }
+}
+```
+
+```sh
+hia docs theme-assets --config hia.config.json --out site
+hia docs build --config hia.config.json --project-manifest half-a.json --out site/half-a/zh-CN --locale zh-CN
+hia docs build --config hia.config.json --input half-b.hia.json --out site/half-b/en --locale en
+```
+
+`theme-assets`必须显式提供`--out`，固定写入`assets/hia-default.css`和`assets/hia-default.js`，不生成页面。
+`docs.theme.colors`由该资源生成命令消费；普通`docs build`的本地资产路径尚不消费颜色覆盖。
+共享模式下，文档构建不输出CSS/JavaScript副本，并按各HTML深度生成引用，包含无脚本页面。
+`hia-manifest.json`只列本次构建拥有的文件，不把外部资源伪报为本次产物。
+
+资源写入者与所有半边应采用同一份品牌配置。`baseUrl`相对于每次`--out`根解释，亦可使用`/docs/assets/`这样的站点根路径；
+它只描述URL，不授权构建向父目录写文件。不同层级的半边需分别选择适当的相对URL。
+默认`mode: "local"`保持原有输出方式；`includeThemeAssets: false`仍只控制是否随本次输出资源。
+
+## 安全颜色与兼容性
+
+允许的semantic token为`canvas`、`surface`、`surfaceMuted`、`border`、`text`、`textMuted`、`accent`、
+`accentContrast`、`accentSoft`、`accentHover`、`focusRing`、`codeBackground`、`codeText`、`danger`。
+值只接受`#RGB`、`#RGBA`、`#RRGGBB`、`#RRGGBBAA`，不接受CSS片段、`var()`或`url()`。
+省略的token沿用内置palette，默认常量不会被修改。覆盖作用于所选palette；请复核自身颜色与所选scheme的对比度。
+
+资源URL只允许同站相对或根相对目录；协议、远端地址、query、fragment和反斜杠会被拒绝。
+不支持下载任意自定义CSS或自动修改宿主的样式文件。
+
+程序调用可使用`getDefaultThemeAssets({ colors })`（主题包）或`renderThemeAssets({ colors })`（HTML渲染器），
+两者只返回内存文件记录。两种HTML渲染函数的`themeAssets`选项接受相同资源路由：
+
+```js
+renderProjectHtmlDocument(project, {
+  themeAssets: { mode: "external", baseUrl: "../../assets/" }
+});
+```
+
+## English summary
+
+Run `hia docs theme-assets --config hia.config.json --out <site-root>` once to emit one branded CSS/JS pair.
+Configure each independent build with `docs.theme.assets: { mode: "external", baseUrl: "../../assets/" }`.
+References are relocated for every page depth; manifests list only locally owned files. URLs do not authorize parent-directory writes.
+Colors are closed hex-valued semantic tokens consumed by the explicit asset command; ordinary local-asset `docs build` does not yet apply them.
+The renderer exposes `renderThemeAssets({ colors })` and the `themeAssets` routing option. These additions are unreleased.

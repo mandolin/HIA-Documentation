@@ -5,6 +5,7 @@ Command line entry for the HIA documentation system.
 Current scope:
 
 - `hia --help`
+- `hia docs theme-assets --out <site-root> [--config <file>]` — see [shared assets and brand colors](../../docs/shared-theme-assets.md).
 - `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 - `hia docs evidence [--docs-dir <dir>] [--out <file>]`
 - `hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]`

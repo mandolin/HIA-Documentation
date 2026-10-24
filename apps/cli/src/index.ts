@@ -13,6 +13,7 @@ import {
   type BrowserPanelRelationGraphInput
 } from "@hia-doc/browser-panel";
 import {
+  HIA_CONFIG_PORTAL_SKINS,
   hasConfigErrors,
   loadHiaProjectConfig,
   validateHiaProjectManifest,
@@ -51,6 +52,7 @@ import {
 import {
   renderHtmlDocument,
   renderProjectHtmlDocument,
+  renderThemeAssets,
   type RenderHtmlOptions,
   type RenderProjectDocSourceMapRef,
   type RenderProjectEntry,
@@ -242,6 +244,7 @@ Usage:
 
 Commands:
   docs build      Generate HTML documentation from a HIA document fixture.
+  docs theme-assets Write one CSS/JS pair under explicit --out for shared-site ownership.
   docs evidence   Summarize generated project documentation outputs without reading source bodies.
   docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
   docs continuity Compare two public-safe documentation evidence summaries without reading target state.
@@ -357,6 +360,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
     return runDocsBuild(normalizedArgv.slice(2), io);
   }
 
+  // <lang><zh-CN>共享资源具有显式唯一输出根；此命令不构建业务文档或向半边目录隐式写入。</zh-CN><en>Shared resources have an explicit sole output root; this command neither builds business documents nor implicitly writes half-site directories.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "theme-assets") {
+    return runThemeAssets(normalizedArgv.slice(2), io);
+  }
+
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "evidence") {
     return runDocsEvidence(normalizedArgv.slice(2), io);
   }
@@ -398,6 +406,33 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   io.stderr(`Unknown command: ${normalizedArgv.join(" ")}`);
   io.stderr("Run `hia --help` for available commands.");
   return 1;
+}
+
+/** @lang zh-CN 将共享主题文件写入显式--out根，配置无效时不创建目录；不读取文档工件。 @lang en Writes shared theme files under explicit --out, creating no directory on invalid config and reading no documentation artifacts. */
+async function runThemeAssets(argv: string[], io: CliIo): Promise<number> {
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--out"]);
+  const supported = argv.every((value, index) => index % 2 === 1 || value === "--config" || value === "--out");
+  if (!supported || !readOption(argv, "--out")) optionDiagnostics.push(createCliDiagnostic("HIA_CLI_THEME_ASSETS_OPTIONS_INVALID", "docs theme-assets requires --out and accepts only --config/--out.", "error"));
+  reportDiagnostics(optionDiagnostics, io);
+  if (optionDiagnostics.some((item) => item.severity === "error")) return 1;
+  const configPath = readOption(argv, "--config");
+  const config = await loadHiaProjectConfig(configPath ? { cwd: io.cwd, configPath } : { cwd: io.cwd });
+  reportDiagnostics(config.diagnostics, io);
+  if (hasConfigErrors(config.diagnostics)) return 1;
+  const output = resolveConfiguredPath(readOption(argv, "--out"), undefined, "dist/docs", io.cwd, config.baseDir);
+  // <lang><zh-CN>缺省颜色保持默认资产，不把undefined作为显式配置传入。</zh-CN><en>Absent colors preserve default assets instead of passing undefined as an explicit option.</en></lang>
+  const colors = config.config.docs?.theme?.colors;
+  const files = renderThemeAssets(colors ? { colors } : {});
+  // <lang><zh-CN>固定相对资源路径先全部验证，再创建目录；URL配置从不进入文件路径计算。</zh-CN><en>Validate every fixed relative asset path before creating directories; URL configuration never enters filesystem path calculations.</en></lang>
+  const targets = files.map((file) => ({ file, relative: normalizeOutputRelativePath(file.path) }));
+  if (targets.some((target) => !target.relative)) return 1;
+  for (const { file, relative } of targets) {
+    const target = path.join(output, relative!);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, file.contents, "utf8");
+  }
+  io.stdout(`Generated ${files.length} shared theme assets at ${output}`);
+  return 0;
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
@@ -2860,6 +2895,9 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
     options.includeThemeAssets = docsConfig.renderer.includeThemeAssets;
   }
 
+  // <lang><zh-CN>共享目录只作为renderer URL路由，不作为当前构建的磁盘输出根。</zh-CN><en>The shared directory is renderer URL routing only, never this build's filesystem output root.</en></lang>
+  if (docsConfig.theme?.assets) options.themeAssets = { ...docsConfig.theme.assets };
+
   options.projectSite = {
     layout: docsConfig.renderer?.projectLayout ?? "split-site",
     ...(docsConfig.renderer?.informationArchitecture
@@ -2884,7 +2922,8 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
       maxLines: docsConfig.source?.maxLines ?? 400
     },
     theme: {
-      skinId: docsConfig.theme?.skin ?? "portal.classic",
+      // <lang><zh-CN>显式skin优先；已实现的非default名称作为同一皮肤选择的别名，不加载任意主题提供者。</zh-CN><en>Explicit skin wins; implemented non-default names alias the same skin selection without loading arbitrary theme providers.</en></lang>
+      skinId: docsConfig.theme?.skin ?? HIA_CONFIG_PORTAL_SKINS.find((skin) => skin === docsConfig.theme?.name) ?? "portal.classic",
       scheme: docsConfig.theme?.scheme ?? "system"
     }
   };

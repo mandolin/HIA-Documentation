@@ -30,6 +30,10 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ## Contract
 
+`renderThemeAssets({ colors })` exposes a branded CSS/JS pair for an explicit sole writer. Both rendering functions accept
+`themeAssets: { mode: "external", baseUrl: "../../assets/" }`, omitting local copies and relocating references at every page depth.
+中文：共享资源由明确的唯一写入者生成，不隐式越过当前输出目录。见[配置与边界](../../docs/shared-theme-assets.md)。
+
 The renderer manifest schema version is exported as `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION`. Project navigation index identity is exported as `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT` and `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION`. Portal IA identity, exact draft version, vocabulary, types, resolver, touched-label catalog, and owner-local Draft 2020-12 schema are exported through `DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_*`. `PORTAL_PRESENTATION_PROFILE_PATH` and `createPortalPresentationBundle()` expose the Portal-owner adoption surface for the neutral presentation contract. `RenderProjectOwnerAdoptionSummary` remains a structural consumer view of the CLI-owned adoption-kit projection; the renderer does not own or reinterpret the full kit contract. `RenderProjectBusinessFlowDocumentationProjectionRef` is the body-free renderer-manifest linkage for the full W-P122 projection stored in the project index.
 
 Native `<details>/<summary>` remains the disclosure authority. Expanded state comes from `details[open]` and the browser accessibility mapping; the renderer does not duplicate authored `aria-expanded`. Split-site 的 `<noscript>` 入口会转到独立多页输出；默认 `fetch` 源码在该输出中降级为构建生成的同源资源链接，而不是恢复外部 locator。Print/forced-colors fallback 由 theme asset 提供。

@@ -67,7 +67,7 @@ describe("@hia-doc/config", () => {
       expect(HIA_CONFIG_SOURCE_MODES).toEqual(["none", "file", "external"]);
       expect(HIA_CONFIG_SOURCE_PRESENTATIONS).toEqual(["none", "link", "embed", "fetch"]);
       expect(HIA_CONFIG_PROJECT_LAYOUTS).toEqual(["split-site", "single-page"]);
-      expect(HIA_CONFIG_THEME_NAMES).toEqual(["default"]);
+      expect(HIA_CONFIG_THEME_NAMES).toEqual(["default", "portal.classic", "portal.graphite", "portal.lumen"]);
       expect(HIA_CONFIG_PORTAL_SKINS).toEqual(["portal.classic", "portal.graphite", "portal.lumen"]);
       expect(HIA_CONFIG_PORTAL_SCHEMES).toEqual(["system", "light", "dark"]);
       expect(HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES).toEqual(["none", "explicit-public"]);

@@ -32,6 +32,12 @@ Native `<details>/<summary>` keeps the `open` attribute as the sole disclosure s
 三套 Portal-owned skin、system/light/dark 配色、可见选择器和本地阅读偏好。偏好不进入 profile/manifest/search；第三方
 主题市场与完整 Portal P6/P7 仍不在当前范围。
 
+## Brand colors
+
+`getDefaultThemeAssets({ colors: { accent: "#0f4f82" } })` returns new asset records with validated semantic hex-color overrides.
+默认常量不变；只接受既有token与安全十六进制颜色，不接受CSS代码。配色需按所选scheme复核对比度。
+See [shared assets and branding](../../docs/shared-theme-assets.md).
+
 ## Font Policy
 
 The default theme does not bundle, download or redistribute font files. Its CSS only references local open-source font families and generic browser fallbacks.

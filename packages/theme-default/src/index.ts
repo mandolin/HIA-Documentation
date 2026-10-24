@@ -350,14 +350,22 @@ export function getDefaultDocumentationPortalThemeReference(): DocumentationPort
 }
 
 /**
- * 返回 renderer 可直接分发的默认主题资源副本。
- * Returns default theme asset records ready for renderer distribution.
+ * @lang zh-CN 返回renderer可直接分发的默认主题资源副本，可追加已校验品牌颜色，不改变默认常量。
+ * @lang en Returns default-theme asset copies ready for renderer distribution, optionally appending validated brand colors without changing default constants.
+ * @param options <lang><zh-CN>可选封闭十六进制颜色token；缺省保持原始资源。</zh-CN><en>Optional closed hex color tokens; omission preserves original assets.</en></lang>
+ * @returns <lang><zh-CN>两份新CSS/JS文件记录，无文件I/O。</zh-CN><en>Two new CSS/JS file records without filesystem I/O.</en></lang>
+ * @throws {TypeError} <lang><zh-CN>非法颜色或访问器以HIA_THEME_COLORS_INVALID拒绝。</zh-CN><en>Invalid colors or accessors are rejected with HIA_THEME_COLORS_INVALID.</en></lang>
  */
-export function getDefaultThemeAssets(): HiaThemeAsset[] {
+export function getDefaultThemeAssets(options: HiaThemeAssetOptions = {}): HiaThemeAsset[] {
+  // <lang><zh-CN>只在副本中追加已校验的颜色，默认常量和JS资源不变，不接收任意CSS片段。</zh-CN><en>Append validated colors only to a copy, leaving default constants and JavaScript unchanged and accepting no arbitrary CSS fragments.</en></lang>
+  const declarations = createBrandColorDeclarations(options);
+  const branding = declarations.length
+    ? `\n\n:root, :root[data-hia-skin], :root[data-hia-skin][data-hia-scheme] {\n${declarations.join("\n")}\n}`
+    : "";
   return [
     {
       path: DEFAULT_THEME_CSS_PATH,
-      contents: DEFAULT_THEME_CSS,
+      contents: DEFAULT_THEME_CSS + branding,
       contentType: "text/css; charset=utf-8"
     },
     {
@@ -366,6 +374,36 @@ export function getDefaultThemeAssets(): HiaThemeAsset[] {
       contentType: "text/javascript; charset=utf-8"
     }
   ];
+}
+
+/** @lang zh-CN 默认主题的构建期品牌选项；只改变明确颜色，不声明新皮肤或公开权限。 @lang en Build-time brand options for the default theme, changing only explicit colors without declaring a new skin or disclosure permission. */
+export interface HiaThemeAssetOptions {
+  /** @lang zh-CN 封闭semantic token名及#RGB/#RGBA/#RRGGBB/#RRGGBBAA值，适用于当前配色；调用者须复核所选scheme对比度。 @lang en Closed semantic token names and hex color values, applying to the selected palette; callers must review contrast for their chosen scheme. */
+  colors?: Partial<Record<DocumentationPortalThemeColorTokenName, string>>;
+}
+
+/** @lang zh-CN 快照普通数据选项并生成安全颜色声明；非法值/访问器/反射异常统一拒绝，不回显原值。 @lang en Snapshots ordinary data options into safe color declarations, uniformly rejecting invalid values/accessors/reflection failures without echoing values. */
+function createBrandColorDeclarations(options: HiaThemeAssetOptions): string[] {
+  try {
+    // <lang><zh-CN>描述符读取不调用getter；颜色容器只接受普通对象或null-prototype对象。</zh-CN><en>Descriptor reads do not invoke getters; color containers accept only ordinary or null-prototype objects.</en></lang>
+    const descriptor = Object.getOwnPropertyDescriptor(options, "colors");
+    if (!descriptor) return [];
+    if (!("value" in descriptor) || !descriptor.enumerable) throw new TypeError();
+    const colors: unknown = descriptor.value;
+    if (colors === undefined) return [];
+    if (!colors || typeof colors !== "object" || Array.isArray(colors) || ![Object.prototype, null].includes(Object.getPrototypeOf(colors))) throw new TypeError();
+    const declarations: string[] = [];
+    for (const name of Reflect.ownKeys(colors)) {
+      const property = Object.getOwnPropertyDescriptor(colors, name);
+      if (typeof name !== "string" || !DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES.includes(name as DocumentationPortalThemeColorTokenName) || !property?.enumerable || !("value" in property)) throw new TypeError();
+      const value: unknown = property.value;
+      if (typeof value !== "string" || value.trim() !== value || !/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(value)) throw new TypeError();
+      declarations.push(`  --hia-color-${themeTokenCssName(name as DocumentationPortalThemeColorTokenName)}: ${value};`);
+    }
+    return declarations;
+  } catch {
+    throw new TypeError("HIA_THEME_COLORS_INVALID: Brand colors require known semantic names and literal hex values.");
+  }
 }
 
 /**
