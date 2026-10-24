@@ -10,6 +10,8 @@ registry status for each version.
 ### Documentation repair candidates — 2026-10-24
 
 Package targets: core `0.1.2`, config `0.1.6`, source-linkage `0.1.1`, theme-default `0.1.3`, renderer-html `0.1.5`, CLI `0.1.7`.
+As of 2026-10-25, core/config/theme targets are published; source-linkage/renderer/CLI targets remain pending. Do not treat this as a complete available CLI upgrade.
+中文：已发布与待发布包详见[发行状态](docs/public-package-release-plan.md)；完整CLI依赖链尚未发行完毕。
 The core runtime and source-linkage public types are included so a clean registry consumer can load the renderer and compile its declarations.
 Existing source definition candidates retain their documented compatibility boundaries; package patches do not declare the system 1.0.0 release.
 中文：六包构成完整依赖闭包，保留既有精确兼容reader。以下条目/品牌/共享资产修复随本批发行，以registry收据为准。

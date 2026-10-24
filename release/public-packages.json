@@ -28,7 +28,7 @@
       "targetVersion": "0.1.2",
       "publishOrder": 10,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/config",
@@ -36,7 +36,7 @@
       "targetVersion": "0.1.6",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/profile",
@@ -76,7 +76,7 @@
       "targetVersion": "0.1.3",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/browser-panel",

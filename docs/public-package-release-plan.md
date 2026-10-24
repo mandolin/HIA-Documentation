@@ -10,7 +10,7 @@ pnpm run distribution:check
 
 ## Current State
 
-### Documentation repair release candidates — 2026-10-24
+### Documentation repair release — 2026-10-24
 
 | Package | Candidate version | Role |
 | --- | --- | --- |
@@ -20,6 +20,11 @@ pnpm run distribution:check
 | `@hia-doc/theme-default` | `0.1.3` | Generates branded assets and wraps API signatures/titles. |
 | `@hia-doc/renderer-html` | `0.1.5` | Preserves all localized entry fields and supports document/project branding. |
 | `@hia-doc/cli` | `0.1.7` | Consumes theme configuration and exposes the shared-asset writer. |
+
+Registry verification on 2026-10-25 confirms core `0.1.2`, config `0.1.6` and theme-default `0.1.3` are published.
+Source-linkage `0.1.1` was rejected by npm at publication; its package-specific Trusted Publisher authorization requires maintainer review.
+Renderer-html `0.1.5` and CLI `0.1.7` remain unpublished pending that dependency. The complete upgrade set is not yet available.
+中文：核心、配置和默认主题已发布；源码关联包遇到包级发布授权问题，渲染器及CLI等待依赖，当前不能宣称完整修复版可安装。
 
 These form one dependency-ordered repair set: core, config/source-linkage/theme, renderer, CLI. Registry availability must be verified
 after each Trusted Publisher run. Other package targets remain unchanged. This package patch does not declare a system 1.0.0 release.
