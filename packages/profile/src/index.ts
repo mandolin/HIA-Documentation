@@ -407,7 +407,7 @@ function validateProfileFields(value: Record<string, unknown>, options: HiaProfi
  * @lang zh-CN 仅注册结构有效的配置并检查已知引用；无效成员留诊断但不占用身份，首个有效同名项优先。
  * @lang en Registers structurally valid profiles and checks known references; invalid members retain diagnostics without reserving IDs, and the first valid duplicate wins.
  * @param input <lang><zh-CN>自有数据profiles稠密数组；配置与查询结果保持调用者原引用，不冻结或深拷贝。</zh-CN><en>Own-data dense profiles array; profiles and query results retain caller references without freezing or deep copies.</en></lang>
- * @returns <lang><zh-CN>新Map与诊断；非法容器返回空Map及SET_INVALID，继承环/失效别名有错误诊断。层不自动排序；多父冲突优先级仍待定案。</zh-CN><en>A new Map and diagnostics; invalid containers return an empty Map with SET_INVALID, and inheritance cycles/invalid aliases have error diagnostics. Layers are not automatically sorted; multi-parent collision precedence awaits a decision.</en></lang>
+ * @returns <lang><zh-CN>新Map与诊断；非法容器返回空Map及SET_INVALID，继承环/有效视图内失效别名有错误诊断。按父序祖先先应用、后声明覆盖、本地最后覆盖，共享身份只应用一次，不按layer重排。</zh-CN><en>A new Map and diagnostics; invalid containers return an empty Map with SET_INVALID, and inheritance cycles/invalid effective aliases have error diagnostics. Apply ancestors in parent order, let later declarations win and locals override last, apply shared identities once, and never reorder by layer.</en></lang>
  */
 export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
   // <lang><zh-CN>注册表属于本次集合，成员所有权仍属于调用者；先快照容器描述符，避免迭代器/getter执行。</zh-CN><en>The registry belongs to this set, while members remain caller-owned; snapshot container descriptors first to avoid iterator/getter execution.</en></lang>
@@ -447,6 +447,12 @@ export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
     diagnostics.push(createProfileDiagnostic("HIA_PROFILE_EXTENDS_CYCLE", "Documentation profile inheritance contains a cycle.", "error", `${cycle.profileId}.extends.${cycle.parentIndex}`, { profileId: cycle.profileId, cycleProfileIds: cycle.profileIds }));
   }
 
+  // <lang><zh-CN>后序传播“存在可达别名”标记；无别名深图保持线性接纳，有别名后代检查合并视图，不能漏掉两有效分支合成的新环。</zh-CN><en>Propagate reachable-alias flags in postorder; alias-free deep graphs retain linear admission, while alias-bearing descendants validate the composed view so valid branches cannot hide a newly combined cycle.</en></lang>
+  const aliasConsumers = new Set<string>();
+  for (const profile of inheritance.postorder) {
+    if (profile.tags.some((tag) => tag.aliasFor) || profile.extends.some((parentId) => aliasConsumers.has(parentId))) aliasConsumers.add(profile.profileId);
+  }
+
   for (const profile of profiles.values()) {
     for (const parentId of profile.extends) {
       if (!profiles.has(parentId)) {
@@ -460,7 +466,7 @@ export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
       }
     }
 
-    diagnostics.push(...validateProfileReferences(profile, profiles));
+    diagnostics.push(...validateProfileReferences(profile, profiles, aliasConsumers.has(profile.profileId)));
   }
 
   return {
@@ -762,25 +768,28 @@ function readProfileCandidates(input: unknown): unknown[] | undefined {
   }
 }
 
-/** @lang zh-CN 检查本地别名的完整终止链和既有映射引用；有继承环时避免派生伪结果/重复下游噪声。 @lang en Checks complete termination of local aliases and existing mapping references, avoiding false results and cascading noise when inheritance cycles exist. */
-function validateProfileReferences(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaDiagnostic[] {
+/** @lang zh-CN 检查查询根有效视图中的别名完整终止链和既有本地映射引用；有继承环时避免派生伪结果/重复下游噪声。 @lang en Checks complete alias termination in the query root's effective view and existing local mapping references, avoiding false results and cascading noise when inheritance cycles exist. */
+function validateProfileReferences(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, hasReachableAliases: boolean): HiaDiagnostic[] {
   // <lang><zh-CN>无引用的配置不逐根遍历全图，使深层无别名配置集合仍保持线性接纳。</zh-CN><en>Profiles without references avoid per-root graph traversal, keeping admission linear for deep alias-free sets.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
-  const hasReferences = profile.tags.some((tag) => tag.aliasFor) || profile.mappings.some((mapping) => mapping.diagnostics?.length);
+  const hasReferences = hasReachableAliases || profile.mappings.some((mapping) => mapping.diagnostics?.length);
   if (!hasReferences) return diagnostics;
   const tags = indexProfileTags(profile, profiles);
   if (!tags) return diagnostics;
 
-  for (const [index, tag] of profile.tags.entries()) {
+  for (const tag of tags.values()) {
     if (!tag.aliasFor) continue;
     // <lang><zh-CN>同一解析函数供公开查询和诊断复用，缺失终点/环均不能停在中间标签后冒充成功。</zh-CN><en>Queries and diagnostics share one resolver so missing endpoints/cycles cannot stop at intermediate tags and masquerade as success.</en></lang>
     const resolution = resolveProfileAlias(tags, tag);
     if (resolution.failure) {
+      // <lang><zh-CN>本地别名定位原数组索引；继承合并产生的失效定位根extends，不伪称根有该本地声明。</zh-CN><en>Locate local aliases at their original array indices; inherited composition failures target the root extends field rather than inventing local declarations.</en></lang>
+      const localIndex = profile.tags.indexOf(tag);
+      const target = localIndex >= 0 ? `${profile.profileId}.tags.${localIndex}.aliasFor` : `${profile.profileId}.extends`;
       diagnostics.push(createProfileDiagnostic(
         resolution.failure === "cycle" ? "HIA_PROFILE_ALIAS_CYCLE" : "HIA_PROFILE_ALIAS_TARGET_UNKNOWN",
         resolution.failure === "cycle" ? "Profile alias chain contains a cycle." : "Profile alias chain points to an unknown tag.",
         "error",
-        `${profile.profileId}.tags.${index}.aliasFor`,
+        target,
         { profileId: profile.profileId, tagName: tag.name, aliasFor: tag.aliasFor, aliasChain: resolution.aliasChain }
       ));
     }
@@ -803,10 +812,10 @@ function validateProfileReferences(profile: HiaDocumentationProfile, profiles: M
   return diagnostics;
 }
 
-/** @lang zh-CN 以原列表的后序/后声明覆盖规则收集标签，继承环返回空；优先级定案前不改现有列表选择。 @lang en Collects tags with the existing postorder/later-declaration list rule, returning empty on inheritance cycles without changing list selection before a precedence decision. */
+/** @lang zh-CN 列表直接复用单标签/别名的有效索引，保持原引用与统一覆盖规则；继承环返回空。 @lang en Listing directly reuses the effective index used by single-tag/alias queries, preserving original references and one override rule; inheritance cycles return empty. */
 function collectInheritedTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileTagDefinition[] {
-  const traversal = traverseProfileInheritance(profiles, [profile]);
-  return traversal.cycles.length ? [] : dedupeByName(traversal.postorder.flatMap((entry) => entry.tags));
+  const tags = indexProfileTags(profile, profiles);
+  return tags ? [...tags.values()] : [];
 }
 
 /** @lang zh-CN 保持现有后序规则覆盖与原引用，使用显式栈处理深图/拒绝环。 @lang en Preserves existing postorder rule overrides and references, using an explicit stack for deep graphs and cycle rejection. */
@@ -821,14 +830,14 @@ function collectInheritedDiagnostics(profile: HiaDocumentationProfile, profiles:
   return traversal.cycles.length ? [] : dedupeById(traversal.postorder.flatMap((entry) => entry.diagnostics), "code");
 }
 
-/** @lang zh-CN 查询侧先保持旧先序首命中规则，只解决终止性/环边界；待优先级确认后统一到列表。 @lang en Initially preserves the old preorder first-match lookup rule while fixing termination/cycles, pending confirmation before alignment with listing. */
+/** @lang zh-CN 已确认方案A：按父序后序只应用每个身份一次，后实际声明覆盖先声明、本地最后覆盖；所有标签消费者使用此索引。 @lang en Confirmed option A: apply each identity once in parent-ordered postorder, let later actual declarations override earlier ones and locals override last; all tag consumers use this index. */
 function indexProfileTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): Map<string, HiaProfileTagDefinition> | undefined {
   const traversal = traverseProfileInheritance(profiles, [profile]);
   if (traversal.cycles.length) return undefined;
   // <lang><zh-CN>Map按字面名称查询，constructor/__proto__等不命中Object原型。</zh-CN><en>Map looks up literal names so constructor/__proto__ cannot hit Object prototypes.</en></lang>
   const tags = new Map<string, HiaProfileTagDefinition>();
-  for (const entry of traversal.preorder) {
-    for (const tag of entry.tags) if (!tags.has(tag.name)) tags.set(tag.name, tag);
+  for (const entry of traversal.postorder) {
+    for (const tag of entry.tags) tags.set(tag.name, tag);
   }
   return tags;
 }
@@ -949,14 +958,6 @@ function joinTarget(prefix: string | undefined, field: string): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function dedupeByName<T extends { name: string }>(items: T[]): T[] {
-  const result = new Map<string, T>();
-  for (const item of items) {
-    result.set(item.name, item);
-  }
-  return [...result.values()];
 }
 
 function dedupeById<T extends Record<K, string>, K extends keyof T>(items: T[], key: K): T[] {

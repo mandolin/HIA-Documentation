@@ -24,9 +24,9 @@ The returned map is new, but accepted profiles and registry query results retain
 
 Inheritance cycles now produce `HIA_PROFILE_EXTENDS_CYCLE`. Inherited tag listings and semantic tag/rule/diagnostic queries refuse graphs with a reachable cycle, while raw profile metadata and local tag listings remain inspectable. Shared ancestors and repeated parent references are not cycles. Iterative traversal handles deep finite graphs without recursive call-stack growth.
 
-Alias chains must reach an existing terminal tag. Missing endpoints retain `HIA_PROFILE_ALIAS_TARGET_UNKNOWN`; cycles produce `HIA_PROFILE_ALIAS_CYCLE`. Invalid chains return `undefined` even with `includeAliases: true`. Valid results retain caller references and the exact visited alias names, excluding the terminal tag. Mapping references to unknown diagnostic codes retain warning severity.
+Alias chains in the query root's composed view must reach an existing terminal tag. Missing endpoints retain `HIA_PROFILE_ALIAS_TARGET_UNKNOWN`; cycles produce `HIA_PROFILE_ALIAS_CYCLE`, including cycles created by combining individually valid branches. Invalid chains return `undefined` even with `includeAliases: true`. Valid results retain caller references and the exact visited alias names, excluding the terminal tag. Mapping references to unknown diagnostic codes retain warning severity.
 
-Multi-parent collision precedence remains unsuitable as a stable public guarantee: inherited tag listing and individual tag lookup currently differ. Avoid conflicting inherited definitions until composition semantics are finalized. The four layer names do not automatically sort profiles or establish precedence. See [composition and query boundaries](profile-composition.md) for error behavior and ownership.
+Composition follows parent-reference order with ancestors first, each identity applied once, later actual declarations winning and local declarations applied last. All tag/list/alias-target, rule and diagnostic queries follow that rule. The four layer names do not automatically reorder profiles. See [composition and migration boundaries](profile-composition.md) for diamond examples, error behavior and ownership.
 
 ## File loading and privacy
 
