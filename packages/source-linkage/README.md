@@ -14,6 +14,21 @@ It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_
 
 ## Version and privacy checks
 
+The source version also checks declared field types, collection identities and
+ordered positive-integer ranges. Non-JSON memory values, accessors, cycles,
+sparse/custom-behavior arrays and duplicate identities produce
+`DOC_SOURCE_MAP_MANIFEST_INVALID`; query gates keep invalid indexes unusable.
+These additional input checks are unreleased and are not part of npm `0.1.1`.
+
+Legacy omitted fields and open ordinary-JSON extensions remain supported.
+`available` describes this permissive index boundary, not complete wire-schema
+validation. Generator-specific `rangeSource` strings remain accepted. The
+contract version remains `0.1.0-draft`. See the repository documentation at
+`docs/doc-source-map-input-validation.md` for the exact input and privacy limits.
+
+中文：源码版新增显式字段、集合身份、范围与普通JSON预检；该修复尚未发布到npm。
+保留旧宽输入及生成器来源字符串，索引available不是完整wire-schema验证证明。
+
 `createDocSourceMapIndex()` retains diagnostics and an explicit `invalid` or
 `unsupported-version` status when input is unusable. Query functions return no
 entries for either status, including the symbol/source/artifact convenience

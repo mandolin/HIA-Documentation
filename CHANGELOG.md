@@ -7,6 +7,9 @@ registry status for each version.
 
 ## 未发布 / Unreleased
 
+- 文档源码映射索引新增普通JSON预检、显式字段类型、集合身份唯一及有序正整数范围校验；拒绝访问器、环、稀疏/自定义行为数组，不调用toJSON或数组自有迭代器。无效输入沿用现有查询隔离；历史省略项、开放JSON扩展与生成器来源字符串保持，契约/包版本不变。
+- Documentation-map indexing now checks ordinary JSON, declared field types, unique collection identities and ordered positive-integer ranges. It rejects accessors, cycles and sparse/custom-behavior arrays without invoking toJSON or own array iterators. Existing query isolation, legacy omissions, open JSON extensions and generator provenance strings remain; contract/package versions are unchanged. See [input validation](docs/doc-source-map-input-validation.md).
+
 - 文档化配置规范增加独立的1.0.0源码定义候选，精确兼容旧0.1.0-draft reader；历史canonical原字节保持。新schema表达既有aliasFor/default消息约束，新增精确版本类型和完整字段双语文档。七份官方领域配置、包版本及系统正式发行独立管理。
 - Documentation profiles now expose an independent 1.0.0 source definition candidate with exact legacy 0.1.0-draft reader support and unchanged historical canonical bytes. The new schema expresses existing alias-target/default-message constraints; exact version typing and bilingual field documentation are added. Official domain profiles, package versions and system releases remain independent.
 

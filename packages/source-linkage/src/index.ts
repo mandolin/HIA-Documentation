@@ -1,4 +1,6 @@
 import path from "node:path";
+import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
+import { collectDocSourceMapInputIssues } from "./manifest-input.js";
 import {
   allGeneratedPositionsFor,
   eachMapping,
@@ -336,6 +338,10 @@ interface IndexedNode {
  * only to locate diagnostics. The index retains ordinary doc-source-map minimal
  * sidecar references, while the complete binding model stays in its independent
  * artifact to prevent a normal map from carrying binding bodies or private source.
+ * @lang zh-CN 拒绝访问器、环、非有限/非普通JSON和显式错型字段；保留历史宽输入的省略项。
+ * available只证明本索引边界通过，不替代完整wire-schema验证。不会调用toJSON；Proxy反射副作用不受沙箱保证。
+ * @lang en Rejects accessors, cycles, non-finite/non-ordinary JSON and declared wrong field types while retaining legacy omissions.
+ * available proves this index boundary only, not complete wire-schema validation. Never calls toJSON; proxy reflection side effects are not sandboxed.
  *
  * @param value <lang><zh-CN>待验证的 manifest 运行时值。</zh-CN><en>Runtime manifest value to validate.</en></lang>
  * @param options <lang><zh-CN>可选 diagnostic 路径上下文；默认空对象。</zh-CN><en>Optional diagnostic path context; defaults to an empty object.</en></lang>
@@ -345,12 +351,12 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   // <lang><zh-CN>诊断序列是本函数唯一的可观察验证副产物；后续 status 只能由它推导。</zh-CN><en>The diagnostic sequence is this function's sole observable validation byproduct; later status must be derived from it.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
 
-  // <lang><zh-CN>先拒绝非对象，避免后续属性读取绕过 manifest 边界或抛出未结构化异常。</zh-CN><en>Reject non-objects first so later property reads cannot bypass the manifest boundary or throw an unstructured exception.</en></lang>
-  if (!isRecord(value)) {
+  // <lang><zh-CN>先拒绝非对象或非普通JSON图，避免后续字段读取执行访问器或泄漏异常正文。</zh-CN><en>Reject non-objects and non-ordinary JSON graphs before field reads can execute accessors or disclose exception text.</en></lang>
+  if (!isRecord(value) || !isDocSourceMapJsonDataGraph(value)) {
     // <lang><zh-CN>使用 source-linkage diagnostic 保留调用方 path，但不回显输入正文。</zh-CN><en>Use a source-linkage diagnostic that preserves caller path without echoing input bodies.</en></lang>
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
-      "doc-source-map manifest must be a JSON object.",
+      "doc-source-map manifest must contain ordinary finite acyclic JSON data.",
       "error",
       options.path
     ));
@@ -361,6 +367,11 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       ...(options.path ? { path: options.path } : {}),
       status: "invalid"
     });
+  }
+
+  // <lang><zh-CN>已声明字段先按既有结构约束诊断；历史宽输入的省略项保留，不把索引接纳冒充完整schema证明。</zh-CN><en>Diagnose declared fields against existing structural constraints first, retaining legacy omissions without treating index admission as complete schema proof.</en></lang>
+  for (const issue of collectDocSourceMapInputIssues(value)) {
+    diagnostics.push(createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MANIFEST_INVALID", issue.message, "error", appendTarget(options.path, issue.target)));
   }
 
   // <lang><zh-CN>contract 标识确认该 JSON 属于 doc-source-map；错误不阻止收集其余可诊断结构。</zh-CN><en>The contract identifier confirms the JSON is a doc-source-map; an error does not stop collection of other diagnosable structure.</en></lang>
@@ -480,6 +491,15 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   };
 }
 
+/**
+ * @lang zh-CN 纯验证入口，返回与索引构建相同的版本、显式字段、引用、路径和隐私diagnostics，不修改输入。
+ * 历史宽输入的省略字段保持兼容；本函数不代替独立完整wire-schema验证，不读取文件或sidecar。
+ * @lang en Pure validation entry returning the same version, declared-field, reference, path and privacy diagnostics as index construction without mutation.
+ * Omitted fields in permissive legacy inputs remain compatible; this does not replace complete wire-schema validation or read files/sidecars.
+ * @param value <lang><zh-CN>未知输入，普通JSON预检在任何字段读取之前完成。</zh-CN><en>Unknown input, with ordinary-JSON preflight before field reads.</en></lang>
+ * @param options <lang><zh-CN>可选诊断路径，不授予文件访问权限。</zh-CN><en>Optional diagnostic location granting no file access.</en></lang>
+ * @returns <lang><zh-CN>本次新建的诊断数组。</zh-CN><en>Diagnostic array created for this call.</en></lang>
+ */
 export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): HiaDiagnostic[] {
   return createDocSourceMapIndex(value, options).diagnostics;
 }
