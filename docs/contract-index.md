@@ -11,7 +11,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Source model | `HIA_SOURCE_MODEL_VERSION` | `1.0.0` source candidate; exact legacy `0.2.0` |
 | Config schema | `HIA_CONFIG_SCHEMA_VERSION` | `0.1.0` |
 | Project docs manifest | `HIA_PROJECT_MANIFEST_SCHEMA_VERSION` | `1.0.0` source candidate; exact legacy `0.1.0-draft` |
-| Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `0.1.0-draft` |
+| Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `1.0.0` candidate; reader also accepts exact `0.1.0-draft` |
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |

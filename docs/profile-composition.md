@@ -1,6 +1,6 @@
 # Documentation Profile Composition
 
-The documentation profile runtime consumes the exact `0.1.0-draft` schema identity. Composition checks do not promote that contract, official profile semantics or npm package versions to a stable release.
+The documentation profile runtime reads exactly `1.0.0` and legacy `0.1.0-draft`. Current and legacy profiles can share an inheritance graph under the same rules below. The current schema is a `1.0.0` source definition candidate; official domain-profile semantics and npm package versions have independent release boundaries.
 
 ## Query ownership and defaults
 

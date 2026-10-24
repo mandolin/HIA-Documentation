@@ -31,7 +31,7 @@ import catalog from "@hia-doc/profiles/catalog.json" with { type: "json" };
 import cssdoc from "@hia-doc/profiles/cssdoc.profile.json" with { type: "json" };
 ```
 
-The distributed files use `documentation-profile@0.1.0-draft`. Profile contract versions are independent from the npm package version.
+The distributed files use `documentation-profile@0.1.0-draft`. The runtime now exposes a separate `1.0.0` source schema candidate and retains an exact legacy reader; it does not rewrite these files. Domain-profile, schema, catalog and npm versions remain independent.
 
 ## Status
 

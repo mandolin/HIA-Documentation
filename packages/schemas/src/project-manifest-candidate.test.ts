@@ -24,6 +24,6 @@ describe("project manifest candidate distribution", () => {
     expect(entry.contractVersion).toBe("1.0.0");
     expect(entry.stability).toBe("stable-candidate");
     expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(17);
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(4);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(5);
   });
 });

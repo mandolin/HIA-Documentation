@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-1.0.0.schema.json",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -20,7 +20,7 @@
   "additionalProperties": true,
   "properties": {
     "schemaVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "profileId": {
       "type": "string",
@@ -127,6 +127,22 @@
         "targets"
       ],
       "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "alias"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "aliasFor"
+            ]
+          }
+        }
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"
@@ -211,6 +227,9 @@
         },
         "messages": {
           "type": "object",
+          "required": [
+            "default"
+          ],
           "additionalProperties": {
             "type": "string"
           }

@@ -12,7 +12,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `business-flow-documentation-projection` | `@hia-doc/core` | draft |
 | `hia-document` | `@hia-doc/core` | active pre-1.0 |
 | `project-manifest` | `@hia-doc/config` | draft |
-| `documentation-profile` | `@hia-doc/profile` | draft |
+| `documentation-profile` | `@hia-doc/profile` | 1.0.0 stable definition candidate; exact historical draft retained |
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `doc-source-map` | `@hia-doc/source-linkage` | draft |
@@ -75,7 +75,7 @@ https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.j
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json
-https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-1.0.0.schema.json
 ```
 
 The Pages artifact also includes unversioned package-style aliases such as `hia-document.schema.json`. Schema references should use the versioned `$id`; aliases are retrieval conveniences only.

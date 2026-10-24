@@ -27,7 +27,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | --- | --- | --- | --- |
 | `@hia-doc/core` | `0.1.1`, MIT; publishable manifest | core document / text i18n / source / protocol `1.0.0` source candidates; exact legacy `0.2.0` document/submodels and `0.1.0` envelope types, DLR/resource-resolution and UI-locale completeness `0.1.0-draft` | Active pre-1.0 baseline; public release candidate. |
 | `@hia-doc/config` | `0.1.5`, MIT; publishable manifest | config schema `0.1.0` | Active pre-1.0 baseline; patch release carries producer-result project manifest support. |
-| `@hia-doc/profile` | `0.1.0`, MIT; publishable manifest | profile schema `0.1.0-draft` | Draft runtime with [declared-field validation and ownership limits](profile-input-validation.md); composition semantics remain unstabilized. |
+| `@hia-doc/profile` | `0.1.0`, MIT; publishable manifest | profile schema `1.0.0` source candidate, exact legacy `0.1.0-draft` reader | Structural and registry APIs with [validation and ownership limits](profile-input-validation.md) and [consistent composition](profile-composition.md); npm/domain-profile releases remain separate. |
 | `@hia-doc/profiles` | `0.1.0`, MIT; publishable manifest | official profile catalog/set `0.1.0-draft` | Workspace distribution baseline; public release candidate. |
 | `@hia-doc/plugin-sdk` | `0.1.2`, MIT; publishable manifest | documentation producer descriptor/result `1.0.0` candidates; exact `0.1.0-draft` reader support | Candidate source definitions; existing published package contents are not modified. See producer migration guide. |
 | `@hia-doc/schemas` | `0.1.4`, MIT; publishable manifest | schema catalog `0.1.0-draft` | Owner-preserving workspace snapshots; patch release carries updated producer-result and project-manifest schemas. |
@@ -61,7 +61,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | Text i18n `0.2.0` | core helpers and adapters | renderer, LSP resource index | `fixtures/i18n-resource.hia.json` |
 | Source model `0.2.0` | core helpers and adapters | renderer, LSP source navigation | `fixtures/source-reference.hia.json` |
 | JSDoc Integration `0.1.0` | `jsdoc-plugin-hia-sys` | `@hia-doc/parser-jsdoc`, CLI | `fixtures/jsdoc-integration.*.json` |
-| Documentation profile `0.1.0-draft` | `@hia-doc/profiles` official JSON | profile runtime, LSP capability/completion | `packages/profiles/src/profiles/*.json` |
+| Documentation profile `1.0.0` candidate and exact legacy `0.1.0-draft` | explicit authors; official JSON remains legacy | profile runtime, LSP capability/completion | mixed-version runtime/type consumers, current/historical schemas and unchanged `packages/profiles/src/profiles/*.json` |
 | Official profile distribution `0.1.0-draft` | `@hia-doc/profiles` | project manifest authors, LSP/IDE consumers | catalog, package tests and `docs/profile-distribution.md` |
 | Schema distribution `0.1.0-draft` | `@hia-doc/schemas` snapshots | JSON Schema consumers and contract tooling | owner/snapshot equality gate and `docs/schema-distribution.md` |
 | Documentation producer/result `1.0.0` candidates and exact legacy `0.1.0-draft` | `@hia-doc/plugin-sdk`, documentation producers | CLI orchestration, CI and adapter tooling | Current/legacy semantic and type consumers, fixed historical inputs, owner/distribution schemas; [migration guide](documentation-producers.md) |

@@ -77,7 +77,8 @@ const definitions = [
     key: "documentation-profile",
     ownerPackage: "@hia-doc/profile",
     schema: HIA_PROFILE_JSON_SCHEMA,
-    stability: "draft"
+    // <lang><zh-CN>结构/注册表公开API与确认的组合语义已审；不升级七份领域profile或npm发行状态。</zh-CN><en>Structural/registry public APIs and confirmed composition semantics have been reviewed, without promoting seven domain profiles or npm release status.</en></lang>
+    stability: "stable-candidate"
   },
   {
     contractVersion: DOCUMENTATION_PRODUCER_CONTRACT_VERSION,

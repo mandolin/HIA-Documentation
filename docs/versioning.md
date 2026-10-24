@@ -46,7 +46,7 @@ A private satellite workspace root is a container marker. Its child packages hav
 | Source model | `1.0.0` source candidate; exact legacy `0.2.0` | Source contract candidate | `@hia-doc/core` |
 | Protocol envelope | `1.0.0` source candidate; exact legacy `0.1.0` | Source contract candidate | `@hia-doc/core` |
 | Config schema | `0.1.0` | Active pre-1.0 contract | `@hia-doc/config` |
-| Documentation profile schema | `0.1.0-draft` | Draft | `@hia-doc/profile` |
+| Documentation profile schema | `1.0.0` | Stable definition candidate; exact legacy `0.1.0-draft` reader support | `@hia-doc/profile` |
 | Official profile catalog | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
 | Official profile set | `0.1.0-draft` | Draft | `@hia-doc/profiles` |
 | Schema distribution catalog | `0.1.0-draft` | Draft | `@hia-doc/schemas` |

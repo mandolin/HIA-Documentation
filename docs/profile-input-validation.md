@@ -1,6 +1,6 @@
 # Documentation Profile Input Validation
 
-`@hia-doc/profile` reads `documentation-profile@0.1.0-draft`. Its schema identity, npm package version, catalog version and each individual `profileVersion` are separate. Input validation improvements do not promote the contract or the seven bundled official profiles to a stable release.
+`@hia-doc/profile` exposes a `documentation-profile@1.0.0` source definition candidate and reads exactly `1.0.0` and legacy `0.1.0-draft`. Its schema identity, npm package version, catalog version and each individual `profileVersion` are separate. The new root does not graduate the seven bundled official domain profiles or publish a stable npm release.
 
 ## Validation boundary
 
@@ -35,3 +35,9 @@ Composition follows parent-reference order with ancestors first, each identity a
 The returned `path` and failure diagnostic `data.profilePath` retain the caller's original path. These fields are not sanitized and must be handled before public disclosure. The loader is not a filesystem sandbox and does not fetch remote profiles, resolve packages or materialize artifacts automatically.
 
 See [official profile distribution](profile-distribution.md) for package boundaries and [migration guidance](migration-guide.md) for project adoption.
+
+## Current and legacy schema identities
+
+The current canonical schema is `documentation-profile-1.0.0.schema.json` and constrains `schemaVersion` to `1.0.0`. The exact historical `documentation-profile-0.1.0-draft.schema.json` remains independently retrievable with its original bytes. The current shape expresses the already enforced local requirements that alias-status tags have `aliasFor` and rule messages have a `default` string; the historical schema is not changed. Cross-profile existence, duplicate declarations, inheritance ordering and alias cycles remain runtime checks.
+
+The reader rejects unknown patches/minors, prereleases and build-suffixed versions. Missing versions are not defaulted. `HiaProfileSchemaVersion` offers an exact opt-in authoring type; `HiaDocumentationProfile` retains its broad input view and is not proof that validation passed. Reading files or constructing sets preserves `schemaVersion` and the independent `profileVersion`.

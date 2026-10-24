@@ -11,7 +11,7 @@ The profile system has two packages with different responsibilities:
 | `@hia-doc/profile` | Profile types, loading, structural and semantic validation, registry queries and profile-set composition. |
 | `@hia-doc/profiles` | Official stable and bridge profile JSON files, a machine-readable catalog and defensive-copy accessors. |
 
-The documentation profile schema is `0.1.0-draft`. The canonical official JSON files live under `packages/profiles/src/profiles/` and are copied into the package `dist` directory by the TypeScript build.
+The seven bundled profiles still declare `documentation-profile@0.1.0-draft`; their catalog and individual `profileVersion` values remain unchanged. The runtime separately exposes a `1.0.0` current schema candidate and accepts these exact legacy files without rewriting them. The canonical official JSON files live under `packages/profiles/src/profiles/` and are copied into the package `dist` directory by the TypeScript build.
 
 ## Official Profile Set
 

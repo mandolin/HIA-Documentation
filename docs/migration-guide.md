@@ -122,3 +122,9 @@ Tools that need the official vocabulary can consume `@hia-doc/profiles` as JSON 
 - Full SassDoc legacy compatibility.
 - Complete API Extractor or TypeDoc bridge.
 - Vue, React, CSS-in-JS and Storybook deep bridges.
+
+## Documentation profile schema
+
+New profile authors may declare `schemaVersion: "1.0.0"` with the current canonical schema. Existing `0.1.0-draft` profiles remain exact supported inputs, including the seven official bundled files. Loading and registration do not rewrite versions or files. Keep each domain's `profileVersion` independent; changing the envelope version does not approve new tag semantics.
+
+Use `validateHiaProfile` for JSON/field checks, then `createHiaProfileSet` for known inheritance, aliases and mapping references. Inspect diagnostics before querying or publishing metadata. Current and legacy parent chains use the same [composition rule](profile-composition.md). Unknown patch/minor/prerelease/build versions are rejected; there is no implicit SemVer-range negotiation. See [validation and historical identity limits](profile-input-validation.md).
