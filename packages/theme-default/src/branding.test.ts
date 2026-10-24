@@ -7,6 +7,13 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_THEME_CSS, DEFAULT_THEME_JS, getDefaultThemeAssets } from "./index.js";
 
 describe("theme branding assets", () => {
+  it("wraps long signatures without changing source-code whitespace rules", () => {
+    expect(DEFAULT_THEME_CSS).toMatch(/\.hia-symbol h2\s*\{[^}]*overflow-wrap:\s*anywhere;/u);
+    expect(DEFAULT_THEME_CSS).toMatch(/\.hia-signature\s*\{[^}]*white-space:\s*pre-wrap;/u);
+    expect(DEFAULT_THEME_CSS).toMatch(/\.hia-signature\s*\{[^}]*overflow-wrap:\s*anywhere;/u);
+    expect(DEFAULT_THEME_CSS).not.toMatch(/\.hia-source-code\s*\{[^}]*white-space:\s*pre-wrap;/u);
+  });
+
   it("overrides the requested accent without changing shared defaults or JavaScript", () => {
     const assets = getDefaultThemeAssets({ colors: { accent: "#0f4f82", canvas: "#ffffff" } });
     expect(assets[0].contents).toContain("--hia-color-accent: #0f4f82;");

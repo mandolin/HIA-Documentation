@@ -2,8 +2,8 @@
 
 HIA 文档工具共享的配置 contract 与 loader。
 
-共享资源可通过`docs.theme.assets`配置同站URL，品牌颜色通过`docs.theme.colors`交给显式资源生成命令。
-详见[共享资产和安全颜色](../../docs/shared-theme-assets.md)。项目模式的`docs.theme.name`可使用已实现的skin名称作为别名，显式`skin`优先；未知名称继续警告并回退默认，不加载任意provider。
+共享资源可通过`docs.theme.assets`配置同站URL；`docs.theme.colors`由普通单文档/项目构建及显式资源生成命令共同消费。
+详见[共享资产和安全颜色](../../docs/shared-theme-assets.md)。单文档/项目站的`docs.theme.name`可使用已实现的skin名称作为别名，显式`skin`优先；未知名称继续警告并回退默认，不加载任意provider。
 
 ## Project Manifest Source Candidate
 

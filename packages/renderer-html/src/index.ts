@@ -33,6 +33,7 @@ import {
   getPortalThemeSkinLabel,
   type PortalThemeScheme,
   type PortalThemeSkinId,
+  type HiaThemeAssetOptions,
   type DocumentationPortalThemeReference
 } from "@hia-doc/theme-default";
 import {
@@ -105,9 +106,11 @@ export interface RenderHtmlOptions {
   includeThemeAssets?: boolean;
   /** @lang zh-CN 默认本地资源；external只引用同站共享资源，不越过输出根写文件。 @lang en Defaults to local assets; external references same-site shared assets without writing outside the output root. */
   themeAssets?: ThemeAssetRouting;
+  /** @lang zh-CN 普通与项目输出共用的品牌颜色和构建期皮肤/配色，逐项优先于旧projectSite.theme。 @lang en Brand colors and build-time skin/scheme shared by document/project output, taking per-field precedence over legacy projectSite.theme. */
+  theme?: RenderHtmlThemeOptions;
   /**
-   * 统一项目文档站的输出与源码呈现策略；普通单文档渲染忽略该字段。
-   * Output and source-presentation policy for unified project sites; ignored by single-document rendering.
+   * @lang zh-CN 项目站输出与源码策略；单文档只读取theme作为兼容回退，其余项目策略不适用。
+   * @lang en Project-site output/source policy; document rendering reads only theme as a compatibility fallback, ignoring other project policies.
    */
   projectSite?: RenderProjectSiteOptions;
 }
@@ -122,6 +125,9 @@ export interface RenderProjectThemeOptions {
   scheme?: PortalThemeScheme;
   skinId?: PortalThemeSkinId;
 }
+
+/** @lang zh-CN 主题owner的安全品牌颜色及既有皮肤/配色，不接收自定义CSS或代码。 @lang en Theme-owner safe brand colors plus existing skin/scheme, without custom CSS or code. */
+export interface RenderHtmlThemeOptions extends RenderProjectThemeOptions, HiaThemeAssetOptions {}
 
 export interface RenderProjectSiteOptions {
   /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
@@ -783,6 +789,8 @@ export interface RenderProjectSourceCommentProjectionSummary {
 export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOptions = {}): RenderHtmlResult {
   const pageTitle = options.title ?? document.title;
   const includeThemeAssets = options.includeThemeAssets ?? true;
+  // <lang><zh-CN>即使调用者选择外部资源，也先验证明确颜色，避免静默忽略非法配置。</zh-CN><en>Validate explicit colors even with external resources, avoiding silently ignored invalid configuration.</en></lang>
+  const assets = getDefaultThemeAssets(options.theme ?? {});
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
@@ -793,7 +801,7 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
   ];
 
   if (includeThemeAssets) {
-    for (const asset of getDefaultThemeAssets()) {
+    for (const asset of assets) {
       files.push({
         path: asset.path,
         contents: asset.contents,
@@ -831,6 +839,8 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   const includeThemeAssets = options.includeThemeAssets ?? true;
   const siteLayout = options.projectSite?.layout ?? "split-site";
   const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
+  // <lang><zh-CN>颜色由主题owner单点校验，和普通文档使用同一个品牌资源工厂。</zh-CN><en>The theme owner validates colors centrally through the same branded-asset factory used by documents.</en></lang>
+  const assets = getDefaultThemeAssets(options.theme ?? {});
   // <lang><zh-CN>bundle 是 profile、source asset 和 owner mapping 的唯一生成点；后续 HTML 只消费 body-free mapping。</zh-CN><en>The bundle is the sole generation point for profiles, source assets, and owner mappings; later HTML consumes only body-free mappings.</en></lang>
   const presentationBundle = createPortalPresentationBundle({
     projectId: normalizedProjectInput.project.id ?? `project:${normalizedProjectInput.project.name}`,
@@ -890,7 +900,7 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
   files.push(...presentationBundle.artifacts);
 
   if (includeThemeAssets) {
-    for (const asset of getDefaultThemeAssets()) {
+    for (const asset of assets) {
       files.push({
         path: asset.path,
         contents: asset.contents,
@@ -957,12 +967,8 @@ function resolveProjectPortalContext(
   // <lang><zh-CN>非 IA 调用保留历史 fallback；adopted explicit IA 永远由上面的 caller-explicit gate 提供值。</zh-CN><en>Non-IA calls retain the historical fallback; adopted explicit IA always receives its value from the caller-explicit gate above.</en></lang>
   const uiLocale = resolveDocumentationPortalUiLocale(options.projectSite?.uiLocale, localeModel.selectedLocale);
   const sourceCommentProjection = options.projectSite?.sourceCommentProjection;
-  const requestedSkin = options.projectSite?.theme?.skinId ?? "portal.classic";
-  const requestedScheme = options.projectSite?.theme?.scheme ?? "system";
-
-  if (!PORTAL_THEME_SKIN_IDS.includes(requestedSkin) || !PORTAL_THEME_SCHEMES.includes(requestedScheme)) {
-    throw new TypeError("HIA_PORTAL_THEME_SELECTION_INVALID: Portal skin and scheme must use the built-in closed catalog.");
-  }
+  // <lang><zh-CN>共用逐项优先级及闭集校验；旧项目调用保留兼容回退。</zh-CN><en>Share per-field precedence and closed-catalog validation, retaining fallback for legacy project calls.</en></lang>
+  const { skinId: requestedSkin, scheme: requestedScheme } = resolveThemeSelection(options);
 
   if (projectInput.documentationContinuity) {
     assertProjectDocumentationContinuitySummary(projectInput.documentationContinuity);
@@ -1938,6 +1944,15 @@ function renderDefaultThemeRootAttributes(themeSelection?: Required<RenderProjec
   ].join(" ");
 }
 
+/** @lang zh-CN 优先共用theme，逐项回退旧项目theme与默认值；未知选择在产生HTML前拒绝。 @lang en Prefers shared theme, falls back per field to legacy project theme and defaults, and rejects unknown selections before HTML generation. */
+function resolveThemeSelection(options: RenderHtmlOptions): Required<RenderProjectThemeOptions> {
+  // <lang><zh-CN>皮肤与配色独立解析，不从品牌颜色推断另一种主题。</zh-CN><en>Resolve skin and scheme independently without inferring another theme from brand colors.</en></lang>
+  const skinId = options.theme?.skinId ?? options.projectSite?.theme?.skinId ?? "portal.classic";
+  const scheme = options.theme?.scheme ?? options.projectSite?.theme?.scheme ?? "system";
+  if (!PORTAL_THEME_SKIN_IDS.includes(skinId) || !PORTAL_THEME_SCHEMES.includes(scheme)) throw new TypeError("HIA_PORTAL_THEME_SELECTION_INVALID: Portal skin and scheme must use the built-in closed catalog.");
+  return { skinId, scheme };
+}
+
 function renderIndexHtml(pageTitle: string, document: HiaDocument, options: RenderHtmlOptions): string {
   const selectedLocale = options.locale || document.defaultLocale;
   const locales = normalizeLocales(document, selectedLocale);
@@ -1948,7 +1963,7 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
 
   return [
     "<!doctype html>",
-    `<html lang="${escapeHtml(selectedLocale)}" ${renderDefaultThemeRootAttributes()}>`,
+    `<html lang="${escapeHtml(selectedLocale)}" ${renderDefaultThemeRootAttributes(resolveThemeSelection(options))}>`,
     "<head>",
     "<meta charset=\"utf-8\">",
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
@@ -2855,9 +2870,12 @@ function renderProjectNavItem(entry: RenderProjectEntry): string {
   ].join("");
 }
 
+/** @lang zh-CN 将项目条目作为完整API参考渲染；本地化正文与单文档复用同一formatter，不将导航摘要当完整正文。 @lang en Renders a project entry as a complete API reference, sharing the document field formatter rather than treating a navigation summary as full prose. */
 function renderProjectEntry(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
   const signature = entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "";
   const summary = renderProjectEntrySummary(entry, locales, selectedLocale);
+  // <lang><zh-CN>只排除已作为主描述显示的一个字段，保留同时存在的summary/description及未知扩展字段。</zh-CN><en>Exclude only the one primary field already shown, retaining coexisting summary/description and unknown extensions.</en></lang>
+  const otherFields = renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry));
   const input = entry.input ? renderProjectEntryInput(entry.input) : "";
   const profile = entry.profile ? renderProjectEntryProfile(entry.profile) : "";
   const hierarchy = entry.hierarchy ? renderProjectEntryHierarchy(entry.hierarchy) : "";
@@ -2874,6 +2892,7 @@ function renderProjectEntry(entry: RenderProjectEntry, locales: string[], select
     `<span class="hia-kind">${escapeHtml(formatProjectViewLabel(entry.view))}</span>`,
     signature,
     summary,
+    otherFields,
     input,
     profile,
     hierarchy,
@@ -2923,7 +2942,8 @@ function renderProjectSemanticTopicInternal(
   nextAncestors.add(entry.id);
   const members = collectProjectEntryMembers(entry, projectInput.entries);
   const sections = [
-    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale), portalContext),
+    // <lang><zh-CN>显式IA保留既有section顺序，在正文分区内加入完整字段，避免建立第二条内容降级路径。</zh-CN><en>Explicit IA retains section order while including full fields inside the prose section, avoiding a second content-loss route.</en></lang>
+    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale) + renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry)), portalContext),
     renderProjectTopicSection(
       "declaration",
       "portal.section.declaration",
@@ -3248,24 +3268,9 @@ function renderProjectEntryHierarchy(hierarchy: RenderProjectEntryHierarchyRef):
   return details ? `<dl class="hia-project-meta hia-project-hierarchy-meta">${details}</dl>` : "";
 }
 
+/** @lang zh-CN 仅选择主描述字段，使用原字段身份及共用的locale/fallback规则；不改写i18n模型。 @lang en Selects only the primary prose field with its original identity and shared locale/fallback rules, without rewriting the i18n model. */
 function renderProjectEntrySummary(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
-  const field = entry.i18n?.fields.description ?? entry.i18n?.fields.summary;
-
-  if (!field && !entry.summary) {
-    return "";
-  }
-
-  const blocks = locales
-    .map((locale) => renderLocalizedBlock(
-      field,
-      locale,
-      selectedLocale,
-      createI18nResolveOptionsFromModel(entry.i18n),
-      entry.summary ?? ""
-    ))
-    .join("");
-
-  return `<div class="hia-localized-set" data-hia-i18n-field="description">${blocks}</div>`;
+  return renderI18nField(entry, getPrimaryI18nFieldPath(entry), locales, selectedLocale, entry.summary ?? "");
 }
 
 function renderProjectEntryInput(input: RenderProjectInputRef): string {
@@ -4709,8 +4714,10 @@ function renderLocaleControl(locales: string[], selectedLocale: string): string 
 
 function renderSymbol(symbol: HiaSymbol, document: HiaDocument, locales: string[], selectedLocale: string): string {
   const signature = symbol.signature ? `<pre class="hia-signature"><code>${escapeHtml(symbol.signature)}</code></pre>` : "";
-  const description = renderI18nField(symbol, "description", locales, selectedLocale, symbol.summary);
-  const otherFields = renderAdditionalI18nFields(symbol, locales, selectedLocale);
+  // <lang><zh-CN>纯.NET summary与description共用主字段选择，主字段只呈现一次，附加字段全部保留。</zh-CN><en>.NET summary and description share primary-field selection, showing the primary once and retaining every additional field.</en></lang>
+  const primaryPath = getPrimaryI18nFieldPath(symbol);
+  const description = renderI18nField(symbol, primaryPath, locales, selectedLocale, symbol.summary);
+  const otherFields = renderAdditionalI18nFields(symbol, locales, selectedLocale, primaryPath);
   const source = renderSource(symbol);
 
   return [
@@ -4725,9 +4732,19 @@ function renderSymbol(symbol: HiaSymbol, document: HiaDocument, locales: string[
   ].join("");
 }
 
-function renderAdditionalI18nFields(symbol: HiaSymbol, locales: string[], selectedLocale: string): string {
+/** @lang zh-CN 正文formatter只依赖i18n；项目entry和core symbol不需要伪造彼此的字段。 @lang en Prose formatting depends only on i18n, so project entries and core symbols never fabricate each other's fields. */
+type I18nFieldOwner = Pick<HiaSymbol, "i18n">;
+
+/** @lang zh-CN description优先，其次summary，无模型时仍用description承载普通摘要回退。 @lang en Prefers description, then summary, retaining description for plain-summary fallback without a model. */
+function getPrimaryI18nFieldPath(owner: I18nFieldOwner): string {
+  return owner.i18n?.fields.description ? "description" : owner.i18n?.fields.summary ? "summary" : "description";
+}
+
+/** @lang zh-CN 按原顺序遍历所有附加字段；不按.NET字段清单过滤，不修改输入或把字段文本当HTML。 @lang en Iterates all additional fields in input order without a .NET whitelist, input mutation, or interpreting field text as HTML. */
+function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description"): string {
   const fields = symbol.i18n?.fields || {};
-  const fieldEntries = Object.entries(fields).filter(([fieldPath]) => fieldPath !== "description");
+  // <lang><zh-CN>只移除已显示的主字段，允许summary与description同时完整显示。</zh-CN><en>Remove only the already-rendered primary field, allowing summary and description to coexist completely.</en></lang>
+  const fieldEntries = Object.entries(fields).filter(([fieldPath]) => fieldPath !== primaryPath);
 
   if (fieldEntries.length === 0) {
     return "";
@@ -4745,8 +4762,9 @@ function renderAdditionalI18nFields(symbol: HiaSymbol, locales: string[], select
   return items ? `<section class="hia-i18n-fields"><h3>Localized Fields</h3><dl>${items}</dl></section>` : "";
 }
 
+/** @lang zh-CN 渲染每个locale的纯文本与明确fallback；所有locale均无正文时省略空字段。 @lang en Renders plain text and explicit fallback per locale, omitting fields with no prose in any locale. */
 function renderI18nField(
-  symbol: HiaSymbol,
+  symbol: I18nFieldOwner,
   fieldPath: string,
   locales: string[],
   selectedLocale: string,
@@ -4758,8 +4776,12 @@ function renderI18nField(
     return "";
   }
 
+  // <lang><zh-CN>缺译不等于空字段：先用现有解析规则核全部locale，保留任何可解析正文。</zh-CN><en>A missing translation is not an empty field: use existing resolution rules across all locales and retain any resolvable prose.</en></lang>
+  const resolveOptions = createI18nResolveOptions(symbol);
+  if (field && !fallbackText && !locales.some((locale) => resolveI18nFieldText(field, locale, resolveOptions).text.length > 0)) return "";
+
   const blocks = locales
-    .map((locale) => renderLocalizedBlock(field, locale, selectedLocale, createI18nResolveOptions(symbol), fallbackText))
+    .map((locale) => renderLocalizedBlock(field, locale, selectedLocale, resolveOptions, fallbackText))
     .join("");
 
   return `<div class="hia-localized-set" data-hia-i18n-field="${escapeHtml(fieldPath)}">${blocks}</div>`;
@@ -4954,7 +4976,8 @@ function resolveProjectLocaleModel(
   return { selectedLocale, locales };
 }
 
-function createI18nResolveOptions(symbol: HiaSymbol) {
+/** @lang zh-CN 从不修改的i18n owner读取默认/fallback语言，保持各渲染路径一致。 @lang en Reads default/fallback locales from an unmodified i18n owner consistently across rendering routes. */
+function createI18nResolveOptions(symbol: I18nFieldOwner) {
   return createI18nResolveOptionsFromModel(symbol.i18n);
 }
 

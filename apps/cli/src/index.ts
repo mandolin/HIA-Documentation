@@ -2898,6 +2898,16 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
   // <lang><zh-CN>共享目录只作为renderer URL路由，不作为当前构建的磁盘输出根。</zh-CN><en>The shared directory is renderer URL routing only, never this build's filesystem output root.</en></lang>
   if (docsConfig.theme?.assets) options.themeAssets = { ...docsConfig.theme.assets };
 
+  // <lang><zh-CN>普通与项目构建消费同一品牌选择；显式skin优先于名称别名，颜色交给主题owner验证。</zh-CN><en>Document/project builds consume one brand selection; explicit skin wins over name aliases and the theme owner validates colors.</en></lang>
+  const themeSkin = docsConfig.theme?.skin ?? HIA_CONFIG_PORTAL_SKINS.find((skin) => skin === docsConfig.theme?.name) ?? "portal.classic";
+  // <lang><zh-CN>配色与皮肤独立，缺省遵循系统，不从品牌颜色推断明暗。</zh-CN><en>Scheme is independent of skin, defaulting to the system without inferring light/dark from brand colors.</en></lang>
+  const themeScheme = docsConfig.theme?.scheme ?? "system";
+  options.theme = {
+    skinId: themeSkin,
+    scheme: themeScheme,
+    ...(docsConfig.theme?.colors ? { colors: { ...docsConfig.theme.colors } } : {})
+  };
+
   options.projectSite = {
     layout: docsConfig.renderer?.projectLayout ?? "split-site",
     ...(docsConfig.renderer?.informationArchitecture
@@ -2923,8 +2933,8 @@ function createRenderOptions(locale: string | undefined, docsConfig: HiaDocsConf
     },
     theme: {
       // <lang><zh-CN>显式skin优先；已实现的非default名称作为同一皮肤选择的别名，不加载任意主题提供者。</zh-CN><en>Explicit skin wins; implemented non-default names alias the same skin selection without loading arbitrary theme providers.</en></lang>
-      skinId: docsConfig.theme?.skin ?? HIA_CONFIG_PORTAL_SKINS.find((skin) => skin === docsConfig.theme?.name) ?? "portal.classic",
-      scheme: docsConfig.theme?.scheme ?? "system"
+      skinId: themeSkin,
+      scheme: themeScheme
     }
   };
 

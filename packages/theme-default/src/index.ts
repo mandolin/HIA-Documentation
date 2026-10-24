@@ -688,6 +688,8 @@ a {
 
 .hia-symbol h2 {
   margin: 0 0 .5rem;
+  /* <lang><zh-CN>长成员标识在单页与多页均可折行，不改变内容层级。</zh-CN><en>Wrap long member identifiers in document and project pages without changing content hierarchy.</en></lang> */
+  overflow-wrap: anywhere;
 }
 
 .hia-kind {
@@ -709,6 +711,9 @@ a {
 .hia-signature {
   border: 1px solid var(--hia-border);
   padding: .5rem;
+  /* <lang><zh-CN>长签名保留空白并在窄屏换行；源码预览仍沿用独立的原始排版。</zh-CN><en>Long signatures preserve whitespace and wrap on narrow screens; source previews retain their separate original formatting.</en></lang> */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .hia-source-code {

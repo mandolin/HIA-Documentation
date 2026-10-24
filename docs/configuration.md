@@ -186,8 +186,8 @@ HTML 根节点在脚本运行前就带有构建默认，因此禁用 JavaScript 
 | `docs.renderer.sourceCommentProjection.contentPolicy` | `"none"` / `"explicit-projected-text"` | 注释正文授权，默认 `none`；只接受已投影纯文本。 |
 | `docs.theme.skin` | `"portal.classic"` / `"portal.graphite"` / `"portal.lumen"` | 构建期无脚本默认 skin。 |
 | `docs.theme.scheme` | `"system"` / `"light"` / `"dark"` | 构建期无脚本默认 scheme。 |
-| `docs.theme.name` | `"default"` / 三个内置skin名称 | 项目模式的skin别名，显式`skin`优先；未知名称警告并回退。 |
-| `docs.theme.colors` | 封闭semantic token到hex的映射 | 由显式`docs theme-assets`生成品牌资源；普通本地资产构建尚不消费。 |
+| `docs.theme.name` | `"default"` / 三个内置skin名称 | 单文档/项目站的skin别名，显式`skin`优先；未知名称警告并回退。 |
+| `docs.theme.colors` | 封闭semantic token到hex的映射 | 普通单文档/项目站及显式`docs theme-assets`均消费；共享模式由唯一资源写入者生成相同品牌配置。 |
 | `docs.theme.assets` | `{ mode: "local" }` / `{ mode: "external", baseUrl: string }` | 同站共享资源URL与唯一所有权，详见[用法](shared-theme-assets.md)。 |
 | `docs.source.presentation` | `"none"` / `"link"` / `"embed"` / `"fetch"` | 源码呈现策略，默认 `fetch`。 |
 | `docs.source.publicAssetPolicy` | `"none"` / `"explicit-public"` | CLI 文件读取与公开静态资源授权；默认 `none`。 |

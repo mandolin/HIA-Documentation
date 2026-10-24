@@ -27,7 +27,7 @@ hia docs build --config hia.config.json --input half-b.hia.json --out site/half-
 ```
 
 `theme-assets`必须显式提供`--out`，固定写入`assets/hia-default.css`和`assets/hia-default.js`，不生成页面。
-`docs.theme.colors`由该资源生成命令消费；普通`docs build`的本地资产路径尚不消费颜色覆盖。
+`docs.theme.colors`由该资源生成命令和普通`docs build`共同消费；单文档和项目站的本地资产同样应用颜色覆盖。
 共享模式下，文档构建不输出CSS/JavaScript副本，并按各HTML深度生成引用，包含无脚本页面。
 `hia-manifest.json`只列本次构建拥有的文件，不把外部资源伪报为本次产物。
 
@@ -50,14 +50,30 @@ hia docs build --config hia.config.json --input half-b.hia.json --out site/half-
 
 ```js
 renderProjectHtmlDocument(project, {
+  theme: { colors: { accent: "#0f4f82" }, skinId: "portal.classic", scheme: "light" },
   themeAssets: { mode: "external", baseUrl: "../../assets/" }
 });
 ```
+
+`renderHtmlDocument`接受相同的`theme`与`themeAssets`选项。`theme.skinId`和`theme.scheme`逐字段优先于
+旧`projectSite.theme`，未提供的字段才回退旧选项；默认仍为`portal.classic`和`system`。
+配置中的`docs.theme.name`可使用`default`或三个已实现皮肤名称，显式`docs.theme.skin`优先；未知名称会警告并回退，
+不会加载任意主题提供者。颜色覆盖与皮肤、明暗模式独立；共享资源必须由使用相同颜色配置的唯一写入者生成。
+
+## 完整 API 内容与分页
+
+项目站的`entries/*.html`、`pages/*.html`、项目单页和显式信息架构条目页复用完整字段渲染：
+主字段优先`description`，否则`summary`；其余非空字段各呈现一次，包括备注、参数、类型参数、返回、异常和未知扩展字段。
+只有`summary`的符号不会重复显示主文；缺少翻译时保留既有回退标记，纯空字段不产生空块。字段正文和签名均作文本转义。
+
+单个`--input`仍输出单页。需要多页时使用既有`--project-manifest`入口；直接单工件分页开关尚未实现。
 
 ## English summary
 
 Run `hia docs theme-assets --config hia.config.json --out <site-root>` once to emit one branded CSS/JS pair.
 Configure each independent build with `docs.theme.assets: { mode: "external", baseUrl: "../../assets/" }`.
 References are relocated for every page depth; manifests list only locally owned files. URLs do not authorize parent-directory writes.
-Colors are closed hex-valued semantic tokens consumed by the explicit asset command; ordinary local-asset `docs build` does not yet apply them.
-The renderer exposes `renderThemeAssets({ colors })` and the `themeAssets` routing option. These additions are unreleased.
+Colors are closed hex-valued semantic tokens consumed by both the explicit asset command and ordinary document/project builds.
+Both renderers expose `theme: { colors, skinId, scheme }`; root selection takes per-field precedence over legacy `projectSite.theme`.
+Project entry pages preserve all nonempty localized fields, including unknown extensions, with the primary field rendered once.
+Direct single-artifact pagination remains unavailable; use the existing project-manifest route. These additions are unreleased.

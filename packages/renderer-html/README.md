@@ -13,6 +13,7 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 - `fetch`/`link` 只生成 `sources/{sha256}.txt` 同源资源和局部 `.gitattributes`；资源具有 content revision、SHA-384、byte/line facts，旧 external URL 被剥离且不会成为 fallback。
 - 项目站输出 exact-valid `documentation-presentation-profile.json`，并由 manifest/project index 以最小引用关联；profile 不含 owner DOM/CSS/route 私有结构或源码正文。
 - Consumes field-level i18n text and emits runtime-switchable locale blocks.
+- 单文档、项目单页、split-site 条目及无脚本成员页保留全部非空 i18n 字段（含未知扩展）。主文优先 `description`，否则 `summary`，只呈现一次；缺译沿用明确 fallback 标记。
 - Marks fallback text with `data-hia-fallback-from`.
 - Shows relative `definedIn` source links, primary source blocks and referenced source fragments.
 - Emits default CSS/JS assets from `@hia-doc/theme-default`.
@@ -33,6 +34,11 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 `renderThemeAssets({ colors })` exposes a branded CSS/JS pair for an explicit sole writer. Both rendering functions accept
 `themeAssets: { mode: "external", baseUrl: "../../assets/" }`, omitting local copies and relocating references at every page depth.
 中文：共享资源由明确的唯一写入者生成，不隐式越过当前输出目录。见[配置与边界](../../docs/shared-theme-assets.md)。
+
+`RenderHtmlOptions.theme` / `RenderHtmlThemeOptions` accepts `colors`, `skinId` and `scheme` for both rendering functions.
+Root skin/scheme values take per-field precedence over legacy `projectSite.theme`; omitted fields retain compatibility fallbacks.
+Colors apply to locally emitted assets too. Invalid colors are rejected even when assets are omitted or externally owned.
+中文：单页与项目站可直接传品牌颜色及皮肤/配色；签名在窄屏自动换行，原始代码块的空白规则保持不变。
 
 The renderer manifest schema version is exported as `HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION`. Project navigation index identity is exported as `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT` and `HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION`. Portal IA identity, exact draft version, vocabulary, types, resolver, touched-label catalog, and owner-local Draft 2020-12 schema are exported through `DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_*`. `PORTAL_PRESENTATION_PROFILE_PATH` and `createPortalPresentationBundle()` expose the Portal-owner adoption surface for the neutral presentation contract. `RenderProjectOwnerAdoptionSummary` remains a structural consumer view of the CLI-owned adoption-kit projection; the renderer does not own or reinterpret the full kit contract. `RenderProjectBusinessFlowDocumentationProjectionRef` is the body-free renderer-manifest linkage for the full W-P122 projection stored in the project index.
 
