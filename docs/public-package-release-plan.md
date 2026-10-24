@@ -10,6 +10,21 @@ pnpm run distribution:check
 
 ## Current State
 
+### Documentation repair release candidates — 2026-10-24
+
+| Package | Candidate version | Role |
+| --- | --- | --- |
+| `@hia-doc/core` | `0.1.2` | Supplies the presentation/i18n contract APIs required by the current renderer; exact legacy readers remain available. |
+| `@hia-doc/config` | `0.1.6` | Validates brand colors, built-in skin aliases and explicit shared-asset routing. |
+| `@hia-doc/source-linkage` | `0.1.1` | Supplies the binding-projection public types referenced by renderer declarations. |
+| `@hia-doc/theme-default` | `0.1.3` | Generates branded assets and wraps API signatures/titles. |
+| `@hia-doc/renderer-html` | `0.1.5` | Preserves all localized entry fields and supports document/project branding. |
+| `@hia-doc/cli` | `0.1.7` | Consumes theme configuration and exposes the shared-asset writer. |
+
+These form one dependency-ordered repair set: core, config/source-linkage/theme, renderer, CLI. Registry availability must be verified
+after each Trusted Publisher run. Other package targets remain unchanged. This package patch does not declare a system 1.0.0 release.
+中文：本批按依赖关系发布上述六包；npm版本与系统正式版、契约定义版本分别管理。以registry和安装验收为准。
+
 The D3 bootstrap release is complete. All 13 first-publication packages are visible on npm at `0.1.0`, and W-P15.3 has verified the post-bootstrap Trusted Publisher path with `@hia-doc/theme-default@0.1.1`.
 
 - Scope: `@hia-doc`.

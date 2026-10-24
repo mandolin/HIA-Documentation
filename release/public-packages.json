@@ -15,25 +15,28 @@
     "trustedPublishing": {
       "provider": "github-actions",
       "runner": "ubuntu-latest",
-      "requiredPermissions": ["contents: read", "id-token: write"]
+      "requiredPermissions": [
+        "contents: read",
+        "id-token: write"
+      ]
     }
   },
   "packages": [
     {
       "name": "@hia-doc/core",
       "path": "packages/core",
-      "targetVersion": "0.1.1",
+      "targetVersion": "0.1.2",
       "publishOrder": 10,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/config",
       "path": "packages/config",
-      "targetVersion": "0.1.5",
+      "targetVersion": "0.1.6",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/profile",
@@ -62,18 +65,18 @@
     {
       "name": "@hia-doc/source-linkage",
       "path": "packages/source-linkage",
-      "targetVersion": "0.1.0",
+      "targetVersion": "0.1.1",
       "publishOrder": 30,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/theme-default",
       "path": "packages/theme-default",
-      "targetVersion": "0.1.2",
+      "targetVersion": "0.1.3",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/browser-panel",
@@ -94,10 +97,10 @@
     {
       "name": "@hia-doc/renderer-html",
       "path": "packages/renderer-html",
-      "targetVersion": "0.1.4",
+      "targetVersion": "0.1.5",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     },
     {
       "name": "@hia-doc/schemas",
@@ -118,10 +121,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.6",
+      "targetVersion": "0.1.7",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     }
   ],
   "excludedPackages": [

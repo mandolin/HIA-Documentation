@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/source-linkage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Doc-source-map indexing and validation helpers for HIA tooling.",
   "license": "MIT",
   "repository": {
