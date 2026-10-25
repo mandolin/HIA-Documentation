@@ -13,6 +13,20 @@ function fixture(): RenderProjectHtmlInput {
   return { project: { id: "synthetic:lines", name: "Source lines" }, entries: [{ id: "api:a", name: "A", kind: "dotnet-method", view: "dotnet", source: { path: "src/public.cs", range: { start: { line: 21 }, end: { line: 22 } }, preview: { content: 'return "<script>synthetic</script>";\n// 中文 😀', range: { start: { line: 21 }, end: { line: 22 } } } } }] };
 }
 describe("source line views", () => {
+  it.each([0, -1, NaN, Infinity, '1" data-untrusted-position="yes'])('normalizes malformed runtime positions %s before HTML interpolation', (value) => {
+    const fragment = renderSourceLines("safe", value as number, true);
+    expect(fragment).toContain('id="L1"');
+    expect(fragment).not.toContain('data-untrusted-position');
+  });
+
+  it("keeps untyped malformed embedded preview positions out of HTML attributes", () => {
+    const input = fixture();
+    input.entries[0]!.source!.preview!.range!.start.line = '1" data-untrusted-position="yes' as unknown as number;
+    const result = renderProjectHtmlDocument(input, { projectSite: { source: { presentation: "embed" } } });
+    const entry = result.files.find((file) => file.path.startsWith("entries/"))!.contents;
+    expect(entry).not.toContain('data-untrusted-position="yes');
+    expect(entry).toContain('data-hia-source-line-number="1"');
+  });
   it.each(["fetch", "link"] as const)("links %s to a generated same-origin source page with real anchors", (presentation) => {
     const result = renderProjectHtmlDocument(fixture(), { projectSite: { source: { presentation } } });
     const entry = result.files.find((file) => file.path.startsWith("entries/"))!.contents;

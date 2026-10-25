@@ -11,15 +11,17 @@ const LINE_STYLE = ".hia-source-code-line{display:block;min-width:max-content}.h
  * @lang zh-CN 转义授权正文并逐行编号；独立页使用L锚点，内联避免重复DOM id。
  * @lang en Escapes/ numbers authorized text by line; standalone pages use L anchors while inline previews avoid duplicate DOM IDs.
  * @param content <lang><zh-CN>owner已限长的源码片段。</zh-CN><en>Source excerpt already bounded by its owner.</en></lang>
- * @param startLine <lang><zh-CN>片段的一基起始行。</zh-CN><en>One-based first line of the excerpt.</en></lang>
+ * @param startLine <lang><zh-CN>片段的一基起始行；无效运行时值回退到1，绝不插入原始行号文本。</zh-CN><en>One-based first line; invalid runtime values fall back to one and never insert raw position text.</en></lang>
  * @param anchors <lang><zh-CN>仅独立页生成L行id。</zh-CN><en>Only standalone pages emit L-line IDs.</en></lang>
  * @returns <lang><zh-CN>仅span/a与转义文本，无脚本。</zh-CN><en>Spans/anchors and escaped text only, without scripts.</en></lang>
  */
 export function renderSourceLines(content: string, startLine = 1, anchors = false): string {
+  // <lang><zh-CN>JS调用者可能绕过TS类型；只允许正安全整数进入HTML数字位置，拒绝把位置解释成属性。</zh-CN><en>JS callers can bypass TS types; admit only positive safe integers into HTML number positions, never interpreting positions as attributes.</en></lang>
+  const firstLine = Number.isSafeInteger(startLine) && startLine > 0 ? startLine : 1;
   // <lang><zh-CN>数组只覆盖有界片段，不读取其它源码；编号只来自数值，正文永远转义。</zh-CN><en>The array covers the bounded excerpt only without other source reads; numbers derive from numeric positions and bodies are always escaped.</en></lang>
   return content.split(/\r?\n/u).map((text, index) => {
     // <lang><zh-CN>行号来自片段原始位置；固定行号列不改变源码缩进，标签仅在独立页可点击。</zh-CN><en>Numbers follow original excerpt positions; the fixed gutter preserves code indentation and is clickable only on standalone pages.</en></lang>
-    const number = startLine + index;
+    const number = firstLine + index;
     const style = "display:inline-block;min-width:3ch;margin-inline-end:1.25rem;text-align:right;user-select:none";
     const label = anchors ? `<a class="hia-source-line-number" href="#L${number}" aria-label="L${number}" style="${style}">${number}</a>` : `<span class="hia-source-line-number" aria-hidden="true" style="${style}">${number}</span>`;
     return `<span class="hia-source-code-line" data-hia-source-line-number="${number}"${anchors ? ` id="L${number}" tabindex="-1"` : ""} style="display:block;min-width:max-content">${label}${escape(text)}</span>`;

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Source line position hardening
+
+- 源码行号只接受正安全整数，无效的运行时预览行号回退到1，防止绕过TypeScript类型的调用者把定位值插入HTML属性；合法行号、正文、主题和流式构建行为保持。
+- Source line numbers accept positive safe integers only; invalid runtime preview positions fall back to one, preventing callers bypassing TypeScript types from interpolating positions as HTML attributes. Valid positions, bodies, themes and streamed builds are unchanged.
+
 ## 2026-10-25 — Project source previews (renderer-html 0.1.7 / cli 0.1.9)
 
 - 已授权fetch/link源码提供同源无脚本查看页及真实#L行定位；fetch行号链接到该页，纯文本摘要校验端点保持独立，不恢复未授权或外部链接。
