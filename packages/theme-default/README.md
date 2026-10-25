@@ -38,6 +38,18 @@ Native `<details>/<summary>` keeps the `open` attribute as the sole disclosure s
 默认常量不变；只接受既有token与安全十六进制颜色，不接受CSS代码。配色需按所选scheme复核对比度。
 See [shared assets and branding](../../docs/shared-theme-assets.md).
 
+## Deep navigation trees
+
+Tree labels wrap independently of their open actions. Open actions remain visible and align to the right, moving to another row when space is limited. The sidebar uses compact indentation and local horizontal scrolling for exceptionally deep paths.
+
+Override the indentation on the shell in your own stylesheet:
+
+```css
+.hia-shell { --hia-tree-indent: .6rem; }
+```
+
+中文说明：深层树不会通过缩小字体或隐藏打开按钮节省空间。默认每层缩进 `.6rem`；极深层级保留可读宽度并在侧栏内滚动。折叠标识跟随原生 `details.open`，键盘行为保持原生语义。
+
 ## Font Policy
 
 The default theme does not bundle, download or redistribute font files. Its CSS only references local open-source font families and generic browser fallbacks.
@@ -46,6 +58,11 @@ The default theme does not bundle, download or redistribute font files. Its CSS 
 - Code and source locations prefer `Sarasa Mono SC`, `Sarasa Fixed SC`, `Noto Sans Mono CJK SC`, `Source Han Mono SC`, `Cascadia Code`, `JetBrains Mono` and `Fira Code`.
 
 ## Release Notes
+
+### 0.1.4 (release candidate)
+
+- Fixes deep navigation label collapse, excessive indentation and competing open actions. Adds `--hia-tree-indent` and keeps extremely deep overflow within the sidebar.
+- 修复深层标签逐字换行、缩进过大和打开按钮挤压；极深层级保持局部滚动。
 
 ### 0.1.1
 

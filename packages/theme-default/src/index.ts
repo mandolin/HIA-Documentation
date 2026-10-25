@@ -509,14 +509,16 @@ a {
 }
 
 .hia-shell {
+  /* <lang><zh-CN>宿主可覆写层级缩进；紧凑默认值为深命名空间保留阅读宽度。</zh-CN><en>Hosts may override tree indentation; the compact default preserves reading width for deep namespaces.</en></lang> */
+  --hia-tree-indent: .6rem;
   display: grid;
-  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .hia-sidebar {
   border-right: 1px solid var(--hia-border);
-  padding: 1.5rem;
+  padding: 1rem;
   background: var(--hia-color-surface-muted);
 }
 
@@ -540,7 +542,22 @@ a {
 .hia-sidebar nav a {
   display: grid;
   gap: .1rem;
+  min-width: 0;
   text-decoration: none;
+}
+
+/* <lang><zh-CN>极深列表保留局部可读下限，由侧栏滚动承接；不把名称压成单字符列。</zh-CN><en>Very deep lists retain a local readable floor and scroll within the sidebar instead of collapsing names into single-character columns.</en></lang> */
+.hia-sidebar [data-hia-project-tree] {
+  /* <lang><zh-CN>横向滚动仅属于树，避免深层焦点带动标题、语言和皮肤控件左右偏移。</zh-CN><en>Keep horizontal scrolling inside the tree so deep focus does not shift the title, locale or skin controls.</en></lang> */
+  overflow-x: auto;
+  padding-block: .25rem;
+}
+
+.hia-sidebar .hia-project-hierarchy-list {
+  list-style: none;
+  margin: 0;
+  min-width: 8rem;
+  padding-left: var(--hia-tree-indent);
 }
 
 .hia-sidebar nav small {
@@ -834,6 +851,9 @@ a {
 .hia-project-entry-link {
   background: transparent;
   color: var(--hia-accent);
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
   padding: .15rem .2rem;
   text-align: left;
 }
@@ -842,9 +862,29 @@ a {
   align-items: center;
   cursor: pointer;
   display: flex;
-  gap: .4rem;
+  flex-wrap: wrap;
+  gap: .15rem .4rem;
   justify-content: space-between;
-  overflow-wrap: anywhere;
+  padding-inline-start: 1rem;
+  position: relative;
+}
+
+/* <lang><zh-CN>只让标签折行；打开入口可换到下一行，不与标签争抢最后几个像素。</zh-CN><en>Only the label wraps words; the open action may move to the next row rather than consume the label's last pixels.</en></lang> */
+.hia-project-hierarchy-list details > summary > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* <lang><zh-CN>flex布局仍显示与原生open状态一致的装饰提示；不复制aria-expanded状态。</zh-CN><en>Flex layouts retain a decorative cue derived from native open state without duplicating aria-expanded.</en></lang> */
+.hia-project-hierarchy-list details > summary::before {
+  content: "▸";
+  inset-inline-start: 0;
+  position: absolute;
+}
+
+.hia-project-hierarchy-list details[open] > summary::before {
+  content: "▾";
 }
 
 details > summary:focus-visible,
@@ -872,12 +912,13 @@ details > summary:focus-visible,
 .hia-project-tree-open {
   flex: none;
   font-size: .78rem;
+  margin-inline-start: auto;
   padding: .18rem .45rem;
 }
 
 .hia-project-hierarchy-list details > ul {
   border-left: 1px solid var(--hia-border);
-  margin-left: .25rem;
+  margin-left: 0;
 }
 
 .hia-project-loading,

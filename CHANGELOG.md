@@ -25,6 +25,13 @@ registry status for each version.
 - 文档化配置规范运行时补齐既有字段/数组项和普通JSON检查；无效集合成员留诊断并跳过，不能占用有效身份。文件解析错误不再回显源码片段，调用者路径上下文仍保留。该次输入修复保持原schema、官方配置和包身份；后续继承和候选变更见上方。
 - Documentation profile runtime checks now cover existing declared fields, list items and ordinary JSON. Invalid set members retain diagnostics and are skipped without reserving valid IDs. Parse errors no longer echo source excerpts; caller path context remains. That input repair retained schema, official profile and package identities; see subsequent composition and candidate changes above. See [validation and ownership](docs/profile-input-validation.md).
 
+## 2026-10-25 — Portal tree layout repair (release candidate)
+
+- 默认主题 `0.1.4` 候选修复深树缩进与标签竖排：侧栏更宽、内边距更小、标签独立换行，打开按钮保持可见并可移至下一行；极深树在侧栏内局部滚动。新增 `--hia-tree-indent` CSS 变量。
+- Theme `0.1.4` candidate fixes deep-tree indentation and collapsed labels with a wider sidebar, independent label wrapping, visible wrapping open actions and local overflow. `--hia-tree-indent` controls indentation.
+- HTML渲染器 `0.1.6` 与CLI `0.1.8` 候选更新精确主题依赖链；渲染器/CLI运行代码及源码公开策略不变。本批不发布文档源码映射的未发布候选。
+- Renderer `0.1.6` and CLI `0.1.8` candidates carry the exact updated theme dependency chain without changing renderer/CLI runtime code or source-publication policy. Unreleased documentation-map candidates are excluded from this publication batch.
+
 ## 2026-10-25 — Documentation rendering repair
 
 ### 发布版本 / Released versions

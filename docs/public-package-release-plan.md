@@ -10,6 +10,16 @@ pnpm run distribution:check
 
 ## Current State
 
+### Portal tree layout patch — 2026-10-25 (candidate)
+
+| Package | Target version | Change |
+| --- | --- | --- |
+| `@hia-doc/theme-default` | `0.1.4` | Compact indentation, readable deep-tree labels, wrapping open actions and tree-local horizontal scrolling. |
+| `@hia-doc/renderer-html` | `0.1.6` | Exact dependency on the repaired theme; renderer runtime code unchanged. |
+| `@hia-doc/cli` | `0.1.8` | Exact dependency on the updated renderer; CLI runtime code unchanged. |
+
+中文：本批只发布树布局补丁及其依赖引用链；源码映射等未发布实现不进入本批。维护者已授权发行和参考站部署，实际registry可用性仍需逐包验证。
+
 ### Documentation repair release — 2026-10-25
 
 | Package | Published version | Role |
