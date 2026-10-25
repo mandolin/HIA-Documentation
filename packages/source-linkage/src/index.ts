@@ -8,6 +8,7 @@ import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { collectDocSourceMapInputIssues } from "./manifest-input.js";
 import { collectCurrentDocSourceMapIssues } from "./manifest-current.js";
 import { prepareDocSourceMapMigration } from "./manifest-migration.js";
+import { createBodyFreeOrdinaryTraceMap } from "./ordinary-input.js";
 import {
   allGeneratedPositionsFor,
   eachMapping,
@@ -256,39 +257,48 @@ export interface DocSourceMapQueryResult {
   status: DocSourceMapIndex["status"];
 }
 
+/** @lang zh-CN 两种位置偏置；默认向下最近。 @lang en The two position biases; defaults to greatest lower bound. */
 export type OrdinarySourceMapBias = "greatest-lower-bound" | "least-upper-bound";
 
+/** @lang zh-CN 可选映射基准与工件路径；无I/O，不构成发布授权。 @lang en Optional map base and artifact path; no I/O or publication authority. */
 export interface OrdinarySourceMapIndexOptions {
   artifactPath?: string;
   path?: string;
 }
 
+/** @lang zh-CN 独立无正文索引；公开类型可变，调用者不得篡改后继续依赖校验。 @lang en Independent body-free index; the public type is mutable, so validation must not be assumed after tampering. */
 export interface OrdinarySourceMapIndex {
   artifactPath?: string;
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 包含无原始位置的段数量；invalid时为零。 @lang en Segment count including unmapped segments; zero when invalid. */
   mappingCount: number;
   path?: string;
   sources: string[];
   sourceCount: number;
   status: "available" | "invalid";
+  /** @lang zh-CN 可用时提供的独立库实例，不含正文；查找会更新内部缓存。 @lang en Independent library instance when available, without bodies; lookups update internal caches. */
   traceMap?: TraceMap;
 }
 
+/** @lang zh-CN 可选偏置，省略时统一向下最近。 @lang en Optional bias, consistently defaulting to greatest lower bound. */
 export interface OrdinarySourceMapLookupOptions {
   bias?: OrdinarySourceMapBias;
 }
 
+/** @lang zh-CN 原始路径及HIA一基行/列，可带映射符号名。 @lang en Original path and HIA one-based line/column, optionally with a mapped symbol name. */
 export interface SourceMapOriginalPosition {
   name?: string;
   position: HiaSourcePosition;
   sourcePath: string;
 }
 
+/** @lang zh-CN 生成工件的HIA一基行/列，路径可省略。 @lang en HIA one-based line/column in a generated artifact, with optional path. */
 export interface SourceMapGeneratedPosition {
   artifactPath?: string;
   position: HiaSourcePosition;
 }
 
+/** @lang zh-CN 仅available带原始映射；输入回显不是校验证明。 @lang en Only available results carry original mappings; input echoes are not validation evidence. */
 export interface SourceMapOriginalLookupResult {
   diagnostics: HiaDiagnostic[];
   generated: SourceMapGeneratedPosition;
@@ -296,6 +306,7 @@ export interface SourceMapOriginalLookupResult {
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
+/** @lang zh-CN 仅available带单个生成映射；unmapped不是错误。 @lang en Only available results carry one generated mapping; unmapped is not an error. */
 export interface SourceMapGeneratedLookupResult {
   diagnostics: HiaDiagnostic[];
   generated?: SourceMapGeneratedPosition;
@@ -303,6 +314,7 @@ export interface SourceMapGeneratedLookupResult {
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
+/** @lang zh-CN 全部生成映射；invalid/unmapped时数组为空。 @lang en All generated mappings; the array is empty for invalid/unmapped results. */
 export interface SourceMapAllGeneratedLookupResult {
   diagnostics: HiaDiagnostic[];
   generated: SourceMapGeneratedPosition[];
@@ -310,6 +322,7 @@ export interface SourceMapAllGeneratedLookupResult {
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
+/** @lang zh-CN 显式位置或元数据筛选；双向输入的旧顺序不证明一致性。 @lang en Explicit position or metadata filters; legacy dual-input ordering does not establish consistency. */
 export interface SourceLinkedLookupQuery {
   generatedPath?: string;
   generatedPosition?: HiaSourcePosition;
@@ -320,6 +333,7 @@ export interface SourceLinkedLookupQuery {
   symbolKind?: string;
 }
 
+/** @lang zh-CN 联合结果；位置失败时条目为空，query回显仍是调用方输入。 @lang en Combined result; failed positions yield no entries, and query echoes remain caller input. */
 export interface SourceLinkedLookupResult {
   diagnostics: HiaDiagnostic[];
   entries: DocSourceMapIndexedEntry[];
@@ -562,19 +576,26 @@ export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOp
 }
 
 /**
- * 建立普通 source map 查询索引。输入由调用方显式提供，本函数不抓取 sourceMappingURL，也不暴露 sourcesContent。
- * Build an ordinary source map lookup index. The caller provides the map explicitly; this helper does not fetch sourceMappingURL or expose sourcesContent.
+ * @lang zh-CN 建立无正文的普通位置映射索引；复制元数据，不抓取sourceMappingURL，不读取sourcesContent或未知扩展。
+ * @lang en Builds a body-free ordinary position-map index; copies metadata without fetching sourceMappingURL or reading sourcesContent/unknown extensions.
+ * @param value <lang><zh-CN>调用方显式提供的JSON字符串、编码/解码对象或TraceMap实例。</zh-CN><en>Caller-provided JSON string, encoded/decoded object or TraceMap instance.</en></lang>
+ * @param options <lang><zh-CN>可选映射基准和工件路径；默认空对象，路径不是发布授权。</zh-CN><en>Optional map base and artifact path; defaults to an empty object and does not authorize publication.</en></lang>
+ * @returns <lang><zh-CN>独立索引；无效输入返回空索引与固定诊断，不回显原始异常。不是完整ECMA-426验证器。</zh-CN><en>Independent index; invalid input returns an empty index with a fixed diagnostic, without raw errors. Not a complete ECMA-426 validator.</en></lang>
  */
 export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, options: OrdinarySourceMapIndexOptions = {}): OrdinarySourceMapIndex {
+  // <lang><zh-CN>诊断属于本次索引，不携带调用方正文或底层异常信息。</zh-CN><en>Diagnostics belong to this index and carry neither caller bodies nor underlying error text.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
 
   try {
-    const traceMap = new TraceMap(value as SourceMapInput, options.path ?? null);
+    // <lang><zh-CN>先投影已知元数据，杜绝库实例短路及sourcesContent随索引外泄。</zh-CN><en>Project known metadata first, preventing library instance shortcuts and sourcesContent leakage through the index.</en></lang>
+    const traceMap = createBodyFreeOrdinaryTraceMap(value, options.path);
+    // <lang><zh-CN>统计映射段数量作为调用方诊断摘要，计数包含无原始位置的段。</zh-CN><en>Count mapping segments for the caller summary, including segments without original positions.</en></lang>
     let mappingCount = 0;
     eachMapping(traceMap, () => {
       mappingCount += 1;
     });
 
+    // <lang><zh-CN>公开源列表仅保留规范化路径，正文从未进入此独立TraceMap。</zh-CN><en>The public source list contains normalized paths only; bodies never enter this independent TraceMap.</en></lang>
     const sources = traceMap.sources
       .map((source) => typeof source === "string" ? normalizeLookupPath(source) : "")
       .filter((source) => source.length > 0);
@@ -589,10 +610,10 @@ export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, op
       status: "available",
       traceMap
     };
-  } catch (error) {
+  } catch {
     diagnostics.push(createSourceLinkageDiagnostic(
       "ORDINARY_SOURCE_MAP_INVALID",
-      `ordinary source map could not be parsed: ${errorMessage(error)}`,
+      "Ordinary source map metadata could not be read safely.",
       "error",
       options.path
     ));
@@ -658,15 +679,25 @@ export function findDocSourceMapEntriesByArtifact(
 }
 
 /**
- * 从生成位置追溯到原始源码位置。
- * Trace a generated position back to the original source position.
+ * @lang zh-CN 从生成位置追溯原始位置；无I/O，更新库内部缓存。
+ * @lang en Traces generated positions to originals without I/O, updating internal library caches.
+ * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
+ * @param generatedPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
+ * @param options <lang><zh-CN>可选偏置，默认向下最近。</zh-CN><en>Optional bias, defaulting to greatest lower bound.</en></lang>
+ * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid；输入位置仍回显。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic; the input position is still echoed.</en></lang>
  */
 export function findOriginalPositionForGenerated(
   index: OrdinarySourceMapIndex,
   generatedPosition: HiaSourcePosition,
   options: OrdinarySourceMapLookupOptions = {}
 ): SourceMapOriginalLookupResult {
+  // <lang><zh-CN>输入上下文与成功时才出现的原始映射分开保留。</zh-CN><en>Retain input context separately from original mappings that appear only on success.</en></lang>
   const generated = createGeneratedPosition(index.artifactPath, generatedPosition);
+
+  // <lang><zh-CN>HIA坐标是一基正整数，拒绝静默夹值或让底层库抛出异常。</zh-CN><en>HIA coordinates are positive one-based integers; reject silent clamping and underlying library exceptions.</en></lang>
+  if (!isValidOrdinaryLookupPosition(generatedPosition)) {
+    return { diagnostics: invalidOrdinaryPositionDiagnostics(index), generated, status: "invalid" };
+  }
 
   if (index.status !== "available" || !index.traceMap) {
     return {
@@ -676,6 +707,7 @@ export function findOriginalPositionForGenerated(
     };
   }
 
+  // <lang><zh-CN>仅在库边界将HIA列转换为零基列。</zh-CN><en>Convert HIA columns to zero-based columns only at the library boundary.</en></lang>
   const original = originalPositionFor(index.traceMap, {
     line: generatedPosition.line,
     column: hiaColumnToSourceMapColumn(generatedPosition.column),
@@ -706,8 +738,13 @@ export function findOriginalPositionForGenerated(
 }
 
 /**
- * 从原始源码位置查找一个生成位置。
- * Find one generated position for an original source position.
+ * @lang zh-CN 从原始位置查找一个生成位置；无I/O，更新库内部缓存。
+ * @lang en Finds one generated position for an original without I/O, updating internal library caches.
+ * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
+ * @param sourcePath <lang><zh-CN>原始或库已解析路径，仅规范化分隔符。</zh-CN><en>Original or library-resolved path, with separators normalized only.</en></lang>
+ * @param originalPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
+ * @param options <lang><zh-CN>可选偏置，默认向下最近。</zh-CN><en>Optional bias, defaulting to greatest lower bound.</en></lang>
+ * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic.</en></lang>
  */
 export function findGeneratedPositionForOriginal(
   index: OrdinarySourceMapIndex,
@@ -717,6 +754,11 @@ export function findGeneratedPositionForOriginal(
 ): SourceMapGeneratedLookupResult {
   const original = createOriginalPosition(sourcePath, originalPosition);
 
+  // <lang><zh-CN>反向查找采用同一坐标约束，空结果不能掩盖非法输入。</zh-CN><en>Reverse lookups share the coordinate constraint; empty results must not conceal invalid input.</en></lang>
+  if (!isValidOrdinaryLookupPosition(originalPosition)) {
+    return { diagnostics: invalidOrdinaryPositionDiagnostics(index), original, status: "invalid" };
+  }
+
   if (index.status !== "available" || !index.traceMap) {
     return {
       diagnostics: index.diagnostics,
@@ -725,6 +767,7 @@ export function findGeneratedPositionForOriginal(
     };
   }
 
+  // <lang><zh-CN>调用成熟映射库前转换坐标，返回时再恢复HIA坐标。</zh-CN><en>Convert coordinates before calling the mature mapping library, then restore HIA coordinates on return.</en></lang>
   const generated = generatedPositionFor(index.traceMap, {
     source: normalizeLookupPath(sourcePath),
     line: originalPosition.line,
@@ -752,8 +795,13 @@ export function findGeneratedPositionForOriginal(
 }
 
 /**
- * 从原始源码位置查找全部生成位置。
- * Find all generated positions for an original source position.
+ * @lang zh-CN 查找原始位置对应的全部生成位置；无I/O，更新库内部缓存。
+ * @lang en Finds all generated positions for an original without I/O, updating internal library caches.
+ * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
+ * @param sourcePath <lang><zh-CN>原始或库已解析路径。</zh-CN><en>Original or library-resolved path.</en></lang>
+ * @param originalPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
+ * @param options <lang><zh-CN>可选偏置，统一默认向下最近，覆盖库的全部查找默认偏置。</zh-CN><en>Optional bias, consistently defaulting to greatest lower bound and overriding the library all-lookup default.</en></lang>
+ * @returns <lang><zh-CN>映射数组及状态，invalid/unmapped时数组为空。</zh-CN><en>Mapping array and status; the array is empty for invalid/unmapped results.</en></lang>
  */
 export function findAllGeneratedPositionsForOriginal(
   index: OrdinarySourceMapIndex,
@@ -762,6 +810,11 @@ export function findAllGeneratedPositionsForOriginal(
   options: OrdinarySourceMapLookupOptions = {}
 ): SourceMapAllGeneratedLookupResult {
   const original = createOriginalPosition(sourcePath, originalPosition);
+
+  // <lang><zh-CN>反向查找采用同一坐标约束，空结果不能掩盖非法输入。</zh-CN><en>Reverse lookups share the coordinate constraint; empty results must not conceal invalid input.</en></lang>
+  if (!isValidOrdinaryLookupPosition(originalPosition)) {
+    return { diagnostics: invalidOrdinaryPositionDiagnostics(index), generated: [], original, status: "invalid" };
+  }
 
   if (index.status !== "available" || !index.traceMap) {
     return {
@@ -772,6 +825,7 @@ export function findAllGeneratedPositionsForOriginal(
     };
   }
 
+  // <lang><zh-CN>一对多投影保留库顺序，并逐项转换回HIA列。</zh-CN><en>Preserve library order for one-to-many projections and convert each result back to HIA columns.</en></lang>
   const generated = allGeneratedPositionsFor(index.traceMap, {
     source: normalizeLookupPath(sourcePath),
     line: originalPosition.line,
@@ -791,8 +845,12 @@ export function findAllGeneratedPositionsForOriginal(
 }
 
 /**
- * 联合 ordinary source map 与 doc-source-map，回答生成物位置对应的文档化语义。
- * Combine ordinary source map and doc-source-map lookup to answer documentation semantics for a generated artifact position.
+ * @lang zh-CN 联合位置map与文档语义map；无I/O，位置失败不能退化为宽泛文档结果。
+ * @lang en Combines position and documentation-semantic maps without I/O; failed positions cannot fall back to broad document results.
+ * @param docSourceMapIndex <lang><zh-CN>已验证文档索引，非available时无条目。</zh-CN><en>Validated documentation index; no entries when non-available.</en></lang>
+ * @param ordinarySourceMapIndex <lang><zh-CN>本包创建且未篡改的位置索引；位置查询更新内部缓存。</zh-CN><en>Untampered position index created by this package; position lookups update internal caches.</en></lang>
+ * @param query <lang><zh-CN>位置或元数据筛选；仅元数据时不要求普通map可用。双向输入保留旧处理顺序。</zh-CN><en>Position or metadata filters; metadata-only queries do not require an available ordinary map. Dual inputs retain legacy processing order.</en></lang>
+ * @returns <lang><zh-CN>联合结果与诊断；非available时条目为空，输入query原样回显。</zh-CN><en>Combined result and diagnostics; non-available results have no entries, and query echoes input unchanged.</en></lang>
  */
 export function querySourceLinkedPosition(
   docSourceMapIndex: DocSourceMapIndex,
@@ -802,9 +860,12 @@ export function querySourceLinkedPosition(
   let original: SourceMapOriginalPosition | undefined;
   let generated: SourceMapGeneratedPosition | undefined;
   let status: SourceLinkedLookupResult["status"] = docSourceMapIndex.status;
+  // <lang><zh-CN>保留查找本身的新增诊断，避免只收集索引诊断而丢失坐标拒绝原因。</zh-CN><en>Retain lookup-specific diagnostics rather than collecting index diagnostics only and losing coordinate rejection reasons.</en></lang>
+  const lookupDiagnostics: HiaDiagnostic[] = [...ordinarySourceMapIndex.diagnostics];
 
   if (query.generatedPosition) {
     const generatedLookup = findOriginalPositionForGenerated(ordinarySourceMapIndex, query.generatedPosition);
+    lookupDiagnostics.push(...generatedLookup.diagnostics);
     original = generatedLookup.original;
     generated = createGeneratedPosition(query.generatedPath ?? generatedLookup.generated.artifactPath, query.generatedPosition);
     status = generatedLookup.status === "available" ? status : generatedLookup.status;
@@ -813,6 +874,7 @@ export function querySourceLinkedPosition(
   if (query.originalSourcePath && query.originalPosition) {
     original = createOriginalPosition(query.originalSourcePath, query.originalPosition);
     const generatedLookup = findGeneratedPositionForOriginal(ordinarySourceMapIndex, query.originalSourcePath, query.originalPosition);
+    lookupDiagnostics.push(...generatedLookup.diagnostics);
     generated = generatedLookup.generated;
     status = generatedLookup.status === "available" ? status : generatedLookup.status;
   }
@@ -829,11 +891,12 @@ export function querySourceLinkedPosition(
   return {
     diagnostics: [
       ...docQueryResult.diagnostics,
-      ...ordinarySourceMapIndex.diagnostics
+      ...new Set(lookupDiagnostics)
     ],
-    entries: docQueryResult.entries,
+    // <lang><zh-CN>位置查找失败时不能退化为文件级/全量条目，失败状态只返回诊断。</zh-CN><en>Failed position lookup must not fall back to file-wide/all entries; failed states return diagnostics only.</en></lang>
+    entries: status === "available" ? docQueryResult.entries : [],
     ...(generated ? { generated } : {}),
-    matchedEntryCount: docQueryResult.matchedEntryCount,
+    matchedEntryCount: status === "available" ? docQueryResult.matchedEntryCount : 0,
     ...(original ? { original } : {}),
     query,
     status
@@ -1081,6 +1144,16 @@ function createGeneratedPosition(artifactPath: string | undefined, position: Hia
   };
 }
 
+/** @lang zh-CN HIA查找的行/列是安全正整数；省略列沿用第一列。 @lang en HIA lookup lines/columns are safe positive integers; omitted columns retain the first-column default. */
+function isValidOrdinaryLookupPosition(position: HiaSourcePosition): boolean {
+  return Number.isSafeInteger(position.line) && position.line > 0
+    && (position.column === undefined || (Number.isSafeInteger(position.column) && position.column > 0));
+}
+
+/** @lang zh-CN 返回固定坐标错误，不回显坐标对象或底层异常；不修改原索引诊断。 @lang en Returns a fixed position error without reflecting the position object or underlying exception; does not mutate index diagnostics. */
+function invalidOrdinaryPositionDiagnostics(index: OrdinarySourceMapIndex): HiaDiagnostic[] {
+  return [...index.diagnostics, createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_POSITION_INVALID", "HIA lookup positions require positive integer lines and optional positive integer columns.", "error", index.path)];
+}
 function hiaColumnToSourceMapColumn(column: number | undefined): number {
   return Math.max(0, (column ?? 1) - 1);
 }
@@ -1564,9 +1637,6 @@ function isUnsafeRelativePath(value: string): boolean {
     || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(normalized);
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function appendTarget(prefix: string | undefined, suffix: string): string {
   return prefix ? `${prefix}.${suffix}` : suffix;

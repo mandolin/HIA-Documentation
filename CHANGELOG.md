@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Ordinary source-map isolation
+
+- 普通位置映射复制已知元数据，不读取/保留源码正文或未知扩展；固定解析诊断避免输入泄漏。三类查找拒绝非法一基坐标，联合失败不再返回文件级宽泛条目；合法输入、偏置和已解析路径保持。契约/包版本不变，尚未发布。
+- Ordinary maps copy recognized metadata without reading/retaining source bodies or unknown extensions. Fixed parse diagnostics avoid input leakage; all three lookups reject invalid one-based coordinates, and combined failures return no broad file-level entries. Valid inputs, biases and resolved paths remain supported. Contract/package versions are unchanged; unreleased.
+
 本文件记录尚未发布和已发布的用户可见变化。包是否已进入 npm registry，以对应版本的发布记录与 registry 状态为准。
 
 This file records unreleased and released user-visible changes. Registry availability is determined by the release record and npm
