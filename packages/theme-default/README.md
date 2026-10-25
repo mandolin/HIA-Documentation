@@ -59,7 +59,7 @@ The default theme does not bundle, download or redistribute font files. Its CSS 
 
 ## Release Notes
 
-### 0.1.4 (release candidate)
+### 0.1.4
 
 - Fixes deep navigation label collapse, excessive indentation and competing open actions. Adds `--hia-tree-indent` and keeps extremely deep overflow within the sidebar.
 - 修复深层标签逐字换行、缩进过大和打开按钮挤压；极深层级保持局部滚动。

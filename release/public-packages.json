@@ -76,7 +76,7 @@
       "targetVersion": "0.1.4",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/browser-panel",
@@ -100,7 +100,7 @@
       "targetVersion": "0.1.6",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/schemas",
@@ -124,7 +124,7 @@
       "targetVersion": "0.1.8",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "patch-candidate"
+      "releaseStatus": "published"
     }
   ],
   "excludedPackages": [

@@ -10,15 +10,23 @@ pnpm run distribution:check
 
 ## Current State
 
-### Portal tree layout patch — 2026-10-25 (candidate)
+### Portal tree layout patch — 2026-10-25
 
-| Package | Target version | Change |
+| Package | Published version | Change |
 | --- | --- | --- |
 | `@hia-doc/theme-default` | `0.1.4` | Compact indentation, readable deep-tree labels, wrapping open actions and tree-local horizontal scrolling. |
 | `@hia-doc/renderer-html` | `0.1.6` | Exact dependency on the repaired theme; renderer runtime code unchanged. |
 | `@hia-doc/cli` | `0.1.8` | Exact dependency on the updated renderer; CLI runtime code unchanged. |
 
-中文：本批只发布树布局补丁及其依赖引用链；源码映射等未发布实现不进入本批。维护者已授权发行和参考站部署，实际registry可用性仍需逐包验证。
+All three versions are published and tagged `latest`. Downloads match npm integrity and their provenance statements identify the reviewed commit and Trusted Publish runs. A clean registry install of CLI `0.1.8` resolves renderer `0.1.6` and theme `0.1.4`, and real multipage CLI builds pass on Node.js 22/24.
+
+中文：本批只发布树布局补丁及其依赖引用链；源码映射等未发布实现不进入本批。三个版本的registry、下载完整性、来源关联和全新安装构建均已复核，HIA参考站已部署修复。
+
+Upgrade the direct documentation tools, then rebuild your generated site:
+
+```sh
+npm install --save-dev --save-exact @hia-doc/cli@0.1.8 @hia-doc/dotnetdoc-runner@0.1.10 --registry=https://registry.npmjs.org/
+```
 
 ### Documentation repair release — 2026-10-25
 
@@ -31,12 +39,12 @@ pnpm run distribution:check
 | `@hia-doc/renderer-html` | `0.1.5` | Preserves all localized entry fields and supports document/project branding. |
 | `@hia-doc/cli` | `0.1.7` | Consumes theme configuration and exposes the shared-asset writer. |
 
-Registry verification on 2026-10-25 confirms all six versions above are published and tagged `latest`.
+Registry verification on 2026-10-25 confirmed publication of all six versions above at that checkpoint. The newer tree patch versions are listed above.
 A fresh registry install of CLI `0.1.7` and DotNetDoc runner `0.1.10` passes Node.js 22/24 checks for real source signatures,
 complete localized fields, shared branded assets and strict public TypeScript declarations.
 中文：六个主仓包及六个DotNetDoc `0.1.10`包均已发布；完整安装链、下载完整性及来源关联已复核。
 
-For a .NET documentation tool directory, pin the two direct tools:
+The original .NET documentation repair used these direct tool versions (historical command; use the newer tree patch command above):
 
 ```sh
 npm install --save-dev --save-exact @hia-doc/cli@0.1.7 @hia-doc/dotnetdoc-runner@0.1.10 --registry=https://registry.npmjs.org/
