@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Large-site source preview memory repair
+
+- 已授权fetch/link源码提供同源无脚本查看页及真实#L行定位；fetch行号链接到该页，纯文本摘要校验端点保持独立，不恢复未授权或外部链接。
+- Authorized fetch/link source includes script-free same-origin viewing pages with real #L targets. Fetch line numbers link to these pages while digest-verified text endpoints stay separate; unauthorized or external links are not restored.
+- 项目构建改为有背压的逐文件写出，修复同一源文件并发缓存击穿；CLI流式读取有界片段、真实路径隔离、16MiB片段LRU及明确大小/总预算诊断。旧renderer内存API、完整文档字段、四种源码模式与显式公开授权保持；producer源码片段也遵守maxLines。
+- Project builds await per-file output and eliminate concurrent same-file cache misses. Bounded excerpt streams, real-path containment, a 16 MiB excerpt LRU and fixed budget diagnostics replace whole-file accumulation. Legacy renderer collection, complete documentation fields, all four source modes and explicit publication authority remain supported.
+
 ## Unreleased — Ordinary source-map isolation
 
 - 普通位置映射复制已知元数据，不读取/保留源码正文或未知扩展；固定解析诊断避免输入泄漏。三类查找拒绝非法一基坐标，联合失败不再返回文件级宽泛条目；合法输入、偏置和已解析路径保持。契约/包版本不变，尚未发布。

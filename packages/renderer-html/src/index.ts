@@ -1,3 +1,4 @@
+import { renderSourceLines } from "./source-lines.js";
 import {
   canonicalizeDocumentationLocale,
   getI18nField,
@@ -518,6 +519,24 @@ export interface RenderHtmlResult {
   manifest: RenderHtmlManifest;
 }
 
+/**
+ * @lang zh-CN 一个文件的写入者；Promise完成前不生成下一页。不要求保留传入文件，失败会停止输出。
+ * @lang en Writer for one file; no next page is generated before its promise resolves. Retaining files is unnecessary, and failures stop output.
+ * @param file <lang><zh-CN>安全相对路径的完整单文件；写入者负责输出目录。</zh-CN><en>One complete file with a safe relative path; the writer owns the output directory.</en></lang>
+ * @returns <lang><zh-CN>同步完成或表示写入已完成的Promise。</zh-CN><en>Synchronous completion or a promise indicating the write completed.</en></lang>
+ */
+export type RenderHtmlFileWriter = (file: RenderedHtmlFile) => void | Promise<void>;
+
+/** @lang zh-CN 逐文件渲染的无正文结果；索引/输入metadata仍随条目数增长。 @lang en Body-free result of per-file rendering; index/input metadata still grows with entry count. */
+export interface RenderHtmlWriteResult {
+  /** @lang zh-CN 已成功交给写入者的文件数，error诊断时为零。 @lang en Files successfully handed to the writer; zero for error diagnostics. */
+  fileCount: number;
+  /** @lang zh-CN 与普通API相同的诊断，不改变失败严重度。 @lang en Same diagnostics as the ordinary API, without changing failure severity. */
+  diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 仅文件清单/项目metadata，不含文件正文。 @lang en File inventory/project metadata only, without file bodies. */
+  manifest: RenderHtmlManifest;
+}
+
 export interface RenderHtmlManifest {
   schemaVersion: typeof HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION;
   renderer: "@hia-doc/renderer-html";
@@ -833,6 +852,49 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
  * @throws 当显式 IA/theme/source-comment 选择或 renderer 生成的 exact profile 非法时 fail closed。Fails closed when explicit IA/theme/source-comment selections or the renderer-generated exact profile are invalid.
  */
 export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions = {}): RenderHtmlResult {
+  // <lang><zh-CN>旧API显式收集相同惰性文件计划，保留内存结果形状与逐字节输出。</zh-CN><en>The legacy API explicitly collects the same lazy file plan, preserving its in-memory result shape and byte-for-byte output.</en></lang>
+  const plan = createProjectHtmlRenderPlan(projectInput, options);
+  const files = relocateDefaultThemeAssets([...plan.files], options.themeAssets);
+  return { files, diagnostics: plan.diagnostics, manifest: plan.manifest(files) };
+}
+
+/**
+ * @lang zh-CN 逐文件生成项目站并等待调用方写入，不保留整站HTML；先验证配置/契约和error诊断。
+ * @lang en Generates a project site one file at a time and awaits caller writes without retaining site HTML; validates configuration/contracts and error diagnostics first.
+ * @param projectInput <lang><zh-CN>显式文档/授权片段；不读取文件或网络。原始输入和索引仍与站点规模相关。</zh-CN><en>Explicit documentation/authorized excerpts; no file/network reads. Original input and indexes still scale with the site.</en></lang>
+ * @param writer <lang><zh-CN>等待单文件写入完成；抛错/拒绝会停止，不回滚已写文件。</zh-CN><en>Completes each individual write; throwing/rejecting stops output without rolling back earlier writes.</en></lang>
+ * @param options <lang><zh-CN>与旧API相同；显式single-page/eager仍可能产生大型单文件。</zh-CN><en>Same as the legacy API; explicit single-page/eager may still produce large individual files.</en></lang>
+ * @returns <lang><zh-CN>无文件正文的结果/清单；error诊断时零写入。</zh-CN><en>Body-free result/inventory; error diagnostics result in zero writes.</en></lang>
+ * @throws <lang><zh-CN>配置/契约非法或writer失败；不吞错误、不改变公开授权。</zh-CN><en>Invalid configuration/contracts or writer failure; errors and publication authority remain unchanged.</en></lang>
+ */
+export async function renderProjectHtmlDocumentToWriter(projectInput: RenderProjectHtmlInput, writer: RenderHtmlFileWriter, options: RenderHtmlOptions = {}): Promise<RenderHtmlWriteResult> {
+  // <lang><zh-CN>计划只保存输入/中性索引和源码资产；HTML由迭代器按需产生。</zh-CN><en>The plan retains input/neutral indexes and source assets only; its iterator generates HTML on demand.</en></lang>
+  const plan = createProjectHtmlRenderPlan(projectInput, options);
+  const files: RenderHtmlManifestFile[] = [];
+  if (!plan.diagnostics.some((item) => item.severity === "error")) {
+    for (const original of plan.files) {
+      for (const file of relocateDefaultThemeAssets([original], options.themeAssets)) {
+        // <lang><zh-CN>背压点先于下一次iterator.next；清单只存metadata，不存正文。
+        // </zh-CN><en>Backpressure precedes the next iterator.next; inventories retain metadata rather than bodies.</en></lang>
+        await writer(file);
+        files.push({ path: file.path, role: file.role, contentType: file.contentType });
+      }
+    }
+  }
+  return { fileCount: files.length, diagnostics: plan.diagnostics, manifest: plan.manifest(files) };
+}
+
+/** @lang zh-CN 内部惰性计划的清单闭包只接收文件metadata。 @lang en The internal lazy plan's inventory closure accepts file metadata only. */
+interface ProjectHtmlRenderPlan {
+  files: Iterable<RenderedHtmlFile>;
+  diagnostics: HiaDiagnostic[];
+  manifest: (files: RenderHtmlManifestFile[]) => RenderHtmlManifest;
+}
+
+/** @lang zh-CN 在任何输出前构造/验证共用事实，保持普通与流式API的契约、顺序和正文一致。 @lang en Builds/validates shared facts before output, preserving contracts, ordering and prose across ordinary and streaming APIs. */
+function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions): ProjectHtmlRenderPlan {
+  // <lang><zh-CN>资源路由非法时必须在第一次writer调用前拒绝。</zh-CN><en>Reject invalid asset routing before the first writer invocation.</en></lang>
+  relocateDefaultThemeAssets([], options.themeAssets);
   // <lang><zh-CN>关系图先规范化，确保 presentation identity 使用最终 relation facts，而不是调用者数组顺序。</zh-CN><en>Normalize the relation graph first so presentation identity uses final relation facts rather than caller array order.</en></lang>
   const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
@@ -871,62 +933,28 @@ export function renderProjectHtmlDocument(projectInput: RenderProjectHtmlInput, 
     diagnostics: [...(sourcePreparedProjectInput.diagnostics ?? []), ...presentationBundle.diagnostics]
   };
   const navigationIndex = createProjectNavigationIndex(renderedProjectInput, pageTitle, options, portalContext, presentationBundle);
-  const files: RenderedHtmlFile[] = siteLayout === "single-page"
-    ? [
-        {
-          path: "index.html",
-          contents: renderProjectIndexHtml(pageTitle, renderedProjectInput, options, portalContext),
-          contentType: "text/html; charset=utf-8",
-          role: "entry"
-        }
-      ]
-    : createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
-  // <lang><zh-CN>完整性 report 在所有可见/无脚本文件生成后追加，但 adoption 本身已在生成前通过 gate。</zh-CN><en>Append the completeness report after visible/no-script files, while the adoption itself has already passed its pre-render gate.</en></lang>
-  if (portalContext.uiLocaleAdoption) {
-    files.push({
-      path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH,
-      contents: `${portalContext.uiLocaleAdoption.reportJson}\n`,
-      contentType: "application/json; charset=utf-8",
-      role: "index"
-    });
-  }
-  files.push({
-    path: "project-index.json",
-    contents: `${JSON.stringify(navigationIndex, null, 2)}\n`,
-    contentType: "application/json; charset=utf-8",
-    role: "index"
-  });
-  // <lang><zh-CN>profile/source artifacts 在 navigation index 后追加；manifest 仍记录完整确定性文件清单。</zh-CN><en>Append profile/source artifacts after the navigation index while the manifest still records the full deterministic file inventory.</en></lang>
-  files.push(...presentationBundle.artifacts);
-
-  if (includeThemeAssets) {
-    for (const asset of assets) {
-      files.push({
-        path: asset.path,
-        contents: asset.contents,
-        contentType: asset.contentType,
-        role: "asset"
-      });
+  /** @lang zh-CN 按既有顺序惰性发出单文件；只在消费者继续迭代时渲染下一页。 @lang en Lazily emits individual files in legacy order, rendering the next page only when the consumer resumes. */
+  function* produceFiles(): Generator<RenderedHtmlFile> {
+    if (siteLayout === "single-page") {
+      yield { path: "index.html", contents: renderProjectIndexHtml(pageTitle, renderedProjectInput, options, portalContext), contentType: "text/html; charset=utf-8", role: "entry" };
+    } else {
+      yield* createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
+    }
+    if (portalContext.uiLocaleAdoption) {
+      yield { path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH, contents: `${portalContext.uiLocaleAdoption.reportJson}\n`, contentType: "application/json; charset=utf-8", role: "index" };
+    }
+    yield { path: "project-index.json", contents: `${JSON.stringify(navigationIndex, null, 2)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
+    yield* presentationBundle.artifacts;
+    if (includeThemeAssets) {
+      for (const asset of assets) yield { path: asset.path, contents: asset.contents, contentType: asset.contentType, role: "asset" };
     }
   }
-
-  // <lang><zh-CN>共享模式删除副本并重定位全部完整页面引用，manifest不再声称拥有外部文件。</zh-CN><en>Shared mode removes copies and relocates complete-page references; the manifest no longer claims external-file ownership.</en></lang>
-  const routedFiles = relocateDefaultThemeAssets(files, options.themeAssets);
   return {
-    files: routedFiles,
+    files: produceFiles(),
     diagnostics: renderedProjectInput.diagnostics ?? [],
-    manifest: createProjectManifest(
-      renderedProjectInput,
-      routedFiles,
-      pageTitle,
-      options,
-      navigationIndex,
-      presentationBundle,
-      portalContext
-    )
+    manifest: (files) => createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle, portalContext)
   };
 }
-
 /** @lang zh-CN 当前 render 调用的 IA、locale、labels 与 theme resolved context。 @lang en Resolved IA, locale, labels, and theme context for one render call. */
 interface RenderProjectPortalContext {
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
@@ -1183,7 +1211,7 @@ function applyProjectSourcePresentationPolicy(
       const publicAsset = presentationBundle.sourceByEntryId.get(entry.id);
       const source: RenderProjectSourceRef = {
         ...locator,
-        ...(presentation === "link" && publicAsset ? { linkUrl: publicAsset.relativeUrl, publicAsset } : {}),
+        ...(presentation === "link" && publicAsset ? { linkUrl: publicAsset.linkUrl ?? publicAsset.relativeUrl, publicAsset } : {}),
         ...(presentation === "embed" && preview ? {
           preview: {
             ...preview,
@@ -1192,6 +1220,7 @@ function applyProjectSourcePresentationPolicy(
         } : {}),
         ...(presentation === "fetch" && publicAsset ? {
           fetchUrl: publicAsset.relativeUrl,
+          ...(publicAsset.linkUrl ? { linkUrl: publicAsset.linkUrl } : {}),
           publicAsset,
           fetchTrigger: options.projectSite?.source?.fetchTrigger ?? entry.source.fetchTrigger ?? "on-expand",
           fetchMaxLines: options.projectSite?.source?.maxLines ?? entry.source.fetchMaxLines ?? 400
@@ -1331,7 +1360,7 @@ function collectProjectPresentationRelationIds(
 /** @lang zh-CN 构造含 profile linkage 的 body-free renderer manifest。 @lang en Builds a body-free renderer manifest with presentation-profile linkage. */
 function createProjectManifest(
   projectInput: RenderProjectHtmlInput,
-  files: RenderedHtmlFile[],
+  files: RenderHtmlManifestFile[],
   pageTitle: string,
   options: RenderHtmlOptions,
   navigationIndex: RenderProjectNavigationIndex,
@@ -1527,13 +1556,13 @@ function createProjectNavigationIndex(
  * @lang zh-CN 生成大型项目默认使用的 split-site 文件集合；入口页只保留应用壳，entry/source 正文保持分离。
  * @lang en Generates the default split-site file set for large projects; the entry page retains only the shell while entry/source bodies remain separate.
  */
-function createProjectSplitSiteFiles(
+function* createProjectSplitSiteFiles(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
   navigationIndex: RenderProjectNavigationIndex,
   options: RenderHtmlOptions,
   portalContext: RenderProjectPortalContext
-): RenderedHtmlFile[] {
+): Generator<RenderedHtmlFile> {
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const informationArchitecture = portalContext.informationArchitecture;
   const files: RenderedHtmlFile[] = [
@@ -1610,6 +1639,13 @@ function createProjectSplitSiteFiles(
 
   // <lang zh-CN>canonical entry fragment 始终生成，保证旧 deep link 与不识别 IA 的 consumer 可回退。</lang>
   // <lang en>Canonical entry fragments are always emitted so old deep links and IA-unaware consumers retain a fallback.</lang>
+  // <lang><zh-CN>先释放固定壳/索引；默认lazy不保存已生成条目页。eager按其显式语义保存预载片段。</zh-CN><en>Release fixed shell/index output first; default lazy output retains no generated entry pages. Eager retains preload fragments by its explicit semantics.</en></lang>
+  yield* files;
+  files.length = 0;
+  const presentationPaths = informationArchitecture?.loadingStrategy === "eager"
+    ? new Set(navigationIndex.entries.map((entry) => entry.presentationPath ?? entry.contentPath).filter((path): path is string => Boolean(path)))
+    : undefined;
+  const eagerFragments: Array<{ path: string; contents: string }> = [];
   for (const entry of projectInput.entries) {
     // <lang><zh-CN>索引与原输入由同一次确定性映射产生，因此对应 no-script entry 必须存在。</zh-CN><en>The index and original input come from the same deterministic mapping, so the matching no-script entry must exist.</en></lang>
     const noScriptEntry = noScriptEntryById.get(entry.id);
@@ -1661,24 +1697,27 @@ function createProjectSplitSiteFiles(
         });
       }
     }
+    // <lang><zh-CN>一页写完才继续生成下一页，清单由外部只保存路径metadata。</zh-CN><en>Continue generating only after the current page is written; the outer inventory stores path metadata only.</en></lang>
+    for (const file of files) {
+      if (presentationPaths?.has(file.path)) eagerFragments.push({ path: file.path, contents: file.contents });
+      yield file;
+    }
+    files.length = 0;
   }
 
   // <lang zh-CN>semantic-container 只增加 presentation fragment，不替换 canonical fragment。</lang>
   // <lang en>Semantic containers add presentation fragments without replacing canonical fragments.</lang>
   if (informationArchitecture?.contentGrouping === "semantic-container") {
-    files.push(...createProjectSemanticContainerFiles(projectInput, localeModel, portalContext));
+    for (const file of createProjectSemanticContainerFiles(projectInput, localeModel, portalContext)) {
+      if (presentationPaths?.has(file.path)) eagerFragments.push({ path: file.path, contents: file.contents });
+      yield file;
+    }
   }
 
   // <lang zh-CN>eager 以单一 index 预载 presentation fragment；canonical files 仍保持独立可寻址。</lang>
   // <lang en>Eager delivery preloads presentation fragments through one index while canonical files remain independently addressable.</lang>
   if (informationArchitecture?.loadingStrategy === "eager") {
-    const presentationPaths = new Set(
-      navigationIndex.entries.map((entry) => entry.presentationPath ?? entry.contentPath).filter((path): path is string => Boolean(path))
-    );
-    const fragments = files
-      .filter((file) => presentationPaths.has(file.path))
-      .map((file) => ({ path: file.path, contents: file.contents }))
-      .sort((left, right) => compareStableText(left.path, right.path));
+    const fragments = eagerFragments.sort((left, right) => compareStableText(left.path, right.path));
     files.push({
       path: "content/eager.json",
       contents: `${JSON.stringify({
@@ -1691,7 +1730,7 @@ function createProjectSplitSiteFiles(
     });
   }
 
-  return files;
+  yield* files;
 }
 
 function createProjectNavigationShardFiles(
@@ -2362,7 +2401,30 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "      /* <lang><zh-CN>只投影配置允许的行数，绝不执行或加入搜索索引。</zh-CN><en>Project only the configured line limit, never executing or search-indexing the body.</en></lang> */",
     "      const lines = text.split(/\\r?\\n/u);",
     "      const maxLines = Math.max(1, Number(details.dataset.hiaSourceMaxLines || 400));",
-    "      if (code) code.textContent = lines.slice(0, maxLines).join('\\n');",
+    "      /* <lang><zh-CN>正文只通过Text节点加入DOM；行号链接只指向同源生成页，不产生重复行id。</zh-CN><en>Insert bodies only through Text nodes; line links target generated same-origin pages without duplicate line IDs.</en></lang> */",
+    "      if (code) {",
+    "        const fragment = document.createDocumentFragment();",
+    "        const parsedStart = Number(details.dataset.hiaSourceStartLine || 1);",
+    "        const startLine = Number.isSafeInteger(parsedStart) && parsedStart > 0 ? parsedStart : 1;",
+    "        const viewer = details.dataset.hiaSourceLink ? new URL(details.dataset.hiaSourceLink, document.baseURI) : undefined;",
+    "        const safeViewer = viewer && viewer.origin === location.origin && !viewer.username && !viewer.password ? viewer : undefined;",
+    "        for (const [index, text] of lines.slice(0, maxLines).entries()) {",
+    "          const number = startLine + index;",
+    "          const row = document.createElement('span');",
+    "          row.className = 'hia-source-code-line';",
+    "          row.dataset.hiaSourceLineNumber = String(number);",
+    "          row.style.cssText = 'display:block;min-width:max-content';",
+    "          const label = document.createElement(safeViewer ? 'a' : 'span');",
+    "          label.className = 'hia-source-line-number';",
+    "          label.style.cssText = 'display:inline-block;min-width:3ch;margin-inline-end:1.25rem;text-align:right;user-select:none;color:inherit';",
+    "          label.textContent = String(number);",
+    "          if (safeViewer) { label.href = safeViewer.pathname + safeViewer.search + '#L' + number; label.setAttribute('aria-label', 'L' + number); }",
+    "          else label.setAttribute('aria-hidden', 'true');",
+    "          row.append(label, document.createTextNode(text));",
+    "          fragment.append(row);",
+    "        }",
+    "        code.replaceChildren(fragment);",
+    "      }",
     "      setSourceState(details, 'ready', 'portal.source.status.ready', 'Source ready.');",
     "    } catch (error) {",
     "      const aborted = error?.name === 'AbortError';",
@@ -3392,7 +3454,7 @@ function renderProjectSourceFetch(
     ? `<button type="button" class="hia-source-fetch-button" data-hia-source-fetch-button>${renderOptionalProjectUiMessage(portalContext, "portal.source.load", "Load source / 加载源码")}</button>`
     : "";
   return [
-    `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl)}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-state="idle" data-hia-source-asset-id="${escapeHtml(publicAsset.assetId)}" data-hia-source-integrity="${escapeHtml(publicAsset.digest)}" data-hia-source-byte-length="${escapeHtml(String(publicAsset.byteLength))}" data-hia-source-max-bytes="1048576" data-hia-source-max-lines="${escapeHtml(String(maxLines))}" data-hia-source-timeout="10000">`,
+    `<details class="hia-source-preview hia-project-source-preview" data-hia-source-fetch="${escapeHtml(source.fetchUrl)}" data-hia-source-link="${escapeHtml(publicAsset.linkUrl ?? "")}" data-hia-source-start-line="${startLine}" data-hia-source-fetch-trigger="${escapeHtml(fetchTrigger)}" data-hia-source-state="idle" data-hia-source-asset-id="${escapeHtml(publicAsset.assetId)}" data-hia-source-integrity="${escapeHtml(publicAsset.digest)}" data-hia-source-byte-length="${escapeHtml(String(publicAsset.byteLength))}" data-hia-source-max-bytes="1048576" data-hia-source-max-lines="${escapeHtml(String(maxLines))}" data-hia-source-timeout="10000">`,
     `<summary>${escapeHtml(caption)}</summary>`,
     manualButton,
     `<p class="hia-project-loading" data-hia-source-fetch-status role="status" aria-live="polite"${portalContext?.uiLocaleAdoption ? " data-hia-ui-message=\"portal.source.status.loading\"" : ""} hidden></p>`,
@@ -3446,7 +3508,7 @@ function renderProjectSourcePreview(
   return [
     `<details class="hia-source-preview hia-project-source-preview"${open}>`,
     `<summary>${renderOptionalProjectUiMessage(portalContext, "portal.source.preview", `Source Preview ${caption}`, { caption })}</summary>`,
-    `<pre class="hia-source-code"${language}><code>${escapeHtml(preview.content)}</code></pre>`,
+    `<pre class="hia-source-code"${language}><code>${renderSourceLines(preview.content, preview.range?.start.line ?? 1)}</code></pre>`,
     "</details>"
   ].join("");
 }
@@ -4856,10 +4918,10 @@ function renderDefinedIn(definedIn: HiaSourceDefinedIn, enableLink: boolean): st
   const label = `${definedIn.relativePath}${line}`;
 
   if (enableLink && definedIn.link?.enabled !== false && definedIn.link?.lineUrl) {
-    return `<p class="hia-source-line">Defined in <a href="${escapeHtml(definedIn.link.lineUrl)}">${escapeHtml(label)}</a></p>`;
+    return `<p class="hia-source-code-line">Defined in <a href="${escapeHtml(definedIn.link.lineUrl)}">${escapeHtml(label)}</a></p>`;
   }
 
-  return `<p class="hia-source-line">Defined in ${escapeHtml(label)}</p>`;
+  return `<p class="hia-source-code-line">Defined in ${escapeHtml(label)}</p>`;
 }
 
 function renderPrimaryBlock(block: HiaSourcePrimaryBlock): string {

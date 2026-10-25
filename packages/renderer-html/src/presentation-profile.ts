@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { renderPublicSourcePage } from "./source-lines.js";
 import {
   DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT,
   DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
@@ -66,6 +67,8 @@ export interface PortalPreparedSourceAsset {
   digest: string;
   lineCount: number;
   relativeUrl: string;
+  /** @lang zh-CN 可选同源源码页与行锚点；fetch仍用relativeUrl纯文本。 @lang en Optional same-origin source page/line anchor; fetch still uses relativeUrl plain text. */
+  linkUrl?: string;
   revision: string;
   sourceId: string;
 }
@@ -224,7 +227,7 @@ function createPortalSourceArtifacts(
   }
 
   const diagnostics: HiaDiagnostic[] = [];
-  const assetsBySourceId = new Map<string, { asset: DocumentationPresentationSourceAsset; artifact?: PortalPresentationArtifact; projection: PortalPreparedSourceAsset; contentHash: string }>();
+  const assetsBySourceId = new Map<string, { asset: DocumentationPresentationSourceAsset; artifact?: PortalPresentationArtifact; viewer?: PortalPresentationArtifact; projection: PortalPreparedSourceAsset; contentHash: string }>();
   const sourceByEntryId = new Map<string, PortalPreparedSourceAsset>();
   // <lang zh-CN>缺正文可能覆盖数千 topic；只记录计数并在循环后发出一个有界诊断，避免突破 contract 的 128 项上限。</lang>
   // <lang en>A missing body can affect thousands of topics; retain only a count and emit one bounded diagnostic after the loop to stay within the contract's 128-item limit.</lang>
@@ -266,6 +269,13 @@ function createPortalSourceArtifacts(
     }
 
     const relativeUrl = `${PORTAL_PUBLIC_SOURCE_DIRECTORY}/${contentHash}.txt`;
+    // <lang><zh-CN>同一文本可来自不同起始行，查看页路径包含行号，避免内容共享导致错误定位。</zh-CN><en>Identical text can originate at different first lines; viewer paths include the line number to prevent shared content from mislabeling positions.</en></lang>
+    const firstLine = source.startLine ?? 1;
+    if (!Number.isSafeInteger(firstLine) || firstLine < 1) {
+      diagnostics.push(createHiaDiagnostic("PRESENTATION_SOURCE_ASSET_INVALID", "An authorized source excerpt requires a positive integer start line.", "error"));
+      continue;
+    }
+    const viewerPath = `${PORTAL_PUBLIC_SOURCE_DIRECTORY}/${digestHex("sha256", `${identitySeed}:${contentHash}`)}.L${firstLine}.html`;
     const lineCount = content.length === 0 ? 0 : content.split(/\r?\n/u).length;
     const digest = `sha384-${digestBase64("sha384", content)}`;
     const assetId = stableIdentity("portal.asset", `${identitySeed}:${contentHash}`);
@@ -273,6 +283,7 @@ function createPortalSourceArtifacts(
       assetId,
       sourceId,
       relativeUrl,
+      ...(mode === "fetch" || mode === "link" ? { linkUrl: `${viewerPath}#L${firstLine}` } : {}),
       revision: `content:${contentHash}`,
       digest,
       byteLength,
@@ -299,7 +310,9 @@ function createPortalSourceArtifacts(
       asset,
       projection,
       contentHash,
-      ...(artifact ? { artifact } : {})
+      ...(artifact ? { artifact } : {}),
+      // <lang><zh-CN>查看页正文只在写入者读取contents时纯函数生成，不在bundle阶段把所有行号HTML驻留内存。</zh-CN><en>Viewer bodies are generated purely when writers read contents, avoiding retention of every line-numbered HTML page during bundle preparation.</en></lang>
+      ...(mode === "fetch" || mode === "link" ? { viewer: { path: viewerPath, get contents() { return renderPublicSourcePage(content, source.sourcePath, firstLine); }, contentType: "text/html; charset=utf-8", role: "asset" as const } } : {})
     });
     sourceByEntryId.set(source.entryId, projection);
   }
@@ -317,7 +330,7 @@ function createPortalSourceArtifacts(
   // <lang zh-CN>内容寻址会让不同 source identity 共享同一路径；按路径再去重可避免输出重复 artifact。</lang>
   // <lang en>Content addressing can map distinct source identities to one path, so deduplicate artifacts by path before emission.</lang>
   const sourceArtifacts = [...new Map(
-    records.flatMap(({ artifact }) => artifact ? [[artifact.path, artifact] as const] : [])
+    records.flatMap(({ artifact, viewer }) => [...(artifact ? [[artifact.path, artifact] as const] : []), ...(viewer ? [[viewer.path, viewer] as const] : [])])
   ).values()];
   const gitAttributes = sourceArtifacts.length > 0
     ? [{ path: ".gitattributes", contents: PORTAL_PUBLIC_SOURCE_GITATTRIBUTES, contentType: "text/plain; charset=utf-8", role: "asset" as const }]

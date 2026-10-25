@@ -703,7 +703,7 @@ describe("@hia-doc/cli", () => {
       };
 
       expect(exitCode).toBe(0);
-      expect(entryHtml).toMatch(/href="sources\/[a-f0-9]{64}\.txt"/u);
+      expect(entryHtml).toMatch(/href="sources\/[a-f0-9]{64}\.L\d+\.html#L\d+"/u);
       expect(entryHtml).not.toContain("https://github.com/");
       expect(entryHtml).not.toContain("bin/Portal.Components.xml");
       expect(presentationProfile).toMatchObject({

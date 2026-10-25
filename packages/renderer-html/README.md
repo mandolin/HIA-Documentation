@@ -6,6 +6,13 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ## Current Scope
 
+- 大站可调用 `renderProjectHtmlDocumentToWriter(input, writer, options)`，逐文件生成并等待writer；返回无正文的manifest/diagnostics/fileCount。旧API仍显式收集完整数组。详见[构建内存与源码边界](../../docs/project-build-memory.md)。
+- Large sites can use the awaited per-file writer API; input/index metadata still scales with the site, and explicit single-page/eager outputs may remain large.
+
+授权的fetch/link同时生成带行号与#L锚点的同源源码HTML页；fetch仍读取独立纯文本并验证摘要，不把HTML当源码执行。
+Authorized fetch/link modes also emit script-free source-view pages with line anchors; fetch retains its separate integrity-checked plain-text endpoint.
+
+
 - 单一 document 模式输出一个 `index.html`。
 - 统一项目站默认输出 `split-site`：入口页、延迟导航分片、搜索索引、关系图、逐节点 HTML fragment，以及 `pages/` 下不依赖 JavaScript 的索引和逐 topic 页面。
 - `projectSite.source.presentation` 统一约束 `none`、`link`、`embed`、`fetch` 四种源码呈现方式；默认值为 `fetch`。

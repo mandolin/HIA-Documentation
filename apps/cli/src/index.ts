@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } from "./project-source.js";
 
 import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -51,7 +52,7 @@ import {
 } from "@hia-doc/profile";
 import {
   renderHtmlDocument,
-  renderProjectHtmlDocument,
+  renderProjectHtmlDocumentToWriter,
   renderThemeAssets,
   type RenderHtmlOptions,
   type RenderProjectDocSourceMapRef,
@@ -733,11 +734,16 @@ async function runProjectDocsBuild(
     return 1;
   }
   // <lang><zh-CN>只把 validated portalSummary 加入 renderer input；完整 kit 的 target/trial identity 与 diagnostics 不进入 Portal。</zh-CN><en>Add only the validated portalSummary to renderer input; the full kit's target/trial identities and diagnostics never enter the Portal.</en></lang>
-  const rendered = renderProjectHtmlDocument({
+  const rendered = await renderProjectHtmlDocumentToWriter({
     ...preparedProjectInput,
     ...(ownerAdoption ? { ownerAdoption } : {}),
     // <lang><zh-CN>handoff envelope、review 与 digest 留在 CLI trust boundary；Portal 只收到已二次验证的 W-P122 projection。</zh-CN><en>The handoff envelope, review facts, and digest stay at the CLI trust boundary; the Portal receives only the revalidated W-P122 projection.</en></lang>
     ...(businessFlowDocumentationProjection ? { businessFlowDocumentationProjection } : {})
+  }, async (file) => {
+    // <lang><zh-CN>等待磁盘写入形成背压；不把整站文件正文保存到CLI数组。</zh-CN><en>Await disk writes for backpressure without retaining site file bodies in a CLI array.</en></lang>
+    const targetPath = path.join(outputDir, file.path);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, file.contents, "utf8");
   }, createRenderOptions(locale, docsConfig));
   reportDiagnostics(rendered.diagnostics, io);
 
@@ -745,18 +751,14 @@ async function runProjectDocsBuild(
     return 1;
   }
 
-  for (const file of rendered.files) {
-    const targetPath = path.join(outputDir, file.path);
-    await mkdir(path.dirname(targetPath), { recursive: true });
-    await writeFile(targetPath, file.contents, "utf8");
-  }
+
 
   const manifestFile = createProjectOutputManifest(rendered, manifestPath, aggregation);
   const manifestTargetPath = path.join(outputDir, manifestPath);
   await mkdir(path.dirname(manifestTargetPath), { recursive: true });
   await writeFile(manifestTargetPath, JSON.stringify(manifestFile, null, 2), "utf8");
 
-  io.stdout(`Generated ${rendered.files.length + 1} file(s) at ${outputDir}`);
+  io.stdout(`Generated ${rendered.fileCount + 1} file(s) at ${outputDir}`);
   return 0;
 }
 
@@ -839,7 +841,7 @@ function createOutputManifest(rendered: ReturnType<typeof renderHtmlDocument>, m
 }
 
 function createProjectOutputManifest(
-  rendered: ReturnType<typeof renderProjectHtmlDocument>,
+  rendered: Awaited<ReturnType<typeof renderProjectHtmlDocumentToWriter>>,
   manifestPath: string,
   aggregation: ProjectAggregationResult
 ) {
@@ -1044,137 +1046,6 @@ function normalizeEvidenceSourcePresentation(
   value: unknown
 ): GeneratedDocsEvidenceSummary["privacy"]["sourcePresentation"] {
   return value === "none" || value === "embed" || value === "fetch" || value === "link" ? value : "fetch";
-}
-
-/**
- * @lang zh-CN 为 Portal renderer 准备显式授权的源码片段；剥离 producer/legacy URL，且不执行源码。
- * @lang en Prepares explicitly authorized source excerpts for the Portal renderer, stripping producer/legacy URLs and never executing source.
- *
- * @param projectInput - 已聚合 project input。Aggregated project input.
- * @param docsConfig - 已验证配置。Validated configuration.
- * @param configBaseDir - `localRoot` 的配置文件基准目录。Configuration-file base directory for `localRoot`.
- * @returns 带有有界 preview 或仅 locator 的新 project input。New project input with bounded previews or locators only.
- */
-async function prepareProjectSourcePresentation(
-  projectInput: RenderProjectHtmlInput,
-  docsConfig: HiaDocsConfig,
-  configBaseDir: string
-): Promise<RenderProjectHtmlInput> {
-  // <lang><zh-CN>默认 fetch，但 filesystem 读取仍需要与模式分离的 explicit-public 授权。</zh-CN><en>Fetch is the default, while filesystem reads still require mode-independent explicit-public authorization.</en></lang>
-  const presentation = resolveProjectSourcePresentation(docsConfig);
-  const localRoot = path.resolve(configBaseDir, docsConfig.source?.localRoot ?? ".");
-  const publicAssetAuthorized = docsConfig.source?.publicAssetPolicy === "explicit-public";
-  const defaultExpanded = docsConfig.source?.defaultExpanded ?? false;
-  const maxLines = docsConfig.source?.maxLines ?? 400;
-  // <lang><zh-CN>同一 build 内按绝对已约束路径缓存文本，避免多个 symbol 重复读取同一公开文件。</zh-CN><en>Cache text by constrained absolute path within one build so multiple symbols do not reread the same public file.</en></lang>
-  const sourceFileCache = new Map<string, string>();
-
-  return {
-    ...projectInput,
-    entries: await Promise.all(projectInput.entries.map(async (entry) => {
-      if (!entry.source) {
-        return entry;
-      }
-
-      const { preview: existingPreview, fetchUrl: _existingFetchUrl, linkUrl: _existingLinkUrl, ...locator } = entry.source;
-      // <lang><zh-CN>优先采用 producer 提供的 primary block 范围，避免 fetch 退化为只读取定义位置的一行。</zh-CN><en>Prefer the producer primary-block range so fetch does not collapse to the single defined-in line.</en></lang>
-      const effectiveRange = existingPreview?.range ?? locator.range;
-      const preparedLocator = {
-        ...locator,
-        ...(effectiveRange ? { range: effectiveRange } : {})
-      };
-      const source: NonNullable<RenderProjectEntry["source"]> = {
-        ...preparedLocator
-      };
-
-      if (presentation === "embed" || presentation === "fetch" || presentation === "link") {
-        // <lang><zh-CN>producer preview 已是显式正文授权；CLI 文件读取另要求 explicit-public，避免 fetch-default 放宽隐私。</zh-CN><en>A producer preview is already explicit body authorization; CLI file reads additionally require explicit-public so fetch-default cannot loosen privacy.</en></lang>
-        const preview = existingPreview ?? (publicAssetAuthorized
-          ? await readProjectSourcePreview(
-              localRoot,
-              preparedLocator.path,
-              preparedLocator.range,
-              maxLines,
-              sourceFileCache
-            )
-          : undefined);
-        if (preview) {
-          source.preview = {
-            ...preview,
-            ...(presentation === "embed" ? { defaultExpanded } : {})
-          };
-        }
-      }
-
-      return {
-        ...entry,
-        source
-      };
-    }))
-  };
-}
-
-/** @lang zh-CN 解析四态 source presentation；显式关闭优先，缺省为 fetch。 @lang en Resolves the four-state source presentation; explicit disablement wins and the default is fetch. */
-function resolveProjectSourcePresentation(
-  docsConfig: HiaDocsConfig
-): RenderProjectSourcePresentation {
-  if (docsConfig.source?.enabled === false || docsConfig.source?.mode === "none") {
-    return "none";
-  }
-  return docsConfig.source?.presentation ?? "fetch";
-}
-
-/**
- * @lang zh-CN 从显式 localRoot 内读取一个安全相对纯文本片段，并按 range/maxLines 截断。
- * @lang en Reads one safe relative plain-text excerpt under an explicit local root and bounds it by range/maxLines.
- *
- * @param localRoot - 已解析的授权根。Resolved authorization root.
- * @param relativePath - producer 提供的相对 locator。Producer-provided relative locator.
- * @param range - 可选 1-based inclusive 范围。Optional 1-based inclusive range.
- * @param maxLines - 最大公开行数。Maximum public line count.
- * @param cache - 当前 build 的临时文本缓存。Ephemeral text cache for the current build.
- * @returns 公开候选 preview；越界、绝对 locator 或读取失败时为 undefined。Public-candidate preview, or undefined for traversal, absolute locators, or read failures.
- */
-async function readProjectSourcePreview(
-  localRoot: string,
-  relativePath: string,
-  range: NonNullable<RenderProjectEntry["source"]>["range"],
-  maxLines: number,
-  cache: Map<string, string>
-): Promise<NonNullable<NonNullable<RenderProjectEntry["source"]>["preview"]> | undefined> {
-  // <lang><zh-CN>先统一分隔符并拒绝绝对/父级 locator，再接触 filesystem。</zh-CN><en>Normalize separators and reject absolute/parent locators before touching the filesystem.</en></lang>
-  const normalizedPath = toPosix(relativePath);
-  if (!normalizedPath || normalizedPath.startsWith("/") || /^[a-zA-Z]:\//u.test(normalizedPath) || normalizedPath.split("/").includes("..")) {
-    return undefined;
-  }
-  const absolutePath = path.resolve(localRoot, normalizedPath);
-  if (!isPathInside(localRoot, absolutePath)) {
-    return undefined;
-  }
-
-  // <lang><zh-CN>缓存只存活于当前命令，不序列化，也不跨 build 持久化。</zh-CN><en>The cache lives only for this command and is neither serialized nor persisted across builds.</en></lang>
-  let sourceText = cache.get(absolutePath);
-  if (sourceText === undefined) {
-    try {
-      sourceText = await readFile(absolutePath, "utf8");
-      cache.set(absolutePath, sourceText);
-    } catch {
-      return undefined;
-    }
-  }
-
-  // <lang><zh-CN>range 采用 1-based inclusive 行号；末行同时受文件长度和 maxLines 约束。</zh-CN><en>The range uses 1-based inclusive lines, with the end bounded by file length and maxLines.</en></lang>
-  const lines = sourceText.split(/\r?\n/u);
-  const startLine = Math.max(1, range?.start.line ?? 1);
-  const requestedEndLine = range?.end?.line ?? (startLine + maxLines - 1);
-  const endLine = Math.min(lines.length, requestedEndLine, startLine + maxLines - 1);
-  return {
-    content: lines.slice(startLine - 1, endLine).join("\n"),
-    range: {
-      start: { line: startLine },
-      end: { line: endLine }
-    }
-  };
 }
 
 function hasProjectHtmlEmbeddedSourceBody(value: string | undefined): boolean {

@@ -665,7 +665,7 @@ describe("@hia-doc/renderer-html", () => {
 
     expect(modes.none.html).not.toContain("https://example.test");
     expect(modes.none.html).not.toContain("function sourceMode()");
-    expect(modes.link.html).toMatch(/href="sources\/[a-f0-9]{64}\.txt"/u);
+    expect(modes.link.html).toMatch(/href="sources\/[a-f0-9]{64}\.L\d+\.html#L\d+"/u);
     expect(modes.link.html).not.toContain("https://example.test");
     expect(modes.link.html).not.toContain("function sourceMode()");
     expect(modes.embed.html).toContain("function sourceMode()");
