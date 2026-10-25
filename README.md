@@ -96,7 +96,7 @@ JSDoc 用户侧集成包放在 `../HIA/jsdoc-plugin-hia-sys/`，JSDoc 主题放�
 - `@hia-doc/profiles`: 分发 7 个 official stable/bridge profiles，提供 JSON subpath、catalog 和 defensive-copy API。
 - `@hia-doc/plugin-sdk`: 定义 `documentation-producer@0.1.0-draft`，校验并执行显式加载的单次 producer module；不负责自动发现、进程调度或 watch graph。
 - `@hia-doc/schemas`: 分发 owner-preserving JSON Schema snapshots；不替代各 owner runtime validator。
-- `@hia-doc/source-linkage`: 校验并索引 `doc-source-map@0.1.0-draft`，导出 Draft 2020-12 schema，供 CLI/renderer 及后续 LSP/browser 消费。
+- `@hia-doc/source-linkage`: 源码实现 `doc-source-map@1.0.0` 的类别/具体来源与显式迁移，精确兼容旧 `0.1.0-draft`，导出 Draft 2020-12 schema；完整稳定候选审查仍在进行，新增能力尚未发布。见[来源与迁移](docs/doc-source-map-provenance.md)。
 - `@hia-doc/parser-jsdoc`: 将 `jsdoc-plugin-hia-sys` 的 HIA Integration JSON 转换为 core document，并清理 metadata、diagnostic data 和本机路径。
 - `@hia-doc/lsp`: LSP 服务、diagnostics、resource index、profile-derived completion/hover/capability、authoring location、resource action/preflight、definition 和 folding，只消费 core document 与 normalized profile runtime。
 - `@hia-doc/theme-default`: 默认 CSS/JS 静态主题资产。

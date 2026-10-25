@@ -19,19 +19,19 @@ These values describe checked-in package manifests, not a live npm registry look
 | Package | Manifest version | Publication / version policy |
 | --- | --- | --- |
 | main-repo root | private 0.0.0 | Workspace marker; not an npm product. |
-| `@hia-doc/core` | `0.1.1` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/config` | `0.1.5` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/core` | `0.1.2` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/config` | `0.1.6` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/profile` | `0.1.0` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/parser-jsdoc` | `0.1.0` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/plugin-sdk` | `0.1.2` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/source-linkage` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/theme-default` | `0.1.2` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/source-linkage` | `0.1.1` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/theme-default` | `0.1.3` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/browser-panel` | `0.1.0` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/profiles` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/renderer-html` | `0.1.4` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/renderer-html` | `0.1.5` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/schemas` | `0.1.4` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/lsp` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/cli` | `0.1.6` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/cli` | `0.1.7` | Publishable manifest; contract versions remain independent. |
 | @mandolin/jsdoc-plugin-hia-sys | 0.1.3 | Publishable manifest; independently versioned JSDoc integration. |
 | @mandolin/jsdoc-theme-hia | 0.1.2 | Publishable manifest; independently versioned JSDoc theme. |
 
@@ -58,8 +58,8 @@ A private satellite workspace root is a container marker. Its child packages hav
 | Project docs manifest | `1.0.0` source candidate; exact legacy `0.1.0-draft` | Source contract candidate | `@hia-doc/config` |
 | HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
 | CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
-| Doc source map | `0.1.0-draft` | Draft | `doc-source-map` contract docs and satellite tools |
-| Doc source map schema | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
+| Doc source map | `1.0.0`; exact legacy `0.1.0-draft` reader | Source implementation, full API review pending; unreleased | `@hia-doc/source-linkage` |
+| Doc source map schema | `1.0.0`; original historical schema retained | Catalog draft pending full review | `@hia-doc/source-linkage` |
 | Generated documentation binding | `0.1.0-draft` | Draft | `@hia-doc/source-linkage` |
 | Documentation locale resource | `0.1.0-draft` | Draft | `@hia-doc/core` |
 | Documentation locale-resolution sidecar | `0.1.0-draft` | Draft | `@hia-doc/core` |

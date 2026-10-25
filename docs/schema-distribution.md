@@ -15,7 +15,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-profile` | `@hia-doc/profile` | 1.0.0 stable definition candidate; exact historical draft retained |
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
-| `doc-source-map` | `@hia-doc/source-linkage` | draft |
+| `doc-source-map` | `@hia-doc/source-linkage` | `1.0.0` source implementation; catalog draft pending full API review; exact historical schema retained |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |

@@ -14,7 +14,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Documentation profile schema | `HIA_PROFILE_SCHEMA_VERSION` | `1.0.0` candidate; reader also accepts exact `0.1.0-draft` |
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
-| Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `0.1.0-draft` |
+| Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `1.0.0` source implementation, full API review pending; exact legacy `0.1.0-draft` reader |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `0.1.0-draft` |
 | Business-flow documentation | `BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Business-flow documentation projection | `BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |

@@ -10,7 +10,16 @@ This guide describes the first migration paths into HIA documentation profiles a
 - Keep legacy vocabulary as aliases, deprecated tags, raw metadata or migration diagnostics instead of creating parallel standards.
 - Prefer explicit project manifests over implicit scanning.
 
-Before registering custom documentation profiles, review [input validation and ownership](profile-input-validation.md). Invalid members are skipped with diagnostics; check errors before consuming a profile set. Avoid conflicting multi-parent tag definitions until composition precedence is finalized.
+Before registering custom documentation profiles, review [input validation and ownership](profile-input-validation.md). Invalid members are skipped with diagnostics; check errors before consuming a profile set. Multi-parent resolution follows the documented [composition precedence](profile-composition.md).
+
+## Documentation source maps
+
+The unreleased source definition adds closed locating categories and per-reference
+origin detail. Use explicit [lossless migration](doc-source-map-provenance.md);
+the exact legacy reader preserves old artifacts without rewriting them. Unknown
+origins and frozen binding-sidecar associations refuse standalone conversion.
+This source implementation remains under full API review and is separate from
+the published `@hia-doc/source-linkage@0.1.1` package.
 
 ## JSDoc Projects
 
