@@ -146,7 +146,7 @@ describe("doc-source-map model B", () => {
     expect(api.createDocSourceMapIndex(value).status).toBe("available");
     expect(api.migrateDocSourceMap(value).status).toBe("invalid");
     expect(api.migrateDocSourceMap(value).manifest).toBeUndefined();
-    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("0.1.0-draft");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("0.1.0-draft");
   });
   it("preflights hidden declared containers before nested accessors can execute", () => {
     const value = current(); let reads = 0;

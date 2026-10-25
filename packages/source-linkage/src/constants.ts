@@ -25,8 +25,9 @@ export type DocSourceMapRangeSource = typeof DOC_SOURCE_MAP_RANGE_SOURCES[number
  */
 export const GENERATED_DOCUMENTATION_BINDING_CONTRACT = "generated-documentation-binding";
 
-/**
- * 中文：中性生成式文档绑定 contract 的首个草案版本。
- * English: First draft version of the neutral generated-documentation-binding contract.
- */
-export const GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION = "0.1.0-draft";
+/** @lang zh-CN 当前试验绑定版本，只配doc-source-map1.0.0，不代表绑定稳定1.0承诺。 @lang en Current experimental binding version paired only with doc-source-map1.0.0, without a binding1.0 stability promise. */
+export const GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION = "0.2.0-draft";
+/** @lang zh-CN 历史绑定版本固定旧doc-source-map配对与schema身份。 @lang en Historical binding version pinning its legacy doc-source-map pair and schema identity. */
+export const GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION = "0.1.0-draft";
+/** @lang zh-CN 精确支持两代试验绑定，不按SemVer范围推测。 @lang en Exactly supports two experimental binding generations without SemVer range inference. */
+export type GeneratedDocumentationBindingContractVersion = typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION | typeof GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION;

@@ -515,7 +515,10 @@
           "const": "generated-documentation-binding"
         },
         "contractVersion": {
-          "const": "0.1.0-draft"
+          "enum": [
+            "0.1.0-draft",
+            "0.2.0-draft"
+          ]
         },
         "path": {
           "$ref": "#/$defs/safeRelativePath"

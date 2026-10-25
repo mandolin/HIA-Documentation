@@ -1,0 +1,31 @@
+{
+  "$comment": "中文：绑定输入边界的公开合成旧配对，不含业务源码或运行值。 English: Public synthetic legacy pair for binding input boundaries, without business source or runtime values.",
+  "documentMap": {
+    "contract": "doc-source-map", "contractVersion": "0.1.0-draft", "id": "map:synthetic",
+    "producer": { "name": "synthetic", "version": "0.0.0" },
+    "sources": [{ "id": "source:synthetic", "kind": "template", "path": "src/synthetic.pug" }],
+    "artifacts": [{ "id": "artifact:synthetic", "kind": "html", "path": "dist/synthetic.html" }],
+    "generatedBindingSidecars": [{ "id": "sidecar:synthetic", "contract": "generated-documentation-binding", "contractVersion": "0.1.0-draft", "path": "dist/synthetic.gdb.json" }],
+    "entries": [{ "id": "entry:synthetic", "kind": "symbol", "symbolId": "symbol:synthetic", "sourceRefs": [], "artifactRefs": [{ "artifactId": "artifact:synthetic", "rangeSource": "adapter", "confidence": "high" }], "generatedBindingRefs": [{ "bindingId": "binding:synthetic", "sidecarId": "sidecar:synthetic" }], "diagnostics": [] }],
+    "sourceMaps": [], "chains": [], "privacy": { "sourcesContentPolicy": "none" }, "diagnostics": []
+  },
+  "bindingSidecar": {
+    "contract": "generated-documentation-binding", "contractVersion": "0.1.0-draft", "id": "sidecar:synthetic",
+    "producer": { "name": "synthetic", "version": "0.0.0", "adapterId": "pug" },
+    "docSourceMapLinkage": { "contract": "doc-source-map", "contractVersion": "0.1.0-draft", "docSourceMapId": "map:synthetic", "sidecarId": "sidecar:synthetic", "sidecarPath": "dist/synthetic.gdb.json", "entryReferenceField": "generatedBindingRefs" },
+    "privacy": { "sourcesContentPolicy": "none", "allowAbsolutePaths": false, "allowUncPaths": false, "allowSourceBodySerialization": false, "allowRuntimeValueSerialization": false, "allowRuntimeExpressionExecution": false, "allowDigestSerialization": false, "allowSecretSerialization": false },
+    "deterministicLocalsPolicy": { "contract": "generated-doc-locals", "contractVersion": "0.1.0-draft-input", "mode": "none", "adapterId": "pug", "bindingAllowlist": [], "privacyClassification": "metadata-only", "limits": { "maxDepth": 12, "maxEntries": 10000, "maxStringBytes": 65536 }, "prohibitedSources": ["process-environment", "network", "provider", "host-editor", "implicit-runtime-capture"] },
+    "compatibility": { "minimumConsumerContractVersion": "0.1.0-draft", "unknownFieldPolicy": "ignore-unknown-optional-fields", "breakingChangePolicy": "new-contract-version-and-schema-id" },
+    "bindings": [{
+      "id": "binding:synthetic", "adapterId": "pug",
+      "sourceIntent": { "kind": "documentation-field", "field": "description", "sourceRef": { "sourceId": "source:synthetic", "range": { "start": { "line": 1, "column": 1 }, "end": { "line": 3, "column": 4 } }, "rangeSource": "parser" } },
+      "bindingRef": { "kind": "member-path", "rootDeclarationId": "declaration:synthetic", "memberPath": ["name"] },
+      "scope": { "id": "gdb-scope/v1/pug/source-synthetic#root/declaration", "adapterId": "pug", "sourceId": "source:synthetic", "semanticAncestry": ["root"], "declarationSlot": "declaration" },
+      "resolution": { "resolutionKind": "exact", "confidence": "high", "provenanceCoverage": "source-and-generated" },
+      "composition": { "relation": "none", "mergePolicy": "not-applicable", "contributions": [] }
+    }],
+    "expansions": [{ "id": "expansion:synthetic", "bindingId": "binding:synthetic", "scopeId": "gdb-scope/v1/pug/source-synthetic#root/declaration", "order": 0, "instanceKey": { "status": "stable", "key": "gdb-key/v1/string:synthetic", "origin": "explicit-instance-key", "privacySafe": true }, "resolution": { "resolutionKind": "exact", "confidence": "high", "provenanceCoverage": "source-and-generated" }, "targetIds": ["target:synthetic"] }],
+    "targets": [{ "id": "target:synthetic", "identity": { "kind": "generated-html-element", "artifactId": "artifact:synthetic", "symbolId": "symbol:synthetic", "selector": "article.synthetic" }, "resolution": { "resolutionKind": "exact", "confidence": "high", "provenanceCoverage": "source-and-generated" } }],
+    "diagnostics": []
+  }
+}

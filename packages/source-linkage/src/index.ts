@@ -37,7 +37,8 @@ import {
   DOC_SOURCE_MAP_CONTRACT_VERSION,
   DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
 } from "./constants.js";
 
 export {
@@ -48,7 +49,9 @@ export {
   type DocSourceMapContractVersion,
   type DocSourceMapRangeSource,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
+  type GeneratedDocumentationBindingContractVersion
 } from "./constants.js";
 export {
   DOC_SOURCE_MAP_JSON_SCHEMA,
@@ -59,9 +62,12 @@ export {
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID,
   validateGeneratedDocumentationBinding,
   type GeneratedDocumentationBindingValidationOptions
 } from "./generated-documentation-binding.js";
+export { migrateGeneratedDocumentationBindingBundle, type GeneratedDocumentationBindingMigrationBundle, type GeneratedDocumentationBindingBundleMigrationResult } from "./binding-migration.js";
 export {
   createGeneratedDocumentationBindingIndex,
   findGeneratedBindingsForDocSourceMapEntry,
@@ -1514,7 +1520,7 @@ function collectGeneratedBindingSidecarDiagnostics(diagnostics: HiaDiagnostic[],
   sidecars.filter(isRecord).forEach((sidecar, index) => {
     const id = stringValue(sidecar.id);
     const sidecarPath = stringValue(sidecar.path);
-    if (!id || ids.has(id) || sidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT || sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION) {
+    if (!id || ids.has(id) || sidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT || (sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION)) {
       diagnostics.push(createSourceLinkageDiagnostic(
         "DOC_SOURCE_MAP_BINDING_SIDECAR_INVALID",
         "generated binding sidecar must have a unique id and the supported contract/version.",

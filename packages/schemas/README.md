@@ -85,6 +85,14 @@ AI graph-ready references. The schema intentionally carries no Portal layout or 
 
 ## Status
 
+The unreleased source binding definition is `0.2.0-draft`, paired with
+documentation source map `1.0.0`. The ninth historical snapshot preserves the
+original binding `0.1.0-draft` bytes; the first eight remain unchanged. Repository
+and package builds restore validated original history bytes after TypeScript
+compilation. The catalog remains 17 entries with five stable definition
+candidates; binding is draft. See `docs/generated-documentation-binding-contract.md`
+in the repository for exact pairing and complete-bundle migration.
+
 Package versions, contract versions and registry availability are separate.
 Read each catalog entry's contract version and stability; the presence of a
 historical schema does not promote a draft to stable. Registry availability and

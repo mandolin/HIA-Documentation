@@ -56,6 +56,13 @@
       "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json",
       "fileName": "hia-project-manifest-0.1.0-draft.schema.json",
       "sha256": "a527136765ea85a964b82bb441b28999c6069a1c0dae41ef677ad3587ba1e0f7"
+    },
+    {
+      "key": "generated-documentation-binding",
+      "contractVersion": "0.1.0-draft",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
+      "fileName": "generated-documentation-binding-0.1.0-draft.schema.json",
+      "sha256": "7ba9d1f538d006f7427ffe78028a6821cf6be1b3605475af65da6c1b3a5e6f38"
     }
   ]
 }

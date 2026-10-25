@@ -57,12 +57,12 @@
       "stability": "draft"
     },
     {
-      "contractVersion": "0.1.0-draft",
+      "contractVersion": "0.2.0-draft",
       "key": "generated-documentation-binding",
       "ownerPackage": "@hia-doc/source-linkage",
       "path": "./generated-documentation-binding.schema.json",
-      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
-      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json",
       "stability": "draft"
     },
     {

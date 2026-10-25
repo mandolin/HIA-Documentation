@@ -7,7 +7,8 @@ import {
 } from "@hia-doc/core";
 import {
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
 } from "./constants.js";
 import {
   validateGeneratedDocumentationBinding
@@ -176,10 +177,10 @@ export function createGeneratedDocumentationBindingIndex(
     ...options.docSourceMapIndex.diagnostics,
     ...validateGeneratedDocumentationBinding(value, options.path ? { path: options.path } : {})
   ];
-  const contractVersion = isRecord(value) ? stringValue(value.contractVersion) : undefined;
-  const sidecarId = isRecord(value) ? stringValue(value.id) : undefined;
+  // <lang><zh-CN>validator拒绝访问器后不能再次直接读取头字段；只投影自有数据描述符供失败状态说明。</zh-CN><en>Never read headers directly after validator rejection of accessors; project own data descriptors only for failure metadata.</en></lang>
+  const { contractVersion, sidecarId } = readBindingHeader(value);
 
-  if (!isRecord(value) || diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
+  if (diagnostics.some((diagnostic) => diagnostic.severity === "error") || !isRecord(value)) {
     return createEmptyGeneratedDocumentationBindingIndex({
       diagnostics,
       ...(contractVersion ? { contractVersion } : {}),
@@ -381,7 +382,7 @@ function validateSidecarLinkage(
 
   if (linkageSidecarId !== sidecarId
     || declaredSidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT
-    || declaredSidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION) {
+    || declaredSidecar.contractVersion !== sidecar.contractVersion) {
     diagnostics.push(createIndexDiagnostic(
       "GENERATED_DOCUMENTATION_BINDING_INDEX_LINKAGE_INVALID",
       "generated-documentation-binding sidecar declaration must match the frozen contract, version, and sidecar id.",
@@ -623,13 +624,28 @@ function createEmptyGeneratedDocumentationBindingIndex(options: {
   });
 }
 
+/** @lang zh-CN 仅读取数据描述符中的版本/id，不执行getter；反射失败返回空元数据。 @lang en Reads version/id data descriptors without executing getters; reflection failure returns empty metadata. */
+function readBindingHeader(value: unknown): { contractVersion?: string; sidecarId?: string } {
+  try {
+    if (typeof value !== "object" || value === null) return {};
+    // <lang><zh-CN>描述符本身由引擎复制，访问器没有value，不会在这里执行。</zh-CN><en>The engine copies descriptors; accessors have no value and never execute here.</en></lang>
+    const version = Object.getOwnPropertyDescriptor(value, "contractVersion");
+    const identity = Object.getOwnPropertyDescriptor(value, "id");
+    const contractVersion = version && Object.hasOwn(version, "value") ? stringValue(version.value) : undefined;
+    const sidecarId = identity && Object.hasOwn(identity, "value") ? stringValue(identity.value) : undefined;
+    return { ...(contractVersion ? { contractVersion } : {}), ...(sidecarId ? { sidecarId } : {}) };
+  } catch {
+    return {};
+  }
+}
+
 function resolveIndexStatus(
   contractVersion: string | undefined,
   diagnostics: readonly HiaDiagnostic[]
 ): GeneratedDocumentationBindingIndex["status"] {
   const hasNonVersionError = diagnostics.some((diagnostic) => diagnostic.severity === "error"
     && diagnostic.code !== "GENERATED_DOCUMENTATION_BINDING_UNSUPPORTED_VERSION");
-  return contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && !hasNonVersionError
+  return contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION && !hasNonVersionError
     ? "unsupported-version"
     : "invalid";
 }

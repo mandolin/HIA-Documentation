@@ -22,29 +22,14 @@ export interface PreparedDocSourceMapMigration {
  * @param value <lang><zh-CN>已通过owner输入检查的普通JSON根。</zh-CN><en>Ordinary-JSON root passing owner input checks.</en></lang>
  * @returns <lang><zh-CN>待验证复制品或静态问题；不写文件、不调用JSON hooks。</zh-CN><en>Clone pending validation or a static issue; no file writes or JSON-hook calls.</en></lang>
  */
-export function prepareDocSourceMapMigration(value: Record<string, unknown>): PreparedDocSourceMapMigration {
-  // <lang><zh-CN>迭代复制保留共享子图，避免深扩展对象消耗调用栈；不会沿输入原型继承属性。</zh-CN><en>Iterative copying preserves shared subgraphs and avoids call-stack growth for deep extensions, without inheriting input properties.</en></lang>
-  const manifest: Record<string, unknown> = {};
-  const copies = new Map<object, object>([[value, manifest]]);
-  const pending: Array<[object, object]> = [[value, manifest]];
-  while (pending.length) {
-    // <lang><zh-CN>每个容器只展开一次；属性用defineProperty写入以保留__proto__作为普通数据键。</zh-CN><en>Expand each container once; defineProperty retains __proto__ as an ordinary data key.</en></lang>
-    const [source, target] = pending.pop()!;
-    for (const key of Object.keys(source)) {
-      const child = (source as Record<string, unknown>)[key];
-      let copied = child;
-      if (typeof child === "object" && child !== null) {
-        copied = copies.get(child);
-        if (!copied) { copied = Array.isArray(child) ? [] : {}; copies.set(child, copied as object); pending.push([child, copied as object]); }
-      }
-      Object.defineProperty(target, key, { value: copied, enumerable: true, configurable: true, writable: true });
-    }
-  }
+export function prepareDocSourceMapMigration(value: Record<string, unknown>, options: { coordinatedBindings?: true } = {}): PreparedDocSourceMapMigration {
+  // <lang><zh-CN>协调标志仅供已验证整组的owner内部调用，单工件公共迁移不传此标志。</zh-CN><en>The coordination flag is internal to owners validating complete bundles; public standalone migration never supplies it.</en></lang>
+  const manifest = cloneSourceLinkageJsonData(value);
   // <lang><zh-CN>当前版只复制；旧版每条引用独立转换，不能用顶层producer替代具体来源。</zh-CN><en>Current versions are cloned only; legacy references convert individually rather than substituting the top-level producer.</en></lang>
   if (value.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION) {
-    // <lang><zh-CN>冻结binding sidecar反向引用旧根，单独转换普通map无法保真更新另一工件；要求协调迁移。</zh-CN><en>Frozen binding sidecars refer back to the legacy root; converting a normal map alone cannot update another artifact losslessly, so coordinated migration is required.</en></lang>
-    if ((Array.isArray(manifest.generatedBindingSidecars) && manifest.generatedBindingSidecars.length > 0)
-      || (manifest.entries as Array<Record<string, unknown>>).some(entry => Array.isArray(entry.generatedBindingRefs) && entry.generatedBindingRefs.length > 0)) {
+    // <lang><zh-CN>单工件迁移仍拒绝绑定关联，整组调用须已验证完整输入闭包。</zh-CN><en>Standalone migration still refuses binding associations; coordinated callers must validate the complete input closure first.</en></lang>
+    if (!options.coordinatedBindings && ((Array.isArray(manifest.generatedBindingSidecars) && manifest.generatedBindingSidecars.length > 0)
+      || (manifest.entries as Array<Record<string, unknown>>).some(entry => Array.isArray(entry.generatedBindingRefs) && entry.generatedBindingRefs.length > 0))) {
       return { issue: "Frozen generated-binding associations require coordinated artifact migration." };
     }
     for (const entry of manifest.entries as Array<Record<string, unknown>>) {
@@ -64,4 +49,31 @@ export function prepareDocSourceMapMigration(value: Record<string, unknown>): Pr
   }
   manifest.contractVersion = DOC_SOURCE_MAP_CONTRACT_VERSION;
   return { manifest };
+}
+
+/**
+ * @lang zh-CN 复制已预检的JSON可序列化字段，保留共享子图及普通__proto__键，不调用JSON hooks。
+ * @lang en Clones preflighted JSON-serializable fields, retaining shared subgraphs and ordinary __proto__ keys without invoking JSON hooks.
+ * @param value <lang><zh-CN>已通过普通JSON预检的根对象。</zh-CN><en>Root object already passing ordinary-JSON preflight.</en></lang>
+ * @returns <lang><zh-CN>独立可写图；不可枚举内存扩展不属于JSON wire，调用者须再次验证所需字段。</zh-CN><en>Independent writable graph; non-enumerable memory extensions are outside JSON wire, and callers must revalidate required fields.</en></lang>
+ */
+export function cloneSourceLinkageJsonData(value: Record<string, unknown>): Record<string, unknown> {
+  // <lang><zh-CN>迭代复制保留共享子图，避免深扩展对象消耗调用栈；不会沿输入原型继承属性。</zh-CN><en>Iterative copying preserves shared subgraphs and avoids call-stack growth for deep extensions, without inheriting input properties.</en></lang>
+  const manifest: Record<string, unknown> = {};
+  const copies = new Map<object, object>([[value, manifest]]);
+  const pending: Array<[object, object]> = [[value, manifest]];
+  while (pending.length) {
+    // <lang><zh-CN>每个容器只展开一次；属性用defineProperty写入以保留__proto__作为普通数据键。</zh-CN><en>Expand each container once; defineProperty retains __proto__ as an ordinary data key.</en></lang>
+    const [source, target] = pending.pop()!;
+    for (const key of Object.keys(source)) {
+      const child = (source as Record<string, unknown>)[key];
+      let copied = child;
+      if (typeof child === "object" && child !== null) {
+        copied = copies.get(child);
+        if (!copied) { copied = Array.isArray(child) ? [] : {}; copies.set(child, copied as object); pending.push([child, copied as object]); }
+      }
+      Object.defineProperty(target, key, { value: copied, enumerable: true, configurable: true, writable: true });
+    }
+  }
+  return manifest;
 }

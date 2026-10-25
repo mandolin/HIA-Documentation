@@ -10,7 +10,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "build": "node ./node_modules/typescript/bin/tsc -b --pretty false",
+    "build": "node ./node_modules/typescript/bin/tsc -b --pretty false && node packages/schemas/scripts/copy-schema-history.mjs",
     "check": "pnpm run build && pnpm run test:unit && pnpm run test:e2e && pnpm run devtools:check && pnpm run visual-studio:check",
     "dev:cli": "pnpm --filter @hia-doc/cli dev",
     "devtools:check": "node scripts/check-devtools-extension.mjs",

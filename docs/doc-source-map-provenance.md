@@ -67,7 +67,9 @@ if (result.status === "migrated" || result.status === "already-current") {
 
 `generated-documentation-binding@0.1.0-draft`的反向引用固定指向旧版doc-source-map。
 普通映射单独升级不能更新另一个工件。含该声明/绑定引用的旧映射拒绝单独迁移，
-读取旧配对继续可用；组合时必须匹配真实映射版本。协调sidecar迁移属于独立兼容工作。
+读取旧配对继续可用；组合时必须匹配真实映射版本。现有源码提供显式整组迁移，
+将全部辅助工件一并升级至绑定`0.2.0-draft`与映射`1.0.0`；缺失、重复、断链或混配整组拒绝。
+见[绑定契约与迁移](generated-documentation-binding-contract.md)。旧生产器输出继续可读。
 
 新版索引检查必要结构、来源、显式字段、身份/范围及已有路径/隐私/引用边界；
 `available`不是所有JSON Schema关键字或跨链图约束都通过的证明，输入类型也不是验证证明。

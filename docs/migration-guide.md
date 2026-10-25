@@ -21,6 +21,12 @@ origins and frozen binding-sidecar associations refuse standalone conversion.
 This source implementation remains under full API review and is separate from
 the published `@hia-doc/source-linkage@0.1.1` package.
 
+For generated bindings, use the explicit
+[complete-bundle migration](generated-documentation-binding-contract.md#exact-version-pairs-and-coordinated-migration).
+It pairs binding `0.2.0-draft` with map `1.0.0`, retains exact old-pair readers,
+and returns no partial bundle on failure. It performs no filesystem transaction
+or publication; callers retain persistence and privacy responsibility.
+
 ## JSDoc Projects
 
 Existing JSDoc projects can adopt HIA through the published packages:

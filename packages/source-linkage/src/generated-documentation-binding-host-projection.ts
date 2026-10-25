@@ -1,6 +1,8 @@
 import {
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
+  type GeneratedDocumentationBindingContractVersion
 } from "./constants.js";
 import type {
   GeneratedDocumentationBindingIndex,
@@ -39,7 +41,8 @@ export const GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT_VERSION =
  */
 export interface GeneratedDocumentationBindingHostProjection {
   bindingContract: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT;
-  bindingContractVersion: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION;
+  /** @lang zh-CN 实际受支持绑定版本；失败未知输入沿用旧安全元数据回退，不认证未知版本。 @lang en Actual supported binding version; failed unknown inputs retain the legacy safe-metadata fallback without authenticating unknown versions. */
+  bindingContractVersion: GeneratedDocumentationBindingContractVersion;
   bindings: readonly GeneratedDocumentationBindingHostBinding[];
   contract: typeof GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT;
   contractVersion: typeof GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT_VERSION;
@@ -185,7 +188,7 @@ export function createGeneratedDocumentationBindingHostProjection(
 
   return Object.freeze({
     bindingContract: GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-    bindingContractVersion: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+    bindingContractVersion: index.contractVersion === GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION ? GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION : GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
     bindings: freezeList(bindings),
     contract: GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT,
     contractVersion: GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT_VERSION,

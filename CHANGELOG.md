@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated binding input and coordinated migration
+
+- 生成式绑定输入隔离访问器/环/反射错误，检查集合项、已声明字段、安全坐标及顺序，迭代隐私扫描不回显未知扩展键。新增绑定`0.2.0-draft`与源码映射`1.0.0`精确配对及纯内存整组迁移；旧配对和原始schema字节保留，失败无局部产物。locals契约、包版本及绑定draft性质保持，未发布npm。
+- Binding readers guard ordinary JSON and consumed fields, safe coordinates/orders and iterative privacy scanning. New binding `0.2.0-draft` pairs exactly with map `1.0.0`; explicit memory bundle migration validates complete closure, clones and revalidates, returning no partial result on failure. Exact old pairs and schema bytes remain supported. Locals identity, package versions and binding draft status are unchanged; unreleased. See [binding contract and migration](docs/generated-documentation-binding-contract.md).
+
 ## Unreleased — Combined query and LSP rejection propagation
 
 - 联合位置/语义查询增加已知数据字段投影，拒绝访问器、错误字符串及非法坐标，保留既有坐标/语义诊断；原始query回显未脱敏。语言服务保留查询状态和新增诊断，无筛选时也隔离invalid/unsupported条目，null/false不再丢弃，拒绝不冒充成功无匹配。协议、schema、包/依赖及宿主UI保持，尚未发布。

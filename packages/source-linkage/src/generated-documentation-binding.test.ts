@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
   validateGeneratedDocumentationBinding
@@ -16,7 +16,7 @@ import {
 function createValidBindingSidecar(): Record<string, unknown> {
   return {
     contract: GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-    contractVersion: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+    contractVersion: GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
     id: "gdb:fixture:card",
     producer: {
       name: "fixture-adapter",

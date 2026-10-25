@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json",
   "type": "object",
   "required": [
     "contract",
@@ -22,7 +22,7 @@
       "const": "generated-documentation-binding"
     },
     "contractVersion": {
-      "const": "0.1.0-draft"
+      "const": "0.2.0-draft"
     },
     "id": {
       "$ref": "#/$defs/nonEmptyString"
@@ -865,7 +865,7 @@
           "const": "doc-source-map"
         },
         "contractVersion": {
-          "const": "0.1.0-draft"
+          "const": "1.0.0"
         },
         "docSourceMapId": {
           "$ref": "#/$defs/nonEmptyString"
@@ -891,7 +891,7 @@
       "additionalProperties": false,
       "properties": {
         "minimumConsumerContractVersion": {
-          "const": "0.1.0-draft"
+          "const": "0.2.0-draft"
         },
         "unknownFieldPolicy": {
           "const": "ignore-unknown-optional-fields"

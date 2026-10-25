@@ -2,7 +2,7 @@
 
 ## 中文摘要
 
-`generated-documentation-binding@0.1.0-draft` 是独立、中性的 sidecar
+`generated-documentation-binding@0.2.0-draft` 是独立、中性的 sidecar
 contract，用于记录一条上游文档意图如何声明、展开并关联零个或多个下游生成目标。
 它不属于 Pug AST、HTMDoc core symbol 或 ordinary source map；Pug、Sass、Vue、
 JSX、Meta 等 adapter 可分别提供 parser/scope 语义后复用它。
@@ -16,11 +16,63 @@ locals 值、绝对/UNC 路径、digest 或 secret。adapter expression 只由 a
 | Field | Value |
 | --- | --- |
 | Contract | `generated-documentation-binding` |
-| Contract version | `0.1.0-draft` |
+| Contract version | `0.2.0-draft` source draft; exact legacy `0.1.0-draft` retained |
 | Schema dialect | JSON Schema Draft 2020-12 |
-| Canonical schema id | `https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json` |
+| Canonical schema id | `https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json` |
 | Owner | `@hia-doc/source-linkage` |
 | Distribution snapshot | `@hia-doc/schemas/generated-documentation-binding.schema.json` |
+
+Source changes below are unreleased. Package versions and the existing npm
+contents are unchanged. Binding remains a draft; no binding `1.0.0` commitment
+is implied. The old canonical URL retains its original bytes.
+
+## Exact version pairs and coordinated migration
+
+| Binding | Paired documentation source map | Reader |
+| --- | --- | --- |
+| `0.1.0-draft` | `0.1.0-draft` | Retained legacy pair |
+| `0.2.0-draft` | `1.0.0` | Current source pair |
+
+The current binding schema changes its root version, map-linkage version and
+`compatibility.minimumConsumerContractVersion`. The deterministic locals input
+remains `generated-doc-locals@0.1.0-draft-input`. Mixed pairs and unknown exact
+versions are refused; matching ids do not establish version compatibility.
+
+```ts
+import { migrateGeneratedDocumentationBindingBundle } from "@hia-doc/source-linkage";
+
+const result = migrateGeneratedDocumentationBindingBundle({
+  docSourceMap: legacyMap,
+  bindingSidecars: allDeclaredSidecars
+});
+if (result.bundle) {
+  // Inspect the complete result before deciding whether/how to persist it.
+  consume(result.bundle.docSourceMap, result.bundle.bindingSidecars);
+}
+```
+
+The pure memory API validates the entire input pair, creates independent copies,
+updates only defined version fields and reviewed map provenance, then validates
+the result. `status` is `migrated`, `already-current`, `invalid` or
+`unsupported-version`. A failure never returns `bundle`. Already-current inputs
+also return independent copies; inputs and their array order are preserved.
+
+Supply every declared sidecar exactly once. Ids, paths, map back-references,
+binding/expansion/target edges and group-local source/artifact references must
+resolve. The API does not load external symbol artifacts or infer expressions.
+Unknown JSON artifact extensions and diagnostic content are preserved, while
+unknown wrapper fields are not returned. Standalone `migrateDocSourceMap` still
+refuses legacy binding associations.
+
+迁移成功仅表示本 API 所检查的完整配对与引用边界成立，不授予公开或写入权限。
+输出保留允许的工件内容；调用者负责持久化事务、并发控制和隐私复核。
+旧生产器可以继续输出旧配对，无需自动重写。
+
+The existing Pug runtime fixture remains readable as a legacy pair, but currently
+uses different source-id spellings in its map and binding sidecar. Bundle
+migration refuses that unclosed group without changing identities. Align the
+producer's source identities in a separately reviewed change before migrating
+that output; retaining legacy reader support does not certify migration readiness.
 
 ## Neutral model
 
@@ -98,6 +150,25 @@ draft must ignore unknown optional fields, while a breaking field/type/meaning
 change requires a new `contractVersion` and a new canonical schema `$id`.
 Adding an optional field still requires fixture, compatibility-matrix, owner-
 validator, and release-gate updates.
+
+The owner reader accepts ordinary finite acyclic JSON data, including shared
+subgraphs. It rejects accessors without executing them, malformed collection
+items, declared enum/string violations, unsafe integer coordinates/orders,
+reversed ranges and forbidden serialized privacy fields. Omitted columns compare
+as one. Privacy scanning is iterative and its fixed diagnostic path does not
+repeat unknown extension keys. Index headers use own data descriptors after
+validation, avoiding a rejected getter being read again.
+
+This owner validator is not a general JSON Schema engine or a proof of every
+cross-artifact semantic rule. Unknown optional JSON fields are ignored by the
+reader and retained by migration. Non-enumerable memory properties are outside
+the JSON wire representation; required fields must survive copying and result
+validation. Stateful proxies, hostile resource use and concurrent mutation are
+not sandboxed. Optional caller-supplied diagnostic paths are not redacted.
+
+The host projection keeps its own `0.1.0-draft` identity and reports the actual
+supported binding version. An unavailable index yields the existing safe empty
+projection; it does not certify an unknown input version.
 
 See also `docs/versioning.md`, `docs/schema-distribution.md`, and
 `docs/compatibility-matrix.md`.

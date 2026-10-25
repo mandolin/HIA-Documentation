@@ -58,10 +58,14 @@ rewritten. Already-current data is cloned. Allowed source bodies and open JSON
 extensions remain in the migrated artifact; returning data grants no publication
 authority. See `docs/doc-source-map-provenance.md` for categories and migration.
 
-Frozen generated-binding sidecars still refer to the legacy map version.
-Standalone migration refuses those associations, and composition requires an
-exact paired map version. Continue reading legacy pairs until coordinated
-sidecar migration is available.
+Legacy generated-binding sidecars still refer to the legacy map version.
+Standalone migration refuses those associations. The unreleased
+`migrateGeneratedDocumentationBindingBundle({ docSourceMap, bindingSidecars })`
+validates and copies the complete group into binding `0.2.0-draft` / map `1.0.0`.
+Supply every declared sidecar; missing, duplicate, unresolved or mixed-version
+groups fail without partial output. Successful/current results are independent
+copies, preserve JSON extensions, and grant no write/publication authority.
+Exact legacy binding/map `0.1.0-draft` reading remains supported.
 
 `createDocSourceMapIndex()` retains diagnostics and an explicit `invalid` or
 `unsupported-version` status when input is unusable. Query functions return no
@@ -74,7 +78,7 @@ an explicit `embed` or `redacted` policy. The normalized index and query results
 never contain these bodies. Ordinary source-map handling has its own validation
 and does not grant permission to use an invalid documentation source map.
 
-`generated-documentation-binding@0.1.0-draft` is a separate neutral sidecar
+`generated-documentation-binding@0.2.0-draft` (source draft, unreleased) is a separate neutral sidecar
 contract. The package exports its Draft 2020-12 schema and
 `validateGeneratedDocumentationBinding()`. A doc-source-map may declare only a
 safe sidecar reference plus binding ids; it never embeds the full binding model
@@ -83,6 +87,12 @@ explicit in-memory sidecar and a pre-built doc-source-map index to provide
 read-only `binding -> generated targets` and `generated target -> bindings`
 queries. It never loads a sidecar path, executes expressions/locals, or starts
 a renderer or host projection. See `docs/generated-documentation-binding-contract.md`.
+
+The binding reader preflights ordinary JSON without executing getters, checks
+consumed declared fields and safe ordered ranges, and iteratively checks privacy
+fields. It is not a general schema engine or proxy/resource sandbox. The legacy
+schema and canonical identity remain exported independently, with original bytes
+preserved in `@hia-doc/schemas`. Binding remains a draft.
 
 `documentation-locale-resolution@0.1.0-draft` is another independent,
 metadata-only sidecar owned by `@hia-doc/core`. A doc-source-map may declare its

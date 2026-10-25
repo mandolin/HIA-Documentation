@@ -20,7 +20,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
 | `documentation-terminology` | `@hia-doc/core` | draft |
-| `generated-documentation-binding` | `@hia-doc/source-linkage` | draft |
+| `generated-documentation-binding` | `@hia-doc/source-linkage` | `0.2.0-draft` source draft, exact `0.1.0-draft` historical identity retained |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
 | `documentation-presentation-profile` | `@hia-doc/core` | draft |
 | `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
@@ -94,6 +94,13 @@ checked for semantic equality with their owner definitions. Their byte digests
 are pinned independently in regression tests. They retain the publicly served
 formatting, which can differ from the current source snapshot formatting.
 
+A ninth snapshot retains the exact original binding `0.1.0-draft` definition
+before introducing binding `0.2.0-draft` / map `1.0.0` coordination. Its SHA-256 is
+`7ba9d1f538d006f7427ffe78028a6821cf6be1b3605475af65da6c1b3a5e6f38`.
+The first eight digests are unchanged. This adds no catalog entry or stable
+definition: the catalog remains 17 entries, five stable definition candidates.
+Binding remains draft, and the map definition still awaits full API review.
+
 The Pages build validates every historical snapshot before replacing its local
 artifact and publishes `schemas/history.json`. A current definition may share a
 historical identity only when its schema definition is unchanged. A new version
@@ -101,6 +108,11 @@ uses a new identity; the previous fixed URL keeps its original bytes. The owner
 synchronizer updates current snapshots only and never rewrites history. If a
 compiler changes JSON formatting in emitted history, the digest gate fails;
 restore the saved original bytes rather than updating their expected digests.
+
+Both the repository build and the schema package build run a post-compile
+history copy. It validates all source snapshots before copying original bytes
+into `dist/history`, so TypeScript's JSON formatting cannot change canonical
+history. The Pages digest gate still verifies those resulting bytes.
 
 An archived draft remains a draft. Structural validation should select the
 schema matching the input's exact version; semantic acceptance still belongs to

@@ -1,4 +1,11 @@
+/**
+ * @file
+ * @lang zh-CN 新旧生成式绑定schema与纯数据/跨集合/隐私validator，保留冻结旧定义，不读取路径或执行表达式。
+ * @lang en Current/legacy generated-binding schemas and pure data/cross-collection/privacy validator, retaining frozen definitions without path reads or expression execution.
+ */
 import path from "node:path";
+import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
+import { collectBindingInputIssues } from "./binding-input.js";
 import {
   createHiaDiagnostic,
   type HiaDiagnostic,
@@ -9,15 +16,20 @@ import {
   DOC_SOURCE_MAP_CONTRACT,
   // <lang><zh-CN>此草案冻结引用历史doc-source-map，不随当前根升级而改变已分发schema。</zh-CN><en>This draft pins the historical doc-source-map, preserving its distributed schema when the current root advances.</en></lang>
   DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION as DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_CONTRACT_VERSION as CURRENT_DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_RANGE_SOURCES,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
 } from "./constants.js";
 
 /**
  * 中文：可版本化 generated-documentation-binding JSON Schema 的 canonical `$id`。
  * English: Canonical versioned `$id` for the generated-documentation-binding JSON Schema.
  */
-export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json";
+export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json";
+/** @lang zh-CN 不变的旧版canonical身份，历史原始字节另存分发。 @lang en Immutable legacy canonical identity, with original bytes retained separately in distribution. */
+export const GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json";
 
 /**
  * 中文：与 contract 版本分离的 schema 版本；当前与 contractVersion 对齐。
@@ -36,9 +48,11 @@ export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION = GENERATED_DOCUMENT
  * diagnostics, and sidecar references; it contains no Pug AST nodes, template
  * source bodies, or runtime local values.
  */
-export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = {
+/** @lang zh-CN 创建独立schema图，两个版本不共享可变子结构，仅已确认版本/反向引用const不同。 @lang en Creates independent schema graphs without mutable sharing; only confirmed version/back-reference constants differ. */
+function createBindingSchema<const Version extends string, const MapVersion extends string, const Identity extends string>(version: Version, mapVersion: MapVersion, identity: Identity) {
+return {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
+  $id: identity,
   type: "object",
   required: [
     "contract",
@@ -57,7 +71,7 @@ export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = {
   additionalProperties: true,
   properties: {
     contract: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT },
-    contractVersion: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION },
+    contractVersion: { const: version },
     id: { $ref: "#/$defs/nonEmptyString" },
     producer: { $ref: "#/$defs/producer" },
     docSourceMapLinkage: { $ref: "#/$defs/docSourceMapLinkage" },
@@ -419,7 +433,7 @@ export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = {
       additionalProperties: false,
       properties: {
         contract: { const: DOC_SOURCE_MAP_CONTRACT },
-        contractVersion: { const: DOC_SOURCE_MAP_CONTRACT_VERSION },
+        contractVersion: { const: mapVersion },
         docSourceMapId: { $ref: "#/$defs/nonEmptyString" },
         sidecarId: { $ref: "#/$defs/nonEmptyString" },
         sidecarPath: { $ref: "#/$defs/safeRelativePath" },
@@ -431,13 +445,19 @@ export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = {
       required: ["minimumConsumerContractVersion", "unknownFieldPolicy", "breakingChangePolicy"],
       additionalProperties: false,
       properties: {
-        minimumConsumerContractVersion: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION },
+        minimumConsumerContractVersion: { const: version },
         unknownFieldPolicy: { const: "ignore-unknown-optional-fields" },
         breakingChangePolicy: { const: "new-contract-version-and-schema-id" }
       }
     }
   }
 } as const;
+}
+
+/** @lang zh-CN 当前0.2.0-draft独立定义，只引用doc-source-map1.0.0。 @lang en Independent current0.2.0-draft definition referring only to doc-source-map1.0.0. */
+export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION, CURRENT_DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID);
+/** @lang zh-CN 精确旧定义，不跟随当前常量漂移，结构与历史快照保持。 @lang en Exact legacy definition without following current constants, retaining historical snapshot structure. */
+export const GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION, DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID);
 
 /**
  * 中文：generated-documentation-binding owner validator 的可选上下文。
@@ -470,33 +490,38 @@ const diagnosticSeverityByCode = new Map<string, HiaDiagnosticSeverity>([
 ]);
 
 /**
- * 中文：校验中性 generated-documentation-binding sidecar 的跨集合、隐私和
- * 版本语义。它不执行 adapter expression、不读取 source body，也不建立 W-P52.5
- * 的双向查询索引。
- * English: Validates cross-collection, privacy, and version semantics for a
- * neutral generated-documentation-binding sidecar. It neither executes adapter
- * expressions nor reads source bodies, and it does not build the W-P52.5
- * bidirectional query index.
+ * @lang zh-CN 校验新旧绑定辅助工件的普通JSON、已消费字段、跨集合、隐私与精确版本；不执行getter/表达式，不读取路径或建立索引。
+ * @lang en Validates ordinary JSON, consumed fields, cross-collection/privacy semantics and exact current/legacy binding versions without executing getters/expressions, reading paths or building indexes.
  *
- * @param value 中文：待校验的反序列化 JSON 值。English: Deserialized JSON value to validate.
- * @param options 中文：只含 diagnostic 定位上下文。English: Diagnostic-location context only.
- * @returns 中文：稳定诊断数组，空数组表示 owner semantic checks 通过。English: Stable diagnostics; an empty array passes owner semantic checks.
+ * @param value <lang><zh-CN>未知内存值；只接受有限无环普通JSON，允许共享子图。</zh-CN><en>Unknown memory value; only finite acyclic ordinary JSON is accepted, with shared subgraphs allowed.</en></lang>
+ * @param options <lang><zh-CN>显式诊断路径上下文，不保证可公开。</zh-CN><en>Explicit diagnostic-path context, without public-safety guarantees.</en></lang>
+ * @returns <lang><zh-CN>固定诊断数组；空数组仅代表本owner已实现检查通过，不替代完整schema验证。Proxy反射/资源和并发突变不是沙箱保证。</zh-CN><en>Fixed diagnostics; an empty array passes implemented owner checks only, not complete schema validation. Proxy reflection/resources/concurrent mutation are not sandbox guarantees.</en></lang>
  */
 export function validateGeneratedDocumentationBinding(
   value: unknown,
   options: GeneratedDocumentationBindingValidationOptions = {}
 ): HiaDiagnostic[] {
-  const diagnostics: HiaDiagnostic[] = [];
-
-  if (!isRecord(value)) {
-    diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "generated-documentation-binding manifest must be a JSON object.", "error", options.path));
-    return diagnostics;
+  try {
+    // <lang><zh-CN>先检查完整普通JSON图；短路顺序也保护被撤销Proxy，不在拒绝后读取头字段。</zh-CN><en>Preflight the complete ordinary-JSON graph first; short-circuit order also protects revoked proxies without reading headers after rejection.</en></lang>
+    if (!isDocSourceMapJsonDataGraph(value) || !isRecord(value)) {
+      return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding manifest must contain ordinary finite acyclic JSON data.", "error", options.path)];
+    }
+    return validateBindingJsonObject(value, options);
+  } catch {
+    // <lang><zh-CN>反射或输入突变异常只返回固定诊断，不反射私有异常正文。</zh-CN><en>Reflection or input-mutation errors return fixed diagnostics without reflecting private exception text.</en></lang>
+    return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding input could not be validated as ordinary JSON data.", "error", options.path)];
   }
+}
 
+/** @lang zh-CN 在普通JSON预检后执行既有语义与已声明字段检查；不修改输入。 @lang en Executes existing semantics and declared-field checks after ordinary-JSON preflight without mutating input. */
+function validateBindingJsonObject(value: Record<string, unknown>, options: GeneratedDocumentationBindingValidationOptions): HiaDiagnostic[] {
+  // <lang><zh-CN>诊断只由固定说明与显式上下文构成，字段检查不回显被拒绝的值。</zh-CN><en>Diagnostics contain fixed explanations and explicit context only; field checks never echo rejected values.</en></lang>
+  const diagnostics: HiaDiagnostic[] = [];
+  for (const issue of collectBindingInputIssues(value)) diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", issue.message, "error", appendPath(options.path, issue.target)));
   validateContractHeader(value, diagnostics, options.path);
   validatePrivacy(value.privacy, diagnostics, options.path);
   validateDeterministicLocalsPolicy(value.deterministicLocalsPolicy, diagnostics, options.path);
-  validateDocSourceMapLinkage(value.docSourceMapLinkage, diagnostics, options.path);
+  validateDocSourceMapLinkage(value.docSourceMapLinkage, value.contractVersion, diagnostics, options.path);
   collectForbiddenValueProperties(value, diagnostics, options.path);
 
   const bindings = collectObjects(value.bindings, "bindings", diagnostics, options.path);
@@ -524,8 +549,8 @@ function validateContractHeader(value: Record<string, unknown>, diagnostics: Hia
   if (value.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT) {
     diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "generated-documentation-binding manifest contract is invalid.", "error", targetPath));
   }
-  if (value.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION) {
-    diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_UNSUPPORTED_VERSION", `generated-documentation-binding contractVersion must be ${GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION}.`, "error", targetPath));
+  if (value.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && value.contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION) {
+    diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_UNSUPPORTED_VERSION", "Binding contractVersion must be an explicitly supported current or legacy version.", "error", targetPath));
   }
   if (!nonEmptyString(value.id) || !isRecord(value.producer) || !nonEmptyString(value.producer.name) || !nonEmptyString(value.producer.version) || !nonEmptyString(value.producer.adapterId)) {
     diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Manifest id and producer name/version/adapterId are required.", "error", targetPath));
@@ -568,10 +593,11 @@ function validateDeterministicLocalsPolicy(value: unknown, diagnostics: HiaDiagn
   }
 }
 
-function validateDocSourceMapLinkage(value: unknown, diagnostics: HiaDiagnostic[], targetPath?: string): void {
+/** @lang zh-CN 每代绑定只接受其冻结的映射版本，不能交叉配对。 @lang en Each binding generation admits only its pinned mapping version, never cross-pairing. */
+function validateDocSourceMapLinkage(value: unknown, bindingVersion: unknown, diagnostics: HiaDiagnostic[], targetPath?: string): void {
   if (!isRecord(value)
     || value.contract !== DOC_SOURCE_MAP_CONTRACT
-    || value.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION
+    || value.contractVersion !== (bindingVersion === GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION ? CURRENT_DOC_SOURCE_MAP_CONTRACT_VERSION : DOC_SOURCE_MAP_CONTRACT_VERSION)
     || !nonEmptyString(value.sidecarId)
     || !nonEmptyString(value.sidecarPath)
     || value.entryReferenceField !== "generatedBindingRefs") {
@@ -600,9 +626,13 @@ function validateBinding(value: Record<string, unknown>, bindingIds: Set<string>
   validateComposition(value.composition, diagnostics, appendPath(targetPath, "composition"));
 }
 
+/** @lang zh-CN 生成目标须保留可识别身份，可选范围沿core一基/顺序约束。 @lang en Generated targets retain identifiable identity, with optional ranges following core one-based/order constraints. */
 function validateTarget(value: Record<string, unknown>, diagnostics: HiaDiagnostic[], targetPath?: string): void {
   if (!nonEmptyString(value.id) || !isRecord(value.identity) || !nonEmptyString(value.identity.kind) || (!nonEmptyString(value.identity.artifactId) && !nonEmptyString(value.identity.symbolId))) {
     diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Target requires an id and an artifact or documentation-symbol identity without adapter AST details.", "error", targetPath));
+  }
+  if (isRecord(value.identity) && Object.hasOwn(value.identity, "range") && !isRange(value.identity.range)) {
+    diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Target range must contain ordered positive safe integer coordinates.", "error", appendPath(targetPath, "identity.range")));
   }
   validateResolution(value.resolution, diagnostics, appendPath(targetPath, "resolution"));
 }
@@ -613,7 +643,7 @@ function validateExpansions(expansions: Record<string, unknown>[], bindingIds: S
     const expansionPath = appendPath(targetPath, `expansions.${index}`);
     const bindingId = stringValue(expansion.bindingId);
     const scopeId = stringValue(expansion.scopeId);
-    if (!nonEmptyString(expansion.id) || !bindingId || !bindingIds.has(bindingId) || !scopeId || !Number.isInteger(expansion.order)) {
+    if (!nonEmptyString(expansion.id) || !bindingId || !bindingIds.has(bindingId) || !scopeId || !Number.isSafeInteger(expansion.order) || (expansion.order as number) < 0) {
       diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Expansion requires an id, known bindingId, scopeId, and non-negative order.", "error", expansionPath));
     }
     validateResolution(expansion.resolution, diagnostics, appendPath(expansionPath, "resolution"));
@@ -652,7 +682,7 @@ function validateComposition(value: unknown, diagnostics: HiaDiagnostic[], targe
     return;
   }
   value.contributions.forEach((contribution, index) => {
-    if (!isRecord(contribution) || !nonEmptyString(contribution.id) || !Number.isInteger(contribution.order) || !isSourceRef(contribution.sourceRef) || !isRecord(contribution.overrideContext) || !nonEmptyString(contribution.overrideContext.kind)) {
+    if (!isRecord(contribution) || !nonEmptyString(contribution.id) || !Number.isSafeInteger(contribution.order) || (contribution.order as number) < 0 || !isSourceRef(contribution.sourceRef) || !isRecord(contribution.overrideContext) || !nonEmptyString(contribution.overrideContext.kind)) {
       diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Every inheritance or composition contribution retains source and override context.", "error", appendPath(targetPath, `contributions.${index}`)));
     }
   });
@@ -688,12 +718,19 @@ function validateContractDiagnostic(value: Record<string, unknown>, diagnostics:
   }
 }
 
+/** @lang zh-CN 集合必须由对象项组成，非法项明确报错，不静默丢失后宣称成功。 @lang en Collections must contain objects; invalid members are diagnosed rather than silently discarded before success. */
 function collectObjects(value: unknown, collectionName: string, diagnostics: HiaDiagnostic[], targetPath?: string): Record<string, unknown>[] {
   if (!Array.isArray(value)) {
     diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", `${collectionName} must be an array.`, "error", appendPath(targetPath, collectionName)));
     return [];
   }
-  return value.filter(isRecord);
+  // <lang><zh-CN>保留合法项用于继续诊断，但任何非法项都会使公共组合器返回空索引。</zh-CN><en>Retain valid members for further diagnostics, but any invalid member makes the public composer return an empty index.</en></lang>
+  const items: Record<string, unknown>[] = [];
+  value.forEach((item, index) => {
+    if (isRecord(item)) items.push(item);
+    else diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding collection members must be JSON objects.", "error", appendPath(targetPath, `${collectionName}.${index}`)));
+  });
+  return items;
 }
 
 function collectUniqueIds(items: Record<string, unknown>[], collectionName: string, diagnostics: HiaDiagnostic[], targetPath?: string): Set<string> {
@@ -709,33 +746,40 @@ function collectUniqueIds(items: Record<string, unknown>[], collectionName: stri
   return ids;
 }
 
-function collectForbiddenValueProperties(value: unknown, diagnostics: HiaDiagnostic[], targetPath?: string, currentPath = ""): void {
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => collectForbiddenValueProperties(item, diagnostics, targetPath, `${currentPath}.${index}`));
-    return;
-  }
-  if (!isRecord(value)) {
-    return;
-  }
+/** @lang zh-CN 迭代扫描每个容器一次；固定privacy定位避免泄漏扩展属性名，调用方path仍保留。 @lang en Iteratively scans each container once; a fixed privacy location avoids extension-key leakage while retaining caller paths. */
+function collectForbiddenValueProperties(value: unknown, diagnostics: HiaDiagnostic[], targetPath?: string): void {
+  // <lang><zh-CN>固定禁用字段不含原始数据；显式栈和身份集合避免深图栈溢出及共享子图重复工作。</zh-CN><en>Fixed forbidden keys contain no raw data; an explicit stack and identity set prevent deep recursion and repeated shared-subgraph work.</en></lang>
   const forbidden = new Set(["sourceBody", "sourceText", "sourcesContent", "runtimeValues", "localsValues", "digestValue", "secretValue"]);
-  for (const [key, child] of Object.entries(value)) {
-    if (forbidden.has(key)) {
-      diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_PRIVACY_VIOLATION", `Property ${key} is forbidden in a generated-documentation-binding sidecar.`, "error", appendPath(targetPath, `${currentPath}.${key}`.replace(/^\./, ""))));
+  const pending: unknown[] = [value];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    // <lang><zh-CN>只扫描预检后的容器；描述符保留隐藏数据检查而不调用getter。</zh-CN><en>Scan preflighted containers only; descriptors preserve hidden-data checks without invoking getters.</en></lang>
+    const current = pending.pop();
+    if (typeof current !== "object" || current === null || visited.has(current)) continue;
+    visited.add(current);
+    for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(current))) {
+      if (forbidden.has(key)) {
+        diagnostics.push(createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_PRIVACY_VIOLATION", `Property ${key} is forbidden in a generated-documentation-binding sidecar.`, "error", appendPath(targetPath, "privacy")));
+      }
+      if (Object.hasOwn(descriptor, "value") && typeof descriptor.value === "object" && descriptor.value !== null) pending.push(descriptor.value);
     }
-    collectForbiddenValueProperties(child, diagnostics, targetPath, `${currentPath}.${key}`);
   }
 }
 
+/** @lang zh-CN 源引用沿冻结七类来源及core坐标约束，不猜测具体工具类别。 @lang en Source references follow the frozen seven origins and core coordinates without guessing tool categories. */
 function isSourceRef(value: unknown): value is Record<string, unknown> {
-  return isRecord(value) && nonEmptyString(value.sourceId) && isRange(value.range) && nonEmptyString(value.rangeSource);
+  return isRecord(value) && nonEmptyString(value.sourceId) && isRange(value.range) && (DOC_SOURCE_MAP_RANGE_SOURCES as readonly unknown[]).includes(value.rangeSource);
 }
 
+/** @lang zh-CN 采用core一基安全整数与缺省列1，终点不早于起点，不改变端点包含语义。 @lang en Uses core positive safe integer positions and omitted column one, with ordered endpoints and unchanged inclusivity semantics. */
 function isRange(value: unknown): boolean {
-  return isRecord(value) && isPosition(value.start) && isPosition(value.end);
+  if (!isRecord(value) || !isPosition(value.start) || !isPosition(value.end)) return false;
+  return value.end.line > value.start.line || (value.end.line === value.start.line && (value.end.column ?? 1) >= (value.start.column ?? 1));
 }
 
-function isPosition(value: unknown): boolean {
-  return isRecord(value) && Number.isInteger(value.line) && (value.column === undefined || Number.isInteger(value.column));
+/** @lang zh-CN 缺省列可省略，已提供的行列必须为一基安全整数。 @lang en Columns may be omitted; supplied lines/columns must be positive safe integers. */
+function isPosition(value: unknown): value is { line: number; column?: number } {
+  return isRecord(value) && Number.isSafeInteger(value.line) && (value.line as number) > 0 && (value.column === undefined || (Number.isSafeInteger(value.column) && (value.column as number) > 0));
 }
 
 function isValidScope(value: Record<string, unknown>): boolean {
