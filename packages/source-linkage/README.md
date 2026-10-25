@@ -4,6 +4,11 @@ Workspace package for indexing and validating `doc-source-map` manifests and com
 
 The package reads documentation source map manifests, checks the privacy/path baseline, and exposes normalized indexes that CLI, renderer, LSP, and future browser integrations can consume.
 
+The unreleased source query helpers validate known runtime filters without
+executing their getters. Invalid filters return no entries; omitted columns
+compare as one. See [query semantics and compatibility](../../docs/doc-source-map-query.md).
+中文：源码查询边界新增字段检查及固定诊断，尚未发布；契约和包版本保持。
+
 It also provides an ordinary source map lookup layer based on `@jridgewell/trace-mapping`. The model keeps responsibilities separate:
 
 - ordinary source maps answer generated/original position lookup;

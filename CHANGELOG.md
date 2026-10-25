@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation semantic query validation
+
+- 文档语义查询校验已知字段的普通数据、非空白字符串与一基安全整数坐标；拒绝访问器且不执行，固定诊断不复制异常正文。便捷查询保留非法可选参数交由校验，联合查询传播语义拒绝状态。省略列按核心规则比较为1，范围仍两端包含。契约、schema及包版本保持，尚未发布。
+- Documentation semantic queries validate known data fields, nonblank strings and positive safe integer coordinates. Accessors are rejected without execution, and fixed diagnostics omit exception text. Convenience helpers pass invalid optional arguments through validation; combined lookup propagates semantic rejection. Omitted columns compare as one under the core contract; endpoints remain inclusive. Contract/schema/package versions are unchanged; unreleased. See [query semantics](docs/doc-source-map-query.md).
+
 ## 2026-10-25 — .NET source provenance (cli 0.1.11)
 
 - CLI项目导入隔离旧.NET成员工件的XML文档出处，避免将其公开成代码资产；真实C#来源保留完整定义末行，不再忽略range而继续读后续400行。其他领域XML源码保持支持，公开授权语义不变。

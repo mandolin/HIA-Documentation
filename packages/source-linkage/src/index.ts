@@ -240,20 +240,33 @@ export interface DocSourceMapSourceMapLink {
   path?: string;
 }
 
+/** @lang zh-CN 文档语义筛选；已知字段须为普通自有数据，可选 undefined 按省略处理，未知字段不消费。 @lang en Documentation filters; known fields must be ordinary own data, optional undefined is treated as omitted, and unknown fields are not consumed. */
 export interface DocSourceMapQuery {
+  /** @lang zh-CN 非空白工件路径；仅规范化分隔符与首个 ./。 @lang en Nonblank artifact path; only separators and the initial ./ are normalized. */
   artifactPath?: string;
+  /** @lang zh-CN 非空白精确选择器，仅在提供工件路径时筛选。 @lang en Nonblank exact selector, filtering only when an artifact path is supplied. */
   selector?: string;
+  /** @lang zh-CN 非空白源码路径，不读取文件。 @lang en Nonblank source path; no file is read. */
   sourcePath?: string;
+  /** @lang zh-CN 一基安全整数位置，省略列为1；仅在提供源码路径时筛选。 @lang en One-based safe integer position, defaulting omitted columns to one; filters only with a source path. */
   position?: HiaSourcePosition;
+  /** @lang zh-CN 非空白符号身份，精确匹配不裁剪。 @lang en Nonblank symbol identity, matched exactly without trimming. */
   symbolId?: string;
+  /** @lang zh-CN 非空白符号种类，精确匹配。 @lang en Nonblank symbol kind, matched exactly. */
   symbolKind?: string;
 }
 
+/** @lang zh-CN 查询状态与借用的条目/query引用，不构成不可变或可公开数据保证。 @lang en Query status and borrowed entry/query references, without an immutability or public-safety guarantee. */
 export interface DocSourceMapQueryResult {
+  /** @lang zh-CN 原索引诊断及适用的固定查询错误；不修改索引。 @lang en Original index diagnostics plus any fixed query error, without mutating the index. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 按原顺序返回的条目引用；invalid/unsupported-version为空。 @lang en Entry references in original order; empty for invalid/unsupported-version. */
   entries: DocSourceMapIndexedEntry[];
+  /** @lang zh-CN 返回条目数量，无额外总量估计。 @lang en Returned entry count, without an additional total estimate. */
   matchedEntryCount: number;
+  /** @lang zh-CN 原始调用者查询引用，未脱敏，不应用作可信日志数据。 @lang en Original caller query reference, unsanitized and unsuitable as trusted log data. */
   query: DocSourceMapQuery;
+  /** @lang zh-CN 非法查询为invalid，其余沿用索引状态。 @lang en Invalid queries yield invalid; otherwise the index status is retained. */
   status: DocSourceMapIndex["status"];
 }
 
@@ -634,13 +647,21 @@ export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, op
  * @lang zh-CN 查询已通过版本与隐私检查的文档化语义链路；无效或不支持版本的索引只返回诊断和状态。
  * @lang en Queries documentation linkage after version and privacy validation; invalid or unsupported indexes return diagnostics and status only.
  * @param index <lang><zh-CN>由 createDocSourceMapIndex 建立的只读索引。</zh-CN><en>Read-only index created by createDocSourceMapIndex.</en></lang>
- * @param query <lang><zh-CN>可选筛选条件；默认匹配全部可用条目。</zh-CN><en>Optional filters; defaults to all available entries.</en></lang>
- * @returns <lang><zh-CN>筛选结果与原诊断；非 available 状态的 entries 始终为空。无文件或网络副作用。</zh-CN><en>Filtered results and original diagnostics; entries are always empty for non-available states. No file or network side effects.</en></lang>
+ * @param query <lang><zh-CN>普通对象或null原型筛选；默认匹配全部可用条目。已知字段的访问器/错误值拒绝，未知字段不读。</zh-CN><en>Plain or null-prototype filters, defaulting to all available entries. Known-field accessors/invalid values are rejected; unknown fields are not read.</en></lang>
+ * @returns <lang><zh-CN>筛选结果与诊断；非法查询返回invalid及空条目，不透传异常正文。原query与条目仍为借用引用，无I/O；Proxy反射不是沙箱。</zh-CN><en>Results and diagnostics; invalid queries return invalid with no entries and no exception text. Original query/entries remain borrowed references, without I/O; proxy reflection is not sandboxed.</en></lang>
  */
 export function queryDocSourceMapIndex(index: DocSourceMapIndex, query: DocSourceMapQuery = {}): DocSourceMapQueryResult {
+  // <lang><zh-CN>只为匹配建立已知字段快照，避免筛选中反复读取调用者访问器或把错误值当作省略。</zh-CN><en>Snapshot known fields for matching to avoid repeated caller accessors and treating invalid values as omissions.</en></lang>
+  const prepared = prepareDocSourceMapQuery(query);
+  if (!prepared) {
+    return {
+      diagnostics: [...index.diagnostics, createSourceLinkageDiagnostic("DOC_SOURCE_MAP_QUERY_INVALID", "Documentation query fields require ordinary data, nonblank strings and positive safe integer coordinates.", "error", index.path)],
+      entries: [], matchedEntryCount: 0, query, status: "invalid"
+    };
+  }
   // <lang><zh-CN>状态门禁先于筛选，避免版本 warning 或隐私 error 的索引仍返回可消费映射。</zh-CN><en>Gate by status before filtering so indexes with version warnings or privacy errors cannot return consumable mappings.</en></lang>
   const entries = index.status === "available"
-    ? index.entries.filter((entry) => matchesDocSourceMapQuery(entry, query))
+    ? index.entries.filter((entry) => matchesDocSourceMapQuery(entry, prepared))
     : [];
 
   return {
@@ -652,10 +673,25 @@ export function queryDocSourceMapIndex(index: DocSourceMapIndex, query: DocSourc
   };
 }
 
+/**
+ * @lang zh-CN 按非空白符号身份精确查询，无I/O；无效值/索引返回空数组，诊断需使用完整查询API。
+ * @lang en Queries an exact nonblank symbol identity without I/O; invalid values/indexes return an empty array, with diagnostics available through the full query API.
+ * @param index <lang><zh-CN>本包建立且未篡改的索引。</zh-CN><en>Untampered index created by this package.</en></lang>
+ * @param symbolId <lang><zh-CN>非空白符号身份，不裁剪。</zh-CN><en>Nonblank symbol identity, without trimming.</en></lang>
+ * @returns <lang><zh-CN>借用的条目引用，保持原顺序。</zh-CN><en>Borrowed entry references in original order.</en></lang>
+ */
 export function findDocSourceMapEntriesBySymbol(index: DocSourceMapIndex, symbolId: string): DocSourceMapIndexedEntry[] {
   return queryDocSourceMapIndex(index, { symbolId }).entries;
 }
 
+/**
+ * @lang zh-CN 按源码路径及可选位置查询，无I/O；范围沿用两端包含，省略列为1。
+ * @lang en Queries by source path and optional position without I/O; ranges retain inclusive endpoints and omitted columns default to one.
+ * @param index <lang><zh-CN>本包建立且未篡改的索引。</zh-CN><en>Untampered index created by this package.</en></lang>
+ * @param sourcePath <lang><zh-CN>非空白源码路径，规范化分隔符与首个 ./。</zh-CN><en>Nonblank source path, normalizing separators and the initial ./.</en></lang>
+ * @param position <lang><zh-CN>可选一基安全整数位置，undefined按省略处理。</zh-CN><en>Optional one-based safe integer position; undefined is treated as omitted.</en></lang>
+ * @returns <lang><zh-CN>有序借用条目；无效查询为空，诊断使用完整查询API。</zh-CN><en>Ordered borrowed entries; invalid queries are empty, with diagnostics available through the full API.</en></lang>
+ */
 export function findDocSourceMapEntriesBySource(
   index: DocSourceMapIndex,
   sourcePath: string,
@@ -663,10 +699,18 @@ export function findDocSourceMapEntriesBySource(
 ): DocSourceMapIndexedEntry[] {
   return queryDocSourceMapIndex(index, {
     sourcePath,
-    ...(position ? { position } : {})
+    ...(position !== undefined ? { position } : {})
   }).entries;
 }
 
+/**
+ * @lang zh-CN 按工件路径及可选精确选择器查询，不读取工件或执行选择器。
+ * @lang en Queries by artifact path and optional exact selector without reading artifacts or executing selectors.
+ * @param index <lang><zh-CN>本包建立且未篡改的索引。</zh-CN><en>Untampered index created by this package.</en></lang>
+ * @param artifactPath <lang><zh-CN>非空白工件路径，规范化分隔符与首个 ./。</zh-CN><en>Nonblank artifact path, normalizing separators and the initial ./.</en></lang>
+ * @param selector <lang><zh-CN>可选非空白选择器，undefined按省略处理。</zh-CN><en>Optional nonblank selector; undefined is treated as omitted.</en></lang>
+ * @returns <lang><zh-CN>有序借用条目；无效查询为空，诊断使用完整查询API。</zh-CN><en>Ordered borrowed entries; invalid queries are empty, with diagnostics available through the full API.</en></lang>
+ */
 export function findDocSourceMapEntriesByArtifact(
   index: DocSourceMapIndex,
   artifactPath: string,
@@ -674,7 +718,7 @@ export function findDocSourceMapEntriesByArtifact(
 ): DocSourceMapIndexedEntry[] {
   return queryDocSourceMapIndex(index, {
     artifactPath,
-    ...(selector ? { selector } : {})
+    ...(selector !== undefined ? { selector } : {})
   }).entries;
 }
 
@@ -887,6 +931,8 @@ export function querySourceLinkedPosition(
     ...(query.selector ? { selector: query.selector } : {})
   };
   const docQueryResult = queryDocSourceMapIndex(docSourceMapIndex, docQuery);
+  // <lang><zh-CN>语义筛选拒绝也必须向联合状态传播，不能保留伪available。</zh-CN><en>Propagate rejected semantic filters into the combined status rather than preserving a false available result.</en></lang>
+  if (docQueryResult.status !== "available") status = docQueryResult.status;
 
   return {
     diagnostics: [
@@ -1088,6 +1134,52 @@ function isLinkedEntry(entry: DocSourceMapIndexedEntry): boolean {
   return hasUsableSource && hasUsableArtifact;
 }
 
+/** @lang zh-CN 投影已声明的查询数据；拒绝访问器/错误类型，不读取未知扩展，不修改调用者。 @lang en Projects declared query data, rejecting accessors/wrong types without reading unknown extensions or mutating callers. */
+function prepareDocSourceMapQuery(value: unknown): DocSourceMapQuery | undefined {
+  try {
+    if (!isPlainQueryRecord(value)) return undefined;
+    // <lang><zh-CN>固定字段白名单与独立容器阻止原型值和查询中的未知扩展参与筛选。</zh-CN><en>A fixed field allowlist and independent container prevent inherited values and unknown extensions from participating in matching.</en></lang>
+    const result: DocSourceMapQuery = {};
+    const fields = ["artifactPath", "selector", "sourcePath", "symbolId", "symbolKind"] as const;
+    for (const field of fields) {
+      // <lang><zh-CN>仅描述符值可消费；即使不可枚举访问器也不执行。</zh-CN><en>Only descriptor data values are consumed; even non-enumerable accessors are not executed.</en></lang>
+      const descriptor = Object.getOwnPropertyDescriptor(value, field);
+      if (!descriptor) continue;
+      if (!Object.hasOwn(descriptor, "value")) return undefined;
+      if (descriptor.value === undefined) continue;
+      if (typeof descriptor.value !== "string" || !descriptor.value.trim()) return undefined;
+      result[field] = descriptor.value;
+    }
+    // <lang><zh-CN>位置单独投影两个已知字段，未知坐标扩展不读，省略column保留到比较处默认1。</zh-CN><en>Project the two known position fields separately, ignoring extensions and retaining omitted columns until comparison defaults them to one.</en></lang>
+    const position = Object.getOwnPropertyDescriptor(value, "position");
+    if (position) {
+      if (!Object.hasOwn(position, "value")) return undefined;
+      if (position.value !== undefined) {
+        if (!isPlainQueryRecord(position.value)) return undefined;
+        // <lang><zh-CN>坐标描述符是本次调用的独立快照，只消费数值，不调用原对象属性。</zh-CN><en>Coordinate descriptors form this call's snapshot; consume numeric data without accessing original object properties.</en></lang>
+        const line = Object.getOwnPropertyDescriptor(position.value, "line");
+        const column = Object.getOwnPropertyDescriptor(position.value, "column");
+        if (!line || !Object.hasOwn(line, "value") || !Number.isSafeInteger(line.value) || line.value < 1) return undefined;
+        if (column && (!Object.hasOwn(column, "value") || (column.value !== undefined && (!Number.isSafeInteger(column.value) || column.value < 1)))) return undefined;
+        result.position = { line: line.value, ...(column?.value !== undefined ? { column: column.value } : {}) };
+      }
+    }
+    return result;
+  } catch {
+    // <lang><zh-CN>Proxy反射异常只转换为固定失败，不传播可能包含私有正文的异常。</zh-CN><en>Convert proxy reflection errors to fixed failure without propagating potentially private exception text.</en></lang>
+    return undefined;
+  }
+}
+
+/** @lang zh-CN 查询只接受本realm普通或null原型对象，不接受数组/类实例；反射异常由外层收敛。 @lang en Queries accept same-realm plain/null-prototype records, excluding arrays/class instances; the caller catches reflection failures. */
+function isPlainQueryRecord(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  // <lang><zh-CN>原型仅用于数据形状判定，不沿原型读取筛选条件。</zh-CN><en>The prototype determines data shape only; filters are never read through it.</en></lang>
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/** @lang zh-CN 对已投影数据应用既有筛选交集；同路径和位置/选择器必须在同一引用命中。 @lang en Applies existing filter intersections to projected data; a path and position/selector must match the same reference. */
 function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSourceMapQuery): boolean {
   if (query.symbolId && entry.symbolId !== query.symbolId) {
     return false;
@@ -1114,6 +1206,7 @@ function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSou
   return true;
 }
 
+/** @lang zh-CN 沿用现有双端包含的文档范围；没有范围不能命中位置。 @lang en Retains existing inclusive documentation endpoints; an absent range cannot match a position. */
 function containsPosition(range: HiaSourceRange | undefined, position: HiaSourcePosition): boolean {
   if (!range) {
     return false;
@@ -1122,12 +1215,13 @@ function containsPosition(range: HiaSourceRange | undefined, position: HiaSource
   return comparePositions(position, range.start) >= 0 && comparePositions(position, range.end) <= 0;
 }
 
+/** @lang zh-CN 按core既有规则比较行列，缺省列为1，不推断行长或字符单位。 @lang en Compares positions under existing core rules, defaulting omitted columns to one without inferring line length or character units. */
 function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): number {
   if (left.line !== right.line) {
     return left.line - right.line;
   }
 
-  return (left.column ?? 0) - (right.column ?? 0);
+  return (left.column ?? 1) - (right.column ?? 1);
 }
 
 function createOriginalPosition(sourcePath: string, position: HiaSourcePosition): SourceMapOriginalPosition {
