@@ -356,6 +356,7 @@ export function findGeneratedBindingsForDocSourceMapEntry(
   return freezeList(index.bindings.filter((binding) => binding.docSourceMapEntryIds.includes(entryId)));
 }
 
+/** @lang zh-CN 核对明确配对的sidecar/map身份、精确版本与路径，不以相同id推定跨版本兼容。 @lang en Checks explicitly paired sidecar/map identities, exact versions and paths without inferring cross-version compatibility from matching ids. */
 function validateSidecarLinkage(
   sidecar: Record<string, unknown>,
   linkage: Record<string, unknown> | undefined,
@@ -391,6 +392,15 @@ function validateSidecarLinkage(
   }
 
   const expectedDocSourceMapId = linkage ? stringValue(linkage.docSourceMapId) : undefined;
+  // <lang><zh-CN>sidecar草案的反向引用版本必须匹配真实map；当前根升级不得使冻结旧引用静默变义。</zh-CN><en>The draft sidecar's back-reference version must match the actual map; advancing the current root must not silently reinterpret a frozen legacy reference.</en></lang>
+  if (linkage?.contractVersion !== docSourceMapIndex.contractVersion) {
+    diagnostics.push(createIndexDiagnostic(
+      "GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_MISMATCH",
+      "generated-documentation-binding linkage version must match the paired doc-source-map exactly.",
+      "error",
+      targetPath
+    ));
+  }
   if (expectedDocSourceMapId && docSourceMapIndex.id !== expectedDocSourceMapId) {
     diagnostics.push(createIndexDiagnostic(
       "GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_MISMATCH",

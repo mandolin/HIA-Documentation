@@ -7,7 +7,8 @@ import {
 } from "@hia-doc/core";
 import {
   DOC_SOURCE_MAP_CONTRACT,
-  DOC_SOURCE_MAP_CONTRACT_VERSION,
+  // <lang><zh-CN>此草案冻结引用历史doc-source-map，不随当前根升级而改变已分发schema。</zh-CN><en>This draft pins the historical doc-source-map, preserving its distributed schema when the current root advances.</en></lang>
+  DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION as DOC_SOURCE_MAP_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";

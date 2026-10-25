@@ -20,14 +20,30 @@ sparse/custom-behavior arrays and duplicate identities produce
 `DOC_SOURCE_MAP_MANIFEST_INVALID`; query gates keep invalid indexes unusable.
 These additional input checks are unreleased and are not part of npm `0.1.1`.
 
-Legacy omitted fields and open ordinary-JSON extensions remain supported.
-`available` describes this permissive index boundary, not complete wire-schema
-validation. Generator-specific `rangeSource` strings remain accepted. The
-contract version remains `0.1.0-draft`. See the repository documentation at
+The source definition is now `doc-source-map@1.0.0`, with an exact
+`0.1.0-draft` reader preserving legacy omissions and generator-specific origins.
+Current references use a closed `rangeSource` category and optional nonblank
+`rangeSourceDetail`. `unresolved` requires `confidence: "none"`; detail labels
+do not infer category, confidence or trust. `available` describes the owner
+index boundary, not every wire-schema or cross-chain constraint. See
 `docs/doc-source-map-input-validation.md` for the exact input and privacy limits.
 
 中文：源码版新增显式字段、集合身份、范围与普通JSON预检；该修复尚未发布到npm。
-保留旧宽输入及生成器来源字符串，索引available不是完整wire-schema验证证明。
+当前1.0.0来源模型采用通用闭集类别与引用层具体来源，精确旧reader保留宽输入及来源字符串。
+available不是完整wire-schema或跨链验证证明；此源码实现尚未发布，包版本与契约版本独立。
+
+`migrateDocSourceMap(value)` explicitly returns an independent current artifact
+or diagnostics. Four reviewed legacy origins map to categories while retaining
+the original string as `rangeSourceDetail`; unknown origins, conflicting detail,
+incomplete structure and privacy errors refuse conversion. Inputs are never
+rewritten. Already-current data is cloned. Allowed source bodies and open JSON
+extensions remain in the migrated artifact; returning data grants no publication
+authority. See `docs/doc-source-map-provenance.md` for categories and migration.
+
+Frozen generated-binding sidecars still refer to the legacy map version.
+Standalone migration refuses those associations, and composition requires an
+exact paired map version. Continue reading legacy pairs until coordinated
+sidecar migration is available.
 
 `createDocSourceMapIndex()` retains diagnostics and an explicit `invalid` or
 `unsupported-version` status when input is unusable. Query functions return no

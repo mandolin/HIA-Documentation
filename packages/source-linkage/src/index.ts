@@ -1,6 +1,13 @@
+/**
+ * @file
+ * @lang zh-CN 文档语义映射与普通位置map的独立查询边界；只消费调用方数据，默认不暴露源码正文。
+ * @lang en Independent query boundaries for documentation-semantic and ordinary position maps; consumes caller data only and does not expose source bodies by default.
+ */
 import path from "node:path";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { collectDocSourceMapInputIssues } from "./manifest-input.js";
+import { collectCurrentDocSourceMapIssues } from "./manifest-current.js";
+import { prepareDocSourceMapMigration } from "./manifest-migration.js";
 import {
   allGeneratedPositionsFor,
   eachMapping,
@@ -27,6 +34,7 @@ import {
 import {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";
@@ -34,6 +42,10 @@ import {
 export {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_RANGE_SOURCES,
+  type DocSourceMapContractVersion,
+  type DocSourceMapRangeSource,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";
@@ -204,6 +216,8 @@ export interface DocSourceMapSourceLink {
   path?: string;
   range?: HiaSourceRange;
   rangeSource?: string;
+  /** @lang zh-CN 引用层具体来源说明，不推导类别、置信度或权限；旧输入可以省略。 @lang en Reference-level origin description, without inferring category, confidence or permissions; legacy inputs may omit it. */
+  rangeSourceDetail?: string;
   sourceId: string;
 }
 
@@ -213,6 +227,8 @@ export interface DocSourceMapArtifactLink {
   language?: string;
   path?: string;
   rangeSource?: string;
+  /** @lang zh-CN 产物引用层的被动来源说明，不加载工具或改变查询。 @lang en Passive origin description on an artifact reference, without loading tools or changing queries. */
+  rangeSourceDetail?: string;
   selector?: string;
 }
 
@@ -370,7 +386,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   }
 
   // <lang><zh-CN>已声明字段先按既有结构约束诊断；历史宽输入的省略项保留，不把索引接纳冒充完整schema证明。</zh-CN><en>Diagnose declared fields against existing structural constraints first, retaining legacy omissions without treating index admission as complete schema proof.</en></lang>
-  for (const issue of collectDocSourceMapInputIssues(value)) {
+  for (const issue of [...collectDocSourceMapInputIssues(value), ...collectCurrentDocSourceMapIssues(value)]) {
     diagnostics.push(createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MANIFEST_INVALID", issue.message, "error", appendTarget(options.path, issue.target)));
   }
 
@@ -391,10 +407,10 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   // <lang><zh-CN>contractVersion 是版本兼容性判定的可选文本，不把非字符串值转换为可用版本。</zh-CN><en>contractVersion is optional text for compatibility decisions; non-string values are not coerced into usable versions.</en></lang>
   const contractVersion = stringValue(value.contractVersion);
   // <lang><zh-CN>版本不匹配时继续建立索引，以便调用方同时获得结构问题与 unsupported-version 状态。</zh-CN><en>Continue building when versions differ so callers receive both structural issues and unsupported-version status.</en></lang>
-  if (contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION) {
+  if (contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION) {
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_UNSUPPORTED_VERSION",
-      `doc-source-map contractVersion should be ${DOC_SOURCE_MAP_CONTRACT_VERSION}.`,
+      `doc-source-map contractVersion must be ${DOC_SOURCE_MAP_CONTRACT_VERSION} or ${DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION}.`,
       contractVersion ? "warning" : "error",
       options.path,
       {
@@ -460,7 +476,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   // <lang><zh-CN>hasErrors 汇总所有 error severity，是最终 invalid 状态的唯一硬条件。</zh-CN><en>hasErrors aggregates every error severity and is the sole hard condition for final invalid status.</en></lang>
   const hasErrors = diagnostics.some((diagnostic) => diagnostic.severity === "error");
   // <lang><zh-CN>unsupportedVersion 只在结构无错误时生效，避免覆盖更严重的 invalid 结论。</zh-CN><en>unsupportedVersion applies only when structure has no errors, avoiding replacement of the more severe invalid conclusion.</en></lang>
-  const unsupportedVersion = contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && !hasErrors;
+  const unsupportedVersion = contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION && !hasErrors;
 
   // <lang><zh-CN>id 是可选 manifest 身份；空或非字符串值不进入返回索引。</zh-CN><en>id is optional manifest identity; empty or non-string values do not enter the returned index.</en></lang>
   const id = stringValue(value.id);
@@ -502,6 +518,47 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
  */
 export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): HiaDiagnostic[] {
   return createDocSourceMapIndex(value, options).diagnostics;
+}
+
+/** @lang zh-CN 显式迁移结果，不对输入对象或磁盘工件作原位升级。 @lang en Explicit migration result, without upgrading input objects or on-disk artifacts in place. */
+export interface DocSourceMapMigrationResult {
+  /** @lang zh-CN migrated为旧版转换，already-current为新版独立复制；失败不提供局部产物。 @lang en migrated converts a legacy input; already-current independently clones a current input; failures provide no partial artifact. */
+  status: "migrated" | "already-current" | "invalid" | "unsupported-version";
+  /** @lang zh-CN owner验证通过的新容器；保留开放JSON扩展及显式获准的源码正文，返回值不代表授权公开。 @lang en New containers passing owner validation, retaining open JSON extensions and explicitly permitted source bodies; returning data grants no publication authority. */
+  manifest?: Record<string, unknown>;
+  /** @lang zh-CN 拒绝时使用静态诊断，不回显原始来源或源码正文。 @lang en Static refusal diagnostics, without echoing raw origins or source bodies. */
+  diagnostics: HiaDiagnostic[];
+}
+
+/**
+ * @lang zh-CN 显式将精确旧版映射转换为当前版，保留具体来源及开放JSON扩展；当前版返回独立复制品。
+ * 未知来源、信息冲突、不完整结构或隐私错误均拒绝，失败不返回局部产物。只消费调用方数据，不读取文件或sidecar、不写磁盘、不调用JSON hooks。
+ * @lang en Explicitly converts an exact legacy map to the current version, retaining concrete origins and open JSON extensions; current inputs return independent clones.
+ * Unknown origins, information conflicts, incomplete structure or privacy errors are refused without partial artifacts. Consumes caller data only, without file/sidecar reads, disk writes or JSON hooks.
+ * @param value <lang><zh-CN>未知运行时输入，必须通过普通JSON和owner边界。</zh-CN><en>Unknown runtime input that must pass ordinary-JSON and owner boundaries.</en></lang>
+ * @param options <lang><zh-CN>可选诊断路径，默认空；不授予文件访问。</zh-CN><en>Optional diagnostic path, empty by default, granting no file access.</en></lang>
+ * @returns <lang><zh-CN>当前版独立容器或安全诊断；Proxy副作用、资源消耗和并发输入突变不受沙箱保证。</zh-CN><en>Independent current containers or safe diagnostics; proxy effects, resource exhaustion and concurrent input mutation are not sandboxed.</en></lang>
+ */
+export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): DocSourceMapMigrationResult {
+  /** @lang zh-CN 所有失败均通过静态文本隔离，不转发含原数据的局部索引。 @lang en Isolates every failure with static text rather than forwarding partial indexes containing source data. */
+  const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): DocSourceMapMigrationResult => ({
+    status, diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", message, "error", options.path)]
+  });
+  // <lang><zh-CN>先运行既有普通JSON/版本/隐私门禁；未知版本从不按兼容范围猜测。</zh-CN><en>Run existing ordinary-JSON/version/privacy gates first; unknown versions are never guessed compatible.</en></lang>
+  const before = createDocSourceMapIndex(value, options);
+  if (before.status === "unsupported-version") return refused("Migration requires an explicitly supported mapping version.", "unsupported-version");
+  if (before.status !== "available" || !isRecord(value)) return refused("Mapping input must pass owner validation before migration.");
+  try {
+    // <lang><zh-CN>内部准备只复制和按明确映射转换，结果仍必须重新通过新版必要结构与语义检查。</zh-CN><en>Preparation only clones and converts explicit mappings; the result must still pass current required-structure and semantic checks.</en></lang>
+    const prepared = prepareDocSourceMapMigration(value);
+    if (!prepared.manifest) return refused(prepared.issue ?? "Mapping could not be migrated losslessly.");
+    const after = createDocSourceMapIndex(prepared.manifest, options);
+    if (after.status !== "available") return refused("Migrated mapping must satisfy current structure, provenance and privacy requirements.");
+    return { status: before.contractVersion === DOC_SOURCE_MAP_CONTRACT_VERSION ? "already-current" : "migrated", manifest: prepared.manifest, diagnostics: after.diagnostics };
+  } catch {
+    // <lang><zh-CN>反射/复制异常的原始正文可能含私有信息，只返回固定错误。</zh-CN><en>Raw reflection/copy errors may contain private information; return a fixed error only.</en></lang>
+    return refused("Mapping could not be copied safely for migration.");
+  }
 }
 
 /**
@@ -919,6 +976,9 @@ function createSourceLink(sourceRef: Record<string, unknown>, sourceById: Map<st
     link.rangeSource = rangeSource;
   }
 
+  // <lang><zh-CN>来源细节仅在引用本身声明时复制，不从工具名推导通用类别。</zh-CN><en>Copy origin detail only when declared on the reference, without inferring a category from a tool name.</en></lang>
+  if (typeof sourceRef.rangeSourceDetail === "string" && /\S/u.test(sourceRef.rangeSourceDetail)) link.rangeSourceDetail = sourceRef.rangeSourceDetail;
+
   return link;
 }
 
@@ -947,6 +1007,9 @@ function createArtifactLink(artifactRef: Record<string, unknown>, artifactById: 
   if (rangeSource) {
     link.rangeSource = rangeSource;
   }
+
+  // <lang><zh-CN>具体来源只作为被动说明；联通性继续由引用/路径/类别与confidence判断。</zh-CN><en>Concrete origin is descriptive only; connectivity remains determined by references, paths, category and confidence.</en></lang>
+  if (typeof artifactRef.rangeSourceDetail === "string" && /\S/u.test(artifactRef.rangeSourceDetail)) link.rangeSourceDetail = artifactRef.rangeSourceDetail;
 
   if (confidence) {
     link.confidence = confidence;

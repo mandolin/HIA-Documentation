@@ -195,6 +195,15 @@ function createDocSourceMap(bindingId = "binding:pug:colors:name", sidecarPath =
 }
 
 describe("generated-documentation-binding bidirectional index", () => {
+  it("refuses pairing a frozen legacy linkage with a current-version documentation map", () => {
+    // <lang><zh-CN>相同id不证明版本匹配；新版普通map可独立有效，但不能偷换冻结sidecar的引用版本。</zh-CN><en>Matching ids do not prove matching versions; a current ordinary map may be independently valid without substituting the frozen sidecar's referenced version.</en></lang>
+    const value = createDocSourceMap(); value.contractVersion = "1.0.0";
+    const docSourceMapIndex = createDocSourceMapIndex(value);
+    expect(docSourceMapIndex.status).toBe("available");
+    const index = createGeneratedDocumentationBindingIndex(createPugLikeSidecar(), { docSourceMapIndex });
+    expect(index.status).toBe("invalid");
+    expect(findGeneratedTargetsForBinding(index, "binding:pug:colors:name")).toEqual([]);
+  });
   it("links a Pug-like one-to-many binding to targets and resolves targets back to the declaration", () => {
     const docSourceMapIndex = createDocSourceMapIndex(createDocSourceMap());
     const index = createGeneratedDocumentationBindingIndex(createPugLikeSidecar(), { docSourceMapIndex });

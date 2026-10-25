@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json",
   "type": "object",
   "required": [
     "contract",
@@ -21,7 +21,7 @@
       "const": "doc-source-map"
     },
     "contractVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "id": {
       "$ref": "#/$defs/nonEmptyString"
@@ -366,10 +366,34 @@
         "rangeSource": {
           "$ref": "#/$defs/rangeSource"
         },
+        "rangeSourceDetail": {
+          "$ref": "#/$defs/rangeSourceDetail"
+        },
         "confidence": {
           "$ref": "#/$defs/confidence"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "rangeSource": {
+                "const": "unresolved"
+              }
+            },
+            "required": [
+              "rangeSource"
+            ]
+          },
+          "then": {
+            "properties": {
+              "confidence": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      ]
     },
     "artifactRef": {
       "type": "object",
@@ -389,10 +413,34 @@
         "rangeSource": {
           "$ref": "#/$defs/rangeSource"
         },
+        "rangeSourceDetail": {
+          "$ref": "#/$defs/rangeSourceDetail"
+        },
         "confidence": {
           "$ref": "#/$defs/confidence"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "rangeSource": {
+                "const": "unresolved"
+              }
+            },
+            "required": [
+              "rangeSource"
+            ]
+          },
+          "then": {
+            "properties": {
+              "confidence": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      ]
     },
     "entry": {
       "type": "object",
@@ -548,6 +596,11 @@
         "heuristic",
         "unresolved"
       ]
+    },
+    "rangeSourceDetail": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "confidence": {
       "enum": [

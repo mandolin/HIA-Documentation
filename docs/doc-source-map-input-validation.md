@@ -1,7 +1,8 @@
 # 文档源码映射输入验证
 
 以下额外检查属于尚未发布的源码版，npm `@hia-doc/source-linkage@0.1.1`不包含这些变化。
-当前契约仍为`doc-source-map@0.1.0-draft`，历史schema与fixture保持原样。
+当前源码定义为`doc-source-map@1.0.0`，精确旧reader保留`0.1.0-draft`；历史schema与fixture保持原样。
+新版必要字段及来源类别/细节见[来源与迁移](doc-source-map-provenance.md)。下文的省略项兼容专指旧reader。
 
 ## 索引边界
 
@@ -16,14 +17,14 @@
 | artifact/source/map/entry/chain及sidecar集合 | 数组、对象项、非空身份、同集合身份唯一 |
 | 来源、产物和sidecar引用 | 已声明字符串、列表与对象形状；既有owner继续检查引用和安全路径 |
 | source reference范围 | 起止端点、一基正整数行/可选列、终点不早于起点 |
-| 来源与置信度 | 来源保持既有非空字符串；置信度沿用high/medium/low/none |
+| 来源与置信度 | 旧reader保留非空来源字符串；新版检查闭集类别/可选细节与unresolved配对，置信度为high/medium/low/none |
 
 同一entry可以对同一source声明多个范围；身份唯一检查不把合法的多范围引用合并。
 重复顶层身份使索引invalid，不为调用者选择先声明或后声明的赢家。
 
 这些检查保留历史宽输入的省略字段和开放普通JSON扩展。`available`表示本索引边界通过，
 不能替代对完整wire文档进行独立schema验证；尤其不能据此宣称所有wire必填字段都已存在。
-当前schema的来源枚举与既有生成器来源字符串并非完全一致，调用者应分别处理索引接纳和完整schema要求。
+历史schema的来源枚举与旧reader接受的具体来源字符串并非完全一致；新根采用明确类别/细节模型，不重写历史定义。
 普通source-map定位算法、跨链执行、完整sidecar模型和文件权限不属于本检查。
 
 ## 拒绝与隐私
@@ -43,4 +44,5 @@ cycles, sparse/custom-behavior arrays, ambiguous identities and malformed ranges
 Legacy omissions, open JSON extensions and generator-specific provenance strings remain supported.
 Index availability is not proof of complete wire-schema validity. Invalid indexes remain blocked by query gates;
 privacy defaults, explicit body opt-in and reference-only sidecars are unchanged. Reflection side effects and
-resource exhaustion are not sandboxed. Contract and package versions are unchanged.
+resource exhaustion are not sandboxed. The current source definition is 1.0.0 with an exact legacy reader;
+package versions and registry publication remain separate.

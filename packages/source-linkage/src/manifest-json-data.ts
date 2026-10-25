@@ -8,7 +8,7 @@
  * @lang zh-CN 迭代检查有限、无环的普通JSON数据，不调用getter或自定义toJSON；共享无环对象允许。
  * @lang en Iteratively checks finite, acyclic ordinary JSON data without invoking getters or custom toJSON; shared acyclic objects are allowed.
  * @param value <lang><zh-CN>待检查内存值，不修改任何输入。</zh-CN><en>In-memory value to inspect; no input is mutated.</en></lang>
- * @returns <lang><zh-CN>仅普通JSON图为true；反射异常为false。非枚举对象数据和Symbol键不属于wire；Proxy反射副作用不受沙箱保护。</zh-CN><en>True only for ordinary JSON graphs; reflection failures return false. Non-enumerable object data and Symbol keys are outside the wire model; proxy reflection side effects are not sandboxed.</en></lang>
+ * @returns <lang><zh-CN>仅普通JSON图为true；反射异常为false。隐藏自有数据也预检以保护后续字段读取，Symbol键不属于wire；Proxy反射副作用不受沙箱保护。</zh-CN><en>True only for ordinary JSON graphs; reflection failures return false. Hidden own data is also preflighted to protect later field reads; Symbol keys are outside the wire model, and proxy effects are not sandboxed.</en></lang>
  */
 export function isDocSourceMapJsonDataGraph(value: unknown): boolean {
   // <lang><zh-CN>显式退出帧区分祖先环与共享子图，避免递归调用栈和重复遍历。</zh-CN><en>Explicit exit frames distinguish ancestor cycles from shared subgraphs, avoiding recursive stacks and repeated traversal.</en></lang>
@@ -54,11 +54,10 @@ export function isDocSourceMapJsonDataGraph(value: unknown): boolean {
           values.push(descriptor.value);
         }
       } else {
-        // <lang><zh-CN>只读取可枚举自有数据属性，JSON值的语义不延伸到metadata领域正文。</zh-CN><en>Read only enumerable own data properties; JSON-value semantics do not interpret domain text in metadata.</en></lang>
+        // <lang><zh-CN>已知模型字段可被声明成非枚举数据，仍须检查其子图，避免后续读取绕过预检。</zh-CN><en>Known model fields can be non-enumerable data, so their subgraphs must still be checked to prevent later reads bypassing preflight.</en></lang>
         for (const descriptor of Object.values(descriptors)) {
           // <lang><zh-CN>隐藏访问器也可能是后续模型读取的已知字段，必须在跳过非枚举数据前拒绝。</zh-CN><en>Hidden accessors may still be known fields read by later model checks, so reject them before skipping non-enumerable data.</en></lang>
           if (!Object.hasOwn(descriptor, "value")) return false;
-          if (!descriptor.enumerable) continue;
           values.push(descriptor.value);
         }
       }

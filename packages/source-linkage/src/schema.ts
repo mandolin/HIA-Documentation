@@ -1,6 +1,7 @@
 import {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_RANGE_SOURCES,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";
@@ -9,9 +10,12 @@ import {
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
 } from "@hia-doc/core";
 
-export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json";
+/** @lang zh-CN 当前新schema的固定身份；历史schema保持独立原字节。 @lang en Fixed current-schema identity; the historical schema retains its independent original bytes. */
+export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json";
+/** @lang zh-CN 当前根版本，不代表npm包已经发布。 @lang en Current root version, not proof of npm publication. */
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
 
+/** @lang zh-CN 完整wire结构定义；跨身份引用、重复身份和范围顺序由owner运行时补充检查。 @lang en Complete wire-structure definition; the owner runtime additionally checks cross-identity references, duplicates and range order. */
 export const DOC_SOURCE_MAP_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: DOC_SOURCE_MAP_SCHEMA_ID,
@@ -172,8 +176,10 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         sourceId: { $ref: "#/$defs/nonEmptyString" },
         range: { $ref: "#/$defs/range" },
         rangeSource: { $ref: "#/$defs/rangeSource" },
+        rangeSourceDetail: { $ref: "#/$defs/rangeSourceDetail" },
         confidence: { $ref: "#/$defs/confidence" }
-      }
+      },
+      allOf: [{ if: { properties: { rangeSource: { const: "unresolved" } }, required: ["rangeSource"] }, then: { properties: { confidence: { const: "none" } } } }]
     },
     artifactRef: {
       type: "object",
@@ -183,8 +189,10 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         artifactId: { $ref: "#/$defs/nonEmptyString" },
         selector: { $ref: "#/$defs/nonEmptyString" },
         rangeSource: { $ref: "#/$defs/rangeSource" },
+        rangeSourceDetail: { $ref: "#/$defs/rangeSourceDetail" },
         confidence: { $ref: "#/$defs/confidence" }
-      }
+      },
+      allOf: [{ if: { properties: { rangeSource: { const: "unresolved" } }, required: ["rangeSource"] }, then: { properties: { confidence: { const: "none" } } } }]
     },
     entry: {
       type: "object",
@@ -247,8 +255,9 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
       }
     },
     rangeSource: {
-      enum: ["source-map", "parser", "compiler", "adapter", "manual", "heuristic", "unresolved"]
+      enum: DOC_SOURCE_MAP_RANGE_SOURCES
     },
+    rangeSourceDetail: { type: "string", minLength: 1, pattern: "\\S" },
     confidence: { enum: ["high", "medium", "low", "none"] },
     sourcesContentPolicy: { enum: ["none", "reference", "embed", "redacted"] },
     privacy: {

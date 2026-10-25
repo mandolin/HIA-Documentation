@@ -7,8 +7,11 @@ registry status for each version.
 
 ## 未发布 / Unreleased
 
-- 文档源码映射索引新增普通JSON预检、显式字段类型、集合身份唯一及有序正整数范围校验；拒绝访问器、环、稀疏/自定义行为数组，不调用toJSON或数组自有迭代器。无效输入沿用现有查询隔离；历史省略项、开放JSON扩展与生成器来源字符串保持，契约/包版本不变。
-- Documentation-map indexing now checks ordinary JSON, declared field types, unique collection identities and ordered positive-integer ranges. It rejects accessors, cycles and sparse/custom-behavior arrays without invoking toJSON or own array iterators. Existing query isolation, legacy omissions, open JSON extensions and generator provenance strings remain; contract/package versions are unchanged. See [input validation](docs/doc-source-map-input-validation.md).
+- 文档源码映射新增1.0.0源码定义：闭集来源类别、引用层具体来源和显式保真迁移，精确旧reader保留；新旧未知版本隔离。冻结生成式绑定sidecar的schema不变，组合检查真实映射版本，单独迁移拒绝相关联工件。隐藏已声明容器也进行普通JSON预检。包版本和npm发行状态独立。见[来源模型与迁移](docs/doc-source-map-provenance.md)。
+- Documentation maps add a 1.0.0 source definition with closed mechanism categories, per-reference origin detail, explicit lossless migration and an exact legacy reader. Frozen binding schemas stay unchanged; composition checks actual map versions, and standalone migration refuses associated artifacts. Hidden declared containers also pass JSON preflight. Package versions and registry publication remain separate.
+
+- 文档源码映射索引新增普通JSON预检、显式字段类型、集合身份唯一及有序正整数范围校验；拒绝访问器、环、稀疏/自定义行为数组，不调用toJSON或数组自有迭代器。无效输入沿用现有查询隔离；该次输入修复保留历史省略项、开放JSON扩展、生成器来源字符串与契约/包版本，后续来源模型见上方。
+- Documentation-map indexing adds ordinary-JSON, declared-field, identity and range checks, rejecting hooks/cycles/custom arrays while retaining query isolation. That input repair preserved legacy omissions, extensions, origin strings and contract/package identities; see the subsequent provenance definition above and [input validation](docs/doc-source-map-input-validation.md).
 
 - 文档化配置规范增加独立的1.0.0源码定义候选，精确兼容旧0.1.0-draft reader；历史canonical原字节保持。新schema表达既有aliasFor/default消息约束，新增精确版本类型和完整字段双语文档。七份官方领域配置、包版本及系统正式发行独立管理。
 - Documentation profiles now expose an independent 1.0.0 source definition candidate with exact legacy 0.1.0-draft reader support and unchanged historical canonical bytes. The new schema expresses existing alias-target/default-message constraints; exact version typing and bilingual field documentation are added. Official domain profiles, package versions and system releases remain independent.
