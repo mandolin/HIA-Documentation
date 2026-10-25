@@ -335,14 +335,21 @@ export interface SourceMapAllGeneratedLookupResult {
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
-/** @lang zh-CN 显式位置或元数据筛选；双向输入的旧顺序不证明一致性。 @lang en Explicit position or metadata filters; legacy dual-input ordering does not establish consistency. */
+/** @lang zh-CN 显式位置或元数据筛选，只消费已知自有数据；双向输入的旧顺序不证明一致性。 @lang en Explicit position or metadata filters, consuming known own data only; legacy dual-input ordering does not establish consistency. */
 export interface SourceLinkedLookupQuery {
+  /** @lang zh-CN 可选非空白生成路径；匹配前仅规范化分隔符和首个 ./。 @lang en Optional nonblank generated path, normalizing only separators and the initial ./ for matching. */
   generatedPath?: string;
+  /** @lang zh-CN 可选一基安全整数生成位置，省略列为1。 @lang en Optional one-based safe integer generated position, defaulting an omitted column to one. */
   generatedPosition?: HiaSourcePosition;
+  /** @lang zh-CN 可选一基安全整数原始位置，配合原始路径时启用反向查找。 @lang en Optional one-based safe integer original position, enabling reverse lookup when paired with the original path. */
   originalPosition?: HiaSourcePosition;
+  /** @lang zh-CN 可选非空白原始路径，缺原始位置时保留既有未启用行为。 @lang en Optional nonblank original path, retaining existing inactive behavior without an original position. */
   originalSourcePath?: string;
+  /** @lang zh-CN 可选非空白精确选择器，不执行选择器。 @lang en Optional nonblank exact selector; selectors are not executed. */
   selector?: string;
+  /** @lang zh-CN 可选非空白精确符号身份，不裁剪正文。 @lang en Optional nonblank exact symbol identity, without trimming. */
   symbolId?: string;
+  /** @lang zh-CN 可选非空白精确符号种类。 @lang en Optional nonblank exact symbol kind. */
   symbolKind?: string;
 }
 
@@ -893,43 +900,62 @@ export function findAllGeneratedPositionsForOriginal(
  * @lang en Combines position and documentation-semantic maps without I/O; failed positions cannot fall back to broad document results.
  * @param docSourceMapIndex <lang><zh-CN>已验证文档索引，非available时无条目。</zh-CN><en>Validated documentation index; no entries when non-available.</en></lang>
  * @param ordinarySourceMapIndex <lang><zh-CN>本包创建且未篡改的位置索引；位置查询更新内部缓存。</zh-CN><en>Untampered position index created by this package; position lookups update internal caches.</en></lang>
- * @param query <lang><zh-CN>位置或元数据筛选；仅元数据时不要求普通map可用。双向输入保留旧处理顺序。</zh-CN><en>Position or metadata filters; metadata-only queries do not require an available ordinary map. Dual inputs retain legacy processing order.</en></lang>
- * @returns <lang><zh-CN>联合结果与诊断；非available时条目为空，输入query原样回显。</zh-CN><en>Combined result and diagnostics; non-available results have no entries, and query echoes input unchanged.</en></lang>
+ * @param query <lang><zh-CN>普通/null原型位置或元数据筛选；已知字段须为自有数据，undefined按省略。仅元数据时不要求普通map可用；双向输入保留旧顺序。</zh-CN><en>Plain/null-prototype position or metadata filters; known fields must be own data and undefined means omission. Metadata-only queries need no available ordinary map; dual inputs retain legacy ordering.</en></lang>
+ * @returns <lang><zh-CN>联合结果与固定诊断；非法查询不执行已知getter，不返回位置或条目。原query回显未脱敏；Proxy反射不受沙箱保护。</zh-CN><en>Combined results with fixed diagnostics; invalid queries execute no known getters and return no positions or entries. The original query echo is unsanitized; proxy reflection is not sandboxed.</en></lang>
  */
 export function querySourceLinkedPosition(
   docSourceMapIndex: DocSourceMapIndex,
   ordinarySourceMapIndex: OrdinarySourceMapIndex,
   query: SourceLinkedLookupQuery
 ): SourceLinkedLookupResult {
+  // <lang><zh-CN>先投影全部已知字段再查位置，错误值不能被truthiness省略，也不提前触发库缓存。</zh-CN><en>Project every known field before position lookup so invalid values cannot disappear by truthiness or trigger library caches prematurely.</en></lang>
+  const prepared = prepareSourceLinkedQuery(query);
+  if ("error" in prepared) {
+    return {
+      diagnostics: [...new Set([...docSourceMapIndex.diagnostics, ...ordinarySourceMapIndex.diagnostics]), ...(prepared.error === "position"
+        ? [createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_POSITION_INVALID", "HIA lookup positions require positive integer lines and optional positive integer columns.", "error", ordinarySourceMapIndex.path)]
+        : prepared.error === "semantic"
+          ? [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_QUERY_INVALID", "Documentation query fields require ordinary data, nonblank strings and positive safe integer coordinates.", "error", docSourceMapIndex.path)]
+          : [createSourceLinkageDiagnostic("SOURCE_LINKED_LOOKUP_QUERY_INVALID", "Combined lookup fields require ordinary own data and nonblank strings.", "error", docSourceMapIndex.path)])],
+      entries: [], matchedEntryCount: 0, query, status: "invalid"
+    };
+  }
+  // <lang><zh-CN>匹配与坐标转换只读取独立快照；结果仍回显原query以保持既有身份关系。</zh-CN><en>Matching and coordinate conversion read the independent snapshot only; results still echo the original query to retain identity.</en></lang>
+  const input = prepared.query;
+  // <lang><zh-CN>两个方向的结果与累计状态沿用原处理顺序，前一次失败不会被后一次成功覆盖。</zh-CN><en>Directional results and accumulated status retain the original processing order; a later success never overrides an earlier failure.</en></lang>
   let original: SourceMapOriginalPosition | undefined;
   let generated: SourceMapGeneratedPosition | undefined;
   let status: SourceLinkedLookupResult["status"] = docSourceMapIndex.status;
   // <lang><zh-CN>保留查找本身的新增诊断，避免只收集索引诊断而丢失坐标拒绝原因。</zh-CN><en>Retain lookup-specific diagnostics rather than collecting index diagnostics only and losing coordinate rejection reasons.</en></lang>
   const lookupDiagnostics: HiaDiagnostic[] = [...ordinarySourceMapIndex.diagnostics];
 
-  if (query.generatedPosition) {
-    const generatedLookup = findOriginalPositionForGenerated(ordinarySourceMapIndex, query.generatedPosition);
+  if (input.generatedPosition) {
+    // <lang><zh-CN>生成位置先追溯原始位置，保留查找特有诊断。</zh-CN><en>Trace the generated position to its original first, retaining lookup-specific diagnostics.</en></lang>
+    const generatedLookup = findOriginalPositionForGenerated(ordinarySourceMapIndex, input.generatedPosition);
     lookupDiagnostics.push(...generatedLookup.diagnostics);
     original = generatedLookup.original;
-    generated = createGeneratedPosition(query.generatedPath ?? generatedLookup.generated.artifactPath, query.generatedPosition);
+    generated = createGeneratedPosition(input.generatedPath ?? generatedLookup.generated.artifactPath, input.generatedPosition);
     status = generatedLookup.status === "available" ? status : generatedLookup.status;
   }
 
-  if (query.originalSourcePath && query.originalPosition) {
-    original = createOriginalPosition(query.originalSourcePath, query.originalPosition);
-    const generatedLookup = findGeneratedPositionForOriginal(ordinarySourceMapIndex, query.originalSourcePath, query.originalPosition);
+  if (input.originalSourcePath && input.originalPosition) {
+    original = createOriginalPosition(input.originalSourcePath, input.originalPosition);
+    // <lang><zh-CN>原始路径/位置成对提供时沿用后处理顺序，不据此证明双向一致。</zh-CN><en>Process paired original path/position afterward as before, without inferring bidirectional consistency.</en></lang>
+    const generatedLookup = findGeneratedPositionForOriginal(ordinarySourceMapIndex, input.originalSourcePath, input.originalPosition);
     lookupDiagnostics.push(...generatedLookup.diagnostics);
     generated = generatedLookup.generated;
     status = generatedLookup.status === "available" ? status : generatedLookup.status;
   }
 
+  // <lang><zh-CN>只把投影后的字符串和成功解析位置交给语义查询，保持原筛选交集。</zh-CN><en>Pass projected strings and resolved positions to semantic querying, retaining existing filter intersections.</en></lang>
   const docQuery: DocSourceMapQuery = {
-    ...(query.symbolId ? { symbolId: query.symbolId } : {}),
-    ...(query.symbolKind ? { symbolKind: query.symbolKind } : {}),
+    ...(input.symbolId ? { symbolId: input.symbolId } : {}),
+    ...(input.symbolKind ? { symbolKind: input.symbolKind } : {}),
     ...(original ? { sourcePath: original.sourcePath, position: original.position } : {}),
-    ...(generated?.artifactPath ?? query.generatedPath ? { artifactPath: generated?.artifactPath ?? query.generatedPath } : {}),
-    ...(query.selector ? { selector: query.selector } : {})
+    ...(generated?.artifactPath ?? input.generatedPath ? { artifactPath: generated?.artifactPath ?? input.generatedPath } : {}),
+    ...(input.selector ? { selector: input.selector } : {})
   };
+  // <lang><zh-CN>语义结果独立保留诊断与版本状态，不能从位置成功推导其可用。</zh-CN><en>Retain semantic diagnostics and version status independently; position success does not imply semantic availability.</en></lang>
   const docQueryResult = queryDocSourceMapIndex(docSourceMapIndex, docQuery);
   // <lang><zh-CN>语义筛选拒绝也必须向联合状态传播，不能保留伪available。</zh-CN><en>Propagate rejected semantic filters into the combined status rather than preserving a false available result.</en></lang>
   if (docQueryResult.status !== "available") status = docQueryResult.status;
@@ -1168,6 +1194,45 @@ function prepareDocSourceMapQuery(value: unknown): DocSourceMapQuery | undefined
   } catch {
     // <lang><zh-CN>Proxy反射异常只转换为固定失败，不传播可能包含私有正文的异常。</zh-CN><en>Convert proxy reflection errors to fixed failure without propagating potentially private exception text.</en></lang>
     return undefined;
+  }
+}
+
+/** @lang zh-CN 联合查询投影的内部结果，错误类型只决定固定诊断，不携带输入正文。 @lang en Internal combined-query projection result; the error kind selects a fixed diagnostic without carrying input text. */
+type PreparedSourceLinkedQuery = { query: SourceLinkedLookupQuery } | { error: "query" | "position" | "semantic" };
+
+/** @lang zh-CN 投影联合查询的五字符串与两坐标，只读已知自有描述符；反射异常收敛为固定查询错误。 @lang en Projects the combined query's five strings and two positions through known own descriptors only, converting reflection errors into fixed query failure. */
+function prepareSourceLinkedQuery(value: unknown): PreparedSourceLinkedQuery {
+  try {
+    if (!isPlainQueryRecord(value)) return { error: "query" };
+    // <lang><zh-CN>独立快照不共享坐标对象；未知字段保持忽略，不读取扩展getter。</zh-CN><en>The independent snapshot shares no position objects; unknown fields remain ignored without reading extension getters.</en></lang>
+    const query: SourceLinkedLookupQuery = {};
+    for (const field of ["generatedPath", "originalSourcePath", "selector", "symbolId", "symbolKind"] as const) {
+      // <lang><zh-CN>可选undefined沿用省略，非空白文本不裁剪；访问器直接拒绝。</zh-CN><en>Optional undefined retains omission and nonblank text is not trimmed; reject accessors directly.</en></lang>
+      const descriptor = Object.getOwnPropertyDescriptor(value, field);
+      if (!descriptor) continue;
+      if (!Object.hasOwn(descriptor, "value")) return { error: "query" };
+      if (descriptor.value === undefined) continue;
+      if (typeof descriptor.value !== "string" || !descriptor.value.trim()) return { error: "semantic" };
+      query[field] = descriptor.value;
+    }
+    for (const field of ["generatedPosition", "originalPosition"] as const) {
+      // <lang><zh-CN>即使位置未配路径，也先验证已提供的值，避免错误输入退化为全量结果。</zh-CN><en>Validate every supplied position even without a paired path, preventing invalid input from becoming an unfiltered result.</en></lang>
+      const descriptor = Object.getOwnPropertyDescriptor(value, field);
+      if (!descriptor) continue;
+      if (!Object.hasOwn(descriptor, "value")) return { error: "query" };
+      if (descriptor.value === undefined) continue;
+      if (!isPlainQueryRecord(descriptor.value)) return { error: "position" };
+      // <lang><zh-CN>两个坐标描述符必须是数据属性，数值域与既有普通位置查询一致。</zh-CN><en>Both coordinate descriptors must be data properties, with the same numeric domains as ordinary lookups.</en></lang>
+      const line = Object.getOwnPropertyDescriptor(descriptor.value, "line");
+      const column = Object.getOwnPropertyDescriptor(descriptor.value, "column");
+      if (!line || !Object.hasOwn(line, "value") || !Number.isSafeInteger(line.value) || line.value < 1) return { error: "position" };
+      if (column && (!Object.hasOwn(column, "value") || (column.value !== undefined && (!Number.isSafeInteger(column.value) || column.value < 1)))) return { error: "position" };
+      query[field] = { line: line.value, ...(column?.value !== undefined ? { column: column.value } : {}) };
+    }
+    return { query };
+  } catch {
+    // <lang><zh-CN>Proxy反射不是沙箱，但不能把私有异常正文传播到诊断。</zh-CN><en>Proxy reflection is not sandboxed, but private exception text must not enter diagnostics.</en></lang>
+    return { error: "query" };
   }
 }
 

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Combined query and LSP rejection propagation
+
+- 联合位置/语义查询增加已知数据字段投影，拒绝访问器、错误字符串及非法坐标，保留既有坐标/语义诊断；原始query回显未脱敏。语言服务保留查询状态和新增诊断，无筛选时也隔离invalid/unsupported条目，null/false不再丢弃，拒绝不冒充成功无匹配。协议、schema、包/依赖及宿主UI保持，尚未发布。
+- Combined lookups project known runtime fields before matching, reject accessors/wrong strings/invalid coordinates and preserve coordinate/semantic diagnostics; original query echoes remain unsanitized. LSP consumers retain query status and new diagnostics, isolate invalid/unsupported entries even without filters, preserve null/false for validation and distinguish rejection from valid empty states. Protocol/schema/package/dependency versions and host UI are unchanged; unreleased. See [query semantics](docs/doc-source-map-query.md).
+
 ## Unreleased — Documentation semantic query validation
 
 - 文档语义查询校验已知字段的普通数据、非空白字符串与一基安全整数坐标；拒绝访问器且不执行，固定诊断不复制异常正文。便捷查询保留非法可选参数交由校验，联合查询传播语义拒绝状态。省略列按核心规则比较为1，范围仍两端包含。契约、schema及包版本保持，尚未发布。

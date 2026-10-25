@@ -297,13 +297,15 @@ export function createHiaLspService(options: HiaLspServiceOptions = {}): HiaLspS
       return getHiaDocumentationQualityReview(qualityReviewInputs.get(uri));
     },
     getManagedDocSourceMapIndex(uri: string, query?: DocSourceMapQuery): HiaDocumentSourceMapIndexResult {
+      // <lang><zh-CN>优先当前托管文档，再用工作区已加载索引；这里只选择来源，不跳过查询校验。</zh-CN><en>Prefer the managed document, then an already loaded workspace index; select provenance without bypassing query validation.</en></lang>
       const managedIndex = documents.get(uri)?.docSourceMapIndex;
       const workspaceIndex = workspaceDocSourceMapIndexes.get(uri);
       const index = managedIndex ?? workspaceIndex;
 
       return createHiaDocumentSourceMapIndexResult({
         ...(index ? { index } : {}),
-        ...(query ? { query } : {}),
+        // <lang><zh-CN>仅undefined代表省略，保留null/false供下游拒绝，避免退化为全量查询。</zh-CN><en>Only undefined means omission; preserve null/false for downstream rejection rather than widening to all entries.</en></lang>
+        ...(query !== undefined ? { query } : {}),
         source: getHostResultSource(managedIndex, workspaceIndex),
         uri
       });

@@ -57,8 +57,47 @@ neither immutable nor sanitized for logging or publication. Indexes must be
 created by this package and remain untampered. Proxy reflection can execute user
 code; caught reflection errors do not imply sandboxing or resource limits.
 
-`querySourceLinkedPosition` propagates semantic query rejection into its combined
-status. General runtime validation of that combined query, ordinary-position
-helpers, conflicting dual positions and frozen binding sidecar migration remain
-separate review boundaries. The [ordinary position map guide](ordinary-source-map-lookup.md)
-describes its existing coordinate-only validation.
+## Combined position queries
+
+`querySourceLinkedPosition(documentIndex, ordinaryIndex, query)` requires an
+explicit plain/null-prototype query. Its five string fields (`generatedPath`,
+`originalSourcePath`, `selector`, `symbolId`, `symbolKind`) must be nonblank.
+`generatedPosition` and `originalPosition` use the same positive safe integer
+coordinates and omitted-column default. Optional `undefined` means omission;
+unknown fields are ignored without reading their getters. Supplied positions
+are validated even if not paired with a path. Accepted positions are copied.
+
+Rejected queries return `invalid`, no entries, count zero and no positional
+results. Diagnostics preserve both indexes without mutating them. Codes are:
+
+- `SOURCE_LINKED_LOOKUP_QUERY_INVALID`: invalid root, known-field accessors or
+  reflection failure; no raw exception text is included.
+- `DOC_SOURCE_MAP_QUERY_INVALID`: invalid or blank string metadata, retaining
+  the existing semantic-filter diagnostic.
+- `ORDINARY_SOURCE_MAP_POSITION_INVALID`: malformed or invalid positions,
+  retaining the existing coordinate diagnostic.
+
+Metadata-only queries still work with an unavailable ordinary map. Both
+directions, optional columns and existing unpaired-filter behavior remain.
+When both directions are supplied, generated lookup runs first, original lookup
+runs second, and earlier failures remain failures. This order does not establish
+position consistency. The original `query` echo remains unsanitized.
+
+## Language service propagation
+
+The source `hia/documentSourceMapIndex@0.1.0-draft` consumer uses query status and
+diagnostics for every loaded index, including unfiltered queries. Invalid and
+unsupported indexes yield no entries even if the index retains entries for
+diagnostic inspection. Original aggregate counts remain index metadata.
+Known query rejection is `invalid` with its diagnostic; it is never described
+as a successful `query-no-match` or `source-data-empty`. Valid misses and empty
+indexes retain those existing empty states. Missing indexes remain `unavailable`
+with `not-loaded` and are not queried. Managed-service null/false query values
+reach validation instead of disappearing as omissions.
+
+No transport error, host field, empty-state enum or UI is added. Outer typed
+options/URI/request envelopes, ordinary-position helpers' arbitrary runtime
+objects, conflicting dual positions, tampered indexes and frozen binding
+sidecar migration remain separate review boundaries. The
+[ordinary position map guide](ordinary-source-map-lookup.md) describes its
+existing coordinate-only validation. These changes remain unreleased.

@@ -58,4 +58,8 @@ is invalid or unmapped. It preserves lookup-specific diagnostics. Metadata-only
 queries still use an available documentation index independently of ordinary-map
 availability. Invalid/unsupported documentation indexes never yield entries.
 The legacy order for supplying both original and generated positions remains;
-that order is not a consistency check between the two positions.
+that order is not a consistency check between the two positions. Combined query
+fields now receive separate runtime projection and fixed diagnostics; see
+[combined queries and LSP propagation](doc-source-map-query.md#combined-position-queries).
+The three ordinary position helpers themselves retain their coordinate-only
+boundary described above.

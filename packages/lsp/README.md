@@ -68,6 +68,12 @@ The LSP resource index is an IDE view model derived from core documents. It is n
 
 The LSP source-linkage index is an IDE view model derived from `doc-source-map` manifests and `@hia-doc/source-linkage`. It is a query surface for navigation; it does not execute producers or mutate project manifests.
 
+The unreleased source consumer preserves query rejection status and diagnostics,
+including unfiltered invalid/unsupported-index isolation. Invalid queries are
+not reported as normal no-match empty states; missing indexes remain unavailable.
+See [query semantics](../../docs/doc-source-map-query.md#language-service-propagation).
+中文：源码语言服务保留实际查询状态/诊断，拒绝不冒充正常空结果；尚未发布，协议版本保持。
+
 The LSP project relation graph is an IDE view model derived from renderer `project-index.json` output. It exposes project-level entry/source/generated/endpoint relations for host navigation; it does not parse renderer HTML, embed source previews or run producers.
 
 `hia/documentSourceMapIndex` and `hia/projectRelationGraph` include an additive `host` metadata object. IDE and DevTools hosts can use it to identify the result contract, custom request version, capability id, data source (`managed-document`, `workspace-runtime` or `none`) and empty state without parsing human-readable messages. Existing response payload fields remain unchanged.

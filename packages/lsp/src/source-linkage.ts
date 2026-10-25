@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 将文档源码映射查询状态与诊断投影到LSP领域结果，不执行生产器、不加载源码或改变宿主UI。
+ * @lang en Projects documentation source-map query status and diagnostics into LSP domain results without running producers, loading sources or changing host UI.
+ */
 import type {
   HiaDiagnostic,
   HiaSourceRange
@@ -30,16 +35,20 @@ export type HiaDocumentSourceMapUnavailableReason = "doc-source-map-missing";
 
 export interface HiaDocumentSourceMapIndexResult {
   artifactCount: number;
+  /** @lang zh-CN 实际查询诊断的无data摘要，包含输入拒绝而非只取索引诊断。 @lang en Data-free summaries of actual query diagnostics, including input rejection rather than index diagnostics alone. */
   diagnostics: HiaSourceLinkageDiagnosticSummary[];
   entries: HiaLspDocSourceMapEntry[];
   entryCount: number;
+  /** @lang zh-CN 已有宿主元数据；只有available结果可带成功空状态。 @lang en Existing host metadata; only available results may carry successful empty states. */
   host: HiaLspHostResultMeta;
   linkedEntryCount: number;
   matchedEntryCount: number;
+  /** @lang zh-CN 调用者原查询引用，未脱敏；不是可公开或可信日志数据。 @lang en Original caller query reference, unsanitized and unsuitable as public/trusted log data. */
   query?: DocSourceMapQuery;
   sourceCount: number;
   sourceMapCount: number;
   sourcesContentPolicy: string;
+  /** @lang zh-CN 已加载时沿查询状态，无索引时为unavailable。 @lang en Query status when loaded, or unavailable without an index. */
   status: HiaDocumentSourceMapStatus;
   unavailableReason?: HiaDocumentSourceMapUnavailableReason;
   unresolvedEntryCount: number;
@@ -84,8 +93,10 @@ export interface HiaSourceLinkageDiagnosticSummary {
 }
 
 /**
- * 将 source-linkage runtime index 转换成 LSP request 的稳定 JSON 结果。
- * Convert a source-linkage runtime index into a stable JSON result for the LSP request.
+ * @lang zh-CN 将source-linkage查询投影为既有LSP领域结果；无文件/网络I/O、不修改索引，不跳过无筛选查询的状态门禁。
+ * @lang en Projects source-linkage queries into existing LSP domain results without file/network I/O or index mutation, retaining status gates even for unfiltered queries.
+ * @param options <lang><zh-CN>未篡改索引、可选原查询、来源与URI；外层typed options不在本函数的任意对象校验范围。</zh-CN><en>Untampered index, optional original query, source and URI; arbitrary validation of outer typed options is outside this function's scope.</en></lang>
+ * @returns <lang><zh-CN>查询诊断/状态、无正文条目摘要和宿主元数据；无索引保留unavailable，拒绝不冒充正常无匹配。原query回显未脱敏。</zh-CN><en>Query diagnostics/status, body-free entry summaries and host metadata; absent indexes retain unavailable and rejection never masquerades as a normal miss. The original query echo is unsanitized.</en></lang>
  */
 export function createHiaDocumentSourceMapIndexResult(options: {
   index?: DocSourceMapIndex;
@@ -93,7 +104,9 @@ export function createHiaDocumentSourceMapIndexResult(options: {
   source?: HiaLspHostResultSource;
   uri: string;
 }): HiaDocumentSourceMapIndexResult {
+  // <lang><zh-CN>外层参数沿typed接口读取；query自身交source-linkage检查，null/false不能按省略处理。</zh-CN><en>Read outer parameters through the typed interface; source-linkage validates the query itself, and null/false must not count as omission.</en></lang>
   const { index, query, uri } = options;
+  // <lang><zh-CN>来源只描述数据来自何处，不替代查询有效性。</zh-CN><en>Source describes where data originated, without establishing query validity.</en></lang>
   const source = options.source ?? (index ? "managed-document" : "none");
 
   if (!index) {
@@ -111,7 +124,7 @@ export function createHiaDocumentSourceMapIndexResult(options: {
       }),
       linkedEntryCount: 0,
       matchedEntryCount: 0,
-      ...(query ? { query } : {}),
+      ...(query !== undefined ? { query } : {}),
       sourceCount: 0,
       sourceMapCount: 0,
       sourcesContentPolicy: "none",
@@ -122,13 +135,15 @@ export function createHiaDocumentSourceMapIndexResult(options: {
     };
   }
 
-  const queryResult = query ? queryDocSourceMapIndex(index, query) : undefined;
-  const entries = queryResult?.entries ?? index.entries;
-  const emptyState = createDocSourceMapEmptyState(index, entries, query);
+  // <lang><zh-CN>无query也必须经过版本/隐私门禁，不能直接消费索引中保留用于诊断的条目。</zh-CN><en>Even absent queries must pass version/privacy gates rather than consume index entries retained for diagnostics directly.</en></lang>
+  const queryResult = queryDocSourceMapIndex(index, query);
+  // <lang><zh-CN>状态、诊断与条目来自同一次查询，拒绝的空数组不是成功的query-no-match。</zh-CN><en>Status, diagnostics and entries come from the same query; a rejected empty array is not a successful query-no-match.</en></lang>
+  const entries = queryResult.entries;
+  const emptyState = queryResult.status === "available" ? createDocSourceMapEmptyState(index, entries, query) : undefined;
 
   return {
     artifactCount: index.artifactCount,
-    diagnostics: createDiagnosticSummaries(index.diagnostics),
+    diagnostics: createDiagnosticSummaries(queryResult.diagnostics),
     entries: entries.map(createEntrySummary),
     entryCount: index.entryCount,
     host: createHiaLspHostResultMeta({
@@ -140,22 +155,23 @@ export function createHiaDocumentSourceMapIndexResult(options: {
     }),
     linkedEntryCount: index.linkedEntryCount,
     matchedEntryCount: entries.length,
-    ...(query ? { query } : {}),
+    ...(query !== undefined ? { query } : {}),
     sourceCount: index.sourceCount,
     sourceMapCount: index.sourceMapCount,
     sourcesContentPolicy: index.sourcesContentPolicy,
-    status: index.status,
+    status: queryResult.status,
     unresolvedEntryCount: index.unresolvedEntryCount,
     uri
   };
 }
 
+/** @lang zh-CN 仅为已通过查询生成既有成功空状态，不定义新的错误或宿主交互。 @lang en Creates existing successful empty states only after query admission, without defining new errors or host interactions. */
 function createDocSourceMapEmptyState(
   index: DocSourceMapIndex,
   entries: DocSourceMapIndexedEntry[],
   query: DocSourceMapQuery | undefined
 ) {
-  if (query && entries.length === 0) {
+  if (query !== undefined && entries.length === 0) {
     return "query-no-match" as const;
   }
 

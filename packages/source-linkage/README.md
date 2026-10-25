@@ -9,6 +9,11 @@ executing their getters. Invalid filters return no entries; omitted columns
 compare as one. See [query semantics and compatibility](../../docs/doc-source-map-query.md).
 中文：源码查询边界新增字段检查及固定诊断，尚未发布；契约和包版本保持。
 
+Combined position queries also project known runtime fields before lookup,
+preserving fixed coordinate/semantic diagnostics and using a fixed query error
+for malformed roots/accessors. Existing dual-input order remains; see the same guide.
+中文：联合查询先校验后定位，错误值不退化为宽泛结果；双向顺序不等于一致性证明。
+
 It also provides an ordinary source map lookup layer based on `@jridgewell/trace-mapping`. The model keeps responsibilities separate:
 
 - ordinary source maps answer generated/original position lookup;
