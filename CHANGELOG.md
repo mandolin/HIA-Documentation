@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — CLI .NET source provenance correction
+
+- CLI项目导入隔离旧.NET成员工件的XML文档出处，避免将其公开成代码资产；真实C#来源保留完整定义末行，不再忽略range而继续读后续400行。其他领域XML源码保持支持，公开授权语义不变。
+- CLI project import isolates XML documentation origins in legacy .NET member artifacts. Actual C# source retains the declaration end line instead of ignoring its range and reading the next 400 lines. XML code in other domains and explicit publication authority remain supported.
+
 ## 2026-10-25 — Source line positions (renderer-html 0.1.8 / cli 0.1.10)
 
 - 源码行号只接受正安全整数，无效的运行时预览行号回退到1，防止绕过TypeScript类型的调用者把定位值插入HTML属性；合法行号、正文、主题和流式构建行为保持。

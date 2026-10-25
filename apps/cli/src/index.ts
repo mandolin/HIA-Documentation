@@ -2520,6 +2520,12 @@ function profileFromArtifact(artifact: Record<string, unknown>): RenderProjectPr
   };
 }
 
+/**
+ * @lang zh-CN 投影代码定义，隔离旧.NET工件的XML文档出处；保留真实定义的包含末行范围。
+ * @lang en Projects code definitions while isolating XML documentation origins in legacy .NET artifacts and retaining inclusive declaration end lines.
+ * @param symbol <lang><zh-CN>已加载的HIA符号；不修改原工件。</zh-CN><en>Loaded HIA symbol; the original artifact is unchanged.</en></lang>
+ * @returns <lang><zh-CN>代码来源或空对象，不对文档XML发起源码读取。</zh-CN><en>Code source or an empty object, without requesting documentation XML as code.</en></lang>
+ */
 function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderProjectEntry["source"] } {
   const definedIn = symbol.source?.definedIn;
   const primaryBlock = symbol.source?.primaryBlock;
@@ -2527,6 +2533,10 @@ function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderP
   if (!definedIn?.relativePath) {
     return {};
   }
+
+  // <lang><zh-CN>旧adapter未携带rangeSource；成员ID加XML路径确定此兼容边界，其他领域XML源码仍可用。</zh-CN><en>Legacy adapters omitted rangeSource; member ID plus XML path identifies this compatibility boundary while other domains' XML sources remain valid.</en></lang>
+  const dotnetdoc = isRecord(symbol.metadata?.dotnetdoc) ? symbol.metadata.dotnetdoc : undefined;
+  if (typeof dotnetdoc?.memberName === "string" && /\.xml$/iu.test(definedIn.relativePath)) return {};
 
   const source: NonNullable<RenderProjectEntry["source"]> = {
     path: definedIn.relativePath
@@ -2540,7 +2550,11 @@ function createProjectSourceFromHiaSymbol(symbol: HiaSymbol): { source?: RenderP
     source.linkUrl = definedIn.link.lineUrl;
   }
 
-  if (definedIn.position) {
+  // <lang><zh-CN>完整声明范围优先；仅position的旧工件保留位置语义，不能忽略真实末行而多公开后续400行。</zh-CN><en>The complete declaration range takes precedence; position-only legacy artifacts retain location semantics without discarding a real end line and publishing the next 400 lines.</en></lang>
+  const declaredRange = "range" in definedIn && isRecord(definedIn.range) ? normalizeProjectRange(definedIn.range) : undefined;
+  if (declaredRange) {
+    source.range = declaredRange;
+  } else if (definedIn.position) {
     source.range = {
       start: {
         line: definedIn.position.line,

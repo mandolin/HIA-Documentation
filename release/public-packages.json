@@ -97,10 +97,10 @@
     {
       "name": "@hia-doc/renderer-html",
       "path": "packages/renderer-html",
-        "targetVersion": "0.1.8",
+      "targetVersion": "0.1.8",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-        "releaseStatus": "published"
+      "releaseStatus": "published"
     },
     {
       "name": "@hia-doc/schemas",
@@ -121,10 +121,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-        "targetVersion": "0.1.10",
+      "targetVersion": "0.1.11",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-        "releaseStatus": "published"
+      "releaseStatus": "patch-candidate"
     }
   ],
   "excludedPackages": [

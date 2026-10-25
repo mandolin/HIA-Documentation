@@ -135,3 +135,5 @@ owner-local Draft 2020-12 `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_JSON_SCHEMA
 not a target-host integration or execution protocol.
 
 See `docs/business-flow-documentation-handoff-contract.md`, `docs/documentation-source-comment-projection-contract.md`, `docs/html-authoring-source-comment-integration-verification-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
+
+Legacy .NET member artifacts pointing to XML documentation are not imported as code sources. Rebuild them with DotNetDoc runner0.1.11 or later and configured project/source inputs. Actual declaration end lines are preserved. 中文：旧.NET XML文档出处不再生成代码预览；真实声明范围优先，不影响其他领域XML源码或显式公开授权。
