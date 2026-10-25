@@ -4,6 +4,7 @@
  * @lang en Version/closure/losslessness/atomic-failure regressions for the confirmed 0.2.0-draft binding bundle migration.
  */
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import * as api from "./index.js";
 
@@ -122,7 +123,9 @@ describe("generated binding coordinated migration", () => {
 
   it("preserves exact historical schema bytes", () => {
     const bytes = readFileSync(new URL("../../schemas/src/history/generated-documentation-binding-0.1.0-draft.schema.json", import.meta.url), "utf8");
-    expect(JSON.stringify(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA, null, 2) + "\n").toBe(bytes);
+    // <lang><zh-CN>旧公开文件使用编译器四空格格式，不能用源对象重新序列化冒充线上原字节。</zh-CN><en>The old public file uses compiler four-space formatting; reserializing the source object cannot substitute for original online bytes.</en></lang>
+    expect(createHash("sha256").update(bytes).digest("hex")).toBe("6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7");
+    expect(JSON.parse(bytes)).toEqual(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA);
   });
 
   it("migrates all explicitly supplied sidecars in input order", () => {

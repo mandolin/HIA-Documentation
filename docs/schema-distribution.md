@@ -96,7 +96,7 @@ formatting, which can differ from the current source snapshot formatting.
 
 A ninth snapshot retains the exact original binding `0.1.0-draft` definition
 before introducing binding `0.2.0-draft` / map `1.0.0` coordination. Its SHA-256 is
-`7ba9d1f538d006f7427ffe78028a6821cf6be1b3605475af65da6c1b3a5e6f38`.
+`6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7`.
 The first eight digests are unchanged. This adds no catalog entry or stable
 definition: the catalog remains 17 entries, five stable definition candidates.
 Binding remains draft, and the map definition still awaits full API review.

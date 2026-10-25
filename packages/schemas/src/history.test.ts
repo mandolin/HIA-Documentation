@@ -13,7 +13,7 @@ import { getHiaSchema, HIA_SCHEMA_CATALOG, HIA_SCHEMA_PUBLIC_BASE_URL } from "./
 
 // <lang><zh-CN>期望摘要独立于可编辑索引，固定首次迁移前已分发的原始文件。</zh-CN><en>Expected digests are independent of the editable index and pin the distributed files before the first migration.</en></lang>
 const pinnedDigests: Record<string, string> = {
-  "generated-documentation-binding-0.1.0-draft.schema.json": "7ba9d1f538d006f7427ffe78028a6821cf6be1b3605475af65da6c1b3a5e6f38",
+  "generated-documentation-binding-0.1.0-draft.schema.json": "6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7",
   "documentation-profile-0.1.0-draft.schema.json": "ddcc684a742da21c898965885a28989b33f2ccaa9f610943b48f77c7be0476a8",
   "documentation-producer-0.1.0-draft.schema.json": "c7ca78e4fc904b4cad638a430b881cd08a3a2eee84550a7725bed2e2c03e898a",
   "documentation-producer-result-0.1.0-draft.schema.json": "f9289c91ceebcf5b75863e1ad492371692edc18e21c44bdbe71de3ec411f6a66",
