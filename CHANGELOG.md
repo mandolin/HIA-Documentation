@@ -1,6 +1,6 @@
 # 变更日志 / Changelog
 
-## Unreleased — Large-site source preview memory repair
+## 2026-10-25 — Project source previews (renderer-html 0.1.7 / cli 0.1.9)
 
 - 已授权fetch/link源码提供同源无脚本查看页及真实#L行定位；fetch行号链接到该页，纯文本摘要校验端点保持独立，不恢复未授权或外部链接。
 - Authorized fetch/link source includes script-free same-origin viewing pages with real #L targets. Fetch line numbers link to these pages while digest-verified text endpoints stay separate; unauthorized or external links are not restored.
