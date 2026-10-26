@@ -2,6 +2,8 @@
 
 ## Unreleased — Binding index fields and exact query identifiers
 
+- Document seven ordinary position index/result interfaces (32 fields): raw versus resolved paths, count domains, borrowed echoes, mapped/combined snapshots and diagnostic/state boundaries. Preserve runtime/type semantics and add result-ownership characterization; unreleased.
+
 - Clarify nine documentation-source index metadata interfaces (63 fields), covering creation-time counts, ordered references, copied mutable ranges and reference-only sidecars. Preserve all runtime/type semantics and add metadata ownership regressions; unreleased.
 
 - 四个绑定查询先检查primitive string标识符，修复undefined匹配缺省symbolId的宽结果；不转换/trim/规范化合法身份。补齐索引17导出及字段双语说明、计数/顺序/冻结与借用边界、精确回归和严格类型；配对、提取诊断、范围端点、公开类型/导出及版本保持。

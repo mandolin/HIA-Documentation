@@ -338,17 +338,26 @@ export interface OrdinarySourceMapIndexOptions {
   path?: string;
 }
 
-/** @lang zh-CN 独立无正文索引；公开类型可变，调用者不得篡改后继续依赖校验。 @lang en Independent body-free index; the public type is mutable, so validation must not be assumed after tampering. */
+/**
+ * @lang zh-CN 独立无正文的可变普通位置索引；计数是创建快照，lookup更新库cache，不得篡改后继续依赖校验。
+ * @lang en Independent body-free mutable ordinary position index; counts are creation-time snapshots, lookups update library caches, and tampering invalidates reliance on validation.
+ */
 export interface OrdinarySourceMapIndex {
+  /** @lang zh-CN 显式options的非空产物上下文，规范分隔符/开头./；不从map.file推导，不授予文件访问或发布权限。 @lang en Nonempty explicit artifact context from options, normalizing separators/initial ./; not inferred from map.file and granting no file-access/publication authority. */
   artifactPath?: string;
+  /** @lang zh-CN 本次索引的可变诊断列表；成功为空，拒绝使用固定错误并保留合法未脱敏上下文，结果可能借用此列表/记录。 @lang en Mutable diagnostics for this creation; empty on success, fixed on rejection with valid unsanitized context, and possibly borrowed by result lists/records. */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 包含无原始位置的段数量；invalid时为零。 @lang en Segment count including unmapped segments; zero when invalid. */
+  /** @lang zh-CN 所有映射段数，含无原始位置的段；invalid为零，后续修改实例不自动重算。 @lang en Count of all mapping segments, including unmapped segments; zero when invalid and not automatically recomputed after instance mutation. */
   mappingCount: number;
+  /** @lang zh-CN 非空options.path原文，作为库解析基准与诊断上下文；空string省略，未脱敏或授予访问权限。 @lang en Original nonempty options.path used as library resolution base and diagnostic context; empty strings omitted, without sanitization or access authority. */
   path?: string;
+  /** @lang zh-CN 原始sources槽位中非空string的分隔符/开头./规范化新列表，保留重复、滤空/null；不是库resolvedSources。 @lang en New separator/initial-./ normalized list of nonempty string slots from raw sources, retaining duplicates and filtering empty/null slots; not library resolvedSources. */
   sources: string[];
+  /** @lang zh-CN 创建时公开sources列表长度，不是原始槽位数、唯一路径数或有映射文件数。 @lang en Public sources-list length at creation, not raw slot count, unique paths or mapped-file count. */
   sourceCount: number;
+  /** @lang zh-CN 构造边界available或invalid，不含unmapped；空的合法map仍available，不证明完整ECMA-426符合或公开安全。 @lang en Construction status available or invalid, never unmapped; a valid empty map remains available without proving full ECMA-426 conformance or public safety. */
   status: "available" | "invalid";
-  /** @lang zh-CN 可用时提供的独立库实例，不含正文；查找会更新内部缓存。 @lang en Independent library instance when available, without bodies; lookups update internal caches. */
+  /** @lang zh-CN 仅正常构造提供的独立无正文TraceMap，保留既有解析路径；可变cache随查找更新，不共享调用方实例/cache。 @lang en Independent body-free TraceMap on successful construction, retaining existing resolved paths; mutable lookup caches do not share the caller instance/caches. */
   traceMap?: TraceMap;
 }
 
@@ -357,40 +366,72 @@ export interface OrdinarySourceMapLookupOptions {
   bias?: OrdinarySourceMapBias;
 }
 
-/** @lang zh-CN 原始路径及HIA一基行/列，可带映射符号名。 @lang en Original path and HIA one-based line/column, optionally with a mapped symbol name. */
+/**
+ * @lang zh-CN 原始位置上下文或成功映射结果；直接helper的输入位置回显借用原对象，输出/联合快照另有所有权。
+ * @lang en Original-position context or successful mapping; direct-helper input echoes borrow the original position, while mapped outputs/combined snapshots have separate ownership.
+ */
 export interface SourceMapOriginalPosition {
+  /** @lang zh-CN 库映射提供的可选非空符号名；输入上下文不推导name，无名映射省略此字段。 @lang en Optional nonempty symbol name supplied by a mapping; input context does not infer names and nameless mappings omit it. */
   name?: string;
+  /** @lang zh-CN HIA一基行/列；映射输出新建坐标，直接反向helper回显原position对象并保留省略列，非法runtime回显不是类型证明。 @lang en HIA one-based line/column; mapped outputs have fresh coordinates, direct reverse helpers echo the original position/omitted columns, and invalid runtime echoes do not prove types. */
   position: HiaSourcePosition;
+  /** @lang zh-CN 映射输出为库解析路径的分隔符/开头./规范化文本；输入回显仅规范化primitive string，非法runtime值可能原样保留，未脱敏。 @lang en Mapped output is a separator/initial-./ normalized library-resolved path; input echoes normalize primitive strings only and may retain invalid runtime values, without sanitization. */
   sourcePath: string;
 }
 
-/** @lang zh-CN 生成工件的HIA一基行/列，路径可省略。 @lang en HIA one-based line/column in a generated artifact, with optional path. */
+/**
+ * @lang zh-CN 生成位置上下文或映射结果；字段存在并不证明成功，须检查所在结果status。
+ * @lang en Generated-position context or mapping; presence alone does not prove success, so inspect the enclosing result status.
+ */
 export interface SourceMapGeneratedPosition {
+  /** @lang zh-CN 可选非空产物上下文，规范分隔符/开头./；来自索引options或联合请求，不执行文件读取。 @lang en Optional nonempty artifact context with normalized separators/initial ./, from index options or a combined request, without file reads. */
   artifactPath?: string;
+  /** @lang zh-CN HIA一基坐标；直接正向helper回显原输入引用，反向映射输出新建，联合结果使用已投影快照；无公开安全/序列化保证。 @lang en HIA one-based coordinates; direct forward helpers echo the input reference, reverse mappings create fresh coordinates, and combined results use projected snapshots, without public-safety/serialization guarantees. */
   position: HiaSourcePosition;
 }
 
-/** @lang zh-CN 仅available带原始映射；输入回显不是校验证明。 @lang en Only available results carry original mappings; input echoes are not validation evidence. */
+/**
+ * @lang zh-CN 生成到原始查找结果；generated是请求上下文，只有available才有成功映射的original。
+ * @lang en Generated-to-original lookup result; generated is request context and only available carries a successful original mapping.
+ */
 export interface SourceMapOriginalLookupResult {
+  /** @lang zh-CN 正常/未映射/索引失败分支借用原索引列表；新增参数拒绝使用新列表并借用已有记录，均未统一深冻结。 @lang en Normal/unmapped/index-failure branches borrow the index list; new argument rejection creates a list borrowing existing records, without uniform deep freezing. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 始终保留的生成请求上下文，position借用原输入，invalid/unmapped时也存在且可能含非法runtime值。 @lang en Always-retained generated request context whose position borrows input; present even for invalid/unmapped and possibly containing invalid runtime values. */
   generated: SourceMapGeneratedPosition;
+  /** @lang zh-CN available时的新建原始映射含一基坐标/解析路径及可选name；invalid/unmapped时省略。 @lang en Fresh original mapping when available, with one-based coordinates/resolved path and optional name; omitted when invalid/unmapped. */
   original?: SourceMapOriginalPosition;
+  /** @lang zh-CN available表示得到映射，unmapped表示有效但无映射，invalid表示索引或参数拒绝；不从回显字段推导。 @lang en available means mapped, unmapped means a valid miss, and invalid means rejected index/arguments; never infer it from echo fields. */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
-/** @lang zh-CN 仅available带单个生成映射；unmapped不是错误。 @lang en Only available results carry one generated mapping; unmapped is not an error. */
+/**
+ * @lang zh-CN 原始到单个生成位置查找结果；original是输入上下文，不代表正向映射验证。
+ * @lang en Original-to-one-generated lookup result; original is input context, not proof of a forward mapping check.
+ */
 export interface SourceMapGeneratedLookupResult {
+  /** @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建列表并复用旧记录，不修改原索引诊断。 @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list reusing old records without modifying index diagnostics. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN available时的新生成位置/坐标容器，invalid/unmapped省略；不与输入position共享坐标对象。 @lang en Fresh generated position/coordinate containers when available, omitted for invalid/unmapped and not sharing the input position. */
   generated?: SourceMapGeneratedPosition;
+  /** @lang zh-CN 始终保留的原始请求上下文，规范primitive来源路径且position借用原输入；不是可信/脱敏回显。 @lang en Always-retained original request context with normalized primitive source path and borrowed input position; not a trusted/sanitized echo. */
   original: SourceMapOriginalPosition;
+  /** @lang zh-CN available为单个映射，unmapped为有效未命中，invalid为拒绝；不同于文档map版本状态。 @lang en available for one mapping, unmapped for a valid miss and invalid for rejection, distinct from documentation-map version states. */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
-/** @lang zh-CN 全部生成映射；invalid/unmapped时数组为空。 @lang en All generated mappings; the array is empty for invalid/unmapped results. */
+/**
+ * @lang zh-CN 原始到全部生成位置结果；列表与输出坐标新建，保留库顺序而不追加项目排序。
+ * @lang en Original-to-all-generated result with fresh list/output coordinates, retaining library order without additional project sorting.
+ */
 export interface SourceMapAllGeneratedLookupResult {
+  /** @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建含原记录与固定错误的列表。 @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list with existing records and a fixed error. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 本次新建的可变生成位置列表，逐项恢复HIA一基列；invalid/unmapped为空，不承诺跨版本库排序。 @lang en New mutable generated-position list with HIA one-based columns restored per item; empty when invalid/unmapped, without promising cross-version library ordering. */
   generated: SourceMapGeneratedPosition[];
+  /** @lang zh-CN 始终保留的原始请求上下文，position仍借用调用者原对象，省略列不补入回显。 @lang en Always-retained original request context borrowing the caller position, without inserting omitted columns into the echo. */
   original: SourceMapOriginalPosition;
+  /** @lang zh-CN 有结果available，无结果unmapped，拒绝invalid；空数组不能单独区分后两者。 @lang en available with results, unmapped on a valid miss and invalid on rejection; an empty list alone cannot distinguish the last two. */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
@@ -412,14 +453,24 @@ export interface SourceLinkedLookupQuery {
   symbolKind?: string;
 }
 
-/** @lang zh-CN 联合结果；位置失败时条目为空，query回显仍是调用方输入。 @lang en Combined result; failed positions yield no entries, and query echoes remain caller input. */
+/**
+ * @lang zh-CN 联合文档/位置结果；状态按实际请求分支组合，不按所有聚合诊断的最高severity重算，原query回显未脱敏。
+ * @lang en Combined documentation/position result; status composes requested branches rather than recomputing the highest severity of all diagnostics, and the original query echo is unsanitized.
+ */
 export interface SourceLinkedLookupResult {
+  /** @lang zh-CN 新建聚合列表，记录可借用原索引；仅普通位置收集序列按对象身份去重，不是全列表按内容去重。 @lang en New aggregate list possibly borrowing index records; only the ordinary-position collection is deduplicated by object identity, not the entire list by content. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN available时按语义筛选顺序新建列表并借用文档索引条目；其它状态为空，不复制/冻结条目。 @lang en Fresh list borrowing documentation-index entries in semantic-filter order when available, empty otherwise, without cloning/freezing entries. */
   entries: DocSourceMapIndexedEntry[];
+  /** @lang zh-CN 适用时保留的生成位置/请求上下文，来自库映射或已投影输入快照；invalid/unmapped/版本失败也可能存在。 @lang en Generated mapping/request context when applicable, from a library mapping or projected input snapshot; may remain for invalid/unmapped/version failures. */
   generated?: SourceMapGeneratedPosition;
+  /** @lang zh-CN 本次返回条目数量，非available为零；不是底层索引总数或映射段数。 @lang en Number of entries returned for this call, zero unless available; not index totals or mapping-segment count. */
   matchedEntryCount: number;
+  /** @lang zh-CN 适用时保留的库映射或原始请求快照，坐标不借用调用者query位置；文档版本失败仍可保留。 @lang en Library mapping/original request snapshot when applicable, with coordinates not borrowing caller-query positions; may remain after documentation-version failure. */
   original?: SourceMapOriginalPosition;
+  /** @lang zh-CN 调用者原query引用；未知环/非法runtime数据可能仍在回显中，不作可信类型/可序列化或公开安全保证。 @lang en Original caller-query reference; unknown cycles/invalid runtime data may remain in echoes, without trusted-type/serialization/public-safety guarantees. */
   query: SourceLinkedLookupQuery;
+  /** @lang zh-CN 文档可用性及被请求位置结果的组合；metadata-only不要求普通索引可用，因此可available且带其error诊断。 @lang en Composition of documentation availability and requested lookups; metadata-only requests need no available ordinary index and may be available with its error diagnostics. */
   status: DocSourceMapIndex["status"] | OrdinarySourceMapIndex["status"] | "unmapped";
 }
 

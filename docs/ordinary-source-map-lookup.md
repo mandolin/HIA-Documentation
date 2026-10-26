@@ -107,3 +107,11 @@ fields now receive separate runtime projection and fixed diagnostics; see
 The three ordinary helpers use the field projection described above. Their
 public signatures, bias defaults, numeric conversion, result states and source
 map semantics are unchanged; this repair remains unreleased.
+
+## Index and result field reference
+
+See the [seven-interface field reference](ordinary-source-map-results.md) for
+raw versus resolved paths, source/segment count domains, input echoes versus
+snapshotted/mapped coordinates, diagnostic ownership and branch-specific states.
+
+中文：七接口32字段已补双语/特征回归，保持原类型和运行逻辑；尚未发布。

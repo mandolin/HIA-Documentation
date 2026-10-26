@@ -29,6 +29,12 @@ reference](../../docs/doc-source-map-index.md) for ownership, counts and limits.
 
 中文：普通索引九接口63字段已补语义说明与回归，保持原可变类型/运行逻辑；尚未发布。
 
+Ordinary position index/result fields retain raw-source versus resolved-path
+views and distinguish borrowed echoes, fresh mappings and combined snapshots.
+See the [result field reference](../../docs/ordinary-source-map-results.md) for
+all seven interfaces, counts, ownership and branch-specific status semantics.
+中文：普通位置索引及结果七接口32字段说明已完善，类型/运行逻辑保持，尚未发布。
+
 ## Version and privacy checks
 
 The source-only ordinary-map repair copies body-free metadata and preserves valid
