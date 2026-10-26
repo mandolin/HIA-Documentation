@@ -22,6 +22,31 @@ and malformed encoded segment syntax produce an empty `invalid` index with
 Caller-supplied path context is retained and is not a public-safety guarantee.
 Proxy reflection can have side effects; this function is not a JavaScript sandbox.
 
+Creation options must be same-realm plain or null-prototype records. Only own
+data descriptors for `path` and `artifactPath` are consumed, accepting primitive
+strings or runtime `undefined`. Known accessors and invalid roots/field types are
+rejected without invoking getters or conversion hooks. Unknown extensions are
+not read or enumerated; frozen data is accepted. The public exact-optional types
+remain unchanged: a present typed path is a string.
+
+Both paths are snapshotted before reading the map. Invalid options produce an
+empty `invalid` index with the existing `ORDINARY_SOURCE_MAP_INVALID`, without
+partial path context. A malformed map with valid options retains the validated
+snapshot in its diagnostic/index context; the catch path never rereads caller
+options. These paths remain unsanitized. Mutation from map reflection cannot
+replace the snapshots, but arbitrary Proxy execution is not sandboxed.
+
+Valid path semantics remain unchanged: `path` is the library resolution base
+and original diagnostic context; `artifactPath` normalizes separators and a
+leading `./`. Empty strings retain their prior resolution behavior and are
+omitted from returned context; whitespace is not trimmed. These are parsing
+contexts, not documentation publication paths. A pre-resolved `TraceMap` keeps
+its resolved source paths even when a new `path` option is provided.
+
+中文：创建选项只取普通或 null 原型对象的两个自有数据路径，拒绝访问器和错误类型；
+先复制快照，成功/失败分支均不重读原选项。选项非法不保留部分路径，map 非法时保留合法上下文；
+合法字符串、空字符串、空白及已有实例解析语义保持。上下文未脱敏，代理反射不是沙箱；尚未发布。
+
 Decoded arrays and names are copied. An existing `TraceMap` keeps its previously
 resolved source paths without sharing mutable mapping caches or source bodies.
 The returned index remains mutable, and later lookups update internal library

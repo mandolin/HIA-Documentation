@@ -34,6 +34,16 @@ defaults and limits. These changes are not included in npm `0.1.1`.
 
 中文：普通位置映射源码修复正文隔离、坐标校验与联合失败隔离，尚未发布；详见上述说明。
 
+Index creation also projects its own `path`/`artifactPath` string data before
+reading the map. Invalid options yield the existing fixed
+`ORDINARY_SOURCE_MAP_INVALID` with no partial path context. Valid snapshots are
+retained if map parsing fails, without rereading caller options. Empty/whitespace
+strings and prior resolution semantics are unchanged; valid context remains
+unsanitized. Unknown extensions are ignored, while known accessors are rejected.
+
+中文：索引创建选项按自有数据投影为快照，避免失败分支二次访问和抛异常；合法路径语义保持。
+选项失败不回显部分路径，合法路径上下文仍未脱敏；尚未发布。
+
 Position/options require plain or null-prototype records; optional columns and
 both bias defaults are unchanged. Input echoes remain untrusted and may be
 nonserializable, and mutable indexes must not be tampered with after validation.

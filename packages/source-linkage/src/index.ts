@@ -279,9 +279,11 @@ export interface DocSourceMapQueryResult {
 /** @lang zh-CN 两种位置偏置；默认向下最近。 @lang en The two position biases; defaults to greatest lower bound. */
 export type OrdinarySourceMapBias = "greatest-lower-bound" | "least-upper-bound";
 
-/** @lang zh-CN 可选映射基准与工件路径；无I/O，不构成发布授权。 @lang en Optional map base and artifact path; no I/O or publication authority. */
+/** @lang zh-CN 普通/null原型的自有数据路径选项；无I/O或发布授权，未知扩展不读。 @lang en Own-data path options in a plain/null-prototype record; no I/O or publication authority, and unknown extensions are unread. */
 export interface OrdinarySourceMapIndexOptions {
+  /** @lang zh-CN 可选工件上下文，规范分隔符与开头./；空字符串省略，不裁剪空白。 @lang en Optional artifact context with normalized separators/leading ./; empty strings are omitted and whitespace is untrimmed. */
   artifactPath?: string;
+  /** @lang zh-CN 可选库解析基准及诊断上下文，原string保持；不是公开安全路径。 @lang en Optional library resolution base and diagnostic context, retaining the original string; not a public-safe path. */
   path?: string;
 }
 
@@ -605,16 +607,17 @@ export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOp
  * @lang zh-CN 建立无正文的普通位置映射索引；复制元数据，不抓取sourceMappingURL，不读取sourcesContent或未知扩展。
  * @lang en Builds a body-free ordinary position-map index; copies metadata without fetching sourceMappingURL or reading sourcesContent/unknown extensions.
  * @param value <lang><zh-CN>调用方显式提供的JSON字符串、编码/解码对象或TraceMap实例。</zh-CN><en>Caller-provided JSON string, encoded/decoded object or TraceMap instance.</en></lang>
- * @param options <lang><zh-CN>可选映射基准和工件路径；默认空对象，路径不是发布授权。</zh-CN><en>Optional map base and artifact path; defaults to an empty object and does not authorize publication.</en></lang>
- * @returns <lang><zh-CN>独立索引；无效输入返回空索引与固定诊断，不回显原始异常。不是完整ECMA-426验证器。</zh-CN><en>Independent index; invalid input returns an empty index with a fixed diagnostic, without raw errors. Not a complete ECMA-426 validator.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有数据选项，默认空对象；path/artifactPath只允许string或undefined，访问器拒绝且不调用，未知字段不读。</zh-CN><en>Plain/null-prototype own-data options, defaulting to an empty object; path/artifactPath accept strings or undefined only, rejecting accessors without invocation and ignoring unknown fields.</en></lang>
+ * @returns <lang><zh-CN>独立索引；非法map/选项为固定ORDINARY_SOURCE_MAP_INVALID空索引，不回显异常。选项失败无路径上下文；合法快照在map失败时保留，未脱敏。无I/O，Proxy反射不是沙箱；非完整ECMA-426验证器。</zh-CN><en>Independent index; invalid maps/options yield an empty index with fixed ORDINARY_SOURCE_MAP_INVALID and no raw error. Rejected options have no path context; valid snapshots survive map failure and remain unsanitized. No I/O or proxy sandbox; not a complete ECMA-426 validator.</en></lang>
  */
 export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, options: OrdinarySourceMapIndexOptions = {}): OrdinarySourceMapIndex {
-  // <lang><zh-CN>诊断属于本次索引，不携带调用方正文或底层异常信息。</zh-CN><en>Diagnostics belong to this index and carry neither caller bodies nor underlying error text.</en></lang>
-  const diagnostics: HiaDiagnostic[] = [];
+  // <lang><zh-CN>先复制两个路径，后续map反射即使修改调用者options，也不使成功/catch重读不可信属性。</zh-CN><en>Copy both paths first so subsequent map reflection cannot make success/catch reread untrusted caller properties after mutation.</en></lang>
+  const preparedOptions = prepareOrdinaryIndexOptions(options);
+  if (!preparedOptions) return invalidOrdinaryIndex();
 
   try {
     // <lang><zh-CN>先投影已知元数据，杜绝库实例短路及sourcesContent随索引外泄。</zh-CN><en>Project known metadata first, preventing library instance shortcuts and sourcesContent leakage through the index.</en></lang>
-    const traceMap = createBodyFreeOrdinaryTraceMap(value, options.path);
+    const traceMap = createBodyFreeOrdinaryTraceMap(value, preparedOptions.path);
     // <lang><zh-CN>统计映射段数量作为调用方诊断摘要，计数包含无原始位置的段。</zh-CN><en>Count mapping segments for the caller summary, including segments without original positions.</en></lang>
     let mappingCount = 0;
     eachMapping(traceMap, () => {
@@ -627,32 +630,18 @@ export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, op
       .filter((source) => source.length > 0);
 
     return {
-      ...(options.artifactPath ? { artifactPath: normalizeLookupPath(options.artifactPath) } : {}),
-      diagnostics,
+      ...(preparedOptions.artifactPath ? { artifactPath: normalizeLookupPath(preparedOptions.artifactPath) } : {}),
+      diagnostics: [],
       mappingCount,
-      ...(options.path ? { path: options.path } : {}),
+      ...(preparedOptions.path ? { path: preparedOptions.path } : {}),
       sources,
       sourceCount: sources.length,
       status: "available",
       traceMap
     };
   } catch {
-    diagnostics.push(createSourceLinkageDiagnostic(
-      "ORDINARY_SOURCE_MAP_INVALID",
-      "Ordinary source map metadata could not be read safely.",
-      "error",
-      options.path
-    ));
-
-    return {
-      ...(options.artifactPath ? { artifactPath: normalizeLookupPath(options.artifactPath) } : {}),
-      diagnostics,
-      mappingCount: 0,
-      ...(options.path ? { path: options.path } : {}),
-      sources: [],
-      sourceCount: 0,
-      status: "invalid"
-    };
+    // <lang><zh-CN>错误分支只用已验证快照，原始异常和原options均不进入结果。</zh-CN><en>The failure path uses validated snapshots only; neither raw errors nor original options enter the result.</en></lang>
+    return invalidOrdinaryIndex(preparedOptions);
   }
 }
 
@@ -1256,7 +1245,7 @@ function prepareSourceLinkedQuery(value: unknown): PreparedSourceLinkedQuery {
   }
 }
 
-/** @lang zh-CN 查询只接受本realm普通或null原型对象，不接受数组/类实例；反射异常由外层收敛。 @lang en Queries accept same-realm plain/null-prototype records, excluding arrays/class instances; the caller catches reflection failures. */
+/** @lang zh-CN 输入投影只接受本realm普通或null原型对象，不接受数组/类实例；反射异常由外层收敛。 @lang en Input projections accept same-realm plain/null-prototype records, excluding arrays/class instances; the caller catches reflection failures. */
 function isPlainQueryRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   // <lang><zh-CN>原型仅用于数据形状判定，不沿原型读取筛选条件。</zh-CN><en>The prototype determines data shape only; filters are never read through it.</en></lang>
@@ -1321,6 +1310,50 @@ function createGeneratedPosition(artifactPath: string | undefined, position: Hia
   return {
     ...(artifactPath ? { artifactPath: normalizeLookupPath(artifactPath) } : {}),
     position
+  };
+}
+
+/**
+ * @lang zh-CN 投影创建选项的两自有路径，不枚举/读取未知字段或执行getter；反射失败原子拒绝。
+ * @lang en Projects the two own creation paths without enumerating/reading unknown fields or invoking getters; reflection failure rejects atomically.
+ * @param value <lang><zh-CN>未经信任的运行时选项；string/undefined字段以外拒绝。</zh-CN><en>Untrusted runtime options; fields other than strings/undefined are rejected.</en></lang>
+ * @returns <lang><zh-CN>独立路径快照或失败undefined，不裁剪/解析路径。</zh-CN><en>Independent path snapshot or undefined failure, without trimming/resolving paths.</en></lang>
+ */
+function prepareOrdinaryIndexOptions(value: unknown): OrdinarySourceMapIndexOptions | undefined {
+  try {
+    if (!isPlainQueryRecord(value)) return undefined;
+    // <lang><zh-CN>快照只保存原始string；在map解析及其代理陷阱之前复制完成。</zh-CN><en>The snapshot stores primitive strings only and is completed before map parsing or its proxy traps.</en></lang>
+    const options: OrdinarySourceMapIndexOptions = {};
+    for (const field of ["path", "artifactPath"] as const) {
+      // <lang><zh-CN>每个已知描述符只读取一次；缺省/undefined不制造额外属性。</zh-CN><en>Read each known descriptor once; absence/undefined creates no extra property.</en></lang>
+      const descriptor = Object.getOwnPropertyDescriptor(value, field);
+      if (!descriptor) continue;
+      if (!Object.hasOwn(descriptor, "value")) return undefined;
+      if (descriptor.value === undefined) continue;
+      if (typeof descriptor.value !== "string") return undefined;
+      options[field] = descriptor.value;
+    }
+    return options;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * @lang zh-CN 建立固定失败索引，仅使用已验证路径快照，不能传原始options。
+ * @lang en Builds a fixed failure index from validated path snapshots only, never raw options.
+ * @param options <lang><zh-CN>内部投影结果；选项本身拒绝时省略，不能泄漏部分路径。</zh-CN><en>Internal projected result; omitted on option rejection to avoid leaking partial paths.</en></lang>
+ * @returns <lang><zh-CN>无映射/正文的invalid索引；合法上下文仍未脱敏。</zh-CN><en>Invalid index without mappings/bodies; valid context remains unsanitized.</en></lang>
+ */
+function invalidOrdinaryIndex(options: OrdinarySourceMapIndexOptions = {}): OrdinarySourceMapIndex {
+  return {
+    ...(options.artifactPath ? { artifactPath: normalizeLookupPath(options.artifactPath) } : {}),
+    diagnostics: [createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_INVALID", "Ordinary source map metadata could not be read safely.", "error", options.path)],
+    mappingCount: 0,
+    ...(options.path ? { path: options.path } : {}),
+    sources: [],
+    sourceCount: 0,
+    status: "invalid"
   };
 }
 

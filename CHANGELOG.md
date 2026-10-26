@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Ordinary index option snapshots
+
+- 普通位置索引创建仅投影 path/artifactPath 自有数据字符串，拒绝错误根/字段/访问器，成功与失败分支都使用独立快照，避免 catch 再次抛异常。选项失败沿用固定 ORDINARY_SOURCE_MAP_INVALID 且无部分路径；合法路径含空/空白及已解析实例语义、协议/包版本与导出保持。合法上下文仍未脱敏，尚未发布。
+- Ordinary index creation snapshots own path/artifactPath string data, rejects invalid roots/fields/accessors, and avoids rereading caller options from success/catch paths. Rejected options retain fixed ORDINARY_SOURCE_MAP_INVALID without partial context. Valid paths including empty/whitespace strings, pre-resolved instances, versions and exports are unchanged; valid context remains unsanitized. Unreleased; see [ordinary lookups](docs/ordinary-source-map-lookup.md).
+
 ## Unreleased — Ordinary position helper input projection
 
 - 三种普通位置helper投影已知自有坐标/偏置数据，拒绝访问器、非法对象/路径和错误偏置，固定诊断不透传异常；坐标错误沿用既有code，路径/偏置使用ORDINARY_SOURCE_MAP_QUERY_INVALID。原输入回显未脱敏，索引篡改仍不支持。合法偏置/缺省列/未命中、契约/schema/包版本及公开导出保持，尚未发布。

@@ -34,4 +34,13 @@ findGeneratedPositionForOriginal(index, 42, { line: 1 });
 findAllGeneratedPositionsForOriginal(index, "src/a.ts", { line: 1 }, { bias: "nearest" });
 // @ts-expect-error Runtime rejection does not widen typed positions to null.
 findOriginalPositionForGenerated(index, null);
+// @ts-expect-error Runtime option rejection does not allow a null typed options root.
+createOrdinarySourceMapIndex({}, null);
+// @ts-expect-error Map resolution paths remain primitive strings.
+createOrdinarySourceMapIndex({}, { path: 42 });
+// @ts-expect-error Artifact paths remain primitive strings.
+createOrdinarySourceMapIndex({}, { artifactPath: {} });
+// @ts-expect-error Exact optional public fields remain string-only when present.
+const undefinedIndexPath: OrdinarySourceMapIndexOptions = { path: undefined };
+void undefinedIndexPath;
 void [options, lookup, index, forward, reverse, all, original, generated, query, combined, badBias, requiredOriginal, requiredGenerated, badStatus, createBodyFreeOrdinaryTraceMap];
