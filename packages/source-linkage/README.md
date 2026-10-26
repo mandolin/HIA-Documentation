@@ -43,6 +43,14 @@ all seven interfaces, counts, ownership and branch-specific status semantics.
 
 ## Version and privacy checks
 
+The [map validation, indexing and migration guide](../../docs/doc-source-map-validation-and-migration.md)
+distinguishes status precedence, independent validator diagnostics, passive
+declarations and migration requirements. Unknown versions may have only warnings
+yet remain unqueryable; legacy reader admission does not promise migration to
+current required structure. Index failure can retain metadata, and success does
+not certify complete schema/reference closure or publication safety.
+中文：文档源码映射三个函数责任与组合特征已补齐，保留类型/行为/版本，尚未发布。
+
 See [binding validation and bundle migration](../../docs/generated-binding-validation-and-migration.md)
 for both synchronous functions, owner-versus-actual-map responsibilities, empty
 sidecar sets, opaque scopes and external-symbol limits. The unreleased owner now

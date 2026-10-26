@@ -510,6 +510,9 @@ interface IndexedNode {
  * @lang en Rejects accessors, cycles, non-finite/non-ordinary JSON and declared wrong field types while retaining legacy omissions.
  * available proves this index boundary only, not complete wire-schema validation. Never calls toJSON; proxy reflection side effects are not sandboxed.
  *
+ * @lang zh-CN 状态优先级为任意error→invalid，否则未知版本→unsupported-version，其余available；warning不等于可查询。失败可保留部分规范化metadata，公开查询另按status隔离。未解析source/artifact引用可只产生warning，不认证绑定整组闭包。root诊断severity参与状态，entry诊断只投影code标签；chain、普通map pointer、contractRef和sidecar只消费声明，不自动加载/执行或认证外部内容。privacy允许标记不会取消安全相对路径约束。
+ * @lang en Status precedence is any error→invalid, otherwise unknown version→unsupported-version, otherwise available; warnings do not establish queryability. Refusals may retain partial normalized metadata, while public queries separately gate on status. Unresolved source/artifact references may produce warnings only, without certifying binding-bundle closure. Root diagnostic severity affects status; entry diagnostics project code labels only. Chains, ordinary-map pointers, contractRefs and sidecars are declarations, never automatically loaded/executed or externally authenticated. Privacy allowance flags do not waive safe-relative-path checks.
+ *
  * @param value <lang><zh-CN>待验证的 manifest 运行时值。</zh-CN><en>Runtime manifest value to validate.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空对象；已知访问器/错型拒绝，未知字段不读，合法上下文未脱敏。</zh-CN><en>Plain/null-prototype own string diagnostic path, defaulting to an empty object; known accessors/wrong types reject, unknown fields remain unread and valid context unsanitized.</en></lang>
  * @returns <lang><zh-CN>可查询索引；选项失败使用既有MANIFEST_INVALID且无部分路径，输入失败保留已验证上下文。选项在读取输入图前复制。</zh-CN><en>Queryable index; rejected options use existing MANIFEST_INVALID without partial paths, while rejected inputs retain validated context. Options are copied before reading the input graph.</en></lang>
@@ -666,6 +669,9 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
  * 历史宽输入的省略字段保持兼容；本函数不代替独立完整wire-schema验证，不读取文件或sidecar。
  * @lang en Pure validation entry returning the same version, declared-field, reference, path and privacy diagnostics as index construction without mutation.
  * Omitted fields in permissive legacy inputs remain compatible; this does not replace complete wire-schema validation or read files/sidecars.
+ * @remarks
+ * @lang zh-CN 直接同步返回createDocSourceMapIndex同算法的本次诊断列表，分别调用不共享列表；不额外认证工件或发起I/O。未知版本可能只有warning但仍不可查询；需检查诊断code或索引status，不能只以无error判断受支持。历史省略项可通过reader而仍不满足迁移后的当前必要结构。entry诊断code元数据不变成root错误政策。
+ * @lang en Synchronously returns this call's diagnostic list from the same createDocSourceMapIndex algorithm; separate calls do not share lists, and no additional artifact authentication or I/O occurs. Unknown versions may produce only warnings yet remain unqueryable; inspect diagnostic codes or index status rather than assuming no errors means supported. Legacy omissions may pass the reader while failing current required structure after migration. Entry diagnostic-code metadata does not become a root-error policy.
  * @param value <lang><zh-CN>未知输入，普通JSON预检在任何字段读取之前完成。</zh-CN><en>Unknown input, with ordinary-JSON preflight before field reads.</en></lang>
  * @param options <lang><zh-CN>同索引入口的普通/null原型自有string路径，不授予文件访问权限；已知访问器拒绝，合法上下文未脱敏。</zh-CN><en>Same plain/null-prototype own string path as indexing, granting no file access; known accessors reject and valid context remains unsanitized.</en></lang>
  * @returns <lang><zh-CN>本次新建的诊断数组；非法选项沿用MANIFEST_INVALID且无路径。</zh-CN><en>Diagnostic array created for this call; invalid options retain MANIFEST_INVALID without a path.</en></lang>
@@ -698,6 +704,9 @@ export interface DocSourceMapMigrationResult {
  * 未知来源、信息冲突、不完整结构或隐私错误均拒绝，失败不返回局部产物。只消费调用方数据，不读取文件或sidecar、不写磁盘、不调用JSON hooks。
  * @lang en Explicitly converts an exact legacy map to the current version, retaining concrete origins and open JSON extensions; current inputs return independent clones.
  * Unknown origins, information conflicts, incomplete structure or privacy errors are refused without partial artifacts. Consumes caller data only, without file/sidecar reads, disk writes or JSON hooks.
+ * @remarks
+ * @lang zh-CN 先取路径快照/检查原owner状态，再独立复制与明确来源转换，最后复核当前必要结构；旧reader可索引不保证可迁移。普通map未解析引用的warning可继续保留，成功不证明完整引用闭包。旧绑定关联须协调迁移；当前map的already-current独立复制不加载sidecar认证正文。chain、pointer和外部contractRef保持被动数据，获准正文/原诊断/扩展可保留；不是完整schema、公开安全或发布成功证明。
+ * @lang en Snapshots path/checks original owner status, independently clones/converts explicit provenance, then revalidates current required structure; legacy index admission does not promise migration. Ordinary-map unresolved-reference warnings may remain, so success does not certify complete reference closure. Legacy binding associations require coordinated migration; already-current independent map cloning does not load/authenticate sidecar bodies. Chains, pointers and external contractRefs remain passive data, with admitted bodies/raw diagnostics/extensions retained; success proves neither complete schema validation, public safety nor publication.
  * @param value <lang><zh-CN>未知运行时输入，必须通过普通JSON和owner边界。</zh-CN><en>Unknown runtime input that must pass ordinary-JSON and owner boundaries.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空；迁移只投影一次，已知访问器/错型拒绝，不授予文件访问。</zh-CN><en>Plain/null-prototype own string diagnostic path, empty by default; migration projects once, rejects known accessors/wrong types and grants no file access.</en></lang>
  * @returns <lang><zh-CN>当前版独立容器或安全诊断；Proxy副作用、资源消耗和并发输入突变不受沙箱保证。</zh-CN><en>Independent current containers or safe diagnostics; proxy effects, resource exhaustion and concurrent input mutation are not sandboxed.</en></lang>

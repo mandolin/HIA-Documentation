@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation map function responsibilities
+
+- 补充校验、索引、迁移三个入口的状态优先级、root/entry诊断角色、被动外部声明与宽reader/迁移差异说明及组合特征/严格类型。整个主模块AST、类型、运行逻辑与版本保持，尚未发布。
+- Document status precedence, root/entry diagnostic roles, passive external declarations and permissive-reader/migration differences across three map entries, with combination characterization and strict types. Whole-module AST, types, runtime logic and versions remain unchanged; unreleased. See the [guide](docs/doc-source-map-validation-and-migration.md).
+
 ## Unreleased — Generated binding validation and migration responsibilities
 
 - 修复root/binding已声明adapterExtensions对象类型未执行的问题，拒绝错型容器并沿既有索引/整组迁移原子失败；补两函数责任、空组、外部符号/scope边界说明。schema、契约/包版本和公开签名保持，尚未发布。
