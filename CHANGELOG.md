@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation-map options and migration-result fields
+
+- 补齐两接口四字段的诊断path、可选关联限制、成功复制/诊断所有权和失败无局部产物说明与特征/严格类型。成功可保留获准正文、文本与上下文，不构成公开授权；保留原类型、运行逻辑和版本，尚未发布。
+- Document four fields in the map option/migration-result interfaces, including diagnostic context, optional-field limitations, copied success results/diagnostics and refusals without partial manifests. Permitted bodies/text/context may remain; success grants no publication authority. Runtime logic, types and versions remain unchanged; unreleased. See the [reference](docs/doc-source-map-options-and-results.md).
+
 ## Unreleased — Source-linkage constant and schema reference
 
 - 补齐十八项身份/版本/类别与schema公开面说明、精确配对及共享/冻结/副本所有权回归和严格类型消费。三schema类型只读但运行时共享可变，修改前应克隆；类型、运行逻辑、分发字节与版本保持，尚未发布。

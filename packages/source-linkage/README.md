@@ -93,6 +93,13 @@ rewritten. Already-current data is cloned. Allowed source bodies and open JSON
 extensions remain in the migrated artifact; returning data grants no publication
 authority. See `docs/doc-source-map-provenance.md` for categories and migration.
 
+The [options and migration-result reference](../../docs/doc-source-map-options-and-results.md)
+documents all four fields of `DocSourceMapIndexOptions` and
+`DocSourceMapMigrationResult`. Check status and manifest presence separately:
+the current interface is not a discriminated union. Results remain mutable and
+may retain permitted bodies, diagnostic text and unsanitized context; success
+does not grant publication authority.
+
 Legacy generated-binding sidecars still refer to the legacy map version.
 Standalone migration refuses those associations. The unreleased
 `migrateGeneratedDocumentationBindingBundle({ docSourceMap, bindingSidecars })`

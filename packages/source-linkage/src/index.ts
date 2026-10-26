@@ -102,9 +102,15 @@ export {
   type GeneratedDocumentationBindingHostTarget
 } from "./generated-documentation-binding-host-projection.js";
 
-/** @lang zh-CN 普通/null原型的自有诊断路径选项，未知扩展不读取；路径不构成文件访问或公开授权。 @lang en Own diagnostic-path options in a plain/null-prototype record; unknown extensions remain unread and paths grant no file-access/publication authority. */
+/**
+ * @lang zh-CN 文档映射创建、验证与单工件迁移共用的可写诊断上下文选项；运行时要求同realm普通/null原型对象，只投影自有path数据，未知字段不读。每次调用先复制，之后修改选项不回写旧结果；不授予文件读取、路径隐私豁免或公开权限。
+ * @lang en Mutable diagnostic-context options shared by map creation, validation and standalone migration. Runtime admission requires a same-realm plain/null-prototype record and projects own path data only, ignoring unknown fields. Each call snapshots options before processing, so later edits cannot change earlier results; no file-read, privacy exemption or publication permission is granted.
+ */
 export interface DocSourceMapIndexOptions {
-  /** @lang zh-CN 原始string上下文，空/空白保持既有行为，不脱敏或规范化。 @lang en Original string context retaining prior empty/whitespace behavior, without sanitization or normalization. */
+  /**
+   * @lang zh-CN 可省略的原始string诊断前缀，不裁剪、规范化分隔符或脱敏；空字符串不附上下文，空白/绝对样式文字仍保留。入口可能追加字段定位，错误诊断也可回显合法path。严格exactOptionalPropertyTypes不接纳显式undefined属性，但运行预检将其视作省略，整个undefined参数走入口默认值；这不改变string字段类型。
+   * @lang en Optional raw string diagnostic prefix, without trimming, separator normalization or sanitization; empty strings add no context, while whitespace/absolute-looking text is retained. Entries may append field locations, and failures may echo a valid path. exactOptionalPropertyTypes rejects an explicit undefined property, although runtime preflight treats it as omitted and an undefined argument uses entry defaults; the string field type remains unchanged.
+   */
   path?: string;
 }
 
@@ -668,13 +674,22 @@ export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexO
   return createDocSourceMapIndex(value, options).diagnostics;
 }
 
-/** @lang zh-CN 显式迁移结果，不对输入对象或磁盘工件作原位升级。 @lang en Explicit migration result, without upgrading input objects or on-disk artifacts in place. */
+/**
+ * @lang zh-CN 单工件显式迁移的可写结果，factory成功返回新manifest，失败省略该自有属性，不改输入/磁盘。本接口是状态联合字段加可选记录，不是判别联合；人工构造仍可不配套，消费者须分别检查status、manifest存在和unknown字段，不能从类型推断公开安全。
+ * @lang en Mutable standalone migration result: the factory returns a fresh manifest on success and omits that own property on refusal, without changing input/disk. This interface has a status-union field and an optional record rather than a discriminated union. Manually constructed values may be inconsistent; check status, manifest presence and unknown fields separately, without inferring publication safety from the type.
+ */
 export interface DocSourceMapMigrationResult {
-  /** @lang zh-CN migrated为旧版转换，already-current为新版独立复制；失败不提供局部产物。 @lang en migrated converts a legacy input; already-current independently clones a current input; failures provide no partial artifact. */
+  /** @lang zh-CN migrated表示精确旧版转当前版，already-current表示当前版独立复制；invalid/unsupported-version均无局部manifest。它是本次factory检查的快照，调用者修改可写结果/诊断后不会自动重算，也不是schema完整验证或公开授权。 @lang en migrated converts the exact legacy version, while already-current independently clones the current version; invalid/unsupported-version expose no partial manifest. This is a snapshot of factory checks, not automatically recomputed after caller edits to mutable results/diagnostics and not proof of complete schema validation or publication authority. */
   status: "migrated" | "already-current" | "invalid" | "unsupported-version";
-  /** @lang zh-CN owner验证通过的新容器；保留开放JSON扩展及显式获准的源码正文，返回值不代表授权公开。 @lang en New containers passing owner validation, retaining open JSON extensions and explicitly permitted source bodies; returning data grants no publication authority. */
+  /**
+   * @lang zh-CN factory成功时提供后置owner检查通过的新可写JSON图，跨输入/调用不共享可变节点，同一图内部共享关系保留。只复制可枚举string键，不保留原型/描述符、隐藏或Symbol扩展；保留开放JSON扩展、原诊断及显式获准正文，不自动脱敏。Record字段仍unknown，不能代替完整类型化工件或公开门禁；失败省略此属性。
+   * @lang en On factory success, a fresh writable JSON graph passing post-copy owner checks, with no mutable nodes shared across input/calls while retaining sharing inside that graph. Copies enumerable string keys, not original prototypes/descriptors or hidden/symbol extensions; retains open JSON extensions, raw diagnostics and explicitly permitted bodies without automatic sanitization. Record fields remain unknown, not a fully typed artifact or publication gate; refusals omit this property.
+   */
   manifest?: Record<string, unknown>;
-  /** @lang zh-CN 拒绝时使用静态诊断，不回显原始来源或源码正文。 @lang en Static refusal diagnostics, without echoing raw origins or source bodies. */
+  /**
+   * @lang zh-CN 每次新建的可写列表/诊断外壳，不借用manifest内原诊断对象。成功取后置索引投影，可含warning/info及调用方文本/code/诊断path，空列表不是唯一成功形态；失败为单条固定迁移错误，不透传被拒正文，但合法options.path仍保留。修改列表不回写输入/其它结果或重算status，整体不保证可安全公开。
+   * @lang en Fresh mutable list/diagnostic shells per call, without borrowing raw manifest diagnostic objects. Success uses post-copy index projection and may contain warning/info with caller text/codes/diagnostic paths; an empty list is not the only success shape. Refusals contain one fixed migration error without rejected bodies, but retain a valid options.path. Edits neither write through to input/other results nor recompute status, and the list is not guaranteed publication-safe.
+   */
   diagnostics: HiaDiagnostic[];
 }
 
