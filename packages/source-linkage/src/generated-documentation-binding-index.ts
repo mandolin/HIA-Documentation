@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @lang zh-CN 绑定与文档映射的只读双向组合索引；选项及已消费头部独立投影，嵌套前置数据须来自未篡改工厂索引。
+ * @lang en Read-only bidirectional binding/map composition index; independently projects options/consumed headers while nested prerequisite data must come from an untampered factory index.
+ */
+import { prepareSourceLinkagePathOptions } from "./path-options.js";
 import {
   createHiaDiagnostic,
   type HiaDiagnostic,
@@ -6,6 +12,7 @@ import {
   type HiaSourceRange
 } from "@hia-doc/core";
 import {
+  DOC_SOURCE_MAP_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
@@ -19,9 +26,8 @@ import type {
 } from "./index.js";
 
 /**
- * 中文：建立 generated-documentation-binding 只读双向索引的输入选项。
- * English: Input options for building a read-only generated-documentation-binding
- * bidirectional index.
+ * @lang zh-CN 建立生成式绑定只读双向索引的自有数据选项；前置索引需保持未篡改。
+ * @lang en Own-data options for read-only generated-binding bidirectional indexing; prerequisite indexes must remain untampered.
  *
  * @remarks
  * 中文：调用方必须显式先建立 doc-source-map index；本模块不读取 sidecar path、
@@ -31,9 +37,14 @@ import type {
  * executes adapter expressions or locals.
  */
 export interface GeneratedDocumentationBindingIndexOptions {
+  /** @lang zh-CN 必需自有数据引用，来自本包工厂且嵌套数组/条目未篡改；头部检查不是来源认证。 @lang en Required own-data reference from this package's factory with untampered nested arrays/entries; header checks do not authenticate origin. */
   docSourceMapIndex: DocSourceMapIndex;
+  /** @lang zh-CN 可选自有string诊断上下文，原空/空白行为保持且未脱敏。 @lang en Optional own string diagnostic context retaining prior empty/whitespace behavior and remaining unsanitized. */
   path?: string;
 }
+
+/** @lang zh-CN 仅包含实际消费头部的内部视图；数组借用而非深复制/认证。 @lang en Internal view containing consumed headers only; arrays are borrowed rather than deeply copied/authenticated. */
+type BindingDocSourceMapView = Pick<DocSourceMapIndex, "contract" | "contractVersion" | "id" | "status" | "diagnostics" | "entries" | "bindingSidecars" | "entryCount">;
 
 /**
  * 中文：中性 generated-documentation-binding 双向索引。
@@ -168,14 +179,23 @@ export interface GeneratedDocumentationBindingComposition {
  * English: This function consumes only supplied in-memory objects. It does not
  * load JSON from `sidecarPath`, write the full binding model into an ordinary
  * source map, or invoke a renderer or host.
+ * @param value <lang><zh-CN>独立绑定sidecar运行时值，仍需owner验证。</zh-CN><en>Independent binding-sidecar runtime value requiring owner validation.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型的自有前置索引和可选string路径；已知访问器/错型/反射失败拒绝，未知字段不读。</zh-CN><en>Plain/null-prototype own prerequisite index and optional string path; known accessors/wrong types/reflection failures reject, while unknown fields remain unread.</en></lang>
+ * @returns <lang><zh-CN>冻结组合结果。选项/消费头部错误为既有DOC_SOURCE_MAP_UNAVAILABLE、invalid空输出，无部分上下文；合法诊断/状态与未脱敏路径保持。数组仍借用，非深图验证或Proxy/资源/并发沙箱。</zh-CN><en>Frozen composition result. Invalid options/consumed headers yield existing DOC_SOURCE_MAP_UNAVAILABLE with empty invalid output and no partial context; valid diagnostics/statuses and unsanitized paths remain. Arrays are borrowed; no deep-graph validation or proxy/resource/concurrency sandbox.</en></lang>
  */
 export function createGeneratedDocumentationBindingIndex(
   value: unknown,
   options: GeneratedDocumentationBindingIndexOptions
 ): GeneratedDocumentationBindingIndex {
+  // <lang><zh-CN>先固定两选项及八头字段；拒绝时不读取sidecar头或复制未验证的诊断。</zh-CN><en>Snapshot both options and eight header fields first; refusal reads no sidecar headers and copies no unvalidated diagnostics.</en></lang>
+  const preparedOptions = prepareBindingIndexOptions(options);
+  if (!preparedOptions) return createEmptyGeneratedDocumentationBindingIndex({ status: "invalid", diagnostics: [createIndexDiagnostic("GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_UNAVAILABLE", "generated-documentation-binding indexing requires own data options with a string path and a pre-built doc-source-map index.", "error")] });
+  // <lang><zh-CN>头部是内部独立快照；嵌套数组/条目仍按公共前置条件借用。</zh-CN><en>The header is an independent internal snapshot; nested arrays/entries remain borrowed under the public precondition.</en></lang>
+  const docSourceMapIndex = preparedOptions.docSourceMapIndex;
+  // <lang><zh-CN>新诊断数组保持前置诊断在先，既有状态推导和原数组互不修改。</zh-CN><en>A new diagnostic array keeps prerequisite diagnostics first, preserving status derivation without mutating the original array.</en></lang>
   const diagnostics: HiaDiagnostic[] = [
-    ...options.docSourceMapIndex.diagnostics,
-    ...validateGeneratedDocumentationBinding(value, options.path ? { path: options.path } : {})
+    ...docSourceMapIndex.diagnostics,
+    ...validateGeneratedDocumentationBinding(value, preparedOptions.path ? { path: preparedOptions.path } : {})
   ];
   // <lang><zh-CN>validator拒绝访问器后不能再次直接读取头字段；只投影自有数据描述符供失败状态说明。</zh-CN><en>Never read headers directly after validator rejection of accessors; project own data descriptors only for failure metadata.</en></lang>
   const { contractVersion, sidecarId } = readBindingHeader(value);
@@ -189,16 +209,16 @@ export function createGeneratedDocumentationBindingIndex(
     });
   }
 
-  if (options.docSourceMapIndex.status !== "available") {
-    const docSourceMapStatus = options.docSourceMapIndex.status === "unsupported-version"
+  if (docSourceMapIndex.status !== "available") {
+    const docSourceMapStatus = docSourceMapIndex.status === "unsupported-version"
       ? "unsupported-version"
       : "invalid";
     diagnostics.push(createIndexDiagnostic(
       "GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_UNAVAILABLE",
       "generated-documentation-binding indexing requires an available paired doc-source-map index.",
       docSourceMapStatus === "invalid" ? "error" : "warning",
-      options.path,
-      { docSourceMapStatus: options.docSourceMapIndex.status }
+      preparedOptions.path,
+      { docSourceMapStatus: docSourceMapIndex.status }
     ));
     return createEmptyGeneratedDocumentationBindingIndex({
       diagnostics,
@@ -209,17 +229,21 @@ export function createGeneratedDocumentationBindingIndex(
   }
 
   const linkage = isRecord(value.docSourceMapLinkage) ? value.docSourceMapLinkage : undefined;
+  // <lang><zh-CN>声明来自快照中的借用sidecar数组，实际版本/路径/身份仍由原配对规则核验。</zh-CN><en>The declaration comes from the snapshot's borrowed sidecar array; existing pairing rules still check exact versions/paths/identities.</en></lang>
   const declaredSidecar = sidecarId
-    ? options.docSourceMapIndex.bindingSidecars.find((sidecar) => sidecar.id === sidecarId)
+    ? docSourceMapIndex.bindingSidecars.find((sidecar) => sidecar.id === sidecarId)
     : undefined;
-  validateSidecarLinkage(value, linkage, declaredSidecar, options.docSourceMapIndex, diagnostics, options.path);
+  validateSidecarLinkage(value, linkage, declaredSidecar, docSourceMapIndex, diagnostics, preparedOptions.path);
 
+  // <lang><zh-CN>owner验证后的三集合分别保留输入顺序，原sidecar不会被排序或改写。</zh-CN><en>Three owner-validated collections retain input order; the original sidecar is neither sorted nor rewritten.</en></lang>
   const bindings = collectRecords(value.bindings);
   const expansions = collectRecords(value.expansions);
   const targets = collectRecords(value.targets);
+  // <lang><zh-CN>两张身份表只做当前内存组的关联，不能推导跨工件或跨版本兼容。</zh-CN><en>Two identity maps join this in-memory group only and infer no cross-artifact/version compatibility.</en></lang>
   const bindingById = new Map(bindings.map((binding) => [requiredString(binding.id), binding]));
   const targetById = new Map(targets.map((target) => [requiredString(target.id), target]));
-  const entryIdsByBindingId = collectEntryIdsByBindingId(options.docSourceMapIndex.entries, sidecarId, bindingById, diagnostics, options.path);
+  // <lang><zh-CN>文档条目边来自头部快照数组，未知binding保持既有warning与空边处理。</zh-CN><en>Documentation-entry edges come from the header snapshot array; unknown bindings retain existing warning/empty-edge handling.</en></lang>
+  const entryIdsByBindingId = collectEntryIdsByBindingId(docSourceMapIndex.entries, sidecarId, bindingById, diagnostics, preparedOptions.path);
 
   if (diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
     return createEmptyGeneratedDocumentationBindingIndex({
@@ -230,6 +254,7 @@ export function createGeneratedDocumentationBindingIndex(
     });
   }
 
+  // <lang><zh-CN>正反向边表按输入首次出现顺序去重，不将一对多展开折叠成单目标。</zh-CN><en>Forward/reverse edge maps deduplicate in first-seen input order without collapsing one-to-many expansion to one target.</en></lang>
   const expansionIdsByBindingId = new Map<string, string[]>();
   const targetIdsByBindingId = new Map<string, string[]>();
   const expansionIdsByTargetId = new Map<string, string[]>();
@@ -251,6 +276,7 @@ export function createGeneratedDocumentationBindingIndex(
     }
   }
 
+  // <lang><zh-CN>最终投影独立冻结；数组来源借用不意味着把原输入冻结或公开其正文。</zh-CN><en>Final projections are independently frozen; borrowed source arrays imply neither freezing original inputs nor exposing their bodies.</en></lang>
   const indexedExpansions = expansions.map((expansion) => freezeExpansion(expansion));
   const indexedBindings = bindings.map((binding) => freezeBinding(
     binding,
@@ -260,6 +286,7 @@ export function createGeneratedDocumentationBindingIndex(
   ));
   const indexedTargets = targets.map((target) => {
     const targetId = requiredString(target.id);
+    // <lang><zh-CN>先回溯目标的绑定，再沿绑定汇总文档条目，保持原反查顺序。</zh-CN><en>Trace target bindings first, then aggregate their documentation entries while retaining existing reverse-lookup order.</en></lang>
     const bindingIds = bindingIdsByTargetId.get(targetId) ?? [];
     const entryIds = bindingIds.flatMap((bindingId) => entryIdsByBindingId.get(bindingId) ?? []);
     return freezeTarget(
@@ -270,6 +297,7 @@ export function createGeneratedDocumentationBindingIndex(
     );
   });
 
+  // <lang><zh-CN>同一文档条目可关联多个binding，汇总计数只按唯一条目计算。</zh-CN><en>One documentation entry may link multiple bindings; the summary counts unique entries only.</en></lang>
   const linkedDocSourceMapEntryCount = uniqueStrings([...entryIdsByBindingId.values()].flat()).length;
 
   return Object.freeze({
@@ -278,7 +306,7 @@ export function createGeneratedDocumentationBindingIndex(
     contract: GENERATED_DOCUMENTATION_BINDING_CONTRACT,
     ...(contractVersion ? { contractVersion } : {}),
     diagnostics: freezeList(diagnostics),
-    docSourceMapEntryCount: options.docSourceMapIndex.entryCount,
+    docSourceMapEntryCount: docSourceMapIndex.entryCount,
     expansionCount: indexedExpansions.length,
     expansions: freezeList(indexedExpansions),
     linkedDocSourceMapEntryCount,
@@ -357,12 +385,64 @@ export function findGeneratedBindingsForDocSourceMapEntry(
   return freezeList(index.bindings.filter((binding) => binding.docSourceMapEntryIds.includes(entryId)));
 }
 
+/**
+ * @lang zh-CN 投影选项和已消费的前置头部；只保证浅层形状，不认证工厂来源或校验借用图。
+ * @lang en Projects options and consumed prerequisite headers; guarantees shallow shape only, neither factory-origin authentication nor borrowed-graph validation.
+ * @param value <lang><zh-CN>未知选项，必需docSourceMapIndex与可选path均为自有数据。</zh-CN><en>Unknown options with required docSourceMapIndex and optional path, both own data.</en></lang>
+ * @returns <lang><zh-CN>独立头部及原数组引用，或原子失败undefined。Proxy反射异常收敛，不是沙箱。</zh-CN><en>Independent headers with original array references, or atomic undefined failure; catches proxy reflection errors without sandboxing.</en></lang>
+ */
+function prepareBindingIndexOptions(value: unknown): { docSourceMapIndex: BindingDocSourceMapView; path?: string } | undefined {
+  try {
+    // <lang><zh-CN>路径投影同时核普通/null原型根，之后只读取必需的自有索引描述符。</zh-CN><en>Path projection also checks a plain/null-prototype root, followed only by the required own index descriptor.</en></lang>
+    const location = prepareSourceLinkagePathOptions(value);
+    if (!location) return undefined;
+    const reference = Object.getOwnPropertyDescriptor(value as object, "docSourceMapIndex");
+    if (!reference || !Object.hasOwn(reference, "value")) return undefined;
+    const index: unknown = reference.value;
+    if (typeof index !== "object" || index === null || Array.isArray(index)) return undefined;
+    const prototype = Object.getPrototypeOf(index);
+    if (prototype !== Object.prototype && prototype !== null) return undefined;
+    // <lang><zh-CN>只保存八个已消费字段，缺少可选id/版本视为省略，不沿原型或枚举扩展取值。</zh-CN><en>Retain eight consumed fields only; missing optional id/version is omitted, without inherited reads or extension enumeration.</en></lang>
+    const header: Record<string, unknown> = {};
+    for (const field of ["contract", "contractVersion", "id", "status", "diagnostics", "entries", "bindingSidecars", "entryCount"] as const) {
+      const descriptor = Object.getOwnPropertyDescriptor(index, field);
+      if (!descriptor) {
+        if (field === "id" || field === "contractVersion") continue;
+        return undefined;
+      }
+      if (!Object.hasOwn(descriptor, "value")) return undefined;
+      header[field] = descriptor.value;
+    }
+    if (header.contract !== DOC_SOURCE_MAP_CONTRACT || !["available", "invalid", "unsupported-version"].includes(header.status as string)) return undefined;
+    if ((header.id !== undefined && typeof header.id !== "string") || (header.contractVersion !== undefined && typeof header.contractVersion !== "string")) return undefined;
+    for (const field of ["diagnostics", "entries", "bindingSidecars"]) {
+      // <lang><zh-CN>标准数组头部不等于条目认证；公共契约仍要求数组及其内容来自未篡改前置索引。</zh-CN><en>Standard array headers do not authenticate entries; the public contract still requires untampered prerequisite arrays and contents.</en></lang>
+      if (!Array.isArray(header[field]) || Object.getPrototypeOf(header[field]) !== Array.prototype) return undefined;
+    }
+    // <lang><zh-CN>计数必须与条目数组长度一致，用自有长度描述符避免读取调用者的普通get陷阱。</zh-CN><en>The count must match entry-array length, using its own length descriptor to avoid ordinary caller get traps.</en></lang>
+    const length = Object.getOwnPropertyDescriptor(header.entries, "length");
+    if (!Number.isSafeInteger(header.entryCount) || (header.entryCount as number) < 0 || !length || header.entryCount !== length.value) return undefined;
+    return { ...location, docSourceMapIndex: {
+      contract: DOC_SOURCE_MAP_CONTRACT,
+      ...(typeof header.contractVersion === "string" ? { contractVersion: header.contractVersion } : {}),
+      ...(typeof header.id === "string" ? { id: header.id } : {}),
+      status: header.status as DocSourceMapIndex["status"],
+      diagnostics: header.diagnostics as DocSourceMapIndex["diagnostics"],
+      entries: header.entries as DocSourceMapIndex["entries"],
+      bindingSidecars: header.bindingSidecars as DocSourceMapIndex["bindingSidecars"],
+      entryCount: header.entryCount as number
+    } };
+  } catch {
+    return undefined;
+  }
+}
+
 /** @lang zh-CN 核对明确配对的sidecar/map身份、精确版本与路径，不以相同id推定跨版本兼容。 @lang en Checks explicitly paired sidecar/map identities, exact versions and paths without inferring cross-version compatibility from matching ids. */
 function validateSidecarLinkage(
   sidecar: Record<string, unknown>,
   linkage: Record<string, unknown> | undefined,
   declaredSidecar: DocSourceMapIndex["bindingSidecars"][number] | undefined,
-  docSourceMapIndex: DocSourceMapIndex,
+  docSourceMapIndex: BindingDocSourceMapView,
   diagnostics: HiaDiagnostic[],
   targetPath: string | undefined
 ): void {

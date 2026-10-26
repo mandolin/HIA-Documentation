@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Binding-index prerequisite header snapshots
+
+- 绑定索引通过自有数据描述符复制选项与八个已消费前置头部，拒绝错误根/字段/访问器和反射失败；沿用DOC_SOURCE_MAP_UNAVAILABLE返回冻结空invalid，无部分路径或未验证诊断回显。合法状态/诊断/配对/顺序/冻结查询保持，数组仍借用且要求未篡改；浅头部检查不是来源认证或深图验证。版本与根导出不变，尚未发布。
+- Binding indexing snapshots own options and eight consumed prerequisite headers, rejecting malformed roots/fields/accessors/reflection failures with existing DOC_SOURCE_MAP_UNAVAILABLE and frozen empty invalid output, without partial context. Valid states, diagnostics, pairing, order and frozen queries remain; borrowed arrays must stay untampered. Shallow checks authenticate neither origin nor deep graphs. Versions/exports are unchanged; unreleased. See [binding contract](docs/generated-documentation-binding-contract.md).
+
 ## Unreleased — Documentation-map diagnostic option snapshots
 
 - 文档映射索引/验证/单映射迁移、绑定验证/整组迁移五入口投影自有诊断path，拒绝错误根/字段/访问器与反射失败，沿用各入口既有INVALID且不回显部分路径；内部前后复核与错误处理只用独立快照。合法空/空白和未脱敏上下文、版本/迁移/范围匹配语义及导出保持，尚未发布。

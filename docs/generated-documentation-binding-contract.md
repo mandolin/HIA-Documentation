@@ -28,6 +28,35 @@ is implied. The old canonical URL retains its original bytes.
 
 ## Exact version pairs and coordinated migration
 
+### Binding-index options and prerequisite index
+
+`createGeneratedDocumentationBindingIndex(sidecar, { docSourceMapIndex, path })`
+requires a pre-built `createDocSourceMapIndex` result whose nested arrays and
+entries remain untampered. Options and prerequisite headers must be same-realm
+plain or null-prototype records. The required index reference, optional primitive
+string path and eight consumed header fields are read through own data
+descriptors only; known accessors/wrong types/reflection failures reject without
+executing ordinary getters. Unknown extensions remain unread.
+
+The consumed header checks cover contract, optional id/version, status,
+diagnostics/entries/sidecar arrays and an entry count matching the entries array.
+These are **shallow checks**, not origin authentication or full schema/graph
+validation. Header snapshots precede sidecar processing; arrays/entries remain
+borrowed references, without deep copying or freezing the prerequisite input.
+
+Invalid options/headers return a frozen empty `invalid` result with the existing
+`GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_UNAVAILABLE`, without
+partial path or unchecked diagnostic/header echoes. Valid prerequisite error
+diagnostics and unsupported-version states retain prior propagation. Valid
+empty/whitespace paths and unsanitized context retain prior behavior. Pairing,
+ordering, instance keys and frozen bidirectional results are unchanged.
+
+中文：选项与已消费头部采用自有数据快照，错误输入不抛出普通属性读取异常或回显部分上下文；
+嵌套数组/条目仍要求来自未篡改的工厂索引。浅层形状检查不认证来源，也不保证对嵌套访问器、
+代理、资源消耗或并发篡改提供沙箱。此修复尚未发布，不提升绑定草案或包版本。
+
+### Version pairs
+
 | Binding | Paired documentation source map | Reader |
 | --- | --- | --- |
 | `0.1.0-draft` | `0.1.0-draft` | Retained legacy pair |
