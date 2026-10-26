@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 检查主仓发行清单/包身份/运行范围及发布工作流；只读检查不代表发行资格。
+ * @lang en Checks main-repository release manifests, identity, runtime range and publishing workflows; read-only checks do not establish release qualification.
+ */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +23,8 @@ const allowedReleaseStatuses = new Set(["published", "patch-candidate", "candida
 assert(releasePlan.schemaVersion === "0.1.0-draft", "release/public-packages.json: unexpected schemaVersion.");
 assert(releasePlan.scope === "@hia-doc", "release/public-packages.json: canonical npm scope must remain @hia-doc.");
 assert(releasePlan.registry === "https://registry.npmjs.org/", "release/public-packages.json: registry must remain npmjs.");
-assert(releasePlan.runtimeNodeRange === ">=20.19.0", "release/public-packages.json: runtime Node range drifted.");
+// <lang><zh-CN>下限为两条已确认LTS的实测补丁，不静默覆盖EOL或未验证major。</zh-CN><en>Floors use tested patches on both confirmed LTS lines, without silently covering EOL or unverified majors.</en></lang>
+assert(releasePlan.runtimeNodeRange === "^22.23.4 || ^24.22.1", "release/public-packages.json: runtime Node range must match the tested Node 22/24 floors.");
 assert(releasePlan.publishToolchain?.nodeVersion === "24.x", "release/public-packages.json: publish job must use Node 24.x.");
 assert(releasePlan.publishToolchain?.minimumNpmVersion === "11.15.0", "release/public-packages.json: Trusted Publishing npm baseline drifted.");
 
@@ -88,6 +94,12 @@ console.log(
     : `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the post-D3 release train.`
 );
 
+/**
+ * @lang zh-CN 收集声明的workspace依赖，不是归档改写/完整registry闭包验证。
+ * @lang en Collects declared workspace dependencies, not archive rewrites or complete registry closure.
+ * @param packageJson <lang><zh-CN>本仓已解析清单。</zh-CN><en>Parsed repository manifest.</en></lang>
+ * @returns <lang><zh-CN>按区段顺序的本地包名。</zh-CN><en>Local package names in section order.</en></lang>
+ */
 function listLocalDependencyNames(packageJson) {
   const names = [];
   for (const dependencySection of ["dependencies", "peerDependencies", "optionalDependencies", "devDependencies"]) {
@@ -100,6 +112,13 @@ function listLocalDependencyNames(packageJson) {
   return names;
 }
 
+/**
+ * @lang zh-CN 以公开说明停止失败门禁，无写入。
+ * @lang en Stops a failed gate with a public message, without writes.
+ * @param condition <lang><zh-CN>必要约束。</zh-CN><en>Required constraint.</en></lang>
+ * @param message <lang><zh-CN>失败说明。</zh-CN><en>Failure description.</en></lang>
+ * @throws <lang><zh-CN>约束失败时抛出Error。</zh-CN><en>Throws Error on constraint failure.</en></lang>
+ */
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);

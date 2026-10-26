@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Candidate runtime range and package identity
+
+- 根、十三个npm包、发行范围与门禁统一为已实测的Node.js22/24补丁下限`^22.23.4 || ^24.22.1`；补28项范围/已发布身份拒绝回归与候选说明，保留包版本和发布状态。旧npm归档不变，尚未发布。
+- Align the root, thirteen npm manifests, release metadata and gate to tested Node.js22/24 floors `^22.23.4 || ^24.22.1`. Add 28 runtime/published-identity regressions and [candidate guidance](docs/package-candidates.md), retaining package versions and release statuses. Existing npm archives are unchanged; unreleased.
+
 ## Unreleased — Ordinary position lookup responsibilities
 
 - 补四个普通位置入口的同一行锚点、精确/非精确重复项、全部反查所选列组、同名来源槽位及状态传播说明与特征/严格类型。主模块运行AST、类型与版本保持，尚未发布。

@@ -10,7 +10,17 @@ pnpm run distribution:check
 
 ## Current State
 
-### Portal tree layout patch — 2026-10-25
+The current source candidate declares Node.js `^22.23.4 || ^24.22.1` across the
+workspace root and thirteen npm packages. This change is unreleased. Existing
+npm contents and engine declarations remain independent; see
+[candidate identity and clean-install guidance](package-candidates.md).
+Published identities remain unavailable for republishing until a new version is
+explicitly assigned and qualified. Current checked-in targets appear below;
+dated publication reports describe their original checkpoints.
+
+中文：当前源码候选采用已验证22/24补丁下限；保留既有包版本及已发布状态，不能重发同一身份。
+
+### Historical Portal tree layout patch — 2026-10-25
 
 | Package | Published version | Change |
 | --- | --- | --- |
@@ -18,11 +28,11 @@ pnpm run distribution:check
 | `@hia-doc/renderer-html` | `0.1.6` | Exact dependency on the repaired theme; renderer runtime code unchanged. |
 | `@hia-doc/cli` | `0.1.8` | Exact dependency on the updated renderer; CLI runtime code unchanged. |
 
-All three versions are published and tagged `latest`. Downloads match npm integrity and their provenance statements identify the reviewed commit and Trusted Publish runs. A clean registry install of CLI `0.1.8` resolves renderer `0.1.6` and theme `0.1.4`, and real multipage CLI builds pass on Node.js 22/24.
+At that checkpoint, all three versions were published and tagged `latest`. Downloads matched npm integrity and provenance identified the reviewed commit and Trusted Publish runs. A clean registry install of CLI `0.1.8` resolved renderer `0.1.6` and theme `0.1.4`, with multipage builds verified on Node.js 22/24. This dated record does not describe current dist-tags.
 
 中文：本批只发布树布局补丁及其依赖引用链；源码映射等未发布实现不进入本批。三个版本的registry、下载完整性、来源关联和全新安装构建均已复核，HIA参考站已部署修复。
 
-Upgrade the direct documentation tools, then rebuild your generated site:
+The original checkpoint used these exact direct tools:
 
 ```sh
 npm install --save-dev --save-exact @hia-doc/cli@0.1.8 @hia-doc/dotnetdoc-runner@0.1.10 --registry=https://registry.npmjs.org/
@@ -56,41 +66,45 @@ These form one dependency-ordered repair set: core, config/source-linkage/theme,
 after each Trusted Publisher run. Other package targets remain unchanged. This package patch does not declare a system 1.0.0 release.
 中文：本批按依赖关系发布上述六包；npm版本与系统正式版、契约定义版本分别管理。以registry和安装验收为准。
 
-The D3 bootstrap release is complete. All 13 first-publication packages are visible on npm at `0.1.0`, and W-P15.3 has verified the post-bootstrap Trusted Publisher path with `@hia-doc/theme-default@0.1.1`.
+The original thirteen-package bootstrap and subsequent Trusted Publisher rehearsal are historical publication records. Current source targets retain separate candidate qualification requirements.
 
 - Scope: `@hia-doc`.
 - Registry: `https://registry.npmjs.org/`.
 - Repository: `mandolin/HIA-Documentation`.
 - License: MIT.
-- Runtime Node range: `>=20.19.0`.
+- Current source runtime Node range: `^22.23.4 || ^24.22.1` (unreleased).
 - First release version: `0.1.0` for every public package.
 - Latest patch rehearsal: `@hia-doc/theme-default@0.1.1`.
 - Current package state: public packages with explicit `publishConfig.access: "public"`.
 - Trusted Publisher: configured for `mandolin/HIA-Documentation` and `.github/workflows/npm-trusted-publish.yml`.
 
-## Release Candidates
+## Current checked-in identities
+
+Targets and `published` flags reflect the release manifest. They do not assert
+that the current source payload equals the registry archive at the same identity.
 
 | Order | Package | Kind | Target | Status |
 | --- | --- | --- | --- | --- |
-| 10 | `@hia-doc/core` | owner runtime | `0.1.0` | published |
-| 20 | `@hia-doc/config` | owner runtime | `0.1.1` | published |
+| 10 | `@hia-doc/core` | owner runtime | `0.1.2` | published |
+| 20 | `@hia-doc/config` | owner runtime | `0.1.6` | published |
 | 20 | `@hia-doc/profile` | owner runtime | `0.1.0` | published |
 | 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` | published |
-| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.1` | published |
-| 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.0` | published |
-| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.1` | published |
+| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.2` | published |
+| 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.1` | published |
+| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.4` | published |
 | 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` | published |
 | 40 | `@hia-doc/profiles` | distribution | `0.1.0` | published |
-| 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.0` | published |
-| 50 | `@hia-doc/schemas` | distribution | `0.1.1` | published |
+| 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.8` | published |
+| 50 | `@hia-doc/schemas` | distribution | `0.1.4` | published |
 | 60 | `@hia-doc/lsp` | tooling runtime | `0.1.0` | published |
-| 70 | `@hia-doc/cli` | tooling runtime | `0.1.1` | published |
+| 70 | `@hia-doc/cli` | tooling runtime | `0.1.11` | published |
 
 `@hia-doc/vscode-extension` is excluded from this npm train because it should be distributed through VSIX or Marketplace release governance.
 
 ## Publishing Model
 
-Release jobs use Node 24.x for publishing even though runtime packages support Node `>=20.19.0`. This keeps the runtime compatibility promise separate from the npm Trusted Publishing toolchain.
+Release jobs use Node 24.x for publishing. Source candidates declare the two
+tested LTS runtime ranges above; historical npm archives retain their own engines.
 
 The workflow uses:
 
@@ -111,8 +125,8 @@ It requires:
 - Exact confirmation text: `publish @hia-doc package`.
 - GitHub permissions `contents: read` and `id-token: write`.
 - Node 24.x.
-- npm `^11.5.1`.
-- Full `pnpm run release:gate`.
+- npm `^11.15.0`.
+- Full `pnpm run release:gate:publish-ready`.
 - `scripts/resolve-public-release-package.mjs <package> --publish-ready`, which refuses to publish packages whose release status is already `published`.
 
 ## Registry Checks

@@ -7,7 +7,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | Surface | Supported / pinned | Status | Verification |
 | --- | --- | --- | --- |
 | Node.js for `main-repo` development / CI | Local `24.22.1`; CI latest `22.x` / `24.x` on Ubuntu 24.04 and Windows Server 2025 | LTS candidate verification matrix | `pnpm run release:gate` in each combination |
-| Existing main package engine declarations | `>=20.19.0` | Legacy installation range; tightening accompanies package stabilization | Package manifests and release plan must agree |
+| Current main source candidate engines | `^22.23.4 || ^24.22.1` | Unreleased declaration; existing npm archives retain their own engines | Root, thirteen manifests, release plan and actual archives must agree |
 | pnpm for `main-repo` | `10.34.4` | Pinned | `pnpm install --frozen-lockfile` in CI |
 | Node.js for public JSDoc packages | Package engines declare `>=18` | Legacy installation constraint | satellite package CI / release gates |
 | VS Code API | `^1.92.0` | Development baseline | `apps/vscode-extension` build and tests |
@@ -18,6 +18,11 @@ The local development pin was researched on 2026-10-23. Supported release-line
 verification uses the latest 22/24 patches; CI resolves those patches through
 `setup-node`. Windows Server CI does not substitute for a real Windows 11 host
 check. Publication continues to use Node.js 24 and the declared npm baseline.
+
+See [candidate identities](package-candidates.md) for checked-in versions,
+unreleased engine declarations, complete local tarball installation and the
+separate qualification required before assigning new release identities.
+中文：源码候选范围与旧npm归档分开；包版本沿用不表示其源码负载已发布，实际发行需新身份与完整门禁。
 
 ## Main Repository Packages
 
@@ -34,8 +39,8 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | `@hia-doc/source-linkage` | `0.1.1`, MIT; published | Published package: map/binding `0.1.0-draft`; unreleased source: map `1.0.0` / binding `0.2.0-draft` coordination with exact legacy reader, full API review pending | Published contents remain distinct from source candidates; see [map provenance](doc-source-map-provenance.md) and [complete binding migration](generated-documentation-binding-contract.md). |
 | `@hia-doc/parser-jsdoc` | `0.1.0`, MIT; publishable manifest | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
 | `@hia-doc/theme-default` | `0.1.4`, MIT; published | default renderer assets | Adds compact, readable deep-tree layout to the published branding and responsive content assets. |
-| `@hia-doc/renderer-html` | `0.1.6`, MIT; published | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Updates the exact theme dependency; complete localized entries, branding and shared-asset references remain supported. |
-| `@hia-doc/cli` | `0.1.8`, MIT; published | config, core document, JSDoc Integration, project docs manifest draft | Updates the renderer dependency chain; theme configuration and explicit source-publication policy remain unchanged. |
+| `@hia-doc/renderer-html` | `0.1.8`, MIT; published identity | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Current source retains unreleased contract dependencies; see candidate identity guidance. |
+| `@hia-doc/cli` | `0.1.11`, MIT; published identity | config, core document, JSDoc Integration, project docs manifest draft | Current source retains unreleased contract dependencies; source-preview repairs are versioned separately. |
 | `@hia-doc/lsp` | `0.1.0`, MIT; publishable manifest | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline; public release candidate. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 | `@hia-doc/browser-panel` | `0.1.0`, MIT; publishable manifest | Browser panel API | Browser-panel component; full IDE product support is separate. |

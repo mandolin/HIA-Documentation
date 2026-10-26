@@ -9,7 +9,7 @@
     "directory": "packages/core"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": "^22.23.4 || ^24.22.1"
   },
   "type": "module",
   "main": "./dist/index.js",
