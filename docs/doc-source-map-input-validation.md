@@ -1,5 +1,19 @@
 # 文档源码映射输入验证
 
+## 诊断路径选项
+
+索引、校验、单映射迁移、绑定整组迁移和绑定owner校验的诊断path选项，只接受同realm普通或null原型对象的自有string数据字段；运行时undefined按省略处理。已知访问器/错误根或字段/反射失败拒绝，不调用getter或转换钩子，未知字段不读。各入口沿用既有INVALID诊断code，不回显部分非法路径。
+
+读取工件之前复制路径，成功/失败及迁移前后验证不重读原options。合法空/空白字符串与上下文保留原行为，路径不规范化、未脱敏，不授予文件访问或公开权限；代理执行/资源/并发不受沙箱保证。复杂绑定索引选项仍有独立前置要求，不能据此声称该选项面已经全部审查。
+
+The map index/validator, standalone map migration, bundle migration and binding
+validator snapshot an own string diagnostic `path` from same-realm plain or
+null-prototype options. Known accessors, malformed roots/fields and reflection
+errors reject with each entry's existing INVALID code, without partial context.
+Unknown fields remain unread. Valid empty/whitespace strings and unsanitized
+context retain prior behavior; input processing and failure handlers do not
+reread caller options. This is neither a proxy sandbox nor publication authority.
+
 以下额外检查属于尚未发布的源码版，npm `@hia-doc/source-linkage@0.1.1`不包含这些变化。
 当前源码定义为`doc-source-map@1.0.0`，精确旧reader保留`0.1.0-draft`；历史schema与fixture保持原样。
 新版必要字段及来源类别/细节见[来源与迁移](doc-source-map-provenance.md)。下文的省略项兼容专指旧reader。

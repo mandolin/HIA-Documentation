@@ -6,6 +6,7 @@
 import path from "node:path";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { collectBindingInputIssues } from "./binding-input.js";
+import { prepareSourceLinkagePathOptions } from "./path-options.js";
 import {
   createHiaDiagnostic,
   type HiaDiagnostic,
@@ -460,11 +461,11 @@ export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = createBindingSchema(G
 export const GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION, DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID);
 
 /**
- * 中文：generated-documentation-binding owner validator 的可选上下文。
- * English: Optional context for the generated-documentation-binding owner validator.
+ * @lang zh-CN 绑定owner校验的普通/null原型自有诊断路径选项，未知字段不读取。
+ * @lang en Plain/null-prototype own diagnostic-path options for binding owner validation; unknown fields remain unread.
  */
 export interface GeneratedDocumentationBindingValidationOptions {
-  /** 中文：仅用于 diagnostic targetPath 的 artifact-relative 位置。English: Artifact-relative location used only for diagnostic targetPath. */
+  /** @lang zh-CN 自有string诊断上下文，不规范化或脱敏，也不授予文件访问/发布权限。 @lang en Own string diagnostic context, neither normalized nor sanitized and granting no file-access/publication authority. */
   path?: string;
 }
 
@@ -494,22 +495,25 @@ const diagnosticSeverityByCode = new Map<string, HiaDiagnosticSeverity>([
  * @lang en Validates ordinary JSON, consumed fields, cross-collection/privacy semantics and exact current/legacy binding versions without executing getters/expressions, reading paths or building indexes.
  *
  * @param value <lang><zh-CN>未知内存值；只接受有限无环普通JSON，允许共享子图。</zh-CN><en>Unknown memory value; only finite acyclic ordinary JSON is accepted, with shared subgraphs allowed.</en></lang>
- * @param options <lang><zh-CN>显式诊断路径上下文，不保证可公开。</zh-CN><en>Explicit diagnostic-path context, without public-safety guarantees.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有string路径快照输入，默认空对象；访问器/错型拒绝且未知字段不读，合法上下文未脱敏。</zh-CN><en>Plain/null-prototype own string-path snapshot input, defaulting to an empty object; accessors/wrong types are rejected, unknown fields unread and valid context unsanitized.</en></lang>
  * @returns <lang><zh-CN>固定诊断数组；空数组仅代表本owner已实现检查通过，不替代完整schema验证。Proxy反射/资源和并发突变不是沙箱保证。</zh-CN><en>Fixed diagnostics; an empty array passes implemented owner checks only, not complete schema validation. Proxy reflection/resources/concurrent mutation are not sandbox guarantees.</en></lang>
  */
 export function validateGeneratedDocumentationBinding(
   value: unknown,
   options: GeneratedDocumentationBindingValidationOptions = {}
 ): HiaDiagnostic[] {
+  // <lang><zh-CN>仅投影一次原路径选项，try/catch及内部语义校验都只使用快照。</zh-CN><en>Project original path options once; try/catch and internal semantic checks use the snapshot only.</en></lang>
+  const preparedOptions = prepareSourceLinkagePathOptions(options);
+  if (!preparedOptions) return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding options must contain an own string diagnostic path.", "error")];
   try {
     // <lang><zh-CN>先检查完整普通JSON图；短路顺序也保护被撤销Proxy，不在拒绝后读取头字段。</zh-CN><en>Preflight the complete ordinary-JSON graph first; short-circuit order also protects revoked proxies without reading headers after rejection.</en></lang>
     if (!isDocSourceMapJsonDataGraph(value) || !isRecord(value)) {
-      return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding manifest must contain ordinary finite acyclic JSON data.", "error", options.path)];
+      return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding manifest must contain ordinary finite acyclic JSON data.", "error", preparedOptions.path)];
     }
-    return validateBindingJsonObject(value, options);
+    return validateBindingJsonObject(value, preparedOptions);
   } catch {
     // <lang><zh-CN>反射或输入突变异常只返回固定诊断，不反射私有异常正文。</zh-CN><en>Reflection or input-mutation errors return fixed diagnostics without reflecting private exception text.</en></lang>
-    return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding input could not be validated as ordinary JSON data.", "error", options.path)];
+    return [createBindingDiagnostic("GENERATED_DOCUMENTATION_BINDING_INVALID", "Binding input could not be validated as ordinary JSON data.", "error", preparedOptions.path)];
   }
 }
 

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation-map diagnostic option snapshots
+
+- 文档映射索引/验证/单映射迁移、绑定验证/整组迁移五入口投影自有诊断path，拒绝错误根/字段/访问器与反射失败，沿用各入口既有INVALID且不回显部分路径；内部前后复核与错误处理只用独立快照。合法空/空白和未脱敏上下文、版本/迁移/范围匹配语义及导出保持，尚未发布。
+- Five map/binding validation and migration entries snapshot own diagnostic path data, rejecting malformed options/accessors/reflection failures with existing INVALID codes and no partial context. Internal revalidation and error handling use snapshots only. Valid empty/whitespace strings, unsanitized context, versions, migration/range semantics and exports remain unchanged; unreleased. See [input boundaries](docs/doc-source-map-input-validation.md).
+
 ## Unreleased — Ordinary index option snapshots
 
 - 普通位置索引创建仅投影 path/artifactPath 自有数据字符串，拒绝错误根/字段/访问器，成功与失败分支都使用独立快照，避免 catch 再次抛异常。选项失败沿用固定 ORDINARY_SOURCE_MAP_INVALID 且无部分路径；合法路径含空/空白及已解析实例语义、协议/包版本与导出保持。合法上下文仍未脱敏，尚未发布。

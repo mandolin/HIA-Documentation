@@ -9,6 +9,7 @@ import { createDocSourceMapIndex, type DocSourceMapIndexOptions } from "./index.
 import { createGeneratedDocumentationBindingIndex } from "./generated-documentation-binding-index.js";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { cloneSourceLinkageJsonData, prepareDocSourceMapMigration } from "./manifest-migration.js";
+import { prepareSourceLinkagePathOptions } from "./path-options.js";
 
 /** @lang zh-CN 明确的整组内存产物，不是磁盘事务或发布授权；完整JSON字段可能仍包含调用者允许的内容。 @lang en Explicit in-memory artifact bundle, not a disk transaction or publication authority; complete JSON fields may retain caller-allowed content. */
 export interface GeneratedDocumentationBindingMigrationBundle {
@@ -31,12 +32,15 @@ export interface GeneratedDocumentationBindingBundleMigrationResult {
  * @lang zh-CN 显式迁移普通映射与其全部绑定辅助工件，或为当前配对创建独立复制；不读路径、不执行表达式、不写磁盘。
  * @lang en Explicitly migrates a map and all declared binding sidecars, or independently clones a current pair, without path reads, expression execution or disk writes.
  * @param value <lang><zh-CN>普通JSON对象，包含docSourceMap与bindingSidecars数组；辅助工件须与声明完整一一对应，未知wrapper字段不输出。</zh-CN><en>Ordinary JSON object containing docSourceMap and bindingSidecars; sidecars must correspond completely and uniquely to declarations, while unknown wrapper fields are not output.</en></lang>
- * @param options <lang><zh-CN>可选诊断路径上下文，不保证可公开。</zh-CN><en>Optional diagnostic-path context without a public-safety guarantee.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空；访问器/错型/反射失败用既有迁移INVALID拒绝且不回显路径，合法快照未脱敏。</zh-CN><en>Plain/null-prototype own string diagnostic path, empty by default; accessors/wrong types/reflection failures reject with existing migration INVALID and no path echo, while valid snapshots remain unsanitized.</en></lang>
  * @returns <lang><zh-CN>完整新组或固定诊断。保留JSON可序列化字段/扩展；不把迁移视为公开授权，不保证Proxy/资源/并发突变沙箱。</zh-CN><en>Complete new bundle or fixed diagnostics, retaining JSON-serializable fields/extensions without publication authority or proxy/resource/concurrent-mutation sandbox guarantees.</en></lang>
  */
 export function migrateGeneratedDocumentationBindingBundle(value: unknown, options: DocSourceMapIndexOptions = {}): GeneratedDocumentationBindingBundleMigrationResult {
+  // <lang><zh-CN>路径是非公开保证的诊断上下文；先复制，后续输入图/失败处理不再读原options。</zh-CN><en>The path is diagnostic context without public-safety guarantees; snapshot it before input-graph checks/failure handling.</en></lang>
+  const preparedOptions = prepareSourceLinkagePathOptions(options);
   /** @lang zh-CN 失败只包含固定说明，不透传验证器中的调用者身份/正文。 @lang en Failures contain fixed explanations only, without forwarding caller identities/bodies from validators. */
-  const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): GeneratedDocumentationBindingBundleMigrationResult => ({ status, diagnostics: [createHiaDiagnostic("GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID", message, "error", options.path ? { targetPath: options.path } : {})] });
+  const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): GeneratedDocumentationBindingBundleMigrationResult => ({ status, diagnostics: [createHiaDiagnostic("GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID", message, "error", preparedOptions?.path ? { targetPath: preparedOptions.path } : {})] });
+  if (!preparedOptions) return refused("Migration options must contain an own string diagnostic path.");
   try {
     if (!isDocSourceMapJsonDataGraph(value) || !record(value) || !record(value.docSourceMap) || !Array.isArray(value.bindingSidecars) || !value.bindingSidecars.every(record)) return refused("Migration requires an ordinary JSON mapping and an explicit sidecar array.");
     // <lang><zh-CN>精确版本检查先于消费，任何未知版本都不按范围或前缀猜测。</zh-CN><en>Check exact versions before consumption, never inferring compatibility from ranges or prefixes.</en></lang>

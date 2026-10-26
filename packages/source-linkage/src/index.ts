@@ -9,6 +9,7 @@ import { collectDocSourceMapInputIssues } from "./manifest-input.js";
 import { collectCurrentDocSourceMapIssues } from "./manifest-current.js";
 import { prepareDocSourceMapMigration } from "./manifest-migration.js";
 import { createBodyFreeOrdinaryTraceMap } from "./ordinary-input.js";
+import { prepareSourceLinkagePathOptions } from "./path-options.js";
 import {
   allGeneratedPositionsFor,
   eachMapping,
@@ -101,7 +102,9 @@ export {
   type GeneratedDocumentationBindingHostTarget
 } from "./generated-documentation-binding-host-projection.js";
 
+/** @lang zh-CN 普通/null原型的自有诊断路径选项，未知扩展不读取；路径不构成文件访问或公开授权。 @lang en Own diagnostic-path options in a plain/null-prototype record; unknown extensions remain unread and paths grant no file-access/publication authority. */
 export interface DocSourceMapIndexOptions {
+  /** @lang zh-CN 原始string上下文，空/空白保持既有行为，不脱敏或规范化。 @lang en Original string context retaining prior empty/whitespace behavior, without sanitization or normalization. */
   path?: string;
 }
 
@@ -402,10 +405,13 @@ interface IndexedNode {
  * available proves this index boundary only, not complete wire-schema validation. Never calls toJSON; proxy reflection side effects are not sandboxed.
  *
  * @param value <lang><zh-CN>待验证的 manifest 运行时值。</zh-CN><en>Runtime manifest value to validate.</en></lang>
- * @param options <lang><zh-CN>可选 diagnostic 路径上下文；默认空对象。</zh-CN><en>Optional diagnostic path context; defaults to an empty object.</en></lang>
- * @returns <lang><zh-CN>可查询的索引；即使无效输入也返回带 diagnostics 的安全空索引。</zh-CN><en>Queryable index; invalid input still returns a safe empty index with diagnostics.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空对象；已知访问器/错型拒绝，未知字段不读，合法上下文未脱敏。</zh-CN><en>Plain/null-prototype own string diagnostic path, defaulting to an empty object; known accessors/wrong types reject, unknown fields remain unread and valid context unsanitized.</en></lang>
+ * @returns <lang><zh-CN>可查询索引；选项失败使用既有MANIFEST_INVALID且无部分路径，输入失败保留已验证上下文。选项在读取输入图前复制。</zh-CN><en>Queryable index; rejected options use existing MANIFEST_INVALID without partial paths, while rejected inputs retain validated context. Options are copied before reading the input graph.</en></lang>
  */
 export function createDocSourceMapIndex(value: unknown, options: DocSourceMapIndexOptions = {}): DocSourceMapIndex {
+  // <lang><zh-CN>先取得独立诊断路径，输入图反射或后续失败均不得重读原options。</zh-CN><en>Snapshot the diagnostic path first; input-graph reflection and later failures must never reread original options.</en></lang>
+  const preparedOptions = prepareSourceLinkagePathOptions(options);
+  if (!preparedOptions) return createEmptyIndex({ status: "invalid", diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MANIFEST_INVALID", "doc-source-map options must contain an own string diagnostic path.", "error")] });
   // <lang><zh-CN>诊断序列是本函数唯一的可观察验证副产物；后续 status 只能由它推导。</zh-CN><en>The diagnostic sequence is this function's sole observable validation byproduct; later status must be derived from it.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
 
@@ -416,20 +422,20 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
       "doc-source-map manifest must contain ordinary finite acyclic JSON data.",
       "error",
-      options.path
+      preparedOptions.path
     ));
 
     // <lang><zh-CN>无效根节点必须返回同一 index 形状，保证调用方不需要特殊空值分支。</zh-CN><en>An invalid root must return the same index shape so callers need no special null branch.</en></lang>
     return createEmptyIndex({
       diagnostics,
-      ...(options.path ? { path: options.path } : {}),
+      ...(preparedOptions.path ? { path: preparedOptions.path } : {}),
       status: "invalid"
     });
   }
 
   // <lang><zh-CN>已声明字段先按既有结构约束诊断；历史宽输入的省略项保留，不把索引接纳冒充完整schema证明。</zh-CN><en>Diagnose declared fields against existing structural constraints first, retaining legacy omissions without treating index admission as complete schema proof.</en></lang>
   for (const issue of [...collectDocSourceMapInputIssues(value), ...collectCurrentDocSourceMapIssues(value)]) {
-    diagnostics.push(createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MANIFEST_INVALID", issue.message, "error", appendTarget(options.path, issue.target)));
+    diagnostics.push(createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MANIFEST_INVALID", issue.message, "error", appendTarget(preparedOptions.path, issue.target)));
   }
 
   // <lang><zh-CN>contract 标识确认该 JSON 属于 doc-source-map；错误不阻止收集其余可诊断结构。</zh-CN><en>The contract identifier confirms the JSON is a doc-source-map; an error does not stop collection of other diagnosable structure.</en></lang>
@@ -439,7 +445,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
       "doc-source-map manifest contract must be doc-source-map.",
       "error",
-      options.path,
+      preparedOptions.path,
       {
         contract: stringValue(value.contract) ?? ""
       }
@@ -454,7 +460,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       "DOC_SOURCE_MAP_UNSUPPORTED_VERSION",
       `doc-source-map contractVersion must be ${DOC_SOURCE_MAP_CONTRACT_VERSION} or ${DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION}.`,
       contractVersion ? "warning" : "error",
-      options.path,
+      preparedOptions.path,
       {
         contractVersion: contractVersion ?? ""
       }
@@ -485,24 +491,24 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   const bindingSidecarById = new Map(bindingSidecars.map((sidecar) => [sidecar.id, sidecar]));
 
   // <lang><zh-CN>先检查所有可公开路径，防止 artifact、source、map 或 sidecar 任一边界引入绝对/越界路径。</zh-CN><en>Check every public path first so no artifact, source, map, or sidecar boundary introduces an absolute or escaping path.</en></lang>
-  collectPathDiagnostics(diagnostics, artifacts, options.path, "artifact");
-  collectPathDiagnostics(diagnostics, sources, options.path, "source");
-  collectPathDiagnostics(diagnostics, sourceMaps, options.path, "sourceMap");
-  collectPathDiagnostics(diagnostics, bindingSidecars, options.path, "generated binding sidecar");
-  collectPathDiagnostics(diagnostics, localeResolutionSidecars, options.path, "locale-resolution sidecar");
-  collectPathDiagnostics(diagnostics, localeDiscoverySidecars, options.path, "locale-discovery sidecar");
+  collectPathDiagnostics(diagnostics, artifacts, preparedOptions.path, "artifact");
+  collectPathDiagnostics(diagnostics, sources, preparedOptions.path, "source");
+  collectPathDiagnostics(diagnostics, sourceMaps, preparedOptions.path, "sourceMap");
+  collectPathDiagnostics(diagnostics, bindingSidecars, preparedOptions.path, "generated binding sidecar");
+  collectPathDiagnostics(diagnostics, localeResolutionSidecars, preparedOptions.path, "locale-resolution sidecar");
+  collectPathDiagnostics(diagnostics, localeDiscoverySidecars, preparedOptions.path, "locale-discovery sidecar");
   // <lang><zh-CN>随后核验 contract reference、sidecar 声明与 sourcesContent policy，保持普通 map 只含 reference 的不变量。</zh-CN><en>Then validate contract references, sidecar declarations, and sourcesContent policy, preserving the invariant that ordinary maps hold references only.</en></lang>
-  collectContractRefDiagnostics(diagnostics, value.artifacts, options.path);
-  collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, options.path);
-  collectLocaleResolutionSidecarDiagnostics(diagnostics, value.localeResolutionSidecars, options.path);
-  collectLocaleDiscoverySidecarDiagnostics(diagnostics, value.localeDiscoverySidecars, options.path);
-  collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, options.path);
+  collectContractRefDiagnostics(diagnostics, value.artifacts, preparedOptions.path);
+  collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, preparedOptions.path);
+  collectLocaleResolutionSidecarDiagnostics(diagnostics, value.localeResolutionSidecars, preparedOptions.path);
+  collectLocaleDiscoverySidecarDiagnostics(diagnostics, value.localeDiscoverySidecars, preparedOptions.path);
+  collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, preparedOptions.path);
   // <lang><zh-CN>manifest 自带 diagnostic 仅被归一化为安全 HIA diagnostic，不信任其原始形状。</zh-CN><en>Manifest-supplied diagnostics are normalized into safe HIA diagnostics only; their raw shape is not trusted.</en></lang>
-  diagnostics.push(...normalizeManifestDiagnostics(value.diagnostics, options.path));
+  diagnostics.push(...normalizeManifestDiagnostics(value.diagnostics, preparedOptions.path));
 
   // <lang><zh-CN>entries 只能从对象数组创建；每一项通过三张身份表解析 source、artifact 与 sidecar reference。</zh-CN><en>entries can be created only from an object array; each item resolves source, artifact, and sidecar references through the three identity maps.</en></lang>
   const entries = Array.isArray(value.entries)
-    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, options.path))
+    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, preparedOptions.path))
     : [];
 
   // <lang><zh-CN>非数组 entries 必须显式诊断，而不是把缺失误报为零条有效 entry。</zh-CN><en>Non-array entries must be diagnosed explicitly rather than misreporting absence as zero valid entries.</en></lang>
@@ -511,7 +517,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
       "DOC_SOURCE_MAP_MANIFEST_INVALID",
       "doc-source-map manifest entries must be an array.",
       "error",
-      appendTarget(options.path, "entries")
+      appendTarget(preparedOptions.path, "entries")
     ));
   }
 
@@ -539,7 +545,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
     localeResolutionSidecarCount: localeResolutionSidecars.length,
     localeDiscoverySidecars,
     localeDiscoverySidecarCount: localeDiscoverySidecars.length,
-    ...(options.path ? { path: options.path } : {}),
+    ...(preparedOptions.path ? { path: preparedOptions.path } : {}),
     sourceCount: sources.length,
     sourceMaps,
     sourceMapCount: sourceMaps.length,
@@ -555,8 +561,8 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
  * @lang en Pure validation entry returning the same version, declared-field, reference, path and privacy diagnostics as index construction without mutation.
  * Omitted fields in permissive legacy inputs remain compatible; this does not replace complete wire-schema validation or read files/sidecars.
  * @param value <lang><zh-CN>未知输入，普通JSON预检在任何字段读取之前完成。</zh-CN><en>Unknown input, with ordinary-JSON preflight before field reads.</en></lang>
- * @param options <lang><zh-CN>可选诊断路径，不授予文件访问权限。</zh-CN><en>Optional diagnostic location granting no file access.</en></lang>
- * @returns <lang><zh-CN>本次新建的诊断数组。</zh-CN><en>Diagnostic array created for this call.</en></lang>
+ * @param options <lang><zh-CN>同索引入口的普通/null原型自有string路径，不授予文件访问权限；已知访问器拒绝，合法上下文未脱敏。</zh-CN><en>Same plain/null-prototype own string path as indexing, granting no file access; known accessors reject and valid context remains unsanitized.</en></lang>
+ * @returns <lang><zh-CN>本次新建的诊断数组；非法选项沿用MANIFEST_INVALID且无路径。</zh-CN><en>Diagnostic array created for this call; invalid options retain MANIFEST_INVALID without a path.</en></lang>
  */
 export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): HiaDiagnostic[] {
   return createDocSourceMapIndex(value, options).diagnostics;
@@ -578,23 +584,26 @@ export interface DocSourceMapMigrationResult {
  * @lang en Explicitly converts an exact legacy map to the current version, retaining concrete origins and open JSON extensions; current inputs return independent clones.
  * Unknown origins, information conflicts, incomplete structure or privacy errors are refused without partial artifacts. Consumes caller data only, without file/sidecar reads, disk writes or JSON hooks.
  * @param value <lang><zh-CN>未知运行时输入，必须通过普通JSON和owner边界。</zh-CN><en>Unknown runtime input that must pass ordinary-JSON and owner boundaries.</en></lang>
- * @param options <lang><zh-CN>可选诊断路径，默认空；不授予文件访问。</zh-CN><en>Optional diagnostic path, empty by default, granting no file access.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空；迁移只投影一次，已知访问器/错型拒绝，不授予文件访问。</zh-CN><en>Plain/null-prototype own string diagnostic path, empty by default; migration projects once, rejects known accessors/wrong types and grants no file access.</en></lang>
  * @returns <lang><zh-CN>当前版独立容器或安全诊断；Proxy副作用、资源消耗和并发输入突变不受沙箱保证。</zh-CN><en>Independent current containers or safe diagnostics; proxy effects, resource exhaustion and concurrent input mutation are not sandboxed.</en></lang>
  */
 export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): DocSourceMapMigrationResult {
+  // <lang><zh-CN>整个迁移仅投影一次原选项，前后索引校验只获得该独立快照。</zh-CN><en>Project original options once for the entire migration; before/after index validation receives this independent snapshot only.</en></lang>
+  const preparedOptions = prepareSourceLinkagePathOptions(options);
+  if (!preparedOptions) return { status: "invalid", diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", "Mapping options must contain an own string diagnostic path.", "error")] };
   /** @lang zh-CN 所有失败均通过静态文本隔离，不转发含原数据的局部索引。 @lang en Isolates every failure with static text rather than forwarding partial indexes containing source data. */
   const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): DocSourceMapMigrationResult => ({
-    status, diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", message, "error", options.path)]
+    status, diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", message, "error", preparedOptions.path)]
   });
   // <lang><zh-CN>先运行既有普通JSON/版本/隐私门禁；未知版本从不按兼容范围猜测。</zh-CN><en>Run existing ordinary-JSON/version/privacy gates first; unknown versions are never guessed compatible.</en></lang>
-  const before = createDocSourceMapIndex(value, options);
+  const before = createDocSourceMapIndex(value, preparedOptions);
   if (before.status === "unsupported-version") return refused("Migration requires an explicitly supported mapping version.", "unsupported-version");
   if (before.status !== "available" || !isRecord(value)) return refused("Mapping input must pass owner validation before migration.");
   try {
     // <lang><zh-CN>内部准备只复制和按明确映射转换，结果仍必须重新通过新版必要结构与语义检查。</zh-CN><en>Preparation only clones and converts explicit mappings; the result must still pass current required-structure and semantic checks.</en></lang>
     const prepared = prepareDocSourceMapMigration(value);
     if (!prepared.manifest) return refused(prepared.issue ?? "Mapping could not be migrated losslessly.");
-    const after = createDocSourceMapIndex(prepared.manifest, options);
+    const after = createDocSourceMapIndex(prepared.manifest, preparedOptions);
     if (after.status !== "available") return refused("Migrated mapping must satisfy current structure, provenance and privacy requirements.");
     return { status: before.contractVersion === DOC_SOURCE_MAP_CONTRACT_VERSION ? "already-current" : "migrated", manifest: prepared.manifest, diagnostics: after.diagnostics };
   } catch {
