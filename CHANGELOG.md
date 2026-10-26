@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Ordinary position lookup responsibilities
+
+- 补四个普通位置入口的同一行锚点、精确/非精确重复项、全部反查所选列组、同名来源槽位及状态传播说明与特征/严格类型。主模块运行AST、类型与版本保持，尚未发布。
+- Document same-line anchors, exact/nonexact ties, selected-column groups, duplicate source slots and status propagation for four ordinary-position entries, with characterization and strict types. Runtime AST, types and versions remain unchanged; unreleased. See [ordinary lookups](docs/ordinary-source-map-lookup.md#lookup-selection-reference).
+
 ## Unreleased — Documentation map function responsibilities
 
 - 补充校验、索引、迁移三个入口的状态优先级、root/entry诊断角色、被动外部声明与宽reader/迁移差异说明及组合特征/严格类型。整个主模块AST、类型、运行逻辑与版本保持，尚未发布。

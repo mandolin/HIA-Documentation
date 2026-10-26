@@ -41,6 +41,11 @@ See the [result field reference](../../docs/ordinary-source-map-results.md) for
 all seven interfaces, counts, ownership and branch-specific status semantics.
 中文：普通位置索引及结果七接口32字段说明已完善，类型/运行逻辑保持，尚未发布。
 
+See the [lookup selection reference](../../docs/ordinary-source-map-lookup.md#lookup-selection-reference)
+for same-line segment anchors, exact versus nonexact ties, all-generated column
+groups and duplicate source-slot limits. Runtime logic, types and versions remain unchanged; unreleased.
+中文：四个普通位置入口补查找选择说明；同列整组不等于整行，重复来源名不合并，尚未发布。
+
 ## Version and privacy checks
 
 The [map validation, indexing and migration guide](../../docs/doc-source-map-validation-and-migration.md)

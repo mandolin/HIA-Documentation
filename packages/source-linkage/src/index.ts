@@ -742,6 +742,7 @@ export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOp
  * @param value <lang><zh-CN>调用方显式提供的JSON字符串、编码/解码对象或TraceMap实例。</zh-CN><en>Caller-provided JSON string, encoded/decoded object or TraceMap instance.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有数据选项，默认空对象；path/artifactPath只允许string或undefined，访问器拒绝且不调用，未知字段不读。</zh-CN><en>Plain/null-prototype own-data options, defaulting to an empty object; path/artifactPath accept strings or undefined only, rejecting accessors without invocation and ignoring unknown fields.</en></lang>
  * @returns <lang><zh-CN>独立索引；非法map/选项为固定ORDINARY_SOURCE_MAP_INVALID空索引，不回显异常。选项失败无路径上下文；合法快照在map失败时保留，未脱敏。无I/O，Proxy反射不是沙箱；非完整ECMA-426验证器。</zh-CN><en>Independent index; invalid maps/options yield an empty index with fixed ORDINARY_SOURCE_MAP_INVALID and no raw error. Rejected options have no path context; valid snapshots survive map failure and remain unsanitized. No I/O or proxy sandbox; not a complete ECMA-426 validator.</en></lang>
+ * @remarks <lang><zh-CN>空映射也可available，表示结构可消费而非必有位置命中；file元数据不会替代options.artifactPath。普通索引不认证文档链路或公开授权。</zh-CN><en>Empty maps can be available: accepted structure does not imply a position match. File metadata never replaces options.artifactPath. Ordinary indexes authenticate neither documentation linkage nor publication consent.</en></lang>
  */
 export function createOrdinarySourceMapIndex(value: SourceMapInput | unknown, options: OrdinarySourceMapIndexOptions = {}): OrdinarySourceMapIndex {
   // <lang><zh-CN>先复制两个路径，后续map反射即使修改调用者options，也不使成功/catch重读不可信属性。</zh-CN><en>Copy both paths first so subsequent map reflection cannot make success/catch reread untrusted caller properties after mutation.</en></lang>
@@ -864,6 +865,7 @@ export function findDocSourceMapEntriesByArtifact(
  * @param generatedPosition <lang><zh-CN>普通/null原型的HIA一基安全整数行/列自有数据；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own HIA positive safe integer line/column data; omitted column defaults to 1 and known getters never execute.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有数据偏置，仅接受两种公开值或省略；未知扩展不读。</zh-CN><en>Plain/null-prototype own-data bias accepting only the two public values or omission; extensions are not read.</en></lang>
  * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid；原始位置仍回显，非脱敏/序列化保证，Proxy反射不受沙箱保护。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic; raw positions remain echoed without redaction/serialization guarantees or a proxy-reflection sandbox.</en></lang>
+ * @remarks <lang><zh-CN>默认GLB仅在请求生成行选段，返回锚点不插值；选到无来源段即unmapped，不继续扫描。同一生成列精确命中时GLB取首段、LUB取末段。查询先校验，再传播索引状态。</zh-CN><en>Default GLB selects a segment only on the requested generated line, returning its anchor without interpolation. Unmapped segments yield unmapped without further scanning. Exact generated-column ties select the first segment for GLB and the last for LUB. Queries validate before propagating index status.</en></lang>
  */
 export function findOriginalPositionForGenerated(
   index: OrdinarySourceMapIndex,
@@ -928,6 +930,7 @@ export function findOriginalPositionForGenerated(
  * @param originalPosition <lang><zh-CN>普通/null原型一基安全整数自有坐标；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own one-based safe integer coordinates; omitted column defaults to 1 and known getters never execute.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有数据偏置，仅两种公开值或省略。</zh-CN><en>Plain/null-prototype own-data bias with the two public values or omission only.</en></lang>
  * @returns <lang><zh-CN>映射、unmapped或固定诊断invalid；原输入回显未脱敏，非法runtime输入不承诺回显类型/可序列化；不是Proxy沙箱。</zh-CN><en>Mapping, unmapped or invalid with fixed diagnostics; raw input echoes are unsanitized and invalid runtime inputs have no echo-type/serialization guarantee or proxy sandbox.</en></lang>
+ * @remarks <lang><zh-CN>只在匹配来源槽位的请求原始行选列，不跨行或插值。精确重复坐标GLB取首个生成项、LUB取末个；非精确GLB可能取较小列组末项。库先匹配raw sources首槽，否则匹配resolvedSources首槽，同名不合并。查询先校验，再传播索引状态。</zh-CN><en>Selects a column only on the requested original line in the matched source slot, without crossing lines or interpolating. Exact ties select the first generated item for GLB and last for LUB; nonexact GLB can select the lower-column group's last item. The library first matches a raw sources slot, otherwise a resolvedSources slot; duplicates are not merged. Queries validate before propagating index status.</en></lang>
  */
 export function findGeneratedPositionForOriginal(
   index: OrdinarySourceMapIndex,
@@ -990,6 +993,7 @@ export function findGeneratedPositionForOriginal(
  * @param originalPosition <lang><zh-CN>普通/null原型一基安全整数自有坐标；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own one-based safe integer coordinates; omitted column defaults to 1 and known getters never execute.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有偏置数据，默认向下最近，覆盖库的全部查找默认偏置；错误值拒绝。</zh-CN><en>Plain/null-prototype own bias data, defaulting to greatest lower bound over the library all-lookup default; invalid values are rejected.</en></lang>
  * @returns <lang><zh-CN>映射数组及状态，invalid/unmapped时数组为空；原输入回显未脱敏，不承诺非法runtime回显类型/序列化或Proxy沙箱。</zh-CN><en>Mapping array and status, empty on invalid/unmapped; raw echoes are unsanitized with no invalid-runtime echo-type/serialization or proxy-sandbox guarantee.</en></lang>
+ * @remarks <lang><zh-CN>全部指偏置所选原始列的整组生成项，不是整行/文件；省略列为1。默认GLB覆盖库全部查找的LUB默认，组内保留库顺序。只查匹配首个来源槽位的请求原始行，不跨行或合并同名来源；查询先校验，再传播索引状态。</zh-CN><en>All means the generated group at the original column selected by bias, not the whole line/file; omitted columns mean one. Default GLB overrides the library all-lookup LUB default, retaining library order. Searches only the requested original line in the first matching source slot, without crossing lines or merging duplicate sources; queries validate before propagating index status.</en></lang>
  */
 export function findAllGeneratedPositionsForOriginal(
   index: OrdinarySourceMapIndex,

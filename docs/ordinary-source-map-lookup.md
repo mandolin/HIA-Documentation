@@ -108,6 +108,41 @@ The three ordinary helpers use the field projection described above. Their
 public signatures, bias defaults, numeric conversion, result states and source
 map semantics are unchanged; this repair remains unreleased.
 
+## Lookup selection reference
+
+An `available` index can be empty; availability describes accepted structure,
+not guaranteed position matches. Map `file` metadata does not supply the returned
+`artifactPath`: provide that context explicitly in creation options.
+
+Lookups select segment anchors without interpolating offsets or moving to a
+different line. Forward lookup returns `unmapped` if bias selects a segment
+without an original position. At an exact generated-column tie, greatest lower
+bound selects the first segment and least upper bound the last.
+
+Single reverse lookup selects one generated anchor. An exact original-column
+tie selects the first generated item for greatest lower bound and the last for
+least upper bound. A nonexact greatest-lower-bound match can select the last item
+at the lower original column. This is not a canonical inverse of forward lookup.
+
+The all-generated helper returns the group at the **selected original column**,
+in library order, rather than every mapping on the line or in the file. Omitting
+`column` queries column `1`; it is not a wildcard. Its default is greatest lower
+bound, including where the underlying library's all-generated default differs.
+
+Reverse lookup matches the first raw source slot, otherwise the first resolved
+source slot. Duplicate names are not merged. After HIA separator/initial `./`
+normalization, matching retains case and nonblank whitespace. Bias does not
+search adjacent original lines. These are existing dependency semantics, not a
+guarantee of complete inverse mapping or a new source identity policy.
+
+Query validation precedes index status propagation: malformed queries add the
+fixed query/position diagnostic even if the index is already invalid; valid
+queries propagate that index's diagnostics without returning positions.
+
+中文：四入口保持原运行/类型/版本。空映射可用但不保证命中；只选同一行的段锚点，不做列插值。
+精确重复坐标与中间位置的单值反查选项可能不同；全部反查只返回偏置所选原始列整组，省略列不是通配。
+同名来源槽位不合并；这是一项现存限制，不是完整逆映射或源码身份认证承诺。先校验查询再传播索引状态。
+
 ## Index and result field reference
 
 See the [seven-interface field reference](ordinary-source-map-results.md) for
