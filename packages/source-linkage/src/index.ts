@@ -299,7 +299,7 @@ export interface OrdinarySourceMapIndex {
   traceMap?: TraceMap;
 }
 
-/** @lang zh-CN 可选偏置，省略时统一向下最近。 @lang en Optional bias, consistently defaulting to greatest lower bound. */
+/** @lang zh-CN 普通/null原型自有数据选项；可选偏置省略时统一向下最近，未知值拒绝。 @lang en Plain/null-prototype own-data options; omitted bias consistently defaults to greatest lower bound, while unknown values are rejected. */
 export interface OrdinarySourceMapLookupOptions {
   bias?: OrdinarySourceMapBias;
 }
@@ -739,9 +739,9 @@ export function findDocSourceMapEntriesByArtifact(
  * @lang zh-CN 从生成位置追溯原始位置；无I/O，更新库内部缓存。
  * @lang en Traces generated positions to originals without I/O, updating internal library caches.
  * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
- * @param generatedPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
- * @param options <lang><zh-CN>可选偏置，默认向下最近。</zh-CN><en>Optional bias, defaulting to greatest lower bound.</en></lang>
- * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid；输入位置仍回显。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic; the input position is still echoed.</en></lang>
+ * @param generatedPosition <lang><zh-CN>普通/null原型的HIA一基安全整数行/列自有数据；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own HIA positive safe integer line/column data; omitted column defaults to 1 and known getters never execute.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有数据偏置，仅接受两种公开值或省略；未知扩展不读。</zh-CN><en>Plain/null-prototype own-data bias accepting only the two public values or omission; extensions are not read.</en></lang>
+ * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid；原始位置仍回显，非脱敏/序列化保证，Proxy反射不受沙箱保护。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic; raw positions remain echoed without redaction/serialization guarantees or a proxy-reflection sandbox.</en></lang>
  */
 export function findOriginalPositionForGenerated(
   index: OrdinarySourceMapIndex,
@@ -752,9 +752,13 @@ export function findOriginalPositionForGenerated(
   const generated = createGeneratedPosition(index.artifactPath, generatedPosition);
 
   // <lang><zh-CN>HIA坐标是一基正整数，拒绝静默夹值或让底层库抛出异常。</zh-CN><en>HIA coordinates are positive one-based integers; reject silent clamping and underlying library exceptions.</en></lang>
-  if (!isValidOrdinaryLookupPosition(generatedPosition)) {
+  const position = prepareOrdinaryLookupPosition(generatedPosition);
+  if (!position) {
     return { diagnostics: invalidOrdinaryPositionDiagnostics(index), generated, status: "invalid" };
   }
+  // <lang><zh-CN>偏置只从已投影自有数据消费，不能将错误值静默当默认偏置。</zh-CN><en>Consume bias from projected own data only, never silently treating an invalid value as the default.</en></lang>
+  const preparedOptions = prepareOrdinaryLookupOptions(options);
+  if (!preparedOptions) return { diagnostics: invalidOrdinaryQueryDiagnostics(index), generated, status: "invalid" };
 
   if (index.status !== "available" || !index.traceMap) {
     return {
@@ -766,9 +770,9 @@ export function findOriginalPositionForGenerated(
 
   // <lang><zh-CN>仅在库边界将HIA列转换为零基列。</zh-CN><en>Convert HIA columns to zero-based columns only at the library boundary.</en></lang>
   const original = originalPositionFor(index.traceMap, {
-    line: generatedPosition.line,
-    column: hiaColumnToSourceMapColumn(generatedPosition.column),
-    bias: toTraceMapBias(options.bias)
+    line: position.line,
+    column: hiaColumnToSourceMapColumn(position.column),
+    bias: toTraceMapBias(preparedOptions.bias)
   });
 
   if (!original.source || !original.line || original.column === null) {
@@ -798,10 +802,10 @@ export function findOriginalPositionForGenerated(
  * @lang zh-CN 从原始位置查找一个生成位置；无I/O，更新库内部缓存。
  * @lang en Finds one generated position for an original without I/O, updating internal library caches.
  * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
- * @param sourcePath <lang><zh-CN>原始或库已解析路径，仅规范化分隔符。</zh-CN><en>Original or library-resolved path, with separators normalized only.</en></lang>
- * @param originalPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
- * @param options <lang><zh-CN>可选偏置，默认向下最近。</zh-CN><en>Optional bias, defaulting to greatest lower bound.</en></lang>
- * @returns <lang><zh-CN>available映射、unmapped或带固定诊断的invalid。</zh-CN><en>Available mapping, unmapped, or invalid with a fixed diagnostic.</en></lang>
+ * @param sourcePath <lang><zh-CN>原始或库已解析的非空白primitive路径；仅沿用分隔符和首个./规范化，不裁剪。</zh-CN><en>Nonblank primitive original/library-resolved path, retaining separator/initial-./ normalization without trimming.</en></lang>
+ * @param originalPosition <lang><zh-CN>普通/null原型一基安全整数自有坐标；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own one-based safe integer coordinates; omitted column defaults to 1 and known getters never execute.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有数据偏置，仅两种公开值或省略。</zh-CN><en>Plain/null-prototype own-data bias with the two public values or omission only.</en></lang>
+ * @returns <lang><zh-CN>映射、unmapped或固定诊断invalid；原输入回显未脱敏，非法runtime输入不承诺回显类型/可序列化；不是Proxy沙箱。</zh-CN><en>Mapping, unmapped or invalid with fixed diagnostics; raw input echoes are unsanitized and invalid runtime inputs have no echo-type/serialization guarantee or proxy sandbox.</en></lang>
  */
 export function findGeneratedPositionForOriginal(
   index: OrdinarySourceMapIndex,
@@ -809,12 +813,17 @@ export function findGeneratedPositionForOriginal(
   originalPosition: HiaSourcePosition,
   options: OrdinarySourceMapLookupOptions = {}
 ): SourceMapGeneratedLookupResult {
+  // <lang><zh-CN>回显保持原位置身份，非string路径不调用转换钩子；只有快照进入库查询。</zh-CN><en>Echoes retain raw position identity without invoking non-string path conversion hooks; only snapshots reach library lookups.</en></lang>
   const original = createOriginalPosition(sourcePath, originalPosition);
 
   // <lang><zh-CN>反向查找采用同一坐标约束，空结果不能掩盖非法输入。</zh-CN><en>Reverse lookups share the coordinate constraint; empty results must not conceal invalid input.</en></lang>
-  if (!isValidOrdinaryLookupPosition(originalPosition)) {
+  const position = prepareOrdinaryLookupPosition(originalPosition);
+  if (!position) {
     return { diagnostics: invalidOrdinaryPositionDiagnostics(index), original, status: "invalid" };
   }
+  // <lang><zh-CN>路径与偏置须符合已声明字段，拒绝不能伪装成合法未命中。</zh-CN><en>Paths and biases must match declared fields; rejection cannot masquerade as a valid miss.</en></lang>
+  const preparedOptions = prepareOrdinaryLookupOptions(options);
+  if (typeof sourcePath !== "string" || !sourcePath.trim() || !preparedOptions) return { diagnostics: invalidOrdinaryQueryDiagnostics(index), original, status: "invalid" };
 
   if (index.status !== "available" || !index.traceMap) {
     return {
@@ -827,9 +836,9 @@ export function findGeneratedPositionForOriginal(
   // <lang><zh-CN>调用成熟映射库前转换坐标，返回时再恢复HIA坐标。</zh-CN><en>Convert coordinates before calling the mature mapping library, then restore HIA coordinates on return.</en></lang>
   const generated = generatedPositionFor(index.traceMap, {
     source: normalizeLookupPath(sourcePath),
-    line: originalPosition.line,
-    column: hiaColumnToSourceMapColumn(originalPosition.column),
-    bias: toTraceMapBias(options.bias)
+    line: position.line,
+    column: hiaColumnToSourceMapColumn(position.column),
+    bias: toTraceMapBias(preparedOptions.bias)
   });
 
   if (!generated.line || generated.column === null) {
@@ -855,10 +864,10 @@ export function findGeneratedPositionForOriginal(
  * @lang zh-CN 查找原始位置对应的全部生成位置；无I/O，更新库内部缓存。
  * @lang en Finds all generated positions for an original without I/O, updating internal library caches.
  * @param index <lang><zh-CN>本包创建且未篡改的位置索引。</zh-CN><en>Untampered position index created by this package.</en></lang>
- * @param sourcePath <lang><zh-CN>原始或库已解析路径。</zh-CN><en>Original or library-resolved path.</en></lang>
- * @param originalPosition <lang><zh-CN>HIA一基正整数行/列；省略列为1。</zh-CN><en>HIA positive integer one-based line/column; omitted column defaults to 1.</en></lang>
- * @param options <lang><zh-CN>可选偏置，统一默认向下最近，覆盖库的全部查找默认偏置。</zh-CN><en>Optional bias, consistently defaulting to greatest lower bound and overriding the library all-lookup default.</en></lang>
- * @returns <lang><zh-CN>映射数组及状态，invalid/unmapped时数组为空。</zh-CN><en>Mapping array and status; the array is empty for invalid/unmapped results.</en></lang>
+ * @param sourcePath <lang><zh-CN>原始或库已解析的非空白primitive路径，不调用对象转换钩子。</zh-CN><en>Nonblank primitive original/library-resolved path without object conversion hooks.</en></lang>
+ * @param originalPosition <lang><zh-CN>普通/null原型一基安全整数自有坐标；省略列为1，已知getter不执行。</zh-CN><en>Plain/null-prototype own one-based safe integer coordinates; omitted column defaults to 1 and known getters never execute.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有偏置数据，默认向下最近，覆盖库的全部查找默认偏置；错误值拒绝。</zh-CN><en>Plain/null-prototype own bias data, defaulting to greatest lower bound over the library all-lookup default; invalid values are rejected.</en></lang>
+ * @returns <lang><zh-CN>映射数组及状态，invalid/unmapped时数组为空；原输入回显未脱敏，不承诺非法runtime回显类型/序列化或Proxy沙箱。</zh-CN><en>Mapping array and status, empty on invalid/unmapped; raw echoes are unsanitized with no invalid-runtime echo-type/serialization or proxy-sandbox guarantee.</en></lang>
  */
 export function findAllGeneratedPositionsForOriginal(
   index: OrdinarySourceMapIndex,
@@ -866,12 +875,17 @@ export function findAllGeneratedPositionsForOriginal(
   originalPosition: HiaSourcePosition,
   options: OrdinarySourceMapLookupOptions = {}
 ): SourceMapAllGeneratedLookupResult {
+  // <lang><zh-CN>原输入回显不参与坐标求值，独立快照才可用于一对多查找。</zh-CN><en>Raw echoes never participate in coordinate evaluation; only independent snapshots drive one-to-many lookups.</en></lang>
   const original = createOriginalPosition(sourcePath, originalPosition);
 
   // <lang><zh-CN>反向查找采用同一坐标约束，空结果不能掩盖非法输入。</zh-CN><en>Reverse lookups share the coordinate constraint; empty results must not conceal invalid input.</en></lang>
-  if (!isValidOrdinaryLookupPosition(originalPosition)) {
+  const position = prepareOrdinaryLookupPosition(originalPosition);
+  if (!position) {
     return { diagnostics: invalidOrdinaryPositionDiagnostics(index), generated: [], original, status: "invalid" };
   }
+  // <lang><zh-CN>错误路径/偏置只返回固定查询拒绝，保留空的生成映射数组。</zh-CN><en>Invalid paths/biases return fixed query rejection with an empty generated-mapping array.</en></lang>
+  const preparedOptions = prepareOrdinaryLookupOptions(options);
+  if (typeof sourcePath !== "string" || !sourcePath.trim() || !preparedOptions) return { diagnostics: invalidOrdinaryQueryDiagnostics(index), generated: [], original, status: "invalid" };
 
   if (index.status !== "available" || !index.traceMap) {
     return {
@@ -885,9 +899,9 @@ export function findAllGeneratedPositionsForOriginal(
   // <lang><zh-CN>一对多投影保留库顺序，并逐项转换回HIA列。</zh-CN><en>Preserve library order for one-to-many projections and convert each result back to HIA columns.</en></lang>
   const generated = allGeneratedPositionsFor(index.traceMap, {
     source: normalizeLookupPath(sourcePath),
-    line: originalPosition.line,
-    column: hiaColumnToSourceMapColumn(originalPosition.column),
-    bias: toTraceMapBias(options.bias)
+    line: position.line,
+    column: hiaColumnToSourceMapColumn(position.column),
+    bias: toTraceMapBias(preparedOptions.bias)
   }).map((position) => createGeneratedPosition(index.artifactPath, {
     line: position.line,
     column: sourceMapColumnToHiaColumn(position.column)
@@ -1295,10 +1309,11 @@ function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): nu
   return (left.column ?? 1) - (right.column ?? 1);
 }
 
+/** @lang zh-CN 保留原输入回显；仅primitive string规范化，非法runtime对象不执行replaceAll/toString，回显不作可信类型证明。 @lang en Retains raw input echoes, normalizing primitive strings only without invoking replaceAll/toString on invalid runtime objects; echoes never prove trusted types. */
 function createOriginalPosition(sourcePath: string, position: HiaSourcePosition): SourceMapOriginalPosition {
   return {
     position,
-    sourcePath: normalizeLookupPath(sourcePath)
+    sourcePath: typeof sourcePath === "string" ? normalizeLookupPath(sourcePath) : sourcePath
   };
 }
 
@@ -1309,15 +1324,43 @@ function createGeneratedPosition(artifactPath: string | undefined, position: Hia
   };
 }
 
-/** @lang zh-CN HIA查找的行/列是安全正整数；省略列沿用第一列。 @lang en HIA lookup lines/columns are safe positive integers; omitted columns retain the first-column default. */
-function isValidOrdinaryLookupPosition(position: HiaSourcePosition): boolean {
-  return Number.isSafeInteger(position.line) && position.line > 0
-    && (position.column === undefined || (Number.isSafeInteger(position.column) && position.column > 0));
+/** @lang zh-CN 只投影已知自有坐标，省略列保留；不执行getter，不读取扩展，反射异常只作失败。 @lang en Projects known own coordinates only while retaining omitted columns, without executing getters/reading extensions; reflection errors become failure only. */
+function prepareOrdinaryLookupPosition(value: unknown): HiaSourcePosition | undefined {
+  try {
+    if (!isPlainQueryRecord(value)) return undefined;
+    // <lang><zh-CN>已知数据描述符组成一次调用的独立快照，校验后不再读原坐标属性。</zh-CN><en>Known data descriptors form this call's independent snapshot; original coordinate properties are never read again after validation.</en></lang>
+    const line = Object.getOwnPropertyDescriptor(value, "line");
+    const column = Object.getOwnPropertyDescriptor(value, "column");
+    if (!line || !Object.hasOwn(line, "value") || !Number.isSafeInteger(line.value) || line.value < 1) return undefined;
+    if (column && (!Object.hasOwn(column, "value") || (column.value !== undefined && (!Number.isSafeInteger(column.value) || column.value < 1)))) return undefined;
+    return { line: line.value, ...(column?.value !== undefined ? { column: column.value } : {}) };
+  } catch {
+    return undefined;
+  }
+}
+
+/** @lang zh-CN 偏置只接受两种已声明值及undefined省略，拒绝形状/访问器/异常，不读取未知选项。 @lang en Bias accepts the two declared values or undefined omission only, rejecting invalid shapes/accessors/errors without reading unknown options. */
+function prepareOrdinaryLookupOptions(value: unknown): OrdinarySourceMapLookupOptions | undefined {
+  try {
+    if (!isPlainQueryRecord(value)) return undefined;
+    // <lang><zh-CN>缺省和显式undefined均保持既有GLB默认，不能容忍错误拼写。</zh-CN><en>Absent and explicit undefined retain the existing GLB default without tolerating misspellings.</en></lang>
+    const bias = Object.getOwnPropertyDescriptor(value, "bias");
+    if (!bias) return {};
+    if (!Object.hasOwn(bias, "value")) return undefined;
+    if (bias.value === undefined) return {};
+    return bias.value === "greatest-lower-bound" || bias.value === "least-upper-bound" ? { bias: bias.value } : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** @lang zh-CN 返回固定坐标错误，不回显坐标对象或底层异常；不修改原索引诊断。 @lang en Returns a fixed position error without reflecting the position object or underlying exception; does not mutate index diagnostics. */
 function invalidOrdinaryPositionDiagnostics(index: OrdinarySourceMapIndex): HiaDiagnostic[] {
   return [...index.diagnostics, createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_POSITION_INVALID", "HIA lookup positions require positive integer lines and optional positive integer columns.", "error", index.path)];
+}
+/** @lang zh-CN 固定路径/偏置输入拒绝，不反射原值/异常，不修改索引诊断；显式path上下文仍未脱敏。 @lang en Fixed path/bias rejection without reflecting values/errors or mutating index diagnostics; explicit path context remains unsanitized. */
+function invalidOrdinaryQueryDiagnostics(index: OrdinarySourceMapIndex): HiaDiagnostic[] {
+  return [...index.diagnostics, createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_QUERY_INVALID", "Ordinary lookup paths and options require declared primitive paths and own data bias values.", "error", index.path)];
 }
 function hiaColumnToSourceMapColumn(column: number | undefined): number {
   return Math.max(0, (column ?? 1) - 1);

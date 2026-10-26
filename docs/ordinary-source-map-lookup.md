@@ -4,7 +4,7 @@ The source version of `@hia-doc/source-linkage` isolates ordinary position-map
 metadata from source bodies. These changes are unreleased; npm `0.1.1` does not
 include them. No contract, schema, or package version changes in this repair.
 
-中文：源码修复普通位置映射的正文隔离、固定错误诊断、非法坐标拒绝与联合失败隔离；尚未发布。
+中文：源码修复普通位置映射的正文隔离、固定错误诊断、已知查询字段投影与联合失败隔离；尚未发布。
 文档源码映射来源模型与独立 binding sidecar 版本保持不变。
 
 ## Input and ownership
@@ -39,9 +39,27 @@ All three position helpers use **HIA one-based lines and columns**. Omitted
 columns default to `1`; values must be positive safe integers. Zero, negatives,
 fractions, `NaN` and infinity return `invalid` with
 `ORDINARY_SOURCE_MAP_POSITION_INVALID`, rather than being clamped or thrown.
-These are typed APIs: arbitrary runtime query objects, accessors and tampered
-indexes are outside this coordinate-only check. Echoed input is not validation
-evidence and must not be logged as trusted/public data.
+Positions and lookup options must be same-realm plain or null-prototype objects.
+Only own data descriptors for `line`, `column` and `bias` are consumed; known
+accessors are rejected without execution. Frozen data is accepted. Unknown
+extensions and their accessors are ignored. Numeric snapshots are used for the
+library call, avoiding rereading caller properties after validation. Invalid
+coordinate shapes and reflection failures retain `ORDINARY_SOURCE_MAP_POSITION_INVALID`.
+
+Reverse source paths must be primitive, nonblank strings. Valid paths keep the
+existing separator and initial `./` normalization; whitespace is not trimmed
+from a nonblank path, and no URL parsing or I/O is added. Options accept only the
+two declared bias strings; omitted/undefined bias retains the default. Invalid
+option shapes, bias values or source paths return `invalid` with the fixed
+`ORDINARY_SOURCE_MAP_QUERY_INVALID`. Rejection never becomes a valid empty lookup,
+and diagnostic text does not include values or caught exception messages.
+
+The original input position is still echoed by reference. Rejected runtime
+values can also remain in input context, so echoes are neither validated output
+types nor redacted/serializable data. Do not log or serialize the whole result as
+trusted/public evidence. Explicit index path context is still retained. Proxies,
+concurrent mutation, hostile resource use and tampered indexes are not sandboxed;
+the index must remain an untampered instance created by this package.
 
 | API | Available result | No mapping |
 | --- | --- | --- |
@@ -61,5 +79,6 @@ The legacy order for supplying both original and generated positions remains;
 that order is not a consistency check between the two positions. Combined query
 fields now receive separate runtime projection and fixed diagnostics; see
 [combined queries and LSP propagation](doc-source-map-query.md#combined-position-queries).
-The three ordinary position helpers themselves retain their coordinate-only
-boundary described above.
+The three ordinary helpers use the field projection described above. Their
+public signatures, bias defaults, numeric conversion, result states and source
+map semantics are unchanged; this repair remains unreleased.

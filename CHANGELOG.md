@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Ordinary position helper input projection
+
+- 三种普通位置helper投影已知自有坐标/偏置数据，拒绝访问器、非法对象/路径和错误偏置，固定诊断不透传异常；坐标错误沿用既有code，路径/偏置使用ORDINARY_SOURCE_MAP_QUERY_INVALID。原输入回显未脱敏，索引篡改仍不支持。合法偏置/缺省列/未命中、契约/schema/包版本及公开导出保持，尚未发布。
+- Three ordinary position helpers project known own coordinate/bias data, reject accessors and invalid objects/paths/biases, and return fixed diagnostics without exception text. Coordinate failures retain their code; path/bias failures use ORDINARY_SOURCE_MAP_QUERY_INVALID. Raw echoes remain untrusted and tampered indexes remain unsupported. Valid lookup semantics, contract/schema/package versions and root exports are unchanged; unreleased. See [ordinary lookups](docs/ordinary-source-map-lookup.md).
+
 ## Unreleased — Pug producer source-identity coordination
 
 - Pug源码生产器的新映射统一采用绑定端既有完整相对路径源码身份，修复组内断链和slug碰撞；绑定及内容保持。需重新生成完整组后迁移，旧不闭合组仍拒绝。核心运行时/schema/包身份保持，未发布npm。

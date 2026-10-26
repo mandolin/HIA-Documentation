@@ -28,4 +28,10 @@ const requiredGenerated: SourceMapGeneratedPosition = reverse.generated;
 const badStatus: SourceLinkedLookupResult["status"] = "success";
 // @ts-expect-error Body-free projection is internal, not a root API.
 import { createBodyFreeOrdinaryTraceMap } from "../src/index.js";
+// @ts-expect-error Reverse source paths remain primitive strings, not coercible numbers.
+findGeneratedPositionForOriginal(index, 42, { line: 1 });
+// @ts-expect-error Lookup options retain the exact declared bias union.
+findAllGeneratedPositionsForOriginal(index, "src/a.ts", { line: 1 }, { bias: "nearest" });
+// @ts-expect-error Runtime rejection does not widen typed positions to null.
+findOriginalPositionForGenerated(index, null);
 void [options, lookup, index, forward, reverse, all, original, generated, query, combined, badBias, requiredOriginal, requiredGenerated, badStatus, createBodyFreeOrdinaryTraceMap];

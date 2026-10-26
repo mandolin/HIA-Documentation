@@ -96,8 +96,9 @@ with `not-loaded` and are not queried. Managed-service null/false query values
 reach validation instead of disappearing as omissions.
 
 No transport error, host field, empty-state enum or UI is added. Outer typed
-options/URI/request envelopes, ordinary-position helpers' arbitrary runtime
-objects, conflicting dual positions, tampered indexes and frozen binding
-sidecar migration remain separate review boundaries. The
+options/URI/request envelopes, conflicting dual positions and tampered indexes
+remain separate review boundaries. The ordinary helpers now project their known
+runtime position/options fields and reject invalid paths and biases; the
 [ordinary position map guide](ordinary-source-map-lookup.md) describes its
-existing coordinate-only validation. These changes remain unreleased.
+input and echo limits. Explicit [binding bundle migration](generated-documentation-binding-contract.md)
+has its own exact-version and complete-group checks. These changes remain unreleased.

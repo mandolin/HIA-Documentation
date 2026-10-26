@@ -25,12 +25,18 @@ It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_
 ## Version and privacy checks
 
 The source-only ordinary-map repair copies body-free metadata and preserves valid
-string/object/decoded/TraceMap inputs. Invalid coordinates receive fixed diagnostics;
-combined position failures return no broad document entries. See
+string/object/decoded/TraceMap inputs. Ordinary helpers project known own
+position/options data without executing getters, reject invalid coordinates,
+paths and biases with fixed diagnostics, and preserve unknown-field ignoring.
+Combined position failures return no broad document entries. See
 [`ordinary-source-map-lookup`](../../docs/ordinary-source-map-lookup.md) for ownership,
 defaults and limits. These changes are not included in npm `0.1.1`.
 
 中文：普通位置映射源码修复正文隔离、坐标校验与联合失败隔离，尚未发布；详见上述说明。
+
+Position/options require plain or null-prototype records; optional columns and
+both bias defaults are unchanged. Input echoes remain untrusted and may be
+nonserializable, and mutable indexes must not be tampered with after validation.
 
 The source version also checks declared field types, collection identities and
 ordered positive-integer ranges. Non-JSON memory values, accessors, cycles,
