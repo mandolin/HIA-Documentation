@@ -494,9 +494,13 @@ const diagnosticSeverityByCode = new Map<string, HiaDiagnosticSeverity>([
  * @lang zh-CN 校验新旧绑定辅助工件的普通JSON、已消费字段、跨集合、隐私与精确版本；不执行getter/表达式，不读取路径或建立索引。
  * @lang en Validates ordinary JSON, consumed fields, cross-collection/privacy semantics and exact current/legacy binding versions without executing getters/expressions, reading paths or building indexes.
  *
+ * @remarks
+ * @lang zh-CN 按现有顺序返回输入字段、头部/政策、集合及引用诊断，已声明的root/binding adapterExtensions存在时须为object；未知可选JSON字段继续保留兼容。此函数只看到sidecar：不核实际映射声明/source/artifact闭包，不认证外部symbol、表达式或scopeId的词法真实性。合法提取error记录不会成为工件结构错误；消费索引和整组迁移另行据error拒绝。
+ * @lang en Returns input-field, header/policy, collection and reference diagnostics in existing order; declared root/binding adapterExtensions must be objects when present, while unknown optional JSON fields remain compatible. This function sees only the sidecar: it checks no actual map declarations/source/artifact closure and authenticates no external symbols, expressions or lexical meaning of scopeId. Valid extraction-error records are not artifact-structure errors; consuming indexes and bundle migration separately refuse extraction errors.
+ *
  * @param value <lang><zh-CN>未知内存值；只接受有限无环普通JSON，允许共享子图。</zh-CN><en>Unknown memory value; only finite acyclic ordinary JSON is accepted, with shared subgraphs allowed.</en></lang>
  * @param options <lang><zh-CN>普通/null原型自有string路径快照输入，默认空对象；访问器/错型拒绝且未知字段不读，合法上下文未脱敏。</zh-CN><en>Plain/null-prototype own string-path snapshot input, defaulting to an empty object; accessors/wrong types are rejected, unknown fields unread and valid context unsanitized.</en></lang>
- * @returns <lang><zh-CN>固定诊断数组；空数组仅代表本owner已实现检查通过，不替代完整schema验证。Proxy反射/资源和并发突变不是沙箱保证。</zh-CN><en>Fixed diagnostics; an empty array passes implemented owner checks only, not complete schema validation. Proxy reflection/resources/concurrent mutation are not sandbox guarantees.</en></lang>
+ * @returns <lang><zh-CN>同步新建可写固定诊断数组，不修改输入；空数组仅代表本owner已实现检查通过，不替代完整schema验证、组认证或公开授权。Proxy反射/资源和并发突变不是沙箱保证。</zh-CN><en>Fresh synchronous writable fixed diagnostics without input mutation; an empty array passes implemented owner checks only, not complete schema validation, bundle certification or publication authority. Proxy reflection/resources/concurrent mutation are not sandbox guarantees.</en></lang>
  */
 export function validateGeneratedDocumentationBinding(
   value: unknown,

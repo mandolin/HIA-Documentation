@@ -43,6 +43,14 @@ all seven interfaces, counts, ownership and branch-specific status semantics.
 
 ## Version and privacy checks
 
+See [binding validation and bundle migration](../../docs/generated-binding-validation-and-migration.md)
+for both synchronous functions, owner-versus-actual-map responsibilities, empty
+sidecar sets, opaque scopes and external-symbol limits. The unreleased owner now
+enforces the existing object type for root/binding `adapterExtensions`; malformed
+containers yield invalid indexes and atomic migration refusal. Optional objects
+and admitted unknown JSON fields remain supported.
+中文：生成式文档绑定校验补齐既有扩展对象类型约束及两个函数责任说明，版本不变，尚未发布。
+
 The [binding options and bundle result reference](../../docs/generated-binding-options-and-results.md)
 documents six fields across validation context, the writable bundle container and
 migration results. Record types do not certify versions; factory success returns

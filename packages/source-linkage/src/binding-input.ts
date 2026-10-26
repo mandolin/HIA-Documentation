@@ -38,6 +38,9 @@ export function collectBindingInputIssues(value: Node): BindingInputIssue[] {
     if (Object.hasOwn(node, key) && (!Array.isArray(node[key]) || !(node[key] as unknown[]).every(text))) issue(`${target}.${key}`);
   };
 
+  // <lang><zh-CN>已声明的可选扩展容器存在时必须为对象；保留对象内部未知JSON字段，不把数组/null或原始值当扩展图。</zh-CN><en>Declared optional extension containers must be objects when present; retain unknown JSON fields inside objects without admitting arrays/null or primitives as extension graphs.</en></lang>
+  if (Object.hasOwn(value, "adapterExtensions") && !record(value.adapterExtensions)) issue("adapterExtensions");
+
   // <lang><zh-CN>兼容声明是冻结wire的一部分，不能让错误最低版本或政策被静默接受。</zh-CN><en>Compatibility declarations are part of the frozen wire and cannot silently admit wrong minimum versions or policies.</en></lang>
   if (!record(value.compatibility)
     || value.compatibility.minimumConsumerContractVersion !== value.contractVersion
@@ -56,6 +59,8 @@ export function collectBindingInputIssues(value: Node): BindingInputIssue[] {
   for (const [index, binding] of records(value.bindings).entries()) {
     // <lang><zh-CN>下标只定位当前声明；非法集合项由外层validator另报，不变成成功条目。</zh-CN><en>Indices locate declarations; invalid collection members are diagnosed by the outer validator and never become successful entries.</en></lang>
     const target = `bindings.${index}`;
+    // <lang><zh-CN>绑定节点与根沿用同一冻结object类型，固定路径不会回显扩展值或未知键。</zh-CN><en>Binding nodes retain the same frozen object type as the root; fixed paths never echo extension values or unknown keys.</en></lang>
+    if (Object.hasOwn(binding, "adapterExtensions") && !record(binding.adapterExtensions)) issue(`${target}.adapterExtensions`);
     if (record(binding.sourceIntent)) strings(binding.sourceIntent, `${target}.sourceIntent`, ["field", "locale"]);
     if (record(binding.bindingRef)) {
       enumeration(binding.bindingRef, `${target}.bindingRef`, "kind", ["identifier", "member-path", "adapter-defined"]);

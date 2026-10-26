@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated binding validation and migration responsibilities
+
+- 修复root/binding已声明adapterExtensions对象类型未执行的问题，拒绝错型容器并沿既有索引/整组迁移原子失败；补两函数责任、空组、外部符号/scope边界说明。schema、契约/包版本和公开签名保持，尚未发布。
+- Enforce the already declared object type for root/binding adapterExtensions, refusing malformed containers through existing index/atomic migration gates. Document both functions, empty bundles and external-symbol/scope limits. Schemas, contract/package versions and public signatures remain unchanged; unreleased. See the [guide](docs/generated-binding-validation-and-migration.md).
+
 ## Unreleased — Generated binding options and bundle-result fields
 
 - 补齐三接口六字段的诊断上下文、结构类型限制、按工件复制/输入顺序与原子结果说明及特征/严格类型；成功外层诊断为空但工件文本可保留。类型、运行逻辑、版本保持，尚未发布。
