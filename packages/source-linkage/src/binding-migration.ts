@@ -11,20 +11,29 @@ import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { cloneSourceLinkageJsonData, prepareDocSourceMapMigration } from "./manifest-migration.js";
 import { prepareSourceLinkagePathOptions } from "./path-options.js";
 
-/** @lang zh-CN 明确的整组内存产物，不是磁盘事务或发布授权；完整JSON字段可能仍包含调用者允许的内容。 @lang en Explicit in-memory artifact bundle, not a disk transaction or publication authority; complete JSON fields may retain caller-allowed content. */
+/**
+ * @lang zh-CN 显式整组内存容器的可写结构类型；Record/数组本身不认证版本、完整性或隐私。迁移入口另行接收unknown并验证完整旧/新配对，成功才返回独立当前组；不是磁盘事务或发布授权。未知wrapper字段不输出，但整个输入仍须通过普通JSON预检。
+ * @lang en Writable structural type for an explicit in-memory artifact bundle; records/arrays alone certify neither versions, completeness nor privacy. The migration entry separately accepts unknown, validates a complete legacy/current pair and returns an independent current bundle on success. It is not a disk transaction or publication authority. Unknown wrapper fields are omitted from output, but the entire input still requires ordinary-JSON preflight.
+ */
 export interface GeneratedDocumentationBindingMigrationBundle {
-  /** @lang zh-CN 独立的当前1.0.0普通文档映射，只存绑定引用。 @lang en Independent current1.0.0 documentation map containing binding references only. */
+  /**
+   * @lang zh-CN 必填普通映射记录，字段值仍为unknown，类型不能证明contractVersion。factory成功输出为独立可写1.0.0图，绑定仅保留引用；获准源码正文、原诊断和JSON扩展仍可能保留，不代表公开安全。可枚举字符串键复制，不保留原型/描述符、隐藏/Symbol属性；同一映射内部共享保留，与输入/其它调用/sidecar副本无可变别名。
+   * @lang en Required map record with unknown field values; its type does not prove contractVersion. Factory success supplies an independent writable 1.0.0 graph containing binding references only; permitted source bodies, raw diagnostics and JSON extensions may remain without public-safety guarantees. Enumerable string keys are copied, excluding original prototypes/descriptors and hidden/symbol properties; sharing within the map is retained, without mutable aliases to inputs, other calls or sidecar copies.
+   */
   docSourceMap: Record<string, unknown>;
-  /** @lang zh-CN 完整且独立的0.2.0-draft辅助工件，保持输入顺序。 @lang en Complete independent0.2.0-draft sidecars in input order. */
+  /**
+   * @lang zh-CN 必填可写记录数组，类型不证明成员完整/唯一或版本；运行时须完整对应映射声明。factory成功输出均为0.2.0-draft，保持输入数组顺序而非声明顺序；每个sidecar分别独立复制，内部共享保留，跨工件共享身份不保留。获准诊断/扩展保留，仍禁止源码/运行值等隐私字段；数组及嵌套记录可写，编辑后须重新验证。
+   * @lang en Required writable record array whose type does not prove member completeness, uniqueness or versions; runtime members must exactly cover map declarations. Factory success returns 0.2.0-draft sidecars in input-array rather than declaration order; each sidecar is cloned independently, retaining internal sharing but not cross-artifact shared identity. Admitted diagnostics/extensions remain, while source/runtime-value privacy fields stay prohibited. Arrays and nested records remain writable and require revalidation after edits.
+   */
   bindingSidecars: Record<string, unknown>[];
 }
-/** @lang zh-CN 迁移状态与固定诊断；任何失败都没有bundle，不包含原始输入回显。 @lang en Migration status and fixed diagnostics; failures have no bundle or original-input echo. */
+/** @lang zh-CN 普通可写结果interface，不是状态与bundle关联的判别联合；原子成功/拒绝形态由factory保证，人工构造或后续修改不具备同等证明。 @lang en Ordinary writable result interface, not a discriminated union tying status to bundle; the factory guarantees atomic success/refusal shapes, unlike manual construction or later edits. */
 export interface GeneratedDocumentationBindingBundleMigrationResult {
-  /** @lang zh-CN 旧配对转换为migrated，当前配对复制为already-current。 @lang en Legacy conversion yields migrated; current-pair cloning yields already-current. */
+  /** @lang zh-CN 四值可写状态：旧配对转换为migrated，当前配对复制为already-current，非法组为invalid，未识别的工件版本为unsupported-version。它是调用时观察；修改bundle/diagnostics不重算状态，也不能仅缩小status就推断bundle存在。 @lang en Writable four-literal status: migrated for legacy conversion, already-current for current-pair cloning, invalid for malformed bundles and unsupported-version for unrecognized artifact versions. It is a call-time observation; later bundle/diagnostic edits do not recompute it, and narrowing status alone does not prove bundle presence. */
   status: "migrated" | "already-current" | "invalid" | "unsupported-version";
-  /** @lang zh-CN 仅成功时提供完整新组；调用者自己决定写出/公开。 @lang en Complete new bundle on success only; callers decide whether to write/publish it. */
+  /** @lang zh-CN factory仅在两种成功状态提供自有完整新组；失败连自有bundle属性也省略，无局部产物。接口仍为可选字段，消费者须另查存在性及unknown内容；人工构造可不与status配套。复制/可写性遵循容器字段，调用者自行决定是否写出/公开，成功不是脱敏证明。 @lang en The factory supplies an own complete current bundle only for its two successful statuses; refusals omit even the own bundle property and return no partial artifacts. The interface field remains optional: consumers must separately check presence and unknown content, and manual construction need not match status. Cloning/mutability follow the container fields; callers decide whether to write/publish, without treating success as proof of sanitization. */
   bundle?: GeneratedDocumentationBindingMigrationBundle;
-  /** @lang zh-CN 固定迁移错误，不复制原工件自由文本；工件内diagnostics原样保留在成功bundle。 @lang en Fixed migration errors without artifact free text; artifact diagnostics remain unchanged inside successful bundles. */
+  /** @lang zh-CN 每次新建的可写诊断数组：成功为空，即使bundle工件内仍有获准warning/info或原文本；不汇总工件诊断。拒绝仅含一条固定GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error，不回显被拒工件自由文本，但可保留合法且未脱敏的选项path。无输入/其它调用别名，编辑列表/诊断不更新status。 @lang en Fresh writable diagnostics per call: empty on success even when bundle artifacts retain admitted warnings/info or raw text; artifact diagnostics are not aggregated. Refusal contains one fixed GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error without rejected artifact free text, but may retain a valid unsanitized options.path. No aliases to inputs or other calls; editing the list/diagnostics does not update status. */
   diagnostics: HiaDiagnostic[];
 }
 

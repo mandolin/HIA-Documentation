@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated binding options and bundle-result fields
+
+- 补齐三接口六字段的诊断上下文、结构类型限制、按工件复制/输入顺序与原子结果说明及特征/严格类型；成功外层诊断为空但工件文本可保留。类型、运行逻辑、版本保持，尚未发布。
+- Document six fields across binding validation options, bundle containers and migration results, covering diagnostic context, structural-type limits, per-artifact cloning/input order and atomic result shapes, with characterization and strict type checks. Empty outer success diagnostics do not remove admitted artifact text. Types, runtime logic and versions remain unchanged; unreleased. See the [reference](docs/generated-binding-options-and-results.md).
+
 ## Unreleased — Documentation-map options and migration-result fields
 
 - 补齐两接口四字段的诊断path、可选关联限制、成功复制/诊断所有权和失败无局部产物说明与特征/严格类型。成功可保留获准正文、文本与上下文，不构成公开授权；保留原类型、运行逻辑和版本，尚未发布。

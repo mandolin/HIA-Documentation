@@ -458,11 +458,14 @@ export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = createBindingSchema(G
 export const GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION, DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID);
 
 /**
- * @lang zh-CN 绑定owner校验的普通/null原型自有诊断路径选项，未知字段不读取。
- * @lang en Plain/null-prototype own diagnostic-path options for binding owner validation; unknown fields remain unread.
+ * @lang zh-CN 绑定owner校验的诊断上下文输入；入口先复制已知自有数据，再检查工件，不读取未知选项字段。
+ * @lang en Diagnostic-context input for binding owner validation; the entry snapshots known own data before inspecting artifacts and leaves unknown option fields unread.
  */
 export interface GeneratedDocumentationBindingValidationOptions {
-  /** @lang zh-CN 自有string诊断上下文，不规范化或脱敏，也不授予文件访问/发布权限。 @lang en Own string diagnostic context, neither normalized nor sanitized and granting no file-access/publication authority. */
+  /**
+   * @lang zh-CN 可省略的自有string诊断前缀，不是工件路径解析器；每次调用先复制，字段诊断可追加位置，path/targetPath保持原上下文。空字符串不加前缀，空白和分隔符不规范化或脱敏，失败也可回显合法上下文。仅接收同realm普通/null原型选项；未知字段不读。运行时自有undefined按省略处理，严格可选属性类型仍拒绝显式undefined。输出诊断可写且各调用独立，不授予文件访问/发布权限。
+   * @lang en Optional own string diagnostic prefix, not an artifact-path resolver; copied at call entry, with field locations optionally appended and original context retained in path/targetPath. Empty strings add no prefix; whitespace/separators remain unnormalized and unsanitized, even on refusal. Only same-realm plain/null-prototype options are admitted; unknown fields remain unread. Runtime own undefined is treated as omitted, while strict optional-property types reject explicit undefined. Returned diagnostics are writable and independent across calls, granting no file-access/publication authority.
+   */
   path?: string;
 }
 

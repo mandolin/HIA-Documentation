@@ -43,6 +43,14 @@ all seven interfaces, counts, ownership and branch-specific status semantics.
 
 ## Version and privacy checks
 
+The [binding options and bundle result reference](../../docs/generated-binding-options-and-results.md)
+documents six fields across validation context, the writable bundle container and
+migration results. Record types do not certify versions; factory success returns
+an independent complete current pair with empty outer diagnostics, while raw
+artifact diagnostics may remain. Check optional bundle presence separately;
+successful migration grants no publication authority.
+中文：绑定选项与整组迁移三接口六字段说明及实测已完善，保留类型/运行逻辑，尚未发布。
+
 The source-only ordinary-map repair copies body-free metadata and preserves valid
 string/object/decoded/TraceMap inputs. Ordinary helpers project known own
 position/options data without executing getters, reject invalid coordinates,
