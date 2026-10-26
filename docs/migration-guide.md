@@ -27,6 +27,12 @@ It pairs binding `0.2.0-draft` with map `1.0.0`, retains exact old-pair readers,
 and returns no partial bundle on failure. It performs no filesystem transaction
 or publication; callers retain persistence and privacy responsibility.
 
+For Pug output, regenerate the complete map/sidecar group with the producer
+source-id correction before migrating. Earlier maps used lossy lowercase slugs;
+the corrected producer uses the binding extractor's full logical relative-path
+identity while retaining binding identities and content. Saved unclosed groups
+remain readable but refuse migration; changing only version fields is insufficient.
+
 ## JSDoc Projects
 
 Existing JSDoc projects can adopt HIA through the published packages:

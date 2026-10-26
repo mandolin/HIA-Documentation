@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Pug producer source-identity coordination
+
+- Pug源码生产器的新映射统一采用绑定端既有完整相对路径源码身份，修复组内断链和slug碰撞；绑定及内容保持。需重新生成完整组后迁移，旧不闭合组仍拒绝。核心运行时/schema/包身份保持，未发布npm。
+- The Pug source producer aligns newly generated map source ids with existing binding path identities, fixing local closure and slug collisions while retaining bindings/content. Regenerate complete groups before migration; saved unclosed groups remain refused. Core runtime/schema/package identities are unchanged; unreleased. See [binding migration](docs/generated-documentation-binding-contract.md).
+
 ## Unreleased — Generated binding input and coordinated migration
 
 - 生成式绑定输入隔离访问器/环/反射错误，检查集合项、已声明字段、安全坐标及顺序，迭代隐私扫描不回显未知扩展键。新增绑定`0.2.0-draft`与源码映射`1.0.0`精确配对及纯内存整组迁移；旧配对和原始schema字节保留，失败无局部产物。locals契约、包版本及绑定draft性质保持，未发布npm。

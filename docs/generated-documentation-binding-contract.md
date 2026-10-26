@@ -68,11 +68,15 @@ refuses legacy binding associations.
 输出保留允许的工件内容；调用者负责持久化事务、并发控制和隐私复核。
 旧生产器可以继续输出旧配对，无需自动重写。
 
-The existing Pug runtime fixture remains readable as a legacy pair, but currently
-uses different source-id spellings in its map and binding sidecar. Bundle
-migration refuses that unclosed group without changing identities. Align the
-producer's source identities in a separately reviewed change before migrating
-that output; retaining legacy reader support does not certify migration readiness.
+The Pug source producer now uses its binding extractor's existing
+`source:pug:${workspaceRelativePath}` identity in newly generated maps as well.
+It retains case, punctuation, Unicode and hierarchy; `/` is the separator and
+the id is an opaque reference rather than a URL. Binding/scope/instance/target
+identities and content remain unchanged. Rebuild complete artifact groups with
+the corrected producer before migrating them. Earlier saved maps used a lossy
+lowercase slug; those legacy pairs remain readable but unclosed groups still
+refuse migration. The migration API does not guess or rewrite those identities.
+This is an unreleased producer source correction, not an npm package update.
 
 ## Neutral model
 
