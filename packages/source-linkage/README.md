@@ -22,6 +22,13 @@ It also provides an ordinary source map lookup layer based on `@jridgewell/trace
 
 It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_MAP_JSON_SCHEMA`, `DOC_SOURCE_MAP_SCHEMA_ID` and `DOC_SOURCE_MAP_SCHEMA_VERSION`. Structural schema validation does not replace the package's semantic path, privacy and reference diagnostics.
 
+The ordinary index remains mutable metadata with creation-time counts, copied
+range containers and reference-only sidecars. Check status before consumption;
+unusable indexes may retain partial metadata. See the [complete index field
+reference](../../docs/doc-source-map-index.md) for ownership, counts and limits.
+
+中文：普通索引九接口63字段已补语义说明与回归，保持原可变类型/运行逻辑；尚未发布。
+
 ## Version and privacy checks
 
 The source-only ordinary-map repair copies body-free metadata and preserves valid

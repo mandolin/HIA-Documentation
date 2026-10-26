@@ -108,144 +108,192 @@ export interface DocSourceMapIndexOptions {
   path?: string;
 }
 
+/**
+ * @lang zh-CN 文档源码映射的可变、无正文元数据快照；计数只在创建时计算，invalid/unsupported-version也可能保留部分元数据，消费前必须检查status。
+ * @lang en Mutable body-free metadata snapshot of a documentation source map; counts are computed at creation, and invalid/unsupported-version indexes may retain partial metadata, so check status before consumption.
+ */
 export interface DocSourceMapIndex {
+  /** @lang zh-CN 顶层产物声明数，含未使用节点和重复路径；无效重复身份不在此去重。 @lang en Number of top-level artifact declarations, including unused nodes/repeated paths; invalid duplicate identities are not deduplicated here. */
   artifactCount: number;
+  /** @lang zh-CN 已投影的生成文档绑定sidecar声明数，不是绑定或展开数量。 @lang en Number of projected generated-documentation-binding sidecar declarations, not bindings or expansions. */
   bindingSidecarCount: number;
-  /**
-   * 中文：doc-source-map 声明的 generated binding sidecar 元数据；不加载
-   * sidecar 正文。
-   * English: Generated-binding sidecar metadata declared by the doc-source-map;
-   * sidecar bodies are not loaded here.
-   */
+  /** @lang zh-CN 按声明顺序新建的最小绑定sidecar元数据；不读取或验证其正文。 @lang en New minimal binding-sidecar metadata in declaration order, without reading or validating its body. */
   bindingSidecars: DocSourceMapGeneratedBindingSidecar[];
-  /**
-   * 中文：普通 doc-source-map 声明的 metadata-only locale-resolution sidecar；不加载
-   * resource body、locator 或 resolved text。
-   * English: Metadata-only locale-resolution sidecars declared by the ordinary
-   * doc-source-map; resource bodies, locators, and resolved text are not loaded.
-   */
+  /** @lang zh-CN 按声明顺序新建的语言解析sidecar元数据，不含资源正文、locator或已解析文本。 @lang en New locale-resolution sidecar metadata in declaration order, without resource bodies, locators or resolved text. */
   localeResolutionSidecars: DocSourceMapLocaleResolutionSidecar[];
+  /** @lang zh-CN 已投影语言解析sidecar声明数，不是locale或资源数量。 @lang en Number of projected locale-resolution sidecar declarations, not locales or resources. */
   localeResolutionSidecarCount: number;
-  /**
-   * 中文：普通 doc-source-map 声明的 metadata-only locale-discovery sidecar；不加载
-   * controlled declaration、catalog locator、resource/source body 或 range。
-   * English: Metadata-only locale-discovery sidecars declared by the ordinary
-   * doc-source-map; controlled declarations, catalog locators, resource/source bodies, and ranges are not loaded.
-   */
+  /** @lang zh-CN 按声明顺序新建的语言资源发现sidecar元数据，不含受控声明/catalog或资源正文。 @lang en New locale-discovery sidecar metadata in declaration order, without controlled declarations/catalogs or resource bodies. */
   localeDiscoverySidecars: DocSourceMapLocaleDiscoverySidecar[];
+  /** @lang zh-CN 已投影语言资源发现sidecar声明数，不证明任何资源已读取。 @lang en Number of projected locale-discovery sidecar declarations, proving no resource was read. */
   localeDiscoverySidecarCount: number;
+  /** @lang zh-CN 固定索引类别doc-source-map；即使输入类别错误也使用此值，不作为接纳证明。 @lang en Fixed index kind doc-source-map, even for a wrong input contract; this is not proof of admission. */
   contract: typeof DOC_SOURCE_MAP_CONTRACT;
+  /** @lang zh-CN 可取得时保留输入的非空版本文本，未知标签也可保留；检查status而非只看标签。 @lang en Input nonempty version text when available, including unsupported labels; check status rather than the label alone. */
   contractVersion?: string;
+  /** @lang zh-CN 本次新建的可变owner诊断序列，含结构/版本/引用/路径/隐私及输入诊断；合法上下文与输入消息未脱敏。 @lang en New mutable owner diagnostic sequence, including structure/version/reference/path/privacy and input diagnostics; valid context and input messages are unsanitized. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 按输入顺序新建的可变条目列表；无效状态仍可含部分投影，不应绕过状态消费。 @lang en New mutable entry list in input order; unusable states may retain partial projections that must not bypass the status gate. */
   entries: DocSourceMapIndexedEntry[];
+  /** @lang zh-CN 本次投影条目数，创建后修改entries不会自动重算。 @lang en Number of projected entries at creation; later entries mutation does not recompute it. */
   entryCount: number;
+  /** @lang zh-CN 可取得时复制输入的非空身份文本，不裁剪或授予信任/公开权限。 @lang en Input nonempty identity text when available, without trimming or granting trust/publication authority. */
   id?: string;
+  /** @lang zh-CN 同时具有已解析路径且confidence非none、来源非unresolved的source/artifact引用的条目数；不要求range或selector。 @lang en Entries with both source/artifact references having resolved paths, confidence other than none and provenance other than unresolved; ranges/selectors are not required. */
   linkedEntryCount: number;
+  /** @lang zh-CN 非空时保留调用方诊断路径原文；空string省略，未规范化或脱敏，不授予文件访问权限。 @lang en Caller diagnostic path retained verbatim when nonempty; empty strings are omitted, with no normalization/sanitization or file-access authority. */
   path?: string;
+  /** @lang zh-CN 顶层来源声明数，含未使用声明与相同路径，不等于可定位文件数量。 @lang en Number of top-level source declarations, including unused declarations/shared paths, not the number of navigable files. */
   sourceCount: number;
+  /** @lang zh-CN 按声明顺序新建的普通位置映射链接元数据，不含mappings/sourcesContent且不加载文件或URL。 @lang en New ordinary position-map link metadata in declaration order, excluding mappings/sourcesContent and loading no file or URL. */
   sourceMaps: DocSourceMapSourceMapLink[];
+  /** @lang zh-CN 已投影普通位置映射声明数，不是映射段数或可执行链数量。 @lang en Number of projected ordinary map declarations, not mapping segments or executable chains. */
   sourceMapCount: number;
+  /** @lang zh-CN 复制根privacy策略，缺省为none；embed/redacted也不会令本索引携带源码正文。 @lang en Root privacy policy, defaulting to none; embed/redacted still do not put source bodies into this index. */
   sourcesContentPolicy: string;
+  /** @lang zh-CN owner边界结果；error优先invalid，其次未知版本unsupported-version，否则available；不替代完整schema/跨链或公开安全验证。 @lang en Owner boundary result: errors yield invalid before unsupported-version, otherwise available; not complete schema/cross-chain or public-safety validation. */
   status: "available" | "invalid" | "unsupported-version";
+  /** @lang zh-CN 未满足双侧可用引用谓词的条目数，与linkedEntryCount之和等于创建时entryCount。 @lang en Entries not satisfying the bilateral usable-reference predicate; together with linkedEntryCount equals entryCount at creation. */
   unresolvedEntryCount: number;
 }
 
+/**
+ * @lang zh-CN 可变条目投影；保留顺序和重复引用，不持有完整工件、开放扩展或sidecar正文。
+ * @lang en Mutable entry projection retaining order/repeated references without the complete artifact, open extensions or sidecar bodies.
+ */
 export interface DocSourceMapIndexedEntry {
+  /** @lang zh-CN 按引用顺序新建的产物链接列表，不合并重复产物或选择器。 @lang en New artifact-link list in reference order, without merging repeated artifacts/selectors. */
   artifactLinks: DocSourceMapArtifactLink[];
+  /** @lang zh-CN 输入非空分类文本原值；为被动元数据，不推导权限或稳定性。 @lang en Original nonempty classification text; passive metadata inferring no permissions or stability. */
   classification?: string;
+  /** @lang zh-CN 输入entry诊断的非空code/字符串列表，保持顺序；不是根HIA诊断，severity/message不在此投影。 @lang en Ordered nonempty codes/strings from entry diagnostics, not root HIA diagnostics; severity/message are not projected here. */
   diagnostics: string[];
-  /**
-   * 中文：普通 doc-source-map 中仅保存的 sidecar/binding 引用；不含 binding
-   * model 正文。
-   * English: Sidecar/binding references stored by an ordinary doc-source-map;
-   * never the binding-model body.
-   */
+  /** @lang zh-CN 最小sidecar/binding身份对列表，保持重复与顺序；不加载binding正文或证明bindingId存在。 @lang en Minimal sidecar/binding identity pairs retaining repeats/order; no binding body is loaded and bindingId existence is not proven. */
   generatedBindingRefs: DocSourceMapGeneratedBindingRef[];
+  /** @lang zh-CN 条目身份原值；旧宽输入省略时使用entry:<一基序号>回退，不是全局稳定身份。 @lang en Original entry identity; permissive legacy omissions fall back to entry:<one-based ordinal>, not a globally stable identity. */
   id: string;
+  /** @lang zh-CN 条目kind原值；旧宽输入省略时回退entry，不解释领域行为。 @lang en Original entry kind, defaulting to entry for permissive legacy omissions without interpreting domain behavior. */
   kind: string;
+  /** @lang zh-CN 输入关系类别的非空文本，不执行关系或跨链计算。 @lang en Nonempty input relation-kind text, without executing relations or cross-chain computation. */
   relationKind?: string;
+  /** @lang zh-CN 按引用顺序新建的来源链接列表；同一来源的多个范围和重复引用保留。 @lang en New source-link list in reference order, retaining multiple ranges/repeated references to one source. */
   sourceLinks: DocSourceMapSourceLink[];
+  /** @lang zh-CN 可选非空符号身份原值，不裁剪、大小写折叠或验证目标符号是否存在。 @lang en Optional original nonempty symbol identity, without trimming, case folding or verifying target-symbol existence. */
   symbolId?: string;
+  /** @lang zh-CN 可选非空符号类别文本，仅供查询筛选与元数据使用。 @lang en Optional nonempty symbol-kind text for query filtering and metadata only. */
   symbolKind?: string;
 }
 
 /**
- * 中文：由 doc-source-map entry 指向独立 generated-documentation-binding
- * sidecar 的最小引用。
- * English: Minimal reference from a doc-source-map entry to an independent
- * generated-documentation-binding sidecar.
+ * @lang zh-CN 独立生成文档绑定sidecar的可变最小身份对；不包含binding模型。
+ * @lang en Mutable minimal identity pair for an independent generated-documentation-binding sidecar, without its binding model.
  */
 export interface DocSourceMapGeneratedBindingRef {
+  /** @lang zh-CN sidecar内部binding身份原值；普通索引不打开sidecar验证此身份。 @lang en Original binding identity within the sidecar; the ordinary index does not open the sidecar to verify it. */
   bindingId: string;
+  /** @lang zh-CN 声明的sidecar身份原值；未知声明可伴warning保留，不自动解析路径。 @lang en Original declared sidecar identity; unknown declarations may be retained with a warning, without automatic path resolution. */
   sidecarId: string;
 }
 
 /**
- * 中文：普通 doc-source-map 中 generated binding sidecar 的声明元数据。
- * English: Generated-binding sidecar declaration metadata in an ordinary
- * doc-source-map.
+ * @lang zh-CN 生成文档绑定sidecar的可变声明元数据；可选类型保留旧/失败投影兼容，不承诺正文可用。
+ * @lang en Mutable generated-documentation-binding sidecar declaration metadata; optional types retain legacy/failed-projection compatibility without promising body availability.
  */
 export interface DocSourceMapGeneratedBindingSidecar {
+  /** @lang zh-CN 非空声明契约原文；owner成功还要求匹配绑定契约，字段存在不等于正文验证。 @lang en Nonempty declared contract text; owner success also requires the binding contract, and presence is not body validation. */
   contract?: string;
+  /** @lang zh-CN 非空声明版本原文，普通索引支持精确旧/当前绑定标签；不执行整组迁移。 @lang en Nonempty declared version text; the ordinary index supports exact legacy/current binding labels without executing bundle migration. */
   contractVersion?: string;
+  /** @lang zh-CN 声明身份原值；旧投影缺省回退generated-binding-sidecar:<一基序号>，不表示owner接纳缺失身份。 @lang en Original declaration identity; omission projection falls back to generated-binding-sidecar:<one-based ordinal>, not owner admission of missing identity. */
   id: string;
+  /** @lang zh-CN 非空声明路径原值；owner另检查安全相对路径，不读取文件或授予发布权限。 @lang en Original nonempty declared path; the owner separately checks safe relative paths without file reads or publication authority. */
   path?: string;
 }
 
 /**
- * 中文：普通 doc-source-map 对独立 locale-resolution sidecar 的最小声明。它只含
- * identity、contract 与相对 artifact path，不承载 DLR data。
- * English: Minimal ordinary doc-source-map declaration of an independent
- * locale-resolution sidecar. It contains only identity, contract, and a relative
- * artifact path; it never carries DLR data.
+ * @lang zh-CN 语言解析sidecar的可变最小声明；不承载语言资源解析结果正文。
+ * @lang en Mutable minimal locale-resolution sidecar declaration without resolved locale-resource bodies.
  */
 export interface DocSourceMapLocaleResolutionSidecar {
+  /** @lang zh-CN 复制非空契约文本，owner成功要求语言解析契约；不检查外部正文。 @lang en Copies nonempty contract text; owner success requires the locale-resolution contract, without inspecting external bodies. */
   contract?: string;
+  /** @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确语言解析版本。 @lang en Copies nonempty version text; owner success requires the exact supported locale-resolution version. */
   contractVersion?: string;
+  /** @lang zh-CN 声明身份原值；缺省投影回退locale-resolution-sidecar:<一基序号>，不豁免身份验证。 @lang en Original declaration identity; omission projection falls back to locale-resolution-sidecar:<one-based ordinal> without bypassing identity validation. */
   id: string;
+  /** @lang zh-CN 声明路径原值，owner要求安全相对路径；不加载resource body、locator或resolved text。 @lang en Original declared path, required by the owner to be safe and relative; no resource body, locator or resolved text is loaded. */
   path?: string;
 }
 
 /**
- * 中文：普通 doc-source-map 对独立 locale-discovery sidecar 的最小声明。它只含
- * identity、contract 与相对 artifact path，不承载 controlled declaration/catalog data。
- * English: Minimal ordinary doc-source-map declaration of an independent
- * locale-discovery sidecar. It contains only identity, contract, and a relative
- * artifact path; it never carries controlled declaration/catalog data.
+ * @lang zh-CN 语言资源发现sidecar的可变最小声明；与解析sidecar分别计数，不承载catalog内容。
+ * @lang en Mutable minimal locale-discovery sidecar declaration, counted separately from resolution sidecars and carrying no catalog contents.
  */
 export interface DocSourceMapLocaleDiscoverySidecar {
+  /** @lang zh-CN 复制非空声明契约，owner成功要求documentation-locale-resource-declaration；不执行发现。 @lang en Copies the nonempty declaration contract; owner success requires documentation-locale-resource-declaration without executing discovery. */
   contract?: string;
+  /** @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确声明版本。 @lang en Copies nonempty version text; owner success requires the exact supported declaration version. */
   contractVersion?: string;
+  /** @lang zh-CN 声明身份原值；缺省投影回退locale-discovery-sidecar:<一基序号>，不承诺全局唯一。 @lang en Original declaration identity; omission projection falls back to locale-discovery-sidecar:<one-based ordinal> without promising global uniqueness. */
   id: string;
+  /** @lang zh-CN 非空声明路径原值；不读取controlled declaration/catalog、正文或范围，不授予访问权限。 @lang en Original nonempty declared path; reads no controlled declaration/catalog, body or range and grants no access authority. */
   path?: string;
 }
 
+/**
+ * @lang zh-CN 来源引用的可变元数据，路径/语言从顶层声明解析；未知身份仍可保留无path的链接。
+ * @lang en Mutable source-reference metadata with path/language resolved from top-level declarations; unknown identities may retain links without paths.
+ */
 export interface DocSourceMapSourceLink {
+  /** @lang zh-CN 引用层置信度原值；缺省不推导，none排除该链接的linked资格，不表示概率。 @lang en Original reference confidence; omissions are not inferred and none excludes this link from linked eligibility, not a probability. */
   confidence?: string;
+  /** @lang zh-CN 已声明来源节点的非空语言文本，未知来源不从引用扩展推导。 @lang en Nonempty language text from the declared source node, never inferred from reference extensions for unknown sources. */
   language?: string;
+  /** @lang zh-CN 已声明来源节点的非空路径原值，不做查询规范化；未知来源可省略，不授予文件访问。 @lang en Original nonempty declared-source path without query normalization; optional for unknown sources and granting no file access. */
   path?: string;
+  /** @lang zh-CN 独立复制的一基起止坐标，省略列保留省略；不重新定义端点语义，缺失范围仍可能linked。 @lang en Independently copied one-based endpoints, preserving omitted columns; no endpoint semantics are redefined and a missing range may still be linked. */
   range?: HiaSourceRange;
+  /** @lang zh-CN 引用层来源标签；当前版通用类别、精确旧reader可含具体工具来源，unresolved排除该链接的linked资格。 @lang en Reference provenance label: current common category or concrete origin from the exact legacy reader; unresolved excludes linked eligibility. */
   rangeSource?: string;
-  /** @lang zh-CN 引用层具体来源说明，不推导类别、置信度或权限；旧输入可以省略。 @lang en Reference-level origin description, without inferring category, confidence or permissions; legacy inputs may omit it. */
+  /** @lang zh-CN 引用自身声明的非空白具体来源文本，不从中推导类别、置信度或权限。 @lang en Nonblank concrete origin declared on this reference, inferring no category, confidence or permissions. */
   rangeSourceDetail?: string;
+  /** @lang zh-CN 来源引用身份原值，不合并重复引用或声称外部文件存在。 @lang en Original source-reference identity, without merging repeated references or claiming external file existence. */
   sourceId: string;
 }
 
+/**
+ * @lang zh-CN 产物引用的可变元数据；路径/语言来自顶层产物声明，不持有产物正文或完整范围。
+ * @lang en Mutable artifact-reference metadata; path/language come from top-level artifact declarations, without artifact bodies or complete ranges.
+ */
 export interface DocSourceMapArtifactLink {
+  /** @lang zh-CN 产物引用身份原值；未知身份可保留无path链接并伴warning。 @lang en Original artifact-reference identity; unknown identities may retain pathless links with a warning. */
   artifactId: string;
+  /** @lang zh-CN 引用置信度原值，none排除该链接的linked资格；不计算或推导置信度。 @lang en Original reference confidence; none excludes linked eligibility, without computing or inferring confidence. */
   confidence?: string;
+  /** @lang zh-CN 已声明产物节点的非空语言文本，不采用引用扩展覆盖值。 @lang en Nonempty language text from the declared artifact node, not overridden by reference extensions. */
   language?: string;
+  /** @lang zh-CN 已声明产物节点的非空路径原值，不规范化或读取产物；未知身份可省略。 @lang en Original nonempty declared-artifact path, without normalization or artifact reads; optional for unknown identities. */
   path?: string;
+  /** @lang zh-CN 引用层来源标签；当前通用类别与精确旧reader标签保持，unresolved排除linked资格。 @lang en Reference provenance label retaining current categories/exact legacy labels; unresolved excludes linked eligibility. */
   rangeSource?: string;
-  /** @lang zh-CN 产物引用层的被动来源说明，不加载工具或改变查询。 @lang en Passive origin description on an artifact reference, without loading tools or changing queries. */
+  /** @lang zh-CN 引用自身非空白具体来源文本，仅作描述，不加载工具或推导通用类别。 @lang en Nonblank reference-local concrete origin text, descriptive only without loading tools or inferring common categories. */
   rangeSourceDetail?: string;
+  /** @lang zh-CN 可选非空选择器原值；不解析或执行，不要求其存在才能linked。 @lang en Optional original nonempty selector, neither parsed nor executed and not required for linked eligibility. */
   selector?: string;
 }
 
+/**
+ * @lang zh-CN 普通位置映射的可变链接声明，不是TraceMap实例或已加载映射数据。
+ * @lang en Mutable ordinary position-map link declaration, not a TraceMap instance or loaded mapping data.
+ */
 export interface DocSourceMapSourceMapLink {
+  /** @lang zh-CN 映射声明身份原值；旧宽投影缺省时回退node:<一基序号>。 @lang en Original map declaration identity; permissive legacy omission projection falls back to node:<one-based ordinal>. */
   id: string;
+  /** @lang zh-CN 可选非空映射类别文本；不根据此字段加载解析器或执行转换。 @lang en Optional nonempty map-kind text, without loading parsers or executing transforms from this field. */
   kind?: string;
+  /** @lang zh-CN 可选非空语言文本，仅为声明元数据。 @lang en Optional nonempty language text, serving only as declaration metadata. */
   language?: string;
+  /** @lang zh-CN 声明的非空相对路径原值；当前owner要求提供安全路径，不读文件/URL或sourceMappingURL。 @lang en Original nonempty relative declared path; the current owner requires a safe path without reading files/URLs or sourceMappingURL. */
   path?: string;
 }
 

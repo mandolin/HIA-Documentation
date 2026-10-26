@@ -60,3 +60,8 @@ Index availability is not proof of complete wire-schema validity. Invalid indexe
 privacy defaults, explicit body opt-in and reference-only sidecars are unchanged. Reflection side effects and
 resource exhaustion are not sandboxed. The current source definition is 1.0.0 with an exact legacy reader;
 package versions and registry publication remain separate.
+
+
+## 投影字段与所有权
+
+九个普通索引元数据接口、63字段的计数、顺序、范围复制、可变性及sidecar边界见[索引字段参考](doc-source-map-index.md)。普通索引保留既有可变结构，部分invalid/unsupported-version仍含元数据；消费必须先看status。字段说明与回归不改变原类型、端点或运行算法。
