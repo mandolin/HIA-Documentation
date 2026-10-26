@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 当前文档源码映射Draft 2020-12结构定义；导出为模块共享的类型只读对象，运行时未深冻结，分发资产另存。
+ * @lang en Current documentation-map Draft 2020-12 structure, exported as a module-shared type-readonly object without runtime deep freezing; distribution assets are stored separately.
+ */
 import {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
@@ -11,12 +16,17 @@ import {
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
 } from "@hia-doc/core";
 
-/** @lang zh-CN 当前新schema的固定身份；历史schema保持独立原字节。 @lang en Fixed current-schema identity; the historical schema retains its independent original bytes. */
+/** @lang zh-CN 当前doc-source-map1.0.0的canonical资源身份/引用基准；不是下载动作或发布证明，历史schema保持独立原字节。 @lang en Canonical resource identity/reference base for current doc-source-map1.0.0, not a download action or publication proof; historical schema bytes remain independently retained. */
 export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json";
-/** @lang zh-CN 当前根版本，不代表npm包已经发布。 @lang en Current root version, not proof of npm publication. */
+/** @lang zh-CN 与当前文档映射contract根版本相同的schema字面量版本；独立于npm包SemVer，不说明schema引擎或系统版本。 @lang en Literal schema version matching the current documentation-map root contract, independent of npm package SemVer and not a schema-engine or system version. */
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
 
-/** @lang zh-CN 完整wire结构定义；跨身份引用、重复身份和范围顺序由owner运行时补充检查。 @lang en Complete wire-structure definition; the owner runtime additionally checks cross-identity references, duplicates and range order. */
+/**
+ * @lang zh-CN 当前Draft 2020-12 wire结构定义；as const只约束TypeScript，模块缓存对象及嵌套节点运行时可变，消费者不得直接改共享图，应先structuredClone。来源enum借用已冻结元组；分发读取接口另返回深拷贝。
+ * @lang en Current Draft 2020-12 wire structure; as const constrains TypeScript only, while the cached module object and nested nodes remain mutable at runtime. Consumers must clone before editing. Its provenance enum borrows the frozen tuple; distribution readers return separate deep copies.
+ * @remarks
+ * <lang><zh-CN>跨身份引用、重复身份、范围顺序与隐私还需owner检查；导出/克隆schema不执行验证、读取源码/网络或授予发布权限。</zh-CN><en>Cross-identity references, duplicates, range order and privacy still require owner checks; exporting/cloning a schema neither validates data nor reads source/network resources or grants publication permission.</en></lang>
+ */
 export const DOC_SOURCE_MAP_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: DOC_SOURCE_MAP_SCHEMA_ID,

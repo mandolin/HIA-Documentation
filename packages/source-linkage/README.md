@@ -22,6 +22,12 @@ It also provides an ordinary source map lookup layer based on `@jridgewell/trace
 
 It also exports the machine-readable Draft 2020-12 contract through `DOC_SOURCE_MAP_JSON_SCHEMA`, `DOC_SOURCE_MAP_SCHEMA_ID` and `DOC_SOURCE_MAP_SCHEMA_VERSION`. Structural schema validation does not replace the package's semantic path, privacy and reference diagnostics.
 
+See the [constant and schema reference](../../docs/source-linkage-schema-surface.md)
+for all eighteen exports, exact legacy/current pairings, type-only unions and
+ownership. Schema exports are shared module objects with readonly TypeScript
+types and no runtime deep freeze: clone before editing. Distribution reader
+functions return independent copies; contract versions do not prove publication.
+
 The ordinary index remains mutable metadata with creation-time counts, copied
 range containers and reference-only sidecars. Check status before consumption;
 unusable indexes may retain partial metadata. See the [complete index field

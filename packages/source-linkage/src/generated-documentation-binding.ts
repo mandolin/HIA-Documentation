@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 新旧生成式绑定schema与纯数据/跨集合/隐私validator，保留冻结旧定义，不读取路径或执行表达式。
- * @lang en Current/legacy generated-binding schemas and pure data/cross-collection/privacy validator, retaining frozen definitions without path reads or expression execution.
+ * @lang zh-CN 新旧生成式绑定schema与纯数据/跨集合/隐私validator，保留历史分发定义；schema导出共享且未深冻结，不读取路径或执行表达式。
+ * @lang en Current/legacy generated-binding schemas and pure data/cross-collection/privacy validator, retaining historical distribution definitions; schema exports are shared and not deeply frozen, without path reads or expression execution.
  */
 import path from "node:path";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
@@ -25,11 +25,11 @@ import {
 } from "./constants.js";
 
 /**
- * @lang zh-CN 可版本化 generated-documentation-binding JSON Schema 的 canonical `$id`。
- * @lang en Canonical versioned `$id` for the generated-documentation-binding JSON Schema.
+ * @lang zh-CN 当前绑定0.2.0-draft schema的canonical资源身份/引用基准，不是下载动作、包版本或稳定发行证明。
+ * @lang en Canonical resource identity/reference base of the current binding0.2.0-draft schema, not a download action, package version or stable-release proof.
  */
 export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json";
-/** @lang zh-CN 不变的旧版canonical身份，历史原始字节另存分发。 @lang en Immutable legacy canonical identity, with original bytes retained separately in distribution. */
+/** @lang zh-CN 精确旧绑定0.1.0-draft的独立canonical身份，历史原始字节另存分发，不重定向到新版。 @lang en Separate canonical identity for exact legacy binding0.1.0-draft, with original bytes retained in distribution and no redirection to the current definition. */
 export const GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json";
 
 /**
@@ -39,18 +39,15 @@ export const GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID = "https://mandoli
 export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION = GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION;
 
 /**
- * 中文：`generated-documentation-binding@0.1.0-draft` 的 Draft 2020-12 schema。
- * English: Draft 2020-12 schema for `generated-documentation-binding@0.1.0-draft`.
- *
- * @remarks
- * 中文：schema 只表达中性 declaration、expansion、target、diagnostic 及 sidecar
- * 引用；不出现 Pug AST node、template source body 或 runtime locals value。
- * English: The schema describes only neutral declarations, expansions, targets,
- * diagnostics, and sidecar references; it contains no Pug AST nodes, template
- * source bodies, or runtime local values.
+ * @lang zh-CN 为精确绑定版本/映射版本/身份创建独立Draft 2020-12结构图，不缓存调用结果；新旧图不共享可变子结构。
+ * @lang en Creates an independent Draft 2020-12 graph for exact binding/map versions and identity, without caching calls or sharing mutable substructure between generations.
+ * @param version <lang><zh-CN>绑定根及最低consumer的精确版本。</zh-CN><en>Exact binding root/minimum-consumer version.</en></lang>
+ * @param mapVersion <lang><zh-CN>反向链接文档映射根的精确配对版本。</zh-CN><en>Exact paired documentation-map root version for backlinks.</en></lang>
+ * @param identity <lang><zh-CN>独立canonical资源身份，不触发I/O。</zh-CN><en>Separate canonical resource identity, without I/O.</en></lang>
+ * @returns <lang><zh-CN>as const推断的类型只读新对象，运行时未深冻结；只有中性声明/展开/目标/诊断及被动引用，无模板正文或运行时局部值。</zh-CN><en>Fresh type-readonly object inferred with as const, without runtime deep freezing; contains neutral declarations/expansions/targets/diagnostics and passive references, not template bodies or runtime local values.</en></lang>
  */
-/** @lang zh-CN 创建独立schema图，两个版本不共享可变子结构，仅已确认版本/反向引用const不同。 @lang en Creates independent schema graphs without mutable sharing; only confirmed version/back-reference constants differ. */
 function createBindingSchema<const Version extends string, const MapVersion extends string, const Identity extends string>(version: Version, mapVersion: MapVersion, identity: Identity) {
+// <lang><zh-CN>每次调用重建完整literal图；仅从参数投影已确认身份/版本，不从当前常量猜测历史配对。</zh-CN><en>Rebuild the full literal graph on each call, projecting confirmed identities/versions from parameters rather than inferring legacy pairings from current constants.</en></lang>
 return {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: identity,
@@ -455,9 +452,9 @@ return {
 } as const;
 }
 
-/** @lang zh-CN 当前0.2.0-draft独立定义，只引用doc-source-map1.0.0。 @lang en Independent current0.2.0-draft definition referring only to doc-source-map1.0.0. */
+/** @lang zh-CN 当前绑定0.2.0-draft独立结构图，只配doc-source-map1.0.0；as const是类型约束，运行时模块共享图可变，修改前先克隆，不替代owner验证或发行验收。 @lang en Independent current binding0.2.0-draft graph paired only with doc-source-map1.0.0; as const is type-level, while the module-shared runtime graph remains mutable. Clone before editing; this replaces neither owner validation nor release acceptance. */
 export const GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION, CURRENT_DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID);
-/** @lang zh-CN 精确旧定义，不跟随当前常量漂移，结构与历史快照保持。 @lang en Exact legacy definition without following current constants, retaining historical snapshot structure. */
+/** @lang zh-CN 精确旧绑定0.1.0-draft独立图，只配旧map0.1.0-draft，保留历史结构；类型只读但运行时共享可变，修改前克隆，与新版无可变别名，历史原字节由分发资产保留。 @lang en Independent exact legacy binding0.1.0-draft graph paired only with map0.1.0-draft, retaining historical structure; type-readonly but shared/mutable at runtime. Clone before editing; it shares no mutable aliases with the current graph, and distribution assets retain historical bytes. */
 export const GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA = createBindingSchema(GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION, DOC_SOURCE_MAP_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID);
 
 /**

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Source-linkage constant and schema reference
+
+- 补齐十八项身份/版本/类别与schema公开面说明、精确配对及共享/冻结/副本所有权回归和严格类型消费。三schema类型只读但运行时共享可变，修改前应克隆；类型、运行逻辑、分发字节与版本保持，尚未发布。
+- Document eighteen constant/type/schema exports, exact pairings and shared/frozen/copied ownership, with characterization and a strict type consumer. Schema exports remain type-readonly but shared/mutable at runtime; clone before editing. Runtime logic, types, distribution bytes and versions remain unchanged; unreleased. See the [reference](docs/source-linkage-schema-surface.md).
+
 ## Unreleased — Source-linkage bilingual documentation markers
 
 - 将五项公开声明和普通位置查询的 bias 字段规范为 canonical 双语标记，并澄清绑定 schema 版本与包版本的区别。类型、运行逻辑、导出和版本保持；尚未发布。
