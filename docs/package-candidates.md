@@ -57,3 +57,8 @@ A successful local candidate install does not prove registry contents, provenanc
 cross-repository compatibility or release approval. Before a real release, assign
 unused versions, complete API/contract qualification and repeat relevant registry,
 provenance and consumer checks under [release governance](release-governance.md).
+
+VSIX runtime staging checks the deployed LSP engine against the current release
+manifest. Historical Visual Studio captures, prerequisite labels and helper
+evidence retain their original scope; staging/build success does not establish
+fresh host UI or runtime acceptance for this candidate.

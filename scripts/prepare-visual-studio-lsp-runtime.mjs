@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 为VSIX准备独立LSP部署，按当前发行范围核运行前提；不更新历史宿主捕获或界面。
+ * @lang en Prepares an independent LSP deployment for VSIX and checks current release prerequisites, without updating historical host captures or UI.
+ */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
@@ -12,10 +17,8 @@ const entryPath = path.join(runtimeRoot, "dist", "node.js");
 const manifestPath = path.join(runtimeRoot, "runtime-manifest.json");
 
 /**
- * <lang>
- * <zh-CN>生成 VSIX 可携带的 @hia-doc/lsp production deployment，并写入不含本地路径的清单。</zh-CN>
- * <en>Creates the VSIX-ready @hia-doc/lsp production deployment and writes a manifest without local paths.</en>
- * </lang>
+ * @lang zh-CN 生成VSIX可携带的LSP部署并写无本地路径清单，删除并重建脚本固定的.runtime/lsp。
+ * @lang en Creates a VSIX-ready LSP deployment with a path-free manifest, deleting and rebuilding the script's fixed .runtime/lsp.
  *
  * @returns {Promise<void>} Completion after the runtime tree and manifest are verified.
  */
@@ -56,10 +59,13 @@ async function main() {
     force: true
   });
 
+  // <lang><zh-CN>部署包沿用当前发行范围，不能以历史宿主捕获的旧engine约束新候选。</zh-CN><en>Deployed packages follow the current release range, not historical host-capture engines.</en></lang>
+  const releasePlan = JSON.parse(await readFile(path.join(rootDir, "release/public-packages.json"), "utf8"));
+  // <lang><zh-CN>校验部署后的实际清单，避免只检查源清单而掩盖部署漂移。</zh-CN><en>Check the actual deployed manifest, not merely source metadata, to detect deployment drift.</en></lang>
   const packageJson = JSON.parse(await readFile(packagePath, "utf8"));
   assert.equal(packageJson.name, "@hia-doc/lsp");
   assert.equal(packageJson.version, "0.1.0");
-  assert.equal(packageJson.engines?.node, ">=20.19.0");
+  assert.equal(packageJson.engines?.node, releasePlan.runtimeNodeRange);
   await stat(entryPath);
 
   const deployment = await measureTree(runtimeRoot);

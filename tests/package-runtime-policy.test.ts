@@ -26,6 +26,18 @@ describe("candidate package runtime policy", () => {
     expect(plan.publishToolchain.nodeVersion).toBe("24.x");
     expect(plan.publishToolchain.minimumNpmVersion).toBe("11.15.0");
   });
+  it("checks VSIX staging against the current release range instead of a stale literal", () => {
+    // <lang><zh-CN>VSIX staging不在普通release:gate里，防止遗漏的旧断言只在独立工作流暴露。</zh-CN><en>VSIX staging is outside the ordinary release gate; prevent stale assertions surfacing only in its separate workflow.</en></lang>
+    const source = readFileSync(new URL("../scripts/prepare-visual-studio-lsp-runtime.mjs", import.meta.url), "utf8");
+    expect(source).toContain('readFile(path.join(rootDir, "release/public-packages.json"), "utf8")');
+    expect(source).toContain("assert.equal(packageJson.engines?.node, releasePlan.runtimeNodeRange)");
+    expect(source).not.toContain('assert.equal(packageJson.engines?.node, ">=20.19.0")');
+  });
+  it("documents the source runtime range in release governance and versioning", () => {
+    for (const file of ["docs/release-governance.md", "docs/versioning.md"]) {
+      expect(readFileSync(new URL("../" + file, import.meta.url), "utf8")).toContain(expectedRange);
+    }
+  });
   it.each(plan.packages)("aligns $name to the same supported runtime", entry => {
     // <lang><zh-CN>逐包检查防止根清单正确但归档实际声明仍旧。</zh-CN><en>Check each package so a correct root cannot conceal stale archive declarations.</en></lang>
     expect(manifest(entry.path + "/package.json").engines.node).toBe(expectedRange);

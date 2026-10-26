@@ -73,7 +73,11 @@ Prefer npm Trusted Publishing with GitHub Actions OpenID Connect instead of long
 
 The canonical main-repo package scope is `@hia-doc/*`, the repository license is MIT and public schema ids use `https://mandolin.github.io/HIA-Documentation/schemas/`. Operational npm scope ownership still has to be established before first publication. The first release plan, target package versions and publish order are defined in `docs/public-package-release-plan.md` and `release/public-packages.json`. Existing `@mandolin/*` JSDoc packages retain their current names.
 
-The `@hia-doc/*` workflow uses Node 24.x for publishing and keeps package runtime compatibility at Node `>=20.19.0`. It packs with `pnpm` before `npm publish` so workspace protocol dependencies are rewritten into publishable ranges, then publishes the tarball through npm with provenance.
+The workflow uses Node 24.x for publishing. Current source candidates declare
+`^22.23.4 || ^24.22.1`; existing registry archives retain their original engines
+and contents. It packs with pnpm before publication so workspace dependencies
+become publishable versions. New source payloads require new identities and
+applicable provenance/consumer gates; see [candidate guidance](package-candidates.md).
 
 Automation publish workflows must:
 

@@ -2,6 +2,9 @@
 
 ## Unreleased — Candidate runtime range and package identity
 
+- VSIX运行时部署改为对照当前发行清单校验engine，避免旧固定断言阻断候选构建；另补两项回归与源码/历史宿主范围说明，历史捕获和界面保持。
+- Check staged VSIX runtime engines against the current release manifest, with two additional regressions and source/historical-host scope notes. Historical captures and UI remain unchanged.
+
 - 根、十三个npm包、发行范围与门禁统一为已实测的Node.js22/24补丁下限`^22.23.4 || ^24.22.1`；补28项范围/已发布身份拒绝回归与候选说明，保留包版本和发布状态。旧npm归档不变，尚未发布。
 - Align the root, thirteen npm manifests, release metadata and gate to tested Node.js22/24 floors `^22.23.4 || ^24.22.1`. Add 28 runtime/published-identity regressions and [candidate guidance](docs/package-candidates.md), retaining package versions and release statuses. Existing npm archives are unchanged; unreleased.
 

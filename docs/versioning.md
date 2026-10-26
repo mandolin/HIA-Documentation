@@ -108,7 +108,7 @@ boundary and are not a recommendation to use [end-of-life Node.js releases](http
 
 | Tool | Version |
 | --- | --- |
-| Node.js | `24.22.1` through `.mise.toml`; existing package engines still declare `>=20.19.0` pending package stabilization. |
+| Node.js | `24.22.1` through `.mise.toml`; source candidate engines `^22.23.4 || ^24.22.1`, with latest 22/24 patches verified in CI. Existing registry archives retain their own declarations. |
 | pnpm | `10.34.4` |
 
 See `docs/dependency-license-audit.md` for direct dependency versions and license policy.
@@ -133,6 +133,10 @@ immutable schema identities and migration rules are documented in
 [Documentation Producer API](documentation-producers.md). The catalog's
 `stable-candidate` label preserves that distinction.
 
-Public `@hia-doc/*` package release policy is documented in `docs/public-package-release-plan.md`. Runtime compatibility and publish-job toolchain compatibility are intentionally separate: the checked-in package engine lower bound is Node `>=20.19.0`, while the npm Trusted Publishing workflow selects Node 24.x and npm `^11.15.0`. These installation constraints do not constitute a tested support matrix.
+Public package release policy is documented in
+[the release plan](public-package-release-plan.md). Source candidates declare
+Node.js `^22.23.4 || ^24.22.1`; Trusted Publishing uses Node 24.x and npm
+`^11.15.0`. Existing npm archives retain their own engines. These declarations
+and toolchain choices do not substitute for actual runtime/consumer evidence.
 
 Core foundation compatibility, constructor defaults and ownership are documented in [Core document migration](core-document-migration.md). Exact envelope version types do not replace payload validation; package/registry identity remains independent.

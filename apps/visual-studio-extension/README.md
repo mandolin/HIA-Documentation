@@ -12,7 +12,7 @@ This app is the Visual Studio counterpart to the VS Code and browser DevTools ho
 - Adds a Language Server tab that follows the provider lifecycle and exposes stable reason codes without local paths or raw exception text.
 - Adds a Live Authoring tab backed by an isolated, short-lived LSP projection session over a synthetic HIA fixture.
 - Contributes a `LanguageServerProvider` that starts `@hia-doc/lsp` over stdio for `.hia.json` and `.docmap.json` documents.
-- Deploys the production LSP package tree into the VSIX under `runtime/lsp`; Node.js `>=20.19.0` remains an explicit host prerequisite.
+- Deploys the production LSP package tree into the VSIX under `runtime/lsp`. The historical host capture used Node.js `>=20.19.0`; current source candidates require `^22.23.4 || ^24.22.1` from the package/release manifests. Historical captures and UI metrics are not fresh host qualification for this candidate.
 - Embeds `review-surface.json` as a structured assembly resource and projects only public-safe status, count and boundary fields.
 - Uses neutral English `.resx` resources plus Simplified Chinese `zh-Hans` satellite resources for Remote UI text.
 - Uses `.vsextension/zh-CN` and `.vsextension/zh-Hans` metadata resources for the command display name.
