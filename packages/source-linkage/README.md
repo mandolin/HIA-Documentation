@@ -104,6 +104,16 @@ read-only `binding -> generated targets` and `generated target -> bindings`
 queries. It never loads a sidecar path, executes expressions/locals, or starts
 a renderer or host projection. See `docs/generated-documentation-binding-contract.md`.
 
+The unreleased source also checks primitive-string identifiers in all four
+binding queries, preventing `undefined` from matching omitted target symbol ids.
+Valid identities retain whitespace/case/Unicode. New frozen result lists borrow
+original indexed nodes; the four existing edge/declaration orderings remain
+distinct. See the [binding index reference](../../docs/generated-binding-index.md)
+for all metadata fields, counters, ownership and query limits.
+
+中文：绑定索引字段与四查询已补复核；非法标识符不再产生缺省符号宽匹配，合法身份/顺序保持。
+索引含来源身份及范围，查询结果不是公开安全宿主投影；尚未发布npm。
+
 The binding reader preflights ordinary JSON without executing getters, checks
 consumed declared fields and safe ordered ranges, and iteratively checks privacy
 fields. It is not a general schema engine or proxy/resource sandbox. The legacy

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Binding index fields and exact query identifiers
+
+- 四个绑定查询先检查primitive string标识符，修复undefined匹配缺省symbolId的宽结果；不转换/trim/规范化合法身份。补齐索引17导出及字段双语说明、计数/顺序/冻结与借用边界、精确回归和严格类型；配对、提取诊断、范围端点、公开类型/导出及版本保持。
+- Four binding queries now check primitive-string identifiers before lookup, preventing undefined from broadly matching omitted symbol ids while retaining valid identities without coercion/trimming/normalization. Document and verify index exports/fields, counts, distinct ordering and frozen borrowing. Pairings, extraction diagnostics, endpoints, public types/exports and versions remain unchanged; unreleased. See the [index reference](docs/generated-binding-index.md).
+
 ## Unreleased — Binding extraction diagnostic propagation
 
 - 绑定索引补入完整owner验证通过的提取code/severity，保留原顺序/重复项，使用固定内存正文而不复制id/subjectId/自由文本/扩展。提取error沿既有规则返回invalid空关系，四查询/宿主状态与整组迁移拒绝贯通；info/warning不独立阻断，非法sidecar不透传局部提取记录。新旧配对、严重级别、schema/包/契约版本及导出保持，尚未发布。

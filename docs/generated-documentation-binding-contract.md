@@ -178,6 +178,11 @@ the ordinary map.
 
 ## Compatibility
 
+See the [binding index field/query reference](generated-binding-index.md) for
+normalized metadata, count meanings, distinct query ordering, frozen borrowing
+and exact primitive-string identifier matching. The unreleased source prevents
+undefined queries from matching targets whose optional symbol identity is absent.
+
 Contract versions and package versions are independent. Consumers of this
 draft must ignore unknown optional fields, while a breaking field/type/meaning
 change requires a new `contractVersion` and a new canonical schema `$id`.
