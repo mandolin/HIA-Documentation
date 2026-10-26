@@ -108,7 +108,7 @@ boundary and are not a recommendation to use [end-of-life Node.js releases](http
 
 | Tool | Version |
 | --- | --- |
-| Node.js | `24.22.1` through `.mise.toml`; source candidate engines `^22.23.4 || ^24.22.1`, with latest 22/24 patches verified in CI. Existing registry archives retain their own declarations. |
+| Node.js | `24.22.1` through `.mise.toml`; source candidate engines `^22.23.4 \|\| ^24.22.1`, with latest 22/24 patches verified in CI. Existing registry archives retain their own declarations. |
 | pnpm | `10.34.4` |
 
 See `docs/dependency-license-audit.md` for direct dependency versions and license policy.

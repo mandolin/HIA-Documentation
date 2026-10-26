@@ -7,7 +7,7 @@ This matrix records the current compatibility baseline for the main repository, 
 | Surface | Supported / pinned | Status | Verification |
 | --- | --- | --- | --- |
 | Node.js for `main-repo` development / CI | Local `24.22.1`; CI latest `22.x` / `24.x` on Ubuntu 24.04 and Windows Server 2025 | LTS candidate verification matrix | `pnpm run release:gate` in each combination |
-| Current main source candidate engines | `^22.23.4 || ^24.22.1` | Unreleased declaration; existing npm archives retain their own engines | Root, thirteen manifests, release plan and actual archives must agree |
+| Current main source candidate engines | `^22.23.4 \|\| ^24.22.1` | Unreleased declaration; existing npm archives retain their own engines | Root, thirteen manifests, release plan and actual archives must agree |
 | pnpm for `main-repo` | `10.34.4` | Pinned | `pnpm install --frozen-lockfile` in CI |
 | Node.js for public JSDoc packages | Package engines declare `>=18` | Legacy installation constraint | satellite package CI / release gates |
 | VS Code API | `^1.92.0` | Development baseline | `apps/vscode-extension` build and tests |
