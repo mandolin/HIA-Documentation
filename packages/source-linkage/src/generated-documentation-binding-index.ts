@@ -232,14 +232,14 @@ export interface GeneratedDocumentationBindingComposition {
 }
 
 /**
- * 中文：从独立 sidecar 与已建立的 doc-source-map index 构造只读双向索引。
- * English: Builds a read-only bidirectional index from an independent sidecar
+ * @lang zh-CN 从独立 sidecar 与已建立的 doc-source-map index 构造只读双向索引。
+ * @lang en Builds a read-only bidirectional index from an independent sidecar
  * and a pre-built doc-source-map index.
  *
  * @remarks
- * 中文：这个函数只消费已提供的内存对象；不会按 `sidecarPath` 加载 JSON，不会向
+ * @lang zh-CN 这个函数只消费已提供的内存对象；不会按 `sidecarPath` 加载 JSON，不会向
  * ordinary source map 写入完整 binding model，也不会调用 renderer 或 host。
- * English: This function consumes only supplied in-memory objects. It does not
+ * @lang en This function consumes only supplied in-memory objects. It does not
  * load JSON from `sidecarPath`, write the full binding model into an ordinary
  * source map, or invoke a renderer or host.
  * @param value <lang><zh-CN>独立绑定sidecar运行时值，仍需owner验证。</zh-CN><en>Independent binding-sidecar runtime value requiring owner validation.</en></lang>

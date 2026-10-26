@@ -1,6 +1,6 @@
 /**
- * 中文：普通位置映射之外的文档语义 linkage manifest 标识。
- * English: Identifies the documentation-semantic linkage manifest that complements ordinary source maps.
+ * @lang zh-CN 普通位置映射之外的文档语义 linkage manifest 标识。
+ * @lang en Identifies the documentation-semantic linkage manifest that complements ordinary source maps.
  */
 export const DOC_SOURCE_MAP_CONTRACT = "doc-source-map";
 
@@ -20,8 +20,8 @@ export const DOC_SOURCE_MAP_RANGE_SOURCES = Object.freeze(["source-map", "parser
 export type DocSourceMapRangeSource = typeof DOC_SOURCE_MAP_RANGE_SOURCES[number];
 
 /**
- * 中文：中性生成式文档绑定 sidecar contract 标识。
- * English: Identifies the neutral generated-documentation-binding sidecar contract.
+ * @lang zh-CN 中性生成式文档绑定 sidecar contract 标识。
+ * @lang en Identifies the neutral generated-documentation-binding sidecar contract.
  */
 export const GENERATED_DOCUMENTATION_BINDING_CONTRACT = "generated-documentation-binding";
 

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Source-linkage bilingual documentation markers
+
+- 将五项公开声明和普通位置查询的 bias 字段规范为 canonical 双语标记，并澄清绑定 schema 版本与包版本的区别。类型、运行逻辑、导出和版本保持；尚未发布。
+- Normalize canonical bilingual markers on five public declarations and the ordinary lookup bias field, clarifying binding schema versus package versions. Types, runtime logic, exports and versions remain unchanged; unreleased.
+
 ## Unreleased — Binding index fields and exact query identifiers
 
 - Document seven ordinary position index/result interfaces (32 fields): raw versus resolved paths, count domains, borrowed echoes, mapped/combined snapshots and diagnostic/state boundaries. Preserve runtime/type semantics and add result-ownership characterization; unreleased.

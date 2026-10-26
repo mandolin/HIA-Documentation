@@ -25,16 +25,16 @@ import {
 } from "./constants.js";
 
 /**
- * 中文：可版本化 generated-documentation-binding JSON Schema 的 canonical `$id`。
- * English: Canonical versioned `$id` for the generated-documentation-binding JSON Schema.
+ * @lang zh-CN 可版本化 generated-documentation-binding JSON Schema 的 canonical `$id`。
+ * @lang en Canonical versioned `$id` for the generated-documentation-binding JSON Schema.
  */
 export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json";
 /** @lang zh-CN 不变的旧版canonical身份，历史原始字节另存分发。 @lang en Immutable legacy canonical identity, with original bytes retained separately in distribution. */
 export const GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json";
 
 /**
- * 中文：与 contract 版本分离的 schema 版本；当前与 contractVersion 对齐。
- * English: Schema version independent of package SemVer; it currently matches contractVersion.
+ * @lang zh-CN 与 npm 包 SemVer 独立的 schema 版本；当前与绑定 contractVersion 对齐。
+ * @lang en Schema version independent of npm package SemVer; it currently matches the binding contractVersion.
  */
 export const GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION = GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION;
 

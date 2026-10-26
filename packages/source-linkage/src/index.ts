@@ -363,6 +363,7 @@ export interface OrdinarySourceMapIndex {
 
 /** @lang zh-CN 普通/null原型自有数据选项；可选偏置省略时统一向下最近，未知值拒绝。 @lang en Plain/null-prototype own-data options; omitted bias consistently defaults to greatest lower bound, while unknown values are rejected. */
 export interface OrdinarySourceMapLookupOptions {
+  /** @lang zh-CN greatest-lower-bound或least-upper-bound查找偏置；省略时采用greatest-lower-bound，不进行坐标插值。 @lang en Lookup bias, greatest-lower-bound or least-upper-bound; omission uses greatest-lower-bound without coordinate interpolation. */
   bias?: OrdinarySourceMapBias;
 }
 
