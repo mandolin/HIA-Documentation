@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Binding host projection reference and verification
+
+- 补齐宿主投影导出与字段的双语职责、白名单/状态/计数/顺序/独立冻结及输入前提，新增新旧配对回归与严格类型消费者；原运行时逻辑、导出和版本保持。明确允许字符串不自动脱敏，sidecar提取诊断未传播至绑定索引的限制仍待处理。
+- Document and verify host-projection exports/fields, allowlists, states, counters, ordering, detached freezing and input preconditions, with legacy/current regressions and a strict type consumer. Runtime logic, exports and versions remain unchanged. Permitted strings remain unredacted; missing sidecar extraction-diagnostic propagation remains open. See the [host reference](docs/generated-binding-host-projection.md).
+
 ## Unreleased — Binding-index prerequisite header snapshots
 
 - 绑定索引通过自有数据描述符复制选项与八个已消费前置头部，拒绝错误根/字段/访问器和反射失败；沿用DOC_SOURCE_MAP_UNAVAILABLE返回冻结空invalid，无部分路径或未验证诊断回显。合法状态/诊断/配对/顺序/冻结查询保持，数组仍借用且要求未篡改；浅头部检查不是来源认证或深图验证。版本与根导出不变，尚未发布。

@@ -203,5 +203,11 @@ The host projection keeps its own `0.1.0-draft` identity and reports the actual
 supported binding version. An unavailable index yields the existing safe empty
 projection; it does not certify an unknown input version.
 
+See the [host projection field and ownership reference](generated-binding-host-projection.md)
+for exact allowlists, counters, ordering, independent freezing and privacy
+limits. Permitted strings are not redacted or HTML-encoded. The projection
+summarizes indexed diagnostics; extraction diagnostics in the sidecar are not
+currently propagated to that index and must be inspected separately.
+
 See also `docs/versioning.md`, `docs/schema-distribution.md`, and
 `docs/compatibility-matrix.md`.

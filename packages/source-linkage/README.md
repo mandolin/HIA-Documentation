@@ -132,6 +132,16 @@ relations, stable instance-key state, diagnostics by code/severity, and separate
 resolution/confidence/provenance values. It deliberately omits source bodies and
 ranges, sidecar paths, locals values/digests, and diagnostic free text.
 
+Supply this package's untampered binding index. Every projected container is
+independently frozen; permitted identities/selectors/codes remain unredacted
+data requiring contextual encoding and publication review. Indexed diagnostics
+do not currently include the original sidecar's extraction diagnostics; inspect
+those separately. See the [host projection reference](../../docs/generated-binding-host-projection.md)
+for field, ordering, counter, version-fallback and ownership details.
+
+中文：宿主投影字段及冻结边界已补复核；允许字符串不自动脱敏，sidecar提取诊断尚未传播至索引。
+本轮不改变既有运行时语义或版本，也未发布npm。
+
 Cross-language reuse keeps parser and scope ownership with each language adapter.
 The current production binding sidecar fixture is Pug. Sass and Vue committed
 fixtures prove only the ordinary source-map/doc-source-map privacy baseline, not
