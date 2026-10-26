@@ -1,9 +1,14 @@
 # 变更日志 / Changelog
 
+## Unreleased — Binding extraction diagnostic propagation
+
+- 绑定索引补入完整owner验证通过的提取code/severity，保留原顺序/重复项，使用固定内存正文而不复制id/subjectId/自由文本/扩展。提取error沿既有规则返回invalid空关系，四查询/宿主状态与整组迁移拒绝贯通；info/warning不独立阻断，非法sidecar不透传局部提取记录。新旧配对、严重级别、schema/包/契约版本及导出保持，尚未发布。
+- Binding indexes now propagate extraction codes/frozen severities after complete owner validation, retaining order/duplicates with fixed memory text and no extractor identities/free text/extensions. Errors use existing empty-invalid refusal through queries, host summaries and bundle migration; info/warnings remain nonblocking, and invalid sidecars forward no partial extraction records. Pairings, severities, schemas, versions and exports remain unchanged; unreleased. See the [propagation reference](docs/generated-binding-host-projection.md#extraction-diagnostic-propagation).
+
 ## Unreleased — Binding host projection reference and verification
 
-- 补齐宿主投影导出与字段的双语职责、白名单/状态/计数/顺序/独立冻结及输入前提，新增新旧配对回归与严格类型消费者；原运行时逻辑、导出和版本保持。明确允许字符串不自动脱敏，sidecar提取诊断未传播至绑定索引的限制仍待处理。
-- Document and verify host-projection exports/fields, allowlists, states, counters, ordering, detached freezing and input preconditions, with legacy/current regressions and a strict type consumer. Runtime logic, exports and versions remain unchanged. Permitted strings remain unredacted; missing sidecar extraction-diagnostic propagation remains open. See the [host reference](docs/generated-binding-host-projection.md).
+- 补齐宿主投影导出与字段的双语职责、白名单/状态/计数/顺序/独立冻结及输入前提，新增新旧配对回归与严格类型消费者；该轮保留原投影运行时逻辑、导出和版本。明确允许字符串不自动脱敏；该轮发现的提取诊断遗漏由上述传播修复处理。
+- Document and verify host-projection exports/fields, allowlists, states, counters, ordering, detached freezing and input preconditions, with legacy/current regressions and a strict type consumer. That review retained projection runtime logic, exports and versions. Permitted strings remain unredacted; its extraction-diagnostic finding is addressed by the propagation fix above. See the [host reference](docs/generated-binding-host-projection.md).
 
 ## Unreleased — Binding-index prerequisite header snapshots
 

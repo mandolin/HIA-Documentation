@@ -55,6 +55,7 @@ export interface GeneratedDocumentationBindingIndex {
   bindings: readonly GeneratedDocumentationBindingIndexedBinding[];
   contract: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT;
   contractVersion?: string;
+  /** @lang zh-CN 映射、owner校验、验证通过的提取及联接诊断，按阶段/原顺序保留重复项；提取仅复制code/severity与固定正文，不复制id/subjectId/扩展。任意error使关系为空。 @lang en Map, owner-validation, validated extraction and linkage diagnostics in stage/input order with duplicates; extraction copies only code/severity and fixed text, excluding id/subjectId/extensions. Any error empties relations. */
   diagnostics: readonly HiaDiagnostic[];
   docSourceMapEntryCount: number;
   expansionCount: number;
@@ -181,7 +182,7 @@ export interface GeneratedDocumentationBindingComposition {
  * source map, or invoke a renderer or host.
  * @param value <lang><zh-CN>独立绑定sidecar运行时值，仍需owner验证。</zh-CN><en>Independent binding-sidecar runtime value requiring owner validation.</en></lang>
  * @param options <lang><zh-CN>普通/null原型的自有前置索引和可选string路径；已知访问器/错型/反射失败拒绝，未知字段不读。</zh-CN><en>Plain/null-prototype own prerequisite index and optional string path; known accessors/wrong types/reflection failures reject, while unknown fields remain unread.</en></lang>
- * @returns <lang><zh-CN>冻结组合结果。选项/消费头部错误为既有DOC_SOURCE_MAP_UNAVAILABLE、invalid空输出，无部分上下文；合法诊断/状态与未脱敏路径保持。数组仍借用，非深图验证或Proxy/资源/并发沙箱。</zh-CN><en>Frozen composition result. Invalid options/consumed headers yield existing DOC_SOURCE_MAP_UNAVAILABLE with empty invalid output and no partial context; valid diagnostics/statuses and unsanitized paths remain. Arrays are borrowed; no deep-graph validation or proxy/resource/concurrency sandbox.</en></lang>
+ * @returns <lang><zh-CN>冻结组合结果。通过owner验证的GDB提取诊断按原code/severity/顺序传播，error沿既有规则返回invalid空关系；非法sidecar不透传提取记录。选项/头部错误仍用DOC_SOURCE_MAP_UNAVAILABLE，无部分上下文。合法path未脱敏，数组仍借用，不是深图验证或Proxy/资源/并发沙箱。</zh-CN><en>Frozen composition result. Owner-validated GDB extraction diagnostics retain codes/severities/order; errors use the existing empty-invalid refusal, while invalid sidecars never forward extraction records. Invalid options/headers retain DOC_SOURCE_MAP_UNAVAILABLE without partial context. Valid paths remain unsanitized and arrays borrowed, without deep-graph validation or proxy/resource/concurrency sandbox guarantees.</en></lang>
  */
 export function createGeneratedDocumentationBindingIndex(
   value: unknown,
@@ -192,11 +193,17 @@ export function createGeneratedDocumentationBindingIndex(
   if (!preparedOptions) return createEmptyGeneratedDocumentationBindingIndex({ status: "invalid", diagnostics: [createIndexDiagnostic("GENERATED_DOCUMENTATION_BINDING_INDEX_DOC_SOURCE_MAP_UNAVAILABLE", "generated-documentation-binding indexing requires own data options with a string path and a pre-built doc-source-map index.", "error")] });
   // <lang><zh-CN>头部是内部独立快照；嵌套数组/条目仍按公共前置条件借用。</zh-CN><en>The header is an independent internal snapshot; nested arrays/entries remain borrowed under the public precondition.</en></lang>
   const docSourceMapIndex = preparedOptions.docSourceMapIndex;
-  // <lang><zh-CN>新诊断数组保持前置诊断在先，既有状态推导和原数组互不修改。</zh-CN><en>A new diagnostic array keeps prerequisite diagnostics first, preserving status derivation without mutating the original array.</en></lang>
+  // <lang><zh-CN>owner只报告结构/语义合法性，不能把其空结果误认作提取没有诊断。</zh-CN><en>The owner reports structural/semantic validity only; an empty validation result does not mean extraction produced no diagnostics.</en></lang>
+  const validationDiagnostics = validateGeneratedDocumentationBinding(value, preparedOptions.path ? { path: preparedOptions.path } : {});
+  // <lang><zh-CN>先保持映射及owner诊断顺序，不改前置数组；提取记录只有完整owner验证通过才可读。</zh-CN><en>Retain map/owner diagnostic order without mutating prerequisite arrays; read extraction records only after complete owner validation succeeds.</en></lang>
   const diagnostics: HiaDiagnostic[] = [
     ...docSourceMapIndex.diagnostics,
-    ...validateGeneratedDocumentationBinding(value, preparedOptions.path ? { path: preparedOptions.path } : {})
+    ...validationDiagnostics
   ];
+  // <lang><zh-CN>整个sidecar失败时连先出现的合法提取项也不透传；通过后补入，使已有error分支统一隔离关系。</zh-CN><en>When the sidecar fails, even preceding valid extraction items are withheld; successful validation adds them before the existing error branch isolates relations.</en></lang>
+  if (!validationDiagnostics.some((diagnostic) => diagnostic.severity === "error") && isRecord(value)) {
+    diagnostics.push(...projectValidatedExtractionDiagnostics(value, preparedOptions.path));
+  }
   // <lang><zh-CN>validator拒绝访问器后不能再次直接读取头字段；只投影自有数据描述符供失败状态说明。</zh-CN><en>Never read headers directly after validator rejection of accessors; project own data descriptors only for failure metadata.</en></lang>
   const { contractVersion, sidecarId } = readBindingHeader(value);
 
@@ -383,6 +390,20 @@ export function findGeneratedBindingsForDocSourceMapEntry(
   entryId: string
 ): readonly GeneratedDocumentationBindingIndexedBinding[] {
   return freezeList(index.bindings.filter((binding) => binding.docSourceMapEntryIds.includes(entryId)));
+}
+
+/**
+ * @lang zh-CN 仅从完整owner验证通过的sidecar复制提取诊断，不读取自由文本或扩展。
+ * @lang en Copies extraction diagnostics only from a completely owner-validated sidecar without reading free text or extensions.
+ * @param value <lang><zh-CN>刚经本模块owner验证的普通记录；嵌套数据须保持未篡改。</zh-CN><en>A plain record just accepted by the owner validator; nested data must remain untampered.</en></lang>
+ * @param path <lang><zh-CN>调用者既有诊断上下文，未脱敏且不授予文件访问权限。</zh-CN><en>Existing unredacted caller diagnostic context, granting no file-access authority.</en></lang>
+ * @returns <lang><zh-CN>独立冻结的内存诊断，保留原code/severity/顺序及重复项，仅新增固定通用正文；不复制id或subjectId。</zh-CN><en>Independent frozen in-memory diagnostics preserving code/severity/order and duplicates with fixed generic text only; ids and subjectIds are excluded.</en></lang>
+ */
+function projectValidatedExtractionDiagnostics(value: Record<string, unknown>, path?: string): HiaDiagnostic[] {
+  // <lang><zh-CN>类型断言依赖前置完整owner检查，不是为任意对象提供新解析入口。</zh-CN><en>This type assertion relies on complete preceding owner validation and creates no new parser for arbitrary objects.</en></lang>
+  const records = value.diagnostics as readonly { code: string; severity: HiaDiagnosticSeverity }[];
+  // <lang><zh-CN>逐条新建而不去重，固定正文/调用者path避免回显提取器自由文本或私有身份。</zh-CN><en>Create every record anew without deduplication; fixed text and caller path avoid echoing extractor free text or private identities.</en></lang>
+  return records.map((record) => Object.freeze(createIndexDiagnostic(record.code, "Generated documentation binding extraction reported a diagnostic.", record.severity, path)));
 }
 
 /**

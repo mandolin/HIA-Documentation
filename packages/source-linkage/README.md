@@ -134,13 +134,16 @@ ranges, sidecar paths, locals values/digests, and diagnostic free text.
 
 Supply this package's untampered binding index. Every projected container is
 independently frozen; permitted identities/selectors/codes remain unredacted
-data requiring contextual encoding and publication review. Indexed diagnostics
-do not currently include the original sidecar's extraction diagnostics; inspect
-those separately. See the [host projection reference](../../docs/generated-binding-host-projection.md)
+data requiring contextual encoding and publication review. The unreleased source
+index now propagates owner-validated extraction codes/severities in order, with
+fixed memory messages rather than extractor identities/free text. Extraction
+errors produce empty invalid relations and refuse complete-bundle migration;
+info/warnings remain nonblocking. Invalid sidecars forward no extraction
+records. See the [host projection reference](../../docs/generated-binding-host-projection.md)
 for field, ordering, counter, version-fallback and ownership details.
 
-中文：宿主投影字段及冻结边界已补复核；允许字符串不自动脱敏，sidecar提取诊断尚未传播至索引。
-本轮不改变既有运行时语义或版本，也未发布npm。
+中文：宿主字段与冻结边界已有复核；源码版现补提取诊断传播，error复用既有空拒绝，
+info/warning不阻断。允许字符串仍不自动脱敏，包/契约版本保持且未发布npm。
 
 Cross-language reuse keeps parser and scope ownership with each language adapter.
 The current production binding sidecar fixture is Pug. Sass and Vue committed

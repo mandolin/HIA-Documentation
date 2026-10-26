@@ -205,9 +205,13 @@ projection; it does not certify an unknown input version.
 
 See the [host projection field and ownership reference](generated-binding-host-projection.md)
 for exact allowlists, counters, ordering, independent freezing and privacy
-limits. Permitted strings are not redacted or HTML-encoded. The projection
-summarizes indexed diagnostics; extraction diagnostics in the sidecar are not
-currently propagated to that index and must be inspected separately.
+limits. Permitted strings are not redacted or HTML-encoded. The unreleased source
+index now propagates owner-validated extraction code/severity records in order,
+with fixed memory messages and no extractor identities/free text. Extraction
+errors use existing empty-invalid refusal, including host/query and bundle
+migration gates; info/warnings remain nonblocking. Invalid sidecars never
+forward extraction records. The validator still reports artifact validity,
+so a structurally valid artifact may describe a failed extraction.
 
 See also `docs/versioning.md`, `docs/schema-distribution.md`, and
 `docs/compatibility-matrix.md`.

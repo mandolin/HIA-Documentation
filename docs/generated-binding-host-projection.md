@@ -67,14 +67,33 @@ performed by this factory.
 中文：每个输出容器均独立冻结，输入不改写。允许字段仍可能包含业务元数据；
 宿主必须按输出上下文编码并审查公开范围，不能把public-safe当作任意字符串脱敏证明。
 
-## Diagnostic coverage limit
+## Extraction diagnostic propagation
 
-The projection summarizes `index.diagnostics`. At present, extraction
-diagnostics in the original binding sidecar's `diagnostics` collection are
-validated but are not copied into that index. An empty projected diagnostic
-list does not prove that extraction reported no issues. Consumers must inspect
-the sidecar's extraction diagnostics separately; propagation and the effect of
-extraction errors on index availability still require resolution.
+The source index now includes extraction diagnostics after the complete sidecar
+passes owner validation. Codes and their frozen severities retain input order
+and duplicates. Invalid sidecars, including unknown versions or malformed
+diagnostic records, forward none of their extraction records, even if an
+earlier record was valid. Owner validation reports artifact validity rather than
+the success of the extraction it describes.
+
+Index order is prerequisite map diagnostics, owner-validation diagnostics,
+validated extraction diagnostics, then any later linkage diagnostics. Extraction
+records are independently frozen; their in-memory message is fixed generic
+text, with only the caller's existing optional diagnostic path. The original
+`id`, `subjectId`, free text and extensions are omitted. Host summaries continue
+to expose code/severity only.
+
+Any extraction `error` uses the index's existing refusal rule: `invalid` with
+empty relations and counts. All four binding queries return no relations, hosts
+retain the error/status, and complete-bundle migration refuses without a bundle
+because its existing prerequisite is an available index. `info` and `warning`
+remain visible without independently blocking an otherwise valid index or
+migration. Other owner, privacy, version, linkage and group-closure checks still
+apply. Migration preserves the original diagnostic collection in successful
+artifacts; it does not rewrite that collection into the generic memory summary.
+
+中文：源码版已补齐验证后的提取诊断传播，error复用既有不可用规则；非法sidecar不透传局部记录。
+结构合法与提取成功分开判断，原severity不降级，宿主仍只接收code/severity。此修复尚未发布npm。
 
 This is unreleased source documentation and verification. It changes no package,
 schema or contract version. See the [binding contract and migration](generated-documentation-binding-contract.md).
