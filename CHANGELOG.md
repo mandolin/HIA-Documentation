@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Presentation policy and diagnostic responsibilities
+
+- 补剩余20导出/六接口33字段的主题、隐私声明、兼容、根profile、诊断与schema/状态结果所有权说明，新增54特征及严格类型；关联前两轮形成36导出/91字段职责目录。完整运行AST、类型/schema/版本保持，尚未发布。
+- Document twenty remaining exports and thirty-three theme/privacy/compatibility/profile/result fields, diagnostic boundaries and schema ownership, with 54 characterizations and strict types. Associate earlier reviews for the 36-export/91-field responsibility inventory. Runtime AST, types, schemas and versions remain unchanged; unreleased. See [policy reference](docs/presentation-profile-policy.md).
+
 ## Unreleased — Presentation source assets and pure fetch plans
 
 - 拒绝源码URL首尾ASCII空格，并保留编码问号/井号后的完整路径以检查目录逃逸；补七接口39字段及纯计划/宿主责任、60项回归/特征与严格类型。保留schema/版本、公开签名及refused状态既有行为，尚未发布。

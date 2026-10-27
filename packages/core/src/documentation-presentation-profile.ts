@@ -37,17 +37,17 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
 export const DOCUMENTATION_PRESENTATION_PAGE_MODES = ["multi-page", "single-page"] as const;
 /** @lang zh-CN fetch/embed/link为阅读模式，none为显式关闭态；类型只读的共享元组运行时未冻结，消费方不得修改。 @lang en fetch/embed/link are reading modes and none explicitly disables exposure; the shared type-readonly tuple is not runtime-frozen and consumers must not mutate it. */
 export const DOCUMENTATION_PRESENTATION_SOURCE_MODES = ["fetch", "embed", "link", "none"] as const;
-/** @lang zh-CN 主题色彩 scheme，与 skin identity 相互独立。 @lang en Theme color schemes, independent from skin identity. */
+/** @lang zh-CN dark/light/system声明，与skin独立；共享元组类型只读而运行未冻结，core不读取设备偏好。 @lang en dark/light/system declarations independent of skin; the shared tuple is type-readonly but not runtime-frozen, and core reads no device preference. */
 export const DOCUMENTATION_PRESENTATION_SCHEMES = ["dark", "light", "system"] as const;
 /** @lang zh-CN 允许sha256/sha384/sha512的共享词汇；类型只读但运行未冻结，不进行hash运算。 @lang en Shared sha256/sha384/sha512 vocabulary, type-readonly but not runtime-frozen; performs no hashing. */
 export const DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS = ["sha256", "sha384", "sha512"] as const;
 
 /**
  * @lang zh-CN
- * Source reader 状态闭集；终态必须通过 `reset` 返回 idle 后才能重新读取。
+ * Source reader 状态闭集；终态必须通过 `reset` 返回 idle 后才能重新读取。共享元组类型只读、运行未冻结，不保存reader实例状态。
  *
  * @lang en
- * Closed source-reader state set; a terminal state must reset to idle before another load.
+ * Closed source-reader state set; a terminal state must reset to idle before another load. The shared tuple is type-readonly, not runtime-frozen, and stores no reader instance state.
  */
 export const DOCUMENTATION_SOURCE_READER_STATES = [
   "idle",
@@ -61,7 +61,7 @@ export const DOCUMENTATION_SOURCE_READER_STATES = [
   "aborted"
 ] as const;
 
-/** @lang zh-CN Source reader 输入事件闭集。 @lang en Closed source-reader input event set. */
+/** @lang zh-CN Source reader输入事件闭集；共享未冻结元组不得修改，事件只描述宿主观察，不执行I/O。 @lang en Closed source-reader input events; do not mutate the shared unfrozen tuple. Events describe host observations without executing I/O. */
 export const DOCUMENTATION_SOURCE_READER_EVENTS = [
   "load-requested",
   "content-ready",
@@ -76,10 +76,10 @@ export const DOCUMENTATION_SOURCE_READER_EVENTS = [
 
 /**
  * @lang zh-CN
- * 稳定 diagnostic code 集；网络、完整性、隐私与 identity 失败保持可区分。
+ * 本模块诊断词汇，不限制输入diagnostics的任意非空code。包含当前未直接发出的SOURCE_MODE_INVALID保留项；共享未冻结元组不得修改。
  *
  * @lang en
- * Stable diagnostic codes that keep network, integrity, privacy, and identity failures distinguishable.
+ * Module diagnostic vocabulary, not a restriction on arbitrary nonempty input diagnostic codes. Includes the currently unissued SOURCE_MODE_INVALID reserved entry; do not mutate the shared unfrozen tuple.
  */
 export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
   "PRESENTATION_CONTRACT_UNSUPPORTED",
@@ -100,11 +100,11 @@ export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
 export type DocumentationPresentationPageMode = typeof DOCUMENTATION_PRESENTATION_PAGE_MODES[number];
 /** @lang zh-CN 四种精确源码模式的联合，不包含自动fallback或宿主别名。 @lang en Union of four exact source modes, with no automatic fallback or host aliases. */
 export type DocumentationPresentationSourceMode = typeof DOCUMENTATION_PRESENTATION_SOURCE_MODES[number];
-/** @lang zh-CN 主题 scheme 类型。 @lang en Theme scheme type. */
+/** @lang zh-CN 三种精确scheme声明；system交owner解释，不等同CSS媒体查询枚举。 @lang en Three exact scheme declarations; system is interpreted by the owner and is not a CSS media-query enum value. */
 export type DocumentationPresentationScheme = typeof DOCUMENTATION_PRESENTATION_SCHEMES[number];
-/** @lang zh-CN Source reader 状态类型。 @lang en Source-reader state type. */
+/** @lang zh-CN 九种状态联合，类型不验证绕过类型的运行时state。 @lang en Nine-state union; types do not validate runtime state values that bypass typing. */
 export type DocumentationSourceReaderState = typeof DOCUMENTATION_SOURCE_READER_STATES[number];
-/** @lang zh-CN Source reader 事件类型。 @lang en Source-reader event type. */
+/** @lang zh-CN 九种事件联合，不隐含真实网络/摘要或权限已检查。 @lang en Nine-event union, without implying actual network, digest or permission checks occurred. */
 export type DocumentationSourceReaderEvent = typeof DOCUMENTATION_SOURCE_READER_EVENTS[number];
 
 /**
@@ -257,17 +257,25 @@ export interface DocumentationPresentationSourceProfile {
 
 /** @lang zh-CN 一个 renderer-neutral skin capability entry。 @lang en One renderer-neutral skin capability entry. */
 export interface DocumentationPresentationSkin {
+  /** @lang zh-CN 0至64个唯一、ASCII身份字典序的能力声明，不证明实现存在。 @lang en Zero to 64 unique ASCII-identity-ordered capability declarations, not proof of implementation. */
   capabilities: string[];
+  /** @lang zh-CN catalog内唯一且用于选择的逻辑身份。 @lang en Logical identity unique within the catalog and used for selection. */
   skinId: string;
+  /** @lang zh-CN 至少一种唯一且排序的dark/light/system；选中skin必须支持当前scheme。 @lang en At least one unique sorted dark/light/system value; the selected skin must support the current scheme. */
   supportedSchemes: DocumentationPresentationScheme[];
+  /** @lang zh-CN 1至256字符非绝对路径标签，不trim或解析/获取；不是契约存在/版本受支持的证明。 @lang en Non-absolute-path label of one to 256 characters, without trimming, parsing or fetching; not proof of contract existence or supported version. */
   tokenContract: string;
 }
 
 /** @lang zh-CN 选中主题与至少三套 skin 的 capability catalog。 @lang en Selected theme and a capability catalog of at least three skins. */
 export interface DocumentationPresentationThemeProfile {
+  /** @lang zh-CN 0至64个唯一排序能力，须被选中skin覆盖，允许空。 @lang en Zero to 64 unique sorted capabilities covered by the selected skin; may be empty. */
   requiredCapabilities: string[];
+  /** @lang zh-CN 显式scheme声明，不在core解析系统偏好或加载CSS。 @lang en Explicit scheme declaration; core neither resolves system preferences nor loads CSS. */
   scheme: DocumentationPresentationScheme;
+  /** @lang zh-CN 必须精确匹配catalog内一项skinId，不自动选默认skin。 @lang en Must exactly match a catalog skinId; no default skin is selected automatically. */
   skinId: string;
+  /** @lang zh-CN 3至64项，skinId唯一且ASCII身份字典序；不要求每项均覆盖选中scheme/全部需求。 @lang en Three to 64 entries with unique ASCII-identity-ordered skinId values; unselected entries need not cover the selected scheme/all requirements. */
   skins: DocumentationPresentationSkin[];
 }
 
@@ -279,21 +287,33 @@ export interface DocumentationPresentationThemeProfile {
  * Serializable privacy facts. A later host may explicitly project a body, but it never enters this contract or its search index.
  */
 export interface DocumentationPresentationPrivacy {
+  /** @lang zh-CN 固定false的无绝对路径声明，不代表任意自由文本已扫描脱敏。 @lang en Fixed false declaration of no absolute paths, not proof that arbitrary free text has been scanned/redacted. */
   absolutePathsIncluded: false;
+  /** @lang zh-CN 固定false的无cookie依赖声明；宿主负责实际执行。 @lang en Fixed false declaration of no cookie dependency, enforced by the host. */
   cookiesRequired: false;
+  /** @lang zh-CN 固定false的无凭据声明，不是请求执行或秘密检测证明。 @lang en Fixed false declaration of no credentials, not proof of request execution or secret detection. */
   credentialsIncluded: false;
+  /** @lang zh-CN 固定false的无私有sidecar声明，不读取外部文件核验。 @lang en Fixed false declaration of no private sidecars; external files are not read for verification. */
   privateSidecarsIncluded: false;
+  /** @lang zh-CN 固定false；contract不得承载正文，已知禁止键检查不替代自由文本审查。 @lang en Fixed false: the contract must not carry bodies; prohibited-key checks do not replace free-text review. */
   sourceBodyInContract: false;
+  /** @lang zh-CN 固定false；宿主负责不将正文纳入索引，core不访问索引。 @lang en Fixed false: the host excludes bodies from search indexes; core accesses no index. */
   sourceBodyInSearchIndex: false;
+  /** @lang zh-CN none模式为none，其余为public-explicit；显式分类仍需宿主公开授权。 @lang en none for none mode and public-explicit otherwise; explicit classification still requires host publication authorization. */
   sourceExposure: "none" | "public-explicit";
+  /** @lang zh-CN 固定false的遥测关闭声明，不扫描宿主网络或收集运行证据。 @lang en Fixed false telemetry-off declaration, without scanning host traffic or collecting runtime evidence. */
   telemetryEnabled: false;
 }
 
 /** @lang zh-CN Draft compatibility 采用 exact/closed-world 策略。 @lang en Draft compatibility uses an exact, closed-world policy. */
 export interface DocumentationPresentationCompatibility {
+  /** @lang zh-CN 固定new-contract-version，身份变化需新版，不自动执行迁移。 @lang en Fixed new-contract-version: identity changes require a new version; no migration runs automatically. */
   identityChange: "new-contract-version";
+  /** @lang zh-CN 固定new-contract-version，语义变化需新版，不推断兼容性。 @lang en Fixed new-contract-version: semantic changes require a new version; compatibility is not inferred. */
   semanticChange: "new-contract-version";
+  /** @lang zh-CN 固定reject，未知wire字段被拒绝，不丢弃后继续接纳。 @lang en Fixed reject: unknown wire fields are refused, not silently discarded and accepted. */
   unknownProperties: "reject";
+  /** @lang zh-CN 固定exact，只匹配当前draft名称/版本，不实施SemVer范围。 @lang en Fixed exact: matches the current draft name/version only, not a SemVer range. */
   versionMatch: "exact";
 }
 
@@ -305,16 +325,27 @@ export interface DocumentationPresentationCompatibility {
  * Neutral presentation wire profile; a refused profile retains a safe shape and auditable diagnostics.
  */
 export interface DocumentationPresentationProfile {
+  /** @lang zh-CN 必填exact/closed-world与新版策略声明，不是迁移结果。 @lang en Required exact/closed-world/new-version policy declarations, not a migration result. */
   compatibility: DocumentationPresentationCompatibility;
+  /** @lang zh-CN 精确documentation-presentation-profile，不接受别名。 @lang en Exact documentation-presentation-profile name with no alias. */
   contract: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT;
+  /** @lang zh-CN 精确0.1.0-draft；未来稳定版须独立协调reader/writer/schema。 @lang en Exact 0.1.0-draft; a future stable version needs coordinated reader/writer/schema work. */
   contractVersion: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION;
+  /** @lang zh-CN 最多128个输入记录，不由校验器透传或按severity推导status；自由code/message未全面脱敏。 @lang en Up to 128 input records; validation neither forwards them nor infers status from severity, and free code/message text is not comprehensively redacted. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 精确稳定字段及页面投影声明，比较器不证明宿主履约。 @lang en Exact stable-field/page-projection declarations; comparison does not prove host conformance. */
   identityPolicy: DocumentationPresentationIdentityPolicy;
+  /** @lang zh-CN 完整分区声明与投影，非真实路由解析器。 @lang en Complete partition declarations/projections, not an actual route resolver. */
   pagePartition: DocumentationPresentationPagePartition;
+  /** @lang zh-CN 八项显式隐私声明，不能替代公开授权/自由文本审查。 @lang en Eight explicit privacy declarations, not substitutes for publication authorization/free-text review. */
   privacy: DocumentationPresentationPrivacy;
+  /** @lang zh-CN 合法逻辑profile身份，不参与topic身份比较。 @lang en Valid logical profile identity, not part of topic identity comparison. */
   profileId: string;
+  /** @lang zh-CN 完整源码模式/资产/policy，不授予I/O能力。 @lang en Complete source mode/assets/policy, granting no I/O capability. */
   source: DocumentationPresentationSourceProfile;
+  /** @lang zh-CN 显式ready/refused；不从diagnostics计算，也不单独阻止现行纯计划构造。 @lang en Explicit ready/refused status, neither computed from diagnostics nor an independent gate on current pure-plan construction. */
   status: "ready" | "refused";
+  /** @lang zh-CN 选中skin/scheme/能力声明，不包含DOM/CSS或设备状态。 @lang en Selected skin/scheme/capability declarations without DOM/CSS or device state. */
   theme: DocumentationPresentationThemeProfile;
 }
 
@@ -352,7 +383,9 @@ export interface DocumentationSourceFetchPlanResult {
 
 /** @lang zh-CN Source reader 状态迁移结果。 @lang en Source-reader state-transition result. */
 export interface DocumentationSourceReaderTransitionResult {
+  /** @lang zh-CN 本次非法迁移诊断，可变新数组；合法network/integrity失败事件迁移仍返回空数组。 @lang en New mutable diagnostics for invalid transitions; legal network/integrity-failure event transitions still return an empty array. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 新状态或原state回显；绕过类型传入的非法回显未校验/脱敏/复制。 @lang en Next state or original state echo; invalid echoes passed by bypassing types are unvalidated, unredacted and un-cloned. */
   state: DocumentationSourceReaderState;
 }
 
@@ -363,6 +396,9 @@ export interface DocumentationSourceReaderTransitionResult {
  * @lang en
  * Draft 2020-12 wire schema. The runtime validator additionally enforces ordering, digest lengths, same-origin relative URLs,
  * and cross-field privacy and identity invariants.
+ * @remarks
+ * @lang zh-CN 此导出类型只读但运行时共享可变，enum部分复用公开词汇数组；修改前先复制。schema identity不触发下载或证明宿主行为。
+ * @lang en This type-readonly export is shared and mutable at runtime, with some enums aliasing public vocabulary arrays; clone before editing. Its identity triggers no download and proves no host behavior.
  */
 export const DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -538,7 +574,7 @@ const privateFieldNames = new Set(["absolutePath", "ast", "cookie", "css", "html
  * Validates a neutral profile's closed-world shape, deterministic ordering, and cross-field identity/source/theme/privacy invariants.
  *
  * @param value - 待校验的未知 wire value。 / Unknown wire value to validate.
- * @returns 稳定 diagnostics；空数组表示有效。非JSON图、复制或反射失败使用固定拒绝。 / Stable diagnostics; empty means valid. Non-JSON graphs, cloning or reflection failures use a fixed refusal.
+ * @returns 仅本次新建且可变的验证diagnostics，不复制输入记录；空表示结构/已实现规则有效，不证明文本脱敏或授权。非JSON图/复制/反射失败固定拒绝。 / Only newly created mutable validation diagnostics, not copied input records; empty means valid shape/implemented rules, not proven text redaction or authorization. Non-JSON/cloning/reflection failures use a fixed refusal.
  * @remarks
  * @lang zh-CN 只验证普通JSON快照，不调用普通对象getter/toJSON。非枚举数据与Symbol键不属于wire；Proxy反射副作用、全局内建篡改和资源耗尽不受沙箱保护。
  * @lang en Validates an ordinary JSON snapshot without invoking ordinary-object getters/toJSON. Non-enumerable data and Symbol keys are outside the wire; proxy reflection side effects, tampered global intrinsics and resource exhaustion are not sandboxed.
@@ -646,7 +682,7 @@ function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
  *
  * @param reference - 身份基准 profile。 / Reference identity profile.
  * @param candidate - 待比较 profile。 / Candidate profile to compare.
- * @returns identity drift 或输入诊断。 / Identity drift or input diagnostics.
+ * @returns 新建identity drift或验证诊断；无效输入先参考侧后候选侧，按code/path/message去重，不透传原profile记录。 / New identity-drift or validation diagnostics; invalid inputs are ordered reference then candidate, deduplicated by code/path/message, without forwarding original profile records.
  */
 export function compareDocumentationPresentationIdentity(reference: unknown, candidate: unknown): HiaDiagnostic[] {
   // <lang><zh-CN>两侧分别拥有独立验证副本，绝不在检查后重读调用方的原对象。</zh-CN><en>Each side owns a separately validated copy; never reread caller objects after checking them.</en></lang>
@@ -889,7 +925,7 @@ function isSkin(value: unknown): value is DocumentationPresentationSkin {
     && isSortedIdentityArray(value.capabilities, 64);
 }
 
-/** @lang zh-CN 验证 fail-closed privacy facts。 @lang en Validates fail-closed privacy facts. */
+/** @lang zh-CN 校验固定隐私声明，不观察宿主或证明任意文本已脱敏。 @lang en Checks fixed privacy declarations without observing hosts or proving arbitrary text is redacted. */
 function isPrivacy(value: unknown): value is DocumentationPresentationPrivacy {
   return isExactRecord(value, privacyKeys) && hasRequiredKeys(value, privacyKeys)
     && (value.sourceExposure === "none" || value.sourceExposure === "public-explicit") && value.sourceBodyInContract === false
@@ -903,7 +939,7 @@ function isCompatibility(value: unknown): value is DocumentationPresentationComp
     && value.unknownProperties === "reject" && value.identityChange === "new-contract-version" && value.semanticChange === "new-contract-version";
 }
 
-/** @lang zh-CN 验证可公开 diagnostic shape 与 locator privacy。 @lang en Validates a public-safe diagnostic shape and locator privacy. */
+/** @lang zh-CN 校验diagnostic结构及部分定位字段边界，不扫描自由code/message中的秘密。 @lang en Checks diagnostic shape and selected locator boundaries, without scanning free code/message text for secrets. */
 function isSafeDiagnostic(value: unknown): value is HiaDiagnostic {
   if (!isExactRecord(value, diagnosticKeys) || !hasRequiredKeys(value, ["code", "message", "severity"] as const)) return false;
   if (typeof value.code !== "string" || value.code.length === 0 || typeof value.message !== "string" || value.message.length === 0

@@ -101,6 +101,9 @@ Content defaults to `none`. Source bodies, raw comments, and ordinary source-map
 
 ## Documentation Presentation Profile
 
+See [theme, privacy and diagnostic responsibilities](../../docs/presentation-profile-policy.md) for the remaining
+thirty-three fields, declaration/text boundaries, exact compatibility and schema/result ownership.
+
 See [source assets and fetch plans](../../docs/presentation-source-plan.md) for thirty-nine source/plan fields,
 URL and numeric limits, actual status/diagnostic behavior and host execution responsibilities.
 

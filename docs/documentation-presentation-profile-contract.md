@@ -7,6 +7,9 @@ and compatibility.
 The contract is owned by `@hia-doc/core`. It contains no renderer DOM, CSS selectors, templates, parser AST nodes,
 source body, filesystem path, credential, cookie, telemetry payload, or private sidecar.
 
+Those exclusions are producer and host obligations. Structural/privacy checks do not comprehensively redact arbitrary
+free diagnostic text or prove host behavior/publication consent. See [policy and diagnostic responsibilities](presentation-profile-policy.md).
+
 ## Normative Defaults
 
 - Page partition: `multi-page`.
