@@ -44,6 +44,27 @@ function withOrdinaryMap(base: ReturnType<typeof fixture>, map: unknown, section
     sourceInputs: [{ sectionIndex, sourceIndex, bytes: base.input.sourceInputs[0]!.bytes }] };
 }
 
+/**
+ * @lang zh-CN 构造零长度边界反例，始终从实际源码与地图字节重算摘要；人工普通段仅用于隔离读取器，不表示生产器会输出它。
+ * @lang en Builds zero-length boundary cases with digests recomputed from actual source and map bytes; the synthetic ordinary segment isolates the reader and does not imply producer output.
+ * @param source <lang><zh-CN>本次授权的源码文本，可为空。</zh-CN><en>Authorized source text for this query, possibly empty.</en></lang>
+ * @param endBoundary <lang><zh-CN>文档引用终点约定。</zh-CN><en>Documentation reference endpoint convention.</en></lang>
+ * @param mappings <lang><zh-CN>普通地图段，默认人工 1:1 段；空串表示没有段。</zh-CN><en>Ordinary map mappings, defaulting to a synthetic 1:1 segment; empty means no segment.</en></lang>
+ * @returns <lang><zh-CN>匹配实际字节的严格输入及 1:1 查询。</zh-CN><en>Strict input matching actual bytes and a 1:1 query.</en></lang>
+ */
+function zeroBoundaryFixture(source: string, endBoundary: "exclusive" | "inclusive", mappings = "AAAA") {
+  const base = fixture(source);
+  const input = withOrdinaryMap(base, { version: 3, sources: ["src/a.scss"], names: [], mappings }, null, 0);
+  // <lang><zh-CN>让文档引用与请求位置同为 1:1，单独改变终点约定；摘要对应改后的文档字节。</zh-CN><en>Place the documentation reference and query at 1:1, changing only the endpoint convention; hash the amended documentation bytes.</en></lang>
+  const documentation = JSON.parse(input.documentationMapBytes.toString("utf8"));
+  documentation.entries[0].sourceRefs[0].range.start.column = 1;
+  documentation.entries[0].sourceRefs[0].range.end.column = 1;
+  documentation.entries[0].sourceRefs[0].rangeConvention.endBoundary = endBoundary;
+  input.documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+  input.profile.documentationMap.digest.value = createHash("sha256").update(input.documentationMapBytes).digest("base64");
+  return { input, query: { ...base.query, position: { line: 1, column: 1 } } };
+}
+
 describe("ordinary coordinate profile strict reader", () => {
   it("verifies an actual segment after a non-BMP character while old API stays numeric", async () => {
     const { input, query } = fixture();
@@ -134,6 +155,22 @@ describe("ordinary coordinate profile strict reader", () => {
     const staleLogical = { ...base.input, profile: structuredClone(base.input.profile) };
     staleLogical.profile.sourceSlots[0]!.sourceTextDigest.value = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     expect(queryVerifiedSourceAnchor(await createOrdinaryCoordinateProfileIndex(staleLogical), base.query).verification.kind).toBe("unverified");
+  });
+
+  it.each([
+    { name: "authorized empty source with exclusive zero-length range", source: "", endBoundary: "exclusive", mappings: "AAAA", kind: "unverified", code: "COORDINATE_SOURCE_UNVERIFIED" },
+    { name: "authorized empty source with inclusive point", source: "", endBoundary: "inclusive", mappings: "AAAA", kind: "unverified", code: "COORDINATE_SOURCE_UNVERIFIED" },
+    { name: "nonempty source with exclusive zero-length range", source: "x", endBoundary: "exclusive", mappings: "AAAA", kind: "unverified", code: "COORDINATE_DOCUMENTATION_UNVERIFIED" },
+    { name: "nonempty source with inclusive point and actual segment", source: "x", endBoundary: "inclusive", mappings: "AAAA", kind: "exact-anchor", code: "COORDINATE_EXACT_ANCHOR" },
+    { name: "nonempty source with inclusive point but no ordinary segment", source: "x", endBoundary: "inclusive", mappings: "", kind: "unmapped", code: "COORDINATE_UNMAPPED" }
+  ] as const)("keeps $name separate from other zero-length cases", async ({ source, endBoundary, mappings, kind, code }) => {
+    const { input, query } = zeroBoundaryFixture(source, endBoundary, mappings);
+    const index = await createOrdinaryCoordinateProfileIndex(input);
+    const result = queryVerifiedSourceAnchor(index, query);
+    expect(index.status).toBe("available");
+    expect(result.verification.kind).toBe(kind);
+    expect(result.diagnostics[0]?.code).toBe(code);
+    expect(result.verification.generatedPosition).toEqual(kind === "exact-anchor" ? { line: 1, column: 1 } : undefined);
   });
 
   it("returns nearest-anchor only for a preceding segment within the same documented range", async () => {
