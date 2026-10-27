@@ -38,18 +38,23 @@ Paths are neither trimmed, separator-normalized nor stripped of absolute-looking
 
 This is an interface with a status-union field and an optional manifest, **not a discriminated union**. TypeScript permits manually constructing successful values without manifests or invalid values with manifests; that does not describe factory outputs. Check status and manifest presence separately, and narrow unknown record fields before consuming them.
 
+下例的`rangeEvidence`必须由调用方核实并按**旧工件每条带范围的`sourceRef`**提供；对已是`1.1.0`或完全没有范围的旧工件传空数组。省略证据不能把旧带范围工件升级为当前版。若旧地图含生成式绑定关联，应改用完整的整组迁移，不能用此单工件示例绕过关联检查：`0.1.0-draft/0.1.0-draft`旧草案配对默认升至`0.2.0-draft/1.0.0`，该已公开配对默认独立复制；两种默认路径都不要求新版范围证据。只有显式升至`0.3.0-draft/1.1.0`时，才分别提供映射与绑定的逐引用范围证据。
+
+The caller must verify and supply `rangeEvidence` for **each ranged `sourceRef` in an older artifact**. Pass an empty array for an already-current `1.1.0` map or an older map with no ranges. Omitting evidence cannot upgrade an older ranged map. Older maps with generated-binding associations require coordinated bundle migration rather than this standalone example: the `0.1.0-draft/0.1.0-draft` legacy pair advances by default to `0.2.0-draft/1.0.0`, while that previous published pair is independently cloned by default. Neither default path needs current range evidence. An explicit upgrade to `0.3.0-draft/1.1.0` requires separate per-reference map and binding range evidence.
+
 ```ts
-import { migrateDocSourceMap } from "@hia-doc/source-linkage";
+import { migrateDocSourceMap, type DocSourceMapRangeEvidence } from "@hia-doc/source-linkage";
 
 /**
  * @lang zh-CN 消费当前迁移结果，不将成功状态当作类型或公开授权。
  * @lang en Consumes a migration result without treating success as a type or publication authorization.
  * @param input <lang><zh-CN>未知映射数据，由迁移入口验证。</zh-CN><en>Unknown map data validated by the migration entry.</en></lang>
+ * @param rangeEvidence <lang><zh-CN>调用方逐引用核实的旧范围约定；无旧范围时为空数组。</zh-CN><en>Caller-verified conventions for every old ranged reference, or an empty array when none exist.</en></lang>
  * @returns <lang><zh-CN>工具本地工件或诊断，公开前仍需独立检查。</zh-CN><en>Tool-local artifact or diagnostics, still requiring separate checks before publication.</en></lang>
  */
-function migrateForTool(input: unknown) {
-  // <lang><zh-CN>本次调用的结果快照，逐项检查状态和可选工件。</zh-CN><en>Result snapshot for this call; check status and the optional artifact separately.</en></lang>
-  const result = migrateDocSourceMap(input, { path: "artifacts/map.json" });
+function migrateForTool(input: unknown, rangeEvidence: readonly DocSourceMapRangeEvidence[]) {
+  // <lang><zh-CN>显式传递已核实证据，并逐项检查本次结果的状态和可选工件。</zh-CN><en>Pass verified evidence explicitly and inspect both the result status and optional artifact.</en></lang>
+  const result = migrateDocSourceMap(input, { path: "artifacts/map.json", rangeEvidence });
   if ((result.status === "migrated" || result.status === "already-current") && result.manifest) {
     return result.manifest; // <lang><zh-CN>公开前仍需独立隐私/发行检查。</zh-CN><en>Independent privacy/release checks still apply before publication.</en></lang>
   }
