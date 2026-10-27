@@ -217,6 +217,8 @@ export function convertJSDocIntegrationToHiaDocument(
  *
  * 中文：执行完整转换并返回文档与诊断；适合 gate、测试和上层 producer 在不丢失 warning 的情况下消费。
  * English: Runs the full conversion and returns both document and diagnostics, allowing gates, tests and producers to consume warnings without losing them.
+ * @lang zh-CN 输入契约不匹配仍产生 warning 并继续转换；诊断与身份字段只清理可识别的路径和凭据形态，无法替生产者识别无标记私密正文。
+ * @lang en Contract mismatches still warn and convert; diagnostic and identity fields screen recognizable paths and credentials, while producers remain responsible for unmarked private prose.
  *
  * @param input - Unknown JSDoc integration JSON value.
  * @param options - Optional document identity, locale and filtering options.
@@ -250,15 +252,18 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
   }
 
   const integration = input as JSDocIntegrationInput;
+  // <lang><zh-CN>外部身份只在满足其公开词法后才可进入诊断和溯源元数据；原值仍用于判断兼容性。</zh-CN><en>Expose external identities in diagnostics and provenance metadata only when they meet their public lexical forms; use the original values for compatibility checks.</en></lang>
+  const publicContract = toPublicContractName(integration.contract);
+  const publicContractVersion = toPublicVersion(integration.contractVersion);
 
   if (integration.contract && integration.contract !== JSDOC_HIA_INTEGRATION_CONTRACT) {
     diagnostics.push(createDiagnostic(
       "HIA_JSDOC_CONTRACT_UNSUPPORTED",
-      `Unsupported JSDoc integration contract: ${integration.contract}.`,
+      publicContract ? `Unsupported JSDoc integration contract: ${publicContract}.` : "Unsupported JSDoc integration contract.",
       "warning",
       "contract",
       {
-        actualContract: integration.contract,
+        ...(publicContract ? { actualContract: publicContract } : {}),
         expectedContract: JSDOC_HIA_INTEGRATION_CONTRACT
       }
     ));
@@ -267,11 +272,11 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
   if (integration.contractVersion && integration.contractVersion !== JSDOC_HIA_INTEGRATION_CONTRACT_VERSION) {
     diagnostics.push(createDiagnostic(
       "HIA_JSDOC_CONTRACT_VERSION_UNSUPPORTED",
-      `Unsupported JSDoc integration contractVersion: ${integration.contractVersion}.`,
+      publicContractVersion ? `Unsupported JSDoc integration contractVersion: ${publicContractVersion}.` : "Unsupported JSDoc integration contractVersion.",
       "warning",
       "contractVersion",
       {
-        actualVersion: integration.contractVersion,
+        ...(publicContractVersion ? { actualVersion: publicContractVersion } : {}),
         expectedVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION
       }
     ));
@@ -309,11 +314,11 @@ export function convertJSDocIntegrationToHiaDocumentDetailed(
     metadataSchemaVersion: JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
     source: "jsdoc",
     integration: {
-      contract: integration.contract ?? "",
-      contractVersion: integration.contractVersion ?? "",
-      pluginVersion: integration.pluginVersion ?? "",
-      mode: integration.mode ?? "",
-      irVersion: integration.ir?.version ?? "",
+      contract: publicContract,
+      contractVersion: publicContractVersion,
+      pluginVersion: toPublicVersion(integration.pluginVersion),
+      mode: toPublicDiagnosticText(integration.mode),
+      irVersion: toPublicVersion(integration.ir?.version),
       parserBoundary: sanitizeMetadata(integration.parserBoundary ?? {}),
       docletNodeMap: sanitizeMetadata(filterDocletNodeMap(integration.docletNodeMap, symbolIds)),
       sourceFragments: sanitizeMetadata(integration.sourceFragments ?? []),
@@ -1085,13 +1090,13 @@ function mapDiagnostics(value: unknown, targetPathPrefix: string): HiaDiagnostic
       }
 
       const diagnostic = createDiagnostic(
-        stringValue(item.code) || "HIA_JSDOC_ADAPTER_DIAGNOSTIC",
-        stringValue(item.message) || "JSDoc adapter diagnostic.",
+        toPublicDiagnosticText(item.code) || "HIA_JSDOC_ADAPTER_DIAGNOSTIC",
+        toPublicDiagnosticText(item.message) || "JSDoc adapter diagnostic.",
         toSeverity(item.severity),
-        stringValue(item.targetPath) || `${targetPathPrefix}.${index}`,
+        toPublicDiagnosticText(item.targetPath) || `${targetPathPrefix}.${index}`,
         sanitizeDiagnosticData(item.data)
       );
-      const path = stringValue(item.path);
+      const path = toPublicDiagnosticText(item.path);
 
       if (path) {
         diagnostic.path = path;
@@ -1400,6 +1405,12 @@ function toRelativePath(value: unknown): string {
   return isUnsafePathLike(text) ? "" : text;
 }
 
+/**
+ * @lang zh-CN 复制普通适配器元数据并移除危险结构键、可识别的本机路径与 file URL；无标记私密正文仍由生产者负责。
+ * @lang en Copies ordinary adapter metadata while removing unsafe structural keys, recognizable local paths and file URLs; producers remain responsible for unmarked private prose.
+ * @param value <lang><zh-CN>上游元数据值。</zh-CN><en>Upstream metadata value.</en></lang>
+ * @returns <lang><zh-CN>清理后的值；不安全字符串为 undefined，无 I/O。</zh-CN><en>The sanitized value, or undefined for unsafe strings; no I/O.</en></lang>
+ */
 function sanitizeMetadata(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeMetadata(item)).filter((item) => item !== undefined);
@@ -1409,7 +1420,8 @@ function sanitizeMetadata(value: unknown): unknown {
     const record: Record<string, unknown> = {};
 
     for (const [key, item] of Object.entries(value)) {
-      if (/filePath$/i.test(key)) {
+      // <lang><zh-CN>先拒绝会改写对象原型或序列化行为的键，避免在新对象上赋值时改变结构。</zh-CN><en>Reject keys that can alter an object's prototype or serialization behavior before assigning to the new record.</en></lang>
+      if (/filePath$/i.test(key) || isUnsafeObjectKey(key)) {
         continue;
       }
 
@@ -1422,17 +1434,135 @@ function sanitizeMetadata(value: unknown): unknown {
     return record;
   }
 
-  if (typeof value === "string" && isUnsafePathLike(value)) {
+  if (typeof value === "string" && (isUnsafePathLike(value) || hasLocalFileUrl(value))) {
     return undefined;
   }
 
   return value;
 }
 
+/**
+ * @lang zh-CN 识别不能从上游 JSON 复制到公开对象的原型与序列化控制键。
+ * @lang en Identifies prototype and serialization control keys that must not be copied from upstream JSON into public objects.
+ * @param key <lang><zh-CN>上游对象的自有字段名。</zh-CN><en>Own field name of an upstream object.</en></lang>
+ * @returns <lang><zh-CN>字段具有结构控制作用时为 true。</zh-CN><en>True when the field controls object structure.</en></lang>
+ */
+function isUnsafeObjectKey(key: string): boolean {
+  return ["__proto__", "constructor", "prototype", "toJSON"].includes(key);
+}
+
+/**
+ * @lang zh-CN 识别 Unix、Windows 与网络形式的本机 file URL，包括嵌在普通文本中的 URL。
+ * @lang en Recognizes Unix, Windows and network local file URLs, including URLs embedded in ordinary text.
+ * @param value <lang><zh-CN>待检查的文本。</zh-CN><en>Text to inspect.</en></lang>
+ * @returns <lang><zh-CN>含可识别 file URL 时为 true。</zh-CN><en>True when a recognizable file URL is present.</en></lang>
+ */
+function hasLocalFileUrl(value: string): boolean {
+  return /\bfile:[\\/]/i.test(value);
+}
+
 function sanitizeDiagnosticData(value: unknown): HiaDiagnosticData | undefined {
-  const sanitized = sanitizeMetadata(value);
+  // <lang><zh-CN>诊断 data 与一般调试 metadata 分开处理：保留安全结构，同时剔除常见凭据字段与正文。</zh-CN><en>Handle diagnostic data separately from general debug metadata, retaining safe structure while removing recognizable credential fields and text.</en></lang>
+  const sanitized = sanitizeDiagnosticValue(value);
 
   return isRecord(sanitized) ? sanitized : undefined;
+}
+
+/**
+ * @lang zh-CN 递归清理上游诊断 data 中可识别的私有路径与凭据形态，保留其它普通 JSON 值。
+ * @lang en Recursively removes recognizable private paths and credential forms from upstream diagnostic data while retaining other ordinary JSON values.
+ * @param value <lang><zh-CN>可能含敏感字段或非 JSON 节点的上游值。</zh-CN><en>Upstream value that may contain sensitive fields or non-JSON nodes.</en></lang>
+ * @returns <lang><zh-CN>新的安全 JSON 子图；无法安全保留时为 undefined，无 I/O。</zh-CN><en>A new safe JSON subgraph, or undefined when it cannot be retained; no I/O.</en></lang>
+ */
+function sanitizeDiagnosticValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeDiagnosticValue(item)).filter((item) => item !== undefined);
+  }
+  if (isRecord(value)) {
+    const record: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      // <lang><zh-CN>拒绝凭据与原型/序列化保留键，避免 JSON 输入通过普通赋值污染结果对象结构。</zh-CN><en>Reject credentials and prototype/serialization keys so JSON input cannot alter the result object's shape through ordinary assignment.</en></lang>
+      if (!toPublicDiagnosticText(key) || /filePath$/i.test(key) || isCredentialFieldName(key)
+        || isUnsafeObjectKey(key)) {
+        continue;
+      }
+      const sanitized = sanitizeDiagnosticValue(item);
+      if (sanitized !== undefined) {
+        record[key] = sanitized;
+      }
+    }
+    return record;
+  }
+  if (typeof value === "string") {
+    return toPublicDiagnosticText(value) || undefined;
+  }
+  // <lang><zh-CN>诊断 data 只保留有限 JSON 标量；函数、符号与非有限数字不能进入公开 wire。</zh-CN><en>Keep only finite JSON scalars in diagnostic data; functions, symbols, and nonfinite numbers cannot enter the public wire.</en></lang>
+  return value === null || typeof value === "boolean" || (typeof value === "number" && Number.isFinite(value))
+    ? value
+    : undefined;
+}
+
+/**
+ * @lang zh-CN 只识别通常承载凭据的字段名后缀；`tokenCount` 等计数键仍可保留。
+ * @lang en Recognizes field-name suffixes commonly carrying credentials while retaining counters such as `tokenCount`.
+ * @param value <lang><zh-CN>诊断 data 字段名或赋值左侧标识。</zh-CN><en>Diagnostic-data key or left-hand assignment identifier.</en></lang>
+ * @returns <lang><zh-CN>字段应从公开诊断移除时为 true。</zh-CN><en>True when the field must be removed from a public diagnostic.</en></lang>
+ */
+function isCredentialFieldName(value: string): boolean {
+  const normalized = value.replace(/[-_]/g, "").toLowerCase();
+  return /(?:token|password|passwd|secret|credentials?|authorization(?:header)?|authheader|(?:set)?cookies?(?:header)?|(?:x)?apikey|privatekey|sessionkey|accesskey)$/.test(normalized);
+}
+
+/**
+ * @lang zh-CN 有界清理诊断正文和逻辑定位：拒绝可识别的绝对/越界路径、URL 凭据及常见键值凭据；无标记的私密自然语言仍由生产者负责。
+ * @lang en Bounded screening for diagnostic prose and logical locations: rejects recognizable absolute/escaping paths, URL credentials and common key-value credentials; producers still own unmarked private prose.
+ * @param value <lang><zh-CN>不可信诊断正文、代码或逻辑路径。</zh-CN><en>Untrusted diagnostic prose, code, or logical path.</en></lang>
+ * @returns <lang><zh-CN>安全原文或空字符串；不尝试从可疑正文中截取局部片段。</zh-CN><en>The safe original text or an empty string; suspicious prose is not partially excerpted.</en></lang>
+ */
+function toPublicDiagnosticText(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0) {
+    return "";
+  }
+  // <lang><zh-CN>赋值左侧按完整字段名判断，防止 `sessionToken`/`access_token` 遗漏，同时保留 `tokenCount` 等安全计数。</zh-CN><en>Classify complete assignment keys so `sessionToken` and `access_token` cannot escape while safe counters such as `tokenCount` remain.</en></lang>
+  for (const assignment of value.matchAll(/\b([A-Za-z][A-Za-z0-9_-]{0,63})\s*[:=]\s*\S+/g)) {
+    if (assignment[1] && isCredentialFieldName(assignment[1])) {
+      return "";
+    }
+  }
+  if (/\bbearer\s+\S+/i.test(value)
+    || /:\/\/[^/\s@]+@/i.test(value)
+    || hasLocalFileUrl(value)) {
+    return "";
+  }
+  // <lang><zh-CN>将正文按空白与常见标点切分后复用路径安全判定，防止路径藏在错误句子中。</zh-CN><en>Split prose on whitespace and common punctuation before reusing the path guard so a path embedded in an error sentence is detected.</en></lang>
+  const pathTokens = value.split(/[\s"'`=()\[\]{}<>;,]+/).map((token) => token.replace(/[.!?]+$/, ""));
+  const embeddedPath = /(?:^|[\s"'`=(:])(?:[A-Za-z]:[\\/]|\\\\|\/(?![\/\s])|\.\.[\\/])/.test(value);
+  return embeddedPath || pathTokens.some((token) => isUnsafePathLike(token)) ? "" : value;
+}
+
+/** @lang zh-CN 仅公开简短连字符契约名；其它原始身份不能进入诊断或溯源。 @lang en Exposes only short hyphenated contract names; other raw identities stay out of diagnostics and provenance. */
+function toPublicContractName(value: unknown): string {
+  return typeof value === "string" && value.length <= 128 && /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value) && toPublicDiagnosticText(value)
+    ? value
+    : "";
+}
+
+/** @lang zh-CN 仅公开严格的短 SemVer 身份，兼容性判断仍使用原始输入。 @lang en Exposes only strict short SemVer identities while compatibility checks still use the original input. */
+function toPublicVersion(value: unknown): string {
+  if (typeof value !== "string" || value.length > 128 || !toPublicDiagnosticText(value)) {
+    return "";
+  }
+  const match = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$/.exec(value);
+  if (!match) {
+    return "";
+  }
+  // <lang><zh-CN>预发布的纯数字标识禁止前导零；所有预发布/构建片段均不得为空。</zh-CN><en>Numeric prerelease identifiers cannot have leading zeroes, and prerelease/build segments cannot be empty.</en></lang>
+  const prerelease = match[1]?.split(".") ?? [];
+  const build = match[2]?.split(".") ?? [];
+  return [...prerelease, ...build].some((segment) => segment.length === 0)
+    || prerelease.some((segment) => /^0\d+$/.test(segment))
+    ? ""
+    : value;
 }
 
 function filterDocletNodeMap(value: unknown, symbolIds: Set<string>): unknown {

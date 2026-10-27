@@ -5,6 +5,7 @@ import {
   JSDOC_ADAPTER_CORE_BRIDGE_VERSION,
   JSDOC_ADAPTER_METADATA_SCHEMA_VERSION,
   JSDOC_ADAPTER_NAME,
+  JSDOC_HIA_INTEGRATION_CONTRACT,
   JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
   convertJSDocIntegrationToHiaDocument,
   convertJSDocIntegrationToHiaDocumentDetailed,
@@ -187,6 +188,87 @@ describe("@hia-doc/parser-jsdoc", () => {
     expect(JSON.stringify(result.document)).not.toContain("/private/");
   });
 
+  it("omits recognizable local file URLs from ordinary adapter metadata", () => {
+    // <lang><zh-CN>普通 metadata 中的 Unix、Windows 与网络本机 file URL 均不应公开；相对引用和网页链接作为正控。</zh-CN><en>Ordinary metadata must omit Unix, Windows and network local file URLs; relative references and web links are controls.</en></lang>
+    const privateMarker = "not-for-public";
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      parserBoundary: {
+        safeRelativePath: "src/safe.js",
+        webReference: "https://example.test/reference",
+        sourceUri: `file:///private/${privateMarker}.js`,
+        windowsSourceUri: `file:///C:/private/${privateMarker}.js`,
+        nested: { safeNote: "kept", networkSourceUri: `file://server/${privateMarker}.js` }
+      },
+      ir: {
+        version: "0.1.0",
+        nodes: [{
+          id: "jsdoc:function:safe",
+          kind: "function",
+          name: "safe",
+          summary: "Safe summary.",
+          jsdoc: { meta: { sourceUri: `file:///private/${privateMarker}.js`, safeRelativePath: "src/safe.js" } }
+        }]
+      }
+    });
+    const metadata = result.document.metadata as Record<string, unknown>;
+    const integration = metadata.integration as Record<string, unknown>;
+    const symbolMetadata = result.document.symbols[0]?.metadata as Record<string, unknown>;
+
+    expect(integration.parserBoundary).toMatchObject({
+      safeRelativePath: "src/safe.js",
+      webReference: "https://example.test/reference",
+      nested: { safeNote: "kept" }
+    });
+    expect(symbolMetadata.jsdoc).toMatchObject({ meta: { safeRelativePath: "src/safe.js" } });
+    expect(JSON.stringify(result)).not.toContain(privateMarker);
+    expect(JSON.stringify(result)).not.toContain("file://");
+    expect(validateHiaDocumentDetailed(result.document).valid).toBe(true);
+  });
+
+  it("rejects prototype-control keys from parsed and literal adapter metadata", () => {
+    // <lang><zh-CN>JSON.parse 与计算属性字面量都能生成自有 __proto__ 键；普通 metadata 和诊断 data 应只留下安全字段。</zh-CN><en>JSON.parse and computed object literals can both create an own __proto__ key; ordinary metadata and diagnostic data should retain only safe fields.</en></lang>
+    const privateMarker = "not-for-public";
+    const parsedMetadata = JSON.parse(`{"__proto__":{"marker":"${privateMarker}"},"constructor":{"marker":"${privateMarker}"},"prototype":{"marker":"${privateMarker}"},"safeNote":"kept"}`) as Record<string, unknown>;
+    const literalMetadata: Record<string, unknown> = {
+      ["__proto__"]: { marker: privateMarker },
+      constructor: { marker: privateMarker },
+      prototype: { marker: privateMarker },
+      safeRelativePath: "src/safe.js"
+    };
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      parserBoundary: parsedMetadata,
+      diagnostics: [{ code: "VENDOR_SAFE_HINT", message: "Safe diagnostic.", data: parsedMetadata }],
+      ir: {
+        version: "0.1.0",
+        nodes: [{
+          id: "jsdoc:function:safe",
+          kind: "function",
+          name: "safe",
+          summary: "Safe summary.",
+          jsdoc: { meta: literalMetadata }
+        }]
+      }
+    });
+    const metadata = result.document.metadata as Record<string, unknown>;
+    const integration = metadata.integration as Record<string, unknown>;
+    const parserBoundary = integration.parserBoundary as Record<string, unknown>;
+    const symbolMetadata = result.document.symbols[0]?.metadata as Record<string, unknown>;
+    const jsdocMetadata = symbolMetadata.jsdoc as Record<string, unknown>;
+    const jsdocMeta = jsdocMetadata.meta as Record<string, unknown>;
+
+    expect(parserBoundary).toEqual({ safeNote: "kept" });
+    expect(Object.getPrototypeOf(parserBoundary)).toBe(Object.prototype);
+    expect(jsdocMeta).toEqual({ safeRelativePath: "src/safe.js" });
+    expect(Object.getPrototypeOf(jsdocMeta)).toBe(Object.prototype);
+    expect(result.diagnostics[0]?.data).toEqual({ safeNote: "kept" });
+    expect(JSON.stringify(result)).not.toContain(privateMarker);
+    expect(validateHiaDocumentDetailed(result.document).valid).toBe(true);
+  });
+
   it("warns when a fixture uses an unsupported JSDoc integration contract version", async () => {
     const integration = await readIntegrationFixture("jsdoc-integration.compat.json") as Record<string, unknown>;
     const result = convertJSDocIntegrationToHiaDocumentDetailed({
@@ -203,6 +285,152 @@ describe("@hia-doc/parser-jsdoc", () => {
       severity: "warning",
       targetPath: "contractVersion"
     }));
+  });
+
+  it("keeps unsafe upstream diagnostic text, paths and data out of the core document", () => {
+    // <lang><zh-CN>同一私有标记同时置于顶层与符号诊断，覆盖两处共享映射入口。</zh-CN><en>Place the same private marker in top-level and symbol diagnostics to cover both mapping entry points.</en></lang>
+    const privateMarker = "not-for-public";
+    const unsafeDiagnostic = {
+      code: "HIA_JSDOC_HINT",
+      message: `Could not read C:\\private\\${privateMarker}.env; token=${privateMarker}`,
+      severity: "warning",
+      targetPath: `C:\\private\\${privateMarker}.js`,
+      path: `/private/${privateMarker}.js`,
+      data: {
+        safeRelativePath: "src/hinted.js",
+        tokenCount: 2,
+        note: `Authorization: Bearer ${privateMarker}`,
+        token: privateMarker,
+        nested: { safeNote: "kept" }
+      }
+    };
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      diagnostics: [unsafeDiagnostic],
+      ir: {
+        version: "0.1.0",
+        nodes: [{
+          id: "jsdoc:function:hinted",
+          kind: "function",
+          name: "hinted",
+          summary: "Safe summary.",
+          diagnostics: [unsafeDiagnostic]
+        }]
+      }
+    });
+    const serialized = JSON.stringify(result);
+
+    expect(result.document.symbols).toHaveLength(1);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.severity).toBe("warning");
+    expect(result.diagnostics[0]?.data).toMatchObject({
+      safeRelativePath: "src/hinted.js",
+      tokenCount: 2,
+      nested: { safeNote: "kept" }
+    });
+    expect(serialized).not.toContain(privateMarker);
+    expect(serialized).not.toContain("C:\\private\\");
+    expect(serialized).not.toContain("/private/");
+  });
+
+  it("redacts unsafe diagnostic codes, file URLs and credential-shaped data without losing safe fields", () => {
+    // <lang><zh-CN>代码、正文、逻辑路径和 data 各放一个可辨私有标记；安全扩展代码与相对路径作为正控。</zh-CN><en>Place recognizable private markers in code, prose, logical paths, and data; retain a safe extension code and relative path as controls.</en></lang>
+    const privateMarker = "not-for-public";
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      diagnostics: [
+        {
+          code: `HIA_JSDOC_HINT token=${privateMarker}`,
+          message: `Cannot open file:///private/${privateMarker}.js`,
+          targetPath: `file:///private/${privateMarker}.js`,
+          path: `file:///private/${privateMarker}.js`,
+          data: {
+            safeRelativePath: "src/hinted.js",
+            tokenCount: 2,
+            sessionToken: privateMarker,
+            cookie: privateMarker,
+            nested: { safeNote: "kept", setCookie: privateMarker },
+            note: `sessionToken=${privateMarker}`,
+            sourceUrl: `file:///private/${privateMarker}.js`
+          }
+        },
+        { code: "VENDOR_SAFE_HINT", message: "Safe diagnostic.", data: { safeRelativePath: "src/hinted.js" } },
+        { code: `file:///private/${privateMarker}.js`, message: "Safe fallback message." }
+      ]
+    });
+
+    expect(result.diagnostics).toHaveLength(3);
+    expect(result.diagnostics[0]).toMatchObject({
+      code: "HIA_JSDOC_ADAPTER_DIAGNOSTIC",
+      message: "JSDoc adapter diagnostic.",
+      targetPath: "diagnostics.0",
+      path: "diagnostics.0",
+      data: { safeRelativePath: "src/hinted.js", tokenCount: 2, nested: { safeNote: "kept" } }
+    });
+    expect(result.diagnostics[1]).toMatchObject({ code: "VENDOR_SAFE_HINT", message: "Safe diagnostic." });
+    expect(result.diagnostics[2]).toMatchObject({ code: "HIA_JSDOC_ADAPTER_DIAGNOSTIC", message: "Safe fallback message." });
+    expect(JSON.stringify(result)).not.toContain(privateMarker);
+    expect(validateHiaDocumentDetailed(result.document).valid).toBe(true);
+  });
+
+  it("does not let diagnostic data change the output object's prototype", () => {
+    // <lang><zh-CN>JSON 输入的自有 __proto__ 键不能通过普通赋值改变输出 data 原型并破坏 core 文档有效性。</zh-CN><en>An own __proto__ key in JSON input must not change output data's prototype through assignment or invalidate the core document.</en></lang>
+    const inputData = JSON.parse('{"__proto__":{"polluted":"private"},"safeNote":"kept"}') as Record<string, unknown>;
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      diagnostics: [{ code: "VENDOR_SAFE_HINT", message: "Safe diagnostic.", data: inputData }]
+    });
+    const data = result.diagnostics[0]?.data;
+
+    expect(data).toMatchObject({ safeNote: "kept" });
+    expect(Object.getPrototypeOf(data)).toBe(Object.prototype);
+    expect(validateHiaDocumentDetailed(result.document).valid).toBe(true);
+  });
+
+  it("keeps malformed integration identities private while retaining legacy conversion warnings", () => {
+    // <lang><zh-CN>不可信契约标记只触发固定兼容警告，安全符号仍按旧桥接语义转换。</zh-CN><en>Untrusted contract markers trigger fixed compatibility warnings while a safe symbol still converts under the legacy bridge policy.</en></lang>
+    const privateMarker = "not-for-public";
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: `hia-jsdoc-integration token=${privateMarker}`,
+      contractVersion: `9.0.0 token=${privateMarker}`,
+      pluginVersion: `9.0.0 token=${privateMarker}`,
+      ir: {
+        version: `9.0.0 token=${privateMarker}`,
+        nodes: [{ id: "jsdoc:function:safe", kind: "function", name: "safe", summary: "Safe summary." }]
+      }
+    });
+    const serialized = JSON.stringify(result);
+
+    expect(result.document.symbols).toHaveLength(1);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      "HIA_JSDOC_CONTRACT_UNSUPPORTED",
+      "HIA_JSDOC_CONTRACT_VERSION_UNSUPPORTED"
+    ]);
+    expect(result.diagnostics.every((diagnostic) => diagnostic.severity === "warning")).toBe(true);
+    expect(serialized).not.toContain(privateMarker);
+    expect(serialized).not.toContain("token=");
+  });
+
+  it.each([
+    "read:C:\\private\\not-for-public.env",
+    "read:/private/not-for-public.env",
+    "read:\\\\server\\not-for-public.env",
+    "read:../not-for-public.env",
+    "read:file:///private/not-for-public.env",
+    "https://reader:not-for-public@example.test/docs"
+  ])("redacts recognizable private diagnostic text: %s", (message) => {
+    // <lang><zh-CN>各形态仅影响诊断正文；其余普通文档转换不应受阻。</zh-CN><en>Each form affects only diagnostic prose; ordinary document conversion remains available.</en></lang>
+    const result = convertJSDocIntegrationToHiaDocumentDetailed({
+      contract: JSDOC_HIA_INTEGRATION_CONTRACT,
+      contractVersion: JSDOC_HIA_INTEGRATION_CONTRACT_VERSION,
+      diagnostics: [{ code: "HIA_JSDOC_HINT", message }]
+    });
+
+    expect(result.diagnostics[0]?.message).toBe("JSDoc adapter diagnostic.");
+    expect(JSON.stringify(result.document)).not.toContain("not-for-public");
   });
 
   it("maps JPHS hint diagnostics to core info diagnostics and sanitizes diagnostic data", () => {
@@ -223,6 +451,8 @@ describe("@hia-doc/parser-jsdoc", () => {
                 code: "HIA_JSDOC_HINT",
                 message: "Adapter hint.",
                 severity: "hint",
+                targetPath: "ir.nodes.0",
+                path: "ir.nodes.0",
                 data: {
                   filePath: "C:\\Users\\example\\project\\src\\hinted.js",
                   safeRelativePath: "src/hinted.js"
@@ -237,7 +467,10 @@ describe("@hia-doc/parser-jsdoc", () => {
 
     expect(diagnostic).toMatchObject({
       code: "HIA_JSDOC_HINT",
+      message: "Adapter hint.",
       severity: "info",
+      targetPath: "ir.nodes.0",
+      path: "ir.nodes.0",
       data: {
         safeRelativePath: "src/hinted.js"
       }

@@ -12,7 +12,7 @@ This package consumes the `hia-jsdoc-integration` JSON emitted by `@mandolin/jsd
 - Filters undocumented JSDoc-derived synthetic nodes before they enter core.
 - Deduplicates repeated symbol ids and repeated source references/fragments.
 - Normalizes JPHS compatibility values such as `currentPage` source links and `hint` diagnostics.
-- Preserves selected adapter metadata without leaking local absolute file paths.
+- Screens recognizable local absolute paths from selected adapter metadata.
 - Provides a bridge fixture for core, renderer, CLI and future LSP tests.
 
 ## Compatibility Baseline
@@ -25,7 +25,7 @@ The adapter exposes bridge and metadata version constants:
 - `JSDOC_HIA_INTEGRATION_CONTRACT`
 - `JSDOC_HIA_INTEGRATION_CONTRACT_VERSION`
 
-Converted documents include adapter metadata on the document and symbol metadata on each converted symbol. Metadata and diagnostic `data` are sanitized before they enter the core document: local absolute paths, traversal paths and `filePath` fields are removed.
+Converted documents include adapter metadata on the document and symbol metadata on each converted symbol. Recognizable local absolute paths, traversal paths, and file URLs are screened from adapter metadata. Diagnostic codes, text, paths, and structured data additionally screen common credential forms while retaining safe values. An integration contract mismatch still produces a warning while safe symbols convert. Producers remain responsible for private prose that has no recognizable marker; this adapter does not act as a general-purpose secret classifier.
 
 The compatibility fixtures are:
 
