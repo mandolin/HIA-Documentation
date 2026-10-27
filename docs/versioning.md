@@ -25,13 +25,13 @@ These values describe checked-in package manifests, not a live npm registry look
 | `@hia-doc/parser-jsdoc` | `0.1.0` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/plugin-sdk` | `0.1.2` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/source-linkage` | `0.1.1` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/theme-default` | `0.1.3` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/theme-default` | `0.1.4` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/browser-panel` | `0.1.0` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/profiles` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/renderer-html` | `0.1.5` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/renderer-html` | `0.1.8` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/schemas` | `0.1.4` | Publishable manifest; contract versions remain independent. |
 | `@hia-doc/lsp` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/cli` | `0.1.7` | Publishable manifest; contract versions remain independent. |
+| `@hia-doc/cli` | `0.1.11` | Publishable manifest; contract versions remain independent. |
 | @mandolin/jsdoc-plugin-hia-sys | 0.1.3 | Publishable manifest; independently versioned JSDoc integration. |
 | @mandolin/jsdoc-theme-hia | 0.1.2 | Publishable manifest; independently versioned JSDoc theme. |
 
