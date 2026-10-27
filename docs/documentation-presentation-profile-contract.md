@@ -1,6 +1,6 @@
 # Documentation Presentation Profile Contract
 
-`documentation-presentation-profile@0.1.0-draft` is the renderer-neutral contract for documentation page partitioning,
+`documentation-presentation-profile@1.0.0` is the renderer-neutral contract for documentation page partitioning,
 source reading modes, source asset manifests, theme capabilities, stable presentation identity, privacy, diagnostics,
 and compatibility.
 
@@ -18,7 +18,7 @@ free diagnostic text or prove host behavior/publication consent. See [policy and
 - Fetch endpoint: same-origin relative URL bound to an explicit revision and SHA-256, SHA-384, or SHA-512 digest.
 - Fetch request policy: `credentials=omit`, `mode=same-origin`, `redirect=error`, `cache=default`.
 - Source body execution and source-body search indexing: disabled.
-- Compatibility: exact draft version and closed-world properties.
+- Compatibility: exact supported versions and closed-world properties.
 
 `single-page` is an explicit compatibility partition. `none` is an explicit privacy state and is not one of the three
 source reading modes used for product parity (`fetch`, `embed`, and `link`).
@@ -117,16 +117,19 @@ reader state. The public TypeScript state/event unions are unchanged.
 
 ## Compatibility
 
-Draft consumers must match the contract name and version exactly. Unknown properties are rejected. A change to identity
+Readers admit exactly 1.0.0 and historical 0.1.0-draft, with the exact contract name. Unknown properties are rejected; reading does not migrate inputs. A change to identity
 or semantic rules requires a new contract version. Adding instance data that already satisfies this exact schema does not
 change the contract version; changing the meaning of an existing field does.
 
-The JavaScript input hardening above does not change the JSON schema, draft identity, legal transitions or normal JSON
-semantics. It does not establish a `1.0.0` reader/writer migration or change any npm package version. Existing published
-archives are unchanged until a separately versioned release is published.
+Current writers and schema use 1.0.0; exact historical reading and explicit detached migration retain old schema bytes.
+Only the current version rejects whitespace-only token labels. No package version is changed by this source update;
+existing published archives remain unchanged until a separately versioned release.
 
 The neutral `@hia-doc/core` contract itself does not implement a browser source reader, renderer projection, theme skin,
 page router, cache, search indexer, standalone generator, Portal, or deployment workflow. `@hia-doc/renderer-html` and
 `@hia-doc/theme-default` are conforming owner implementations: they generate the exact profile, same-origin content-addressed
 assets, a digest-checking plain-text reader, three Portal-local skins, and native disclosure without moving owner DOM/CSS into
 this contract.
+
+For exact version types, detached migration, nonblank token labels and owner inventory pairing, see
+[version and migration guidance](presentation-profile-migration.md). Historical schema bytes remain unchanged; package publication is separate.

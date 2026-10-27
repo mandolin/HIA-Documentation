@@ -138,7 +138,7 @@ function createProfileFixture() {
 describe("documentation-presentation-profile", () => {
   it("publishes an exact, closed-world Draft 2020-12 schema", () => {
     expect(DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$schema).toBe("https://json-schema.org/draft/2020-12/schema");
-    expect(DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$id).toContain("documentation-presentation-profile-0.1.0-draft");
+    expect(DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.$id).toContain("documentation-presentation-profile-1.0.0");
     expect(DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA.additionalProperties).toBe(false);
     expect(validateDocumentationPresentationProfile(createProfileFixture())).toEqual([]);
   });

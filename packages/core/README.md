@@ -12,7 +12,7 @@ This package is intentionally independent from CLI, renderer, IDE, and language-
 - Neutral `documentation-locale-resource-declaration@0.1.0-draft` controlled catalog declaration and public-safe catalog-only discovery/sidecar contract.
 - Neutral `documentation-terminology@0.1.0-draft` candidate-set and controlled registry reference with human-linkage and privacy validation.
 - Neutral `documentation-quality-review@0.1.0-draft` aggregation contract for read-only ROP, terminology and locale-resource review signals.
-- Neutral `documentation-presentation-profile@0.1.0-draft` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
+- Neutral `documentation-presentation-profile@1.0.0` contract for deterministic page partitioning, source modes, fetch planning, skin capabilities and privacy.
 - Neutral `documentation-ui-locale-completeness@0.1.0-draft` contract and pure gate for separate content/UI locale scopes, stable messages, exact required coverage, no-script and accessibility metadata.
 - Neutral `business-flow-documentation@0.1.0-draft` contract, semantic validator and deterministic non-executing producer for owner-authored business-flow facts.
 - Neutral `business-flow-documentation-projection@0.1.0-draft` contract with deterministic human-linear and AI graph-ready views over shared public facts.
@@ -110,7 +110,7 @@ URL and numeric limits, actual status/diagnostic behavior and host execution res
 See [presentation pages and stable identity](../../docs/presentation-page-identity.md) for the nineteen partition/identity
 fields, numeric order limits, cross-mode comparisons and renderer route responsibilities.
 
-`documentation-presentation-profile@0.1.0-draft` defines renderer-neutral page, source, theme, identity, privacy and
+`documentation-presentation-profile@1.0.0` defines renderer-neutral page, source, theme, identity, privacy and
 compatibility facts. Multi-page and fetch are normative defaults; single-page is an explicit compatibility profile and
 `none` is an explicit body-free privacy state. The core fetch-plan builder is pure: it performs no network request, file
 read, body decoding, integrity hashing, cache write or fallback.
@@ -123,7 +123,7 @@ their validated snapshot. Accessors, cycles, non-JSON values and reflection/clon
 ordinary getter and `toJSON` hooks are not called. This is not a Proxy or resource sandbox. Invalid runtime reader
 states/events are refused without coercion; the unchanged state echo is unvalidated if the caller bypassed TypeScript.
 See [input and state boundaries](../../docs/documentation-presentation-profile-contract.md#javascript-input-boundary).
-The draft schema, public signatures and package version are unchanged; existing npm archives do not contain unreleased changes.
+The current writer/schema identity is 1.0.0; exact historical reading and explicit migration are supported. Package versions and existing npm archives are unchanged. See [version and migration guidance](../../docs/presentation-profile-migration.md).
 
 ## Documentation UI Locale Completeness
 

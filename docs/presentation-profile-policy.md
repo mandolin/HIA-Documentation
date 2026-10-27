@@ -1,6 +1,6 @@
 # Presentation Theme, Privacy And Diagnostic Responsibilities
 
-This reference describes the current `documentation-presentation-profile@0.1.0-draft` behavior in `@hia-doc/core`.
+This reference describes the current `documentation-presentation-profile@1.0.0` behavior in `@hia-doc/core`.
 Use it with [pages and identity](presentation-page-identity.md), [source plans](presentation-source-plan.md) and the
 [contract](documentation-presentation-profile-contract.md). Declarations, validation and host execution have distinct responsibilities.
 
@@ -18,7 +18,7 @@ The four `DocumentationPresentationSkin` fields are:
 | `supportedSchemes` | Nonempty, unique, sorted subset of the three schemes. |
 | `tokenContract` | One to 256 characters, not an absolute filesystem path; no trimming, parsing, fetching or existence/version check. |
 
-The current label check accepts whitespace-only `tokenContract` values. Consumers should supply meaningful labels;
+Version 1.0.0 refuses whitespace-only tokenContract values; exact historical 0.1.0-draft remains readable without that new restriction. In either version,
 validation does not establish that a referenced token contract exists.
 
 The four `DocumentationPresentationThemeProfile` fields are:
@@ -68,7 +68,7 @@ infer SemVer compatibility, silently discard unknown data or accept a future con
 | Field | Responsibility |
 | --- | --- |
 | `contract` | Exact `documentation-presentation-profile`. |
-| `contractVersion` | Exact `0.1.0-draft`. |
+| `contractVersion` | Exact current `1.0.0` or historical `0.1.0-draft`; no inferred versions. |
 | `profileId` | Logical identity; excluded from topic identity comparison. |
 | `status` | Explicit ready/refused; not inferred from diagnostic severity. |
 | `diagnostics` | At most 128 input records; not forwarded as validator/comparator output. |
@@ -81,7 +81,7 @@ infer SemVer compatibility, silently discard unknown data or accept a future con
 
 A ready profile may contain error-severity input diagnostics. A refused profile can still be structurally valid and
 contain usable assets. The existing pure fetch builder does not independently block refused status; hosts must process
-the original status/diagnostics before executing a plan. An automatic future status gate needs a separately decided policy.
+the original status/diagnostics before executing a plan. Both supported versions preserve this separation; plan success is not execution consent.
 
 ## Validation And Comparison Diagnostics
 
@@ -118,5 +118,6 @@ reading it performs no download. `DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA
 is shared and mutable at runtime. Some enum arrays alias the exported vocabulary arrays. Clone the schema before editing;
 do not mutate shared exports. Runtime validation adds rules that the schema alone does not enforce.
 
-This reference changes no runtime behavior, types, draft/schema/package versions or historical schema assets.
-It does not establish a 1.0.0 migration or npm release; published archives remain unchanged until a separately versioned release.
+Current writers/schema use 1.0.0 with exact historical reading and explicit migration. See
+[version and migration guidance](presentation-profile-migration.md). Historical schema bytes and package versions remain
+unchanged; this source update is not an npm release.

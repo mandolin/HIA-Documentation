@@ -22,7 +22,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-terminology` | `@hia-doc/core` | draft |
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | `0.2.0-draft` source draft, exact `0.1.0-draft` historical identity retained |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
-| `documentation-presentation-profile` | `@hia-doc/core` | draft |
+| `documentation-presentation-profile` | `@hia-doc/core` | 1.0.0 source candidate, exact historical 0.1.0-draft identity retained |
 | `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.

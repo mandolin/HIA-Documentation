@@ -134,7 +134,7 @@ describe("presentation JSON input boundary", () => {
 
   it("retains exact version, unknown-field and private-field refusal", () => {
     const version = fixture();
-    version.contractVersion = "1.0.0" as "0.1.0-draft";
+    version.contractVersion = "1.0.1" as typeof version.contractVersion;
     expect(validate(version).map(({ code }) => code)).toContain("PRESENTATION_CONTRACT_UNSUPPORTED");
     expect(validate({ ...fixture(), extension: true })[0]?.code).toBe("PRESENTATION_PROFILE_INVALID");
     expect(validate({ ...fixture(), sourceBody: "fixture" })[0]?.code).toBe("PRESENTATION_PRIVACY_BOUNDARY");

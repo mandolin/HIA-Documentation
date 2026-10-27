@@ -19,11 +19,11 @@ describe("project manifest candidate distribution", () => {
     expect(getHiaSchema("https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.1.schema.json")).toBeUndefined();
     expect(getHiaSchema("https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0-rc.1.schema.json")).toBeUndefined();
   });
-  it("marks only the reviewed project root as the fourth candidate", () => {
+  it("retains the reviewed project root in the explicit candidate catalog", () => {
     const entry = HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "project-manifest")!;
     expect(entry.contractVersion).toBe("1.0.0");
     expect(entry.stability).toBe("stable-candidate");
     expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(17);
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(5);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(6);
   });
 });

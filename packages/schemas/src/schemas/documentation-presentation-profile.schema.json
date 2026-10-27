@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-1.0.0.schema.json",
   "title": "Documentation Presentation Profile",
   "type": "object",
   "additionalProperties": false,
@@ -22,7 +22,7 @@
       "const": "documentation-presentation-profile"
     },
     "contractVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "status": {
       "enum": [
@@ -108,7 +108,8 @@
         },
         "order": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "canonicalReference": {
           "type": "string",
@@ -239,7 +240,8 @@
         "revision": {
           "type": "string",
           "minLength": 7,
-          "maxLength": 128
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{6,127}$"
         },
         "classification": {
           "const": "public"
@@ -251,16 +253,19 @@
         },
         "mediaType": {
           "type": "string",
-          "minLength": 1,
-          "maxLength": 128
+          "minLength": 2,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+\\-/]{0,126}[A-Za-z0-9]$"
         },
         "byteLength": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 16777216
         },
         "lineCount": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 100000
         },
         "digest": {
           "$ref": "#/$defs/digest"
@@ -382,7 +387,8 @@
         "tokenContract": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 256
+          "maxLength": 256,
+          "pattern": "\\S"
         },
         "supportedSchemes": {
           "type": "array",
@@ -536,5 +542,113 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "pagePartition": {
+            "properties": {
+              "mode": {
+                "const": "single-page"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pagePartition": {
+            "required": [
+              "singlePageId"
+            ]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "pagePartition": {
+            "not": {
+              "required": [
+                "singlePageId"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "mode": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "assets": {
+                "maxItems": 0
+              }
+            }
+          },
+          "privacy": {
+            "properties": {
+              "sourceExposure": {
+                "const": "none"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "privacy": {
+            "properties": {
+              "sourceExposure": {
+                "const": "public-explicit"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "fetch",
+                  "link"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source": {
+            "properties": {
+              "assets": {
+                "items": {
+                  "required": [
+                    "relativeUrl"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

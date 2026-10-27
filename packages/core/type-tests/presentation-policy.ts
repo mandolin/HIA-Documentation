@@ -9,7 +9,7 @@ import type { DocumentationPresentationSkin, DocumentationPresentationThemeProfi
 /** @lang zh-CN 编译检查不替代数组覆盖/隐私/状态运行校验，不执行真实主题或状态迁移。 @lang en Compilation does not replace runtime coverage/privacy/state validation and executes no theme or transition. */
 export function checkPresentationPolicyTypes(skin: DocumentationPresentationSkin, theme: DocumentationPresentationThemeProfile, privacy: DocumentationPresentationPrivacy, compatibility: DocumentationPresentationCompatibility, profile: DocumentationPresentationProfile, result: DocumentationSourceReaderTransitionResult): void {
   // <lang><zh-CN>接口保持可变，词汇/schema为编译只读；声明本身不证明宿主履约。</zh-CN><en>Interfaces remain mutable while vocabulary/schema are type-readonly; declarations do not prove host conformance.</en></lang>
-  const identity: [typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT, typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION] = ["documentation-presentation-profile", "0.1.0-draft"];
+  const identity: [typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT, typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION] = ["documentation-presentation-profile", "1.0.0"];
   const values: [DocumentationPresentationScheme, DocumentationSourceReaderState, DocumentationSourceReaderEvent] = ["system", "idle", "reset"];
   theme.requiredCapabilities = [];
   result.state = "idle";
@@ -22,8 +22,8 @@ export function checkPresentationPolicyTypes(skin: DocumentationPresentationSkin
   privacy.credentialsIncluded = true;
   // @ts-expect-error Compatibility requires exact, not a SemVer range.
   compatibility.versionMatch = "^0.1";
-  // @ts-expect-error The draft version remains exact.
-  profile.contractVersion = "1.0.0";
+  // @ts-expect-error Unknown patch versions remain unsupported.
+  profile.contractVersion = "1.0.1";
   // @ts-expect-error Profile status remains ready/refused only.
   profile.status = "accepted";
   // @ts-expect-error State types do not include arbitrary runtime echoes.

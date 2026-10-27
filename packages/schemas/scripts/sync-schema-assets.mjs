@@ -163,7 +163,7 @@ const definitions = [
     key: "documentation-presentation-profile",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA,
-    stability: "draft"
+    stability: "stable-candidate"
   },
   // <lang><zh-CN>UI locale completeness 只分发 metadata-only gate report；翻译正文、renderer DOM 与运行环境均不进入 schema。</zh-CN><en>UI-locale completeness distributes only metadata-only gate reports; translation text, renderer DOM, and runtime environment never enter the schema.</en></lang>
   {

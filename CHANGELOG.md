@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Presentation profile exact versions and migration
+
+- 文档呈现契约当前写者/schema为1.0.0，保留精确0.1.0-draft读取、无损显式迁移和局部有效资产纯计划；新版拒绝纯空白tokenContract，历史schema字节与包版本保持。独立JSDoc链同步采用当前身份，运行器核对实际工件/bridge配对。
+- Add exact current/historical presentation readers, detached lossless migration and current writer types, retaining per-asset pure planning. Only v1 refuses whitespace-only token labels. Preserve historical schema bytes and package versions; see [migration guidance](docs/presentation-profile-migration.md). Unreleased.
+
 ## Unreleased — Presentation policy and diagnostic responsibilities
 
 - 补剩余20导出/六接口33字段的主题、隐私声明、兼容、根profile、诊断与schema/状态结果所有权说明，新增54特征及严格类型；关联前两轮形成36导出/91字段职责目录。完整运行AST、类型/schema/版本保持，尚未发布。

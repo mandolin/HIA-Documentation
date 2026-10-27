@@ -1,6 +1,6 @@
 # Presentation Source Assets And Fetch Plans
 
-`documentation-presentation-profile@0.1.0-draft` describes metadata and pure request plans. It does not fetch, read files,
+`documentation-presentation-profile@1.0.0` describes metadata and pure request plans. It does not fetch, read files,
 hash responses, resolve origins, execute source or grant publication permission. Validate complete profiles: structural
 TypeScript compatibility alone does not prove validity. See the [contract](documentation-presentation-profile-contract.md).
 
@@ -97,12 +97,12 @@ discriminated union: check plan before use. The wrapper and diagnostic array are
 
 ### Current Profile Status Behavior
 
-The draft validator accepts safe profiles with `status=refused`. The builder does not independently block that status
+Both exact supported versions accept safe profiles with `status=refused`. The builder does not independently block that status
 or copy existing safe profile diagnostics: a remaining valid asset can produce a ready plan with empty result diagnostics.
 Ready means construction succeeded, not source approval, cleared original diagnostics or a verified response. Hosts must
-handle original status/diagnostics before execution. A future automatic status gate needs a separately decided policy.
+handle original status/diagnostics before execution. Both versions retain this per-asset pure-plan policy.
 
 Hosts also enforce CSP, origin/path, actual byte/line/time limits and response digest; map outcomes to reader events; and
-render only approved text without executing it. The boundary-space correction preserves schema, public types, other
-behavior and contract/package versions. It is not a 1.0.0 migration. Published npm archives remain unchanged until a
-separately versioned release containing the correction is published.
+render only approved text without executing it. Current writers/schema use 1.0.0 with exact historical reading and
+explicit migration; see [version and migration guidance](presentation-profile-migration.md). Previously published npm
+archives and package versions remain unchanged by this source update.

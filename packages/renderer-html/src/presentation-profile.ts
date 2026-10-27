@@ -5,7 +5,7 @@ import {
   DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
   createHiaDiagnostic,
   validateDocumentationPresentationProfile,
-  type DocumentationPresentationProfile,
+  type CurrentDocumentationPresentationProfile,
   type DocumentationPresentationScheme,
   type DocumentationPresentationSourceAsset,
   type DocumentationPresentationSourceMode,
@@ -77,7 +77,7 @@ export interface PortalPreparedSourceAsset {
 export interface PortalPresentationBundle {
   artifacts: PortalPresentationArtifact[];
   diagnostics: HiaDiagnostic[];
-  profile: DocumentationPresentationProfile;
+  profile: CurrentDocumentationPresentationProfile;
   sourceByEntryId: ReadonlyMap<string, PortalPreparedSourceAsset>;
   topicByEntryId: ReadonlyMap<string, { fragmentId: string; navigationId: string; pageId: string; topicId: string }>;
 }
@@ -124,7 +124,7 @@ export function createPortalPresentationBundle(options: PortalPresentationBundle
   const sourceResult = createPortalSourceArtifacts(options.sources, options.sourceMode);
   const diagnostics = [...sourceResult.diagnostics];
   const themeSkins = getPortalThemeSkinCatalog();
-  const profile: DocumentationPresentationProfile = {
+  const profile: CurrentDocumentationPresentationProfile = {
     contract: DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT,
     contractVersion: DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION,
     status: diagnostics.length === 0 ? "ready" : "refused",

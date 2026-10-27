@@ -1,7 +1,7 @@
 # Presentation Pages And Stable Identity
 
 `@hia-doc/core` exposes page partition and identity facts through
-`documentation-presentation-profile@0.1.0-draft`. These are logical declarations, not a router, document hierarchy or
+`documentation-presentation-profile@1.0.0`. These are logical declarations, not a router, document hierarchy or
 filesystem index. Validate a complete profile before comparing it. See the
 [contract](documentation-presentation-profile-contract.md) for source, theme, privacy and JavaScript input boundaries.
 
@@ -88,6 +88,6 @@ The HTML Portal owner sorts its entries by entry identity, assigns consecutive o
 identities and retains its own route mapping. The neutral validator checks declarations and projections; it does not
 enforce a namespace/type hierarchy, kind-driven route allocation, relation graph closure or actual route availability.
 
-The numeric-order correction preserves the declared order domain, public signatures, draft schema and package version.
-It does not introduce a `1.0.0` migration. Existing published npm archives are unchanged until a separately versioned
-release containing the correction is published.
+The numeric-order correction preserves the declared order domain. Current writers/schema use 1.0.0 and readers also
+admit exact historical 0.1.0-draft. See [version and migration guidance](presentation-profile-migration.md).
+Package versions and previously published archives are unchanged by this source update.

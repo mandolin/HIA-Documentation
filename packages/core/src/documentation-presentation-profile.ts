@@ -13,12 +13,15 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT = "documentation-presen
 
 /**
  * @lang zh-CN
- * P1 草案版本。draft consumer 必须精确匹配，不能推测向前或向后兼容。
+ * 当前写者的1.0.0源码身份；reader另精确支持历史0.1.0-draft，不推测其它版本兼容性。
  *
  * @lang en
- * P1 draft version. Draft consumers must match it exactly and cannot infer forward or backward compatibility.
+ * Current writer's 1.0.0 source identity; readers also support exact historical 0.1.0-draft, without inferring other compatibility.
  */
-export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION = "0.1.0-draft" as const;
+export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION = "1.0.0" as const;
+
+/** @lang zh-CN reader精确支持的两个wire身份，不是SemVer范围或包版本。 @lang en The two exact wire identities supported by readers, not a SemVer range or package version. */
+export type DocumentationPresentationProfileContractVersion = typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION | "0.1.0-draft";
 
 /**
  * @lang zh-CN
@@ -28,7 +31,7 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION = "0.1.0-draft"
  * Public schema identity used by the distribution package to align with the owner schema.
  */
 export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
-  "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json" as const;
+  "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-1.0.0.schema.json" as const;
 
 /**
  * @lang zh-CN 页面分区模式；multi-page是显式必填的规范默认值，single-page是兼容投影。此元组类型只读，运行时未冻结；消费方不得修改共享词汇。
@@ -263,7 +266,7 @@ export interface DocumentationPresentationSkin {
   skinId: string;
   /** @lang zh-CN 至少一种唯一且排序的dark/light/system；选中skin必须支持当前scheme。 @lang en At least one unique sorted dark/light/system value; the selected skin must support the current scheme. */
   supportedSchemes: DocumentationPresentationScheme[];
-  /** @lang zh-CN 1至256字符非绝对路径标签，不trim或解析/获取；不是契约存在/版本受支持的证明。 @lang en Non-absolute-path label of one to 256 characters, without trimming, parsing or fetching; not proof of contract existence or supported version. */
+  /** @lang zh-CN 1至256字符非绝对路径标签；1.0.0额外要求非纯空白，旧身份仍可读取空白。不trim/解析/获取，也不证明引用存在。 @lang en Non-absolute-path label of one to 256 characters; 1.0.0 additionally requires nonblank text while legacy reads retain whitespace. No trimming/parsing/fetching or existence proof. */
   tokenContract: string;
 }
 
@@ -313,7 +316,7 @@ export interface DocumentationPresentationCompatibility {
   semanticChange: "new-contract-version";
   /** @lang zh-CN 固定reject，未知wire字段被拒绝，不丢弃后继续接纳。 @lang en Fixed reject: unknown wire fields are refused, not silently discarded and accepted. */
   unknownProperties: "reject";
-  /** @lang zh-CN 固定exact，只匹配当前draft名称/版本，不实施SemVer范围。 @lang en Fixed exact: matches the current draft name/version only, not a SemVer range. */
+  /** @lang zh-CN 固定exact，只匹配明确支持的名称/版本，不实施SemVer范围。 @lang en Fixed exact: matches explicitly supported names/versions only, not a SemVer range. */
   versionMatch: "exact";
 }
 
@@ -329,8 +332,8 @@ export interface DocumentationPresentationProfile {
   compatibility: DocumentationPresentationCompatibility;
   /** @lang zh-CN 精确documentation-presentation-profile，不接受别名。 @lang en Exact documentation-presentation-profile name with no alias. */
   contract: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT;
-  /** @lang zh-CN 精确0.1.0-draft；未来稳定版须独立协调reader/writer/schema。 @lang en Exact 0.1.0-draft; a future stable version needs coordinated reader/writer/schema work. */
-  contractVersion: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION;
+  /** @lang zh-CN 精确旧0.1.0-draft或当前1.0.0；读取不自动迁移，当前写者使用专门类型。 @lang en Exact legacy 0.1.0-draft or current 1.0.0; reading does not migrate, and current writers use a dedicated type. */
+  contractVersion: DocumentationPresentationProfileContractVersion;
   /** @lang zh-CN 最多128个输入记录，不由校验器透传或按severity推导status；自由code/message未全面脱敏。 @lang en Up to 128 input records; validation neither forwards them nor infers status from severity, and free code/message text is not comprehensively redacted. */
   diagnostics: HiaDiagnostic[];
   /** @lang zh-CN 精确稳定字段及页面投影声明，比较器不证明宿主履约。 @lang en Exact stable-field/page-projection declarations; comparison does not prove host conformance. */
@@ -348,6 +351,27 @@ export interface DocumentationPresentationProfile {
   /** @lang zh-CN 选中skin/scheme/能力声明，不包含DOM/CSS或设备状态。 @lang en Selected skin/scheme/capability declarations without DOM/CSS or device state. */
   theme: DocumentationPresentationThemeProfile;
 }
+
+/** @lang zh-CN 仅当前1.0.0写者/迁移结果；不允许旧身份冒充当前输出。 @lang en Current 1.0.0 writers/migration results only; legacy identities cannot masquerade as current output. */
+export type CurrentDocumentationPresentationProfile = DocumentationPresentationProfile & {
+  /** @lang zh-CN 当前写者精确版本。 @lang en Exact current writer version. */
+  contractVersion: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION;
+};
+
+/** @lang zh-CN 显式纯迁移的判别结果；失败不提供局部profile，成功也不授予执行/公开权限。 @lang en Discriminated pure migration result; failure has no partial profile, and success grants no execution/publication permission. */
+export type DocumentationPresentationProfileMigrationResult = {
+  /** @lang zh-CN 迁移或当前副本构造成功，非输入profile的业务状态。 @lang en Migration/current-copy success, not the input profile's business status. */
+  status: "ready";
+  /** @lang zh-CN 独立可变的当前版本工件，保留原诊断/状态/身份。 @lang en Detached mutable current artifact preserving original diagnostics/status/identities. */
+  profile: CurrentDocumentationPresentationProfile;
+  /** @lang zh-CN 本次新建验证诊断；成功为空，不透传输入记录。 @lang en Newly created validation diagnostics, empty on success and not forwarded input records. */
+  diagnostics: HiaDiagnostic[];
+} | {
+  /** @lang zh-CN 验证或新规则拒绝，不返回部分产物。 @lang en Validation/new-rule refusal without a partial artifact. */
+  status: "refused";
+  /** @lang zh-CN 固定安全诊断，不回显原异常或危险输入。 @lang en Fixed safe diagnostics without original exceptions or hostile input echoes. */
+  diagnostics: HiaDiagnostic[];
+};
 
 /** @lang zh-CN 纯数据 fetch 请求计划；没有响应 body 或可执行 callback。 @lang en Data-only fetch request plan with no response body or executable callback. */
 export interface DocumentationSourceFetchPlan {
@@ -434,7 +458,7 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA = {
       properties: {
         topicId: { $ref: "#/$defs/identity" }, topicKind: { $ref: "#/$defs/identity" }, pageId: { $ref: "#/$defs/identity" },
         fragmentId: { $ref: "#/$defs/identity" }, navigationId: { $ref: "#/$defs/identity" },
-        relationIds: { $ref: "#/$defs/identityArray" }, order: { type: "integer", minimum: 0 },
+        relationIds: { $ref: "#/$defs/identityArray" }, order: { type: "integer", minimum: 0, maximum: 9_007_199_254_740_991 },
         canonicalReference: { type: "string", minLength: 3, maxLength: 520 }
       }
     },
@@ -469,9 +493,11 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA = {
       required: ["assetId", "sourceId", "revision", "classification", "mediaType", "digest"],
       properties: {
         assetId: { $ref: "#/$defs/identity" }, sourceId: { $ref: "#/$defs/identity" }, sourceMapId: { $ref: "#/$defs/identity" },
-        revision: { type: "string", minLength: 7, maxLength: 128 }, classification: { const: "public" },
-        relativeUrl: { type: "string", minLength: 1, maxLength: 2048 }, mediaType: { type: "string", minLength: 1, maxLength: 128 },
-        byteLength: { type: "integer", minimum: 0 }, lineCount: { type: "integer", minimum: 0 }, digest: { $ref: "#/$defs/digest" }
+        revision: { type: "string", minLength: 7, maxLength: 128, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{6,127}$" }, classification: { const: "public" },
+        relativeUrl: { type: "string", minLength: 1, maxLength: 2048 },
+        mediaType: { type: "string", minLength: 2, maxLength: 128, pattern: "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+\\-/]{0,126}[A-Za-z0-9]$" },
+        byteLength: { type: "integer", minimum: 0, maximum: 16_777_216 },
+        lineCount: { type: "integer", minimum: 0, maximum: 100_000 }, digest: { $ref: "#/$defs/digest" }
       }
     },
     limits: {
@@ -501,7 +527,7 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA = {
     skin: {
       type: "object", additionalProperties: false, required: ["skinId", "tokenContract", "supportedSchemes", "capabilities"],
       properties: {
-        skinId: { $ref: "#/$defs/identity" }, tokenContract: { type: "string", minLength: 1, maxLength: 256 },
+        skinId: { $ref: "#/$defs/identity" }, tokenContract: { type: "string", minLength: 1, maxLength: 256, pattern: "\\S" },
         supportedSchemes: { type: "array", minItems: 1, uniqueItems: true, items: { enum: DOCUMENTATION_PRESENTATION_SCHEMES } },
         capabilities: { $ref: "#/$defs/identityArray" }
       }
@@ -539,7 +565,24 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_JSON_SCHEMA = {
         severity: { enum: ["info", "warning", "error"] }, path: { type: "string" }, targetPath: { type: "string" }, data: { type: "object" }
       }
     }
-  }
+  },
+  // <lang><zh-CN>仅新身份补齐既有可表达的模式条件；排序、URL解码与跨记录身份仍须运行验证。</zh-CN><en>Only the new identity gains expressible existing mode conditions; ordering, URL decoding and cross-record identities still require runtime validation.</en></lang>
+  allOf: [
+    {
+      if: { properties: { pagePartition: { properties: { mode: { const: "single-page" } } } } },
+      then: { properties: { pagePartition: { required: ["singlePageId"] } } },
+      else: { properties: { pagePartition: { not: { required: ["singlePageId"] } } } }
+    },
+    {
+      if: { properties: { source: { properties: { mode: { const: "none" } } } } },
+      then: { properties: { source: { properties: { assets: { maxItems: 0 } } }, privacy: { properties: { sourceExposure: { const: "none" } } } } },
+      else: { properties: { privacy: { properties: { sourceExposure: { const: "public-explicit" } } } } }
+    },
+    {
+      if: { properties: { source: { properties: { mode: { enum: ["fetch", "link"] } } } } },
+      then: { properties: { source: { properties: { assets: { items: { required: ["relativeUrl"] } } } } } }
+    }
+  ]
 } as const;
 
 // <lang><zh-CN>以下 exact-key 表是 runtime closed-world validator 的集中事实源；可选字段仍由各子 validator 单独处理。</zh-CN><en>The exact-key tables below are the runtime closed-world validator's centralized source of truth; child validators still handle optional fields explicitly.</en></lang>
@@ -584,8 +627,31 @@ export function validateDocumentationPresentationProfile(value: unknown): HiaDia
 }
 
 /**
- * @lang zh-CN 三个profile入口共用一次预检和独立快照，后续仅消费同一已验证副本；不执行I/O或改变原对象。
- * @lang en Shares one preflight and detached snapshot across the three profile entries; subsequent work consumes that validated copy only, with no I/O or caller mutation.
+ * @lang zh-CN 显式迁移精确旧工件或复制当前工件；只改根版本，完整保留状态/诊断/身份/资产。新规则不满足时拒绝，不trim、不猜测、不返回局部结果。
+ * @lang en Explicitly migrates an exact legacy artifact or copies a current one, changing only the root version while preserving status/diagnostics/identities/assets. Refuses unmet new rules without trimming, guessing or partial results.
+ * @param value - 调用者提供的未知内存工件，不读取路径或执行hooks。 / Caller-provided unknown in-memory artifact; no path reads or hooks.
+ * @returns 独立可变的当前工件或固定安全拒绝；成功不授权源码公开、请求执行或验证正文。 / Detached mutable current artifact or fixed safe refusal; success grants no source disclosure/request execution or body verification.
+ * @remarks
+ * @lang zh-CN 无网络、文件、发布或输入修改；不协调外部清单/路由。JSON预检与复制沿用校验器边界，Proxy反射/资源耗尽不是沙箱保证。
+ * @lang en No network, files, publication or input mutation, and no coordination of external inventories/routes. JSON preflight/copying shares validator boundaries; proxy reflection/resource exhaustion are not sandbox guarantees.
+ */
+export function migrateDocumentationPresentationProfile(value: unknown): DocumentationPresentationProfileMigrationResult {
+  // <lang><zh-CN>reader先按输入精确版本完成验证并独占复制，失败不得向调用者暴露部分工件。</zh-CN><en>The reader first validates the exact input version and owns a detached copy; failure must not expose a partial artifact.</en></lang>
+  const result = readPresentationProfile(value);
+  if (!result.profile) return { status: "refused", diagnostics: result.diagnostics };
+  // <lang><zh-CN>副本仅更新根身份；不改拒绝态、输入诊断、关联、正文授权或摘要。</zh-CN><en>Update only the copy's root identity, preserving refusal status, input diagnostics, links, body authorization and digests.</en></lang>
+  const profile = result.profile;
+  profile.contractVersion = DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION;
+  // <lang><zh-CN>重新按当前规则完整验证，例如旧空白标签仍可读却不能升级。</zh-CN><en>Revalidate fully under current rules: a legacy blank label remains readable but cannot be upgraded.</en></lang>
+  const diagnostics = validatePreparedPresentationProfile(profile);
+  return diagnostics.length > 0
+    ? { status: "refused", diagnostics }
+    : { status: "ready", diagnostics, profile: profile as CurrentDocumentationPresentationProfile };
+}
+
+/**
+ * @lang zh-CN 校验/比较/计划/迁移入口共用预检和独立快照，后续仅消费同一已验证副本；不执行I/O或改变原对象。
+ * @lang en Validation/comparison/planning/migration share preflight and detached snapshots; subsequent work consumes that validated copy only, with no I/O or caller mutation.
  * @param value - 未知内存输入。 / Unknown in-memory input.
  * @returns 带诊断的拒绝，或可由本次调用独占的有效快照。 / A diagnostic refusal or a valid snapshot owned by this invocation.
  */
@@ -615,7 +681,7 @@ function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
 
   const diagnostics: HiaDiagnostic[] = [];
   if (value.contract !== DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT
-    || value.contractVersion !== DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION) {
+    || (value.contractVersion !== DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION && value.contractVersion !== "0.1.0-draft")) {
     diagnostics.push(presentationDiagnostic("PRESENTATION_CONTRACT_UNSUPPORTED", "Presentation contract and version must match exactly."));
   }
   if ((value.status !== "ready" && value.status !== "refused") || !isIdentity(value.profileId)) {
@@ -632,7 +698,7 @@ function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
   if (!isSourceProfile(value.source)) {
     diagnostics.push(presentationDiagnostic("PRESENTATION_SOURCE_ASSET_INVALID", "Source profile or asset manifest is invalid.", "source"));
   }
-  if (!isThemeProfile(value.theme)) {
+  if (!isThemeProfile(value.theme, value.contractVersion === DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION)) {
     diagnostics.push(presentationDiagnostic("PRESENTATION_THEME_CAPABILITY_INVALID", "Theme catalog, selection, or capability set is invalid.", "theme"));
   }
   if (!isPrivacy(value.privacy)) {
@@ -904,12 +970,12 @@ function isDigest(value: unknown): value is DocumentationPresentationDigest {
   return decodedBase64Length(value.value) === expectedBytes;
 }
 
-/** @lang zh-CN 验证至少三套 skin、scheme 与 selected capability 覆盖。 @lang en Validates at least three skins, schemes, and selected capability coverage. */
-function isThemeProfile(value: unknown): value is DocumentationPresentationThemeProfile {
+/** @lang zh-CN 验证至少三套skin及选中能力；当前版本额外拒绝纯空白标签，旧版本不隐式收紧。 @lang en Validates at least three skins and selected capabilities; only the current version additionally refuses whitespace-only labels. */
+function isThemeProfile(value: unknown, requireNonBlankToken: boolean): value is DocumentationPresentationThemeProfile {
   if (!isExactRecord(value, themeKeys) || !hasRequiredKeys(value, themeKeys) || !isIdentity(value.skinId)
     || !DOCUMENTATION_PRESENTATION_SCHEMES.includes(value.scheme as DocumentationPresentationScheme)
     || !isSortedIdentityArray(value.requiredCapabilities, 64) || !Array.isArray(value.skins) || value.skins.length < 3
-    || value.skins.length > 64 || !value.skins.every(isSkin)) return false;
+    || value.skins.length > 64 || !value.skins.every((skin) => isSkin(skin, requireNonBlankToken))) return false;
   const skins = value.skins as DocumentationPresentationSkin[];
   if (!isSortedBy(skins, ({ skinId }) => skinId) || hasDuplicates(skins.map(({ skinId }) => skinId))) return false;
   const selected = skins.find(({ skinId }) => skinId === value.skinId);
@@ -917,10 +983,11 @@ function isThemeProfile(value: unknown): value is DocumentationPresentationTheme
     && (value.requiredCapabilities as string[]).every((capability) => selected.capabilities.includes(capability));
 }
 
-/** @lang zh-CN 验证单个 renderer-neutral skin capability entry。 @lang en Validates one renderer-neutral skin capability entry. */
-function isSkin(value: unknown): value is DocumentationPresentationSkin {
+/** @lang zh-CN 验证单个中性skin，按调用方版本选择非空白约束；不trim或解析标签。 @lang en Validates one neutral skin with the caller-version nonblank constraint, without trimming or parsing its label. */
+function isSkin(value: unknown, requireNonBlankToken: boolean): value is DocumentationPresentationSkin {
   return isExactRecord(value, skinKeys) && hasRequiredKeys(value, skinKeys) && isIdentity(value.skinId)
     && typeof value.tokenContract === "string" && value.tokenContract.length > 0 && value.tokenContract.length <= 256
+    && (!requireNonBlankToken || /\S/u.test(value.tokenContract))
     && !isAbsolutePathLike(value.tokenContract) && isSortedEnumArray(value.supportedSchemes, DOCUMENTATION_PRESENTATION_SCHEMES)
     && isSortedIdentityArray(value.capabilities, 64);
 }
@@ -933,7 +1000,7 @@ function isPrivacy(value: unknown): value is DocumentationPresentationPrivacy {
     && value.cookiesRequired === false && value.privateSidecarsIncluded === false && value.telemetryEnabled === false;
 }
 
-/** @lang zh-CN 验证 exact draft 与 closed-world compatibility policy。 @lang en Validates exact-draft and closed-world compatibility policy. */
+/** @lang zh-CN 验证精确版本与closed-world兼容声明，不实施隐式迁移。 @lang en Validates exact-version and closed-world compatibility declarations without implicit migration. */
 function isCompatibility(value: unknown): value is DocumentationPresentationCompatibility {
   return isExactRecord(value, compatibilityKeys) && hasRequiredKeys(value, compatibilityKeys) && value.versionMatch === "exact"
     && value.unknownProperties === "reject" && value.identityChange === "new-contract-version" && value.semanticChange === "new-contract-version";

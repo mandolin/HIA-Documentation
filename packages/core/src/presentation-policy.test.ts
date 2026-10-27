@@ -103,7 +103,7 @@ describe("root profile and diagnostics", () => {
     expect(codes(value)).toEqual(["PRESENTATION_PROFILE_INVALID"]);
   });
 
-  it.each(["1.0.0", "0.1.1-draft", ""])("requires exact version %s", (candidate) => {
+  it.each(["1.0.1", "0.1.1-draft", ""])("requires exact version %s", (candidate) => {
     const value = fixture();
     Object.assign(value, { contractVersion: candidate });
     expect(codes(value)).toEqual(["PRESENTATION_CONTRACT_UNSUPPORTED"]);
@@ -157,7 +157,7 @@ describe("root profile and diagnostics", () => {
 
 describe("schema and transition result ownership", () => {
   it("retains exact identities and shared type-readonly runtime-mutable schema enums", () => {
-    expect([contract, version, schemaId]).toEqual(["documentation-presentation-profile", "0.1.0-draft", "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json"]);
+    expect([contract, version, schemaId]).toEqual(["documentation-presentation-profile", "1.0.0", "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-1.0.0.schema.json"]);
     expect(schema.$id).toBe(schemaId);
     expect(schema.$defs.theme.properties.scheme.enum).toBe(schemes);
     expect(Object.isFrozen(schema)).toBe(false);
