@@ -10,8 +10,8 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | --- | --- | --- |
 | `business-flow-documentation` | `@hia-doc/core` | draft |
 | `business-flow-documentation-projection` | `@hia-doc/core` | draft |
-| `hia-document` | `@hia-doc/core` | active pre-1.0 |
-| `project-manifest` | `@hia-doc/config` | draft |
+| `hia-document` | `@hia-doc/core` | `1.0.0` stable definition candidate; exact historical `0.2.0` retained |
+| `project-manifest` | `@hia-doc/config` | `1.0.0` stable definition candidate; exact historical `0.1.0-draft` retained |
 | `documentation-profile` | `@hia-doc/profile` | 1.0.0 stable definition candidate; exact historical draft retained |
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
@@ -70,17 +70,18 @@ It also contains `publicBaseUrl` and a versioned `publicUrl` for each schema. Th
 https://mandolin.github.io/HIA-Documentation/schemas/
 ```
 
-Canonical examples:
+Canonical examples of current definitions:
 
 ```text
-https://mandolin.github.io/HIA-Documentation/schemas/hia-document-0.2.0.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-1.0.0.schema.json
 ```
 
-The Pages artifact also includes unversioned package-style aliases such as `hia-document.schema.json`. Schema references should use the versioned `$id`; aliases are retrieval conveniences only.
+The historical `hia-document-0.2.0.schema.json` remains available for exact legacy inputs. The Pages artifact also includes unversioned package-style aliases such as `hia-document.schema.json`. Schema references should use the versioned `$id`; aliases are retrieval conveniences only.
 
 ## Historical identities
 
@@ -178,4 +179,4 @@ The current core-document canonical schema is hia-document-1.0.0.schema.json. Th
 
 ## Project Manifest Candidate
 
-The current project-manifest schema uses the fixed hia-project-manifest-1.0.0.schema.json identity. The legacy hia-project-manifest-0.1.0-draft.schema.json archive retains its original bytes and constraints. Current keys/aliases resolve to the new root; exact legacy reading does not mutate inputs. This fourth catalog candidate does not promote documentation profiles, other contracts or package releases. See [Project Manifest Migration](project-manifest-migration.md).
+The current project-manifest schema uses the fixed hia-project-manifest-1.0.0.schema.json identity. The legacy hia-project-manifest-0.1.0-draft.schema.json archive retains its original bytes and constraints. Current keys/aliases resolve to the new root; exact legacy reading does not mutate inputs. This schema candidate does not itself promote other contracts or package releases. See [Project Manifest Migration](project-manifest-migration.md).

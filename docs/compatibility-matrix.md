@@ -40,7 +40,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 | `@hia-doc/parser-jsdoc` | `0.1.0`, MIT; publishable manifest | JSDoc Integration `0.1.0`, bridge `0.1.0`, metadata `0.1.0` | Active adapter bridge baseline; public release candidate. |
 | `@hia-doc/theme-default` | `0.1.4`, MIT; published | default renderer assets | Adds compact, readable deep-tree layout to the published branding and responsive content assets. |
 | `@hia-doc/renderer-html` | `0.1.8`, MIT; published identity | renderer manifest `0.1.0`, project navigation index `0.1.0-draft` | Current source retains unreleased contract dependencies; see candidate identity guidance. |
-| `@hia-doc/cli` | `0.1.11`, MIT; published identity | config, core document, JSDoc Integration, project docs manifest draft | Current source retains unreleased contract dependencies; source-preview repairs are versioned separately. |
+| `@hia-doc/cli` | `0.1.11`, MIT; published identity | config, core document, JSDoc Integration, project docs manifest `1.0.0` source candidate with exact `0.1.0-draft` legacy reading | Current source retains unreleased contract dependencies; source-preview repairs are versioned separately. |
 | `@hia-doc/lsp` | `0.1.0`, MIT; publishable manifest | resource index, source-linkage request, authoring locations, resource actions, profile capability data | Active IDE/LSP baseline; public release candidate. |
 | `@hia-doc/vscode-extension` | private `0.0.0` | LSP client, CLI command pass-through, preview manifest consumption | Development baseline. |
 | `@hia-doc/browser-panel` | `0.1.0`, MIT; publishable manifest | Browser panel API | Browser-panel component; full IDE product support is separate. |
@@ -60,20 +60,20 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 
 ## Data Contracts
 
-| Contract | Producer | Consumer | Current fixture coverage |
+| Contract | Producer | Consumer | Tracked fixture and verification coverage |
 | --- | --- | --- | --- |
-| Core document `0.2.0` | core helpers, parser adapters, satellite adapters | renderer, CLI, LSP, validators | `fixtures/basic.hia.json`, `fixtures/core-minimal.hia.json` |
-| Text i18n `0.2.0` | core helpers and adapters | renderer, LSP resource index | `fixtures/i18n-resource.hia.json` |
-| Source model `0.2.0` | core helpers and adapters | renderer, LSP source navigation | `fixtures/source-reference.hia.json` |
+| Core document `1.0.0` source candidate; `0.2.0` legacy fixture | core helpers, parser adapters, satellite adapters | renderer, CLI, LSP, validators | `fixtures/basic.hia.json`, `fixtures/core-minimal.hia.json` retain old roots; current identity and exact legacy reading are covered by [core document migration](core-document-migration.md). |
+| Text i18n `1.0.0` source candidate; `0.2.0` legacy fixture | core helpers and adapters | renderer, LSP resource index | `fixtures/i18n-resource.hia.json` retains the old submodel; current and legacy rules are in [core document migration](core-document-migration.md). |
+| Source model `1.0.0` source candidate; `0.2.0` legacy fixture | core helpers and adapters | renderer, LSP source navigation | `fixtures/source-reference.hia.json` retains the old submodel; current and legacy rules are in [core document migration](core-document-migration.md). |
 | JSDoc Integration `0.1.0` | `jsdoc-plugin-hia-sys` | `@hia-doc/parser-jsdoc`, CLI | `fixtures/jsdoc-integration.*.json` |
 | Documentation profile `1.0.0` candidate and exact legacy `0.1.0-draft` | explicit authors; official JSON remains legacy | profile runtime, LSP capability/completion | mixed-version runtime/type consumers, current/historical schemas and unchanged `packages/profiles/src/profiles/*.json` |
 | Official profile distribution `0.1.0-draft` | `@hia-doc/profiles` | project manifest authors, LSP/IDE consumers | catalog, package tests and `docs/profile-distribution.md` |
 | Schema distribution `0.1.0-draft` | `@hia-doc/schemas` snapshots | JSON Schema consumers and contract tooling | owner/snapshot equality gate and `docs/schema-distribution.md` |
 | Documentation producer/result `1.0.0` candidates and exact legacy `0.1.0-draft` | `@hia-doc/plugin-sdk`, documentation producers | CLI orchestration, CI and adapter tooling | Current/legacy semantic and type consumers, fixed historical inputs, owner/distribution schemas; [migration guide](documentation-producers.md) |
-| Project docs manifest `0.1.0-draft` | explicit user/fixture manifest | CLI project build | `fixtures/project-mixed.hia-project.json` |
+| Project docs manifest `1.0.0` source candidate; `0.1.0-draft` legacy fixture | explicit user/fixture manifest | CLI project build | `fixtures/project-mixed.hia-project.json` retains the old root; current and exact legacy identities are in [project manifest migration](project-manifest-migration.md). |
 | HTMDoc extraction `0.1.0-draft` | `hia-htmdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.htmdoc.json` |
 | CSSDoc extraction `0.1.0-draft` | `hia-cssdoc` / fixtures | CLI project build | `fixtures/project-mixed-alert.cssdoc.json` |
-| Doc source map `0.1.0-draft` | satellite generators / fixtures | `@hia-doc/source-linkage`, CLI project build, renderer project summary | `fixtures/project-mixed-alert.docmap.json` plus distributed schema |
+| Doc source map `1.1.0` source draft; `0.1.0-draft` legacy fixture | satellite generators / fixtures | `@hia-doc/source-linkage`, CLI project build, renderer project summary | `fixtures/project-mixed-alert.docmap.json` retains the old root; current and historical distributed schemas are selected by exact identity. See [range conventions](doc-source-map-range-conventions.md). |
 | Generated documentation binding source `0.3.0-draft` / exact previous `0.2.0-draft` and legacy `0.1.0-draft` | Existing generated-language adapters retain legacy output; current range declarations need producer evidence | `@hia-doc/source-linkage` guarded reader, bidirectional index, safe host projection and complete-bundle migration | Current binding/map `0.3.0-draft`/`1.1.0`, previous `0.2.0-draft`/`1.0.0` and legacy `0.1.0-draft`/`0.1.0-draft` pairs; original historical schema bytes retained; unreleased source, candidate acceptance remains open |
 | Documentation locale resource `0.1.0-draft` | explicit root-bound local DLR profile | core resolver, generic doc-line profiles and future adapters | core/generic-docline security, fallback and legacy-bridge tests; distributed schema |
 | Documentation locale-resolution `0.1.0-draft` | core metadata-only sidecar factory | doc-source-map declaration and future host surfaces | core/source-linkage privacy tests and distributed schema; no resource body or resolved text |
@@ -99,7 +99,7 @@ Package versions below come from checked-in manifests, not a fresh registry quer
 ## Deferred Compatibility Work
 
 - Verify registry availability, integrity and clean-consumer results for each concrete release.
-- Retain compatibility and immutable schema identities when graduating the project-manifest contract.
+- Verify the current `1.0.0` project-manifest source candidate with exact `0.1.0-draft` legacy reading in release consumers, while retaining immutable schema identities.
 - Verify stable contract graduation and retained schema versions across HTML/CSS/source-map consumers.
 - Verify the complete package cohort and its profile/schema/source-linkage/producer compatibility at release time.
 - Workspace profile auto-discovery.
