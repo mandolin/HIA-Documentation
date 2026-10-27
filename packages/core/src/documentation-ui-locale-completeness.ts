@@ -565,6 +565,11 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
           diagnostics.push(diagnostic("ULC_MESSAGE_MISSING", "A declared UI message channel has no required message.", `surfaces.${surface.surfaceId}.modes.${mode}.channels.${channel}`));
         }
       }
+      // <lang><zh-CN>反向核对每条 requirement；额外使用未声明通道也不能冒充完整覆盖。</zh-CN><en>Check every requirement in the other direction; an undeclared channel cannot masquerade as complete coverage.</en></lang>
+      const undeclaredRequirements = modeRequirements.filter((requirement) => !declaredChannels.has(requirement.channel));
+      for (const requirement of undeclaredRequirements) {
+        diagnostics.push(diagnostic("ULC_MESSAGE_MISSING", "A required UI message uses a channel absent from its surface mode.", `requirements.${requirement.requirementId}.channel`));
+      }
 
       for (const uiLocale of uiLocales) {
         // <lang><zh-CN>语言元数据独立于 message lookup；默认语言与局部语言并集必须覆盖内容和 UI。</zh-CN><en>Language metadata is independent from message lookup; page-default and part languages must jointly cover content and UI.</en></lang>
@@ -614,7 +619,8 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
         const summary = summarizeResults(results);
         const declaredChannelsCovered = modeDefinition.channels.every((channel) => modeRequirements.some((requirement) => requirement.channel === channel));
         const requiredBaseChannels = declaredChannels.has("visible-text") && declaredChannels.has("accessible-name");
-        const status = languageMetadataComplete && declaredChannelsCovered && requiredBaseChannels && results.length > 0 && results.every(({ status: resultStatus }) => resultStatus === "covered")
+        const status = languageMetadataComplete && declaredChannelsCovered && undeclaredRequirements.length === 0 && requiredBaseChannels
+          && results.length > 0 && results.every(({ status: resultStatus }) => resultStatus === "covered")
           ? "complete"
           : "incomplete";
         evaluations.push({
@@ -716,6 +722,12 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
   // <lang><zh-CN>复用 input fallback preflight，并检查每个 surface 都完整声明固定 mode/locale 矩阵。</zh-CN><en>Reuse input fallback preflight and check that every surface fully declares the fixed mode/locale matrix.</en></lang>
   const fallbackDiagnostic = validateFallbackChains(report.fallbackPolicy.chains, report.localeScope.uiLocales, bundleLocales);
   if (fallbackDiagnostic) return [fallbackDiagnostic];
+  // <lang><zh-CN>每个 bundle 的消息身份只建一次集合；大量 requirement 的来源核对不能逐次线性扫描清单。</zh-CN><en>Index each bundle's message identities once; many requirement resolutions must not repeatedly scan the inventory linearly.</en></lang>
+  const bundleByLocale = new Map(report.bundles.map((bundle) => [localeKey(bundle.locale), {
+    locale: bundle.locale,
+    messageIds: new Set(bundle.messageIds)
+  }]));
+  const fallbackByLocale = new Map(report.fallbackPolicy.chains.map((chain) => [localeKey(chain.uiLocale), chain.fallbackLocales]));
   if (report.surfaces.some((surface) => {
     const modeIdentities = new Set(surface.modes.map(({ mode }) => mode));
     const metadataIdentities = new Set(surface.languageMetadata.map(({ uiLocale }) => localeKey(uiLocale)));
@@ -762,7 +774,12 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
       const expectedResultStatus = result.resolution === "exact" && result.placeholderStatus === "match" ? "covered" : "incomplete";
       const localePresenceValid = result.resolution === "missing" ? result.resolvedLocale === undefined : isLocale(result.resolvedLocale);
       const placeholderPresenceValid = result.resolution === "missing" ? result.placeholderStatus === "unavailable" : result.placeholderStatus !== "unavailable";
-      return result.status !== expectedResultStatus || !localePresenceValid || !placeholderPresenceValid;
+      const inventoryResolution = resolveInventoryMessage(evaluation.uiLocale, result.messageId, bundleByLocale, fallbackByLocale);
+      const inventoryLocaleValid = inventoryResolution.resolvedLocale === undefined
+        ? result.resolvedLocale === undefined
+        : typeof result.resolvedLocale === "string" && localeEquals(result.resolvedLocale, inventoryResolution.resolvedLocale);
+      return result.status !== expectedResultStatus || !localePresenceValid || !placeholderPresenceValid
+        || result.resolution !== inventoryResolution.resolution || !inventoryLocaleValid;
     })) {
       return [diagnostic("ULC_INVALID_CONTRACT", "Evaluation resolution, placeholder, locale, and coverage states must remain consistent.")];
     }
@@ -771,9 +788,10 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
       return [diagnostic("ULC_INVALID_CONTRACT", "Evaluation summary does not match its requirement results.")];
     }
     const declaredChannelsCovered = modeDefinition.channels.every((channel) => expectedRequirements.some((requirement) => requirement.channel === channel));
+    const requirementChannelsDeclared = expectedRequirements.every((requirement) => modeDefinition.channels.includes(requirement.channel));
     const requiredBaseChannels = modeDefinition.channels.includes("visible-text") && modeDefinition.channels.includes("accessible-name");
     const expectedStatus = evaluation.results.length > 0 && evaluation.results.every(({ status }) => status === "covered")
-      && declaredChannelsCovered && requiredBaseChannels
+      && declaredChannelsCovered && requirementChannelsDeclared && requiredBaseChannels
       && coversLocale(evaluation.documentLanguage, evaluation.partLanguages, evaluation.contentLocale)
       && coversLocale(evaluation.documentLanguage, evaluation.partLanguages, evaluation.uiLocale)
       ? "complete"
@@ -891,16 +909,26 @@ function validateFallbackChains(value: unknown, uiLocales: unknown[], bundleLoca
       return diagnostic("ULC_FALLBACK_UNDECLARED", "Every UI locale must have exactly one explicit fallback chain.");
     }
   }
-  // <lang><zh-CN>沿 UI-locale chain 做 DFS；bundle-only 终点不会继续展开，UI-locale 之间禁止环。</zh-CN><en>Run DFS through UI-locale chains; bundle-only leaves stop, while cycles among UI locales are rejected.</en></lang>
+  // <lang><zh-CN>遍历每条有序回退边，而非只取首个 UI locale；迭代栈避免长链递归耗尽调用栈。</zh-CN><en>Visit every ordered fallback edge rather than only the first UI locale; an iterative stack avoids recursion on long chains.</en></lang>
+  const visitState = new Map<string, "visiting" | "visited">();
   for (const start of chainByLocale.keys()) {
-    // <lang><zh-CN>当前 traversal set 与 cursor 只存 locale identity，不读取 bundle text。</zh-CN><en>The current traversal set and cursor contain locale identity only and never read bundle text.</en></lang>
-    const visiting = new Set<string>();
-    let current: string | undefined = start;
-    while (current && chainByLocale.has(current)) {
-      if (visiting.has(current)) return diagnostic("ULC_FALLBACK_UNDECLARED", "Fallback chains must not contain cycles.");
-      visiting.add(current);
-      const next: string | undefined = chainByLocale.get(current)?.map(localeKey).find((candidate) => chainByLocale.has(candidate));
-      current = next;
+    if (visitState.get(start) === "visited") continue;
+    const pending: { locale: string; nextFallback: number }[] = [{ locale: start, nextFallback: 0 }];
+    visitState.set(start, "visiting");
+    while (pending.length > 0) {
+      const frame = pending[pending.length - 1]!;
+      const fallbackLocales = chainByLocale.get(frame.locale)!;
+      if (frame.nextFallback === fallbackLocales.length) {
+        visitState.set(frame.locale, "visited");
+        pending.pop();
+        continue;
+      }
+      const next = localeKey(fallbackLocales[frame.nextFallback++]!);
+      if (!chainByLocale.has(next)) continue;
+      if (visitState.get(next) === "visiting") return diagnostic("ULC_FALLBACK_UNDECLARED", "Fallback chains must not contain cycles.");
+      if (visitState.get(next) === "visited") continue;
+      visitState.set(next, "visiting");
+      pending.push({ locale: next, nextFallback: 0 });
     }
   }
   return undefined;
@@ -954,6 +982,36 @@ function resolveMessage(
     const fallbackBundle = bundles.get(localeKey(fallbackLocale));
     const fallbackEntry = fallbackBundle?.entries.find((entry) => entry.messageId === messageId);
     if (fallbackBundle && fallbackEntry) return { entry: fallbackEntry, resolution: "declared-fallback", resolvedLocale: fallbackBundle.locale };
+  }
+  return { resolution: "missing" };
+}
+
+/**
+ * @lang zh-CN
+ * 仅用公开 bundle 清单重算报告声称的来源语言；不把占位符状态误当作可从无正文报告重验。
+ *
+ * @lang en
+ * Recomputes the claimed source locale from public bundle inventories only; placeholder status cannot be rechecked without message text.
+ *
+ * @param uiLocale <lang><zh-CN>当前评估要求的界面语言。</zh-CN><en>UI locale required by this evaluation.</en></lang>
+ * @param messageId <lang><zh-CN>已声明的稳定消息身份。</zh-CN><en>Declared stable message identity.</en></lang>
+ * @param bundles <lang><zh-CN>按不区分大小写语言键索引的无正文消息集合。</zh-CN><en>Text-free message sets indexed by case-insensitive locale key.</en></lang>
+ * @param fallbackChains <lang><zh-CN>按语言键索引的显式有序回退列表。</zh-CN><en>Explicit ordered fallback lists indexed by locale key.</en></lang>
+ * @returns <lang><zh-CN>清单可证的解析状态及命中语言。</zh-CN><en>Inventory-supported resolution and matched locale.</en></lang>
+ */
+function resolveInventoryMessage(
+  uiLocale: string,
+  messageId: string,
+  bundles: Map<string, { locale: string; messageIds: ReadonlySet<string> }>,
+  fallbackChains: Map<string, string[]>
+): { resolution: DocumentationUiLocaleResolution; resolvedLocale?: string } {
+  // <lang><zh-CN>目标 UI bundle 的命中优先于任何回退，且必须含确切消息身份。</zh-CN><en>An exact target UI bundle hit precedes every fallback and must contain the precise message identity.</en></lang>
+  const exactBundle = bundles.get(localeKey(uiLocale));
+  if (exactBundle?.messageIds.has(messageId)) return { resolution: "exact", resolvedLocale: exactBundle.locale };
+  // <lang><zh-CN>按声明顺序寻找第一项可用回退；未列出的语言不能被报告声称为来源。</zh-CN><en>Find the first available fallback in declared order; the report cannot claim an undeclared source locale.</en></lang>
+  for (const fallbackLocale of fallbackChains.get(localeKey(uiLocale)) ?? []) {
+    const fallbackBundle = bundles.get(localeKey(fallbackLocale));
+    if (fallbackBundle?.messageIds.has(messageId)) return { resolution: "declared-fallback", resolvedLocale: fallbackBundle.locale };
   }
   return { resolution: "missing" };
 }

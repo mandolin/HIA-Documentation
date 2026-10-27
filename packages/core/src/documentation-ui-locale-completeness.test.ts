@@ -188,6 +188,46 @@ describe("documentation-ui-locale-completeness", () => {
     expect(evaluateDocumentationUiLocaleCompleteness(language).diagnostics.map(({ code }) => code)).toContain("ULC_ACCESSIBILITY_INCOMPLETE");
   });
 
+  it("marks a requirement on an undeclared mode channel incomplete", () => {
+    const input = createInput();
+    input.requirements.push({
+      requirementId: "req.noscript.unlistedstatus",
+      surfaceId: "surface.default-portal",
+      mode: "no-script",
+      stateId: "results",
+      channel: "status-message",
+      messageId: "status.results"
+    });
+
+    const result = evaluateDocumentationUiLocaleCompleteness(input);
+    expect(result.status).toBe("incomplete");
+    expect(result.diagnostics.map(({ code }) => code)).toContain("ULC_MESSAGE_MISSING");
+    expect(result.report?.evaluations.filter(({ mode }) => mode === "no-script").every(({ status }) => status === "incomplete")).toBe(true);
+    expect(validateDocumentationUiLocaleCompletenessReport(result.report)).toEqual([]);
+  });
+
+  it("rejects an acyclic-looking first fallback edge when another edge closes a cycle", () => {
+    const input = createInput();
+    input.uiLocales.push("fr");
+    input.bundles.push({
+      bundleId: "bundle.fr",
+      locale: "fr",
+      entries: input.bundles.find(({ locale }) => locale === "en")!.entries.map((entry) => ({ ...entry }))
+    });
+    input.fallbackChains.find(({ uiLocale }) => uiLocale === "en")!.fallbackLocales = ["zh-CN", "fr"];
+    input.fallbackChains.push({ uiLocale: "fr", fallbackLocales: ["en"] });
+    input.surfaces[0]!.languageMetadata.push({ uiLocale: "fr", documentLanguage: "zh-CN", partLanguages: ["fr"] });
+
+    const result = evaluateDocumentationUiLocaleCompleteness(input);
+    expect(result.status).toBe("refused");
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(["ULC_FALLBACK_UNDECLARED"]);
+
+    input.fallbackChains.find(({ uiLocale }) => uiLocale === "fr")!.fallbackLocales = [];
+    const acyclic = evaluateDocumentationUiLocaleCompleteness(input);
+    expect(acyclic.status).toBe("complete");
+    expect(validateDocumentationUiLocaleCompletenessReport(acyclic.report)).toEqual([]);
+  });
+
   it("rejects invalid locale scope, message identity, fallback policy, and non-plain public messages", () => {
     const locale = createInput();
     locale.defaultUiLocale = "fr";
@@ -226,6 +266,44 @@ describe("documentation-ui-locale-completeness", () => {
     const compatibility = structuredClone(ready);
     compatibility.contractVersion = "0.2.0-draft" as "0.1.0-draft";
     expect(validateDocumentationUiLocaleCompletenessReport(compatibility).map(({ code }) => code)).toContain("ULC_COMPATIBILITY_UNSUPPORTED");
+  });
+
+  it("rejects exact results without the target locale and bundle inventory facts", () => {
+    const ready = evaluateDocumentationUiLocaleCompleteness(createInput()).report!;
+    const wrongLocale = structuredClone(ready);
+    const englishEvaluation = wrongLocale.evaluations.find(({ uiLocale, mode }) => uiLocale === "en" && mode === "interactive")!;
+    englishEvaluation.results.find(({ messageId }) => messageId === "navigation.home")!.resolvedLocale = "fr";
+    expect(validateDocumentationUiLocaleCompletenessReport(wrongLocale).map(({ code }) => code)).toContain("ULC_INVALID_CONTRACT");
+
+    const absentInventory = structuredClone(ready);
+    absentInventory.bundles.find(({ locale }) => locale === "en")!.messageIds = absentInventory.bundles
+      .find(({ locale }) => locale === "en")!.messageIds.filter((messageId) => messageId !== "navigation.home");
+    expect(validateDocumentationUiLocaleCompletenessReport(absentInventory).map(({ code }) => code)).toContain("ULC_INVALID_CONTRACT");
+  });
+
+  it("validates a bounded inventory with many repeated exact requirements", () => {
+    const input = createInput();
+    for (let index = 0; index < 4096; index += 1) {
+      const messageId = `padding.m${index}`;
+      input.messages.push({ messageId, placeholderNames: [], visibility: "public" });
+      for (const bundle of input.bundles) bundle.entries.push({ messageId, text: "Public fixture text" });
+    }
+    for (let index = 0; index < 2048; index += 1) {
+      input.requirements.push({
+        requirementId: `req.interactive.bulk.n${index}`,
+        surfaceId: "surface.default-portal",
+        mode: "interactive",
+        stateId: "results",
+        channel: "status-message",
+        messageId: "status.results"
+      });
+    }
+
+    const result = evaluateDocumentationUiLocaleCompleteness(input);
+    expect(result.status).toBe("complete");
+    expect(result.report?.bundles.every(({ messageIds }) => messageIds.length === 4099)).toBe(true);
+    expect(result.summary?.exact).toBe(4106);
+    expect(validateDocumentationUiLocaleCompletenessReport(result.report)).toEqual([]);
   });
 
   it("never serializes localized message text into the public report", () => {
