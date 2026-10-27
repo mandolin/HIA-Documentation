@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Presentation profile input and reader-state boundaries
+
+- 呈现配置校验、身份比较和纯fetch计划先预检普通JSON图并消费独立快照，拒绝访问器、环、非JSON值及复制/反射失败；源码状态机拒绝继承键和非法转换。补48项反例/特征及严格类型，保留draft schema、版本、签名与全部81个声明内状态pair；尚未发布。
+- Validate ordinary JSON graphs before consuming detached presentation snapshots, with fixed refusals for accessors, cycles, non-JSON values and cloning/reflection failures. Refuse inherited reader transitions and invalid coercion. Add 48 regressions/characterizations and strict types, preserving draft schemas, versions, signatures and all 81 declared state pairs; unreleased. See [input boundaries](docs/documentation-presentation-profile-contract.md#javascript-input-boundary).
+
 ## Unreleased — Candidate runtime range and package identity
 
 - VSIX运行时部署改为对照当前发行清单校验engine，避免旧固定断言阻断候选构建；另补两项回归与源码/历史宿主范围说明，历史捕获和界面保持。

@@ -75,11 +75,46 @@ theme capabilities, source/privacy consistency, and safe diagnostics.
 `compareDocumentationPresentationIdentity()` detects identity drift across generated profile variants. Schema validation
 alone does not replace these owner runtime checks.
 
+### JavaScript Input Boundary
+
+The validator, identity comparator (both sides), and fetch-plan builder accept ordinary, finite, acyclic JSON data.
+They check property descriptors before cloning and then validate and consume a detached snapshot. Ordinary getters,
+custom `toJSON` hooks, array traversal overrides, sparse arrays, non-finite numbers, functions, `undefined`, `BigInt`,
+boxed primitives, class instances and cyclic graphs are refused with `PRESENTATION_PROFILE_INVALID`. Reflection,
+cloning and validation exceptions use a fixed diagnostic without forwarding the original exception or input text.
+
+Same-realm plain objects, null-prototype records, frozen data and shared acyclic subgraphs are accepted if the complete
+profile satisfies the existing rules. Non-enumerable data and Symbol keys are outside the JSON wire model; required
+fields must be enumerable own data. Optional fields should be omitted, rather than explicitly set to `undefined`.
+Neither the input nor a caller-owned nested policy is frozen or modified. Returned fetch-plan policies remain detached
+and deeply frozen. Diagnostic arrays returned by validation/comparison remain ordinary mutable arrays.
+
+This boundary is not a sandbox for Proxy reflection side effects, tampered global intrinsics, concurrent external
+mutation or resource exhaustion. A transparent Proxy can pass descriptor inspection and still fail structured cloning;
+it is then refused. No arbitrary-depth support or hard memory/time budget is promised. The checks do not independently
+authorize publishing admitted diagnostic text, resolve a host origin, fetch source, or verify its digest.
+
+### Runtime State And Event Inputs
+
+`transitionDocumentationSourceReader()` requires primitive strings from the declared state and event sets and reads only
+own transition-table entries. The 81 declared pairs retain 15 legal transitions and 66 refusals. Invalid pairs within
+those sets preserve their existing diagnostic message; runtime values outside the sets use a fixed
+`PRESENTATION_SOURCE_TRANSITION_INVALID` message without string conversion.
+
+Refusal retains the supplied `state`; it does not reset to `idle`. If a JavaScript caller bypasses the TypeScript union,
+that echo may itself be an object, Symbol, or other invalid value. It is unvalidated, unsanitized, and not necessarily
+serializable. Treat only the diagnostic as the refusal result, and do not publish or process an invalid echo as a valid
+reader state. The public TypeScript state/event unions are unchanged.
+
 ## Compatibility
 
 Draft consumers must match the contract name and version exactly. Unknown properties are rejected. A change to identity
 or semantic rules requires a new contract version. Adding instance data that already satisfies this exact schema does not
 change the contract version; changing the meaning of an existing field does.
+
+The JavaScript input hardening above does not change the JSON schema, draft identity, legal transitions or normal JSON
+semantics. It does not establish a `1.0.0` reader/writer migration or change any npm package version. Existing published
+archives are unchanged until a separately versioned release is published.
 
 The neutral `@hia-doc/core` contract itself does not implement a browser source reader, renderer projection, theme skin,
 page router, cache, search indexer, standalone generator, Portal, or deployment workflow. `@hia-doc/renderer-html` and

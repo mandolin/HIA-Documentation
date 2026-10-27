@@ -109,6 +109,13 @@ read, body decoding, integrity hashing, cache write or fallback.
 The source reader state machine distinguishes ready, empty, denied, not-found, integrity-error, network-error and aborted
 outcomes. See `docs/documentation-presentation-profile-contract.md` for host responsibilities and adoption boundaries.
 
+The validator, identity comparator and fetch-plan builder inspect ordinary JSON data before cloning and consume only
+their validated snapshot. Accessors, cycles, non-JSON values and reflection/cloning failures return fixed diagnostics;
+ordinary getter and `toJSON` hooks are not called. This is not a Proxy or resource sandbox. Invalid runtime reader
+states/events are refused without coercion; the unchanged state echo is unvalidated if the caller bypassed TypeScript.
+See [input and state boundaries](../../docs/documentation-presentation-profile-contract.md#javascript-input-boundary).
+The draft schema, public signatures and package version are unchanged; existing npm archives do not contain unreleased changes.
+
 ## Documentation UI Locale Completeness
 
 `documentation-ui-locale-completeness@0.1.0-draft` separates documentation content locales from renderer UI chrome locales.

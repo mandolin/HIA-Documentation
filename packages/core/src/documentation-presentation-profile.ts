@@ -1,4 +1,5 @@
 import { createHiaDiagnostic } from "./diagnostics.js";
+import { isJsonDataGraph } from "./json-data.js";
 import type { HiaDiagnostic } from "./model.js";
 
 /**
@@ -476,9 +477,38 @@ const privateFieldNames = new Set(["absolutePath", "ast", "cookie", "css", "html
  * Validates a neutral profile's closed-world shape, deterministic ordering, and cross-field identity/source/theme/privacy invariants.
  *
  * @param value - 待校验的未知 wire value。 / Unknown wire value to validate.
- * @returns 稳定 diagnostics；空数组表示有效。 / Stable diagnostics; an empty array means valid.
+ * @returns 稳定 diagnostics；空数组表示有效。非JSON图、复制或反射失败使用固定拒绝。 / Stable diagnostics; empty means valid. Non-JSON graphs, cloning or reflection failures use a fixed refusal.
+ * @remarks
+ * @lang zh-CN 只验证普通JSON快照，不调用普通对象getter/toJSON。非枚举数据与Symbol键不属于wire；Proxy反射副作用、全局内建篡改和资源耗尽不受沙箱保护。
+ * @lang en Validates an ordinary JSON snapshot without invoking ordinary-object getters/toJSON. Non-enumerable data and Symbol keys are outside the wire; proxy reflection side effects, tampered global intrinsics and resource exhaustion are not sandboxed.
  */
 export function validateDocumentationPresentationProfile(value: unknown): HiaDiagnostic[] {
+  return readPresentationProfile(value).diagnostics;
+}
+
+/**
+ * @lang zh-CN 三个profile入口共用一次预检和独立快照，后续仅消费同一已验证副本；不执行I/O或改变原对象。
+ * @lang en Shares one preflight and detached snapshot across the three profile entries; subsequent work consumes that validated copy only, with no I/O or caller mutation.
+ * @param value - 未知内存输入。 / Unknown in-memory input.
+ * @returns 带诊断的拒绝，或可由本次调用独占的有效快照。 / A diagnostic refusal or a valid snapshot owned by this invocation.
+ */
+function readPresentationProfile(value: unknown): { diagnostics: HiaDiagnostic[]; profile?: DocumentationPresentationProfile } {
+  try {
+    // <lang><zh-CN>先拒绝访问器、环及非JSON值，再复制；复制也可能因Proxy或过深对象失败，统一收敛。</zh-CN><en>Reject accessors, cycles and non-JSON values before cloning; cloning can also fail for proxies or excessive depth and is handled uniformly.</en></lang>
+    if (isJsonDataGraph(value)) {
+      const snapshot: unknown = structuredClone(value);
+      // <lang><zh-CN>旧shape与跨字段语义仅在独立JSON副本上运行；失败不返回局部profile。</zh-CN><en>Existing shape and cross-field semantics run only on the detached JSON copy; refusals return no partial profile.</en></lang>
+      const diagnostics = validatePreparedPresentationProfile(snapshot);
+      return diagnostics.length > 0 ? { diagnostics } : { diagnostics, profile: snapshot as DocumentationPresentationProfile };
+    }
+  } catch {
+    // <lang><zh-CN>不透传原异常、路径或正文；这不构成对任意Proxy副作用的隔离。</zh-CN><en>Do not forward original exceptions, paths or bodies; this does not isolate arbitrary proxy side effects.</en></lang>
+  }
+  return { diagnostics: [presentationDiagnostic("PRESENTATION_PROFILE_INVALID", "Presentation profile must be ordinary, acyclic JSON data that can be copied and validated.")] };
+}
+
+/** @lang zh-CN 在预检复制后的JSON快照上保留既有closed-world及跨字段规则。 @lang en Preserves existing closed-world and cross-field rules on a preflighted JSON snapshot. */
+function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
   if (containsPrivateField(value)) {
     return [presentationDiagnostic("PRESENTATION_PRIVACY_BOUNDARY", "Presentation profile contains a prohibited private field.")];
   }
@@ -558,14 +588,16 @@ export function validateDocumentationPresentationProfile(value: unknown): HiaDia
  * @returns identity drift 或输入诊断。 / Identity drift or input diagnostics.
  */
 export function compareDocumentationPresentationIdentity(reference: unknown, candidate: unknown): HiaDiagnostic[] {
-  const referenceDiagnostics = validateDocumentationPresentationProfile(reference);
-  const candidateDiagnostics = validateDocumentationPresentationProfile(candidate);
-  if (referenceDiagnostics.length > 0 || candidateDiagnostics.length > 0) {
-    return deduplicateDiagnostics([...referenceDiagnostics, ...candidateDiagnostics]);
+  // <lang><zh-CN>两侧分别拥有独立验证副本，绝不在检查后重读调用方的原对象。</zh-CN><en>Each side owns a separately validated copy; never reread caller objects after checking them.</en></lang>
+  const referenceResult = readPresentationProfile(reference);
+  const candidateResult = readPresentationProfile(candidate);
+  if (!referenceResult.profile || !candidateResult.profile) {
+    return deduplicateDiagnostics([...referenceResult.diagnostics, ...candidateResult.diagnostics]);
   }
 
-  const referenceProfile = reference as DocumentationPresentationProfile;
-  const candidateProfile = candidate as DocumentationPresentationProfile;
+  // <lang><zh-CN>局部引用均来自本次快照；索引只按稳定topicId连接，不用数组位置推断身份。</zh-CN><en>Local references belong to this invocation's snapshots; join the index by stable topicId, never inferred array position.</en></lang>
+  const referenceProfile = referenceResult.profile;
+  const candidateProfile = candidateResult.profile;
   const candidateByTopicId = new Map(candidateProfile.pagePartition.topics.map((topic) => [topic.topicId, topic]));
   const samePartitionMode = referenceProfile.pagePartition.mode === candidateProfile.pagePartition.mode;
 
@@ -599,16 +631,18 @@ export function compareDocumentationPresentationIdentity(reference: unknown, can
  * @returns ready plan 或 fail-closed refused result。 / A ready plan or fail-closed refused result.
  */
 export function createDocumentationSourceFetchPlan(value: unknown, assetId: string): DocumentationSourceFetchPlanResult {
-  const diagnostics = validateDocumentationPresentationProfile(value);
-  if (diagnostics.length > 0) return { diagnostics, status: "refused" };
+  // <lang><zh-CN>计划只能消费刚通过同一轮语义校验的副本；拒绝不泄漏局部计划。</zh-CN><en>The plan consumes only the copy admitted by this validation pass; refusal exposes no partial plan.</en></lang>
+  const result = readPresentationProfile(value);
+  if (!result.profile) return { diagnostics: result.diagnostics, status: "refused" };
 
-  const profile = value as DocumentationPresentationProfile;
+  const profile = result.profile;
   if (profile.source.mode !== "fetch" || !isIdentity(assetId)) {
     return {
       diagnostics: [presentationDiagnostic("PRESENTATION_SOURCE_FETCH_PLAN_REFUSED", "Fetch planning requires an explicit fetch profile and valid asset identity.")],
       status: "refused"
     };
   }
+  // <lang><zh-CN>精确匹配副本中的公开资产，不转换或规范化调用方assetId。</zh-CN><en>Match the public asset in the copy exactly, without coercing or normalizing the caller's assetId.</en></lang>
   const asset = profile.source.assets.find((candidate) => candidate.assetId === assetId);
   if (!asset?.relativeUrl) {
     return {
@@ -642,12 +676,23 @@ export function createDocumentationSourceFetchPlan(value: unknown, assetId: stri
  * @param state - 当前 reader 状态。 / Current reader state.
  * @param event - 单个明确事件。 / One explicit event.
  * @returns 新状态与迁移 diagnostics。 / Next state and transition diagnostics.
+ * @remarks
+ * @lang zh-CN 运行时非法参数不转换，使用固定诊断并原样回显state；绕过类型的回显值未验证、未脱敏且未必可序列化，调用方不得将其当成合法状态或公开数据。
+ * @lang en Invalid runtime arguments are not coerced; a fixed diagnostic accompanies the unchanged state echo. An echo obtained by bypassing types is unvalidated, unsanitized and not necessarily serializable; callers must not treat it as a valid state or public data.
  */
 export function transitionDocumentationSourceReader(
   state: DocumentationSourceReaderState,
   event: DocumentationSourceReaderEvent
 ): DocumentationSourceReaderTransitionResult {
-  const nextState = sourceReaderTransitions[state]?.[event];
+  // <lang><zh-CN>只允许primitive闭集值；先检查再索引或插值，避免继承键与自定义转换。</zh-CN><en>Admit only primitive closed-set values before indexing or interpolation, avoiding inherited keys and custom coercion.</en></lang>
+  if (typeof state !== "string" || typeof event !== "string"
+    || !DOCUMENTATION_SOURCE_READER_STATES.includes(state) || !DOCUMENTATION_SOURCE_READER_EVENTS.includes(event)
+    || !Object.hasOwn(sourceReaderTransitions, state)) {
+    return { diagnostics: [presentationDiagnostic("PRESENTATION_SOURCE_TRANSITION_INVALID", "Source reader state and event must be declared primitive strings.")], state };
+  }
+  // <lang><zh-CN>行内只取自有迁移；合法但未声明的pair保持原有拒绝文案及状态。</zh-CN><en>Read own transitions only; declared but absent pairs retain the existing refusal message and state.</en></lang>
+  const row = sourceReaderTransitions[state];
+  const nextState = Object.hasOwn(row, event) ? row[event] : undefined;
   if (!nextState) {
     return {
       diagnostics: [presentationDiagnostic("PRESENTATION_SOURCE_TRANSITION_INVALID", `Source reader cannot apply ${event} while ${state}.`)],
