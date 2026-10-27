@@ -15,12 +15,12 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-profile` | `@hia-doc/profile` | 1.0.0 stable definition candidate; exact historical draft retained |
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
-| `doc-source-map` | `@hia-doc/source-linkage` | `1.0.0` source implementation; catalog draft pending full API review; exact historical schema retained |
+| `doc-source-map` | `@hia-doc/source-linkage` | `1.1.0` source draft with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` history retained; producer and consumer acceptance still required |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
 | `documentation-terminology` | `@hia-doc/core` | draft |
-| `generated-documentation-binding` | `@hia-doc/source-linkage` | `0.2.0-draft` source draft, exact `0.1.0-draft` historical identity retained |
+| `generated-documentation-binding` | `@hia-doc/source-linkage` | `0.3.0-draft` source draft paired with map `1.1.0`; exact `0.2.0-draft` and `0.1.0-draft` history retained |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
 | `documentation-presentation-profile` | `@hia-doc/core` | 1.0.0 source candidate, exact historical 0.1.0-draft identity retained |
 | `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
@@ -97,9 +97,14 @@ formatting, which can differ from the current source snapshot formatting.
 A ninth snapshot retains the exact original binding `0.1.0-draft` definition
 before introducing binding `0.2.0-draft` / map `1.0.0` coordination. Its SHA-256 is
 `6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7`.
-The first eight digests are unchanged. This adds no catalog entry or stable
-definition: the catalog remains 17 entries, five stable definition candidates.
-Binding remains draft, and the map definition still awaits full API review.
+Two more snapshots preserve the publicly served map `1.0.0` and binding
+`0.2.0-draft` bytes before their current identities advance. Their SHA-256 values
+are `6dddbb5151e5d74f62a21bc0bfe217fb1f309402bc594d0dd0e5e062b64786c3`
+and `474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b`.
+The first nine digests are unchanged. This adds no catalog entry or stable
+definition: the catalog remains 17 entries, six stable definition candidates.
+Both new current identities remain draft pending producer, reader, migration
+and consumer acceptance. See [source range conventions](doc-source-map-range-conventions.md).
 
 The Pages build validates every historical snapshot before replacing its local
 artifact and publishes `schemas/history.json`. A current definition may share a

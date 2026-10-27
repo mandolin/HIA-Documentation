@@ -1,11 +1,13 @@
 # Documentation source-map queries
 
-The source version hardens the four documentation-semantic query helpers. This
-repair is unreleased; npm `@hia-doc/source-linkage@0.1.1` does not include it.
-Contract, schema, package and dependency versions are unchanged.
+The source version hardens the four documentation-semantic query helpers and
+supports `doc-source-map@1.1.0` range conventions. These changes are unreleased;
+npm `@hia-doc/source-linkage@0.1.1` does not include them. Contract and schema
+identities differ from the published package, while the npm package version is
+unchanged.
 
-中文：源码新增文档语义查询的已知字段运行时检查与无 getter 投影；省略列按核心规则为 1。
-非法筛选返回空结果和固定诊断，避免错误值退化为宽泛查询；尚未发布。
+中文：源码新增文档语义查询的已知字段运行时检查与无 getter 投影。旧版省略列按 1；
+新版 `1.1.0` 精确位置匹配需显式列与列单位。非法筛选返回空结果和固定诊断，避免错误值退化为宽泛查询；尚未发布。
 
 ## Filters and failures
 
@@ -20,14 +22,16 @@ TypeScript with `exactOptionalPropertyTypes` remains stricter.
 | --- | --- | --- |
 | `symbolId`, `symbolKind` | Nonblank string | Exact, without trimming |
 | `sourcePath` | Nonblank string | Normalize separators and the initial `./` only |
-| `position` | Positive safe integer `line`; optional positive safe integer `column` | Within the same source reference as `sourcePath` |
+| `position` | Positive safe integer `line`; optional positive safe integer `column` for old maps | Within the same source reference as `sourcePath`; `1.1.0` exact matching needs an explicit column |
+| `columnUnit` | `utf16-code-unit`, `unicode-code-point`, `byte`, or `unknown` | `1.1.0` requires a matching known unit for exact position hits; never inferred from file names or ordinary source maps |
 | `artifactPath` | Nonblank string | Same path normalization |
 | `selector` | Nonblank string | Exact, within the same artifact reference as `artifactPath` |
 
-Active filters intersect; results preserve entry order. Existing dependencies
-remain: `position` filters only with `sourcePath`, and `selector` only with
-`artifactPath`. An otherwise valid unattached filter retains its prior ignored
-behavior. No selectors are executed and no files or URLs are loaded.
+Active filters intersect; results preserve entry order. `selector` filters only
+with `artifactPath`. For the two older map versions, an otherwise valid position
+without `sourcePath` retains its prior ignored behavior. In `1.1.0`, a supplied
+position without `sourcePath` yields no exact matches. No selectors are executed
+and no files or URLs are loaded.
 
 Invalid runtime shapes, known accessors, wrong field types, blank strings, and
 invalid coordinates return `status: "invalid"`, no entries, count zero and the
@@ -45,11 +49,12 @@ them explicitly.
 
 ## Coordinates and ownership
 
-All HIA lines and columns are one-based safe integers. Omitted columns compare
-as **1**, matching the core position contract. Existing documentation ranges
-retain **inclusive endpoints**. This repair does not convert producer ranges to
-half-open intervals or infer line lengths, encoding units or source accuracy.
-Source producers must retain their documented coordinate precision.
+All HIA lines and columns are one-based safe integers. For `0.1.0-draft` and
+`1.0.0`, omitted columns compare as **1** and ranges retain **inclusive
+endpoints**. In `1.1.0`, each ranged reference declares inclusive, exclusive or
+unknown endpoints and a column unit. Exact position matching requires a caller
+column and the same known unit; missing or unknown facts do not match rather
+than broadening the query. See [range conventions](doc-source-map-range-conventions.md).
 
 Matching consumes an independent snapshot of known query fields. Returned
 entries and the echoed original `query` remain borrowed references; results are
@@ -62,8 +67,10 @@ code; caught reflection errors do not imply sandboxing or resource limits.
 `querySourceLinkedPosition(documentIndex, ordinaryIndex, query)` requires an
 explicit plain/null-prototype query. Its five string fields (`generatedPath`,
 `originalSourcePath`, `selector`, `symbolId`, `symbolKind`) must be nonblank.
-`generatedPosition` and `originalPosition` use the same positive safe integer
-coordinates and omitted-column default. Optional `undefined` means omission;
+`generatedPosition` and `originalPosition` use positive safe integer coordinates.
+`originalColumnUnit` explicitly supplies the documentation range unit for
+`1.1.0`; it is not inferred from an ordinary source map lookup. Older maps retain
+their omitted-column default. Optional `undefined` means omission;
 unknown fields are ignored without reading their getters. Supplied positions
 are validated even if not paired with a path. Accepted positions are copied.
 
@@ -78,7 +85,12 @@ results. Diagnostics preserve both indexes without mutating them. Codes are:
   retaining the existing coordinate diagnostic.
 
 Metadata-only queries still work with an unavailable ordinary map. Both
-directions, optional columns and existing unpaired-filter behavior remain.
+directions retain their existing order. Older map versions retain optional
+columns and unpaired-filter behavior. For `1.1.0`, an original path without a
+position filters source metadata; an original position without its path yields
+no documentation entries. An explicit original path conflicting with a path
+resolved from the generated position also yields no entries. Exact positions
+need the source path, column and explicit known unit.
 When both directions are supplied, generated lookup runs first, original lookup
 runs second, and earlier failures remain failures. This order does not establish
 position consistency. The original `query` echo remains unsanitized.

@@ -17,9 +17,9 @@ const diagnostics = validateGeneratedDocumentationBinding(sidecarJson, {
 
 Only supplied sidecar data is consumed. Options are copied before finite acyclic ordinary-JSON preflight; shared subgraphs are supported without invoking getters or expressions. Existing owner checks cover declared fields/policies, collections, quality combinations, instance keys, local binding/target references and privacy. Diagnostics follow existing input-field, header/policy, collection and reference order, returning a fresh writable list without mutating input. Valid path context remains unsanitized, and unknown optional JSON fields remain compatible.
 
-root与binding节点的可选`adapterExtensions`存在时必须为对象。省略、空对象和普通JSON null原型对象可用；`null`、数组、字符串、数字、布尔值拒绝。对象内部仍须通过普通JSON/隐私检查。此约束已在原schema声明，本次未改变契约版本。
+root与binding节点的可选`adapterExtensions`存在时必须为对象。省略、空对象和普通JSON null原型对象可用；`null`、数组、字符串、数字、布尔值拒绝。对象内部仍须通过普通JSON/隐私检查。此owner约束沿用历史schema，不因范围约定版本升级而放宽。
 
-Optional root/binding `adapterExtensions` must be objects when present. Omission, empty objects and ordinary-JSON null-prototype objects are supported; null, arrays, strings, numbers and booleans are refused. Object contents still require ordinary-JSON/privacy checks. The original schema already declared this constraint; contract versions are unchanged.
+Optional root/binding `adapterExtensions` must be objects when present. Omission, empty objects and ordinary-JSON null-prototype objects are supported; null, arrays, strings, numbers and booleans are refused. Object contents still require ordinary-JSON/privacy checks. The historical schema already declared this owner constraint; the range-convention version upgrade does not relax it.
 
 空诊断仅代表实现的owner检查通过。validator没有实际普通映射，不能认证source/artifact闭包或外部文档symbol；不根据不透明`scopeId`推导真实词法环境。合法包含提取error的工件仍可结构合法，消费索引与整组迁移才按error拒绝。它不是完整JSON Schema词汇引擎或公开授权。
 
@@ -42,9 +42,9 @@ if ((result.status === "migrated" || result.status === "already-current") && res
 | 顺序 / Order | 当前检查 / Current checks |
 | --- | --- |
 | 1 | 复制选项，预检整个wrapper JSON图；未知wrapper字段不输出。 / Snapshot options and preflight the whole wrapper JSON graph; unknown wrapper fields are omitted. |
-| 2 | 精确支持旧map/sidecar均0.1.0-draft，当前map1.0.0配sidecar0.2.0-draft；未知版本不猜测兼容。 / Support exact legacy and current pairs without inferring compatibility for unknown versions. |
+| 2 | 精确支持旧`0.1.0-draft`/`0.1.0-draft`、前版map`1.0.0`/sidecar`0.2.0-draft`及当前map`1.1.0`/sidecar`0.3.0-draft`配对；未知版本不猜测兼容。 / Support all three exact pairs without inferring compatibility for unknown versions. |
 | 3 | 实际映射和全部显式辅助工件须完整、唯一并匹配身份/路径/版本；当前实现核组内绑定/展开/目标与提供的source/artifact身份闭包。 / The actual map and every supplied sidecar must form a complete unique set matching identities/paths/versions and implemented group-local reference closure. |
-| 4 | 各工件独立复制，只改已定义版本/配对与已确认旧来源转换字段，不全文替换扩展字符串。 / Clone artifacts separately; update only defined versions/pairings and approved legacy provenance fields, without global extension-string replacement. |
+| 4 | 默认旧版迁移/前版复制沿用原配对；显式升级到当前配对时，每条映射及绑定源码范围分别提供约定证据。各工件独立复制，只改已定义版本/配对与获证字段，不全文替换扩展字符串。 / Preserve default legacy migration and previous-pair copying; an explicit current-pair upgrade requires independent map and binding range evidence. Clone artifacts separately without global extension-string replacement. |
 | 5 | 复核完整结果后一次返回；失败省略bundle，无局部产物。 / Revalidate the complete result before atomic return; refusal omits bundle without partial artifacts. |
 
 完整集合可以为空：普通映射无绑定声明与引用时，显式`bindingSidecars: []`合法。可选`docSourceMapId`省略不等于加载/推断外部映射；symbol-only目标按原规则可用，外部symbol真实性不由本API认证。scope.sourceId在实际映射外时，单工件可合法，但整组迁移拒绝。

@@ -15,8 +15,8 @@ context retain prior behavior; input processing and failure handlers do not
 reread caller options. This is neither a proxy sandbox nor publication authority.
 
 以下额外检查属于尚未发布的源码版，npm `@hia-doc/source-linkage@0.1.1`不包含这些变化。
-当前源码定义为`doc-source-map@1.0.0`，精确旧reader保留`0.1.0-draft`；历史schema与fixture保持原样。
-新版必要字段及来源类别/细节见[来源与迁移](doc-source-map-provenance.md)。下文的省略项兼容专指旧reader。
+当前源码定义为`doc-source-map@1.1.0`；精确旧reader保留`1.0.0`和`0.1.0-draft`，历史schema与fixture保持原样。
+新版必要字段、来源类别/细节及逐引用范围约定见[来源与迁移](doc-source-map-provenance.md)和[范围约定](doc-source-map-range-conventions.md)。下文的省略项兼容专指旧reader。
 
 ## 索引边界
 
@@ -30,7 +30,7 @@ reread caller options. This is neither a proxy sandbox nor publication authority
 | 根身份、producer和privacy | 已声明字段的类型；隐私策略闭集和布尔标志 |
 | artifact/source/map/entry/chain及sidecar集合 | 数组、对象项、非空身份、同集合身份唯一 |
 | 来源、产物和sidecar引用 | 已声明字符串、列表与对象形状；既有owner继续检查引用和安全路径 |
-| source reference范围 | 起止端点、一基正整数行/可选列、终点不早于起点 |
+| source reference范围 | 起止端点、一基正整数行/可选列、终点不早于起点；`1.1.0` 的带范围引用必须声明终点与列单位，已知列单位时双端列必填 |
 | 来源与置信度 | 旧reader保留非空来源字符串；新版检查闭集类别/可选细节与unresolved配对，置信度为high/medium/low/none |
 
 同一entry可以对同一source声明多个范围；身份唯一检查不把合法的多范围引用合并。
@@ -58,10 +58,10 @@ cycles, sparse/custom-behavior arrays, ambiguous identities and malformed ranges
 Legacy omissions, open JSON extensions and generator-specific provenance strings remain supported.
 Index availability is not proof of complete wire-schema validity. Invalid indexes remain blocked by query gates;
 privacy defaults, explicit body opt-in and reference-only sidecars are unchanged. Reflection side effects and
-resource exhaustion are not sandboxed. The current source definition is 1.0.0 with an exact legacy reader;
+resource exhaustion are not sandboxed. The current source definition is 1.1.0 with exact 1.0.0 and 0.1.0-draft readers;
 package versions and registry publication remain separate.
 
 
 ## 投影字段与所有权
 
-九个普通索引元数据接口、63字段的计数、顺序、范围复制、可变性及sidecar边界见[索引字段参考](doc-source-map-index.md)。普通索引保留既有可变结构，部分invalid/unsupported-version仍含元数据；消费必须先看status。字段说明与回归不改变原类型、端点或运行算法。
+九个普通索引元数据接口、64字段的计数、顺序、范围复制、可变性及sidecar边界见[索引字段参考](doc-source-map-index.md)。普通索引保留既有可变结构，部分invalid/unsupported-version仍含元数据；消费必须先看status。`1.1.0` 的范围约定投影不推断旧版单位，旧版端点和查询算法不变。

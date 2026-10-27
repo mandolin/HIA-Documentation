@@ -58,9 +58,9 @@ A private satellite workspace root is a container marker. Its child packages hav
 | Project docs manifest | `1.0.0` source candidate; exact legacy `0.1.0-draft` | Source contract candidate | `@hia-doc/config` |
 | HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
 | CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
-| Doc source map | `1.0.0`; exact legacy `0.1.0-draft` reader | Source implementation, full API review pending; unreleased | `@hia-doc/source-linkage` |
-| Doc source map schema | `1.0.0`; original historical schema retained | Catalog draft pending full review | `@hia-doc/source-linkage` |
-| Generated documentation binding | `0.2.0-draft` source; exact legacy `0.1.0-draft` reader/schema | Draft, unreleased source coordination with map `1.0.0` | `@hia-doc/source-linkage` |
+| Doc source map | `1.1.0`; exact previous `1.0.0` and legacy `0.1.0-draft` readers | Source range convention implementation; producer/consumer candidate acceptance open; unreleased | `@hia-doc/source-linkage` |
+| Doc source map schema | `1.1.0`; original `1.0.0` and `0.1.0-draft` historical bytes retained | Catalog draft pending full candidate evidence | `@hia-doc/source-linkage` |
+| Generated documentation binding | `0.3.0-draft` source; exact previous `0.2.0-draft` and legacy `0.1.0-draft` readers/schemas | Draft, unreleased source coordination with map `1.1.0` | `@hia-doc/source-linkage` |
 | Documentation locale resource | `0.1.0-draft` | Draft | `@hia-doc/core` |
 | Documentation locale-resolution sidecar | `0.1.0-draft` | Draft | `@hia-doc/core` |
 | Documentation producer descriptor/result | `1.0.0` | Stable definition candidate; exact legacy `0.1.0-draft` reader support | `@hia-doc/plugin-sdk` |

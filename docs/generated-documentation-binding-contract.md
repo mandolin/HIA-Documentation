@@ -2,7 +2,7 @@
 
 ## 中文摘要
 
-`generated-documentation-binding@0.2.0-draft` 是独立、中性的 sidecar
+`generated-documentation-binding@0.3.0-draft` 是独立、中性的 sidecar
 contract，用于记录一条上游文档意图如何声明、展开并关联零个或多个下游生成目标。
 它不属于 Pug AST、HTMDoc core symbol 或 ordinary source map；Pug、Sass、Vue、
 JSX、Meta 等 adapter 可分别提供 parser/scope 语义后复用它。
@@ -16,15 +16,15 @@ locals 值、绝对/UNC 路径、digest 或 secret。adapter expression 只由 a
 | Field | Value |
 | --- | --- |
 | Contract | `generated-documentation-binding` |
-| Contract version | `0.2.0-draft` source draft; exact legacy `0.1.0-draft` retained |
+| Contract version | `0.3.0-draft` source draft; exact `0.2.0-draft` and `0.1.0-draft` retained |
 | Schema dialect | JSON Schema Draft 2020-12 |
-| Canonical schema id | `https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json` |
+| Canonical schema id | `https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.3.0-draft.schema.json` |
 | Owner | `@hia-doc/source-linkage` |
 | Distribution snapshot | `@hia-doc/schemas/generated-documentation-binding.schema.json` |
 
 Source changes below are unreleased. Package versions and the existing npm
 contents are unchanged. Binding remains a draft; no binding `1.0.0` commitment
-is implied. The old canonical URL retains its original bytes.
+is implied. Both older canonical URLs retain their original bytes.
 
 ## Exact version pairs and coordinated migration
 
@@ -60,10 +60,15 @@ ordering, instance keys and frozen bidirectional results are unchanged.
 | Binding | Paired documentation source map | Reader |
 | --- | --- | --- |
 | `0.1.0-draft` | `0.1.0-draft` | Retained legacy pair |
-| `0.2.0-draft` | `1.0.0` | Current source pair |
+| `0.2.0-draft` | `1.0.0` | Exact previous source pair |
+| `0.3.0-draft` | `1.1.0` | Current source draft pair |
 
-The current binding schema changes its root version, map-linkage version and
-`compatibility.minimumConsumerContractVersion`. The deterministic locals input
+The current binding schema pins its root version, map-linkage version and
+`compatibility.minimumConsumerContractVersion`. A ranged
+`bindings[].sourceIntent.sourceRef` or
+`bindings[].composition.contributions[].sourceRef` also carries its own
+`rangeConvention` endpoint and column unit, independently of any map reference.
+The deterministic locals input
 remains `generated-doc-locals@0.1.0-draft-input`. Mixed pairs and unknown exact
 versions are refused; matching ids do not establish version compatibility.
 
@@ -80,9 +85,47 @@ if (result.bundle) {
 }
 ```
 
+For an explicit upgrade to the current source draft, supply independently
+reviewed evidence for both sets of references:
+
+```ts
+// 中文：两个证据数组分别说明映射与绑定内部的原始范围。
+// English: The two evidence arrays describe original ranges in the map and binding separately.
+const upgraded = migrateGeneratedDocumentationBindingBundle(
+  { docSourceMap: olderMap, bindingSidecars: olderSidecars },
+  {
+    targetVersion: "0.3.0-draft",
+    rangeEvidence: [{
+      entryIndex: 0,
+      sourceRefIndex: 0,
+      rangeConvention: { endBoundary: "exclusive", columnUnit: "utf16-code-unit" }
+    }],
+    bindingRangeEvidence: [{
+      sidecarIndex: 0,
+      bindingIndex: 0,
+      kind: "sourceIntent",
+      rangeConvention: { endBoundary: "exclusive", columnUnit: "utf16-code-unit" }
+    }]
+  }
+);
+```
+
+The arrays must cover **every** ranged reference in the actual input. The
+indices above illustrate the shape and do not imply that one map reference
+proves the binding reference.
+
 The pure memory API validates the entire input pair, creates independent copies,
 updates only defined version fields and reviewed map provenance, then validates
-the result. `status` is `migrated`, `already-current`, `invalid` or
+the result. By default, the legacy pair advances to `0.2.0-draft` / `1.0.0`;
+that previous pair and the current pair are copied without changing versions.
+An explicit `{ targetVersion: "0.3.0-draft", rangeEvidence,
+bindingRangeEvidence }` upgrades an older complete pair to `0.3.0-draft` /
+`1.1.0`. Map evidence addresses each ranged entry reference by entry/reference
+index. Binding evidence addresses each ranged source intent or contribution by
+`sidecarIndex`, `bindingIndex`, `kind: "sourceIntent" | "contribution"`, optional
+`contributionIndex`, and `rangeConvention`. Missing, duplicate, extra or
+conflicting evidence refuses the whole upgrade; identical coordinates in the
+map do not prove a binding reference's range convention. `status` is `migrated`, `already-current`, `invalid` or
 `unsupported-version`. A failure never returns `bundle`. Already-current inputs
 also return independent copies; inputs and their array order are preserved.
 

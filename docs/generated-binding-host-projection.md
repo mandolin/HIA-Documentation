@@ -13,8 +13,8 @@ and iteration failures from unsupported inputs may escape as exceptions.
 ## Identity and status
 
 The projection's own contract/version remain fixed independently of the input
-binding version. `bindingContractVersion` reports supported `0.2.0-draft` or
-legacy `0.1.0-draft`. An unavailable factory index has empty relations and
+binding version. `bindingContractVersion` reports supported `0.3.0-draft`,
+previous `0.2.0-draft` or legacy `0.1.0-draft`. An unavailable factory index has empty relations and
 retains its `invalid` or `unsupported-version` status and diagnostic summaries.
 Unknown/missing binding versions retain the existing legacy metadata fallback;
 that label does not certify compatibility. A failed index may still carry a

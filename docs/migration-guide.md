@@ -14,17 +14,22 @@ Before registering custom documentation profiles, review [input validation and o
 
 ## Documentation source maps
 
-The unreleased source definition adds closed locating categories and per-reference
-origin detail. Use explicit [lossless migration](doc-source-map-provenance.md);
-the exact legacy reader preserves old artifacts without rewriting them. Unknown
-origins and frozen binding-sidecar associations refuse standalone conversion.
+The unreleased `1.1.0` source definition adds locating categories, per-reference
+origin detail and [range conventions](doc-source-map-range-conventions.md). Use
+explicit [lossless migration](doc-source-map-provenance.md); exact `1.0.0` and
+`0.1.0-draft` readers preserve old artifacts without rewriting them. Unknown
+origins, missing range evidence and frozen binding-sidecar associations refuse
+standalone conversion.
 This source implementation remains under full API review and is separate from
 the published `@hia-doc/source-linkage@0.1.1` package.
 
 For generated bindings, use the explicit
 [complete-bundle migration](generated-documentation-binding-contract.md#exact-version-pairs-and-coordinated-migration).
-It pairs binding `0.2.0-draft` with map `1.0.0`, retains exact old-pair readers,
-and returns no partial bundle on failure. It performs no filesystem transaction
+By default it migrates the `0.1.0-draft` pair to binding `0.2.0-draft` / map
+`1.0.0` and copies that previous pair independently. Explicit upgrade targets
+binding `0.3.0-draft` / map `1.1.0` and needs separate range evidence for each
+older ranged map and binding reference. All three exact pairs remain readable;
+failure returns no partial bundle. It performs no filesystem transaction
 or publication; callers retain persistence and privacy responsibility.
 
 For Pug output, regenerate the complete map/sidecar group with the producer

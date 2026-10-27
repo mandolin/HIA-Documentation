@@ -1,7 +1,7 @@
 # 文档源码映射来源与迁移
 
-源码定义：`doc-source-map@1.0.0`。包版本与契约独立；npm `@hia-doc/source-linkage@0.1.1`不包含本文新增能力。
-精确旧reader继续支持`0.1.0-draft`，原历史schema保留原字节。未知patch/minor、预发行及build版本不自动协商。
+当前源码定义：`doc-source-map@1.1.0`。包版本与契约独立；npm `@hia-doc/source-linkage@0.1.1`不包含本文新增能力。
+精确旧reader继续支持`1.0.0`与`0.1.0-draft`，两版历史schema保留原字节。未知patch/minor、预发行及build版本不自动协商。新版带范围引用另须声明[终点与列单位](doc-source-map-range-conventions.md)。
 
 ## 类别和具体来源
 
@@ -37,7 +37,13 @@
 ```js
 import { migrateDocSourceMap } from "@hia-doc/source-linkage";
 
-const result = migrateDocSourceMap(legacyManifest);
+const result = migrateDocSourceMap(legacyManifest, {
+  rangeEvidence: [
+    // 中文：每条旧范围由调用方逐项提供可核约定；这里的序号仅为示例。
+    // English: The caller supplies evidence for every older range; indices are illustrative.
+    { entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "exclusive", columnUnit: "utf16-code-unit" } }
+  ]
+});
 if (result.status === "migrated" || result.status === "already-current") {
   // 中文：新容器保留允许的数据，保存/发布仍由调用方显式决定。
   // English: New containers retain permitted data; callers explicitly decide persistence/publication.
@@ -53,7 +59,7 @@ if (result.status === "migrated" || result.status === "already-current") {
 | `htmdoc-bridge` | `adapter` | 原旧值 |
 
 原来已使用通用类别的引用保留其类别与已声明细节。未知旧值仍可由旧reader读取，但不能猜测迁移；
-缺来源、细节冲突、新版必要结构缺失、未解析置信度矛盾或隐私错误均拒绝转换，不返回局部工件。
+缺来源、细节冲突、新版必要结构缺失、未解析置信度矛盾、旧范围证据缺失/多余或隐私错误均拒绝转换，不返回局部工件。
 调用方原对象与磁盘文件不改写；失败诊断不回显未知来源或源码正文。
 
 `already-current`也返回独立容器。迭代复制支持深层扩展、共享无环数据和普通`__proto__`数据键，
@@ -68,7 +74,7 @@ if (result.status === "migrated" || result.status === "already-current") {
 `generated-documentation-binding@0.1.0-draft`的反向引用固定指向旧版doc-source-map。
 普通映射单独升级不能更新另一个工件。含该声明/绑定引用的旧映射拒绝单独迁移，
 读取旧配对继续可用；组合时必须匹配真实映射版本。现有源码提供显式整组迁移，
-将全部辅助工件一并升级至绑定`0.2.0-draft`与映射`1.0.0`；缺失、重复、断链或混配整组拒绝。
+默认旧`0.1.0-draft`组沿既有规则迁至绑定`0.2.0-draft`与映射`1.0.0`；既有`0.2.0-draft`/`1.0.0`组默认独立复制。显式选择新版目标时，整组升至绑定`0.3.0-draft`与映射`1.1.0`，映射与绑定内部范围分别提供证据；缺失、重复、断链或混配整组拒绝。
 见[绑定契约与迁移](generated-documentation-binding-contract.md)。旧生产器输出继续可读。
 
 新版索引检查必要结构、来源、显式字段、身份/范围及已有路径/隐私/引用边界；

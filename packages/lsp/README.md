@@ -76,7 +76,7 @@ See [query semantics](../../docs/doc-source-map-query.md#language-service-propag
 
 The LSP project relation graph is an IDE view model derived from renderer `project-index.json` output. It exposes project-level entry/source/generated/endpoint relations for host navigation; it does not parse renderer HTML, embed source previews or run producers.
 
-`hia/documentSourceMapIndex` and `hia/projectRelationGraph` include an additive `host` metadata object. IDE and DevTools hosts can use it to identify the result contract, custom request version, capability id, data source (`managed-document`, `workspace-runtime` or `none`) and empty state without parsing human-readable messages. Existing response payload fields remain unchanged.
+`hia/documentSourceMapIndex` and `hia/projectRelationGraph` include an additive `host` metadata object. IDE and DevTools hosts can use it to identify the result contract, custom request version, capability id, data source (`managed-document`, `workspace-runtime` or `none`) and empty state without parsing human-readable messages. For `doc-source-map@1.1.0`, a position query needs an explicit column and matching `columnUnit`; source links expose their declared `rangeConvention` without inferring one from a path or ordinary source map. The exact older map versions keep their original position behavior.
 
 `hia/documentationEditProposals` returns `hia-documentation-edit-proposals@0.1.0-draft`. The first slice turns missing-locale resource preflight data into reviewable proposals for host or AI-assisted authoring flows. It intentionally returns public-safe context, `sourcesContentPolicy: none`, `allowsAutomaticWrites: false` and `requiresHumanReview: true`.
 

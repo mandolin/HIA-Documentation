@@ -5,7 +5,8 @@ metadata snapshot from `createDocSourceMapIndex()`. These field clarifications
 and regression checks are unreleased; npm `0.1.1` does not include the broader
 source repairs described in the [input validation guide](doc-source-map-input-validation.md).
 
-中文：本页描述既有普通索引的九个接口、63字段；保持原运行语义与公开类型，
+中文：本页描述普通索引的九个接口、64字段；`1.1.0` 新增逐引用范围约定投影，
+旧 `1.0.0` 与 `0.1.0-draft` 的运行语义保持原状，
 不将普通索引改为冻结对象，不将元数据投影等同于完整工件或公开安全数据。
 
 ## State, counts and ownership
@@ -44,7 +45,8 @@ sidecar body. Entry diagnostic codes are not promoted into root severities.
 Current and exact legacy provenance rules remain described in
 [provenance and migration](doc-source-map-provenance.md). Existing
 [query semantics](doc-source-map-query.md) retain their own filter, path,
-coordinate and alias boundaries. No range endpoint convention changes here.
+coordinate and alias boundaries. In `1.1.0`, the index copies declared range
+conventions without inferring units or endpoint meanings for older artifacts.
 
 中文：索引不读取文件或外部正文、不执行转换。此处补字段说明，不扩大迁移、
 文件访问、隐私或稳定版本承诺；包版本、契约版本与实际npm发行相互独立。
@@ -147,7 +149,8 @@ Mutable source-reference metadata with path/language resolved from top-level dec
 | `confidence?` | `string` | Original reference confidence; omissions are not inferred and none excludes this link from linked eligibility, not a probability. |
 | `language?` | `string` | Nonempty language text from the declared source node, never inferred from reference extensions for unknown sources. |
 | `path?` | `string` | Original nonempty declared-source path without query normalization; optional for unknown sources and granting no file access. |
-| `range?` | `HiaSourceRange` | Independently copied one-based endpoints, preserving omitted columns; no endpoint semantics are redefined and a missing range may still be linked. |
+| `range?` | `HiaSourceRange` | Independently copied one-based endpoints, preserving omitted columns; a missing range may still be linked. Endpoint meaning depends on the exact map version and new declared convention. |
+| `rangeConvention?` | `DocSourceMapRangeConvention` | Independently copied endpoint and column-unit declaration for a ranged `1.1.0` source reference; absent on older versions. Unknown dimensions do not support exact position matching. See [range conventions](doc-source-map-range-conventions.md). |
 | `rangeSource?` | `string` | Reference provenance label: current common category or concrete origin from the exact legacy reader; unresolved excludes linked eligibility. |
 | `rangeSourceDetail?` | `string` | Nonblank concrete origin declared on this reference, inferring no category, confidence or permissions. |
 | `sourceId` | `string` | Original source-reference identity, without merging repeated references or claiming external file existence. |

@@ -1,18 +1,22 @@
 # 文档源码映射选项与迁移结果 / Documentation-map options and migration results
 
-本参考覆盖`@hia-doc/source-linkage`的`DocSourceMapIndexOptions`与`DocSourceMapMigrationResult`两个仅类型根、四个直接字段，说明当前源码实现的字段消费和所有权。包版本、契约稳定性与正式发行单独管理。
+本参考覆盖`@hia-doc/source-linkage`的索引选项、显式迁移证据和迁移结果，说明当前源码实现的字段消费和所有权。包版本、契约稳定性与正式发行单独管理。
 
-This reference covers two type-only roots and four direct fields in `@hia-doc/source-linkage`: `DocSourceMapIndexOptions` and `DocSourceMapMigrationResult`. It describes current source behavior and ownership; package versions, contract stability and publication remain separate.
+This reference covers index options, explicit migration evidence and migration results in `@hia-doc/source-linkage`. It describes current source behavior and ownership; package versions, contract stability and publication remain separate.
 
 ## 诊断上下文选项 / Diagnostic-context options
 
-`createDocSourceMapIndex(value, options)`、`validateDocSourceMap(value, options)`、`migrateDocSourceMap(value, options)`共用`DocSourceMapIndexOptions`。每个入口默认空选项，先将自有path复制为独立快照，再处理输入；随后改原选项不会改变已返回诊断。要求同realm普通或null原型对象；未知扩展不读取，已知访问器/错型及反射失败沿既有规则拒绝。完整输入边界见[输入验证](doc-source-map-input-validation.md)。
+`createDocSourceMapIndex(value, options)`与`validateDocSourceMap(value, options)`使用`DocSourceMapIndexOptions`；`migrateDocSourceMap(value, options)`使用扩展它的`DocSourceMapMigrationOptions`。每个入口默认空选项，先将自有path复制为独立快照，再处理输入；随后改原选项不会改变已返回诊断。要求同realm普通或null原型对象；未知扩展不读取，已知访问器/错型及反射失败沿既有规则拒绝。完整输入边界见[输入验证](doc-source-map-input-validation.md)。
 
-The creation, validation and standalone migration entries share `DocSourceMapIndexOptions`. Each defaults to empty options and snapshots own path data before processing input. Later option edits cannot change returned diagnostics. Admission requires a same-realm plain/null-prototype record; unknown extensions are unread, while known accessors/wrong types and reflection failures follow existing refusal rules. See [input validation](doc-source-map-input-validation.md).
+Creation and validation use `DocSourceMapIndexOptions`; standalone migration uses `DocSourceMapMigrationOptions`, which extends it. Each defaults to empty options and snapshots own path data before processing input. Later option edits cannot change returned diagnostics. Admission requires a same-realm plain/null-prototype record; unknown extensions are unread, while known accessors/wrong types and reflection failures follow refusal rules. See [input validation](doc-source-map-input-validation.md).
 
 | 字段 / Field | 类型 / Type | 语义 / Meaning |
 | --- | --- | --- |
 | `path?` | `string` | 未脱敏诊断前缀，不是文件访问或公开授权 / Unsanitized diagnostic prefix, not file-access or publication permission. |
+
+迁移选项还可提供`rangeEvidence?: readonly DocSourceMapRangeEvidence[]`。每条证据用输入中的`entryIndex`与`sourceRefIndex`定位一条带范围引用，附上`rangeConvention`的终点与列单位。迁移目标为`1.1.0`；旧版引用缺少、重复或多出证据时原子拒绝。详见[范围约定](doc-source-map-range-conventions.md)。
+
+Migration additionally accepts `rangeEvidence?: readonly DocSourceMapRangeEvidence[]`. An item addresses a ranged input reference by `entryIndex` and `sourceRefIndex` and supplies its endpoint and column unit. The target is `1.1.0`; missing, duplicate or extra evidence for older references refuses the conversion atomically. See [range conventions](doc-source-map-range-conventions.md).
 
 路径不裁剪、规范化分隔符或消除绝对样式文本。空字符串不附上下文，空白字符串保留；入口可追加字段后缀。合法path也可出现在失败诊断的`path`/`targetPath`里，不能直接当公开安全文本。运行预检将自有`path: undefined`视作省略；启用TypeScript `exactOptionalPropertyTypes`时，`path?: string`不允许这个显式undefined属性。整个第二参数为undefined则使用函数默认值。
 
