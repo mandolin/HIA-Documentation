@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Presentation source assets and pure fetch plans
+
+- 拒绝源码URL首尾ASCII空格，并保留编码问号/井号后的完整路径以检查目录逃逸；补七接口39字段及纯计划/宿主责任、60项回归/特征与严格类型。保留schema/版本、公开签名及refused状态既有行为，尚未发布。
+- Reject boundary ASCII spaces and traversal hidden after encoded question/hash filename characters in source URLs. Document thirty-nine source/plan fields and host responsibilities with 60 regressions/characterizations and strict types, preserving schemas, versions, signatures and current refused-profile behavior; unreleased. See [source plans](docs/presentation-source-plan.md).
+
 ## Unreleased — Presentation page and identity responsibilities
 
 - 修复topic order跨十位数按补零字符串排序的误判，改为非负安全整数的数值严格递增；补页面/身份三接口19字段、48项回归/特征及严格类型，保留原公开签名、schema/版本与比较器身份集合，尚未发布。

@@ -35,11 +35,11 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
  * @lang en Page modes: multi-page is the explicitly required normative default and single-page is a compatibility projection. The tuple is type-readonly but not runtime-frozen; consumers must not mutate the shared vocabulary.
  */
 export const DOCUMENTATION_PRESENTATION_PAGE_MODES = ["multi-page", "single-page"] as const;
-/** @lang zh-CN 源码阅读模式；`none` 是显式隐私态。 @lang en Source reading modes; `none` is an explicit privacy state. */
+/** @lang zh-CN fetch/embed/link为阅读模式，none为显式关闭态；类型只读的共享元组运行时未冻结，消费方不得修改。 @lang en fetch/embed/link are reading modes and none explicitly disables exposure; the shared type-readonly tuple is not runtime-frozen and consumers must not mutate it. */
 export const DOCUMENTATION_PRESENTATION_SOURCE_MODES = ["fetch", "embed", "link", "none"] as const;
 /** @lang zh-CN 主题色彩 scheme，与 skin identity 相互独立。 @lang en Theme color schemes, independent from skin identity. */
 export const DOCUMENTATION_PRESENTATION_SCHEMES = ["dark", "light", "system"] as const;
-/** @lang zh-CN SRI P1 允许的摘要算法。 @lang en Digest algorithms permitted by the P1 SRI policy. */
+/** @lang zh-CN 允许sha256/sha384/sha512的共享词汇；类型只读但运行未冻结，不进行hash运算。 @lang en Shared sha256/sha384/sha512 vocabulary, type-readonly but not runtime-frozen; performs no hashing. */
 export const DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS = ["sha256", "sha384", "sha512"] as const;
 
 /**
@@ -98,7 +98,7 @@ export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
 
 /** @lang zh-CN 仅含中性multi-page/single-page词汇；不接受owner的split-site配置别名。 @lang en Contains only neutral multi-page/single-page vocabulary, not the owner's split-site configuration alias. */
 export type DocumentationPresentationPageMode = typeof DOCUMENTATION_PRESENTATION_PAGE_MODES[number];
-/** @lang zh-CN 源码阅读模式类型。 @lang en Source reading mode type. */
+/** @lang zh-CN 四种精确源码模式的联合，不包含自动fallback或宿主别名。 @lang en Union of four exact source modes, with no automatic fallback or host aliases. */
 export type DocumentationPresentationSourceMode = typeof DOCUMENTATION_PRESENTATION_SOURCE_MODES[number];
 /** @lang zh-CN 主题 scheme 类型。 @lang en Theme scheme type. */
 export type DocumentationPresentationScheme = typeof DOCUMENTATION_PRESENTATION_SCHEMES[number];
@@ -171,7 +171,9 @@ export interface DocumentationPresentationIdentityPolicy {
 
 /** @lang zh-CN Revision-bound public source asset 摘要。 @lang en Digest for a revision-bound public source asset. */
 export interface DocumentationPresentationDigest {
+  /** @lang zh-CN 三个允许算法之一，分别要求32/48/64字节的base64长度；不验证实际正文。 @lang en One of three allowed algorithms requiring base64 lengths for 32/48/64 bytes respectively; does not verify an actual body. */
   algorithm: typeof DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS[number];
+  /** @lang zh-CN 标准base64字母表/分组/padding及推算字节长度；不规范化未用padding位或核正文hash。 @lang en Standard base64 alphabet/grouping/padding and inferred byte length; unused padding bits are not canonicalized and no body hash is checked. */
   value: string;
 }
 
@@ -183,22 +185,35 @@ export interface DocumentationPresentationDigest {
  * Body-free source asset manifest entry. `relativeUrl` cannot contain an origin, credentials, or path traversal.
  */
 export interface DocumentationPresentationSourceAsset {
+  /** @lang zh-CN manifest内唯一的逻辑资产身份；数组按此ASCII身份字典序排列。 @lang en Logical asset identity unique within the manifest; assets are sorted by this ASCII identity. */
   assetId: string;
+  /** @lang zh-CN 可选0至16777216字节声明，不证明实际大小，也不与reader maxBytes交叉比较。 @lang en Optional declared zero to 16,777,216 bytes; not proof of actual size and not cross-checked against reader maxBytes. */
   byteLength?: number;
+  /** @lang zh-CN 必须显式public，仅为分类声明，不构成公开授权。 @lang en Must explicitly be public; a classification declaration, not publication authorization. */
   classification: "public";
+  /** @lang zh-CN 完整算法与摘要元数据；宿主仍须校验实际响应字节。 @lang en Complete algorithm/digest metadata; the host must still verify actual response bytes. */
   digest: DocumentationPresentationDigest;
+  /** @lang zh-CN 可选0至100000行声明，不证明实测行数，不与reader maxLines交叉比较。 @lang en Optional declared zero to 100,000 lines; not a measured line count and not cross-checked against reader maxLines. */
   lineCount?: number;
+  /** @lang zh-CN 2至128字符的受限字符串，不是完整MIME解析或实际响应Content-Type证明。 @lang en Restricted string of two to 128 characters, not full MIME parsing or proof of the response Content-Type. */
   mediaType: string;
+  /** @lang zh-CN fetch/link必填，embed可省略；相对URL最长2048字符，不解析宿主origin或证明文件存在。 @lang en Required for fetch/link and optional for embed; relative URL up to 2048 characters, without resolving host origin or proving file existence. */
   relativeUrl?: string;
+  /** @lang zh-CN 7至128字符的受限逻辑修订标签，不要求Git SHA或URL内出现该标签。 @lang en Restricted logical revision label of seven to 128 characters; need not be a Git SHA or occur in the URL. */
   revision: string;
+  /** @lang zh-CN manifest内唯一的逻辑来源身份，不是文件路径。 @lang en Logical source identity unique within the manifest, not a file path. */
   sourceId: string;
+  /** @lang zh-CN 可选逻辑映射引用；不读取映射、不验证存在或唯一性。 @lang en Optional logical map reference; no map read, existence check or uniqueness requirement. */
   sourceMapId?: string;
 }
 
 /** @lang zh-CN Source reader 的宿主执行限额。 @lang en Host execution limits for a source reader. */
 export interface DocumentationPresentationSourceLimits {
+  /** @lang zh-CN 1至16777216的安全整数字节限额，实际读取中由宿主执行。 @lang en Safe-integer byte limit from one to 16,777,216, enforced by the host during actual reading. */
   maxBytes: number;
+  /** @lang zh-CN 1至100000的安全整数行限额，由宿主执行，不在core读取正文。 @lang en Safe-integer line limit from one to 100,000, enforced by the host; core reads no body. */
   maxLines: number;
+  /** @lang zh-CN 100至60000的安全整数毫秒超时；本接口不创建timer或AbortSignal。 @lang en Safe-integer timeout of 100 to 60,000 milliseconds; creates no timer or AbortSignal. */
   timeoutMs: number;
 }
 
@@ -210,21 +225,33 @@ export interface DocumentationPresentationSourceLimits {
  * Fixed safe fetch policy that describes a request without granting network authority.
  */
 export interface DocumentationPresentationSourceReaderPolicy {
+  /** @lang zh-CN 固定false，不允许执行正文；宿主仍须使用安全文本呈现。 @lang en Fixed false, disallowing body execution; the host must still render safe text. */
   bodyExecution: false;
+  /** @lang zh-CN 固定default请求缓存声明，不保证命中或持久化。 @lang en Fixed default request-cache declaration, without promising cache hits or persistence. */
   cache: "default";
+  /** @lang zh-CN 固定omit，独立于same-origin；宿主必须省略凭据。 @lang en Fixed omit, independent of same-origin; the host must omit credentials. */
   credentials: "omit";
+  /** @lang zh-CN 固定same-origin-relative；core只检查相对字符串，真实origin/root由宿主核验。 @lang en Fixed same-origin-relative; core checks the relative string and the host verifies actual origin/root. */
   endpointPolicy: "same-origin-relative";
+  /** @lang zh-CN 三个显式限额，所有模式都须保留合法policy；不是执行器。 @lang en Three explicit limits; every mode retains a valid policy, not an executor. */
   limits: DocumentationPresentationSourceLimits;
+  /** @lang zh-CN 固定error，不允许宿主静默跟随重定向。 @lang en Fixed error, disallowing silent host redirect following. */
   redirect: "error";
+  /** @lang zh-CN 固定same-origin，不替代credentials=omit或CSP检查。 @lang en Fixed same-origin, not a substitute for credentials=omit or CSP checks. */
   requestMode: "same-origin";
 }
 
 /** @lang zh-CN Profile 的 source mode、manifest 与 reader policy。 @lang en Profile source mode, manifest, and reader policy. */
 export interface DocumentationPresentationSourceProfile {
+  /** @lang zh-CN 0至10000个公开声明，assetId/sourceId各唯一并按assetId排序；none必须为空。 @lang en Zero to 10,000 public declarations with independently unique assetId/sourceId and assetId ordering; empty in none mode. */
   assets: DocumentationPresentationSourceAsset[];
+  /** @lang zh-CN 必填固定fetch，与实际mode独立，不自动填入缺省字段。 @lang en Required fixed fetch default independent of actual mode; omitted fields are not filled automatically. */
   defaultMode: "fetch";
+  /** @lang zh-CN 固定none；失败不自动改link/embed。 @lang en Fixed none; failures do not automatically switch to link/embed. */
   fallbackPolicy: "none";
+  /** @lang zh-CN 实际四态源码模式；none还要求privacy.sourceExposure=none，其它模式为public-explicit。 @lang en Actual four-way source mode; none also requires privacy.sourceExposure=none and other modes require public-explicit. */
   mode: DocumentationPresentationSourceMode;
+  /** @lang zh-CN 所有模式都需显式合法reader policy，core不据此执行网络或读取文件。 @lang en Every mode requires an explicit valid reader policy; core performs no network or file reads from it. */
   readerPolicy: DocumentationPresentationSourceReaderPolicy;
 }
 
@@ -293,21 +320,33 @@ export interface DocumentationPresentationProfile {
 
 /** @lang zh-CN 纯数据 fetch 请求计划；没有响应 body 或可执行 callback。 @lang en Data-only fetch request plan with no response body or executable callback. */
 export interface DocumentationSourceFetchPlan {
+  /** @lang zh-CN 从已验证副本精确匹配的资产身份。 @lang en Asset identity matched exactly in the validated snapshot. */
   readonly assetId: string;
+  /** @lang zh-CN 独立冻结的禁止执行/正文索引声明；宿主负责实施。 @lang en Detached frozen declarations forbidding execution/body indexing, enforced by the host. */
   readonly bodyPolicy: Readonly<{ execute: false; includeInSearchIndex: false }>;
+  /** @lang zh-CN algorithm-base64元数据字符串，不代表正文hash已校验。 @lang en algorithm-base64 metadata string, not proof of a verified body hash. */
   readonly integrity: string;
+  /** @lang zh-CN 从副本复制并冻结的字节/行/毫秒限额；不与资产声明大小交叉拒绝。 @lang en Copied frozen byte/line/millisecond limits, without cross-refusing declared asset sizes. */
   readonly limits: Readonly<DocumentationPresentationSourceLimits>;
+  /** @lang zh-CN 资产声明的媒体类型，不是响应实测值。 @lang en Declared asset media type, not an observed response value. */
   readonly mediaType: string;
+  /** @lang zh-CN 原样保留通过检查的相对URL，宿主在批准的根下解析。 @lang en Unchanged validated relative URL, resolved by the host under its approved root. */
   readonly relativeUrl: string;
+  /** @lang zh-CN 冻结的default/omit/same-origin/error请求选项，不发起请求。 @lang en Frozen default/omit/same-origin/error request options; no request is issued. */
   readonly request: Readonly<{ cache: "default"; credentials: "omit"; mode: "same-origin"; redirect: "error" }>;
+  /** @lang zh-CN 原样保留资产逻辑修订标签，不做Git查询或URL重写。 @lang en Unchanged logical revision label, with no Git lookup or URL rewriting. */
   readonly revision: string;
+  /** @lang zh-CN 精确来源逻辑身份，不含路径或正文。 @lang en Exact logical source identity without a path or body. */
   readonly sourceId: string;
 }
 
 /** @lang zh-CN Fetch plan builder 的成功或拒绝结果。 @lang en Ready or refused result from the fetch-plan builder. */
 export interface DocumentationSourceFetchPlanResult {
+  /** @lang zh-CN 本次构造的诊断；不复制profile内已存在的safe diagnostics，数组可变。 @lang en Diagnostics from this construction, not copies of existing safe profile diagnostics; the array is mutable. */
   diagnostics: HiaDiagnostic[];
+  /** @lang zh-CN 实际成功时存在且嵌套冻结；结构类型本身不使status成为判别联合。 @lang en Present and nested-frozen on actual success; the structural type itself is not a status-discriminated union. */
   plan?: DocumentationSourceFetchPlan;
+  /** @lang zh-CN 本次计划构造ready/refused，不代表profile已获执行授权或响应已验证；外层结果可变。 @lang en This plan construction's ready/refused status, not profile execution consent or response verification; the outer result is mutable. */
   status: "ready" | "refused";
 }
 
@@ -651,6 +690,9 @@ export function compareDocumentationPresentationIdentity(reference: unknown, can
  * @param value - Presentation profile wire value。 / Presentation profile wire value.
  * @param assetId - 要读取的稳定 asset identity。 / Stable asset identity to read.
  * @returns ready plan 或 fail-closed refused result。 / A ready plan or fail-closed refused result.
+ * @remarks
+ * @lang zh-CN 校验完整profile后按精确assetId选择；当前不按profile.status或已有safe diagnostics单独阻断，不核声明大小是否超过本次限额，不hash正文。ready只表示构造成功，宿主在执行前处理原状态/诊断并落实origin、限额及digest验证。
+ * @lang en Validates the complete profile and selects an exact assetId. Currently does not independently block on profile.status/existing safe diagnostics, cross-check declared sizes against limits, or hash a body. Ready means construction succeeded; the host handles original status/diagnostics and enforces origin, limits and digest verification before execution.
  */
 export function createDocumentationSourceFetchPlan(value: unknown, assetId: string): DocumentationSourceFetchPlanResult {
   // <lang><zh-CN>计划只能消费刚通过同一轮语义校验的副本；拒绝不泄漏局部计划。</zh-CN><en>The plan consumes only the copy admitted by this validation pass; refusal exposes no partial plan.</en></lang>
@@ -883,20 +925,24 @@ function isPublicDiagnosticData(value: unknown): boolean {
 
 /** @lang zh-CN 验证无 origin、query、fragment、反斜杠或目录逃逸的相对 asset URL。 @lang en Validates a relative asset URL without origin, query, fragment, backslash, or path traversal. */
 function isSafeRelativeUrl(value: unknown): value is string {
+  // <lang><zh-CN>URL解析会剥离首尾ASCII空格；直接拒绝，避免绝对scheme/authority藏在前导空格后，不trim后继续接受。</zh-CN><en>URL parsing strips boundary ASCII spaces; reject them directly so leading spaces cannot hide an absolute scheme/authority, rather than trimming and accepting.</en></lang>
   if (typeof value !== "string" || value.length === 0 || value.length > 2048 || /[\u0000-\u001F\u007F\\]/u.test(value)
+    || value.startsWith(" ") || value.endsWith(" ")
     || value.includes("?") || value.includes("#") || value.startsWith("/") || value.startsWith("//")
     || /^[A-Za-z][A-Za-z0-9+.-]*:/u.test(value)) return false;
+  // <lang><zh-CN>一次解码仅服务于目录逃逸检查，不把解码值写回计划或模拟服务端多次解码。</zh-CN><en>Decode once only for traversal checks; never replace the planned URL or simulate repeated server decoding.</en></lang>
   let decoded: string;
   try {
     decoded = decodeURIComponent(value);
   } catch {
     return false;
   }
-  const pathPart = decoded.split(/[?#]/u, 1)[0] ?? "";
+  // <lang><zh-CN>原URL已拒绝真实query/fragment；解码后的问号/井号是文件名数据，不能截掉其后的目录逃逸段。</zh-CN><en>Real query/fragment delimiters were already refused; decoded question/hash characters are filename data and must not hide later traversal segments.</en></lang>
+  const pathPart = decoded;
   return !pathPart.startsWith("/") && !pathPart.split("/").some((segment) => segment === "..");
 }
 
-/** @lang zh-CN 计算 canonical base64 的解码字节数，不分配正文 buffer。 @lang en Computes decoded canonical base64 byte length without allocating a body buffer. */
+/** @lang zh-CN 对已检查分组语法的base64推算字节数，不分配正文buffer或验证未用padding位。 @lang en Infers the byte length of grouping-checked base64 without allocating a body buffer or validating unused padding bits. */
 function decodedBase64Length(value: string): number {
   if (value.length === 0 || value.length % 4 !== 0) return -1;
   const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;

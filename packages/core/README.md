@@ -101,6 +101,9 @@ Content defaults to `none`. Source bodies, raw comments, and ordinary source-map
 
 ## Documentation Presentation Profile
 
+See [source assets and fetch plans](../../docs/presentation-source-plan.md) for thirty-nine source/plan fields,
+URL and numeric limits, actual status/diagnostic behavior and host execution responsibilities.
+
 See [presentation pages and stable identity](../../docs/presentation-page-identity.md) for the nineteen partition/identity
 fields, numeric order limits, cross-mode comparisons and renderer route responsibilities.
 

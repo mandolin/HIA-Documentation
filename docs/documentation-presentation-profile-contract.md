@@ -39,6 +39,9 @@ single-page conditions, comparator exclusions and owner route responsibilities.
 
 ## Source Assets And Fetch Planning
 
+See [source and plan reference](presentation-source-plan.md) for all thirty-nine source/plan fields, URL/limit boundaries,
+plan ownership, and the current distinction between profile status and plan construction status.
+
 The manifest contains public logical identities, a safe relative URL, revision, media type, optional public size facts,
 and integrity metadata. It never contains source text.
 
