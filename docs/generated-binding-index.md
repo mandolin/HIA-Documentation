@@ -8,11 +8,21 @@ validation and local references are described in the [binding contract](generate
 
 The resulting metadata index is not a lossless artifact copy or the
 [public-safe host projection](generated-binding-host-projection.md). It includes
-source identities/ranges. Use [bundle migration](generated-documentation-binding-contract.md#exact-version-pairs-and-coordinated-migration)
+source identities/ranges as a relation summary, but does not retain the source
+reference's endpoint convention or column unit. A `sourceRange` in this index
+cannot establish an exact source position by itself. For binding source intent
+or contribution precision, read the validated original sidecar; for a linked
+mapping reference, use the validated [documentation source-map reader and query](doc-source-map-query.md)
+with its declared convention and a matching known query unit. Neither source
+may infer a missing convention from these index coordinates. Use
+[bundle migration](generated-documentation-binding-contract.md#exact-version-pairs-and-coordinated-migration)
 for complete artifacts; review metadata before publication.
 
 中文：索引是显式内存配对后的元数据摘要，不读取路径、不执行表达式、不改输入。
-它含来源身份及范围，不能替代保真工件、公开许可或独立宿主投影。
+它含来源身份及范围，但不保留源码引用的终点约定或列单位；不能仅靠索引的 `sourceRange`
+精确定位。绑定的源码意图或贡献须读取已验证的原 sidecar；映射引用须使用已验证的
+doc-source-map reader 及其声明的约定、匹配的已知查询单位。索引也不能替代保真工件、
+公开许可或独立宿主投影。
 
 ## Index fields
 
@@ -46,8 +56,9 @@ existing caller context, which is not redacted.
 | Composition | Original `relation`, `mergePolicy`, ordered `contributionIds`; source/override contexts and contribution bodies are excluded. |
 
 Normalized source/target ranges retain one-based coordinates and omitted
-columns. This index does not redefine inclusive/exclusive endpoints. Source
-ids, scope ids, selectors and other permitted strings remain opaque unredacted
+columns. This relation index does not retain `rangeConvention`, so neither
+endpoint inclusion nor column unit can be recovered from its `sourceRange`.
+Source ids, scope ids, selectors and other permitted strings remain opaque unredacted
 data, not file access or DOM query instructions.
 
 ## Four exact-identity queries

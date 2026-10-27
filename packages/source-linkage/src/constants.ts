@@ -37,7 +37,15 @@ export type DocSourceMapEndBoundary = typeof DOC_SOURCE_MAP_END_BOUNDARIES[numbe
 export type DocSourceMapColumnUnit = typeof DOC_SOURCE_MAP_COLUMN_UNITS[number];
 /** @lang zh-CN 有源码范围的新版引用必须自述终点和列单位，两个unknown均为诚实的未证事实。 @lang en Current references with a source range must declare endpoint and column unit, with unknown preserving unproven facts honestly. */
 export interface DocSourceMapRangeConvention {
+  /**
+   * @lang zh-CN 1.1.0 带范围源码引用的终点约定：inclusive 包含终点，exclusive 排除终点，unknown 表示尚未证明；无隐式默认值，unknown 不参与精确位置查询。旧版无此字段时保留原有双端包含读取行为，不据此填充新版字段。
+   * @lang en Endpoint convention for a ranged 1.1.0 source reference: inclusive includes the end, exclusive excludes it, and unknown is unproven; there is no implicit default, and unknown cannot yield an exact position match. Older versions retain their existing inclusive reading behavior when this field is absent; that behavior does not populate the new field.
+   */
   endBoundary: DocSourceMapEndBoundary;
+  /**
+   * @lang zh-CN 1.1.0 带范围源码引用的列计数单位；无隐式默认值。已知单位要求起止列齐全，精确位置查询须由调用方提供相同已知单位；unknown 不参与精确命中，也不作单位换算。旧版省略列按 1 读取的规则仅属于旧版行为。
+   * @lang en Column-counting unit for a ranged 1.1.0 source reference, with no implicit default. A known unit requires both endpoint columns, and exact position lookup requires the caller to supply the same known unit; unknown cannot match exactly, and units are not converted. The legacy omitted-column-as-1 rule applies only to older versions.
+   */
   columnUnit: DocSourceMapColumnUnit;
 }
 
