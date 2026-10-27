@@ -21,6 +21,7 @@ Current scope:
 - `hia docs business-flow-handoff --projection <file> [--out <file>]`
 - `hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]`
 - `hia docs html-authoring-verify --request <file> [--out <file>]`
+- `hia docs coordinate-verify --coordinate-profile <file> --ordinary-map <file> --doc-source-map <file> [--source <file>] --source-id <id> --source-index <n> [--section-index <n>] --entry-id <id> --line <n> --column <n> --column-unit utf16-code-unit`
 
 The build command reads config through `@hia-doc/config`, then renders one of three input modes:
 
@@ -85,6 +86,20 @@ comment, map/sidecar body, or path.
 
 中文说明：该命令只读取 caller cwd 下一个显式 safe-relative request，且只在 `--out` 明示时写入同一边界内的报告。
 它不发现或执行 HugeRTE/Obsidian 项目，不接入 Tauri IPC 或 Obsidian Vault，也不声明目标采用。
+
+`docs coordinate-verify` 对一次明确的源码点查询联合检查普通 source map、`doc-source-map@1.1.0`、
+`ordinary-source-map-coordinate-profile@0.1.0-draft` 与可选的获准源码原始字节。提供的文件路径都必须
+相对于调用目录，且读取前解析的实际路径仍在该目录内；路径检查与打开文件之间若发生并发替换，跨平台文件 API 无法原子排除；省略 `--source` 会得到安全未核结果，明示但无法读取
+的源码路径会固定拒绝。命令不会自动扫描项目、读取远端 URL、写出报告或修改旧的
+`docs build` / `browser panel` 查询。`--source-index` 是普通地图的原始 `sources` 槽位；非嵌套内嵌
+section 还须给出 `--section-index`，平面地图省略该参数。行列从 1 开始，`--column-unit` 必须明确为
+`utf16-code-unit`、`unicode-code-point` 或 `byte`。命令在 stdout 输出一条 JSON 机器结果，不含
+源码、路径或摘要；`exact-anchor` 退出码为 0，安全未核或最近锚点为 2，无效输入/不支持版本为 1。
+只有实际地图段、文档引用、坐标单位和三类实际字节证据全部吻合时，才会返回 `exact-anchor`。
+
+The coordinate verification command reads three required caller-explicit local files and an optional authorized source,
+checks an original source slot, and emits a single body-free machine JSON result. It never promotes the legacy numeric
+source-map lookup to verified.
 
 Diagnostics use the shared `HiaDiagnostic` shape. The CLI still prints compact `[severity:code]` lines, while the in-process API keeps machine-readable `data` for callers.
 

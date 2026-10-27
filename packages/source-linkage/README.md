@@ -4,6 +4,34 @@ Workspace package for indexing and validating `doc-source-map` manifests and com
 
 The package reads documentation source map manifests, checks the privacy/path baseline, and exposes normalized indexes that CLI, renderer, LSP, and future browser integrations can consume.
 
+## Strict same-point anchors (source draft)
+
+`createOrdinaryCoordinateProfileIndex()` accepts an explicit
+`ordinary-source-map-coordinate-profile@0.1.0-draft`, actual ordinary and
+documentation map bytes, and authorized original-source bytes addressed by raw
+section/source slot. `queryVerifiedSourceAnchor()` requires an explicit entry,
+source identity, slot, one-based position and column unit. Only
+`verification.kind === "exact-anchor"` means an actual ordinary mapping segment
+starts at the requested original point and a `doc-source-map@1.1.0` reference
+contains that same point. A preceding segment yields `nearest-anchor`; missing
+source access, unmatched versions, unknown units and unsupported maps never
+become exact. These are segment anchors, not per-character range guarantees.
+
+The reader verifies SHA-256 against the bytes it receives. Its first draft
+supports fatal UTF-8 decoding with no transformation, retaining BOM and CRLF;
+the logical-text digest hashes the resulting UTF-16 code units as little-endian
+bytes without an added BOM. It supports local nonnested inline source-map
+sections and preserves their original source-slot indices. The API performs no
+file or network access and never returns source text. Hosts control source
+authorization and must pass actual bytes. The existing ordinary lookup and
+combined query APIs retain their numeric navigation semantics. See the
+[coordinate profile contract](https://github.com/mandolin/HIA-Documentation/blob/main/docs/ordinary-source-map-coordinate-profile.md)
+for the wire and status boundaries.
+
+中文：严格入口必须显式给出侧载、两张地图实际字节和获授权的源码字节；仅真实段起点与
+文档范围同点、同槽、同单位时返回 `exact-anchor`。旧数值导航、页面按钮和最近段均不
+构成同点证明。本契约仍为开发草案，未宣称 npm 发布或正式版门禁通过。
+
 The unreleased source query helpers validate known runtime filters without
 executing their getters. Invalid filters return no entries. The exact older
 contract readers compare omitted columns as one; `1.1.0` exact position lookup

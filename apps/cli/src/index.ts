@@ -92,6 +92,7 @@ import {
 import {
   runHtmlAuthoringSourceCommentIntegrationCommand
 } from "./html-authoring-source-comment-integration.js";
+import { runCoordinateVerificationCommand } from "./coordinate-verify.js";
 
 /**
  * Target-portfolio acceptance foundation exported by the CLI package.
@@ -242,6 +243,7 @@ Usage:
   hia docs business-flow-handoff --projection <file> [--out <file>]
   hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]
   hia docs html-authoring-verify --request <file> [--out <file>]
+  hia docs coordinate-verify --coordinate-profile <file> --ordinary-map <file> --doc-source-map <file> [--source <file>] --source-id <id> --source-index <n> [--section-index <n>] --entry-id <id> --line <n> --column <n> --column-unit <unit>
   hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
 
 Commands:
@@ -254,6 +256,7 @@ Commands:
   docs business-flow-handoff Package an exact public business-flow projection for owner review.
   docs enterprise-workflow Compose enterprise owner input with an optional public-safe baseline/current pair.
   docs html-authoring-verify Verify an exact HTML-authoring handoff, source-comment projection and explicit binding.
+  docs coordinate-verify Verify one actual ordinary-map/documentation-map source anchor from explicit local bytes.
   browser panel   Generate a static source-linked browser panel.
 
 Options:
@@ -279,6 +282,8 @@ Options:
                       Acceptance supports four portfolio families; continuity currently requires enterprise-business.
   --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
   --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
+  --coordinate-profile <file>
+                      Explicit safe-relative ordinary source-map coordinate sidecar for docs coordinate-verify.
 `;
 
 export interface CliIo {
@@ -399,6 +404,11 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   // <lang><zh-CN>HTML-authoring verification 只读取 caller 明示的 safe-relative request；不读取 target/source/map body，也不接入 Tauri/Obsidian。</zh-CN><en>HTML-authoring verification reads only a caller-explicit safe-relative request; it reads no target/source/map body and integrates neither Tauri nor Obsidian.</en></lang>
   if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "html-authoring-verify") {
     return runHtmlAuthoringSourceCommentIntegrationCommand(normalizedArgv.slice(2), io);
+  }
+
+  // <lang><zh-CN>严格锚点命令只读取三份必选及一份可选的 caller 明示本地字节；旧构建与浏览器路径不自动提升为已核。</zh-CN><en>The strict anchor command reads three required and one optional caller-explicit local byte inputs; legacy build and browser paths are never promoted to verified.</en></lang>
+  if (normalizedArgv[0] === "docs" && normalizedArgv[1] === "coordinate-verify") {
+    return runCoordinateVerificationCommand(normalizedArgv.slice(2), io);
   }
 
   if (normalizedArgv[0] === "browser" && normalizedArgv[1] === "panel") {

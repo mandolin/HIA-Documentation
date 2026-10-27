@@ -1,8 +1,8 @@
 # 源码映射常量与 schema / Source-linkage constants and schemas
 
-本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。当前源码根是`doc-source-map@1.1.0`与`generated-documentation-binding@0.3.0-draft`，两者仍是draft；这不是整个包或系统已经正式发布的证明。
+本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。当前源码根包括`doc-source-map@1.1.0`、`generated-documentation-binding@0.3.0-draft`与独立的`ordinary-source-map-coordinate-profile@0.1.0-draft`，均仍是draft；这不是整个包或系统已经正式发布的证明。
 
-This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. Current source definitions use draft `doc-source-map@1.1.0` and `generated-documentation-binding@0.3.0-draft`; these values do not establish package or system publication.
+This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. Current source definitions include draft `doc-source-map@1.1.0`, `generated-documentation-binding@0.3.0-draft`, and independent `ordinary-source-map-coordinate-profile@0.1.0-draft`; these values do not establish package or system publication.
 
 ## 身份、版本和类别 / Identities, versions and categories
 
@@ -18,6 +18,8 @@ This guide focuses on version constants, range vocabulary and schema exports in 
 | `DOC_SOURCE_MAP_END_BOUNDARIES` | 冻结的 `inclusive, exclusive, unknown` 元组 / Frozen tuple | 每条新范围的终点约定 / Endpoint convention on each new ranged reference. |
 | `DOC_SOURCE_MAP_COLUMN_UNITS` | 冻结的 `utf16-code-unit, unicode-code-point, byte, unknown` 元组 / Frozen tuple | 每条新范围的列单位 / Column unit on each new ranged reference. |
 | `DocSourceMapEndBoundary`, `DocSourceMapColumnUnit`, `DocSourceMapRangeConvention` | 仅类型闭集 / Type-only closed sets | 未知维度不授予精确定位 / Unknown dimensions do not certify exact locations. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT` | `"ordinary-source-map-coordinate-profile"` | 独立逐原始槽位证据侧载身份 / Separate per-original-slot evidence sidecar identity. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION` | `"0.1.0-draft"` | 精确草案身份；不替换旧数值导航 / Exact draft identity; legacy numeric navigation remains separate. |
 | `GENERATED_DOCUMENTATION_BINDING_CONTRACT` | `"generated-documentation-binding"` | 独立中性sidecar身份 / Independent neutral sidecar identity. |
 | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `"0.3.0-draft"` | 当前绑定，只配文档映射1.1.0 / Current binding, paired only with map1.1.0. |
 | `GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION` | `"0.2.0-draft"` | 已公开前一绑定，只配映射1.0.0 / Previous published binding, paired only with map1.0.0. |
@@ -39,6 +41,8 @@ All schemas use JSON Schema Draft 2020-12. Canonical identities share the prefix
 | `DOC_SOURCE_MAP_SCHEMA_ID` | 前缀 + `doc-source-map-1.1.0.schema.json` / Prefix + filename. |
 | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `"1.1.0"`，等于当前映射contract根版本 / Matches the current map root version. |
 | `DOC_SOURCE_MAP_JSON_SCHEMA` | 当前映射的共享结构定义 / Shared current map structure. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID` | 前缀 + `ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json` / Prefix + filename. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA` | 独立逐槽位、原始字节摘要与无正文隐私结构；实际同点由严格reader判断 / Separate per-slot, raw-byte-digest and body-free privacy structure; the strict reader decides actual same-point anchors. |
 | `GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID` | 前缀 + `generated-documentation-binding-0.3.0-draft.schema.json` / Prefix + filename. |
 | `GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID` | 前缀 + `generated-documentation-binding-0.2.0-draft.schema.json` / Prefix + filename. |
 | `GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID` | 前缀 + `generated-documentation-binding-0.1.0-draft.schema.json` / Prefix + filename. |
@@ -47,9 +51,9 @@ All schemas use JSON Schema Draft 2020-12. Canonical identities share the prefix
 | `GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA` | 前一绑定独立图；map反向链接1.0.0，最低consumer0.2.0-draft；历史原字节由分发资产固定 / Independent previous binding graph, with exact map1.0.0 backlink and minimum consumer0.2.0-draft; the distribution archive pins original bytes. |
 | `GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA` | 历史绑定独立图；map反向链接及最低consumer均0.1.0-draft / Independent legacy binding graph, both backlink and minimum consumer0.1.0-draft. |
 
-`$id` 是schema资源身份与引用基准，不会因导入常量就自动下载或读取源码。schema结构检查不代替owner对跨身份引用、重复身份、范围顺序、隐私和实际数据的检查。未知patch、预发行或build身份不自动协商；改变工件版本须走[显式协调迁移](generated-documentation-binding-contract.md)。
+`$id` 是schema资源身份与引用基准，不会因导入常量就自动下载或读取源码。schema结构检查不代替owner对跨身份引用、重复身份、范围顺序、隐私和实际数据的检查。坐标侧载还必须校验实际普通map、文档map及获授权来源字节；详见[坐标证据契约](ordinary-source-map-coordinate-profile.md)。未知patch、预发行或build身份不自动协商；改变工件版本须走[显式协调迁移](generated-documentation-binding-contract.md)。
 
-`$id` identifies a schema resource and reference base; importing a constant triggers neither downloads nor source reads. Structural checks do not replace owner checks for references, duplicates, ranges, privacy or actual data. Unknown patch/prerelease/build identities are not negotiated; artifact upgrades use [explicit coordinated migration](generated-documentation-binding-contract.md).
+`$id` identifies a schema resource and reference base; importing a constant triggers neither downloads nor source reads. Structural checks do not replace owner checks for references, duplicates, ranges, privacy or actual data. The coordinate sidecar also requires actual ordinary-map, documentation-map and authorized source-byte checks; see the [coordinate evidence contract](ordinary-source-map-coordinate-profile.md). Unknown patch/prerelease/build identities are not negotiated; artifact upgrades use [explicit coordinated migration](generated-documentation-binding-contract.md).
 
 ## 所有权与修改 / Ownership and editing
 
@@ -57,7 +61,7 @@ All schemas use JSON Schema Draft 2020-12. Canonical identities share the prefix
 | --- | --- | --- |
 | 字符串常量 / String constants | 精确字面量 / Exact literals | 原语值不可变 / Immutable primitive values. |
 | 来源类别元组 / Category tuple | 固定顺序readonly元组 / Ordered readonly tuple | 模块共享且Object.freeze / Module shared and frozen. |
-| 四个schema对象 / Four schema objects | `as const`推断的readonly结构 / Readonly structure inferred with `as const` | 模块实例缓存共享，根/嵌套节点未深冻结 / Shared within a module instance; root/nested nodes are not deeply frozen. |
+| 五个schema对象 / Five schema objects | `as const`推断的readonly结构 / Readonly structure inferred with `as const` | 模块实例缓存共享，根/嵌套节点未深冻结 / Shared within a module instance; root/nested nodes are not deeply frozen. |
 | `@hia-doc/schemas`查询结果 / Distribution reader results | 可变副本类型 / Mutable copy types | 每次独立深拷贝 / Fresh deep copies on each call. |
 
 **不要直接修改共享schema导出。** TypeScript只读不提供运行时防篡改。需要工具局部注解时先深拷贝并显式选择可变消费类型；副本修改不回写模块或分发资产。当前/历史绑定图分开构造，不共享可变子节点。当前映射schema的来源enum引用冻结类别元组。

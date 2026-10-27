@@ -1,0 +1,241 @@
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { runCli, type CliIo } from "./index.js";
+
+/**
+ * @lang zh-CN 生成不含私有内容的普通地图、文档地图和坐标证据正例，用于检查机器入口确实消费实际字节。
+ * @lang en Creates public synthetic ordinary-map, documentation-map and coordinate-evidence inputs to check that the machine entry consumes actual bytes.
+ */
+async function writeSyntheticInputs(root: string): Promise<void> {
+  const sourceText = "/* public fixture */\nexport const value = 1;\n";
+  const sourceBytes = Buffer.from(sourceText, "utf8");
+  const ordinaryMapBytes = Buffer.from(JSON.stringify({
+    version: 3,
+    file: "app.js",
+    sources: ["src/a.ts"],
+    names: [],
+    mappings: "AAAA"
+  }), "utf8");
+  const documentationMapBytes = Buffer.from(JSON.stringify({
+    contract: "doc-source-map",
+    contractVersion: "1.1.0",
+    id: "docmap:sample",
+    producer: { name: "fixture", version: "1.0.0" },
+    artifacts: [{ id: "artifact:app", kind: "generated-js", path: "app.js", language: "javascript" }],
+    sources: [{ id: "source:sample", kind: "source", path: "src/a.ts", language: "typescript", sourcesContentPolicy: "none" }],
+    sourceMaps: [{ id: "map:sample", kind: "ordinary-source-map", format: "source-map-v3", path: "app.js.map", mapsFrom: "artifact:app", mapsTo: ["source:sample"], sourcesContentPolicy: "none" }],
+    chains: [],
+    entries: [{
+      id: "entry:sample",
+      kind: "symbol",
+      sourceRefs: [{
+        sourceId: "source:sample",
+        range: { start: { line: 1, column: 1 }, end: { line: 2, column: 1 } },
+        rangeConvention: { endBoundary: "exclusive", columnUnit: "utf16-code-unit" },
+        rangeSource: "parser",
+        confidence: "high"
+      }],
+      artifactRefs: [{ artifactId: "artifact:app", rangeSource: "source-map", confidence: "high" }],
+      diagnostics: []
+    }],
+    privacy: { sourcesContentPolicy: "none", allowAbsolutePaths: false, allowUncPaths: false, allowPathTraversal: false },
+    diagnostics: []
+  }), "utf8");
+  const digest = (bytes: Uint8Array): { algorithm: "sha256"; value: string } => ({
+    algorithm: "sha256",
+    value: createHash("sha256").update(bytes).digest("base64")
+  });
+  const profile = {
+    contract: "ordinary-source-map-coordinate-profile",
+    contractVersion: "0.1.0-draft",
+    id: "profile:sample",
+    ordinaryMap: { sourceMapId: "map:sample", artifactId: "artifact:app", digest: digest(ordinaryMapBytes) },
+    documentationMap: { id: "docmap:sample", contractVersion: "1.1.0", digest: digest(documentationMapBytes) },
+    sourceSlots: [{
+      sectionIndex: null,
+      sourceIndex: 0,
+      sourceId: "source:sample",
+      columnUnit: "utf16-code-unit",
+      sourceRevision: "revision:sample",
+      sourceByteDigest: digest(sourceBytes),
+      sourceTextDigest: { representation: "decoded-utf16-code-units", ...digest(Buffer.from(sourceText, "utf16le")) },
+      sourceTextEncoding: "utf-8",
+      sourceTextTransform: "none"
+    }],
+    privacy: { sourcesContentPolicy: "none" }
+  };
+
+  await mkdir(path.join(root, "src"), { recursive: true });
+  await writeFile(path.join(root, "src", "a.ts"), sourceBytes);
+  await writeFile(path.join(root, "app.js.map"), ordinaryMapBytes);
+  await writeFile(path.join(root, "app.docmap.json"), documentationMapBytes);
+  await writeFile(path.join(root, "profile.json"), JSON.stringify(profile), "utf8");
+}
+
+/** @lang zh-CN 以独立 cwd 捕捉单条机器 JSON，不把宿主路径附加到结果。 @lang en Captures one machine JSON under an isolated cwd without appending host paths. */
+async function invoke(root: string, overrides: string[] = [], omitSource = false): Promise<{
+  code: number;
+  report: { verification: { kind: string; generatedPosition?: { line: number; column: number } }; diagnostics: Array<{ code: string; message: string }> };
+  stderr: string[];
+}> {
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const io: CliIo = { cwd: root, stdout: (message) => stdout.push(message), stderr: (message) => stderr.push(message) };
+  const args = [
+    "docs", "coordinate-verify",
+    "--coordinate-profile", "profile.json",
+    "--ordinary-map", "app.js.map",
+    "--doc-source-map", "app.docmap.json",
+    "--source", "src/a.ts",
+    "--source-id", "source:sample",
+    "--source-index", "0",
+    "--entry-id", "entry:sample",
+    "--line", "1",
+    "--column", "1",
+    "--column-unit", "utf16-code-unit"
+  ];
+  // <lang><zh-CN>覆盖已知选项的值；未知选项保留，供闭集拒绝反例使用。</zh-CN><en>Replace known option values; retain unknown options for closed-parser rejection cases.</en></lang>
+  for (let index = 0; index < overrides.length; index += 2) {
+    const name = overrides[index]!;
+    const value = overrides[index + 1]!;
+    const existing = args.indexOf(name);
+    if (existing >= 0) args[existing + 1] = value;
+    else args.push(name, value);
+  }
+  if (omitSource) args.splice(args.indexOf("--source"), 2);
+  const code = await runCli(args, io);
+  expect(stdout).toHaveLength(1);
+  return { code, report: JSON.parse(stdout[0]!) as { verification: { kind: string; generatedPosition?: { line: number; column: number } }; diagnostics: Array<{ code: string; message: string }> }, stderr };
+}
+
+describe("docs coordinate-verify", () => {
+  it("returns one exact machine anchor only after reading all four actual local inputs", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      await writeSyntheticInputs(root);
+      const { code, report, stderr } = await invoke(root);
+      expect(code).toBe(0);
+      expect(report.verification.kind).toBe("exact-anchor");
+      expect(report.verification.generatedPosition).toEqual({ line: 1, column: 1 });
+      expect(stderr).toEqual([]);
+      expect(JSON.stringify(report)).not.toContain(root);
+      expect(JSON.stringify(report)).not.toContain("public fixture");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("does not certify a changed source byte or a nearest ordinary segment", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      await writeSyntheticInputs(root);
+      await writeFile(path.join(root, "src", "a.ts"), "/* changed fixture */\nexport const value = 1;\n", "utf8");
+      const changed = await invoke(root);
+      expect(changed.code).not.toBe(0);
+      expect(changed.report.verification.kind).not.toBe("exact-anchor");
+
+      await writeSyntheticInputs(root);
+      const stdout: string[] = [];
+      const io: CliIo = { cwd: root, stdout: (message) => stdout.push(message), stderr: () => undefined };
+      const code = await runCli([
+        "docs", "coordinate-verify",
+        "--coordinate-profile", "profile.json", "--ordinary-map", "app.js.map",
+        "--doc-source-map", "app.docmap.json", "--source", "src/a.ts",
+        "--source-id", "source:sample", "--source-index", "0", "--entry-id", "entry:sample",
+        "--line", "1", "--column", "2", "--column-unit", "utf16-code-unit"
+      ], io);
+      expect(code).toBe(2);
+      expect(JSON.parse(stdout[0]!).verification.kind).not.toBe("exact-anchor");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("returns unverified without authorized source bytes and refuses duplicate raw profile members", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      await writeSyntheticInputs(root);
+      const omitted = await invoke(root, [], true);
+      expect(omitted.code).toBe(2);
+      expect(omitted.report.verification.kind).toBe("unverified");
+
+      // <lang><zh-CN>重复 JSON 成员在普通 JSON.parse 中会悄悄保留末项，严格 reader 必须用原始文本拒绝。</zh-CN><en>Ordinary JSON.parse silently retains a later duplicate member; the strict reader must reject the raw text.</en></lang>
+      await writeFile(path.join(root, "profile.json"), '{"contract":"first","contract":"second"}', "utf8");
+      const duplicate = await invoke(root);
+      expect(duplicate.code).toBe(1);
+      expect(duplicate.report.verification.kind).toBe("invalid");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("rejects traversal, outside symlinks, unknown options and malformed coordinates without private echoes", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    const outside = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-outside-"));
+    try {
+      await writeSyntheticInputs(root);
+      const traversal = await invoke(root, ["--source", "../outside.ts"]);
+      expect(traversal.code).toBe(1);
+      expect(traversal.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_PATH_INVALID");
+      const remote = await invoke(root, ["--source", "https://example.invalid/source.ts"]);
+      expect(remote.code).toBe(1);
+      expect(remote.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_PATH_INVALID");
+      const missing = await invoke(root, ["--source", "src/missing.ts"]);
+      expect(missing.code).toBe(1);
+      expect(missing.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_INPUT_READ_FAILED");
+
+      await writeFile(path.join(outside, "a.ts"), "private sentinel", "utf8");
+      await symlink(path.join(outside, "a.ts"), path.join(root, "outside-link.ts"), "file");
+      const stdout: string[] = [];
+      const io: CliIo = { cwd: root, stdout: (message) => stdout.push(message), stderr: () => undefined };
+      const base = ["docs", "coordinate-verify", "--coordinate-profile", "profile.json", "--ordinary-map", "app.js.map", "--doc-source-map", "app.docmap.json", "--source", "outside-link.ts", "--source-id", "source:sample", "--source-index", "0", "--entry-id", "entry:sample", "--line", "1", "--column", "1", "--column-unit", "utf16-code-unit"];
+      const code = await runCli(base, io);
+      expect(code).toBe(1);
+      expect(JSON.parse(stdout[0]!).diagnostics[0].code).toBe("HIA_CLI_COORDINATE_INPUT_READ_FAILED");
+      expect(stdout[0]).not.toContain("private sentinel");
+      expect(stdout[0]).not.toContain(outside);
+
+      const unknown = await invoke(root, ["--fetch", "https://example.invalid"]);
+      expect(unknown.code).toBe(1);
+      expect(unknown.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_OPTIONS_INVALID");
+      const malformed = await invoke(root, ["--line", "1e2"]);
+      expect(malformed.code).toBe(1);
+      expect(malformed.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_QUERY_INVALID");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+      await rm(outside, { force: true, recursive: true });
+    }
+  });
+
+  it("rejects an oversized profile before parsing or serializing its bytes", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      await writeSyntheticInputs(root);
+      await writeFile(path.join(root, "profile.json"), "x".repeat(2 * 1024 * 1024 + 1), "utf8");
+      const result = await invoke(root);
+      expect(result.code).toBe(1);
+      expect(result.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_INPUT_READ_FAILED");
+      expect(JSON.stringify(result.report)).not.toContain("xxxxx");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("refuses a map that grows beyond the byte cap after the profile was prepared", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      await writeSyntheticInputs(root);
+      // <lang><zh-CN>先有合法证据，再把普通 map 改成超限文件；读取必须受实际句柄字节上限约束。</zh-CN><en>Prepare valid evidence first, then enlarge the ordinary map; the actual handle read must stay bounded.</en></lang>
+      await writeFile(path.join(root, "app.js.map"), Buffer.alloc(16 * 1024 * 1024 + 1, 0x61));
+      const result = await invoke(root);
+      expect(result.code).toBe(1);
+      expect(result.report.diagnostics[0].code).toBe("HIA_CLI_COORDINATE_INPUT_READ_FAILED");
+      expect(JSON.stringify(result.report)).not.toContain(root);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+});

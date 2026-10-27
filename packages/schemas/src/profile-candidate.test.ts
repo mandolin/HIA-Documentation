@@ -28,7 +28,7 @@ describe("documentation profile candidate distribution", () => {
     const entry = HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "documentation-profile")!;
     expect(entry.contractVersion).toBe("1.0.0");
     expect(entry.stability).toBe("stable-candidate");
-    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(17);
+    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(18);
     expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate").map(({ key }) => key)).toEqual(["documentation-profile", "documentation-producer", "documentation-producer-result", "documentation-presentation-profile", "hia-document", "project-manifest"]);
   });
 });

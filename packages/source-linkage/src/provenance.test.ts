@@ -28,7 +28,7 @@ describe("doc-source-map model B", () => {
     expect(api.DOC_SOURCE_MAP_JSON_SCHEMA.$defs.sourceRef.properties.rangeSourceDetail).toBeDefined();
     expect(getHiaSchema("doc-source-map")?.$id).toBe(api.DOC_SOURCE_MAP_SCHEMA_ID);
     expect(getHiaSchema("https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json")?.properties).toMatchObject({ contractVersion: { const: "0.1.0-draft" } });
-    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(17);
+    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(18);
   });
   it.each(["source-map", "parser", "compiler", "adapter", "manual", "heuristic", "unresolved"])("accepts category %s without inferring confidence", category => {
     const value = current();

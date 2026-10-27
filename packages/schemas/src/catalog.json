@@ -57,6 +57,15 @@
       "stability": "draft"
     },
     {
+      "contractVersion": "0.1.0-draft",
+      "key": "ordinary-source-map-coordinate-profile",
+      "ownerPackage": "@hia-doc/source-linkage",
+      "path": "./ordinary-source-map-coordinate-profile.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+      "stability": "draft"
+    },
+    {
       "contractVersion": "0.3.0-draft",
       "key": "generated-documentation-binding",
       "ownerPackage": "@hia-doc/source-linkage",

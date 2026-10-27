@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 对当前契约实例、owner schema 与分发快照做一致性门禁；逐契约注册表不得漏掉新独立侧载。
+ * @lang en Checks current contract instances, owner schemas and distributed snapshots for consistency; the per-contract registry must include each new independent sidecar.
+ */
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,6 +86,8 @@ import {
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID,
   validateGeneratedDocumentationBinding,
   validateDocSourceMap
 } from "../packages/source-linkage/dist/index.js";
@@ -326,6 +333,8 @@ const ownerSchemas = new Map([
   [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID, DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA],
   [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA],
+  // <lang><zh-CN>独立坐标证据草案按自己的 canonical 身份同步，不合并进 doc-source-map 旧根。</zh-CN><en>Synchronize the separate coordinate evidence draft by its own canonical identity rather than folding it into an older documentation-map root.</en></lang>
+  [ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA],
   [GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID, GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA]
 ]);
 assert(
@@ -341,4 +350,4 @@ for (const entry of HIA_SCHEMA_CATALOG.schemas) {
   );
 }
 
-console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 generated documentation binding schema, 1 business-flow documentation schema, 1 business-flow documentation projection schema, 1 documentation presentation profile schema, 1 documentation UI-locale completeness schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);
+console.log(`Schema contract check passed: ${projectManifestFixturePaths.length} project manifests, 1 producer descriptor/result, 1 doc-source-map, 1 ordinary coordinate profile schema, 1 generated documentation binding schema, 1 business-flow documentation schema, 1 business-flow documentation projection schema, 1 documentation presentation profile schema, 1 documentation UI-locale completeness schema, 1 documentation source-comment projection schema, 1 documentation locale resource schema, 1 documentation locale-resource declaration schema, 1 documentation locale-resolution schema, 1 documentation terminology schema, 1 documentation quality-review schema, ${profiles.length} profiles, ${HIA_SCHEMA_CATALOG.schemas.length} distributed schemas.`);

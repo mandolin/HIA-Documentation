@@ -33,6 +33,7 @@ import profileSchema from "@hia-doc/schemas/documentation-profile.schema.json" w
 import producerResultSchema from "@hia-doc/schemas/documentation-producer-result.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import generatedBindingSchema from "@hia-doc/schemas/generated-documentation-binding.schema.json" with { type: "json" };
+import coordinateProfileSchema from "@hia-doc/schemas/ordinary-source-map-coordinate-profile.schema.json" with { type: "json" };
 import presentationProfileSchema from "@hia-doc/schemas/documentation-presentation-profile.schema.json" with { type: "json" };
 import uiLocaleCompletenessSchema from "@hia-doc/schemas/documentation-ui-locale-completeness.schema.json" with { type: "json" };
 import sourceCommentProjectionSchema from "@hia-doc/schemas/documentation-source-comment-projection.schema.json" with { type: "json" };
@@ -66,6 +67,8 @@ limits and metadata-only privacy.
 `documentation-source-comment-projection` is also owned by `@hia-doc/core`. Its runtime validator enforces canonical BCP 47
 tags, stable comment keys, closed-world privacy, and body-policy consistency beyond the structural schema.
 
+`ordinary-source-map-coordinate-profile` is owned by `@hia-doc/source-linkage`. Its draft schema fixes the sidecar's version, slot coordinates, column-unit evidence and body-free digest shape; the owning strict reader must still verify actual ordinary map, documentation map and authorized source bytes, section/slot identity and the precise segment. Schema acceptance alone never means an exact cross-map anchor.
+
 `documentation-presentation-profile` is owned by `@hia-doc/core`. Its runtime validator enforces stable topic/navigation/relation
 identity, deterministic page partitioning, same-origin relative source assets, exact integrity metadata, theme capabilities,
 reader transitions, and the body-free privacy boundary beyond the structural schema.
@@ -85,13 +88,15 @@ AI graph-ready references. The schema intentionally carries no Portal layout or 
 
 ## Status
 
-The unreleased source binding definition is `0.2.0-draft`, paired with
-documentation source map `1.0.0`. The ninth historical snapshot preserves the
-original binding `0.1.0-draft` bytes; the first eight remain unchanged. Repository
-and package builds restore validated original history bytes after TypeScript
-compilation. The catalog remains 17 entries with five stable definition
-candidates; binding is draft. See `docs/generated-documentation-binding-contract.md`
-in the repository for exact pairing and complete-bundle migration.
+The current source binding definition is the unreleased `0.3.0-draft`, paired
+with documentation source map `1.1.0`. Historical snapshots preserve the
+original binding `0.1.0-draft` and `0.2.0-draft` bytes and the source map
+`0.1.0-draft` and `1.0.0` bytes. Repository and package builds restore validated
+history bytes after TypeScript compilation. The current binding and map remain
+draft. See `docs/generated-documentation-binding-contract.md` in the repository
+for exact pairing and complete-bundle migration.
+
+The independent coordinate profile is `0.1.0-draft`; it does not change the older map or binding identities. The current catalog has 18 entries, including this draft, while the six reviewed stable definition candidates remain unchanged.
 
 Package versions, contract versions and registry availability are separate.
 Read each catalog entry's contract version and stability; the presence of a

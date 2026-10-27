@@ -16,6 +16,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `doc-source-map` | `@hia-doc/source-linkage` | `1.1.0` source draft with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` history retained; producer and consumer acceptance still required |
+| `ordinary-source-map-coordinate-profile` | `@hia-doc/source-linkage` | `0.1.0-draft` separate per-original-slot coordinate evidence; exact byte and anchor verification remains an owner reader responsibility |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
@@ -49,6 +50,7 @@ import catalog from "@hia-doc/schemas/catalog.json" with { type: "json" };
 import businessFlowSchema from "@hia-doc/schemas/business-flow-documentation.schema.json" with { type: "json" };
 import businessFlowProjectionSchema from "@hia-doc/schemas/business-flow-documentation-projection.schema.json" with { type: "json" };
 import docMapSchema from "@hia-doc/schemas/doc-source-map.schema.json" with { type: "json" };
+import coordinateProfileSchema from "@hia-doc/schemas/ordinary-source-map-coordinate-profile.schema.json" with { type: "json" };
 import localeResourceSchema from "@hia-doc/schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import localeResourceDeclarationSchema from "@hia-doc/schemas/documentation-locale-resource-declaration.schema.json" with { type: "json" };
 import localeResolutionSchema from "@hia-doc/schemas/documentation-locale-resolution.schema.json" with { type: "json" };
@@ -101,10 +103,12 @@ Two more snapshots preserve the publicly served map `1.0.0` and binding
 `0.2.0-draft` bytes before their current identities advance. Their SHA-256 values
 are `6dddbb5151e5d74f62a21bc0bfe217fb1f309402bc594d0dd0e5e062b64786c3`
 and `474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b`.
-The first nine digests are unchanged. This adds no catalog entry or stable
-definition: the catalog remains 17 entries, six stable definition candidates.
-Both new current identities remain draft pending producer, reader, migration
-and consumer acceptance. See [source range conventions](doc-source-map-range-conventions.md).
+The first nine digests are unchanged. Those historical map/binding snapshots
+added no catalog entry or stable definition. The separate coordinate profile
+adds one draft entry, so the catalog now contains 18 entries and six stable
+definition candidates. The current map, binding and coordinate profile remain
+draft pending their own acceptance. See [source range conventions](doc-source-map-range-conventions.md)
+and the [coordinate evidence contract](ordinary-source-map-coordinate-profile.md).
 
 The Pages build validates every historical snapshot before replacing its local
 artifact and publishes `schemas/history.json`. A current definition may share a
@@ -163,7 +167,7 @@ The checked-in `@hia-doc/schemas` manifest is publishable `0.1.4`; this describe
 source metadata, not a fresh registry availability check. The package scope is
 `@hia-doc`, the repository license is MIT and the canonical Pages namespace is
 `https://mandolin.github.io/HIA-Documentation/schemas/`. The current catalog has
-17 owner schemas. New snapshots reach the public site only after the build and
+18 owner schemas. New snapshots reach the public site only after the build and
 deployment workflow succeeds; local generation alone does not prove deployment.
 
 The public package release plan, publish order and post-publish smoke are documented in `docs/public-package-release-plan.md`.

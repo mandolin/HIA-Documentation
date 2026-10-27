@@ -73,6 +73,25 @@ export {
   DOC_SOURCE_MAP_SCHEMA_VERSION
 } from "./schema.js";
 export {
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA
+} from "./coordinate-profile-schema.js";
+export {
+  createOrdinaryCoordinateProfileIndex,
+  queryVerifiedSourceAnchor,
+  type CoordinateProfileDiagnostic,
+  type CoordinateProfileStatus,
+  type CoordinateVerificationKind,
+  type CoordinateGeneratedPosition,
+  type VerifiedSourceAnchorResult,
+  type OrdinaryCoordinateProfileIndex,
+  type CoordinateSourceInput,
+  type OrdinaryCoordinateProfileInput,
+  type VerifiedSourceAnchorQuery
+} from "./coordinate-profile.js";
+export {
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,

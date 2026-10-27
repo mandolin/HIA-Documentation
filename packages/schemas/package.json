@@ -26,6 +26,7 @@
     "./documentation-producer.schema.json": "./dist/schemas/documentation-producer.schema.json",
     "./documentation-producer-result.schema.json": "./dist/schemas/documentation-producer-result.schema.json",
     "./doc-source-map.schema.json": "./dist/schemas/doc-source-map.schema.json",
+    "./ordinary-source-map-coordinate-profile.schema.json": "./dist/schemas/ordinary-source-map-coordinate-profile.schema.json",
     "./documentation-locale-resource.schema.json": "./dist/schemas/documentation-locale-resource.schema.json",
     "./documentation-locale-resource-declaration.schema.json": "./dist/schemas/documentation-locale-resource-declaration.schema.json",
     "./documentation-locale-resolution.schema.json": "./dist/schemas/documentation-locale-resolution.schema.json",
@@ -47,7 +48,7 @@
     "build": "tsc -p tsconfig.json && node scripts/copy-schema-history.mjs",
     "sync": "node scripts/sync-schema-assets.mjs",
     "sync:check": "node scripts/sync-schema-assets.mjs --check",
-    "test": "vitest run --root ../.. packages/schemas/src/index.test.ts"
+    "test": "vitest run --root ../.. packages/schemas/src"
   },
   "devDependencies": {
     "@hia-doc/config": "workspace:*",

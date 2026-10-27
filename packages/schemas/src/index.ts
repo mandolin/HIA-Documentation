@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 分发各 owner 的当前 JSON Schema 快照及固定历史身份；新增坐标证据仍归 source-linkage 拥有，不在此推断兼容版本。
+ * @lang en Distributes current owner JSON Schema snapshots and fixed historical identities; source-linkage still owns coordinate evidence, and this module does not infer compatible versions.
+ */
 import catalogData from "./catalog.json" with { type: "json" };
 import businessFlowDocumentationSchemaData from "./schemas/business-flow-documentation.schema.json" with { type: "json" };
 import businessFlowDocumentationProjectionSchemaData from "./schemas/business-flow-documentation-projection.schema.json" with { type: "json" };
@@ -5,6 +10,7 @@ import documentationProfileSchemaData from "./schemas/documentation-profile.sche
 import documentationProducerResultSchemaData from "./schemas/documentation-producer-result.schema.json" with { type: "json" };
 import documentationProducerSchemaData from "./schemas/documentation-producer.schema.json" with { type: "json" };
 import docSourceMapSchemaData from "./schemas/doc-source-map.schema.json" with { type: "json" };
+import ordinarySourceMapCoordinateProfileSchemaData from "./schemas/ordinary-source-map-coordinate-profile.schema.json" with { type: "json" };
 import documentationLocaleResourceSchemaData from "./schemas/documentation-locale-resource.schema.json" with { type: "json" };
 import documentationLocaleResourceDeclarationSchemaData from "./schemas/documentation-locale-resource-declaration.schema.json" with { type: "json" };
 import documentationLocaleResolutionSchemaData from "./schemas/documentation-locale-resolution.schema.json" with { type: "json" };
@@ -31,6 +37,7 @@ import historicalGeneratedBindingV02 from "./history/generated-documentation-bin
 
 export const HIA_SCHEMA_CATALOG_VERSION = "0.1.0-draft";
 export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Documentation/schemas/";
+/** @lang zh-CN 与生成 catalog 顺序一致的当前 schema key；不包括历史快照。 @lang en Current schema keys in generated-catalog order, excluding historical snapshots. */
 export const HIA_SCHEMA_KEYS = [
   "business-flow-documentation",
   "business-flow-documentation-projection",
@@ -38,6 +45,7 @@ export const HIA_SCHEMA_KEYS = [
   "documentation-producer",
   "documentation-producer-result",
   "doc-source-map",
+  "ordinary-source-map-coordinate-profile",
   "generated-documentation-binding",
   "documentation-locale-resource",
   "documentation-locale-resolution",
@@ -81,6 +89,7 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "documentation-producer": documentationProducerSchemaData,
   "documentation-producer-result": documentationProducerResultSchemaData,
   "doc-source-map": docSourceMapSchemaData,
+  "ordinary-source-map-coordinate-profile": ordinarySourceMapCoordinateProfileSchemaData,
   "generated-documentation-binding": generatedDocumentationBindingSchemaData,
   "documentation-locale-resource": documentationLocaleResourceSchemaData,
   "documentation-locale-resolution": documentationLocaleResolutionSchemaData,
@@ -103,6 +112,11 @@ const historicalSchemas: readonly HiaJsonSchema[] = [
 
 export const HIA_SCHEMA_CATALOG = catalogData as HiaSchemaCatalog;
 
+/**
+ * @lang zh-CN 返回所有当前 owner schema 的独立深拷贝；不读取文件或网络，不包含历史身份。
+ * @lang en Returns independent deep copies of all current owner schemas, without file or network access or historical identities.
+ * @returns <lang><zh-CN>按 catalog key 顺序的当前结构定义。</zh-CN><en>Current schema definitions in catalog-key order.</en></lang>
+ */
 export function listHiaSchemas(): HiaJsonSchema[] {
   return HIA_SCHEMA_KEYS.map((key) => structuredClone(schemasByKey[key]));
 }

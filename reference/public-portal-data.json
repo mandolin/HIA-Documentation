@@ -101,6 +101,7 @@
         "documentation-producer",
         "documentation-producer-result",
         "doc-source-map",
+        "ordinary-source-map-coordinate-profile",
         "documentation-locale-resource",
         "documentation-locale-resource-declaration",
         "documentation-locale-resolution",

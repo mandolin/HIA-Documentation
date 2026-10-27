@@ -24,6 +24,6 @@ describe("core document candidate distribution", () => {
     const entry = HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "hia-document")!;
     expect(entry.contractVersion).toBe("1.0.0");
     expect(entry.stability).toBe("stable-candidate");
-    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(17);
+    expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(18);
   });
 });

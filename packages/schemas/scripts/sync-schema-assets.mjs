@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 从各 owner 构建产物同步当前 schema 快照与 catalog，历史 canonical 字节由独立流程保存。
+ * @lang en Synchronizes current schema snapshots and the catalog from owner builds; a separate process preserves historical canonical bytes.
+ */
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,7 +48,9 @@ import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
-  GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION
+  GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA
 } from "../../source-linkage/dist/index.js";
 
 const packageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -104,6 +111,15 @@ const definitions = [
     key: "doc-source-map",
     ownerPackage: "@hia-doc/source-linkage",
     schema: DOC_SOURCE_MAP_JSON_SCHEMA,
+    stability: "draft"
+  },
+  // <lang><zh-CN>坐标证据是source-linkage拥有的独立草案侧载；分发快照必须严格同步owner定义，不改旧普通map或doc-source-map资产。</zh-CN><en>Coordinate evidence is an independent draft sidecar owned by source-linkage; its distributed snapshot must match the owner definition without changing older ordinary or documentation-map assets.</en></lang>
+  {
+    contractVersion: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
+    fileName: "ordinary-source-map-coordinate-profile.schema.json",
+    key: "ordinary-source-map-coordinate-profile",
+    ownerPackage: "@hia-doc/source-linkage",
+    schema: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA,
     stability: "draft"
   },
   {

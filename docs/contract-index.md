@@ -15,6 +15,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Official profile catalog | `HIA_OFFICIAL_PROFILE_CATALOG_VERSION` | `0.1.0-draft` |
 | Schema distribution catalog | `HIA_SCHEMA_CATALOG_VERSION` | `0.1.0-draft` |
 | Doc source map schema | `DOC_SOURCE_MAP_SCHEMA_VERSION` | Unreleased `1.1.0` source draft with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` readers and original historical schema bytes retained; candidate acceptance remains open |
+| Ordinary source-map coordinate profile | `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION` | Independent `0.1.0-draft` sidecar for per-original-slot column units and actual-byte digest evidence; strict anchor verification remains an open draft acceptance gate |
 | Generated documentation binding | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | Unreleased `0.3.0-draft` source paired with map `1.1.0`; exact `0.2.0-draft`/`1.0.0` and `0.1.0-draft`/`0.1.0-draft` pairs retained |
 | Business-flow documentation | `BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Business-flow documentation projection | `BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |
@@ -157,6 +158,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Official profile distribution | `@hia-doc/profiles` | Distributes official profile JSON, catalog metadata and defensive-copy accessors. |
 | Schema distribution | `@hia-doc/schemas` | Distributes owner-preserving schema snapshots and catalog metadata without taking over contract ownership. |
 | Doc source map tooling | `@hia-doc/source-linkage` | Owns the main-repo schema, semantic path/privacy validator and normalized index for the neutral `doc-source-map` contract. |
+| Ordinary source-map coordinate profile | `@hia-doc/source-linkage` | Owns the neutral draft sidecar schema and strict reader. It binds original section/source slots to one documentation map and actual map/source bytes; only an independently checked actual segment at the requested original point can be an exact anchor. Unknown units, unavailable source bytes and earlier GLB segments remain unverified or nearest. |
 | Generated documentation binding | `@hia-doc/source-linkage` | Owns draft current/legacy schemas, guarded owner validation, the read-only bidirectional index, safe host projection and explicit complete-bundle migration. Map/binding versions must pair exactly; the map stores safe references only. See the binding contract guide for validation and privacy limits. |
 | Documentation portal theme | `@hia-doc/theme-default` | Owns `documentation-portal-theme@0.1.0-draft`, semantic tokens, three Portal-local skins, system/light/dark schemes, visible selectors, native disclosure, forced-colors, and print fallback. Local reader preference may be persisted by the asset runtime but is never projected into contract/profile/manifest/search; third-party themes remain outside this slice. |
 | Target documentation continuity | `@hia-doc/cli` | Compares two exact generated-docs evidence summaries through a pure metadata-only API and safe-relative CLI. It serializes only counts and fixed facts, keeps entry/producer identities in memory, and grants no target read/write/command/network/publish/adoption authority. 中文：首个 draft 只支持 `enterprise-business`，schema `$id` 仅是 owner-local identity，不表示已经在线分发。 |
@@ -454,6 +456,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 - `docs/business-flow-documentation-projection-contract.md`
 - `docs/business-flow-documentation-handoff-contract.md`
 - `docs/documentation-ui-locale-completeness-contract.md`
+- `docs/ordinary-source-map-coordinate-profile.md`
 - `docs/core-fixture-contract.md`
 - `docs/documentation-portal-information-architecture-contract.md`
 - `docs/documentation-source-comment-projection-contract.md`
