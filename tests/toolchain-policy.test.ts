@@ -30,10 +30,14 @@ describe("development and CI Node.js policy", () => {
     expect(workflow).toContain("node-version: ${{ matrix.node }}");
     expect(workflow).toContain("pnpm run release:gate");
   });
-  it.each(["schema-pages.yml", "public-reference-build.yml", "reference-operations.yml"])("removes the obsolete Node.js 20 pin from %s", (fileName) => {
-    // <lang><zh-CN>公开分发与运维统一采用发布线 24，保留各自已有门禁。</zh-CN><en>Public distribution and operations use release line 24 while retaining their existing gates.</en></lang>
+  it.each([
+    ["schema-pages.yml", "24.22.1"],
+    ["public-reference-build.yml", "24.22.1"],
+    ["reference-operations.yml", "24.x"]
+  ])("uses the declared Node.js 24 release policy in %s", (fileName, version) => {
+    // <lang><zh-CN>两条实际 reference 构建线固定到 engines 下限；运维检查保持同一主版本范围。</zh-CN><en>The two actual reference builders pin the engines floor; the operations check retains the same major release line.</en></lang>
     const workflow = read(".github/workflows/" + fileName);
     expect(workflow).not.toMatch(/node-version:\s*20/);
-    expect(workflow).toContain("node-version: 24.x");
+    expect(workflow).toContain(`node-version: ${version}`);
   });
 });

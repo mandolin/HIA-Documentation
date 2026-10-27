@@ -619,6 +619,32 @@ describe("@hia-doc/renderer-html", () => {
       .not.toContain("https://example.test");
   });
 
+  it("refuses distinct entry IDs that project to the same static page path", () => {
+    const prefix = "a".repeat(80);
+    const entries = [
+      { id: `${prefix}9d04572c`, name: "first", kind: "function", view: "js" as const },
+      { id: `${prefix}d41763dc`, name: "second", kind: "function", view: "js" as const }
+    ];
+
+    expect(() => renderProjectHtmlDocument({ project: { name: "Route Collision" }, entries }, {
+      projectSite: { source: { presentation: "none" } }
+    })).toThrow("HIA_PORTAL_ENTRY_ARTIFACT_PATH_COLLISION");
+  });
+
+  it("keeps a single-page project available when unused split-site filenames would collide", () => {
+    const prefix = "a".repeat(80);
+    const entries = [
+      { id: `${prefix}9d04572c`, name: "first", kind: "function", view: "js" as const },
+      { id: `${prefix}d41763dc`, name: "second", kind: "function", view: "js" as const }
+    ];
+
+    const result = renderProjectHtmlDocument({ project: { name: "Single Page" }, entries }, {
+      projectSite: { layout: "single-page", source: { presentation: "none" } }
+    });
+    expect(result.files.find(({ path }) => path === "index.html")?.contents).toContain("first");
+    expect(result.files.find(({ path }) => path === "index.html")?.contents).toContain("second");
+  });
+
   it("enforces none, link, embed and fetch source presentation at the renderer boundary", () => {
     const input = {
       project: {

@@ -162,6 +162,116 @@ describe("@hia-doc/cli", () => {
     }
   });
 
+  it("keeps distinct project symbols when their readable entry slugs collide", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-entry-id-collision-"));
+    const outDir = path.join(root, "docs");
+    const messages: string[] = [];
+
+    try {
+      const document = JSON.parse(await readFile(path.join(process.cwd(), "fixtures", "basic.hia.json"), "utf8")) as {
+        nodes: Array<{ symbolIds: string[] }>;
+        symbols: Array<{ id: string; name: string; longname: string; summary?: string; signature?: string }>;
+      };
+      const original = document.symbols[1];
+      original!.summary = "Original collision only.";
+      original!.signature = "originalCollisionOnly()";
+      const second = {
+        ...original,
+        id: "function:$buildProfileSummary",
+        name: "$buildProfileSummary",
+        longname: "module:webtest.$buildProfileSummary",
+        summary: "Dollar collision only.",
+        signature: "dollarCollisionOnly()"
+      };
+      document.symbols.push(second);
+      document.nodes[0]?.symbolIds.push(second.id);
+      await writeFile(path.join(root, "document.hia.json"), JSON.stringify(document), "utf8");
+      const manifestPath = path.join(root, "project.hia-project.json");
+      await writeFile(manifestPath, JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: { id: "project:collision", name: "Entry ID Collision" },
+        inputs: [{ kind: "hia-document", path: "document.hia.json" }]
+      }), "utf8");
+
+      const exitCode = await runCli(["docs", "build", "--project-manifest", manifestPath, "--out", outDir], createTestIo(messages));
+      const index = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        entries: Array<{ id: string; name: string; symbolId?: string; contentPath: string; noScriptPagePath?: string; presentationTopicId?: string }>;
+      };
+      const collidingSymbols = index.entries.filter(({ symbolId }) => symbolId === "function:buildProfileSummary" || symbolId === second.id);
+      const profile = JSON.parse(await readFile(path.join(outDir, "documentation-presentation-profile.json"), "utf8")) as {
+        pagePartition: { topics: Array<{ topicId: string }> };
+      };
+
+      expect(exitCode).toBe(0);
+      expect(collidingSymbols).toHaveLength(2);
+      expect(new Set(collidingSymbols.map(({ id }) => id)).size).toBe(2);
+      expect(collidingSymbols.every(({ id }) => /^project-entry~[a-f0-9]{64}$/u.test(id))).toBe(true);
+      expect(new Set(collidingSymbols.map(({ contentPath }) => contentPath)).size).toBe(2);
+      expect(new Set(collidingSymbols.map(({ noScriptPagePath }) => noScriptPagePath)).size).toBe(2);
+      expect(new Set(collidingSymbols.map(({ presentationTopicId }) => presentationTopicId)).size).toBe(2);
+      expect(profile.pagePartition.topics.filter(({ topicId }) => collidingSymbols.some(({ presentationTopicId }) => presentationTopicId === topicId))).toHaveLength(2);
+      expect(index.entries.find(({ symbolId }) => symbolId === "module:webtest")?.id).toBe("hia-document:module-webtest");
+      for (const entry of collidingSymbols) {
+        const ownSignature = entry.symbolId === second.id ? "dollarCollisionOnly()" : "originalCollisionOnly()";
+        const otherSignature = entry.symbolId === second.id ? "originalCollisionOnly()" : "dollarCollisionOnly()";
+        const entryHtml = await readFile(path.join(outDir, entry.contentPath), "utf8");
+        const pageHtml = await readFile(path.join(outDir, entry.noScriptPagePath ?? ""), "utf8");
+        expect(entryHtml).toContain(ownSignature);
+        expect(entryHtml).not.toContain(otherSignature);
+        expect(pageHtml).toContain(ownSignature);
+        expect(pageHtml).not.toContain(otherSignature);
+      }
+      expect(messages.join("\n")).not.toContain("PRESENTATION_IDENTITY_DUPLICATE");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("keeps collision suffixes opaque and artifact paths bounded for long Unicode symbol identities", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-long-entry-id-"));
+    const outDir = path.join(root, "docs");
+    const privateLikeSymbol = `function:${"x".repeat(300)}:C:\\private\\秘密`;
+    const secondSymbol = `function:${"x".repeat(300)}:C:\\private\\$秘密`;
+
+    try {
+      const document = JSON.parse(await readFile(path.join(process.cwd(), "fixtures", "basic.hia.json"), "utf8")) as {
+        nodes: Array<{ symbolIds: string[] }>;
+        symbols: Array<{ id: string; name: string; longname: string }>;
+      };
+      const original = document.symbols[1]!;
+      document.symbols = [
+        document.symbols[0]!,
+        { ...original, id: privateLikeSymbol, name: "longOne", longname: privateLikeSymbol },
+        { ...original, id: secondSymbol, name: "longTwo", longname: secondSymbol }
+      ];
+      document.nodes[0]!.symbolIds = ["module:webtest", privateLikeSymbol, secondSymbol];
+      await writeFile(path.join(root, "document.hia.json"), JSON.stringify(document), "utf8");
+      const manifestPath = path.join(root, "project.hia-project.json");
+      await writeFile(manifestPath, JSON.stringify({
+        schemaVersion: "0.1.0-draft",
+        project: { id: "project:long-collision", name: "Long Entry ID Collision" },
+        inputs: [{ kind: "hia-document", path: "document.hia.json" }]
+      }), "utf8");
+
+      expect(await runCli(["docs", "build", "--project-manifest", manifestPath, "--out", outDir], createTestIo([]))).toBe(0);
+      const index = JSON.parse(await readFile(path.join(outDir, "project-index.json"), "utf8")) as {
+        entries: Array<{ id: string; symbolId?: string; contentPath: string; noScriptPagePath?: string }>;
+      };
+      const entries = index.entries.filter(({ symbolId }) => symbolId === privateLikeSymbol || symbolId === secondSymbol);
+      expect(entries).toHaveLength(2);
+      for (const entry of entries) {
+        expect(entry.id).toMatch(/^project-entry~[a-f0-9]{64}$/u);
+        expect(entry.id).not.toContain("C:\\private");
+        expect(entry.id).not.toContain("秘密");
+        expect(entry.contentPath.length).toBeLessThan(128);
+        expect(entry.noScriptPagePath?.length).toBeLessThan(128);
+      }
+      expect(new Set(entries.map(({ contentPath }) => contentPath)).size).toBe(2);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("projects Portal IA config and manifest semantic paths into renderer output", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-portal-ia-"));
     const outDir = path.join(root, "docs");

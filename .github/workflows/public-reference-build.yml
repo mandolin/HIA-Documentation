@@ -29,7 +29,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24.x
+          # 中文：与本仓 engines 的 Node.js 24 最低受支持版本对齐，避免 runner 旧缓存解析到 24.21.0。
+          # English: Match the supported Node.js 24 floor instead of resolving an older runner-cached 24.21.0.
+          node-version: 24.22.1
 
       - name: Enable pnpm
         run: |

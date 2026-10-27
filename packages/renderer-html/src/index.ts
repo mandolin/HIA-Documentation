@@ -895,11 +895,13 @@ interface ProjectHtmlRenderPlan {
 function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions): ProjectHtmlRenderPlan {
   // <lang><zh-CN>资源路由非法时必须在第一次writer调用前拒绝。</zh-CN><en>Reject invalid asset routing before the first writer invocation.</en></lang>
   relocateDefaultThemeAssets([], options.themeAssets);
+  const siteLayout = options.projectSite?.layout ?? "split-site";
+  // <lang><zh-CN>仅 split-site 写独立条目及无脚本页；冲突必须在任何文件写入前拒绝。</zh-CN><en>Only split-site writes separate entry and no-script pages; reject their collisions before writing any file.</en></lang>
+  if (siteLayout === "split-site") assertUniqueProjectEntryArtifactNames(projectInput.entries);
   // <lang><zh-CN>关系图先规范化，确保 presentation identity 使用最终 relation facts，而不是调用者数组顺序。</zh-CN><en>Normalize the relation graph first so presentation identity uses final relation facts rather than caller array order.</en></lang>
   const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
-  const siteLayout = options.projectSite?.layout ?? "split-site";
   const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
   // <lang><zh-CN>颜色由主题owner单点校验，和普通文档使用同一个品牌资源工厂。</zh-CN><en>The theme owner validates colors centrally through the same branded-asset factory used by documents.</en></lang>
   const assets = getDefaultThemeAssets(options.theme ?? {});
@@ -1796,6 +1798,24 @@ function toLazyProjectNavigationNode(node: RenderProjectNavigationTreeNode): Ren
 
 function createProjectEntryContentPath(entryId: string): string {
   return `entries/${stableProjectArtifactName(entryId)}.html`;
+}
+
+/**
+ * @lang zh-CN 在生成文件前拒绝不同条目投影到相同静态文件名，防止 FNV 文件名摘要碰撞时覆盖正文。
+ * @lang en Refuses distinct entries projected to the same static filename before output, preventing body overwrite on an FNV filename digest collision.
+ * @param entries - 已聚合的项目条目。Aggregated project entries.
+ * @throws 当条目 ID 或其文件名投影重复时抛出固定错误，不回显可能敏感的 ID。Throws a fixed error for duplicate entry IDs or filename projections without exposing potentially sensitive IDs.
+ */
+function assertUniqueProjectEntryArtifactNames(entries: RenderProjectEntry[]): void {
+  // <lang><zh-CN>同一文件名用于 entries/pages/本地化无脚本页；一次检查覆盖三类路由。</zh-CN><en>One filename is used by entries, pages and localized no-script pages, so one check covers all three routes.</en></lang>
+  const names = new Set<string>();
+  for (const entry of entries) {
+    const artifactName = stableProjectArtifactName(entry.id);
+    if (names.has(artifactName)) {
+      throw new TypeError("HIA_PORTAL_ENTRY_ARTIFACT_PATH_COLLISION: Distinct entries would share a static page path.");
+    }
+    names.add(artifactName);
+  }
 }
 
 /** @lang zh-CN 为每个 neutral topic 生成稳定的 no-script owner page route。 @lang en Generates a stable no-script owner page route for every neutral topic. */

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } from "./project-source.js";
 
+import { createHash } from "node:crypto";
 import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -1688,7 +1689,7 @@ async function aggregateProjectDocs(
       profiles: profileRefs,
       docSourceMaps,
       entries: linkProjectEntriesWithDocSourceMaps(
-        applyDotNetSourceRelations(dedupeProjectEntries(entries), dotnetSourceRelations),
+        applyDotNetSourceRelations(disambiguateProjectEntryIds(dedupeProjectEntries(entries)), dotnetSourceRelations),
         indexedDocSourceMaps
       ),
       diagnostics
@@ -1714,6 +1715,38 @@ function dedupeProjectEntries(entries: RenderProjectEntry[]): RenderProjectEntry
     }
     seenSymbolKeys.add(key);
     return true;
+  });
+}
+
+/**
+ * @lang zh-CN 只对可读 slug 相撞的不同条目使用固定长不透明身份；未相撞 ID 原样保留，无法区分的条目拒绝构建。
+ * @lang en Uses a fixed-length opaque identity only for distinct entries with colliding readable slugs; leaves other IDs unchanged and refuses indistinguishable entries.
+ * @param entries - 已按视图和规范符号 ID 去重的条目。Entries already deduplicated by view and canonical symbol ID.
+ * @returns 唯一且不依赖输入顺序的页面条目 ID。Unique page-entry IDs independent of input order.
+ * @throws 同一投影 ID 的条目缺少可区分身份时拒绝，避免静默丢内容。Refuses entries without a distinguishing identity under one projected ID to avoid silent content loss.
+ */
+function disambiguateProjectEntryIds(entries: RenderProjectEntry[]): RenderProjectEntry[] {
+  // <lang><zh-CN>先统计旧 ID；普通条目保留既有路由，仅碰撞组需要升级投影。</zh-CN><en>Count legacy IDs first; ordinary entries retain their routes and only collision groups need a revised projection.</en></lang>
+  const counts = new Map<string, number>();
+  for (const entry of entries) counts.set(entry.id, (counts.get(entry.id) ?? 0) + 1);
+  // <lang><zh-CN>旧 ID 均来自 input kind + slug，且 slug 不含 ~；独立前缀不会碰撞未修改旧 ID。</zh-CN><en>Legacy IDs come from input kind plus slug, which excludes ~; the separate prefix cannot collide with an unchanged legacy ID.</en></lang>
+  const projectedIds = new Map<string, string>();
+  return entries.map((entry) => {
+    if ((counts.get(entry.id) ?? 0) === 1) return entry;
+    // <lang><zh-CN>只在内存保存原始身份；固定长 SHA-256 不向公开路由回显 Unicode、路径或长符号 ID。</zh-CN><en>Keep raw identity in memory only; fixed-length SHA-256 exposes no Unicode, path or long symbol ID in the public route.</en></lang>
+    const identity = entry.symbolId
+      ? [entry.id, "symbol", entry.view, entry.symbolId]
+      : [entry.id, "fallback", entry.view, entry.kind, entry.name];
+    const identityKey = JSON.stringify(identity);
+    const projectedId = `project-entry~${createHash("sha256").update(identityKey, "utf8").digest("hex")}`;
+    const existingIdentity = projectedIds.get(projectedId);
+    if (existingIdentity !== undefined) {
+      throw new TypeError(existingIdentity === identityKey
+        ? "HIA_CLI_PROJECT_ENTRY_ID_AMBIGUOUS: Distinct entries lack a unique canonical projection."
+        : "HIA_CLI_PROJECT_ENTRY_HASH_COLLISION: Distinct canonical identities share one page ID digest.");
+    }
+    projectedIds.set(projectedId, identityKey);
+    return { ...entry, id: projectedId };
   });
 }
 

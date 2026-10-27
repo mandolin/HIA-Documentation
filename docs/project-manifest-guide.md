@@ -232,6 +232,10 @@ In project mode, the output manifest includes:
 - `project-index.json`: deterministic, presentation-neutral entry metadata for static portals and search. It carries stable entry ids, views, public source/doc-source-map references and localized descriptions, but excludes inline source previews. `index.html` remains the complete source-linked detail surface.
 - `project-index.json.relationGraph`: complete first-round relation graph data derived by the renderer from project entries, source metadata and doc-source-map references. Project manifests do not need to declare this graph yet.
 
+Distinct canonical symbol IDs can occasionally produce the same readable entry slug (for example, `jsdoc:member:id` and `jsdoc:member:$id`). The project builder keeps both symbols. Only entries in that collision group receive a fixed-length opaque `project-entry~<sha256>` ID; entries without a collision retain their existing IDs. The opaque ID does not embed the original symbol ID or a source path. The split-site renderer also rejects a projected static filename collision before writing pages, instead of overwriting one member's content.
+
+Introducing or removing a collision can change the affected group's entry IDs and deep links. Rebuild and consume the new `project-index.json` and presentation profile together; previously copied links to an affected entry are not redirected automatically. The generated file paths remain bounded by the renderer's filename projection, while the length of an unrelated pre-existing readable entry ID is not capped by this collision rule. The [presentation identity contract](presentation-page-identity.md) requires unique logical topic, fragment and navigation IDs; it leaves physical page routing to the Portal owner.
+
 - `build.mode = "project"`;
 - `build.inputs`;
 - `build.producers`, when producers are configured;
