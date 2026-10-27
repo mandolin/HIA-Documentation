@@ -7,6 +7,7 @@ import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { canonicalizeDocumentationLocale, createHiaDiagnostic } from "@hia-doc/core";
 import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
+import { isProjectManifestJsonDataGraph } from "./manifest-json-data.js";
 
 export * from "./project-manifest.js";
 
@@ -241,7 +242,8 @@ export async function loadHiaProjectConfig(options: HiaConfigLoadOptions = {}): 
 
     return result;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    // <lang><zh-CN>解析错误可能包含 JSON 片段，读取错误可能包含本机路径；仅输出固定公开诊断，内部路径仍由结果字段承担。</zh-CN><en>Parse errors may contain JSON fragments and read errors may contain local paths; emit only fixed public diagnostics while retaining the operational path in the result.</en></lang>
+    const isParseFailure = error instanceof SyntaxError;
 
     return {
       config: {},
@@ -249,13 +251,9 @@ export async function loadHiaProjectConfig(options: HiaConfigLoadOptions = {}): 
       baseDir,
       diagnostics: [
         createConfigDiagnostic(
-          error instanceof SyntaxError ? "HIA_CONFIG_PARSE_FAILED" : "HIA_CONFIG_READ_FAILED",
-          `${configPath} - ${message}`,
-          "error",
-          undefined,
-          {
-            configPath
-          }
+          isParseFailure ? "HIA_CONFIG_PARSE_FAILED" : "HIA_CONFIG_READ_FAILED",
+          isParseFailure ? "Project config cannot be parsed." : "Project config cannot be read.",
+          "error"
         )
       ],
       path: configPath
@@ -275,8 +273,26 @@ export async function findHiaConfigPath(cwd: string, fileNames: readonly string[
   return undefined;
 }
 
+/**
+ * @lang zh-CN 校验静态 HIA 项目配置。内存输入必须是普通、有限、无环 JSON 图；先拒绝自有访问器再读取字段，不执行文件操作。恶意 Proxy 的反射陷阱不受沙箱隔离。
+ * @lang en Validates static HIA project configuration. In-memory input must be an ordinary, finite, acyclic JSON graph; own accessors are rejected before fields are read, with no file I/O. Reflection traps on hostile Proxies are not sandboxed.
+ * @param value <lang><zh-CN>未信任的配置值；不修改输入，开放扩展字段仍可携带普通 JSON 值。</zh-CN><en>Untrusted config value; the input is not mutated, and open extension fields may still carry ordinary JSON values.</en></lang>
+ * @returns <lang><zh-CN>固定、可公开的诊断；无效图不回显值或异常正文。</zh-CN><en>Fixed, public-safe diagnostics; an invalid graph does not echo values or exception text.</en></lang>
+ */
 export function validateHiaProjectConfig(value: unknown): HiaDiagnostic[] {
+  // <lang><zh-CN>先为原始非对象输入保留既有诊断，再检查对象图的所有已知和扩展字段。</zh-CN><en>Keep the existing diagnostic for primitive input, then inspect every known and extension field in the object graph.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
+
+  if (value === null || typeof value !== "object") {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_INVALID", "HIA config must be a JSON object.", "error"));
+    return diagnostics;
+  }
+
+  // <lang><zh-CN>复用同包普通 JSON 预检，并为配置拒绝隐藏对象字段：访问器、环、非有限数和非 JSON 实例均在属性读取前拒绝。</zh-CN><en>Reuse the package's ordinary-JSON preflight and reject hidden object fields for config; accessors, cycles, non-finite numbers, and non-JSON instances fail before property reads.</en></lang>
+  if (!isProjectManifestJsonDataGraph(value, { rejectNonEnumerableObjectFields: true })) {
+    diagnostics.push(createConfigDiagnostic("HIA_CONFIG_INVALID", "HIA config must contain ordinary finite acyclic JSON data.", "error"));
+    return diagnostics;
+  }
 
   if (!isRecord(value)) {
     diagnostics.push(createConfigDiagnostic("HIA_CONFIG_INVALID", "HIA config must be a JSON object.", "error"));
@@ -288,7 +304,9 @@ export function validateHiaProjectConfig(value: unknown): HiaDiagnostic[] {
   if (typeof value.schemaVersion === "string" && value.schemaVersion !== HIA_CONFIG_SCHEMA_VERSION) {
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_SCHEMA_UNSUPPORTED",
-      `Unsupported HIA config schemaVersion: ${value.schemaVersion}.`,
+      isSafeConfigDiagnosticIdentifier(value.schemaVersion)
+        ? `Unsupported HIA config schemaVersion: ${value.schemaVersion}.`
+        : "Unsupported HIA config schemaVersion.",
       "error",
       "schemaVersion"
     ));
@@ -426,11 +444,13 @@ function validatePortalUiLocaleCompletenessConfig(
   const allowedFields = new Set(["profileId", "surfaceId"]);
   for (const field of Object.keys(value)) {
     if (!allowedFields.has(field)) {
+      // <lang><zh-CN>普通短键保留精确定位；路径或凭据形态的键只报告安全父级。</zh-CN><en>Keep precise locations for ordinary short keys; path- or credential-shaped keys report only the safe parent.</en></lang>
+      const safeField = isSafeConfigDiagnosticIdentifier(field);
       diagnostics.push(createConfigDiagnostic(
         "HIA_CONFIG_UI_LOCALE_COMPLETENESS_FIELD_UNSUPPORTED",
-        `Unsupported uiLocaleCompleteness field: ${field}.`,
+        safeField ? `Unsupported uiLocaleCompleteness field: ${field}.` : "Unsupported uiLocaleCompleteness field.",
         "error",
-        `${targetPath}.${field}`
+        safeField ? `${targetPath}.${field}` : targetPath
       ));
     }
   }
@@ -467,11 +487,13 @@ function validateSourceCommentProjectionConfig(
   const allowedFields = new Set(["contract", "contractVersion", "locale", "contentPolicy"]);
   for (const field of Object.keys(value)) {
     if (!allowedFields.has(field)) {
+      // <lang><zh-CN>不可信动态键可能含私有定位或令牌；只回显安全短键。</zh-CN><en>Untrusted dynamic keys may contain private locators or tokens; echo only safe short keys.</en></lang>
+      const safeField = isSafeConfigDiagnosticIdentifier(field);
       diagnostics.push(createConfigDiagnostic(
         "HIA_CONFIG_SOURCE_COMMENT_FIELD_UNSUPPORTED",
-        `Unsupported sourceCommentProjection field: ${field}.`,
+        safeField ? `Unsupported sourceCommentProjection field: ${field}.` : "Unsupported sourceCommentProjection field.",
         "error",
-        `${targetPath}.${field}`
+        safeField ? `${targetPath}.${field}` : targetPath
       ));
     }
   }
@@ -525,11 +547,13 @@ function validatePortalInformationArchitectureConfig(
   ]);
   for (const field of Object.keys(value)) {
     if (!allowedFields.has(field)) {
+      // <lang><zh-CN>诊断只在键符合公开短标识条件时包含该键，否则定位 IA 对象。</zh-CN><en>Include a key in diagnostics only when it is a public short identifier; otherwise locate the IA object.</en></lang>
+      const safeField = isSafeConfigDiagnosticIdentifier(field);
       diagnostics.push(createConfigDiagnostic(
         "HIA_CONFIG_IA_FIELD_UNSUPPORTED",
-        `Unsupported Portal IA field: ${field}.`,
+        safeField ? `Unsupported Portal IA field: ${field}.` : "Unsupported Portal IA field.",
         "error",
-        `${targetPath}.${field}`
+        safeField ? `${targetPath}.${field}` : targetPath
       ));
     }
   }
@@ -543,7 +567,9 @@ function validatePortalInformationArchitectureConfig(
   if (typeof value.contract === "string" && value.contract !== HIA_CONFIG_PORTAL_IA_CONTRACT) {
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_IA_CONTRACT_UNSUPPORTED",
-      `Unsupported Portal IA contract: ${value.contract}.`,
+      isSafeConfigDiagnosticIdentifier(value.contract)
+        ? `Unsupported Portal IA contract: ${value.contract}.`
+        : "Unsupported Portal IA contract.",
       "error",
       `${targetPath}.contract`
     ));
@@ -551,7 +577,9 @@ function validatePortalInformationArchitectureConfig(
   if (typeof value.contractVersion === "string" && value.contractVersion !== HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION) {
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_IA_VERSION_UNSUPPORTED",
-      `Unsupported Portal IA contractVersion: ${value.contractVersion}.`,
+      isSafeConfigDiagnosticIdentifier(value.contractVersion)
+        ? `Unsupported Portal IA contractVersion: ${value.contractVersion}.`
+        : "Unsupported Portal IA contractVersion.",
       "error",
       `${targetPath}.contractVersion`
     ));
@@ -578,17 +606,31 @@ function validateThemeConfig(value: unknown, diagnostics: HiaDiagnostic[], targe
   }
 
   if (typeof value.name === "string" && !HIA_CONFIG_THEME_NAMES.includes(value.name as typeof HIA_CONFIG_THEME_NAMES[number])) {
+    // <lang><zh-CN>安全短主题名维持旧提示及机器数据；疑似路径或令牌仅保留固定回退主题。</zh-CN><en>Safe short theme names keep legacy text and machine data; suspected paths or tokens retain only the fixed fallback theme.</en></lang>
+    const safeRequestedTheme = isSafeConfigDiagnosticIdentifier(value.name);
     diagnostics.push(createConfigDiagnostic(
       "HIA_CONFIG_THEME_UNSUPPORTED",
-      `Theme "${value.name}" is not implemented yet; the default theme will be used.`,
+      safeRequestedTheme
+        ? `Theme "${value.name}" is not implemented yet; the default theme will be used.`
+        : "Theme is not implemented yet; the default theme will be used.",
       "warning",
       `${targetPath}.name`,
-      {
-        requestedTheme: value.name,
-        fallbackTheme: "default"
-      }
+      safeRequestedTheme ? { requestedTheme: value.name, fallbackTheme: "default" } : { fallbackTheme: "default" }
     ));
   }
+}
+
+/**
+ * @lang zh-CN 仅允许诊断回显有限长的普通公开标识；拒绝路径/URL 字符、常见凭据前缀及长无分隔令牌。它是输出最小化规则，不证明任意短字符串无秘密。
+ * @lang en Allows diagnostic echoes only for bounded ordinary public identifiers; rejects path/URL characters, common credential prefixes, and long undelimited tokens. This is output minimization, not proof that every short string is non-secret.
+ * @param value <lang><zh-CN>未受信任的版本、主题、契约值或动态字段名。</zh-CN><en>Untrusted version, theme, contract value, or dynamic field name.</en></lang>
+ * @returns <lang><zh-CN>仅表示可用于最小化诊断的短标识格式。</zh-CN><en>Whether the value has the short-identifier form allowed in minimized diagnostics.</en></lang>
+ */
+function isSafeConfigDiagnosticIdentifier(value: string): boolean {
+  if (value.length === 0 || value.length > 48 || !/^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/u.test(value)) return false;
+  if (/(?:^|[._-])(?:token|secret|password|passwd|credential|authorization|apikey)(?:$|[._-])/iu.test(value)) return false;
+  if (/^(?:sk-|gh[pousr]_|github_pat_|glpat-|npm_|xox[baprs]-|AKIA|ASIA|eyJ[A-Za-z0-9_-]{8,}\.)/iu.test(value)) return false;
+  return !/^[A-Za-z0-9]{32,}$/u.test(value);
 }
 
 /** @lang zh-CN 新主题选项只接受无访问器的普通自有数据；反射异常不回显。 @lang en New theme options accept only ordinary own data without accessors, never echoing reflection errors. */

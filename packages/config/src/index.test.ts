@@ -90,6 +90,54 @@ describe("@hia-doc/config", () => {
     }
   });
 
+  it("keeps malformed config content and the local path out of parse diagnostics", async () => {
+    // <lang><zh-CN>损坏 JSON 的原始错误可含输入片段，公开诊断只保留固定错误码与正文。</zh-CN><en>A raw JSON error can contain input fragments; public diagnostics retain only a fixed code and message.</en></lang>
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-config-private-"));
+    const configPath = path.join(root, "hia.config.json");
+    const privateMarker = "PRIVATE_CONFIG_PARSE_MARKER";
+
+    try {
+      await writeFile(configPath, `{"secret":${privateMarker}}`, "utf8");
+      const result = await loadHiaProjectConfig({ cwd: root });
+      const diagnosticText = JSON.stringify(result.diagnostics);
+
+      expect(result.found).toBe(true);
+      expect(result.path).toBe(configPath);
+      expect(result.baseDir).toBe(root);
+      expect(result.diagnostics[0]?.code).toBe("HIA_CONFIG_PARSE_FAILED");
+      expect(result.diagnostics[0]?.severity).toBe("error");
+      expect(result.diagnostics[0]?.message).toBe("Project config cannot be parsed.");
+      expect(result.diagnostics[0]?.data).toBeUndefined();
+      expect(diagnosticText).not.toContain(root);
+      expect(diagnosticText).not.toContain(privateMarker);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("keeps an explicit missing config path out of read diagnostics", async () => {
+    // <lang><zh-CN>调用者仍取得内部解析路径，但诊断不可回显该路径或系统错误正文。</zh-CN><en>The caller still receives its resolved operational path, but diagnostics must not echo it or the system error.</en></lang>
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-config-private-"));
+    const configPath = path.join(root, "PRIVATE_CONFIG_MISSING_MARKER.json");
+
+    try {
+      const result = await loadHiaProjectConfig({ cwd: root, configPath });
+      const diagnosticText = JSON.stringify(result.diagnostics);
+
+      expect(result.found).toBe(true);
+      expect(result.path).toBe(configPath);
+      expect(result.baseDir).toBe(root);
+      expect(result.diagnostics[0]?.code).toBe("HIA_CONFIG_READ_FAILED");
+      expect(result.diagnostics[0]?.severity).toBe("error");
+      expect(result.diagnostics[0]?.message).toBe("Project config cannot be read.");
+      expect(result.diagnostics[0]?.data).toBeUndefined();
+      expect(diagnosticText).not.toContain(root);
+      expect(diagnosticText).not.toContain("PRIVATE_CONFIG_MISSING_MARKER");
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("reports validation diagnostics", () => {
     const diagnostics = validateHiaProjectConfig({
       schemaVersion: "9.9.9",
@@ -116,6 +164,189 @@ describe("@hia-doc/config", () => {
       fallbackTheme: "default"
     });
     expect(diagnostics.some((diagnostic) => diagnostic.severity === "warning")).toBe(true);
+  });
+
+  it("keeps unsafe version, contract, theme and dynamic field inputs out of diagnostics", () => {
+    // <lang><zh-CN>有效 JSON 的无效字段也会进入公开诊断，不能靠解析失败的隐私回归代替。</zh-CN><en>Invalid fields in syntactically valid JSON also reach public diagnostics; parse-failure privacy tests do not cover them.</en></lang>
+    const privatePath = "C:/private-owner/config.json";
+    const credentialUrl = "https://owner:password@example.test/contract";
+    const token = "ghp_012345678901234567890123456789012345";
+    const diagnostics = validateHiaProjectConfig({
+      schemaVersion: privatePath,
+      docs: {
+        renderer: {
+          uiLocale: "en",
+          informationArchitecture: { contract: credentialUrl, contractVersion: token, [privatePath]: true },
+          sourceCommentProjection: { locale: "en", [privatePath]: true },
+          uiLocaleCompleteness: { [privatePath]: true }
+        },
+        theme: { name: token }
+      }
+    });
+    const diagnosticText = JSON.stringify(diagnostics);
+
+    for (const privateValue of [privatePath, credentialUrl, token, "password"]) {
+      expect(diagnosticText).not.toContain(privateValue);
+    }
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_IA_FIELD_UNSUPPORTED")?.targetPath)
+      .toBe("docs.renderer.informationArchitecture");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_SOURCE_COMMENT_FIELD_UNSUPPORTED")?.targetPath)
+      .toBe("docs.renderer.sourceCommentProjection");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_UI_LOCALE_COMPLETENESS_FIELD_UNSUPPORTED")?.targetPath)
+      .toBe("docs.renderer.uiLocaleCompleteness");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_THEME_UNSUPPORTED")?.data)
+      .toEqual({ fallbackTheme: "default" });
+  });
+
+  it("preserves concise public identifiers in existing diagnostic messages and locations", () => {
+    // <lang><zh-CN>常规短标识仍提供精确纠错线索，安全过滤不把所有值都降为匿名。</zh-CN><en>Ordinary short identifiers retain precise correction clues; safe filtering does not anonymize every value.</en></lang>
+    const diagnostics = validateHiaProjectConfig({
+      schemaVersion: "9.9.9",
+      docs: {
+        renderer: { uiLocale: "en", informationArchitecture: { contract: "custom-contract", contractVersion: "0.2.0-draft", adaptive: true } },
+        theme: { name: "custom-theme" }
+      }
+    });
+
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_SCHEMA_UNSUPPORTED")?.message).toContain("9.9.9");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_IA_CONTRACT_UNSUPPORTED")?.message).toContain("custom-contract");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_IA_VERSION_UNSUPPORTED")?.message).toContain("0.2.0-draft");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_IA_FIELD_UNSUPPORTED")?.targetPath)
+      .toBe("docs.renderer.informationArchitecture.adaptive");
+    expect(diagnostics.find((item) => item.code === "HIA_CONFIG_THEME_UNSUPPORTED")?.data)
+      .toEqual({ requestedTheme: "custom-theme", fallbackTheme: "default" });
+  });
+
+  it.each([
+    "sk-proj-0123456789abcdef",
+    "npm_0123456789abcdef",
+    "xoxb-0123456789abcdef",
+    "AKIA0123456789ABCDEF"
+  ])("does not echo a common credential-shaped theme value: %s", (token) => {
+    // <lang><zh-CN>短令牌也可能符合一般字母数字词法，须靠已知前缀另行排除。</zh-CN><en>Short credentials can satisfy ordinary alphanumeric syntax and need explicit known-prefix rejection.</en></lang>
+    const diagnostic = validateHiaProjectConfig({ docs: { theme: { name: token } } })
+      .find((item) => item.code === "HIA_CONFIG_THEME_UNSUPPORTED");
+
+    expect(JSON.stringify(diagnostic)).not.toContain(token);
+    expect(diagnostic?.targetPath).toBe("docs.theme.name");
+    expect(diagnostic?.data).toEqual({ fallbackTheme: "default" });
+  });
+
+  it("rejects a root accessor without executing it or exposing its error", () => {
+    // <lang><zh-CN>未知内存输入可带访问器；配置校验必须在字段读取之前将其拒绝。</zh-CN><en>Unknown in-memory input may carry an accessor; config validation must reject it before reading fields.</en></lang>
+    let calls = 0;
+    const config = Object.defineProperty({ docs: {} }, "schemaVersion", {
+      enumerable: true,
+      get() { calls += 1; throw new Error("private-root-secret"); }
+    });
+
+    const diagnostics = validateHiaProjectConfig(config);
+
+    expect(calls).toBe(0);
+    expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+    expect(JSON.stringify(diagnostics)).not.toContain("private-root-secret");
+  });
+
+  it("rejects a nested accessor without executing it or exposing its error", () => {
+    // <lang><zh-CN>嵌套 renderer 属性与根字段使用相同的普通 JSON 边界。</zh-CN><en>Nested renderer properties use the same ordinary-JSON boundary as root fields.</en></lang>
+    let calls = 0;
+    const renderer = Object.defineProperty({}, "title", {
+      enumerable: true,
+      get() { calls += 1; throw new Error("private-nested-secret"); }
+    });
+
+    const diagnostics = validateHiaProjectConfig({ schemaVersion: HIA_CONFIG_SCHEMA_VERSION, docs: { renderer } });
+
+    expect(calls).toBe(0);
+    expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+    expect(JSON.stringify(diagnostics)).not.toContain("private-nested-secret");
+  });
+
+  it.each(["root", "nested"])("rejects a hidden %s config field before reading its nested accessor", (caseName) => {
+    // <lang><zh-CN>非枚举自有字段不属于 JSON wire，不能跳过预检后再按普通配置读取。</zh-CN><en>Non-enumerable own fields are outside the JSON wire and must not be read as config after preflight skips them.</en></lang>
+    let calls = 0;
+    const renderer = Object.defineProperty({}, "title", {
+      enumerable: true,
+      get() { calls += 1; throw new Error("private-hidden-secret"); }
+    });
+    const config: Record<string, unknown> = { schemaVersion: HIA_CONFIG_SCHEMA_VERSION };
+    if (caseName === "root") {
+      Object.defineProperty(config, "docs", { value: { renderer }, enumerable: false });
+    } else {
+      const docs = Object.defineProperty({}, "renderer", { value: renderer, enumerable: false });
+      config.docs = docs;
+    }
+
+    const diagnostics = validateHiaProjectConfig(config);
+
+    expect(calls).toBe(0);
+    expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+    expect(JSON.stringify(diagnostics)).not.toContain("private-hidden-secret");
+  });
+
+  it("rejects a huge sparse extension array before scanning its length", () => {
+    // <lang><zh-CN>只读取两个已定义槽位和 length 的描述符即可判定稀疏，无须逐个探测十亿个索引。</zh-CN><en>The two defined slots and length descriptor suffice to reject sparsity without probing a billion indices.</en></lang>
+    const sparse: unknown[] = [];
+    sparse.length = 1_000_000_000;
+    sparse[0] = "first";
+    sparse[sparse.length - 1] = "last";
+    let lengthReads = 0;
+    const watched = new Proxy(sparse, {
+      get(target, key, receiver) {
+        if (key === "length") lengthReads += 1;
+        return Reflect.get(target, key, receiver);
+      }
+    });
+
+    const diagnostics = validateHiaProjectConfig({ schemaVersion: HIA_CONFIG_SCHEMA_VERSION, extension: watched });
+
+    expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+    expect(lengthReads).toBe(0);
+  });
+
+  it.each(["object data", "object accessor", "array data", "array accessor"])(
+    "rejects an own Symbol field in config %s without executing accessors",
+    (caseName) => {
+      // <lang><zh-CN>Symbol 键不会进入 JSON wire，但可隐藏在普通对象或数组上；配置严格模式须在模型读取前拒绝。</zh-CN><en>Symbol keys are absent from the JSON wire yet may hide on objects or arrays; strict config mode rejects them before model reads.</en></lang>
+      let calls = 0;
+      const extension: Record<string, unknown> | unknown[] = caseName.startsWith("array") ? ["public"] : { public: "value" };
+      Object.defineProperty(extension, Symbol("C:/private-owner/symbol"), caseName.endsWith("accessor")
+        ? { enumerable: true, get() { calls += 1; throw new Error("private-symbol-secret"); } }
+        : { enumerable: true, value: "private-symbol-secret" });
+
+      const diagnostics = validateHiaProjectConfig({ schemaVersion: HIA_CONFIG_SCHEMA_VERSION, extension });
+
+      expect(calls).toBe(0);
+      expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+      expect(JSON.stringify(diagnostics)).not.toContain("private-symbol-secret");
+      expect(JSON.stringify(diagnostics)).not.toContain("private-owner");
+    }
+  );
+
+  it.each(["cycle", "date", "non-finite number"])("rejects non-JSON config data: %s", (caseName) => {
+    // <lang><zh-CN>额外字段仍允许普通 JSON 值，但不能借开放字段藏入非 JSON 图。</zh-CN><en>Extension fields still allow ordinary JSON values, but cannot hide a non-JSON graph.</en></lang>
+    const config: Record<string, unknown> = { schemaVersion: HIA_CONFIG_SCHEMA_VERSION };
+    if (caseName === "cycle") config.extension = config;
+    else if (caseName === "date") config.extension = new Date(0);
+    else config.extension = Number.POSITIVE_INFINITY;
+
+    const diagnostics = validateHiaProjectConfig(config);
+
+    expect(diagnostics.map((item) => item.code)).toContain("HIA_CONFIG_INVALID");
+  });
+
+  it("retains ordinary JSON configuration and open extension data", () => {
+    // <lang><zh-CN>安全预检不改变已支持配置字段及可序列化扩展的结果。</zh-CN><en>The safe preflight preserves supported config fields and serializable extension data.</en></lang>
+    const config = {
+      schemaVersion: HIA_CONFIG_SCHEMA_VERSION,
+      docs: {
+        renderer: { title: "Public docs" },
+        theme: { colors: { accent: "#0f4f82" } },
+        futureExtension: { values: ["plain", 1, false, null] }
+      }
+    };
+
+    expect(validateHiaProjectConfig(config)).toEqual([]);
   });
 
   it("uses build-generated fetch assets and rejects remote fetch endpoints or disabled presentation conflicts", () => {

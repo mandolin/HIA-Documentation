@@ -1410,6 +1410,65 @@ describe("@hia-doc/cli", () => {
     expect(messages.join("\n")).toContain("[error:HIA_CLI_OPTION_VALUE_MISSING]");
   });
 
+  it("does not print malformed config contents or its local path", async () => {
+    // <lang><zh-CN>命令行会原样呈现配置诊断，因此端到端核其标准错误流不含本机路径与输入片段。</zh-CN><en>The CLI presents config diagnostics directly, so verify that stderr contains neither the local path nor an input fragment.</en></lang>
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-config-private-"));
+    const configPath = path.join(root, "hia.config.json");
+    const privateMarker = "PRIVATE_CLI_CONFIG_MARKER";
+    const stderrMessages: string[] = [];
+
+    try {
+      await writeFile(configPath, `{"secret":${privateMarker}}`, "utf8");
+      const exitCode = await runCli(["docs", "build", "--config", configPath], {
+        cwd: root,
+        stdout: () => undefined,
+        stderr: (message) => stderrMessages.push(message)
+      });
+      const output = stderrMessages.join("\n");
+
+      expect(exitCode).toBe(1);
+      expect(output).toContain("[error:HIA_CONFIG_PARSE_FAILED]");
+      expect(output).not.toContain(root);
+      expect(output).not.toContain(privateMarker);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  it("does not print private values or field names from valid JSON config diagnostics", async () => {
+    // <lang><zh-CN>真实 CLI 标准错误流须对已解析但无效的配置应用同一私密值边界。</zh-CN><en>The real CLI stderr must apply the same private-value boundary to parsed but invalid config.</en></lang>
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-config-private-"));
+    const configPath = path.join(root, "hia.config.json");
+    const privatePath = "C:/private-owner/secret.json";
+    const token = "ghp_012345678901234567890123456789012345";
+    const stderrMessages: string[] = [];
+
+    try {
+      await writeFile(configPath, JSON.stringify({
+        schemaVersion: privatePath,
+        docs: {
+          renderer: { uiLocale: "en", informationArchitecture: { contract: "https://owner:password@example.test/contract", [privatePath]: true } },
+          theme: { name: token }
+        }
+      }), "utf8");
+      const exitCode = await runCli(["docs", "build", "--config", configPath], {
+        cwd: root,
+        stdout: () => undefined,
+        stderr: (message) => stderrMessages.push(message)
+      });
+      const output = stderrMessages.join("\n");
+
+      expect(exitCode).toBe(1);
+      expect(output).toContain("[error:HIA_CONFIG_SCHEMA_UNSUPPORTED]");
+      expect(output).not.toContain(privatePath);
+      expect(output).not.toContain("password");
+      expect(output).not.toContain(token);
+      expect(output).not.toContain(root);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("recognizes npm bin symlinks as CLI entrypoints", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-entrypoint-"));
     const realEntry = path.join(root, "dist", "index.js");

@@ -38,6 +38,10 @@ Portal source-comment P1 可通过 `docs.renderer.sourceCommentProjection` 显�
 
 The first contract is intentionally small. `hia.config.ts`, layered config merging and dynamic config evaluation are deferred.
 
+直接调用 `validateHiaProjectConfig()` 时，输入须为普通、有限、无环的 JSON 数据图；自有访问器、隐藏对象字段、非 JSON 实例及稀疏数组会得到固定诊断，不执行访问器。配置文件仍按 JSON 读取。加载失败的公开诊断只报告固定错误码与简短说明；无效字段的动态值仅在符合安全短标识格式时回显。内部返回的路径仅供调用者定位，不应当作可公开诊断数据。恶意 Proxy 的反射陷阱不属于执行沙箱保证。
+
+Direct `validateHiaProjectConfig()` calls require an ordinary, finite, acyclic JSON data graph. Own accessors, hidden object fields, non-JSON instances, and sparse arrays produce fixed diagnostics without invoking accessors. File loading still reads JSON. Public load-failure diagnostics use fixed codes and short messages; invalid field values are echoed only when they have a safe short-identifier form. The returned path remains an internal locator. Hostile Proxy reflection traps are not execution-sandboxed.
+
 ## Contract
 
 The current JSON config schema version is exported as `HIA_CONFIG_SCHEMA_VERSION`.
