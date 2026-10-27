@@ -6,6 +6,7 @@
 import {
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
   type GeneratedDocumentationBindingContractVersion
 } from "./constants.js";
@@ -252,7 +253,11 @@ export function createGeneratedDocumentationBindingHostProjection(
   // <lang><zh-CN>最终所有容器逐层冻结；版本回退仅供不可用结果元数据，不改变原status。</zh-CN><en>Freeze every final container individually; version fallback describes unavailable-result metadata without changing status.</en></lang>
   return Object.freeze({
     bindingContract: GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-    bindingContractVersion: index.contractVersion === GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION ? GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION : GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
+    bindingContractVersion: index.contractVersion === GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+      ? GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+      : index.contractVersion === GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION
+        ? GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION
+        : GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
     bindings: freezeList(bindings),
     contract: GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT,
     contractVersion: GENERATED_DOCUMENTATION_BINDING_HOST_PROJECTION_CONTRACT_VERSION,

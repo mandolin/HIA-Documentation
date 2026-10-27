@@ -197,7 +197,10 @@ function createDocSourceMap(bindingId = "binding:pug:colors:name", sidecarPath =
 describe("generated-documentation-binding bidirectional index", () => {
   it("refuses pairing a frozen legacy linkage with a current-version documentation map", () => {
     // <lang><zh-CN>相同id不证明版本匹配；新版普通map可独立有效，但不能偷换冻结sidecar的引用版本。</zh-CN><en>Matching ids do not prove matching versions; a current ordinary map may be independently valid without substituting the frozen sidecar's referenced version.</en></lang>
-    const value = createDocSourceMap(); value.contractVersion = "1.0.0";
+    const value = createDocSourceMap();
+    value.contractVersion = "1.0.0";
+    // <lang><zh-CN>1.0映射声明自身须配0.2绑定；实际传入的冻结0.1 sidecar仍应独立被组合器拒绝。</zh-CN><en>The 1.0 map declaration itself must pair with binding 0.2; the separately supplied frozen 0.1 sidecar must still be refused by the composer.</en></lang>
+    (value.generatedBindingSidecars as Array<Record<string, unknown>>)[0]!.contractVersion = "0.2.0-draft";
     const docSourceMapIndex = createDocSourceMapIndex(value);
     expect(docSourceMapIndex.status).toBe("available");
     const index = createGeneratedDocumentationBindingIndex(createPugLikeSidecar(), { docSourceMapIndex });

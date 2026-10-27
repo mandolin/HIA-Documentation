@@ -14,12 +14,17 @@ function legacy(): Record<string, any> {
 }
 /** @lang zh-CN 构造完整新版工件，保留旧版其它结构。 @lang en Constructs a complete current artifact while retaining other legacy structure. */
 function current(): Record<string, any> { const value = legacy(); value.contractVersion = "1.0.0"; return value; }
+/** @lang zh-CN 测试中历史范围的证据按原条目与引用序号给出，不据具体工具名推测。 @lang en Historical range evidence in tests uses original entry/reference ordinals, never inferring from concrete tool names. */
+function migrateWithEvidence(value: unknown) {
+  return api.migrateDocSourceMap(value, { rangeEvidence: [{ entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "inclusive", columnUnit: "utf16-code-unit" } }] });
+}
 
 describe("doc-source-map model B", () => {
   it("exports an independent current schema and retains the exact historical definition", () => {
-    expect(api.DOC_SOURCE_MAP_CONTRACT_VERSION).toBe("1.0.0");
+    expect(api.DOC_SOURCE_MAP_CONTRACT_VERSION).toBe("1.1.0");
+    expect(api.DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION).toBe("1.0.0");
     expect(api.DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION).toBe("0.1.0-draft");
-    expect(api.DOC_SOURCE_MAP_SCHEMA_ID).toContain("doc-source-map-1.0.0.schema.json");
+    expect(api.DOC_SOURCE_MAP_SCHEMA_ID).toContain("doc-source-map-1.1.0.schema.json");
     expect(api.DOC_SOURCE_MAP_JSON_SCHEMA.$defs.sourceRef.properties.rangeSourceDetail).toBeDefined();
     expect(getHiaSchema("doc-source-map")?.$id).toBe(api.DOC_SOURCE_MAP_SCHEMA_ID);
     expect(getHiaSchema("https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-0.1.0-draft.schema.json")?.properties).toMatchObject({ contractVersion: { const: "0.1.0-draft" } });
@@ -65,7 +70,7 @@ describe("doc-source-map model B", () => {
     value.contractVersion = "0.1.0-draft";
     expect(api.createDocSourceMapIndex(value).status).toBe("available");
   });
-  it.each(["1.0.1", "1.1.0", "1.0.0-beta", "1.0.0+build"])("isolates unknown exact version %s", version => {
+  it.each(["1.0.1", "1.1.1", "1.0.0-beta", "1.0.0+build"])("isolates unknown exact version %s", version => {
     const value = current(); value.contractVersion = version;
     const index = api.createDocSourceMapIndex(value);
     expect(index.status).toBe("unsupported-version");
@@ -75,10 +80,10 @@ describe("doc-source-map model B", () => {
     const value = legacy(); value.entries[0].sourceRefs[0].rangeSource = name;
     value.extension = { preserved: ["public", null] };
     const before = JSON.stringify(value);
-    const result = api.migrateDocSourceMap(value);
+    const result = migrateWithEvidence(value);
     expect(result.status).toBe("migrated");
     expect(result.diagnostics).toEqual([]);
-    expect(result.manifest?.contractVersion).toBe("1.0.0");
+    expect(result.manifest?.contractVersion).toBe("1.1.0");
     expect((result.manifest?.entries as any[])[0].sourceRefs[0]).toMatchObject({ rangeSource: category, rangeSourceDetail: name, confidence: "high" });
     expect(result.manifest?.extension).toEqual(value.extension);
     expect(result.manifest?.extension).not.toBe(value.extension);
@@ -87,7 +92,7 @@ describe("doc-source-map model B", () => {
   it.each(["unknown-tool", "unresovled"])("preserves readable legacy %s but refuses a guessed migration", name => {
     const value = legacy(); value.entries[0].sourceRefs[0].rangeSource = name;
     expect(api.createDocSourceMapIndex(value).status).toBe("available");
-    const result = api.migrateDocSourceMap(value);
+    const result = migrateWithEvidence(value);
     expect(result.status).toBe("invalid");
     expect(result.manifest).toBeUndefined();
     expect(result.diagnostics.some(d => d.code === "DOC_SOURCE_MAP_MIGRATION_INVALID")).toBe(true);
@@ -96,11 +101,12 @@ describe("doc-source-map model B", () => {
   });
   it("refuses conflicting detail instead of losing either legacy value", () => {
     const value = legacy(); Object.assign(value.entries[0].artifactRefs[0], { rangeSource: "htmdoc-bridge", rangeSourceDetail: "other-detail" });
-    expect(api.migrateDocSourceMap(value).status).toBe("invalid");
+    expect(migrateWithEvidence(value).status).toBe("invalid");
     expect(value.entries[0].artifactRefs[0].rangeSourceDetail).toBe("other-detail");
   });
   it("returns an independent validated current clone for an idempotent migration", () => {
-    const value = current(); const result = api.migrateDocSourceMap(value);
+    const value = current(); value.contractVersion = "1.1.0"; value.entries[0].sourceRefs[0].rangeConvention = { endBoundary: "inclusive", columnUnit: "utf16-code-unit" };
+    const result = api.migrateDocSourceMap(value);
     expect(result.status).toBe("already-current");
     expect(result.manifest).toEqual(value);
     expect(result.manifest).not.toBe(value);
@@ -121,7 +127,7 @@ describe("doc-source-map model B", () => {
   it("preserves declared generic detail and explicit opt-in bodies without exposing them in indexes", () => {
     const value = legacy(); value.entries[0].artifactRefs[0].rangeSourceDetail = "public-bridge";
     value.sources[0].sourcesContentPolicy = "redacted"; value.sources[0].sourcesContent = "allowed-public-body";
-    const result = api.migrateDocSourceMap(value);
+    const result = migrateWithEvidence(value);
     expect(result.status).toBe("migrated");
     expect((result.manifest?.sources as any[])[0].sourcesContent).toBe("allowed-public-body");
     expect(api.createDocSourceMapIndex(result.manifest).entries[0].artifactLinks[0].rangeSourceDetail).toBe("public-bridge");
@@ -131,7 +137,7 @@ describe("doc-source-map model B", () => {
     const value = legacy(); const shared = Object.assign(Object.create(null), JSON.parse('{"__proto__":{"public":true}}'));
     value.extension = { first: shared, second: shared }; let cursor = value.extension;
     for (let i = 0; i < 6000; i++) { cursor.child = {}; cursor = cursor.child; }
-    const result = api.migrateDocSourceMap(value);
+    const result = migrateWithEvidence(value);
     expect(result.status).toBe("migrated");
     const extension = result.manifest?.extension as any;
     expect(extension.first).toBe(extension.second);

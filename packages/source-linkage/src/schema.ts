@@ -6,18 +6,19 @@
 import {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_END_BOUNDARIES,
+  DOC_SOURCE_MAP_COLUMN_UNITS,
   DOC_SOURCE_MAP_RANGE_SOURCES,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
-  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
-  GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
+  GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
 } from "./constants.js";
 import {
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT,
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
 } from "@hia-doc/core";
 
-/** @lang zh-CN 当前doc-source-map1.0.0的canonical资源身份/引用基准；不是下载动作或发布证明，历史schema保持独立原字节。 @lang en Canonical resource identity/reference base for current doc-source-map1.0.0, not a download action or publication proof; historical schema bytes remain independently retained. */
-export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json";
+/** @lang zh-CN 当前doc-source-map1.1.0的canonical资源身份/引用基准；不是下载动作或发布证明，历史schema保持独立原字节。 @lang en Canonical resource identity/reference base for current doc-source-map1.1.0, not a download action or publication proof; historical schema bytes remain independently retained. */
+export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.1.0.schema.json";
 /** @lang zh-CN 与当前文档映射contract根版本相同的schema字面量版本；独立于npm包SemVer，不说明schema引擎或系统版本。 @lang en Literal schema version matching the current documentation-map root contract, independent of npm package SemVer and not a schema-engine or system version. */
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
 
@@ -179,6 +180,15 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
         end: { $ref: "#/$defs/position" }
       }
     },
+    rangeConvention: {
+      type: "object",
+      required: ["endBoundary", "columnUnit"],
+      additionalProperties: false,
+      properties: {
+        endBoundary: { enum: DOC_SOURCE_MAP_END_BOUNDARIES },
+        columnUnit: { enum: DOC_SOURCE_MAP_COLUMN_UNITS }
+      }
+    },
     sourceRef: {
       type: "object",
       required: ["sourceId", "rangeSource", "confidence"],
@@ -186,11 +196,16 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
       properties: {
         sourceId: { $ref: "#/$defs/nonEmptyString" },
         range: { $ref: "#/$defs/range" },
+        rangeConvention: { $ref: "#/$defs/rangeConvention" },
         rangeSource: { $ref: "#/$defs/rangeSource" },
         rangeSourceDetail: { $ref: "#/$defs/rangeSourceDetail" },
         confidence: { $ref: "#/$defs/confidence" }
       },
-      allOf: [{ if: { properties: { rangeSource: { const: "unresolved" } }, required: ["rangeSource"] }, then: { properties: { confidence: { const: "none" } } } }]
+      allOf: [
+        { if: { properties: { rangeSource: { const: "unresolved" } }, required: ["rangeSource"] }, then: { properties: { confidence: { const: "none" } } } },
+        { if: { required: ["range"] }, then: { required: ["rangeConvention"] }, else: { not: { required: ["rangeConvention"] } } },
+        { if: { properties: { rangeConvention: { properties: { columnUnit: { not: { const: "unknown" } } }, required: ["columnUnit"] } }, required: ["rangeConvention"] }, then: { properties: { range: { properties: { start: { required: ["column"] }, end: { required: ["column"] } } } } } }
+      ]
     },
     artifactRef: {
       type: "object",
@@ -230,7 +245,7 @@ export const DOC_SOURCE_MAP_JSON_SCHEMA = {
       properties: {
         id: { $ref: "#/$defs/nonEmptyString" },
         contract: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT },
-        contractVersion: { enum: [GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION, GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION] },
+        contractVersion: { const: GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION },
         path: { $ref: "#/$defs/safeRelativePath" }
       }
     },

@@ -9,25 +9,29 @@ import * as api from "./index.js";
 import * as constants from "./constants.js";
 import { getHiaSchema, listHiaSchemas } from "../../schemas/src/index.js";
 
-/** @lang zh-CN 十一个运行字符串的精确公开值，不将版本常量当成范围协商或包发行证明。 @lang en Exact values for eleven runtime strings, without interpreting version constants as negotiation ranges or package-publication proof. */
+/** @lang zh-CN 三代运行身份的精确公开值，不将版本常量当成范围协商或包发行证明。 @lang en Exact public runtime identities across three generations, without interpreting version constants as negotiation ranges or package-publication proof. */
 const stringValues = [
   ["DOC_SOURCE_MAP_CONTRACT", "doc-source-map"],
-  ["DOC_SOURCE_MAP_CONTRACT_VERSION", "1.0.0"],
+  ["DOC_SOURCE_MAP_CONTRACT_VERSION", "1.1.0"],
+  ["DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION", "1.0.0"],
   ["DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION", "0.1.0-draft"],
   ["GENERATED_DOCUMENTATION_BINDING_CONTRACT", "generated-documentation-binding"],
-  ["GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION", "0.2.0-draft"],
+  ["GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION", "0.3.0-draft"],
+  ["GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION", "0.2.0-draft"],
   ["GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION", "0.1.0-draft"],
-  ["DOC_SOURCE_MAP_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json"],
-  ["DOC_SOURCE_MAP_SCHEMA_VERSION", "1.0.0"],
-  ["GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json"],
+  ["DOC_SOURCE_MAP_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.1.0.schema.json"],
+  ["DOC_SOURCE_MAP_SCHEMA_VERSION", "1.1.0"],
+  ["GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.3.0-draft.schema.json"],
+  ["GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json"],
   ["GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID", "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json"],
-  ["GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION", "0.2.0-draft"]
+  ["GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION", "0.3.0-draft"]
 ] as const;
 
-/** @lang zh-CN 三个共享schema分别记录根版本、canonical身份与分发原文件；只检查既有精确配对。 @lang en Records each shared schema's root version, canonical identity and original distribution file, checking existing exact pairings only. */
+/** @lang zh-CN 四个共享schema分别记录根版本、canonical身份与分发原文件；逐代检查精确配对。 @lang en Records each of four shared schemas with its root version, canonical identity and distributed source file, checking exact pairings by generation. */
 const schemas = [
-  { name: "current-map", value: api.DOC_SOURCE_MAP_JSON_SCHEMA, version: "1.0.0", id: api.DOC_SOURCE_MAP_SCHEMA_ID, file: "schemas/doc-source-map.schema.json" },
-  { name: "current-binding", value: api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA, version: "0.2.0-draft", id: api.GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID, file: "schemas/generated-documentation-binding.schema.json" },
+  { name: "current-map", value: api.DOC_SOURCE_MAP_JSON_SCHEMA, version: "1.1.0", id: api.DOC_SOURCE_MAP_SCHEMA_ID, file: "schemas/doc-source-map.schema.json" },
+  { name: "current-binding", value: api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA, version: "0.3.0-draft", id: api.GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID, file: "schemas/generated-documentation-binding.schema.json" },
+  { name: "previous-binding", value: api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA, version: "0.2.0-draft", id: api.GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID, file: "history/generated-documentation-binding-0.2.0-draft.schema.json" },
   { name: "legacy-binding", value: api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA, version: "0.1.0-draft", id: api.GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID, file: "history/generated-documentation-binding-0.1.0-draft.schema.json" }
 ] as const;
 
@@ -65,9 +69,13 @@ describe("source-linkage constant and schema surface", () => {
     expect(entry.value).toEqual(distributed);
   });
   it("pins both binding map-linkage and minimum-consumer versions independently", () => {
-    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.0.0");
+    // <lang><zh-CN>当前映射schema只声明同代绑定；历史配对由各自原字节schema单独验证，不在新版根上混用。</zh-CN><en>The current map schema declares only its matching binding generation; historical pairs remain in their own byte-preserved schemas.</en></lang>
+    expect(api.DOC_SOURCE_MAP_JSON_SCHEMA.$defs.generatedBindingSidecar.properties.contractVersion).toEqual({ const: "0.3.0-draft" });
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.1.0");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.0.0");
     expect(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("0.1.0-draft");
-    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.compatibility.properties.minimumConsumerContractVersion.const).toBe("0.2.0-draft");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.compatibility.properties.minimumConsumerContractVersion.const).toBe("0.3.0-draft");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.$defs.compatibility.properties.minimumConsumerContractVersion.const).toBe("0.2.0-draft");
     expect(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.$defs.compatibility.properties.minimumConsumerContractVersion.const).toBe("0.1.0-draft");
   });
   it.each(schemas)("documents shared runtime mutability and restores it: $name", entry => {
@@ -112,13 +120,15 @@ describe("source-linkage constant and schema surface", () => {
     first.$defs.nonEmptyString.minLength = 42;
     expect((getHiaSchema(entry.id)! as Record<string, any>).$defs.nonEmptyString.minLength).toBe(1);
     expect(entry.value.$defs.nonEmptyString.minLength).toBe(1);
-    expect(listHiaSchemas().find(schema => schema.$id === entry.id)?.$id).toBe(entry.name === "legacy-binding" ? undefined : entry.id);
+    expect(listHiaSchemas().find(schema => schema.$id === entry.id)?.$id).toBe(entry.name === "legacy-binding" || entry.name === "previous-binding" ? undefined : entry.id);
   });
   it("keeps current unversioned keys separate from exact historical ids", () => {
     expect(getHiaSchema("doc-source-map")).toEqual(api.DOC_SOURCE_MAP_JSON_SCHEMA);
     expect(getHiaSchema("generated-documentation-binding")).toEqual(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA);
+    expect(getHiaSchema(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID)).toEqual(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA);
+    expect(getHiaSchema("https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json")).toMatchObject({ properties: { contractVersion: { const: "1.0.0" } } });
     expect(getHiaSchema(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID)).toEqual(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA);
     expect(getHiaSchema(api.GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID + "?version=latest")).toBeUndefined();
-    expect(getHiaSchema(api.DOC_SOURCE_MAP_SCHEMA_ID.replace("1.0.0", "1.0.1"))).toBeUndefined();
+    expect(getHiaSchema(api.DOC_SOURCE_MAP_SCHEMA_ID.replace("1.1.0", "1.1.1"))).toBeUndefined();
   });
 });

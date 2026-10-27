@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.3.0-draft.schema.json",
   "type": "object",
   "required": [
     "contract",
@@ -22,7 +22,7 @@
       "const": "generated-documentation-binding"
     },
     "contractVersion": {
-      "const": "0.2.0-draft"
+      "const": "0.3.0-draft"
     },
     "id": {
       "$ref": "#/$defs/nonEmptyString"
@@ -149,12 +149,38 @@
         }
       }
     },
+    "rangeConvention": {
+      "type": "object",
+      "required": [
+        "endBoundary",
+        "columnUnit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "endBoundary": {
+          "enum": [
+            "inclusive",
+            "exclusive",
+            "unknown"
+          ]
+        },
+        "columnUnit": {
+          "enum": [
+            "utf16-code-unit",
+            "unicode-code-point",
+            "byte",
+            "unknown"
+          ]
+        }
+      }
+    },
     "sourceRef": {
       "type": "object",
       "required": [
         "sourceId",
         "range",
-        "rangeSource"
+        "rangeSource",
+        "rangeConvention"
       ],
       "additionalProperties": false,
       "properties": {
@@ -174,8 +200,52 @@
             "heuristic",
             "unresolved"
           ]
+        },
+        "rangeConvention": {
+          "$ref": "#/$defs/rangeConvention"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "rangeConvention": {
+                "properties": {
+                  "columnUnit": {
+                    "not": {
+                      "const": "unknown"
+                    }
+                  }
+                },
+                "required": [
+                  "columnUnit"
+                ]
+              }
+            },
+            "required": [
+              "rangeConvention"
+            ]
+          },
+          "then": {
+            "properties": {
+              "range": {
+                "properties": {
+                  "start": {
+                    "required": [
+                      "column"
+                    ]
+                  },
+                  "end": {
+                    "required": [
+                      "column"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "scope": {
       "type": "object",
@@ -865,7 +935,7 @@
           "const": "doc-source-map"
         },
         "contractVersion": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         },
         "docSourceMapId": {
           "$ref": "#/$defs/nonEmptyString"
@@ -891,7 +961,7 @@
       "additionalProperties": false,
       "properties": {
         "minimumConsumerContractVersion": {
-          "const": "0.2.0-draft"
+          "const": "0.3.0-draft"
         },
         "unknownFieldPolicy": {
           "const": "ignore-unknown-optional-fields"

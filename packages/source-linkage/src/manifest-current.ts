@@ -3,7 +3,7 @@
  * @lang zh-CN 新版映射的必要结构和来源模型B约束；历史宽输入不经过此附加检查。
  * @lang en Required structure and model-B constraints for current maps; legacy permissive inputs bypass these additional checks.
  */
-import { DOC_SOURCE_MAP_CONTRACT_VERSION, DOC_SOURCE_MAP_RANGE_SOURCES } from "./constants.js";
+import { DOC_SOURCE_MAP_CONTRACT_VERSION, DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION, DOC_SOURCE_MAP_RANGE_SOURCES, DOC_SOURCE_MAP_END_BOUNDARIES, DOC_SOURCE_MAP_COLUMN_UNITS } from "./constants.js";
 import type { DocSourceMapInputIssue } from "./manifest-input.js";
 
 /** @lang zh-CN 预检后的对象视图，仅供结构访问。 @lang en Object view after preflight, for structural access only. */
@@ -15,7 +15,7 @@ type Node = Record<string, unknown>;
  * @returns <lang><zh-CN>静态问题数组；旧版本返回空数组。</zh-CN><en>Static issue array; empty for legacy versions.</en></lang>
  */
 export function collectCurrentDocSourceMapIssues(value: Node): DocSourceMapInputIssue[] {
-  if (value.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION) return [];
+  if (value.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && value.contractVersion !== DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION) return [];
   // <lang><zh-CN>所有路径仅包含固定字段和下标；错误不回显私有正文。</zh-CN><en>All paths contain fixed fields and indices only; errors never echo private bodies.</en></lang>
   const issues: DocSourceMapInputIssue[] = [];
   /** @lang zh-CN 按schema要求确认自有必填项，错型由共享字段检查补充。 @lang en Confirms own required fields from the schema; shared field checks handle wrong types. */
@@ -33,6 +33,29 @@ export function collectCurrentDocSourceMapIssues(value: Node): DocSourceMapInput
     if (Object.hasOwn(node, "rangeSourceDetail") && (typeof node.rangeSourceDetail !== "string" || !/\S/u.test(node.rangeSourceDetail))) issues.push({ target: `${target}.rangeSourceDetail`, message: "Provenance detail must be a nonblank string." });
     if (node.rangeSource === "unresolved" && node.confidence !== "none") issues.push({ target: `${target}.confidence`, message: "Unresolved provenance requires confidence none." });
   };
+  /** @lang zh-CN 只对1.1.0的带范围来源引用执行精度约定，旧1.0.0按原校验规则读取。 @lang en Applies precision conventions only to 1.1.0 source references with ranges; 1.0.0 retains its original admission rules. */
+  const convention = (node: Node, target: string): void => {
+    if (value.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION) return;
+    const hasRange = Object.hasOwn(node, "range");
+    const hasConvention = Object.hasOwn(node, "rangeConvention");
+    if (hasRange !== hasConvention) {
+      issues.push({ target: `${target}.rangeConvention`, message: "Current range convention must appear exactly when a source range is declared." });
+      return;
+    }
+    if (!hasConvention) return;
+    const declared = node.rangeConvention;
+    if (!object(declared) || Object.getOwnPropertyNames(declared).sort().join(",") !== "columnUnit,endBoundary"
+      || !(DOC_SOURCE_MAP_END_BOUNDARIES as readonly unknown[]).includes(declared.endBoundary)
+      || !(DOC_SOURCE_MAP_COLUMN_UNITS as readonly unknown[]).includes(declared.columnUnit)) {
+      issues.push({ target: `${target}.rangeConvention`, message: "Current range convention requires supported endpoint and column-unit values." });
+      return;
+    }
+    // <lang><zh-CN>已知列单位必须有两个明确端点列；缺列的旧式范围只可标为unknown。</zh-CN><en>A known column unit requires both endpoint columns; ranges missing columns can only declare unknown.</en></lang>
+    if (declared.columnUnit !== "unknown" && (!object(node.range) || !object(node.range.start) || !object(node.range.end)
+      || !Object.hasOwn(node.range.start, "column") || !Object.hasOwn(node.range.end, "column"))) {
+      issues.push({ target: `${target}.rangeConvention.columnUnit`, message: "Known column units require both range endpoint columns." });
+    }
+  };
   required(value, "", ["contract", "contractVersion", "id", "producer", "artifacts", "sources", "sourceMaps", "chains", "entries", "privacy", "diagnostics"]);
   if (object(value.producer)) required(value.producer, "producer", ["name", "version"]);
   if (object(value.privacy)) required(value.privacy, "privacy", ["sourcesContentPolicy"]);
@@ -46,7 +69,8 @@ export function collectCurrentDocSourceMapIssues(value: Node): DocSourceMapInput
   });
   items(value, "entries", (node, target) => {
     required(node, target, ["id", "kind", "sourceRefs", "artifactRefs", "diagnostics"]);
-    for (const key of ["sourceRefs", "artifactRefs"]) items(node, key, quality, target);
+    items(node, "sourceRefs", (reference, location) => { quality(reference, location); convention(reference, location); }, target);
+    items(node, "artifactRefs", quality, target);
     items(node, "generatedBindingRefs", (ref, location) => required(ref, location, ["bindingId", "sidecarId"]), target);
   });
   return issues;

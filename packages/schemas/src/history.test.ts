@@ -14,10 +14,12 @@ import { getHiaSchema, HIA_SCHEMA_CATALOG, HIA_SCHEMA_PUBLIC_BASE_URL } from "./
 // <lang><zh-CN>期望摘要独立于可编辑索引，固定首次迁移前已分发的原始文件。</zh-CN><en>Expected digests are independent of the editable index and pin the distributed files before the first migration.</en></lang>
 const pinnedDigests: Record<string, string> = {
   "generated-documentation-binding-0.1.0-draft.schema.json": "6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7",
+  "generated-documentation-binding-0.2.0-draft.schema.json": "474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b",
   "documentation-profile-0.1.0-draft.schema.json": "ddcc684a742da21c898965885a28989b33f2ccaa9f610943b48f77c7be0476a8",
   "documentation-producer-0.1.0-draft.schema.json": "c7ca78e4fc904b4cad638a430b881cd08a3a2eee84550a7725bed2e2c03e898a",
   "documentation-producer-result-0.1.0-draft.schema.json": "f9289c91ceebcf5b75863e1ad492371692edc18e21c44bdbe71de3ec411f6a66",
   "doc-source-map-0.1.0-draft.schema.json": "26981fe51e91fad06b191a6bed0ee9e17e862542b1e95951a93a30f3f485aa3d",
+  "doc-source-map-1.0.0.schema.json": "6dddbb5151e5d74f62a21bc0bfe217fb1f309402bc594d0dd0e5e062b64786c3",
   "documentation-presentation-profile-0.1.0-draft.schema.json": "a860db4f272feec7a9e846ccf8b6e4e8d5f472c42b994a41e4dc676c53d40291",
   "documentation-ui-locale-completeness-0.1.0-draft.schema.json": "49c0a2da49a27207098c342c172a8f3aa5bdb06c36be665fd1afbfd8cababfa2",
   "hia-document-0.2.0.schema.json": "29ba249908238edf8eb2795e64d70528db8e5e7e272560d8d1a6c3a0d80f3c1e",
@@ -64,10 +66,10 @@ describe("historical schema distribution", () => {
       entry.schemaId = oldId;
     }
   });
-  it("preserves nine canonical identities, original bytes and defensive lookup copies", async () => {
+  it("preserves eleven canonical identities, original bytes and defensive lookup copies", async () => {
     // <lang><zh-CN>读取实际源码快照，并与独立固定摘要和查询结果逐条比较。</zh-CN><en>Read actual source snapshots and compare each against independent pinned digests and lookup results.</en></lang>
     const snapshots = await readHistoricalSchemas(path.join(__dirname, "history"), HIA_SCHEMA_PUBLIC_BASE_URL);
-    expect(snapshots).toHaveLength(9);
+    expect(snapshots).toHaveLength(11);
     expect(Object.keys(pinnedDigests).sort()).toEqual(snapshots.map(({ entry }) => entry.fileName).sort());
     for (const { entry, bytes } of snapshots) {
       expect(entry.sha256).toBe(pinnedDigests[entry.fileName]);

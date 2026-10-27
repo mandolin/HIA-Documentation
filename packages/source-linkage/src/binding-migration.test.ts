@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 已确认0.2.0-draft绑定整组迁移的版本、闭包、保真与原子失败回归。
- * @lang en Version/closure/losslessness/atomic-failure regressions for the confirmed 0.2.0-draft binding bundle migration.
+ * @lang zh-CN 三代绑定整组迁移的精确配对、逐引用范围证据、保真与原子失败回归。
+ * @lang en Exact pairings, per-reference range evidence, losslessness and atomic-failure regressions for three binding-bundle generations.
  */
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -14,7 +14,11 @@ function fixture(): any {
   return { docSourceMap: pair.documentMap, bindingSidecars: [pair.bindingSidecar] };
 }
 /** @lang zh-CN 只通过公共根调用迁移，初始缺失API应成为真实红例。 @lang en Calls migration through the public root only, making the initially missing API a genuine red case. */
-function migrate(value: unknown): any { return api.migrateGeneratedDocumentationBindingBundle(value); }
+function migrate(value: unknown, options: any = {}): any { return api.migrateGeneratedDocumentationBindingBundle(value, options); }
+/** @lang zh-CN 公共旧草案只升到历史0.2/1.0配对。 @lang en The public legacy draft advances only to the historical 0.2/1.0 pair by default. */
+function previousPair(): any { return migrate(fixture()).bundle; }
+/** @lang zh-CN 合成绑定引用的独立外部范围证据，不从映射索引推断。 @lang en Separate external range evidence for the synthetic binding reference, never inferred from the map index. */
+function bindingEvidence(): any[] { return [{ sidecarIndex: 0, bindingIndex: 0, kind: "sourceIntent", rangeConvention: { endBoundary: "inclusive", columnUnit: "utf16-code-unit" } }]; }
 /** @lang zh-CN 失败必须没有局部bundle或输入正文回显。 @lang en Failures must contain neither partial bundles nor reflected input bodies. */
 function expectRefused(value: unknown): void {
   const result = migrate(value);
@@ -57,6 +61,114 @@ describe("generated binding coordinated migration", () => {
     expect(next.bundle.bindingSidecars[0]).not.toBe(first.bindingSidecars[0]);
   });
 
+  it("preserves the published 0.2/1.0 pair by default and upgrades only with explicit binding evidence", () => {
+    const prior = previousPair();
+    const copied = migrate(prior);
+    expect(copied.status).toBe("already-current");
+    expect(copied.bundle).toEqual(prior);
+    expect(copied.bundle.docSourceMap).not.toBe(prior.docSourceMap);
+    expect(copied.bundle.bindingSidecars[0]).not.toBe(prior.bindingSidecars[0]);
+    const before = JSON.stringify(prior);
+    const missing = migrate(prior, { targetVersion: "0.3.0-draft" });
+    expect(missing.status).toBe("invalid");
+    expect(Object.hasOwn(missing, "bundle")).toBe(false);
+    const upgraded = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() });
+    expect(upgraded.status).toBe("migrated");
+    expect(upgraded.bundle.docSourceMap.contractVersion).toBe("1.1.0");
+    expect(upgraded.bundle.docSourceMap.generatedBindingSidecars[0].contractVersion).toBe("0.3.0-draft");
+    expect(upgraded.bundle.bindingSidecars[0].contractVersion).toBe("0.3.0-draft");
+    expect(upgraded.bundle.bindingSidecars[0].docSourceMapLinkage.contractVersion).toBe("1.1.0");
+    expect(upgraded.bundle.bindingSidecars[0].compatibility.minimumConsumerContractVersion).toBe("0.3.0-draft");
+    expect(upgraded.bundle.bindingSidecars[0].bindings[0].sourceIntent.sourceRef.rangeConvention).toEqual({ endBoundary: "inclusive", columnUnit: "utf16-code-unit" });
+    expect(api.validateGeneratedDocumentationBinding(upgraded.bundle.bindingSidecars[0])).toEqual([]);
+    expect(migrate(upgraded.bundle).status).toBe("already-current");
+    expect(JSON.stringify(prior)).toBe(before);
+  });
+
+  it("can explicitly upgrade the exact legacy pair directly while keeping historical input unchanged", () => {
+    const value = fixture();
+    const before = JSON.stringify(value);
+    const upgraded = migrate(value, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() });
+    expect(upgraded.status).toBe("migrated");
+    expect(upgraded.bundle.docSourceMap.contractVersion).toBe("1.1.0");
+    expect(upgraded.bundle.bindingSidecars[0].contractVersion).toBe("0.3.0-draft");
+    expect(upgraded.bundle.docSourceMap.entries[0].artifactRefs[0].rangeSource).toBe("adapter");
+    expect(JSON.stringify(value)).toBe(before);
+  });
+
+  it("allows an explicit empty sidecar set when the map declares no binding references", () => {
+    const value = fixture();
+    value.docSourceMap.generatedBindingSidecars = [];
+    value.docSourceMap.entries[0].generatedBindingRefs = [];
+    value.bindingSidecars = [];
+    expect(migrate(value)).toMatchObject({ status: "migrated", bundle: { docSourceMap: { contractVersion: "1.0.0" }, bindingSidecars: [] } });
+    expect(migrate(value, { targetVersion: "0.3.0-draft" })).toMatchObject({ status: "migrated", bundle: { docSourceMap: { contractVersion: "1.1.0" }, bindingSidecars: [] } });
+  });
+
+  it("requires independent evidence for every composition source reference", () => {
+    const value = fixture();
+    value.bindingSidecars[0].bindings[0].composition = {
+      relation: "composition", mergePolicy: "ordered-contribution",
+      contributions: [{ id: "contribution:synthetic", mode: "append", order: 0,
+        sourceRef: structuredClone(value.bindingSidecars[0].bindings[0].sourceIntent.sourceRef), overrideContext: { kind: "include" } }]
+    };
+    const prior = migrate(value).bundle;
+    const partial = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() });
+    expect(partial.status).toBe("invalid");
+    expect(Object.hasOwn(partial, "bundle")).toBe(false);
+    const evidence = [...bindingEvidence(), { sidecarIndex: 0, bindingIndex: 0, kind: "contribution", contributionIndex: 0, rangeConvention: { endBoundary: "unknown", columnUnit: "unknown" } }];
+    const upgraded = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: evidence });
+    expect(upgraded.status).toBe("migrated");
+    expect(upgraded.bundle.bindingSidecars[0].bindings[0].composition.contributions[0].sourceRef.rangeConvention).toEqual({ endBoundary: "unknown", columnUnit: "unknown" });
+    expect(api.validateGeneratedDocumentationBinding(upgraded.bundle.bindingSidecars[0])).toEqual([]);
+  });
+
+  it("requires separate map and binding range evidence when both older artifacts carry ranged source references", () => {
+    const value = fixture();
+    value.docSourceMap.entries[0].sourceRefs.push({ sourceId: "source:synthetic", range: { start: { line: 1, column: 1 }, end: { line: 3, column: 4 } }, rangeSource: "parser", confidence: "high" });
+    const prior = migrate(value).bundle;
+    expect(prior.docSourceMap.contractVersion).toBe("1.0.0");
+    const bindingOnly = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() });
+    expect(bindingOnly.status).toBe("invalid");
+    expect(Object.hasOwn(bindingOnly, "bundle")).toBe(false);
+    const mapOnly = migrate(prior, { targetVersion: "0.3.0-draft", rangeEvidence: [{ entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "exclusive", columnUnit: "unicode-code-point" } }] });
+    expect(mapOnly.status).toBe("invalid");
+    const complete = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence(), rangeEvidence: [{ entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "exclusive", columnUnit: "unicode-code-point" } }] });
+    expect(complete.status).toBe("migrated");
+    expect(complete.bundle.docSourceMap.entries[0].sourceRefs[0].rangeConvention).toEqual({ endBoundary: "exclusive", columnUnit: "unicode-code-point" });
+    expect(complete.bundle.bindingSidecars[0].bindings[0].sourceIntent.sourceRef.rangeConvention).toEqual({ endBoundary: "inclusive", columnUnit: "utf16-code-unit" });
+  });
+
+  it("rejects 0.3 binding source references without a valid convention or known-unit columns", () => {
+    const current = migrate(previousPair(), { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() }).bundle;
+    const sidecar = current.bindingSidecars[0];
+    expect(api.validateGeneratedDocumentationBinding(sidecar)).toEqual([]);
+    delete sidecar.bindings[0].sourceIntent.sourceRef.rangeConvention;
+    expect(api.validateGeneratedDocumentationBinding(sidecar).some((diagnostic: any) => diagnostic.severity === "error")).toBe(true);
+    sidecar.bindings[0].sourceIntent.sourceRef.rangeConvention = { endBoundary: "unknown", columnUnit: "utf16-code-unit" };
+    delete sidecar.bindings[0].sourceIntent.sourceRef.range.start.column;
+    expect(api.validateGeneratedDocumentationBinding(sidecar).some((diagnostic: any) => diagnostic.severity === "error")).toBe(true);
+    sidecar.bindings[0].sourceIntent.sourceRef.range.start.column = 1;
+    Object.defineProperty(sidecar.bindings[0].sourceIntent.sourceRef.rangeConvention, "hidden", { value: "synthetic-private" });
+    expect(api.validateGeneratedDocumentationBinding(sidecar).some((diagnostic: any) => diagnostic.severity === "error")).toBe(true);
+  });
+
+  it.each(["missing", "duplicate", "extra", "accessor", "hidden-extra", "hidden-convention", "wrong-target"])("atomically refuses malformed binding evidence: %s", (kind) => {
+    const prior = previousPair();
+    const evidence = bindingEvidence();
+    if (kind === "missing") evidence.length = 0;
+    if (kind === "duplicate") evidence.push(structuredClone(evidence[0]));
+    if (kind === "extra") evidence.push({ sidecarIndex: 0, bindingIndex: 0, kind: "contribution", contributionIndex: 0, rangeConvention: { endBoundary: "unknown", columnUnit: "unknown" } });
+    if (kind === "accessor") Object.defineProperty(evidence[0], "rangeConvention", { get() { throw new Error("synthetic-private"); } });
+    if (kind === "hidden-extra") Object.defineProperty(evidence[0], "hidden", { value: "synthetic-private" });
+    if (kind === "hidden-convention") Object.defineProperty(evidence[0].rangeConvention, "hidden", { value: "synthetic-private" });
+    const options = kind === "wrong-target" ? { bindingRangeEvidence: evidence } : { targetVersion: "0.3.0-draft", bindingRangeEvidence: evidence };
+    const result = migrate(prior, options);
+    expect(result.status).toBe("invalid");
+    expect(Object.hasOwn(result, "bundle")).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("synthetic-private");
+  });
+
   it("retains exact legacy reader and standalone-map refusal", () => {
     const value = fixture();
     const index = api.createDocSourceMapIndex(value.docSourceMap);
@@ -92,6 +204,13 @@ describe("generated binding coordinated migration", () => {
     expectRefused(value);
   });
 
+  it("rejects the newer map with a 0.2 binding even if declaration and backlink are edited together", () => {
+    const value = previousPair();
+    value.docSourceMap.contractVersion = "1.1.0";
+    value.bindingSidecars[0].docSourceMapLinkage.contractVersion = "1.1.0";
+    expect(migrate(value).status).toBe("invalid");
+  });
+
   it("refuses unknown provenance without mutating either original", () => {
     const value = fixture();
     value.docSourceMap.entries[0].artifactRefs[0].rangeSource = "synthetic-private-origin";
@@ -114,11 +233,16 @@ describe("generated binding coordinated migration", () => {
   });
 
   it("keeps historical/current schemas independent with exact paired const values", () => {
-    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.properties.contractVersion.const).toBe("0.2.0-draft");
-    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.0.0");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.properties.contractVersion.const).toBe("0.3.0-draft");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.1.0");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.sourceRef.required).toContain("rangeConvention");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.properties.contractVersion.const).toBe("0.2.0-draft");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("1.0.0");
+    expect(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.$defs.sourceRef.required).not.toContain("rangeConvention");
     expect(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.properties.contractVersion.const).toBe("0.1.0-draft");
     expect(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.$defs.docSourceMapLinkage.properties.contractVersion.const).toBe("0.1.0-draft");
     expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.binding).not.toBe(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA.$defs.binding);
+    expect(api.GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA.$defs.binding).not.toBe(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA.$defs.binding);
   });
 
   it("preserves exact historical schema bytes", () => {
@@ -126,6 +250,9 @@ describe("generated binding coordinated migration", () => {
     // <lang><zh-CN>旧公开文件使用编译器四空格格式，不能用源对象重新序列化冒充线上原字节。</zh-CN><en>The old public file uses compiler four-space formatting; reserializing the source object cannot substitute for original online bytes.</en></lang>
     expect(createHash("sha256").update(bytes).digest("hex")).toBe("6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7");
     expect(JSON.parse(bytes)).toEqual(api.GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA);
+    const published = readFileSync(new URL("../../schemas/src/history/generated-documentation-binding-0.2.0-draft.schema.json", import.meta.url), "utf8");
+    expect(createHash("sha256").update(published).digest("hex")).toBe("474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b");
+    expect(JSON.parse(published)).toEqual(api.GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA);
   });
 
   it("migrates all explicitly supplied sidecars in input order", () => {
@@ -145,7 +272,9 @@ describe("generated binding coordinated migration", () => {
   });
 
   it("propagates actual legacy/current versions through the safe host projection", () => {
-    for (const value of [fixture(), migrate(fixture()).bundle]) {
+    const prior = previousPair();
+    const current = migrate(prior, { targetVersion: "0.3.0-draft", bindingRangeEvidence: bindingEvidence() }).bundle;
+    for (const value of [fixture(), prior, current]) {
       const index = api.createGeneratedDocumentationBindingIndex(value.bindingSidecars[0], { docSourceMapIndex: api.createDocSourceMapIndex(value.docSourceMap) });
       expect(api.createGeneratedDocumentationBindingHostProjection(index)).toMatchObject({ status: "available", bindingContractVersion: value.bindingSidecars[0].contractVersion, contractVersion: "0.1.0-draft" });
     }

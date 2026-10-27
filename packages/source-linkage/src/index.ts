@@ -7,7 +7,7 @@ import path from "node:path";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { collectDocSourceMapInputIssues } from "./manifest-input.js";
 import { collectCurrentDocSourceMapIssues } from "./manifest-current.js";
-import { prepareDocSourceMapMigration } from "./manifest-migration.js";
+import { prepareDocSourceMapMigration, snapshotDocSourceMapRangeEvidence, type DocSourceMapRangeEvidence } from "./manifest-migration.js";
 import { createBodyFreeOrdinaryTraceMap } from "./ordinary-input.js";
 import { prepareSourceLinkagePathOptions } from "./path-options.js";
 import {
@@ -36,24 +36,37 @@ import {
 import {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_COLUMN_UNITS,
+  DOC_SOURCE_MAP_END_BOUNDARIES,
   DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
 } from "./constants.js";
+import type { DocSourceMapColumnUnit, DocSourceMapRangeConvention } from "./constants.js";
 
 export {
   DOC_SOURCE_MAP_CONTRACT,
   DOC_SOURCE_MAP_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION,
+  DOC_SOURCE_MAP_COLUMN_UNITS,
+  DOC_SOURCE_MAP_END_BOUNDARIES,
   DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION,
   DOC_SOURCE_MAP_RANGE_SOURCES,
   type DocSourceMapContractVersion,
+  type DocSourceMapColumnUnit,
+  type DocSourceMapEndBoundary,
+  type DocSourceMapRangeConvention,
   type DocSourceMapRangeSource,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION,
   type GeneratedDocumentationBindingContractVersion
 } from "./constants.js";
+export { type DocSourceMapRangeEvidence } from "./manifest-migration.js";
 export {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_ID,
@@ -63,12 +76,20 @@ export {
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID,
   GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_JSON_SCHEMA,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_JSON_SCHEMA,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_SCHEMA_ID,
   validateGeneratedDocumentationBinding,
   type GeneratedDocumentationBindingValidationOptions
 } from "./generated-documentation-binding.js";
-export { migrateGeneratedDocumentationBindingBundle, type GeneratedDocumentationBindingMigrationBundle, type GeneratedDocumentationBindingBundleMigrationResult } from "./binding-migration.js";
+export {
+  migrateGeneratedDocumentationBindingBundle,
+  type GeneratedDocumentationBindingMigrationBundle,
+  type GeneratedDocumentationBindingBundleMigrationOptions,
+  type GeneratedDocumentationBindingBundleMigrationResult,
+  type GeneratedBindingRangeEvidence
+} from "./binding-migration.js";
 export {
   createGeneratedDocumentationBindingIndex,
   findGeneratedBindingsForDocSourceMapEntry,
@@ -257,8 +278,10 @@ export interface DocSourceMapSourceLink {
   language?: string;
   /** @lang zh-CN 已声明来源节点的非空路径原值，不做查询规范化；未知来源可省略，不授予文件访问。 @lang en Original nonempty declared-source path without query normalization; optional for unknown sources and granting no file access. */
   path?: string;
-  /** @lang zh-CN 独立复制的一基起止坐标，省略列保留省略；不重新定义端点语义，缺失范围仍可能linked。 @lang en Independently copied one-based endpoints, preserving omitted columns; no endpoint semantics are redefined and a missing range may still be linked. */
+  /** @lang zh-CN 独立复制的一基起止坐标，省略列保留省略；1.1.0由rangeConvention声明端点语义，旧版保持包含式查询。缺失范围仍可能linked。 @lang en Independently copied one-based endpoints, preserving omitted columns; 1.1.0 declares endpoint semantics through rangeConvention while older queries remain inclusive. Missing ranges may still be linked. */
   range?: HiaSourceRange;
+  /** @lang zh-CN 1.1.0范围逐引用声明的端点与列单位，独立复制；旧版没有此精度证明。 @lang en Independently copied per-reference endpoint and column unit for 1.1.0 ranges; older versions have no such precision proof. */
+  rangeConvention?: DocSourceMapRangeConvention;
   /** @lang zh-CN 引用层来源标签；当前版通用类别、精确旧reader可含具体工具来源，unresolved排除该链接的linked资格。 @lang en Reference provenance label: current common category or concrete origin from the exact legacy reader; unresolved excludes linked eligibility. */
   rangeSource?: string;
   /** @lang zh-CN 引用自身声明的非空白具体来源文本，不从中推导类别、置信度或权限。 @lang en Nonblank concrete origin declared on this reference, inferring no category, confidence or permissions. */
@@ -311,8 +334,10 @@ export interface DocSourceMapQuery {
   selector?: string;
   /** @lang zh-CN 非空白源码路径，不读取文件。 @lang en Nonblank source path; no file is read. */
   sourcePath?: string;
-  /** @lang zh-CN 一基安全整数位置，省略列为1；仅在提供源码路径时筛选。 @lang en One-based safe integer position, defaulting omitted columns to one; filters only with a source path. */
+  /** @lang zh-CN 一基安全整数位置；旧版省略列为1，新版精确查询要求显式列。仅在提供源码路径时筛选。 @lang en One-based safe integer position; older versions default omitted columns to one, while current exact lookup requires an explicit column. Filters only with a source path. */
   position?: HiaSourcePosition;
+  /** @lang zh-CN 1.1.0位置查询的调用方已知列单位；缺省或unknown不产生精确命中，不执行单位换算。 @lang en Caller-known column unit for 1.1.0 positional lookup; omission or unknown gives no exact hit, without unit conversion. */
+  columnUnit?: DocSourceMapColumnUnit;
   /** @lang zh-CN 非空白符号身份，精确匹配不裁剪。 @lang en Nonblank symbol identity, matched exactly without trimming. */
   symbolId?: string;
   /** @lang zh-CN 非空白符号种类，精确匹配。 @lang en Nonblank symbol kind, matched exactly. */
@@ -448,9 +473,11 @@ export interface SourceLinkedLookupQuery {
   generatedPath?: string;
   /** @lang zh-CN 可选一基安全整数生成位置，省略列为1。 @lang en Optional one-based safe integer generated position, defaulting an omitted column to one. */
   generatedPosition?: HiaSourcePosition;
-  /** @lang zh-CN 可选一基安全整数原始位置，配合原始路径时启用反向查找。 @lang en Optional one-based safe integer original position, enabling reverse lookup when paired with the original path. */
+  /** @lang zh-CN 可选一基安全整数原始位置，配合原始路径时启用反向查找；1.1.0语义命中还要求显式列与originalColumnUnit。 @lang en Optional one-based safe integer original position enabling reverse lookup with its source path; 1.1.0 semantic hits also require an explicit column and originalColumnUnit. */
   originalPosition?: HiaSourcePosition;
-  /** @lang zh-CN 可选非空白原始路径，缺原始位置时保留既有未启用行为。 @lang en Optional nonblank original path, retaining existing inactive behavior without an original position. */
+  /** @lang zh-CN 联合查询向1.1.0语义映射传递的原始列单位；未声明时不得从普通map推断。 @lang en Original column unit passed to 1.1.0 semantic lookup; it is never inferred from an ordinary map. */
+  originalColumnUnit?: DocSourceMapColumnUnit;
+  /** @lang zh-CN 可选非空白原始路径；旧版缺原始位置时仍未启用，新版1.1.0则作为来源元数据筛选，并须与生成位置解析路径一致。 @lang en Optional nonblank original path; older maps leave it inactive without an original position, while 1.1.0 uses it as a source metadata filter and checks it against a resolved generated-position path. */
   originalSourcePath?: string;
   /** @lang zh-CN 可选非空白精确选择器，不执行选择器。 @lang en Optional nonblank exact selector; selectors are not executed. */
   selector?: string;
@@ -564,10 +591,10 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   // <lang><zh-CN>contractVersion 是版本兼容性判定的可选文本，不把非字符串值转换为可用版本。</zh-CN><en>contractVersion is optional text for compatibility decisions; non-string values are not coerced into usable versions.</en></lang>
   const contractVersion = stringValue(value.contractVersion);
   // <lang><zh-CN>版本不匹配时继续建立索引，以便调用方同时获得结构问题与 unsupported-version 状态。</zh-CN><en>Continue building when versions differ so callers receive both structural issues and unsupported-version status.</en></lang>
-  if (contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION) {
+  if (contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION) {
     diagnostics.push(createSourceLinkageDiagnostic(
       "DOC_SOURCE_MAP_UNSUPPORTED_VERSION",
-      `doc-source-map contractVersion must be ${DOC_SOURCE_MAP_CONTRACT_VERSION} or ${DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION}.`,
+      `doc-source-map contractVersion must be ${DOC_SOURCE_MAP_CONTRACT_VERSION}, ${DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION} or ${DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION}.`,
       contractVersion ? "warning" : "error",
       preparedOptions.path,
       {
@@ -608,7 +635,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   collectPathDiagnostics(diagnostics, localeDiscoverySidecars, preparedOptions.path, "locale-discovery sidecar");
   // <lang><zh-CN>随后核验 contract reference、sidecar 声明与 sourcesContent policy，保持普通 map 只含 reference 的不变量。</zh-CN><en>Then validate contract references, sidecar declarations, and sourcesContent policy, preserving the invariant that ordinary maps hold references only.</en></lang>
   collectContractRefDiagnostics(diagnostics, value.artifacts, preparedOptions.path);
-  collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, preparedOptions.path);
+  collectGeneratedBindingSidecarDiagnostics(diagnostics, value.generatedBindingSidecars, contractVersion, preparedOptions.path);
   collectLocaleResolutionSidecarDiagnostics(diagnostics, value.localeResolutionSidecars, preparedOptions.path);
   collectLocaleDiscoverySidecarDiagnostics(diagnostics, value.localeDiscoverySidecars, preparedOptions.path);
   collectSourcesContentDiagnostics(diagnostics, value.sources, sourcesContentPolicy, preparedOptions.path);
@@ -617,7 +644,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
 
   // <lang><zh-CN>entries 只能从对象数组创建；每一项通过三张身份表解析 source、artifact 与 sidecar reference。</zh-CN><en>entries can be created only from an object array; each item resolves source, artifact, and sidecar references through the three identity maps.</en></lang>
   const entries = Array.isArray(value.entries)
-    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, preparedOptions.path))
+    ? value.entries.filter(isRecord).map((entry, index) => createIndexedEntry(entry, index, sourceById, artifactById, bindingSidecarById, diagnostics, contractVersion, preparedOptions.path))
     : [];
 
   // <lang><zh-CN>非数组 entries 必须显式诊断，而不是把缺失误报为零条有效 entry。</zh-CN><en>Non-array entries must be diagnosed explicitly rather than misreporting absence as zero valid entries.</en></lang>
@@ -633,7 +660,7 @@ export function createDocSourceMapIndex(value: unknown, options: DocSourceMapInd
   // <lang><zh-CN>hasErrors 汇总所有 error severity，是最终 invalid 状态的唯一硬条件。</zh-CN><en>hasErrors aggregates every error severity and is the sole hard condition for final invalid status.</en></lang>
   const hasErrors = diagnostics.some((diagnostic) => diagnostic.severity === "error");
   // <lang><zh-CN>unsupportedVersion 只在结构无错误时生效，避免覆盖更严重的 invalid 结论。</zh-CN><en>unsupportedVersion applies only when structure has no errors, avoiding replacement of the more severe invalid conclusion.</en></lang>
-  const unsupportedVersion = contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION && !hasErrors;
+  const unsupportedVersion = contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION && contractVersion !== DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION && !hasErrors;
 
   // <lang><zh-CN>id 是可选 manifest 身份；空或非字符串值不进入返回索引。</zh-CN><en>id is optional manifest identity; empty or non-string values do not enter the returned index.</en></lang>
   const id = stringValue(value.id);
@@ -680,12 +707,18 @@ export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexO
   return createDocSourceMapIndex(value, options).diagnostics;
 }
 
+/** @lang zh-CN 单工件迁移的路径与逐引用精度证据选项；证据仅供旧范围升1.1.0，不能授权读取源码。 @lang en Standalone migration options for diagnostic path and per-reference precision evidence; evidence only upgrades old ranges to 1.1.0 and grants no source-read authority. */
+export interface DocSourceMapMigrationOptions extends DocSourceMapIndexOptions {
+  /** @lang zh-CN 旧工件每个带范围来源引用的显式约定证据，按数组序号精确匹配；无范围时省略。 @lang en Explicit convention evidence for every older ranged source reference, matched by array ordinals; omit when no ranges exist. */
+  rangeEvidence?: readonly DocSourceMapRangeEvidence[];
+}
+
 /**
  * @lang zh-CN 单工件显式迁移的可写结果，factory成功返回新manifest，失败省略该自有属性，不改输入/磁盘。本接口是状态联合字段加可选记录，不是判别联合；人工构造仍可不配套，消费者须分别检查status、manifest存在和unknown字段，不能从类型推断公开安全。
  * @lang en Mutable standalone migration result: the factory returns a fresh manifest on success and omits that own property on refusal, without changing input/disk. This interface has a status-union field and an optional record rather than a discriminated union. Manually constructed values may be inconsistent; check status, manifest presence and unknown fields separately, without inferring publication safety from the type.
  */
 export interface DocSourceMapMigrationResult {
-  /** @lang zh-CN migrated表示精确旧版转当前版，already-current表示当前版独立复制；invalid/unsupported-version均无局部manifest。它是本次factory检查的快照，调用者修改可写结果/诊断后不会自动重算，也不是schema完整验证或公开授权。 @lang en migrated converts the exact legacy version, while already-current independently clones the current version; invalid/unsupported-version expose no partial manifest. This is a snapshot of factory checks, not automatically recomputed after caller edits to mutable results/diagnostics and not proof of complete schema validation or publication authority. */
+  /** @lang zh-CN migrated表示任一精确旧版凭必要证据升至1.1.0，already-current表示1.1.0独立复制；invalid/unsupported-version均无局部manifest。它是本次factory检查的快照，调用者修改可写结果/诊断后不会自动重算，也不是schema完整验证或公开授权。 @lang en migrated upgrades either exact older version to 1.1.0 with required evidence, while already-current independently clones 1.1.0; invalid/unsupported-version expose no partial manifest. This is a factory snapshot, not recomputed after caller edits and not proof of full schema validation or publication authority. */
   status: "migrated" | "already-current" | "invalid" | "unsupported-version";
   /**
    * @lang zh-CN factory成功时提供后置owner检查通过的新可写JSON图，跨输入/调用不共享可变节点，同一图内部共享关系保留。只复制可枚举string键，不保留原型/描述符、隐藏或Symbol扩展；保留开放JSON扩展、原诊断及显式获准正文，不自动脱敏。Record字段仍unknown，不能代替完整类型化工件或公开门禁；失败省略此属性。
@@ -700,18 +733,18 @@ export interface DocSourceMapMigrationResult {
 }
 
 /**
- * @lang zh-CN 显式将精确旧版映射转换为当前版，保留具体来源及开放JSON扩展；当前版返回独立复制品。
+ * @lang zh-CN 显式将精确旧版映射凭逐范围证据转换为1.1.0，保留具体来源及开放JSON扩展；1.1.0返回独立复制品。
  * 未知来源、信息冲突、不完整结构或隐私错误均拒绝，失败不返回局部产物。只消费调用方数据，不读取文件或sidecar、不写磁盘、不调用JSON hooks。
- * @lang en Explicitly converts an exact legacy map to the current version, retaining concrete origins and open JSON extensions; current inputs return independent clones.
+ * @lang en Explicitly converts an exact older map to 1.1.0 with per-range evidence, retaining concrete origins and open JSON extensions; 1.1.0 inputs return independent clones.
  * Unknown origins, information conflicts, incomplete structure or privacy errors are refused without partial artifacts. Consumes caller data only, without file/sidecar reads, disk writes or JSON hooks.
  * @remarks
  * @lang zh-CN 先取路径快照/检查原owner状态，再独立复制与明确来源转换，最后复核当前必要结构；旧reader可索引不保证可迁移。普通map未解析引用的warning可继续保留，成功不证明完整引用闭包。旧绑定关联须协调迁移；当前map的already-current独立复制不加载sidecar认证正文。chain、pointer和外部contractRef保持被动数据，获准正文/原诊断/扩展可保留；不是完整schema、公开安全或发布成功证明。
  * @lang en Snapshots path/checks original owner status, independently clones/converts explicit provenance, then revalidates current required structure; legacy index admission does not promise migration. Ordinary-map unresolved-reference warnings may remain, so success does not certify complete reference closure. Legacy binding associations require coordinated migration; already-current independent map cloning does not load/authenticate sidecar bodies. Chains, pointers and external contractRefs remain passive data, with admitted bodies/raw diagnostics/extensions retained; success proves neither complete schema validation, public safety nor publication.
  * @param value <lang><zh-CN>未知运行时输入，必须通过普通JSON和owner边界。</zh-CN><en>Unknown runtime input that must pass ordinary-JSON and owner boundaries.</en></lang>
- * @param options <lang><zh-CN>普通/null原型自有string诊断路径，默认空；迁移只投影一次，已知访问器/错型拒绝，不授予文件访问。</zh-CN><en>Plain/null-prototype own string diagnostic path, empty by default; migration projects once, rejects known accessors/wrong types and grants no file access.</en></lang>
+ * @param options <lang><zh-CN>普通/null原型自有string诊断路径与旧范围逐项证据，默认空；迁移在输入反射前复制，已知访问器/错型拒绝，不授予文件访问。</zh-CN><en>Plain/null-prototype own string diagnostic path and per-old-range evidence, empty by default; migration copies them before input reflection, rejects known accessors/wrong types and grants no file access.</en></lang>
  * @returns <lang><zh-CN>当前版独立容器或安全诊断；Proxy副作用、资源消耗和并发输入突变不受沙箱保证。</zh-CN><en>Independent current containers or safe diagnostics; proxy effects, resource exhaustion and concurrent input mutation are not sandboxed.</en></lang>
  */
-export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}): DocSourceMapMigrationResult {
+export function migrateDocSourceMap(value: unknown, options: DocSourceMapMigrationOptions = {}): DocSourceMapMigrationResult {
   // <lang><zh-CN>整个迁移仅投影一次原选项，前后索引校验只获得该独立快照。</zh-CN><en>Project original options once for the entire migration; before/after index validation receives this independent snapshot only.</en></lang>
   const preparedOptions = prepareSourceLinkagePathOptions(options);
   if (!preparedOptions) return { status: "invalid", diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", "Mapping options must contain an own string diagnostic path.", "error")] };
@@ -719,13 +752,24 @@ export function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOp
   const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): DocSourceMapMigrationResult => ({
     status, diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", message, "error", preparedOptions.path)]
   });
+  // <lang><zh-CN>输入图可能是带副作用的Proxy，必须在其反射前捕获证据描述符，失败不执行getter。</zh-CN><en>The input graph may be a side-effectful Proxy, so capture the evidence descriptor before reflecting it and never invoke getters.</en></lang>
+  let rangeEvidence: DocSourceMapRangeEvidence[] | undefined;
+  try {
+    const evidence = Object.getOwnPropertyDescriptor(options, "rangeEvidence");
+    if (evidence && !Object.hasOwn(evidence, "value")) return refused("Range evidence must be ordinary own data.");
+    rangeEvidence = snapshotDocSourceMapRangeEvidence(evidence?.value);
+    if (!rangeEvidence) return refused("Range evidence must be ordinary own data.");
+  } catch {
+    return refused("Range evidence must be ordinary own data.");
+  }
   // <lang><zh-CN>先运行既有普通JSON/版本/隐私门禁；未知版本从不按兼容范围猜测。</zh-CN><en>Run existing ordinary-JSON/version/privacy gates first; unknown versions are never guessed compatible.</en></lang>
   const before = createDocSourceMapIndex(value, preparedOptions);
   if (before.status === "unsupported-version") return refused("Migration requires an explicitly supported mapping version.", "unsupported-version");
   if (before.status !== "available" || !isRecord(value)) return refused("Mapping input must pass owner validation before migration.");
   try {
     // <lang><zh-CN>内部准备只复制和按明确映射转换，结果仍必须重新通过新版必要结构与语义检查。</zh-CN><en>Preparation only clones and converts explicit mappings; the result must still pass current required-structure and semantic checks.</en></lang>
-    const prepared = prepareDocSourceMapMigration(value);
+    // <lang><zh-CN>helper再验证并复制快照中的每项证据；不重读原选项。</zh-CN><en>The helper validates and copies each item from the snapshot without rereading the caller's options.</en></lang>
+    const prepared = prepareDocSourceMapMigration(value, { rangeEvidence });
     if (!prepared.manifest) return refused(prepared.issue ?? "Mapping could not be migrated losslessly.");
     const after = createDocSourceMapIndex(prepared.manifest, preparedOptions);
     if (after.status !== "available") return refused("Migrated mapping must satisfy current structure, provenance and privacy requirements.");
@@ -796,8 +840,11 @@ export function queryDocSourceMapIndex(index: DocSourceMapIndex, query: DocSourc
     };
   }
   // <lang><zh-CN>状态门禁先于筛选，避免版本 warning 或隐私 error 的索引仍返回可消费映射。</zh-CN><en>Gate by status before filtering so indexes with version warnings or privacy errors cannot return consumable mappings.</en></lang>
-  const entries = index.status === "available"
-    ? index.entries.filter((entry) => matchesDocSourceMapQuery(entry, prepared))
+  // <lang><zh-CN>新版只要携带位置，就需要显式列与已知单位；缺源路径也不得退化为全量元数据查询。</zh-CN><en>For current maps, any supplied position needs an explicit column and known unit; a missing source path cannot broaden it into a full metadata query.</en></lang>
+  const positionCanMatch = index.contractVersion !== DOC_SOURCE_MAP_CONTRACT_VERSION || !prepared.position
+    || (prepared.sourcePath !== undefined && prepared.position.column !== undefined && prepared.columnUnit !== undefined && prepared.columnUnit !== "unknown");
+  const entries = index.status === "available" && positionCanMatch
+    ? index.entries.filter((entry) => matchesDocSourceMapQuery(entry, prepared, index.contractVersion))
     : [];
 
   return {
@@ -821,21 +868,24 @@ export function findDocSourceMapEntriesBySymbol(index: DocSourceMapIndex, symbol
 }
 
 /**
- * @lang zh-CN 按源码路径及可选位置查询，无I/O；范围沿用两端包含，省略列为1。
- * @lang en Queries by source path and optional position without I/O; ranges retain inclusive endpoints and omitted columns default to one.
+ * @lang zh-CN 按源码路径及可选位置查询，无I/O；旧版范围两端包含且省略列为1，1.1.0位置查询须显式列与匹配的已知单位。
+ * @lang en Queries by source path and optional position without I/O; older ranges include both endpoints and default omitted columns to one, while 1.1.0 positional lookups require explicit columns and matching known units.
  * @param index <lang><zh-CN>本包建立且未篡改的索引。</zh-CN><en>Untampered index created by this package.</en></lang>
  * @param sourcePath <lang><zh-CN>非空白源码路径，规范化分隔符与首个 ./。</zh-CN><en>Nonblank source path, normalizing separators and the initial ./.</en></lang>
  * @param position <lang><zh-CN>可选一基安全整数位置，undefined按省略处理。</zh-CN><en>Optional one-based safe integer position; undefined is treated as omitted.</en></lang>
+ * @param columnUnit <lang><zh-CN>可选调用方列单位；1.1.0精确查询须传入与引用一致的已知单位。</zh-CN><en>Optional caller column unit; 1.1.0 exact lookup requires a known unit matching the reference.</en></lang>
  * @returns <lang><zh-CN>有序借用条目；无效查询为空，诊断使用完整查询API。</zh-CN><en>Ordered borrowed entries; invalid queries are empty, with diagnostics available through the full API.</en></lang>
  */
 export function findDocSourceMapEntriesBySource(
   index: DocSourceMapIndex,
   sourcePath: string,
-  position?: HiaSourcePosition
+  position?: HiaSourcePosition,
+  columnUnit?: DocSourceMapColumnUnit
 ): DocSourceMapIndexedEntry[] {
   return queryDocSourceMapIndex(index, {
     sourcePath,
-    ...(position !== undefined ? { position } : {})
+    ...(position !== undefined ? { position } : {}),
+    ...(columnUnit !== undefined ? { columnUnit } : {})
   }).entries;
 }
 
@@ -1093,11 +1143,21 @@ export function querySourceLinkedPosition(
     status = generatedLookup.status === "available" ? status : generatedLookup.status;
   }
 
+  // <lang><zh-CN>新版保留调用方未配对的原路径筛选，但无路径的原位置不能被生成位置悄悄代替；旧版行为保持。</zh-CN><en>Current maps retain an unpaired caller source-path filter but never let a generated lookup silently substitute for an original position lacking its path; older behavior remains unchanged.</en></lang>
+  const currentRangeContract = docSourceMapIndex.contractVersion === DOC_SOURCE_MAP_CONTRACT_VERSION;
+  const unpairedOriginalPosition = currentRangeContract && input.originalPosition !== undefined && input.originalSourcePath === undefined;
+  const conflictingOriginalPath = currentRangeContract && input.originalSourcePath !== undefined && input.originalPosition === undefined
+    && original !== undefined && !pathsEqual(input.originalSourcePath, original.sourcePath);
   // <lang><zh-CN>只把投影后的字符串和成功解析位置交给语义查询，保持原筛选交集。</zh-CN><en>Pass projected strings and resolved positions to semantic querying, retaining existing filter intersections.</en></lang>
   const docQuery: DocSourceMapQuery = {
     ...(input.symbolId ? { symbolId: input.symbolId } : {}),
     ...(input.symbolKind ? { symbolKind: input.symbolKind } : {}),
-    ...(original ? { sourcePath: original.sourcePath, position: original.position } : {}),
+    ...(original ? { sourcePath: original.sourcePath, position: original.position }
+      : currentRangeContract ? {
+        ...(input.originalSourcePath ? { sourcePath: input.originalSourcePath } : {}),
+        ...(input.originalPosition ? { position: input.originalPosition } : {})
+      } : {}),
+    ...(input.originalColumnUnit ? { columnUnit: input.originalColumnUnit } : {}),
     ...(generated?.artifactPath ?? input.generatedPath ? { artifactPath: generated?.artifactPath ?? input.generatedPath } : {}),
     ...(input.selector ? { selector: input.selector } : {})
   };
@@ -1105,6 +1165,8 @@ export function querySourceLinkedPosition(
   const docQueryResult = queryDocSourceMapIndex(docSourceMapIndex, docQuery);
   // <lang><zh-CN>语义筛选拒绝也必须向联合状态传播，不能保留伪available。</zh-CN><en>Propagate rejected semantic filters into the combined status rather than preserving a false available result.</en></lang>
   if (docQueryResult.status !== "available") status = docQueryResult.status;
+  // <lang><zh-CN>新版额外求交未配对输入；合法不匹配仍为available空结果，不误称输入非法或退化成全量条目。</zh-CN><en>Intersect unpaired current-map inputs; a valid miss remains an available empty result rather than an invalid query or a broad fallback.</en></lang>
+  const hasExactEntries = status === "available" && !unpairedOriginalPosition && !conflictingOriginalPath;
 
   return {
     diagnostics: [
@@ -1112,9 +1174,9 @@ export function querySourceLinkedPosition(
       ...new Set(lookupDiagnostics)
     ],
     // <lang><zh-CN>位置查找失败时不能退化为文件级/全量条目，失败状态只返回诊断。</zh-CN><en>Failed position lookup must not fall back to file-wide/all entries; failed states return diagnostics only.</en></lang>
-    entries: status === "available" ? docQueryResult.entries : [],
+    entries: hasExactEntries ? docQueryResult.entries : [],
     ...(generated ? { generated } : {}),
-    matchedEntryCount: status === "available" ? docQueryResult.matchedEntryCount : 0,
+    matchedEntryCount: hasExactEntries ? docQueryResult.matchedEntryCount : 0,
     ...(original ? { original } : {}),
     query,
     status
@@ -1128,11 +1190,12 @@ function createIndexedEntry(
   artifactById: Map<string, IndexedNode>,
   bindingSidecarById: Map<string, IndexedNode>,
   diagnostics: HiaDiagnostic[],
+  contractVersion: string | undefined,
   targetPath?: string
 ): DocSourceMapIndexedEntry {
   const id = stringValue(entry.id) ?? `entry:${index + 1}`;
   const sourceLinks = Array.isArray(entry.sourceRefs)
-    ? entry.sourceRefs.filter(isRecord).map((sourceRef) => createSourceLink(sourceRef, sourceById))
+    ? entry.sourceRefs.filter(isRecord).map((sourceRef) => createSourceLink(sourceRef, sourceById, contractVersion))
     : [];
   const artifactLinks = Array.isArray(entry.artifactRefs)
     ? entry.artifactRefs.filter(isRecord).map((artifactRef) => createArtifactLink(artifactRef, artifactById))
@@ -1227,7 +1290,7 @@ function createIndexedEntry(
   return item;
 }
 
-function createSourceLink(sourceRef: Record<string, unknown>, sourceById: Map<string, IndexedNode>): DocSourceMapSourceLink {
+function createSourceLink(sourceRef: Record<string, unknown>, sourceById: Map<string, IndexedNode>, contractVersion: string | undefined): DocSourceMapSourceLink {
   const sourceId = stringValue(sourceRef.sourceId) ?? "";
   const source = sourceById.get(sourceId);
   const link: DocSourceMapSourceLink = {
@@ -1251,6 +1314,13 @@ function createSourceLink(sourceRef: Record<string, unknown>, sourceById: Map<st
 
   if (range) {
     link.range = range;
+  }
+  // <lang><zh-CN>索引仅复制声明的新版约定，不根据来源、路径或普通位置map推断精度。</zh-CN><en>The index copies only the declared current convention and infers no precision from origin, path or ordinary positional maps.</en></lang>
+  if (contractVersion === DOC_SOURCE_MAP_CONTRACT_VERSION && isRecord(sourceRef.rangeConvention)) {
+    link.rangeConvention = {
+      endBoundary: sourceRef.rangeConvention.endBoundary as DocSourceMapRangeConvention["endBoundary"],
+      columnUnit: sourceRef.rangeConvention.columnUnit as DocSourceMapRangeConvention["columnUnit"]
+    };
   }
 
   if (rangeSource) {
@@ -1322,6 +1392,14 @@ function prepareDocSourceMapQuery(value: unknown): DocSourceMapQuery | undefined
       if (typeof descriptor.value !== "string" || !descriptor.value.trim()) return undefined;
       result[field] = descriptor.value;
     }
+    const columnUnit = Object.getOwnPropertyDescriptor(value, "columnUnit");
+    if (columnUnit) {
+      if (!Object.hasOwn(columnUnit, "value")) return undefined;
+      if (columnUnit.value !== undefined) {
+        if (!(DOC_SOURCE_MAP_COLUMN_UNITS as readonly unknown[]).includes(columnUnit.value)) return undefined;
+        result.columnUnit = columnUnit.value as DocSourceMapColumnUnit;
+      }
+    }
     // <lang><zh-CN>位置单独投影两个已知字段，未知坐标扩展不读，省略column保留到比较处默认1。</zh-CN><en>Project the two known position fields separately, ignoring extensions and retaining omitted columns until comparison defaults them to one.</en></lang>
     const position = Object.getOwnPropertyDescriptor(value, "position");
     if (position) {
@@ -1361,6 +1439,14 @@ function prepareSourceLinkedQuery(value: unknown): PreparedSourceLinkedQuery {
       if (typeof descriptor.value !== "string" || !descriptor.value.trim()) return { error: "semantic" };
       query[field] = descriptor.value;
     }
+    const originalColumnUnit = Object.getOwnPropertyDescriptor(value, "originalColumnUnit");
+    if (originalColumnUnit) {
+      if (!Object.hasOwn(originalColumnUnit, "value")) return { error: "query" };
+      if (originalColumnUnit.value !== undefined) {
+        if (!(DOC_SOURCE_MAP_COLUMN_UNITS as readonly unknown[]).includes(originalColumnUnit.value)) return { error: "semantic" };
+        query.originalColumnUnit = originalColumnUnit.value as DocSourceMapColumnUnit;
+      }
+    }
     for (const field of ["generatedPosition", "originalPosition"] as const) {
       // <lang><zh-CN>即使位置未配路径，也先验证已提供的值，避免错误输入退化为全量结果。</zh-CN><en>Validate every supplied position even without a paired path, preventing invalid input from becoming an unfiltered result.</en></lang>
       const descriptor = Object.getOwnPropertyDescriptor(value, field);
@@ -1391,7 +1477,7 @@ function isPlainQueryRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** @lang zh-CN 对已投影数据应用既有筛选交集；同路径和位置/选择器必须在同一引用命中。 @lang en Applies existing filter intersections to projected data; a path and position/selector must match the same reference. */
-function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSourceMapQuery): boolean {
+function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSourceMapQuery, contractVersion: string | undefined): boolean {
   if (query.symbolId && entry.symbolId !== query.symbolId) {
     return false;
   }
@@ -1402,7 +1488,7 @@ function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSou
 
   if (query.sourcePath) {
     const sourcePath = query.sourcePath;
-    if (!entry.sourceLinks.some((link) => pathsEqual(link.path, sourcePath) && (!query.position || containsPosition(link.range, query.position)))) {
+    if (!entry.sourceLinks.some((link) => pathsEqual(link.path, sourcePath) && (!query.position || containsPosition(link.range, query.position, contractVersion, link.rangeConvention, query.columnUnit)))) {
       return false;
     }
   }
@@ -1417,12 +1503,18 @@ function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSou
   return true;
 }
 
-/** @lang zh-CN 沿用现有双端包含的文档范围；没有范围不能命中位置。 @lang en Retains existing inclusive documentation endpoints; an absent range cannot match a position. */
-function containsPosition(range: HiaSourceRange | undefined, position: HiaSourcePosition): boolean {
+/** @lang zh-CN 新版仅在端点与列单位可证明且一致时比较；旧版保留双端包含与省略列为1。 @lang en Current ranges compare only with proven matching endpoints and column units; older versions retain inclusive endpoints and omitted-column default one. */
+function containsPosition(range: HiaSourceRange | undefined, position: HiaSourcePosition, contractVersion: string | undefined, convention?: DocSourceMapRangeConvention, queryColumnUnit?: DocSourceMapColumnUnit): boolean {
   if (!range) {
     return false;
   }
-
+  if (contractVersion === DOC_SOURCE_MAP_CONTRACT_VERSION) {
+    if (position.column === undefined || range.start.column === undefined || range.end.column === undefined
+      || !convention || convention.endBoundary === "unknown" || convention.columnUnit === "unknown"
+      || !queryColumnUnit || queryColumnUnit === "unknown" || convention.columnUnit !== queryColumnUnit) return false;
+    return comparePositions(position, range.start) >= 0
+      && (convention.endBoundary === "inclusive" ? comparePositions(position, range.end) <= 0 : comparePositions(position, range.end) < 0);
+  }
   return comparePositions(position, range.start) >= 0 && comparePositions(position, range.end) <= 0;
 }
 
@@ -1725,15 +1817,19 @@ function collectContractRefDiagnostics(diagnostics: HiaDiagnostic[], artifacts: 
  * sidecars without reading their bodies; the complete binding model remains in
  * the independent artifact.
  */
-function collectGeneratedBindingSidecarDiagnostics(diagnostics: HiaDiagnostic[], sidecars: unknown, targetPath: string | undefined): void {
+function collectGeneratedBindingSidecarDiagnostics(diagnostics: HiaDiagnostic[], sidecars: unknown, mapVersion: string | undefined, targetPath: string | undefined): void {
   if (!Array.isArray(sidecars)) {
     return;
   }
   const ids = new Set<string>();
+  // <lang><zh-CN>每代映射只声明同代绑定sidecar；不以任一“已知版本”容忍错配。</zh-CN><en>Each mapping generation declares only its paired binding sidecar, never any merely known version.</en></lang>
+  const bindingVersion = mapVersion === DOC_SOURCE_MAP_CONTRACT_VERSION ? GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+    : mapVersion === DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION ? GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION
+      : mapVersion === DOC_SOURCE_MAP_LEGACY_CONTRACT_VERSION ? GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION : undefined;
   sidecars.filter(isRecord).forEach((sidecar, index) => {
     const id = stringValue(sidecar.id);
     const sidecarPath = stringValue(sidecar.path);
-    if (!id || ids.has(id) || sidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT || (sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && sidecar.contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION)) {
+    if (!id || ids.has(id) || sidecar.contract !== GENERATED_DOCUMENTATION_BINDING_CONTRACT || (bindingVersion !== undefined && sidecar.contractVersion !== bindingVersion)) {
       diagnostics.push(createSourceLinkageDiagnostic(
         "DOC_SOURCE_MAP_BINDING_SIDECAR_INVALID",
         "generated binding sidecar must have a unique id and the supported contract/version.",

@@ -30,6 +30,13 @@
       "sha256": "26981fe51e91fad06b191a6bed0ee9e17e862542b1e95951a93a30f3f485aa3d"
     },
     {
+      "key": "doc-source-map",
+      "contractVersion": "1.0.0",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json",
+      "fileName": "doc-source-map-1.0.0.schema.json",
+      "sha256": "6dddbb5151e5d74f62a21bc0bfe217fb1f309402bc594d0dd0e5e062b64786c3"
+    },
+    {
       "key": "documentation-presentation-profile",
       "contractVersion": "0.1.0-draft",
       "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json",
@@ -63,6 +70,13 @@
       "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.1.0-draft.schema.json",
       "fileName": "generated-documentation-binding-0.1.0-draft.schema.json",
       "sha256": "6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7"
+    },
+    {
+      "key": "generated-documentation-binding",
+      "contractVersion": "0.2.0-draft",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/generated-documentation-binding-0.2.0-draft.schema.json",
+      "fileName": "generated-documentation-binding-0.2.0-draft.schema.json",
+      "sha256": "474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b"
     }
   ]
 }

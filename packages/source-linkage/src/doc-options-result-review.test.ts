@@ -5,13 +5,17 @@
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { createDocSourceMapIndex, validateDocSourceMap, migrateDocSourceMap, type DocSourceMapIndexOptions } from "./index.js";
+import { createDocSourceMapIndex, validateDocSourceMap, migrateDocSourceMap as migrateMap, type DocSourceMapIndexOptions } from "./index.js";
 
 /** @lang zh-CN 每次读取独立公开工件，当前分支只换精确版本，原样本不写回。 @lang en Reads a fresh public artifact, changing only the exact version for the current branch and never rewriting the fixture. */
 function fixture(version: string): Record<string, any> {
   const value = JSON.parse(readFileSync(new URL("../../../fixtures/contract-history/doc-source-map.json", import.meta.url), "utf8"));
   value.contractVersion = version;
   return value;
+}
+/** @lang zh-CN 本文件的旧版合成样本含一个范围，升级时逐项提供显式旧约定。 @lang en This file's older synthetic samples contain one range, supplied with explicit per-reference evidence during upgrade. */
+function migrateDocSourceMap(value: unknown, options: DocSourceMapIndexOptions = {}) {
+  return migrateMap(value, { ...options, rangeEvidence: [{ entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "inclusive", columnUnit: "utf16-code-unit" } }] });
 }
 /** @lang zh-CN 收集已知普通数据图节点，用身份交集核对跨输入/跨调用的独立性，不执行工件。 @lang en Collects known plain-data nodes to check cross-input/cross-call independence by identity, without executing artifacts. */
 function nodes(value: unknown, seen = new Set<object>()): Set<object> {
@@ -28,8 +32,8 @@ describe.each(["0.1.0-draft", "1.0.0"])("map options/result fields %s", version 
     // <lang><zh-CN>成功状态和字段组合是factory的实际约定，不将普通interface当判别联合。</zh-CN><en>Success combinations are actual factory conventions, not guarantees supplied by a discriminated-union type.</en></lang>
     const result = migrateDocSourceMap(fixture(version));
     expect(Object.keys(result).sort()).toEqual(["diagnostics", "manifest", "status"]);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
-    expect(result.manifest?.contractVersion).toBe("1.0.0");
+    expect(result.status).toBe("migrated");
+    expect(result.manifest?.contractVersion).toBe("1.1.0");
     expect(result.diagnostics).toEqual([]);
     expect([result, result.manifest!, result.diagnostics].every(value => !Object.isFrozen(value))).toBe(true);
     expect(Object.getOwnPropertyDescriptor(result, "manifest")?.writable).toBe(true);
@@ -54,14 +58,14 @@ describe.each(["0.1.0-draft", "1.0.0"])("map options/result fields %s", version 
     expect(input.sources[0].path).toBe("src/components/alert.html");
     expect((second.manifest!.sources as any[])[0].path).toBe("src/components/alert.html");
     expect((second.manifest!.entries as any[])).toHaveLength(1);
-    expect(migrateDocSourceMap(input).status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    expect(migrateDocSourceMap(input).status).toBe("migrated");
   });
   it("projects successful diagnostics without borrowing raw diagnostic objects", () => {
     const input = fixture(version);
     input.diagnostics = [{ code: "SYNTHETIC_WARNING", severity: "warning", message: "synthetic warning text" }, "synthetic info text"];
     const result = migrateDocSourceMap(input, { path: "context\\synthetic.json" });
     // <lang><zh-CN>成功也能有warning/info及原文本；后置诊断与manifest内原诊断分别持有新对象。</zh-CN><en>Success may contain warning/info and original text; post-validation diagnostics and raw manifest diagnostics hold separate objects.</en></lang>
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    expect(result.status).toBe("migrated");
     expect(result.diagnostics.map(item => [item.code, item.severity, item.message, item.targetPath])).toEqual([
       ["SYNTHETIC_WARNING", "warning", "synthetic warning text", "context\\synthetic.json.diagnostics.0"],
       ["DOC_SOURCE_MAP_ENTRY_DIAGNOSTIC", "info", "synthetic info text", "context\\synthetic.json.diagnostics.1"]

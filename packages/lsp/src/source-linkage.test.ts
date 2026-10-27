@@ -3,6 +3,7 @@
  * @lang zh-CN LSP源码映射查询的状态/诊断/空状态隔离回归，全部使用合成数据。
  * @lang en Regression coverage for LSP source-map query status/diagnostic/empty-state isolation using synthetic data only.
  */
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createDocSourceMapIndex, type DocSourceMapQuery } from "@hia-doc/source-linkage";
 import { createHiaDocumentSourceMapIndexResult } from "./source-linkage.js";
@@ -14,6 +15,32 @@ function manifest(version = "0.1.0-draft") {
 }
 
 describe("LSP source-linkage query propagation", () => {
+  it("projects a declared 1.1.0 range convention and requires the caller's column unit for exact location", () => {
+    // <lang><zh-CN>复用公开合成旧工件的完整结构，仅按新版规则增加逐引用约定；不猜测普通 source map 的列单位。</zh-CN><en>Reuse the complete public synthetic artifact and add the new per-reference declaration, without inferring a column unit from an ordinary source map.</en></lang>
+    const value = JSON.parse(readFileSync(new URL("../../../fixtures/contract-history/doc-source-map.json", import.meta.url), "utf8"));
+    value.contractVersion = "1.1.0";
+    value.entries[0].sourceRefs[0].range = { start: { line: 1, column: 1 }, end: { line: 1, column: 4 } };
+    value.entries[0].sourceRefs[0].rangeConvention = { endBoundary: "exclusive", columnUnit: "utf16-code-unit" };
+    const index = createDocSourceMapIndex(value);
+    expect(index.status).toBe("available");
+    const uri = "file:///synthetic/a.docmap.json";
+    const sourcePath = "src/components/alert.html";
+    const withoutUnit = createHiaDocumentSourceMapIndexResult({ index, query: { sourcePath, position: { line: 1, column: 3 } }, uri });
+    expect(withoutUnit).toMatchObject({ status: "available", entries: [], matchedEntryCount: 0 });
+    const withUnit = createHiaDocumentSourceMapIndexResult({ index, query: { sourcePath, position: { line: 1, column: 3 }, columnUnit: "utf16-code-unit" }, uri });
+    expect(withUnit).toMatchObject({ status: "available", matchedEntryCount: 1, entries: [{ sourceLinks: [{ rangeConvention: { endBoundary: "exclusive", columnUnit: "utf16-code-unit" } }] }] });
+    expect(withUnit.entries[0]?.sourceLinks[0]?.rangeConvention).not.toBe(value.entries[0].sourceRefs[0].rangeConvention);
+    // <lang><zh-CN>宿主可写摘要不能反向改变索引的精确边界或坐标。</zh-CN><en>A writable host summary must not change the index's exact boundary or coordinates.</en></lang>
+    const projected = withUnit.entries[0]!.sourceLinks[0]!;
+    expect(projected.rangeConvention).not.toBe(index.entries[0]!.sourceLinks[0]!.rangeConvention);
+    expect(projected.range).not.toBe(index.entries[0]!.sourceLinks[0]!.range);
+    projected.rangeConvention!.endBoundary = "inclusive";
+    projected.range!.end.column = 9;
+    expect(index.entries[0]!.sourceLinks[0]!.rangeConvention).toEqual({ endBoundary: "exclusive", columnUnit: "utf16-code-unit" });
+    expect(index.entries[0]!.sourceLinks[0]!.range?.end.column).toBe(4);
+    expect(createHiaDocumentSourceMapIndexResult({ index, query: { sourcePath, position: { line: 1, column: 4 }, columnUnit: "utf16-code-unit" }, uri }).entries).toEqual([]);
+  });
+
   it.each([null, false, 42, { symbolId: "" }, { sourcePath: 42 }, { sourcePath: "src/a.ts", position: { line: 0 } }].map((query, id) => ({ query, id })))("propagates query rejection $id", ({ query }) => {
     const index = createDocSourceMapIndex(manifest());
     const result = createHiaDocumentSourceMapIndexResult({ index, query: query as DocSourceMapQuery, uri: "file:///synthetic/a.docmap.json" });

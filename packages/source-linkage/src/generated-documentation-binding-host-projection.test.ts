@@ -193,7 +193,7 @@ describe.each([false, true])("binding host projection, current=%s", (current) =>
   it.each(["invalid-sidecar", "unsupported-sidecar", "invalid-map", "unsupported-map"])("propagates %s status without partial relations or free text", (failure) => {
     const value = pair(current);
     if (failure === "invalid-sidecar") value.bindingSidecar.bindings[0]!.resolution.confidence = "invalid";
-    // <lang><zh-CN>未知版本例只制造版本错误，保留旧回退linkage及一致的最低版本，避免混入结构错误。</zh-CN><en>The unknown-version case introduces a version error alone, retaining fallback legacy linkage and matching minimum version to avoid unrelated structural errors.</en></lang>
+    // <lang><zh-CN>未知sidecar版本先被映射声明的精确配对规则拒绝；未知映射根版本仍由映射索引报告unsupported。</zh-CN><en>An unknown sidecar version first fails the map declaration's exact-pair rule; an unknown map root version is still reported unsupported by the map index.</en></lang>
     if (failure === "unsupported-sidecar") {
       value.bindingSidecar.contractVersion = "99.0.0";
       value.bindingSidecar.compatibility.minimumConsumerContractVersion = "99.0.0";
@@ -203,7 +203,7 @@ describe.each([false, true])("binding host projection, current=%s", (current) =>
     if (failure === "unsupported-map") value.documentMap.contractVersion = "99.0.0";
     const index = indexFor(value);
     const projection = createGeneratedDocumentationBindingHostProjection(index);
-    expect(projection.status).toBe(failure.startsWith("unsupported") ? "unsupported-version" : "invalid");
+    expect(projection.status).toBe(failure === "unsupported-map" ? "unsupported-version" : "invalid");
     expect(projection.status).toBe(index.status);
     expect(projection.bindings).toEqual([]);
     expect(projection.diagnostics).toEqual(index.diagnostics.map(({ code, severity }) => ({ code, severity })));

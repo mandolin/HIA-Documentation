@@ -14,7 +14,13 @@ function fixture(kind: string): unknown {
     const pair = JSON.parse(readFileSync(new URL("../../../fixtures/source-linkage/generated-binding-input.json", import.meta.url), "utf8"));
     return kind === "binding" ? pair.bindingSidecar : { docSourceMap: pair.documentMap, bindingSidecars: [pair.bindingSidecar] };
   }
-  return JSON.parse(readFileSync(new URL("../../../fixtures/contract-history/doc-source-map.json", import.meta.url), "utf8"));
+  const map = JSON.parse(readFileSync(new URL("../../../fixtures/contract-history/doc-source-map.json", import.meta.url), "utf8"));
+  // <lang><zh-CN>本组只验证路径选项；迁移入口使用本地完整1.1样本，避免缺失精度证据混入断言。</zh-CN><en>This suite checks path options only; the migration entry uses a complete local 1.1 sample so missing precision evidence cannot confound assertions.</en></lang>
+  if (kind === "migrate") {
+    map.contractVersion = "1.1.0";
+    map.entries[0].sourceRefs[0].rangeConvention = { endBoundary: "inclusive", columnUnit: "utf16-code-unit" };
+  }
+  return map;
 }
 
 /** @lang zh-CN 统一测试视图不扩大产品类型；诊断数组入口也暴露可断言的状态。 @lang en Normalizes the test view without widening product types; diagnostic-array entries also get an assertable state. */
@@ -101,7 +107,8 @@ for (const kind of ["index", "validate", "migrate", "bundle", "binding"]) {
         getOwnPropertyDescriptor(target, key) { seen.push(String(key)); return Reflect.getOwnPropertyDescriptor(target, key); }
       });
       expect(invoke(kind, options).status).not.toBe("invalid");
-      expect(seen).toEqual(["path"]);
+      expect(seen).toEqual(kind === "migrate" ? ["path", "rangeEvidence"]
+        : kind === "bundle" ? ["path", "targetVersion", "rangeEvidence", "bindingRangeEvidence"] : ["path"]);
     });
 
     it.each([false, true])("keeps snapshots after input reflection (failure=%s)", (fail) => {

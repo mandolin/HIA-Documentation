@@ -15,6 +15,7 @@ import {
   DOC_SOURCE_MAP_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT,
   GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION,
+  GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION,
   GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
 } from "./constants.js";
 import {
@@ -842,7 +843,10 @@ function resolveIndexStatus(
 ): GeneratedDocumentationBindingIndex["status"] {
   const hasNonVersionError = diagnostics.some((diagnostic) => diagnostic.severity === "error"
     && diagnostic.code !== "GENERATED_DOCUMENTATION_BINDING_UNSUPPORTED_VERSION");
-  return contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION && contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION && !hasNonVersionError
+  return contractVersion !== GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION
+    && contractVersion !== GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION
+    && contractVersion !== GENERATED_DOCUMENTATION_BINDING_LEGACY_CONTRACT_VERSION
+    && !hasNonVersionError
     ? "unsupported-version"
     : "invalid";
 }

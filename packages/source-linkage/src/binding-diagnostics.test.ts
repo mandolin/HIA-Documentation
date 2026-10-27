@@ -110,7 +110,8 @@ describe.each([false, true])("binding extraction diagnostics, current=%s", (curr
       value.bindingSidecar.docSourceMapLinkage.contractVersion = "0.1.0-draft";
     }
     const index = indexFor(value);
-    expect(index.status).toBe(failure === "unknown-version" ? "unsupported-version" : "invalid");
+    // <lang><zh-CN>未知绑定根同时无法满足三代精确反向配对，因此仍拒绝提取记录，状态按实际多项 owner 错误为 invalid。</zh-CN><en>An unknown binding root also cannot satisfy any of the three exact backlinks, so extraction records remain gated and the combined owner errors yield invalid.</en></lang>
+    expect(index.status).toBe("invalid");
     expect(index.bindings).toEqual([]);
     expect(index.diagnostics.some(({ code }) => code.startsWith("GDB_"))).toBe(false);
     expect(index.diagnostics.length).toBeGreaterThan(0);

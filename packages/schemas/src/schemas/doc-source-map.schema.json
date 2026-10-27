@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.0.0.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.1.0.schema.json",
   "type": "object",
   "required": [
     "contract",
@@ -21,7 +21,7 @@
       "const": "doc-source-map"
     },
     "contractVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "id": {
       "$ref": "#/$defs/nonEmptyString"
@@ -348,6 +348,31 @@
         }
       }
     },
+    "rangeConvention": {
+      "type": "object",
+      "required": [
+        "endBoundary",
+        "columnUnit"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "endBoundary": {
+          "enum": [
+            "inclusive",
+            "exclusive",
+            "unknown"
+          ]
+        },
+        "columnUnit": {
+          "enum": [
+            "utf16-code-unit",
+            "unicode-code-point",
+            "byte",
+            "unknown"
+          ]
+        }
+      }
+    },
     "sourceRef": {
       "type": "object",
       "required": [
@@ -362,6 +387,9 @@
         },
         "range": {
           "$ref": "#/$defs/range"
+        },
+        "rangeConvention": {
+          "$ref": "#/$defs/rangeConvention"
         },
         "rangeSource": {
           "$ref": "#/$defs/rangeSource"
@@ -389,6 +417,64 @@
             "properties": {
               "confidence": {
                 "const": "none"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "range"
+            ]
+          },
+          "then": {
+            "required": [
+              "rangeConvention"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "rangeConvention"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "rangeConvention": {
+                "properties": {
+                  "columnUnit": {
+                    "not": {
+                      "const": "unknown"
+                    }
+                  }
+                },
+                "required": [
+                  "columnUnit"
+                ]
+              }
+            },
+            "required": [
+              "rangeConvention"
+            ]
+          },
+          "then": {
+            "properties": {
+              "range": {
+                "properties": {
+                  "start": {
+                    "required": [
+                      "column"
+                    ]
+                  },
+                  "end": {
+                    "required": [
+                      "column"
+                    ]
+                  }
+                }
               }
             }
           }
@@ -515,10 +601,7 @@
           "const": "generated-documentation-binding"
         },
         "contractVersion": {
-          "enum": [
-            "0.1.0-draft",
-            "0.2.0-draft"
-          ]
+          "const": "0.3.0-draft"
         },
         "path": {
           "$ref": "#/$defs/safeRelativePath"

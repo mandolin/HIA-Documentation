@@ -13,6 +13,10 @@ function fixture(version: string): any {
   value.contractVersion = version;
   return value;
 }
+/** @lang zh-CN 老版本带范围升级需逐引用精度证据；测试用合成范围明示旧双端包含和UTF-16单位。 @lang en Upgrading an older ranged map requires per-reference evidence; the synthetic range explicitly declares inclusive endpoints and UTF-16 units. */
+function migrateWithEvidence(input: any) {
+  return migrateDocSourceMap(input, { rangeEvidence: [{ entryIndex: 0, sourceRefIndex: 0, rangeConvention: { endBoundary: "inclusive", columnUnit: "utf16-code-unit" } }] });
+}
 
 describe.each(["0.1.0-draft", "1.0.0"])("map function responsibilities %s", version => {
   it("keeps validator and index diagnostics equivalent but independently owned", () => {
@@ -31,17 +35,17 @@ describe.each(["0.1.0-draft", "1.0.0"])("map function responsibilities %s", vers
     // <lang><zh-CN>普通map未解析引用是warning，不冒充绑定整组的硬闭包认证。</zh-CN><en>Unresolved ordinary-map references are warnings, not proof of hard closure as required by binding bundles.</en></lang>
     const input = fixture(version);
     input.entries[0].sourceRefs[0].sourceId = "source:missing-synthetic";
-    const index = createDocSourceMapIndex(input), result = migrateDocSourceMap(input);
+    const index = createDocSourceMapIndex(input), result = migrateWithEvidence(input);
     expect(index.status).toBe("available");
     expect(index.diagnostics.some(item => item.code === "DOC_SOURCE_MAP_ENTRY_UNRESOLVED" && item.severity === "warning")).toBe(true);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    expect(result.status).toBe("migrated");
     expect(result.diagnostics.some(item => item.code === "DOC_SOURCE_MAP_ENTRY_UNRESOLVED")).toBe(true);
   });
   it("retains invalid metadata while status-gated queries and migration refuse", () => {
     // <lang><zh-CN>root error使状态invalid，但索引并非冻结空产物；查询与迁移须另行检查status。</zh-CN><en>A root error makes status invalid without guaranteeing an empty frozen index; queries/migration separately gate on status.</en></lang>
     const input = fixture(version);
     input.diagnostics = [{ code: "SYNTHETIC_ROOT_ERROR", severity: "error", message: "SYNTHETIC_PRIVATE_MESSAGE" }];
-    const index = createDocSourceMapIndex(input), result = migrateDocSourceMap(input);
+    const index = createDocSourceMapIndex(input), result = migrateWithEvidence(input);
     expect(index.status).toBe("invalid");
     expect(index.entryCount).toBe(1);
     expect(index.entries[0]!.symbolId).toBe("html:component:alert");
@@ -54,11 +58,11 @@ describe.each(["0.1.0-draft", "1.0.0"])("map function responsibilities %s", vers
     // <lang><zh-CN>entry.diagnostics在既有模型中只投影code；不擅改为新的全局错误政策。</zh-CN><en>Existing entry.diagnostics project codes only; do not silently create a new global-error policy.</en></lang>
     const input = fixture(version);
     input.entries[0].diagnostics = [{ code: "SYNTHETIC_ENTRY", severity: "error", message: "synthetic entry text" }];
-    const index = createDocSourceMapIndex(input), result = migrateDocSourceMap(input);
+    const index = createDocSourceMapIndex(input), result = migrateWithEvidence(input);
     expect(index.status).toBe("available");
     expect(index.entries[0]!.diagnostics).toEqual(["SYNTHETIC_ENTRY"]);
     expect(index.diagnostics).toEqual([]);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    expect(result.status).toBe("migrated");
     expect((result.manifest!.entries as any[])[0].diagnostics).toEqual(input.entries[0].diagnostics);
   });
   it("preserves passive chain stages without executing or resolving their identities", () => {
@@ -66,8 +70,8 @@ describe.each(["0.1.0-draft", "1.0.0"])("map function responsibilities %s", vers
     const input = fixture(version);
     input.chains = [{ id: "chain:passive", stages: [{ from: "source:external", to: "artifact:external", transform: "synthetic-not-executed", sourceMap: "missing-map", linkage: ["metadata-only"] }] }];
     expect(validateDocSourceMap(input)).toEqual([]);
-    const result = migrateDocSourceMap(input);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    const result = migrateWithEvidence(input);
+    expect(result.status).toBe("migrated");
     expect(result.manifest!.chains).toEqual(input.chains);
   });
   it("keeps external contract references passive and does not authenticate their versions", () => {
@@ -75,19 +79,19 @@ describe.each(["0.1.0-draft", "1.0.0"])("map function responsibilities %s", vers
     const input = fixture(version);
     input.artifacts[0].contractRefs = [{ contract: "synthetic-external-contract", contractVersion: "99.0.0", path: "contracts/not-loaded.json" }];
     expect(createDocSourceMapIndex(input).status).toBe("available");
-    const result = migrateDocSourceMap(input);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    const result = migrateWithEvidence(input);
+    expect(result.status).toBe("migrated");
     expect((result.manifest!.artifacts as any[])[0].contractRefs).toEqual(input.artifacts[0].contractRefs);
   });
   it("does not load source-map pointers or infer their source closure", () => {
     // <lang><zh-CN>pointer仅要求对象，mapsFrom/mapsTo仅为声明文本；本入口不是普通map加载器。</zh-CN><en>Pointer requires an object and mapsFrom/mapsTo remain declaration text; this entry is not an ordinary-map loader.</en></lang>
     const input = fixture(version);
     input.sourceMaps = [{ id: "map:passive", kind: "ordinary-source-map", path: "maps/not-loaded.map", mapsFrom: "artifact:external", mapsTo: ["source:external"], pointer: { url: "https://synthetic.invalid/not-fetched" } }];
-    const index = createDocSourceMapIndex(input), result = migrateDocSourceMap(input);
+    const index = createDocSourceMapIndex(input), result = migrateWithEvidence(input);
     expect(index.status).toBe("available");
     expect(index.sourceMapCount).toBe(1);
     expect(Object.hasOwn(index.sourceMaps[0]!, "pointer")).toBe(false);
-    expect(result.status).toBe(version === "1.0.0" ? "already-current" : "migrated");
+    expect(result.status).toBe("migrated");
     expect(result.manifest!.sourceMaps).toEqual(input.sourceMaps);
   });
   it("does not treat privacy flags as permission for absolute paths", () => {
@@ -123,16 +127,16 @@ describe("map entry compatibility distinctions", () => {
     expect(validateDocSourceMap(input)).toEqual([]);
     expect(migrateDocSourceMap(input).status).toBe("invalid");
   });
-  it("distinguishes legacy binding coordination from cloning an already-current map", () => {
-    // <lang><zh-CN>旧绑定关联不能由单map换代；当前map复制也不认证未提供的sidecar正文。</zh-CN><en>Legacy binding associations cannot be upgraded through a standalone map; current-map cloning likewise does not authenticate unsupplied sidecar bodies.</en></lang>
+  it("requires coordination before upgrading either older binding pair", () => {
+    // <lang><zh-CN>两代旧绑定关联均不能由单map独立换代。</zh-CN><en>Neither older binding association can be upgraded by a standalone map.</en></lang>
     for (const version of ["0.1.0-draft", "1.0.0"]) {
       const input = fixture(version), bindingVersion = version === "1.0.0" ? "0.2.0-draft" : "0.1.0-draft";
       input.generatedBindingSidecars = [{ id: "sidecar:passive", contract: "generated-documentation-binding", contractVersion: bindingVersion, path: "bindings/not-loaded.json" }];
       input.entries[0].generatedBindingRefs = [{ sidecarId: "sidecar:passive", bindingId: "binding:not-authenticated" }];
       expect(createDocSourceMapIndex(input).status).toBe("available");
       const result = migrateDocSourceMap(input);
-      expect(result.status).toBe(version === "1.0.0" ? "already-current" : "invalid");
-      expect(Object.hasOwn(result, "manifest")).toBe(version === "1.0.0");
+      expect(result.status).toBe("invalid");
+      expect(Object.hasOwn(result, "manifest")).toBe(false);
     }
   });
 });

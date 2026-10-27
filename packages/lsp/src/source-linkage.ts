@@ -13,6 +13,7 @@ import {
   type DocSourceMapIndex,
   type DocSourceMapIndexedEntry,
   type DocSourceMapQuery,
+  type DocSourceMapRangeConvention,
   type DocSourceMapSourceLink
 } from "@hia-doc/source-linkage";
 import {
@@ -72,6 +73,8 @@ export interface HiaLspDocSourceMapSourceLink {
   language?: string;
   path?: string;
   range?: HiaSourceRange;
+  /** @lang zh-CN 新版逐引用范围约定的被动投影；旧版无此字段，调用方须检查两维是否已知，不能据缺省值猜测精确定位。 @lang en Passive projection of a new per-reference range convention; legacy maps omit it, and consumers must check both dimensions rather than infer precise positions from defaults. */
+  rangeConvention?: DocSourceMapRangeConvention;
   rangeSource?: string;
   sourceId: string;
 }
@@ -210,9 +213,18 @@ function createEntrySummary(entry: DocSourceMapIndexedEntry): HiaLspDocSourceMap
   return item;
 }
 
+/**
+ * @lang zh-CN 为宿主生成独立的来源摘要；范围与约定均复制，避免调用方修改返回值后改变原索引查询结果。
+ * @lang en Builds an independent host source summary, copying range and convention so callers cannot mutate later index query results through the projection.
+ * @param link <lang><zh-CN>已入索引的来源引用，不修改。</zh-CN><en>Indexed source link, left unmodified.</en></lang>
+ * @returns <lang><zh-CN>无源码正文、可写且不与索引共享嵌套范围的摘要。</zh-CN><en>Writable body-free summary without nested range aliases to the index.</en></lang>
+ */
 function createSourceLinkSummary(link: DocSourceMapSourceLink): HiaLspDocSourceMapSourceLink {
+  // <lang><zh-CN>仅复制已出现的可选字段，保持旧版省略字段的形状。</zh-CN><en>Copy only present optional fields so older projections retain their omitted-field shape.</en></lang>
   return {
-    ...link
+    ...link,
+    ...(link.range ? { range: { start: { ...link.range.start }, end: { ...link.range.end } } } : {}),
+    ...(link.rangeConvention ? { rangeConvention: { ...link.rangeConvention } } : {})
   };
 }
 
