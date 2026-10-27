@@ -99,8 +99,11 @@ function slotKey(sectionIndex: number | null, sourceIndex: number): string { ret
 function nonnegative(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
 /** @lang zh-CN 有限正安全整数，适用于一基查询坐标。 @lang en Finite positive safe integer for one-based query coordinates. */
 function positive(value: unknown): value is number { return nonnegative(value) && value > 0; }
-/** @lang zh-CN 检查受限长度的公开安全不透明身份。 @lang en Checks bounded public-safe opaque identities. */
+/** @lang zh-CN 侧载身份使用比文档地图更窄的公开安全 token；查询来源 ID 必须与侧载槽位一致。 @lang en Sidecar identities use a narrower public-safe token than documentation-map IDs; a queried source ID must match its sidecar slot. */
 function identity(value: unknown): value is string { return typeof value === "string" && value.length <= 512 && IDENTITY_PATTERN.test(value); }
+
+/** @lang zh-CN 文档地图身份仅按当前 1.1.0 schema 的非空字符串边界核验；不把侧载 token 词法施加给条目或未签发的引用。 @lang en Check documentation-map IDs against the current 1.1.0 schema's nonempty-string boundary, without imposing sidecar token syntax on entries or unsigned references. */
+function documentationIdentity(value: unknown): value is string { return typeof value === "string" && value.length > 0; }
 /** @lang zh-CN 普通/null 原型记录；反射异常由上层固定拒绝。 @lang en Plain/null-prototype record; callers convert reflection errors to fixed rejection. */
 function record(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
@@ -344,7 +347,7 @@ function validAnchorDocumentation(value: Record<string, unknown>, profile: Profi
   if (selectedMap.kind !== "ordinary-source-map" || !safeRelativePath(selectedMap.path)
     || selectedMap.mapsFrom !== profile.ordinaryMap.artifactId
     || selectedMap.sourcesContentPolicy !== undefined && selectedMap.sourcesContentPolicy !== "none"
-    || !Array.isArray(selectedMap.mapsTo) || !selectedMap.mapsTo.every(identity)
+    || !Array.isArray(selectedMap.mapsTo) || !selectedMap.mapsTo.every(documentationIdentity)
     || !safeRelativePath(selectedArtifacts[0].path)) return false;
   for (const slot of profile.sourceSlots) {
     // <lang><zh-CN>sourceId 只绑定已声明来源，禁止将同名普通来源路径推作证明。</zh-CN><en>sourceId binds only a declared source; an ordinary path string is never inferred as proof.</en></lang>
@@ -356,9 +359,9 @@ function validAnchorDocumentation(value: Record<string, unknown>, profile: Profi
   }
   for (const entry of value.entries) {
     // <lang><zh-CN>每个可被查询的引用先核受消费的枚举/范围；宽 owner 索引的 available 不足以证明该细节。</zh-CN><en>Validate consumed enums/ranges on every queryable reference; the permissive owner index's available is insufficient for these details.</en></lang>
-    if (!record(entry) || !identity(entry.id) || !Array.isArray(entry.sourceRefs) || !Array.isArray(entry.artifactRefs)) return false;
+    if (!record(entry) || !documentationIdentity(entry.id) || !Array.isArray(entry.sourceRefs) || !Array.isArray(entry.artifactRefs)) return false;
     for (const sourceRef of entry.sourceRefs) {
-      if (!record(sourceRef) || !identity(sourceRef.sourceId) || !RANGE_SOURCES.has(sourceRef.rangeSource as string)
+      if (!record(sourceRef) || !documentationIdentity(sourceRef.sourceId) || !RANGE_SOURCES.has(sourceRef.rangeSource as string)
         || !CONFIDENCES.has(sourceRef.confidence as string)
         || sourceRef.rangeSource === "unresolved" && sourceRef.confidence !== "none") return false;
       if (!Object.hasOwn(sourceRef, "range")) {
@@ -379,7 +382,7 @@ function validAnchorDocumentation(value: Record<string, unknown>, profile: Profi
         || range.start.line === range.end.line && positive(startColumn) && positive(endColumn) && startColumn > endColumn) return false;
     }
     for (const artifactRef of entry.artifactRefs) {
-      if (!record(artifactRef) || !identity(artifactRef.artifactId) || !RANGE_SOURCES.has(artifactRef.rangeSource as string)
+      if (!record(artifactRef) || !documentationIdentity(artifactRef.artifactId) || !RANGE_SOURCES.has(artifactRef.rangeSource as string)
         || !CONFIDENCES.has(artifactRef.confidence as string)
         || artifactRef.rangeSource === "unresolved" && artifactRef.confidence !== "none") return false;
     }
@@ -518,12 +521,12 @@ function result(kind: CoordinateVerificationKind, code: string, message: string,
  * @lang zh-CN 对明确 section/原始槽位与文档条目查询已核同点段。只有两图实际字节、来源字节及逻辑文本、同一已知列单位、文档范围和请求点处真实映射段全部满足时返回 exact-anchor；GLB 近邻只返回 nearest-anchor。
  * @lang en Queries a verified same-point segment for an explicit section/raw slot and documentation entry. exact-anchor requires actual bytes of both maps, verified source bytes/logical text, one matching known column unit, a matching documentation range, and an actual segment at the requested point. A GLB predecessor yields nearest-anchor only.
  * @param index <lang><zh-CN>由严格创建函数产生且未篡改的索引。</zh-CN><en>Index produced by the strict creator and not tampered with.</en></lang>
- * @param query <lang><zh-CN>一基位置和明确槽位；不按同名路径猜测来源。</zh-CN><en>One-based position and explicit slot; never infer source by duplicate path.</en></lang>
+ * @param query <lang><zh-CN>一基位置和明确槽位；entryId 遵守文档地图的非空身份，sourceId 遵守已签发侧载 token，不按同名路径猜测来源。</zh-CN><en>One-based position and explicit slot; entryId follows the documentation map's nonempty ID boundary, sourceId follows the signed sidecar token, and duplicate paths never imply source identity.</en></lang>
  * @returns <lang><zh-CN>无正文、无私有路径的固定机器状态；exact-anchor 仅承诺段起点。</zh-CN><en>Fixed machine state without body or private path; exact-anchor asserts a segment start only.</en></lang>
  */
 export function queryVerifiedSourceAnchor(index: OrdinaryCoordinateProfileIndex, query: VerifiedSourceAnchorQuery): VerifiedSourceAnchorResult {
   try {
-    if (!record(query) || !isDocSourceMapJsonDataGraph(query) || !identity(query.entryId) || !identity(query.sourceId)
+    if (!record(query) || !isDocSourceMapJsonDataGraph(query) || !documentationIdentity(query.entryId) || !identity(query.sourceId)
       || !(query.sectionIndex === null || nonnegative(query.sectionIndex)) || !nonnegative(query.sourceIndex)
       || !record(query.position) || !positive(query.position.line) || !positive(query.position.column)
       || !["utf16-code-unit", "unicode-code-point", "byte"].includes(query.columnUnit)) {

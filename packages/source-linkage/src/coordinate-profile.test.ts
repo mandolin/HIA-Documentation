@@ -74,6 +74,51 @@ describe("ordinary coordinate profile strict reader", () => {
     expect(createOrdinarySourceMapIndex(JSON.parse(input.ordinaryMapBytes.toString("utf8"))).status).toBe("available");
   });
 
+  it("accepts a current documentation-map entry ID with a valid collision suffix", async () => {
+    const base = fixture();
+    // <lang><zh-CN>只改文档地图条目及其实际字节摘要；侧载身份和普通地图保持原值。</zh-CN><en>Change only the documentation entry and its actual-byte digest; keep sidecar identities and the ordinary map unchanged.</en></lang>
+    const documentation = JSON.parse(base.input.documentationMapBytes.toString("utf8"));
+    documentation.entries[0].id = "entry:relation:block:content~2";
+    const documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+    const profile = structuredClone(base.input.profile);
+    profile.documentationMap.digest.value = createHash("sha256").update(documentationMapBytes).digest("base64");
+    const index = await createOrdinaryCoordinateProfileIndex({ ...base.input, profile, documentationMapBytes });
+    expect(index.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(index, { ...base.query, entryId: documentation.entries[0].id }).verification.kind).toBe("exact-anchor");
+  });
+
+  it("does not reject an exact anchor because unrelated document IDs contain a valid suffix", async () => {
+    const base = fixture();
+    // <lang><zh-CN>未查询的文档来源、工件、映射目标和条目可使用当前文档地图的非空身份，不改变被签发的原始槽位。</zh-CN><en>Unqueried documentation sources, artifacts, map targets and entries may use the current map's nonempty IDs without changing the signed raw slot.</en></lang>
+    const documentation = JSON.parse(base.input.documentationMapBytes.toString("utf8"));
+    documentation.sources.push({ id: "source:other~2", kind: "stylesheet-source", path: "src/other.scss", sourcesContentPolicy: "none" });
+    documentation.artifacts.push({ id: "artifact:other~2", kind: "generated-css", path: "dist/other.css" });
+    documentation.sourceMaps[0].mapsTo.push("source:other~2");
+    documentation.entries.push({ id: "entry:other~2", kind: "symbol", sourceRefs: [{ sourceId: "source:other~2", rangeSource: "parser", confidence: "high" }], artifactRefs: [{ artifactId: "artifact:other~2", rangeSource: "adapter", confidence: "high" }], diagnostics: [] });
+    const documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+    const profile = structuredClone(base.input.profile);
+    profile.documentationMap.digest.value = createHash("sha256").update(documentationMapBytes).digest("base64");
+    const index = await createOrdinaryCoordinateProfileIndex({ ...base.input, profile, documentationMapBytes });
+    expect(index.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(index, base.query).verification.kind).toBe("exact-anchor");
+  });
+
+  it("still rejects empty documentation IDs and non-token sidecar source identities", async () => {
+    const base = fixture();
+    // <lang><zh-CN>文档地图禁空身份，侧载仍禁碰撞符；两层规则不能互相替代。</zh-CN><en>The documentation map forbids empty IDs while the sidecar still forbids collision punctuation; neither rule replaces the other.</en></lang>
+    const documentation = JSON.parse(base.input.documentationMapBytes.toString("utf8"));
+    documentation.entries[0].id = "";
+    const documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+    const profile = structuredClone(base.input.profile);
+    profile.documentationMap.digest.value = createHash("sha256").update(documentationMapBytes).digest("base64");
+    expect((await createOrdinaryCoordinateProfileIndex({ ...base.input, profile, documentationMapBytes })).status).toBe("invalid");
+    const nonTokenProfile = structuredClone(base.input.profile);
+    nonTokenProfile.sourceSlots[0]!.sourceId = "source:scss~2";
+    expect((await createOrdinaryCoordinateProfileIndex({ ...base.input, profile: nonTokenProfile })).status).toBe("invalid");
+    const validIndex = await createOrdinaryCoordinateProfileIndex(base.input);
+    expect(queryVerifiedSourceAnchor(validIndex, { ...base.query, entryId: "" }).verification.kind).toBe("invalid");
+  });
+
   it("rejects stale actual bytes and refuses numeric unit coincidence", async () => {
     const { input, query } = fixture();
     const stale = await createOrdinaryCoordinateProfileIndex({ ...input, ordinaryMapBytes: Buffer.from("{}") });

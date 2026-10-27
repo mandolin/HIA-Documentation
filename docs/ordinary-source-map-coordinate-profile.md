@@ -22,6 +22,8 @@ This separate draft sidecar records column-unit evidence for each original secti
 
 所有侧载身份字段（根 `id`、普通 map ID、生成工件 ID、文档 map ID、来源 ID）均采用最长 512 字符的不透明 ASCII token：英数字起首，后续仅允许英数字、点、下划线、冒号与连字符。它们不承载路径或 URL；绝对路径、UNC、带凭据 URL、空白及换行均被拒绝。此限制只属于新坐标侧载，不回写旧文档 map 的 ID 语法。
 
+严格查询的 `entryId` 遵守 `doc-source-map@1.1.0` 的非空字符串身份规则，因此合法条目 ID 中的 `~` 等字符可原样匹配；未签发的文档来源、工件、`mapsTo` 目标与引用身份也不因侧载 token 词法而被整图拒绝。查询的 `sourceId` 必须与已签发的侧载槽位身份一致，仍采用上述 ASCII token；摘要、原始槽位、实际来源字节与文档关系的核验不放宽。
+
 | 字段 | 含义 |
 | --- | --- |
 | `ordinaryMap.sourceMapId` | 同一份文档 map 的 `sourceMaps[].id`；普通 map 实际段来自此工件。 |
