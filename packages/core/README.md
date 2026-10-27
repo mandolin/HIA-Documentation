@@ -101,6 +101,9 @@ Content defaults to `none`. Source bodies, raw comments, and ordinary source-map
 
 ## Documentation Presentation Profile
 
+See [presentation pages and stable identity](../../docs/presentation-page-identity.md) for the nineteen partition/identity
+fields, numeric order limits, cross-mode comparisons and renderer route responsibilities.
+
 `documentation-presentation-profile@0.1.0-draft` defines renderer-neutral page, source, theme, identity, privacy and
 compatibility facts. Multi-page and fetch are normative defaults; single-page is an explicit compatibility profile and
 `none` is an explicit body-free privacy state. The core fetch-plan builder is pure: it performs no network request, file

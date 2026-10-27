@@ -30,7 +30,10 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION = "0.1.0-draft"
 export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-0.1.0-draft.schema.json" as const;
 
-/** @lang zh-CN 页面分区模式；多页是规范默认。 @lang en Page partition modes; multi-page is the normative default. */
+/**
+ * @lang zh-CN 页面分区模式；multi-page是显式必填的规范默认值，single-page是兼容投影。此元组类型只读，运行时未冻结；消费方不得修改共享词汇。
+ * @lang en Page modes: multi-page is the explicitly required normative default and single-page is a compatibility projection. The tuple is type-readonly but not runtime-frozen; consumers must not mutate the shared vocabulary.
+ */
 export const DOCUMENTATION_PRESENTATION_PAGE_MODES = ["multi-page", "single-page"] as const;
 /** @lang zh-CN 源码阅读模式；`none` 是显式隐私态。 @lang en Source reading modes; `none` is an explicit privacy state. */
 export const DOCUMENTATION_PRESENTATION_SOURCE_MODES = ["fetch", "embed", "link", "none"] as const;
@@ -93,7 +96,7 @@ export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
   "PRESENTATION_COMPATIBILITY_UNSUPPORTED"
 ] as const;
 
-/** @lang zh-CN 页面分区模式类型。 @lang en Page partition mode type. */
+/** @lang zh-CN 仅含中性multi-page/single-page词汇；不接受owner的split-site配置别名。 @lang en Contains only neutral multi-page/single-page vocabulary, not the owner's split-site configuration alias. */
 export type DocumentationPresentationPageMode = typeof DOCUMENTATION_PRESENTATION_PAGE_MODES[number];
 /** @lang zh-CN 源码阅读模式类型。 @lang en Source reading mode type. */
 export type DocumentationPresentationSourceMode = typeof DOCUMENTATION_PRESENTATION_SOURCE_MODES[number];
@@ -112,23 +115,37 @@ export type DocumentationSourceReaderEvent = typeof DOCUMENTATION_SOURCE_READER_
  * Stable topic identity plus page projection. The canonical reference must equal `pageId#fragmentId`.
  */
 export interface DocumentationPresentationTopicProjection {
+  /** @lang zh-CN 精确等于pageId#fragmentId的逻辑引用；不是可解析URL，不证明文件或锚点存在。 @lang en Logical reference exactly equal to pageId#fragmentId; not a resolved URL or proof that a file or anchor exists. */
   canonicalReference: string;
+  /** @lang zh-CN profile内唯一的稳定片段身份；跨模式保留，不从pageId推导。 @lang en Stable fragment identity unique within the profile; retained across modes and not derived from pageId. */
   fragmentId: string;
+  /** @lang zh-CN profile内唯一的稳定导航身份；与topic/fragment各有独立唯一性域。 @lang en Stable navigation identity unique within the profile, with a uniqueness domain separate from topic/fragment identities. */
   navigationId: string;
+  /** @lang zh-CN 非负安全整数，topics按数值严格递增；可有空档，不参与当前身份比较。 @lang en Nonnegative safe integer; topics strictly increase numerically. Gaps are allowed; this field is not compared as identity. */
   order: number;
+  /** @lang zh-CN 页面投影身份，可被多个topic共享；只有显式模式变化才豁免跨profile页面身份比较。 @lang en Projected page identity, shareable by multiple topics; only an explicit mode change exempts page identity from cross-profile comparison. */
   pageId: string;
+  /** @lang zh-CN 0至256个唯一、ASCII身份字典序的稳定关系引用；不同topic可共享，不校验外部关系实体存在。 @lang en Zero to 256 unique, ASCII-identity-ordered stable relation references; topics may share them and external relation existence is not checked. */
   relationIds: string[];
+  /** @lang zh-CN profile内唯一且精确区分大小写的连接键；合法身份为1至256个受限ASCII字符，不使用数组位置连接。 @lang en Unique, case-sensitive join key within the profile; valid identities use one to 256 restricted ASCII characters and never join by array position. */
   topicId: string;
+  /** @lang zh-CN 合法逻辑类别身份；不要求属于pageTopicKinds，不参与当前身份比较。 @lang en Valid logical kind identity; membership in pageTopicKinds is not required and it is not compared as identity. */
   topicKind: string;
 }
 
-/** @lang zh-CN 确定性 page partition policy 与投影。 @lang en Deterministic page-partition policy and projections. */
+/** @lang zh-CN 确定性分区声明与投影；接口可变，类型不编码全部跨字段条件，须校验完整profile。 @lang en Deterministic partition declarations and projections; the mutable interface does not encode every cross-field condition, so validate the complete profile. */
 export interface DocumentationPresentationPagePartition {
+  /** @lang zh-CN 必填且固定multi-page；校验器不自动填充缺省值。 @lang en Required and fixed to multi-page; validation does not insert omitted defaults. */
   defaultMode: "multi-page";
+  /** @lang zh-CN owner声明叶节点用fragment或page投影；core不由此推导父子关系或实际路由。 @lang en Owner declaration of fragment/page leaf projection; core infers neither parentage nor actual routes from it. */
   leafTopicPolicy: "fragment" | "page";
+  /** @lang zh-CN 本profile实际模式；与defaultMode独立，是比较器页面投影豁免的开关。 @lang en Actual mode independent of defaultMode; controls the comparator's page-projection exemption. */
   mode: DocumentationPresentationPageMode;
+  /** @lang zh-CN 0至256个唯一且ASCII身份字典序的页面类别声明；允许空，不强制覆盖topicKind集合。 @lang en Zero to 256 unique ASCII-identity-ordered page-kind declarations; may be empty and need not cover topicKind values. */
   pageTopicKinds: string[];
+  /** @lang zh-CN single-page时必填且必须等于每个topic.pageId；multi-page必须省略，结构类型本身不强制此条件。 @lang en Required in single-page and equal to every topic.pageId; omitted in multi-page. The structural type itself does not enforce this condition. */
   singlePageId?: string;
+  /** @lang zh-CN 1至10000个投影，order数值严格递增，topic/fragment/navigation各自唯一；不要求pageId唯一。 @lang en One to 10,000 projections with strictly increasing numeric order and independently unique topic/fragment/navigation ids; pageId need not be unique. */
   topics: DocumentationPresentationTopicProjection[];
 }
 
@@ -140,10 +157,15 @@ export interface DocumentationPresentationPagePartition {
  * Identity rules across presentation variants; only partition mode may affect pageId.
  */
 export interface DocumentationPresentationIdentityPolicy {
+  /** @lang zh-CN 固定partition-mode-only；同模式比较pageId/canonicalReference，不同模式仅豁免这两个字段。 @lang en Fixed partition-mode-only policy; same-mode comparisons include pageId/canonicalReference and different modes exempt only those fields. */
   pageIdProjection: "partition-mode-only";
+  /** @lang zh-CN 固定false，色彩scheme不得改变稳定身份；并非宿主行为证明。 @lang en Fixed false: color scheme must not alter stable identity; this is not proof of host behavior. */
   schemeAffectsIdentity: false;
+  /** @lang zh-CN 固定false，皮肤不得改变稳定身份。 @lang en Fixed false: skin must not alter stable identity. */
   skinAffectsIdentity: false;
+  /** @lang zh-CN 固定false，源码阅读模式不得改变稳定身份。 @lang en Fixed false: source reading mode must not alter stable identity. */
   sourceModeAffectsIdentity: false;
+  /** @lang zh-CN 精确固定顺序的四字段元组；不包含order/topicKind/profileId或分区policy声明。 @lang en Exact ordered tuple of four stable fields; excludes order/topicKind/profileId and partition policy declarations. */
   stableFields: ["topicId", "fragmentId", "navigationId", "relationIds"];
 }
 
@@ -725,12 +747,15 @@ const sourceReaderTransitions: Readonly<Record<DocumentationSourceReaderState, P
 
 /** @lang zh-CN 验证 page partition shape、排序和 single-page 投影。 @lang en Validates page-partition shape, ordering, and single-page projection. */
 function isPagePartition(value: unknown): value is DocumentationPresentationPagePartition {
+  // <lang><zh-CN>先确认声明与每个投影形状，再读取数值顺序；不填默认值或推导路由。</zh-CN><en>Check declarations and each projection shape before reading numeric order; insert no defaults and infer no routes.</en></lang>
   if (!isExactRecord(value, pagePartitionKeys) || !hasRequiredKeys(value, ["defaultMode", "leafTopicPolicy", "mode", "pageTopicKinds", "topics"] as const)) return false;
   if (value.defaultMode !== "multi-page" || !DOCUMENTATION_PRESENTATION_PAGE_MODES.includes(value.mode as DocumentationPresentationPageMode)
     || (value.leafTopicPolicy !== "fragment" && value.leafTopicPolicy !== "page") || !isSortedIdentityArray(value.pageTopicKinds, 256)) return false;
   if (!Array.isArray(value.topics) || value.topics.length === 0 || value.topics.length > 10_000 || !value.topics.every(isTopicProjection)) return false;
+  // <lang><zh-CN>已校验的非负安全整数按相邻数值严格递增；同时拒绝重复order，不用固定位宽字符串key。</zh-CN><en>Validated nonnegative safe integers must strictly increase between neighbors; this also rejects duplicate order without fixed-width string keys.</en></lang>
   const topics = value.topics as DocumentationPresentationTopicProjection[];
-  if (!isSortedBy(topics, ({ order, topicId }) => `${String(order).padStart(10, "0")}:${topicId}`) || hasDuplicates(topics.map(({ order }) => order))) return false;
+  if (topics.some((topic, index) => index > 0 && topics[index - 1]!.order >= topic.order)) return false;
+  // <lang><zh-CN>single-page限定同一页面身份；multi-page不允许携带该单页声明，但可共享pageId。</zh-CN><en>Single-page requires one page identity; multi-page omits that declaration but may still share pageId values.</en></lang>
   if (value.mode === "single-page") {
     if (!isIdentity(value.singlePageId) || topics.some(({ pageId }) => pageId !== value.singlePageId)) return false;
   } else if (value.singlePageId !== undefined) return false;

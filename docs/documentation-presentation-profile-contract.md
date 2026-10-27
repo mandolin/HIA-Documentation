@@ -34,6 +34,9 @@ Within one partition mode, source or theme variants cannot change page identity.
 Arrays are deterministic data, not implicit identity. Topic order is explicit, and identity comparison joins topics by
 `topicId`.
 
+See [page and identity reference](presentation-page-identity.md) for all nineteen fields, numeric ordering, explicit
+single-page conditions, comparator exclusions and owner route responsibilities.
+
 ## Source Assets And Fetch Planning
 
 The manifest contains public logical identities, a safe relative URL, revision, media type, optional public size facts,

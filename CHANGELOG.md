@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Presentation page and identity responsibilities
+
+- 修复topic order跨十位数按补零字符串排序的误判，改为非负安全整数的数值严格递增；补页面/身份三接口19字段、48项回归/特征及严格类型，保留原公开签名、schema/版本与比较器身份集合，尚未发布。
+- Correct numeric topic ordering across digit widths, replacing a ten-character padded key with strictly increasing safe integers. Document nineteen page/identity fields and add 48 regressions/characterizations with strict types, retaining public signatures, schemas, versions and the comparator identity set; unreleased. See [page and identity reference](docs/presentation-page-identity.md).
+
 ## Unreleased — Presentation profile input and reader-state boundaries
 
 - 呈现配置校验、身份比较和纯fetch计划先预检普通JSON图并消费独立快照，拒绝访问器、环、非JSON值及复制/反射失败；源码状态机拒绝继承键和非法转换。补48项反例/特征及严格类型，保留draft schema、版本、签名与全部81个声明内状态pair；尚未发布。
