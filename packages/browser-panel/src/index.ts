@@ -565,13 +565,13 @@ export interface BrowserPanelArtifactRef {
  */
 export interface BrowserPanelEntryLookup {
   /**
-   * 生成产物位置。
-   * Generated artifact position.
+   * 普通 source map 返回的数值产物位置；不证明其原始列单位与文档源码引用相同。
+   * Numeric generated position returned by an ordinary source map; it does not prove agreement with a documentation source reference's original column unit.
    */
   generated?: SourceMapGeneratedPosition;
   /**
-   * 与查询位置匹配的 doc-source-map 条目 ID。
-   * Doc-source-map entry ids matched by the lookup position.
+   * 与声明单位下的源码位置匹配的文档条目 ID；不证明普通 source map 的原始列单位。
+   * Documentation entry ids matched at the source position under its declared unit; this does not prove the ordinary source map's original column unit.
    */
   matchedEntryIds: string[];
   /**
@@ -853,7 +853,8 @@ function createBrowserPanelEntries(input: BrowserPanelDocSourceMapInput): Browse
     const sourceLinks = entry.sourceLinks.map(normalizeSourceLink);
     const artifactLinks = entry.artifactLinks.map(normalizeArtifactLink);
     const domain = inferEntryDomain(entry.symbolKind ?? entry.kind, sourceLinks, artifactLinks);
-    const lookup = createEntryLookup(input, sourceLinks, artifactLinks);
+    // <lang><zh-CN>查询读取索引中逐引用的列单位；公开面板 payload 继续使用既有投影字段。</zh-CN><en>The lookup reads the per-reference column unit from the index while the public panel payload retains its existing projected fields.</en></lang>
+    const lookup = createEntryLookup(input, entry.sourceLinks, artifactLinks);
     const id = createEntryId(input.path, entry.id);
     const label = entry.symbolId ?? entry.id;
 
@@ -873,19 +874,31 @@ function createBrowserPanelEntries(input: BrowserPanelDocSourceMapInput): Browse
   });
 }
 
+/**
+ * @lang zh-CN 按单个文档条目的源码引用查询普通位置映射与文档语义映射；新版单位只来自该引用自身的声明。
+ * @lang en Looks up ordinary positions and documentation semantics for one entry; the current column unit comes only from that source reference's declaration.
+ * @param input <lang><zh-CN>已索引且由调用方提供的两类映射。</zh-CN><en>Both caller-provided indexed map kinds.</en></lang>
+ * @param sourceLinks <lang><zh-CN>索引中的原始源码引用，保留逐引用范围约定。</zh-CN><en>Indexed source links retaining their per-reference range conventions.</en></lang>
+ * @param artifactLinks <lang><zh-CN>面板使用的生成产物链接。</zh-CN><en>Generated artifact links used by the panel.</en></lang>
+ * @returns <lang><zh-CN>可显示的摘要；普通 source map 不提供原始列单位证明，也不执行列单位换算。</zh-CN><en>A displayable summary; the ordinary source map does not prove original column units and no unit conversion occurs.</en></lang>
+ */
 function createEntryLookup(
   input: BrowserPanelDocSourceMapInput,
-  sourceLinks: BrowserPanelSourceRef[],
+  sourceLinks: DocSourceMapSourceLink[],
   artifactLinks: BrowserPanelArtifactRef[]
 ): BrowserPanelEntryLookup {
+  // <lang><zh-CN>沿用首条带范围源码引用与首条带路径产物链接的既有选择顺序。</zh-CN><en>Keep the existing selection order for the first ranged source and first path-bearing artifact.</en></lang>
   const source = sourceLinks.find((candidate) => candidate.path && candidate.range?.start);
   const artifact = artifactLinks.find((candidate) => candidate.path);
+  // <lang><zh-CN>原始位置直接取自所选引用，故其列单位只能使用同一引用声明的已知值。</zh-CN><en>The original position comes directly from the selected reference, so only that same reference's known unit may accompany it.</en></lang>
+  const declaredColumnUnit = source?.rangeConvention?.columnUnit;
   const original = source?.path && source.range?.start
     ? {
         position: source.range.start,
         sourcePath: normalizePath(source.path)
       }
     : undefined;
+  // <lang><zh-CN>普通映射按产物路径选择；其索引没有原始列单位元数据，不从它推断单位。</zh-CN><en>Select the ordinary map by artifact path; its index has no original-column-unit metadata and cannot supply an inferred unit.</en></lang>
   const ordinaryMap = artifact?.path
     ? findOrdinarySourceMapForArtifact(input.ordinarySourceMaps ?? [], artifact.path)
     : undefined;
@@ -905,6 +918,7 @@ function createEntryLookup(
     };
   }
 
+  // <lang><zh-CN>保留既有普通映射查找；返回的生成位置不构成跨单位精度证明。</zh-CN><en>Retain the existing ordinary-map lookup; its generated position is not proof of cross-unit precision.</en></lang>
   const generatedLookup = findGeneratedPositionForOriginal(ordinaryMap.index, original.sourcePath, original.position);
   const generated = generatedLookup.generated;
 
@@ -917,9 +931,11 @@ function createEntryLookup(
     };
   }
 
+  // <lang><zh-CN>只向文档语义查询传入逐引用已知单位；未知或旧版单位均保持省略，不用 UTF-16 作默认值。</zh-CN><en>Pass only a known per-reference unit to semantic querying; unknown and legacy units stay omitted rather than defaulting to UTF-16.</en></lang>
   const combinedLookup = querySourceLinkedPosition(input.index, ordinaryMap.index, {
     originalPosition: original.position,
-    originalSourcePath: original.sourcePath
+    originalSourcePath: original.sourcePath,
+    ...(declaredColumnUnit && declaredColumnUnit !== "unknown" ? { originalColumnUnit: declaredColumnUnit } : {})
   });
 
   return {
