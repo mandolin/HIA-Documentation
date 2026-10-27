@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -75,6 +75,46 @@ async function writeSyntheticInputs(root: string): Promise<void> {
   await writeFile(path.join(root, "profile.json"), JSON.stringify(profile), "utf8");
 }
 
+/**
+ * @lang zh-CN 在相同的公开源码路径上构造两个本地 section，各自保留 raw slot 0、独立源码版本和列单位。
+ * @lang en Builds two local sections for the same public source path, each with raw slot 0, an independent source version and column unit.
+ * @param root <lang><zh-CN>受限测试根目录。</zh-CN><en>Contained test root.</en></lang>
+ * @returns <lang><zh-CN>第二 section 的实际源码字节；首个版本已经写在源路径。</zh-CN><en>Actual source bytes for the second section; the first version remains at the source path.</en></lang>
+ */
+async function writeTwoSectionInputs(root: string): Promise<Buffer> {
+  await writeSyntheticInputs(root);
+  // <lang><zh-CN>两个本地 section 使用相同原始路径和槽位 0，但第二段的生成位置独立偏移。</zh-CN><en>Both local sections use the same original path and slot zero, while the second generated position has its own offset.</en></lang>
+  const ordinaryMapBytes = Buffer.from(JSON.stringify({ version: 3, sections: [
+    { offset: { line: 0, column: 0 }, map: { version: 3, sources: ["src/a.ts"], names: [], mappings: "AAAA" } },
+    { offset: { line: 1, column: 4 }, map: { version: 3, sources: ["src/a.ts"], names: [], mappings: "AAAC" } }
+  ] }), "utf8");
+  // <lang><zh-CN>读取刚写入的公开合成文档地图，只为第二源码版本添加独立来源和条目。</zh-CN><en>Read the freshly written public synthetic documentation map and add a distinct source and entry for the second version.</en></lang>
+  const documentation = JSON.parse(await readFile(path.join(root, "app.docmap.json"), "utf8"));
+  documentation.sources.push({ id: "source:second", kind: "source", path: "src/a.ts", language: "typescript", sourcesContentPolicy: "none" });
+  documentation.sourceMaps[0].mapsTo.push("source:second");
+  documentation.entries.push({ id: "entry:second", kind: "symbol", sourceRefs: [{ sourceId: "source:second",
+    range: { start: { line: 1, column: 2 }, end: { line: 1, column: 3 } },
+    rangeConvention: { endBoundary: "exclusive", columnUnit: "unicode-code-point" }, rangeSource: "parser", confidence: "high" }],
+    artifactRefs: [{ artifactId: "artifact:app", rangeSource: "source-map", confidence: "high" }], diagnostics: [] });
+  const documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+  // <lang><zh-CN>侧载中的两张地图摘要来自本次真正交给 CLI 的字节。</zh-CN><en>Both sidecar map digests come from the exact bytes supplied to the CLI.</en></lang>
+  const profile = JSON.parse(await readFile(path.join(root, "profile.json"), "utf8"));
+  const digest = (bytes: Uint8Array) => ({ algorithm: "sha256", value: createHash("sha256").update(bytes).digest("base64") });
+  profile.ordinaryMap.digest = digest(ordinaryMapBytes);
+  profile.documentationMap.digest = digest(documentationMapBytes);
+  profile.sourceSlots[0].sectionIndex = 0;
+  // <lang><zh-CN>第二份实际源码保留非 BMP 字符，让 code-point 列 2 与 UTF-16 列 3 明确不同。</zh-CN><en>The second actual source keeps a non-BMP character, making code-point column two distinct from UTF-16 column three.</en></lang>
+  const secondText = "😀export const value = 2;\n";
+  const secondBytes = Buffer.from(secondText, "utf8");
+  profile.sourceSlots.push({ ...structuredClone(profile.sourceSlots[0]), sectionIndex: 1, sourceId: "source:second",
+    sourceRevision: "revision:second", columnUnit: "unicode-code-point", sourceByteDigest: digest(secondBytes),
+    sourceTextDigest: { representation: "decoded-utf16-code-units", ...digest(Buffer.from(secondText, "utf16le")) } });
+  await writeFile(path.join(root, "app.js.map"), ordinaryMapBytes);
+  await writeFile(path.join(root, "app.docmap.json"), documentationMapBytes);
+  await writeFile(path.join(root, "profile.json"), JSON.stringify(profile), "utf8");
+  return secondBytes;
+}
+
 /** @lang zh-CN 以独立 cwd 捕捉单条机器 JSON，不把宿主路径附加到结果。 @lang en Captures one machine JSON under an isolated cwd without appending host paths. */
 async function invoke(root: string, overrides: string[] = [], omitSource = false): Promise<{
   code: number;
@@ -112,6 +152,48 @@ async function invoke(root: string, overrides: string[] = [], omitSource = false
 }
 
 describe("docs coordinate-verify", () => {
+  it("requires the explicit local section and that section's authorized bytes despite identical source paths", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
+    try {
+      const secondBytes = await writeTwoSectionInputs(root);
+      const first = await invoke(root, ["--section-index", "0"]);
+      expect(first.code).toBe(0);
+      expect(first.report.verification).toMatchObject({ kind: "exact-anchor", generatedPosition: { line: 1, column: 1 } });
+      const borrowed = await invoke(root, ["--section-index", "1", "--source-id", "source:second", "--entry-id", "entry:second",
+        "--column", "2", "--column-unit", "unicode-code-point"]);
+      expect(borrowed.code).toBe(2);
+      expect(borrowed.report.verification.kind).toBe("unverified");
+
+      // <lang><zh-CN>同一源码路径换成第二版本后，仅第二 section 可获已核锚点，缺失 section 参数不能借用它。</zh-CN><en>After the same source path receives the second version, only the second section may verify; an omitted section cannot borrow it.</en></lang>
+      await writeFile(path.join(root, "src", "a.ts"), secondBytes);
+      const secondOptions = ["--source-id", "source:second", "--entry-id", "entry:second", "--column", "2", "--column-unit", "unicode-code-point"];
+      const second = await invoke(root, ["--section-index", "1", ...secondOptions]);
+      expect(second.code).toBe(0);
+      expect(second.report.verification).toMatchObject({ kind: "exact-anchor", generatedPosition: { line: 2, column: 5 } });
+      const omittedSection = await invoke(root, secondOptions);
+      expect(omittedSection.code).toBe(1);
+      expect(omittedSection.report.verification.kind).toBe("invalid");
+      expect(omittedSection.report.diagnostics[0]?.code).toBe("COORDINATE_PROFILE_SOURCE_INPUT_INVALID");
+      expect((await invoke(root, ["--section-index", "0"])).report.verification.kind).toBe("unverified");
+      const wrongSection = await invoke(root, ["--section-index", "0", ...secondOptions]);
+      expect(wrongSection.code).toBe(2);
+      expect(wrongSection.report.verification.kind).toBe("unverified");
+      const malformed = await invoke(root, ["--section-index", "1e0", ...secondOptions]);
+      expect(malformed.code).toBe(1);
+      expect(malformed.report.diagnostics[0]?.code).toBe("HIA_CLI_COORDINATE_QUERY_INVALID");
+      expect(JSON.stringify([first, borrowed, second, omittedSection, wrongSection, malformed])).not.toContain(root);
+      expect(JSON.stringify([first, borrowed, second, omittedSection, wrongSection, malformed])).not.toContain("export const value");
+      // <lang><zh-CN>诊断只保留固定代码与文案，不回显同一路径、版本标签或源码摘要。</zh-CN><en>Diagnostics retain fixed codes and messages without echoing the shared path, revision label or source digest.</en></lang>
+      const diagnostics = JSON.stringify([first, borrowed, second, omittedSection, wrongSection, malformed].flatMap(({ report }) => report.diagnostics));
+      const sidecar = JSON.parse(await readFile(path.join(root, "profile.json"), "utf8"));
+      expect(diagnostics).not.toContain("src/a.ts");
+      expect(diagnostics).not.toContain("revision:second");
+      expect(diagnostics).not.toContain(sidecar.sourceSlots[1].sourceByteDigest.value);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("returns one exact machine anchor only after reading all four actual local inputs", async () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hia-coordinate-cli-"));
     try {

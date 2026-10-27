@@ -45,6 +45,46 @@ function withOrdinaryMap(base: ReturnType<typeof fixture>, map: unknown, section
 }
 
 /**
+ * @lang zh-CN 两个本地 section 各自使用原始槽位 0 和相同源码路径，但由不同的授权字节、文档来源身份及列单位作证。
+ * @lang en Two local sections each use raw slot 0 and the same source path, while distinct authorized bytes, documentation identities and column units provide evidence.
+ * @returns <lang><zh-CN>已重算两张地图摘要及逐槽源码摘要的严格输入和两个查询。</zh-CN><en>Strict input and two queries with both map digests and per-slot source digests recomputed.</en></lang>
+ */
+function twoSectionFixture() {
+  // <lang><zh-CN>以第一份实际源码作为基线，再让第二段沿用路径但换用独立版本。</zh-CN><en>Start with the first actual source version, then reuse its path with an independent second version.</en></lang>
+  const base = fixture("😀x\n");
+  // <lang><zh-CN>section 偏移只平移生成点；每个内嵌 map 的原始来源槽位都从 0 开始。</zh-CN><en>Section offsets move only generated positions; raw source slots restart at zero in each embedded map.</en></lang>
+  const map = { version: 3, sections: [
+    { offset: { line: 0, column: 0 }, map: { version: 3, sources: ["src/shared.scss"], names: [], mappings: "AAAE" } },
+    { offset: { line: 1, column: 4 }, map: { version: 3, sources: ["src/shared.scss"], names: [], mappings: "AAAC" } }
+  ] };
+  const input = withOrdinaryMap(base, map, 0, 0);
+  // <lang><zh-CN>文档来源身份分开而路径相同，避免把同一路径误当成同一源码版本。</zh-CN><en>Separate documentation source identities while retaining one path, so a path cannot stand in for a source version.</en></lang>
+  const documentation = JSON.parse(input.documentationMapBytes.toString("utf8"));
+  documentation.sources[0].path = "src/shared.scss";
+  documentation.sources.push({ id: "source:second", kind: "stylesheet-source", path: "src/shared.scss", sourcesContentPolicy: "none" });
+  documentation.sourceMaps[0].mapsTo.push("source:second");
+  documentation.entries.push({ id: "entry:second", kind: "symbol", sourceRefs: [{ sourceId: "source:second",
+    range: { start: { line: 1, column: 2 }, end: { line: 1, column: 3 } },
+    rangeConvention: { endBoundary: "exclusive", columnUnit: "unicode-code-point" }, rangeSource: "parser", confidence: "high" }],
+    artifactRefs: [{ artifactId: "artifact:css", rangeSource: "adapter", confidence: "high" }], diagnostics: [] });
+  input.documentationMapBytes = Buffer.from(JSON.stringify(documentation), "utf8");
+  input.profile.documentationMap.digest.value = createHash("sha256").update(input.documentationMapBytes).digest("base64");
+  // <lang><zh-CN>第二份源码只在自己的槽位提供；摘要覆盖真实字节及解码后的 UTF-16 逻辑文本。</zh-CN><en>Provide the second source only for its own slot; digest actual bytes and decoded UTF-16 logical text.</en></lang>
+  const secondText = "😀y\n";
+  const secondBytes = Buffer.from(secondText, "utf8");
+  const digest = (bytes: Uint8Array) => ({ algorithm: "sha256", value: createHash("sha256").update(bytes).digest("base64") });
+  input.profile.sourceSlots.push({ ...structuredClone(input.profile.sourceSlots[0]!), sectionIndex: 1,
+    sourceId: "source:second", columnUnit: "unicode-code-point", sourceRevision: "revision:second",
+    sourceByteDigest: digest(secondBytes), sourceTextDigest: { representation: "decoded-utf16-code-units", ...digest(Buffer.from(secondText, "utf16le")) } });
+  input.sourceInputs.push({ sectionIndex: 1, sourceIndex: 0, bytes: secondBytes });
+  // <lang><zh-CN>两个查询各自绑定文档条目、槽位与列单位，不让路径一致替代任一条件。</zh-CN><en>Bind each query to its own entry, slot and column unit rather than accepting path equality as proof.</en></lang>
+  const firstQuery = { ...base.query, sectionIndex: 0 };
+  const secondQuery = { ...base.query, entryId: "entry:second", sourceId: "source:second", sectionIndex: 1,
+    position: { line: 1, column: 2 }, columnUnit: "unicode-code-point" as const };
+  return { input, firstQuery, secondQuery };
+}
+
+/**
  * @lang zh-CN 构造零长度边界反例，始终从实际源码与地图字节重算摘要；人工普通段仅用于隔离读取器，不表示生产器会输出它。
  * @lang en Builds zero-length boundary cases with digests recomputed from actual source and map bytes; the synthetic ordinary segment isolates the reader and does not imply producer output.
  * @param source <lang><zh-CN>本次授权的源码文本，可为空。</zh-CN><en>Authorized source text for this query, possibly empty.</en></lang>
@@ -158,6 +198,47 @@ describe("ordinary coordinate profile strict reader", () => {
     expect((await createOrdinaryCoordinateProfileIndex(nested)).status).toBe("invalid");
     // <lang><zh-CN>历史普通索引仍拒绝 sectioned map，新版接纳不改变旧版默认。</zh-CN><en>The legacy ordinary index still rejects sections; new support does not change its default.</en></lang>
     expect(createOrdinarySourceMapIndex(sectioned).status).toBe("invalid");
+  });
+
+  it("isolates equal raw source slots across local sections despite identical paths", async () => {
+    const { input, firstQuery, secondQuery } = twoSectionFixture();
+    const index = await createOrdinaryCoordinateProfileIndex(input);
+    expect(index.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(index, firstQuery).verification).toMatchObject({ kind: "exact-anchor", generatedPosition: { line: 1, column: 1 } });
+    expect(queryVerifiedSourceAnchor(index, secondQuery).verification).toMatchObject({ kind: "exact-anchor", generatedPosition: { line: 2, column: 5 } });
+    expect(queryVerifiedSourceAnchor(index, { ...secondQuery, sectionIndex: 0 }).verification.kind).toBe("unverified");
+    expect(queryVerifiedSourceAnchor(index, { ...firstQuery, sectionIndex: 1 }).verification.kind).toBe("unverified");
+    expect(queryVerifiedSourceAnchor(index, { ...secondQuery, columnUnit: "utf16-code-unit" }).verification.kind).toBe("unverified");
+
+    // <lang><zh-CN>把第一 section 的实际字节借给第二 section 时，第一锚点仍可核，第二锚点必须失去证明。</zh-CN><en>Borrowing the first section's actual bytes for the second must preserve only the first verified anchor.</en></lang>
+    const borrowed = await createOrdinaryCoordinateProfileIndex({ ...input, sourceInputs: [input.sourceInputs[0]!,
+      { sectionIndex: 1, sourceIndex: 0, bytes: input.sourceInputs[0]!.bytes }] });
+    expect(borrowed.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(borrowed, firstQuery).verification.kind).toBe("exact-anchor");
+    expect(queryVerifiedSourceAnchor(borrowed, secondQuery).verification.kind).toBe("unverified");
+  });
+
+  it("does not borrow an unprofiled section even when both sections share source identity and bytes", async () => {
+    const base = fixture("😀x\n");
+    // <lang><zh-CN>两个内嵌地图的路径、来源身份、原始槽位与文本完全一致，仅 section 身份不同。</zh-CN><en>Both embedded maps share the path, source identity, raw slot and text; only section identity differs.</en></lang>
+    const input = withOrdinaryMap(base, { version: 3, sections: [
+      { offset: { line: 0, column: 0 }, map: { version: 3, sources: ["src/a.scss"], names: [], mappings: "AAAE" } },
+      { offset: { line: 1, column: 4 }, map: { version: 3, sources: ["src/a.scss"], names: [], mappings: "AAAE" } }
+    ] }, 0, 0);
+    const index = await createOrdinaryCoordinateProfileIndex(input);
+    expect(index.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(index, { ...base.query, sectionIndex: 0 }).verification.kind).toBe("exact-anchor");
+    expect(queryVerifiedSourceAnchor(index, { ...base.query, sectionIndex: 1 }).verification.kind).toBe("unverified");
+  });
+
+  it("requires the sidecar unit even when the source bytes and documentation unit match the query", async () => {
+    const { input, secondQuery } = twoSectionFixture();
+    // <lang><zh-CN>只改变第二槽位的列单位声明，保留文档范围、查询位置和已授权真实字节。</zh-CN><en>Change only the second slot's unit claim, retaining the documentation range, query and authorized actual bytes.</en></lang>
+    const profile = structuredClone(input.profile);
+    profile.sourceSlots[1]!.columnUnit = "utf16-code-unit";
+    const index = await createOrdinaryCoordinateProfileIndex({ ...input, profile });
+    expect(index.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(index, secondQuery).verification.kind).toBe("unverified");
   });
 
   it("rejects overlapping sections and embedded source text", async () => {
