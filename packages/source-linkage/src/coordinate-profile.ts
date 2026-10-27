@@ -25,36 +25,80 @@ const REVISION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}(?![\s\S])/;
 const IDENTITY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]*(?![\s\S])/;
 
 /** @lang zh-CN 固定公开诊断，不包含输入路径、摘要、异常或源码。 @lang en Fixed public-safe diagnostic without input paths, hashes, exceptions or source text. */
-export interface CoordinateProfileDiagnostic { code: string; message: string }
+export interface CoordinateProfileDiagnostic {
+  /** @lang zh-CN 固定的机器诊断码；不回显调用方输入。 @lang en Fixed machine diagnostic code; it does not echo caller input. */
+  code: string;
+  /** @lang zh-CN 可公开的固定说明文字，不包含私有工件细节。 @lang en Fixed public-safe explanation without private artifact details. */
+  message: string;
+}
 /** @lang zh-CN 可查询索引的状态；可用不等于每个槽位已授权或每个坐标均有段。 @lang en Index state; available does not imply every slot is authorized or every coordinate has a segment. */
 export type CoordinateProfileStatus = "available" | "invalid" | "unsupported-version";
 /** @lang zh-CN 严格结果分类；仅 exact-anchor 是已核同点段。 @lang en Strict result categories; only exact-anchor verifies a same-point segment. */
 export type CoordinateVerificationKind = "exact-anchor" | "nearest-anchor" | "unverified" | "ambiguous-source" | "unmapped" | "invalid" | "unsupported-version";
 /** @lang zh-CN 一基生成坐标，仅代表段起点，不代表 token 或范围逐字符映射。 @lang en One-based generated segment anchor, not character-by-character mapping of a token or range. */
-export interface CoordinateGeneratedPosition { line: number; column: number }
+export interface CoordinateGeneratedPosition {
+  /** @lang zh-CN 生成工件中映射段起点的一基行号。 @lang en One-based line of the segment start in the generated artifact. */
+  line: number;
+  /** @lang zh-CN 生成工件中映射段起点的一基列号；不是原始源码列。 @lang en One-based column of the segment start in the generated artifact, not the original source column. */
+  column: number;
+}
 /** @lang zh-CN 不含源码正文或工件路径的严格查询结果。 @lang en Strict query result without source text or artifact paths. */
 export interface VerifiedSourceAnchorResult {
+  /** @lang zh-CN 固定且可公开的本次查询诊断，不包含路径、摘要或正文。 @lang en Fixed public-safe diagnostics for this query, without paths, digests or source text. */
   diagnostics: CoordinateProfileDiagnostic[];
-  verification: { kind: CoordinateVerificationKind; generatedPosition?: CoordinateGeneratedPosition };
+  /** @lang zh-CN 分类与可选导航锚点；只有 exact-anchor 证明跨图同点。 @lang en Classification and optional navigation anchor; only exact-anchor proves a same point across maps. */
+  verification: {
+    /** @lang zh-CN 严格查询分类；nearest-anchor 仅为导航近邻。 @lang en Strict query classification; nearest-anchor is only a navigation neighbor. */
+    kind: CoordinateVerificationKind;
+    /** @lang zh-CN 仅 exact-anchor 或 nearest-anchor 返回的生成段起点；其它分类缺席，类型不保证此字段存在。 @lang en Generated segment start returned only for exact-anchor or nearest-anchor; absent for other kinds and not guaranteed by the type. */
+    generatedPosition?: CoordinateGeneratedPosition;
+  };
 }
 /** @lang zh-CN 对外只暴露状态与固定诊断；槽位、逻辑文本和段存于私有 WeakMap。 @lang en Exposes only status and fixed diagnostics; slots, logical text and segments live in a private WeakMap. */
-export interface OrdinaryCoordinateProfileIndex { status: CoordinateProfileStatus; diagnostics: CoordinateProfileDiagnostic[] }
+export interface OrdinaryCoordinateProfileIndex {
+  /** @lang zh-CN 索引整体状态；available 不保证任一来源槽位已授权或坐标有段。 @lang en Overall index state; available does not guarantee an authorized source slot or a segment at any coordinate. */
+  status: CoordinateProfileStatus;
+  /** @lang zh-CN 固定公开诊断；索引内部证据不通过此数组泄漏。 @lang en Fixed public-safe diagnostics; internal index evidence is not exposed through this array. */
+  diagnostics: CoordinateProfileDiagnostic[];
+}
 /** @lang zh-CN 宿主已授权提供的实际来源字节，以普通 map 原始槽位定位；不含路径或网络能力。 @lang en Actual source bytes authorized by the host, addressed by the ordinary map's raw slot; carries no path or network capability. */
-export interface CoordinateSourceInput { sectionIndex: number | null; sourceIndex: number; bytes: Uint8Array }
+export interface CoordinateSourceInput {
+  /** @lang zh-CN 平面图用 null；本地非嵌套内嵌 section 用原始零基序号，0 与 null 不等价。 @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, and zero differs from null. */
+  sectionIndex: number | null;
+  /** @lang zh-CN 对应普通 map 或指定 section 的 sources 数组原始零基槽位，不能按路径合并。 @lang en Raw zero-based sources-array slot in the ordinary map or selected section; paths must not merge slots. */
+  sourceIndex: number;
+  /** @lang zh-CN 宿主获授权读取的来源文件实际原始字节；构建索引时复制核验，不携带读取权限、路径或源码发布许可。 @lang en Actual raw source-file bytes read with host authorization; copied and checked while building the index, without carrying read authority, a path or permission to publish source. */
+  bytes: Uint8Array;
+}
 /** @lang zh-CN 显式输入含两张地图实际字节和按槽位授权的来源字节；读取器不自行 I/O。 @lang en Explicit input contains actual bytes for both maps and per-slot authorized source bytes; the reader performs no I/O. */
 export interface OrdinaryCoordinateProfileInput {
+  /** @lang zh-CN 坐标侧载 JSON 值或原始 JSON 文本；unknown 必须由严格读取器校验。 @lang en Coordinate sidecar JSON value or raw JSON text; the strict reader must validate this unknown input. */
   profile: unknown;
+  /** @lang zh-CN 本次消费的普通 source map 实际原始字节，不接受仅提供摘要代替。 @lang en Actual raw ordinary source-map bytes consumed this time; a digest alone cannot replace them. */
   ordinaryMapBytes: Uint8Array;
+  /** @lang zh-CN 本次消费的文档源码映射实际原始字节，需与侧载摘要一致。 @lang en Actual raw documentation source-map bytes consumed this time, checked against the sidecar digest. */
   documentationMapBytes: Uint8Array;
+  /** @lang zh-CN 逐原始槽位提供的获授权来源字节；缺席槽位保留未核状态，读取器不自行访问文件或网络。 @lang en Host-authorized source bytes by raw slot; an absent slot remains unverified, and the reader performs no file or network access. */
   sourceInputs: CoordinateSourceInput[];
 }
 /** @lang zh-CN 查询一条文档引用与明确的普通来源槽位；所有坐标一基且列单位必填。 @lang en Queries one documentation reference and explicit ordinary source slot; all coordinates are one-based and the column unit is required. */
 export interface VerifiedSourceAnchorQuery {
+  /** @lang zh-CN 文档源码映射中的条目 ID，按该契约的非空身份规则匹配。 @lang en Entry ID in the documentation map, matched under that contract's nonempty identity rule. */
   entryId: string;
+  /** @lang zh-CN 与侧载槽位及文档来源一致的来源 ID；严格读取器核验身份。 @lang en Source ID shared by the sidecar slot and documentation source; the strict reader verifies the identity. */
   sourceId: string;
+  /** @lang zh-CN 平面图为 null；本地非嵌套 section 为原始零基序号，不能以 0 代替 null。 @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, never zero in place of null. */
   sectionIndex: number | null;
+  /** @lang zh-CN 平面图或指定 section 内普通图 sources 数组的原始零基槽位。 @lang en Raw zero-based sources-array slot in the flat map or selected ordinary-map section. */
   sourceIndex: number;
-  position: { line: number; column: number };
+  /** @lang zh-CN 待核原始源码位置；行列均一基，列按 columnUnit 解释。 @lang en Original source point to verify; line and column are one-based, with the column interpreted by columnUnit. */
+  position: {
+    /** @lang zh-CN 原始源码的一基行号。 @lang en One-based line in the original source. */
+    line: number;
+    /** @lang zh-CN 原始源码的一基列号，单位由 columnUnit 明确指定。 @lang en One-based column in the original source, with its unit explicitly specified by columnUnit. */
+    column: number;
+  };
+  /** @lang zh-CN 请求位置的明确列单位，须与来源槽位和文档引用单位一致；不能按扩展名推断。 @lang en Explicit query-column unit, which must match the source slot and documentation reference; it cannot be inferred from an extension. */
   columnUnit: "utf16-code-unit" | "unicode-code-point" | "byte";
 }
 
