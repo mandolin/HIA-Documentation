@@ -268,10 +268,10 @@ export interface DocumentationUiLocaleCompletenessSummary {
 
 /**
  * @lang zh-CN
- * Pure evaluator 结果；malformed/private 输入不返回 report，有效但覆盖不足的输入返回 incomplete report。
+ * Pure evaluator 结果；非法、私密或超出 wire 容量的输入不返回 report，可表示但覆盖不足的输入返回 incomplete report。
  *
  * @lang en
- * Pure evaluator result; malformed/private input returns no report, while valid but under-covered input returns an incomplete report.
+ * Pure evaluator result; malformed, private, or unrepresentably large input returns no report, while representable under-coverage returns an incomplete report.
  */
 export interface DocumentationUiLocaleCompletenessResult {
   diagnostics: HiaDiagnostic[];
@@ -287,6 +287,10 @@ const messageIdentitySchema = { type: "string", pattern: "^[a-z][a-z0-9]*(?:\\.[
 const localeSchema = { type: "string", pattern: "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$", maxLength: 64 } as const;
 const placeholderSchema = { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,63}$" } as const;
 const countSchema = { type: "integer", minimum: 0, maximum: 1000000 } as const;
+/** @lang zh-CN 与既有 wire schema 一致的 evaluation 上限；超限输入在展开前拒绝。 @lang en Existing wire-schema evaluation ceiling; oversized inputs are refused before expansion. */
+const maxReportEvaluations = 100000;
+/** @lang zh-CN 与既有 wire schema 一致的去重诊断上限；超限时不生成报告。 @lang en Existing wire-schema ceiling for distinct diagnostics; no report is emitted after overflow. */
+const maxReportDiagnostics = 100000;
 
 /**
  * @lang zh-CN
@@ -313,10 +317,10 @@ export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
     bundles: { type: "array", minItems: 1, maxItems: 1000, items: { $ref: "#/$defs/bundle" } },
     surfaces: { type: "array", minItems: 1, maxItems: 1000, items: { $ref: "#/$defs/surface" } },
     requirements: { type: "array", minItems: 1, maxItems: 50000, items: { $ref: "#/$defs/requirement" } },
-    evaluations: { type: "array", minItems: 1, maxItems: 100000, items: { $ref: "#/$defs/evaluation" } },
+    evaluations: { type: "array", minItems: 1, maxItems: maxReportEvaluations, items: { $ref: "#/$defs/evaluation" } },
     privacy: { $ref: "#/$defs/privacy" },
     compatibility: { $ref: "#/$defs/compatibility" },
-    diagnostics: { type: "array", maxItems: 100000, items: { $ref: "#/$defs/diagnostic" } }
+    diagnostics: { type: "array", maxItems: maxReportDiagnostics, items: { $ref: "#/$defs/diagnostic" } }
   },
   $defs: {
     stringArray: { type: "array", maxItems: 1000, uniqueItems: true, items: { type: "string", minLength: 1, maxLength: 128 } },
@@ -505,6 +509,25 @@ const stableIdentityPattern = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 const messageIdentityPattern = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)+$/u;
 const localePattern = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/u;
 const placeholderPattern = /^[A-Za-z][A-Za-z0-9_]{0,63}$/u;
+/** @lang zh-CN 报告可出现的固定诊断正文；生产者与独立 reader 共用，避免词表漂移。 @lang en Fixed report diagnostic prose shared by producer and independent reader to prevent vocabulary drift. */
+const reportDiagnosticText = {
+  noScript: "Every surface must declare a no-script UI message mode.",
+  baseChannels: "Every surface mode must cover visible text and accessible names.",
+  declaredChannel: "A declared UI message channel has no required message.",
+  undeclaredChannel: "A required UI message uses a channel absent from its surface mode.",
+  language: "Document and part language metadata must cover both content and UI locales.",
+  fallback: "A required UI message resolved only through a declared fallback.",
+  missing: "A required UI message is missing from the exact locale and its declared chain.",
+  placeholder: "A localized UI message does not preserve the declared placeholder set."
+} as const;
+/** @lang zh-CN 固定 code/message 配对是报告诊断的第一道隐私边界。 @lang en Fixed code/message pairs are the first privacy boundary for report diagnostics. */
+const reportDiagnosticMessages = new Map<DocumentationUiLocaleCompletenessDiagnosticCode, readonly string[]>([
+  ["ULC_NO_SCRIPT_INCOMPLETE", [reportDiagnosticText.noScript]],
+  ["ULC_ACCESSIBILITY_INCOMPLETE", [reportDiagnosticText.baseChannels, reportDiagnosticText.language]],
+  ["ULC_MESSAGE_MISSING", [reportDiagnosticText.declaredChannel, reportDiagnosticText.undeclaredChannel, reportDiagnosticText.missing]],
+  ["ULC_REQUIRED_MESSAGE_FALLBACK", [reportDiagnosticText.fallback]],
+  ["ULC_PLACEHOLDER_MISMATCH", [reportDiagnosticText.placeholder]]
+]);
 
 /**
  * @lang zh-CN
@@ -514,7 +537,7 @@ const placeholderPattern = /^[A-Za-z][A-Za-z0-9_]{0,63}$/u;
  * Evaluates every surface × interactive/no-script × UI-locale combination; the function reads no files, network, system locale, browser state, or target project.
  *
  * @param value <lang><zh-CN>显式、内存中的 message/surface 输入。</zh-CN><en>Explicit in-memory message and surface input.</en></lang>
- * @returns deeply frozen complete/incomplete report，或 public-safe refusal。 / Deeply frozen complete/incomplete report or public-safe refusal.
+ * @returns 深度冻结的 complete/incomplete 报告，或对非法、私密、超出 wire 容量的输入给出 public-safe refusal。 / Deeply frozen complete/incomplete report or a public-safe refusal for malformed, private or wire-overflow input.
  */
 export function evaluateDocumentationUiLocaleCompleteness(value: unknown): DocumentationUiLocaleCompletenessResult {
   // <lang><zh-CN>结构、identity、locale、fallback 与 plaintext privacy 先行校验，防止敏感正文进入 diagnostic/report。</zh-CN><en>Validate shape, identity, locale, fallback, and plain-text privacy first so sensitive text cannot enter diagnostics or reports.</en></lang>
@@ -523,6 +546,10 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
 
   // <lang><zh-CN>预检后的 input 转为受信 shape，并把所有集合规范化为稳定 wire 顺序。</zh-CN><en>Cast the preflighted input to its trusted shape and normalize every collection into stable wire order.</en></lang>
   const input = value as DocumentationUiLocaleCompletenessInput;
+  // <lang><zh-CN>全矩阵 evaluation 数可由两个已验证长度计算；超过 schema 限额时在生成任何 report 节点前固定拒绝。</zh-CN><en>The full evaluation count follows from two validated lengths; reject before creating report nodes when it exceeds the schema ceiling.</en></lang>
+  if (input.surfaces.length * DOCUMENTATION_UI_LOCALE_MODES.length * input.uiLocales.length > maxReportEvaluations) {
+    return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the bounded evaluation limit."));
+  }
   const contentLocales = sortLocales(input.contentLocales);
   const uiLocales = sortLocales(input.uiLocales);
   // <lang><zh-CN>默认 UI locale 复用 uiLocales 中第一次显式拼写，避免大小写等价标签产生双重 wire spelling。</zh-CN><en>The default UI locale reuses the first explicit spelling from uiLocales so case-equivalent tags do not create two wire spellings.</en></lang>
@@ -544,6 +571,20 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
   const inputBundleByLocale = new Map(input.bundles.map((bundle) => [localeKey(bundle.locale), bundle]));
   const fallbackByLocale = new Map(fallbackChains.map((chain) => [localeKey(chain.uiLocale), chain.fallbackLocales]));
   const diagnostics: HiaDiagnostic[] = [];
+  // <lang><zh-CN>诊断预算按最终 code/path/message 去重身份计数；重复模式命中的同一路径不耗用额外 wire 容量。</zh-CN><en>Count diagnostic budget by final code/path/message identity so repeated mode hits on one path do not consume extra wire capacity.</en></lang>
+  const diagnosticIdentities = new Set<string>();
+  let diagnosticBudgetExceeded = false;
+  /** @lang zh-CN 只收集 schema 上限内的不同诊断，超限记状态并由当前生成块返回固定拒绝。 @lang en Collects distinct diagnostics only within the schema limit; the current generation block returns a fixed refusal after overflow. */
+  function appendReportDiagnostic(item: HiaDiagnostic): void {
+    const identity = `${item.code}\u0000${item.path ?? ""}\u0000${item.message}`;
+    if (diagnosticIdentities.has(identity) || diagnosticBudgetExceeded) return;
+    if (diagnostics.length >= maxReportDiagnostics) {
+      diagnosticBudgetExceeded = true;
+      return;
+    }
+    diagnosticIdentities.add(identity);
+    diagnostics.push(item);
+  }
   const evaluations: DocumentationUiLocaleEvaluation[] = [];
 
   for (const surface of surfaces) {
@@ -555,20 +596,23 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
       const declaredChannels = new Set(modeDefinition.channels);
 
       if (mode === "no-script" && modeDefinition.channels.length === 0) {
-        diagnostics.push(diagnostic("ULC_NO_SCRIPT_INCOMPLETE", "Every surface must declare a no-script UI message mode.", `surfaces.${surface.surfaceId}.modes.no-script`));
+        appendReportDiagnostic(diagnostic("ULC_NO_SCRIPT_INCOMPLETE", reportDiagnosticText.noScript, `surfaces.${surface.surfaceId}.modes.no-script`));
       }
       if (!declaredChannels.has("visible-text") || !declaredChannels.has("accessible-name")) {
-        diagnostics.push(diagnostic("ULC_ACCESSIBILITY_INCOMPLETE", "Every surface mode must cover visible text and accessible names.", `surfaces.${surface.surfaceId}.modes.${mode}`));
+        appendReportDiagnostic(diagnostic("ULC_ACCESSIBILITY_INCOMPLETE", reportDiagnosticText.baseChannels, `surfaces.${surface.surfaceId}.modes.${mode}`));
       }
       for (const channel of modeDefinition.channels) {
         if (!modeRequirements.some((requirement) => requirement.channel === channel)) {
-          diagnostics.push(diagnostic("ULC_MESSAGE_MISSING", "A declared UI message channel has no required message.", `surfaces.${surface.surfaceId}.modes.${mode}.channels.${channel}`));
+          appendReportDiagnostic(diagnostic("ULC_MESSAGE_MISSING", reportDiagnosticText.declaredChannel, `surfaces.${surface.surfaceId}.modes.${mode}.channels.${channel}`));
         }
       }
       // <lang><zh-CN>反向核对每条 requirement；额外使用未声明通道也不能冒充完整覆盖。</zh-CN><en>Check every requirement in the other direction; an undeclared channel cannot masquerade as complete coverage.</en></lang>
       const undeclaredRequirements = modeRequirements.filter((requirement) => !declaredChannels.has(requirement.channel));
       for (const requirement of undeclaredRequirements) {
-        diagnostics.push(diagnostic("ULC_MESSAGE_MISSING", "A required UI message uses a channel absent from its surface mode.", `requirements.${requirement.requirementId}.channel`));
+        appendReportDiagnostic(diagnostic("ULC_MESSAGE_MISSING", reportDiagnosticText.undeclaredChannel, `requirements.${requirement.requirementId}.channel`));
+      }
+      if (diagnosticBudgetExceeded) {
+        return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the bounded diagnostic limit."));
       }
 
       for (const uiLocale of uiLocales) {
@@ -578,7 +622,10 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
         const partLanguages = metadata ? sortLocales(metadata.partLanguages) : [];
         const languageMetadataComplete = Boolean(metadata) && coversLocale(documentLanguage, partLanguages, surface.contentLocale) && coversLocale(documentLanguage, partLanguages, uiLocale);
         if (!languageMetadataComplete) {
-          diagnostics.push(diagnostic("ULC_ACCESSIBILITY_INCOMPLETE", "Document and part language metadata must cover both content and UI locales.", `surfaces.${surface.surfaceId}.languageMetadata.${uiLocale}`));
+          appendReportDiagnostic(diagnostic("ULC_ACCESSIBILITY_INCOMPLETE", reportDiagnosticText.language, `surfaces.${surface.surfaceId}.languageMetadata.${uiLocale}`));
+        }
+        if (diagnosticBudgetExceeded) {
+          return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the bounded diagnostic limit."));
         }
 
         // <lang><zh-CN>逐 requirement 只投影 identity、resolution 与 placeholder 状态，原始 text 始终留在内存 lookup 中。</zh-CN><en>Project only identity, resolution, and placeholder state per requirement; raw text remains confined to the in-memory lookup.</en></lang>
@@ -593,12 +640,12 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
           const covered = resolved.resolution === "exact" && placeholderStatus === "match";
 
           if (resolved.resolution === "declared-fallback") {
-            diagnostics.push(diagnostic("ULC_REQUIRED_MESSAGE_FALLBACK", "A required UI message resolved only through a declared fallback.", `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
+            appendReportDiagnostic(diagnostic("ULC_REQUIRED_MESSAGE_FALLBACK", reportDiagnosticText.fallback, `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
           } else if (resolved.resolution === "missing") {
-            diagnostics.push(diagnostic("ULC_MESSAGE_MISSING", "A required UI message is missing from the exact locale and its declared chain.", `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
+            appendReportDiagnostic(diagnostic("ULC_MESSAGE_MISSING", reportDiagnosticText.missing, `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
           }
           if (resolved.entry && placeholderStatus === "mismatch") {
-            diagnostics.push(diagnostic("ULC_PLACEHOLDER_MISMATCH", "A localized UI message does not preserve the declared placeholder set.", `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
+            appendReportDiagnostic(diagnostic("ULC_PLACEHOLDER_MISMATCH", reportDiagnosticText.placeholder, `evaluations.${surface.surfaceId}.${mode}.${uiLocale}.${requirement.requirementId}`));
           }
 
           // <lang><zh-CN>结果对象不含 text；resolvedLocale 仅在 exact/fallback 命中时出现。</zh-CN><en>The result object contains no text; resolvedLocale appears only after an exact or fallback hit.</en></lang>
@@ -614,6 +661,9 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
           if (resolved.resolvedLocale) result.resolvedLocale = resolved.resolvedLocale;
           return result;
         });
+        if (diagnosticBudgetExceeded) {
+          return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the bounded diagnostic limit."));
+        }
 
         // <lang><zh-CN>Evaluation status 同时收紧 message、channel 与语言元数据，任一不完整都不能放行。</zh-CN><en>Evaluation status jointly gates messages, channels, and language metadata; any incomplete dimension blocks completion.</en></lang>
         const summary = summarizeResults(results);
@@ -678,10 +728,10 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
 
 /**
  * @lang zh-CN
- * 验证公开 completeness report 的 closed-world shape、privacy、compatibility、引用与计数 parity。
+ * 验证公开 completeness report 的 closed-world shape、有界集合、固定诊断的隐私边界、compatibility、引用与计数 parity。
  *
  * @lang en
- * Validates the closed-world shape, privacy, compatibility, reference parity, and count parity of a public completeness report.
+ * Validates the closed-world shape, bounded collections, fixed-diagnostic privacy boundary, compatibility, reference parity, and count parity of a public completeness report.
  *
  * @param value <lang><zh-CN>候选 report。</zh-CN><en>Candidate report.</en></lang>
  * @returns public-safe diagnostics；空数组表示有效。 / Public-safe diagnostics; an empty array means valid.
@@ -744,6 +794,14 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
   const expectedEvaluationCount = report.surfaces.length * DOCUMENTATION_UI_LOCALE_MODES.length * report.localeScope.uiLocales.length;
   if (report.evaluations.length !== expectedEvaluationCount) {
     return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale evaluations must cover every surface, required mode, and UI locale.")];
+  }
+  // <lang><zh-CN>来源索引只从当前报告可验证的缺口建立；诊断路径必须回接相应 surface、requirement 或 evaluation 事实。</zh-CN><en>Build provenance only from report-observable gaps; diagnostic paths must join to their surface, requirement or evaluation facts.</en></lang>
+  const diagnosticPaths = createReportDiagnosticPathIndex(report, requirementById);
+  if (!diagnosticPaths) {
+    return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report exceeds the bounded diagnostic facts.")];
+  }
+  if (report.diagnostics.some((item) => !isPublicSafeReportDiagnostic(item, diagnosticPaths))) {
+    return [diagnostic("ULC_PRIVACY_BOUNDARY", "UI-locale completeness report diagnostics must use fixed public-safe text and actual structural paths.")];
   }
   // <lang><zh-CN>组合键确保数量正确但重复同一组合、遗漏另一组合的伪报告也会被拒绝。</zh-CN><en>Combination keys reject reports that preserve counts by duplicating one combination while omitting another.</en></lang>
   const evaluationKeysSeen = new Set<string>();
@@ -1093,7 +1151,7 @@ function normalizeDiagnostics(items: HiaDiagnostic[]): HiaDiagnostic[] {
   return [...byIdentity.values()].sort((left, right) => compareStrings(`${left.code}\u0000${left.path ?? ""}`, `${right.code}\u0000${right.path ?? ""}`));
 }
 
-/** @lang zh-CN 判断 report 的完整结构 shape。 @lang en Checks the complete structural shape of a report. */
+/** @lang zh-CN 判断 report 的完整结构 shape 与 schema 已限定的集合长度。 @lang en Checks the complete structural shape and schema-bounded collection lengths of a report. */
 function isReportShape(value: Record<string, unknown>): boolean {
   return (value.status === "complete" || value.status === "incomplete")
     && isStableIdentity(value.profileId)
@@ -1103,10 +1161,10 @@ function isReportShape(value: Record<string, unknown>): boolean {
     && Array.isArray(value.bundles) && value.bundles.length > 0 && value.bundles.length <= 1000 && value.bundles.every((item) => isBundleInventory(item))
     && Array.isArray(value.surfaces) && value.surfaces.length > 0 && value.surfaces.length <= 1000 && value.surfaces.every((item) => isReportSurface(item))
     && Array.isArray(value.requirements) && value.requirements.length > 0 && value.requirements.length <= 50000 && value.requirements.every((item) => isRequirement(item))
-    && Array.isArray(value.evaluations) && value.evaluations.length > 0 && value.evaluations.length <= 100000 && value.evaluations.every((item) => isEvaluation(item))
+    && Array.isArray(value.evaluations) && value.evaluations.length > 0 && value.evaluations.length <= maxReportEvaluations && value.evaluations.every((item) => isEvaluation(item))
     && isRecord(value.privacy) && hasExactKeys(value.privacy, privacyKeys)
     && isRecord(value.compatibility) && hasExactKeys(value.compatibility, compatibilityKeys)
-    && Array.isArray(value.diagnostics) && value.diagnostics.every((item) => isDiagnostic(item));
+    && Array.isArray(value.diagnostics) && value.diagnostics.length <= maxReportDiagnostics && value.diagnostics.every((item) => isDiagnostic(item));
 }
 
 /** @lang zh-CN 判断 locale scope 固定字段和 locale 数组。 @lang en Checks fixed locale-scope fields and locale arrays. */
@@ -1163,12 +1221,12 @@ function isRequirement(value: unknown): value is DocumentationUiLocaleRequiremen
     && isChannel(value.channel) && isMessageIdentity(value.messageId);
 }
 
-/** @lang zh-CN 判断单个 evaluation 与其 result/summary shape。 @lang en Checks one evaluation and its result/summary shapes. */
+/** @lang zh-CN 判断单个 evaluation 与其 result/summary shape，并在逐项读取前应用 schema 上限。 @lang en Checks one evaluation and its result/summary shape, applying the schema limit before reading items. */
 function isEvaluation(value: unknown): value is DocumentationUiLocaleEvaluation {
   return isRecord(value) && hasExactKeys(value, evaluationKeys) && isStableIdentity(value.surfaceId) && isMode(value.mode)
     && isLocale(value.contentLocale) && isLocale(value.uiLocale) && isLocale(value.documentLanguage) && isLocaleArray(value.partLanguages, false)
     && (value.status === "complete" || value.status === "incomplete") && isEvaluationSummary(value.summary)
-    && Array.isArray(value.results) && value.results.every((item) => isRequirementResult(item));
+    && Array.isArray(value.results) && value.results.length <= 50000 && value.results.every((item) => isRequirementResult(item));
 }
 
 /** @lang zh-CN 判断 requirement result，包括 resolvedLocale 的条件 shape。 @lang en Checks a requirement result, including the conditional resolved locale. */
@@ -1185,12 +1243,106 @@ function isEvaluationSummary(value: unknown): value is DocumentationUiLocaleEval
     && [value.requirements, value.exact, value.fallback, value.missing, value.placeholderMismatch].every(isCount);
 }
 
-/** @lang zh-CN 判断 public-safe diagnostic shape 与 code 闭集。 @lang en Checks the public-safe diagnostic shape and closed code set. */
+/** @lang zh-CN 判断 diagnostic 基础 shape 与 code 闭集；正文/路径隐私另由 report 规则核定。 @lang en Checks the diagnostic base shape and closed code set; report rules separately verify prose/path privacy. */
 function isDiagnostic(value: unknown): value is HiaDiagnostic {
   return isRecord(value) && hasExactKeys(value, diagnosticKeys)
     && DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES.includes(value.code as DocumentationUiLocaleCompletenessDiagnosticCode)
     && typeof value.message === "string" && value.message.length > 0 && value.message.length <= 512 && value.severity === "error"
     && (value.path === undefined || (typeof value.path === "string" && value.path.length > 0 && value.path.length <= 512));
+}
+
+/**
+ * @lang zh-CN
+ * 从报告已有的声明与结果重建八类可公开诊断路径；缺口事实超过 wire 上限时停止，不分配无限增长的路径集合。
+ *
+ * @lang en
+ * Rebuilds the eight admissible diagnostic path families from report declarations and results; stops if observable findings exceed the wire ceiling.
+ *
+ * @param report <lang><zh-CN>已通过闭集 shape 与矩阵数量检查的报告。</zh-CN><en>Report with closed-world shape and matrix count already checked.</en></lang>
+ * @param requirementById <lang><zh-CN>同一报告内已索引的 requirement。</zh-CN><en>Requirements indexed from the same report.</en></lang>
+ * @returns <lang><zh-CN>按固定消息分组的真实路径，超限则无索引。</zh-CN><en>Actual paths grouped by fixed message, or no index on overflow.</en></lang>
+ */
+function createReportDiagnosticPathIndex(
+  report: DocumentationUiLocaleCompletenessReport,
+  requirementById: ReadonlyMap<string, DocumentationUiLocaleRequirement>
+): Map<string, Set<string>> | undefined {
+  // <lang><zh-CN>路径按固定消息分组，同一路径可对应不同诊断事实，故容量按 message/path 配对计数。</zh-CN><en>Group paths by fixed message; one path may represent distinct findings, so the budget counts message/path pairs.</en></lang>
+  const pathsByMessage = new Map<string, Set<string>>();
+  let distinctPathCount = 0;
+  /** @lang zh-CN 在上限内记录真实缺口路径；返回 false 表示报告无法由本契约有界表示。 @lang en Records an actual finding path within the ceiling; false means this contract cannot represent the report within bounds. */
+  function record(message: string, path: string): boolean {
+    let paths = pathsByMessage.get(message);
+    if (!paths) {
+      paths = new Set<string>();
+      pathsByMessage.set(message, paths);
+    }
+    if (paths.has(path)) return true;
+    if (distinctPathCount >= maxReportDiagnostics) return false;
+    paths.add(path);
+    distinctPathCount += 1;
+    return true;
+  }
+
+  // <lang><zh-CN>先索引 requirement 的真实 surface/mode/channel，供声明缺项和越界通道双向判定。</zh-CN><en>Index real requirement surface/mode/channel facts for both missing declarations and undeclared channel use.</en></lang>
+  const requirementChannels = new Set(report.requirements.map((item) => `${item.surfaceId}\u0000${item.mode}\u0000${item.channel}`));
+  const modeBySurface = new Map<string, DocumentationUiLocaleSurfaceMode>();
+  for (const surface of report.surfaces) {
+    for (const mode of surface.modes) {
+      modeBySurface.set(`${surface.surfaceId}\u0000${mode.mode}`, mode);
+      if (mode.mode === "no-script" && mode.channels.length === 0
+        && !record(reportDiagnosticText.noScript, `surfaces.${surface.surfaceId}.modes.no-script`)) return undefined;
+      if ((!mode.channels.includes("visible-text") || !mode.channels.includes("accessible-name"))
+        && !record(reportDiagnosticText.baseChannels, `surfaces.${surface.surfaceId}.modes.${mode.mode}`)) return undefined;
+      for (const channel of mode.channels) {
+        if (!requirementChannels.has(`${surface.surfaceId}\u0000${mode.mode}\u0000${channel}`)
+          && !record(reportDiagnosticText.declaredChannel, `surfaces.${surface.surfaceId}.modes.${mode.mode}.channels.${channel}`)) return undefined;
+      }
+    }
+    // <lang><zh-CN>语言元数据可缺省；此时 evaluator 仍对每个显式 UI locale 形成固定缺口路径。</zh-CN><en>Language metadata may be absent; the evaluator still emits a fixed gap path for each explicit UI locale.</en></lang>
+    for (const uiLocale of report.localeScope.uiLocales) {
+      const metadata = surface.languageMetadata.find((item) => localeEquals(item.uiLocale, uiLocale));
+      const documentLanguage = metadata?.documentLanguage ?? surface.contentLocale;
+      const partLanguages = metadata?.partLanguages ?? [];
+      if ((!metadata || !coversLocale(documentLanguage, partLanguages, surface.contentLocale)
+        || !coversLocale(documentLanguage, partLanguages, uiLocale))
+        && !record(reportDiagnosticText.language, `surfaces.${surface.surfaceId}.languageMetadata.${uiLocale}`)) return undefined;
+    }
+  }
+  for (const requirement of report.requirements) {
+    const mode = modeBySurface.get(`${requirement.surfaceId}\u0000${requirement.mode}`);
+    if (mode && !mode.channels.includes(requirement.channel)
+      && !record(reportDiagnosticText.undeclaredChannel, `requirements.${requirement.requirementId}.channel`)) return undefined;
+  }
+
+  // <lang><zh-CN>结果路径必须同时落在真实 evaluation 与对应 requirement 上；仅凭正则形状不足以阻止伪造身份。</zh-CN><en>Result paths must join an actual evaluation and matching requirement; syntax alone cannot reject fabricated identities.</en></lang>
+  for (const evaluation of report.evaluations) {
+    for (const result of evaluation.results) {
+      const requirement = requirementById.get(result.requirementId);
+      if (!requirement || requirement.surfaceId !== evaluation.surfaceId || requirement.mode !== evaluation.mode) continue;
+      const path = `evaluations.${evaluation.surfaceId}.${evaluation.mode}.${evaluation.uiLocale}.${result.requirementId}`;
+      if (result.resolution === "declared-fallback" && !record(reportDiagnosticText.fallback, path)) return undefined;
+      if (result.resolution === "missing" && !record(reportDiagnosticText.missing, path)) return undefined;
+      if (result.placeholderStatus === "mismatch" && !record(reportDiagnosticText.placeholder, path)) return undefined;
+    }
+  }
+  return pathsByMessage;
+}
+
+/**
+ * @lang zh-CN
+ * 将报告诊断限制在 evaluator 的固定 code/message 配对及报告可回接的实际缺口路径；身份内容仍由生产者负责。
+ *
+ * @lang en
+ * Restricts report diagnostics to the evaluator's fixed code/message pairs and paths backed by actual report facts; producers remain responsible for identity contents.
+ *
+ * @param value <lang><zh-CN>待核的一条已过基础 shape 的诊断。</zh-CN><en>One diagnostic that passed the basic shape check.</en></lang>
+ * @param pathsByMessage <lang><zh-CN>从同一报告重建的允许路径。</zh-CN><en>Admissible paths rebuilt from the same report.</en></lang>
+ * @returns <lang><zh-CN>code、固定正文与真实路径均匹配才为 true。</zh-CN><en>True only when code, fixed prose and actual path match.</en></lang>
+ */
+function isPublicSafeReportDiagnostic(value: HiaDiagnostic, pathsByMessage: ReadonlyMap<string, ReadonlySet<string>>): boolean {
+  const expectedMessages = reportDiagnosticMessages.get(value.code as DocumentationUiLocaleCompletenessDiagnosticCode);
+  return expectedMessages?.includes(value.message) === true
+    && typeof value.path === "string" && pathsByMessage.get(value.message)?.has(value.path) === true;
 }
 
 /** @lang zh-CN 判断 all-false privacy。 @lang en Checks the all-false privacy boundary. */
