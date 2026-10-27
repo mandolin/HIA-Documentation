@@ -29,6 +29,7 @@ describe("documentation profile candidate distribution", () => {
     expect(entry.contractVersion).toBe("1.0.0");
     expect(entry.stability).toBe("stable-candidate");
     expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(18);
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate").map(({ key }) => key)).toEqual(["documentation-profile", "documentation-producer", "documentation-producer-result", "documentation-presentation-profile", "hia-document", "project-manifest"]);
+    // <lang><zh-CN>目录显式纳入已审文档地图，profile本身身份不随其它候选漂移。</zh-CN><en>The catalog explicitly includes the reviewed documentation map without shifting this profile's identity.</en></lang>
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate").map(({ key }) => key)).toEqual(["documentation-profile", "documentation-producer", "documentation-producer-result", "doc-source-map", "documentation-presentation-profile", "hia-document", "project-manifest"]);
   });
 });

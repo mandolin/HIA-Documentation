@@ -111,7 +111,8 @@ const definitions = [
     key: "doc-source-map",
     ownerPackage: "@hia-doc/source-linkage",
     schema: DOC_SOURCE_MAP_JSON_SCHEMA,
-    stability: "draft"
+    // <lang><zh-CN>逐引用范围语义、精确历史读取、有限生产分支和隔离安装/宿主已审；此标记不晋升绑定、坐标侧载、npm包或系统发行。</zh-CN><en>Per-reference ranges, exact historical readers, bounded producer branches and isolated installation/host paths have been reviewed; this marker does not promote bindings, coordinate sidecars, packages or system releases.</en></lang>
+    stability: "stable-candidate"
   },
   // <lang><zh-CN>坐标证据是source-linkage拥有的独立草案侧载；分发快照必须严格同步owner定义，不改旧普通map或doc-source-map资产。</zh-CN><en>Coordinate evidence is an independent draft sidecar owned by source-linkage; its distributed snapshot must match the owner definition without changing older ordinary or documentation-map assets.</en></lang>
   {

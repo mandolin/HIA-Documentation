@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation source-map contract candidate
+
+- 将 `doc-source-map@1.1.0` 的 catalog 成熟度标为 `stable-candidate`，保留当前 Schema 原字节、精确历史版本和查询/迁移语义；生成式绑定、独立坐标证据及界面语言契约继续保持各自草案。包版本与 npm 发布状态分别管理，详见[范围约定](docs/doc-source-map-range-conventions.md)。
+- Mark the `doc-source-map@1.1.0` catalog entry `stable-candidate`, retaining current schema bytes, exact historical versions and query/migration semantics. Binding, coordinate-evidence and UI-locale contracts retain their own draft status; package versions and npm publication remain separate.
+
 ## Unreleased — Presentation profile exact versions and migration
 
 - 文档呈现契约当前写者/schema为1.0.0，保留精确0.1.0-draft读取、无损显式迁移和局部有效资产纯计划；新版拒绝纯空白tokenContract，历史schema字节与包版本保持。独立JSDoc链同步采用当前身份，运行器核对实际工件/bridge配对。

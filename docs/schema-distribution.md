@@ -15,7 +15,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-profile` | `@hia-doc/profile` | 1.0.0 stable definition candidate; exact historical draft retained |
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
-| `doc-source-map` | `@hia-doc/source-linkage` | `1.1.0` source draft with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` history retained; producer and consumer acceptance still required |
+| `doc-source-map` | `@hia-doc/source-linkage` | `1.1.0` stable-candidate with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` history retained; package and host adoption remain separate |
 | `ordinary-source-map-coordinate-profile` | `@hia-doc/source-linkage` | `0.1.0-draft` separate per-original-slot coordinate evidence; exact byte and anchor verification remains an owner reader responsibility |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
@@ -106,9 +106,10 @@ are `6dddbb5151e5d74f62a21bc0bfe217fb1f309402bc594d0dd0e5e062b64786c3`
 and `474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b`.
 The first nine digests are unchanged. Those historical map/binding snapshots
 added no catalog entry or stable definition. The separate coordinate profile
-adds one draft entry, so the catalog now contains 18 entries and six stable
-definition candidates. The current map, binding and coordinate profile remain
-draft pending their own acceptance. See [source range conventions](doc-source-map-range-conventions.md)
+adds one draft entry, so the catalog now contains 18 entries. The documentation
+map `1.1.0` is a reviewed stable definition candidate, bringing that count to seven;
+the current binding and coordinate profile remain draft pending their own acceptance.
+See [source range conventions](doc-source-map-range-conventions.md)
 and the [coordinate evidence contract](ordinary-source-map-coordinate-profile.md).
 
 The Pages build validates every historical snapshot before replacing its local

@@ -1,8 +1,8 @@
 # 源码映射常量与 schema / Source-linkage constants and schemas
 
-本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。当前源码根包括`doc-source-map@1.1.0`、`generated-documentation-binding@0.3.0-draft`与独立的`ordinary-source-map-coordinate-profile@0.1.0-draft`，均仍是draft；这不是整个包或系统已经正式发布的证明。
+本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。`doc-source-map@1.1.0`为`stable-candidate`；`generated-documentation-binding@0.3.0-draft`与独立的`ordinary-source-map-coordinate-profile@0.1.0-draft`仍为draft。包及系统发行须分别验收。
 
-This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. Current source definitions include draft `doc-source-map@1.1.0`, `generated-documentation-binding@0.3.0-draft`, and independent `ordinary-source-map-coordinate-profile@0.1.0-draft`; these values do not establish package or system publication.
+This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. The source definition `doc-source-map@1.1.0` is a `stable-candidate`; `generated-documentation-binding@0.3.0-draft` and independent `ordinary-source-map-coordinate-profile@0.1.0-draft` remain drafts. Package and system publication have separate acceptance gates.
 
 ## 身份、版本和类别 / Identities, versions and categories
 

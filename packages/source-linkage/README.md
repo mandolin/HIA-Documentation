@@ -132,7 +132,8 @@ sparse/custom-behavior arrays and duplicate identities produce
 These additional input checks are unreleased and are not part of npm `0.1.1`.
 
 The source definition is now `doc-source-map@1.1.0`, with exact `1.0.0` and
-`0.1.0-draft` readers. Current references use a closed `rangeSource` category
+`0.1.0-draft` readers. The schema catalog marks this contract `stable-candidate`;
+package releases and host adoption have separate gates. Current references use a closed `rangeSource` category
 and optional nonblank `rangeSourceDetail`. Ranged source references also declare
 their endpoint convention and column unit; unknown facts do not produce exact
 position matches. `unresolved` requires `confidence: "none"`; detail labels
@@ -142,6 +143,7 @@ index boundary, not every wire-schema or cross-chain constraint. See the
 
 中文：源码版新增显式字段、集合身份、范围与普通JSON预检；该修复尚未发布到npm。
 当前1.1.0继承通用闭集来源类别，并按引用声明范围终点和列单位；精确旧reader保留各自原有行为。
+目录将本契约标为stable-candidate；绑定和坐标侧载草案、npm包及宿主采用继续分别治理。
 available不是完整wire-schema或跨链验证证明；此源码实现尚未发布，包版本与契约版本独立。
 
 `migrateDocSourceMap(value, { rangeEvidence })` explicitly returns an independent

@@ -1,8 +1,8 @@
 # 文档源码范围约定 / Documentation source range conventions
 
-`doc-source-map@1.1.0` 为每条带源码范围的 `entries[].sourceRefs[]` 声明终点与列单位。这个版本与 npm 包版本分开；当前源码定义仍是 draft。公开的 `1.0.0` 和 `0.1.0-draft` 保持精确历史读取与各自原有查询行为。
+`doc-source-map@1.1.0` 为每条带源码范围的 `entries[].sourceRefs[]` 声明终点与列单位。catalog 将当前源码契约定义标为 `stable-candidate`；契约版本、候选成熟度、npm 包版本和系统发行分别管理。公开的 `1.0.0` 和 `0.1.0-draft` 保持精确历史读取与各自原有查询行为。
 
-`doc-source-map@1.1.0` declares endpoint and column units on each ranged `entries[].sourceRefs[]`. It is independent of the npm package version and remains a draft source definition. The published `1.0.0` and `0.1.0-draft` retain exact historical reading and their existing query behavior.
+`doc-source-map@1.1.0` declares endpoint and column units on each ranged `entries[].sourceRefs[]`. The catalog marks this source contract definition `stable-candidate`; contract versions, candidate maturity, npm package versions and system releases are managed separately. The published `1.0.0` and `0.1.0-draft` retain exact historical reading and their existing query behavior.
 
 ## 引用形状 / Reference shape
 
