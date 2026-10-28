@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — UI locale 1.0.0 and publication intent
+
+- 界面语言报告当前1.0.0，保留精确旧读与历史字节；新增真实输入重建、十万总结果预算和稀疏元数据incomplete。Portal/JSDoc能力协调，契约目录八必要项均为候选；包/系统正式发行分别验收。
+- Add exact current/legacy UI-locale reading, input-based rebuilding, total-result limits and sparse metadata. Separate publication candidates from explicit read-only terminal resume; document the binding projection's TypeScript union migration. No package publication.
+
 ## Unreleased — Documentation source-map contract candidate
 
 - 将 `doc-source-map@1.1.0` 的 catalog 成熟度标为 `stable-candidate`，保留当前 Schema 原字节、精确历史版本和查询/迁移语义；生成式绑定、独立坐标证据及界面语言契约继续保持各自草案。包版本与 npm 发布状态分别管理，详见[范围约定](docs/doc-source-map-range-conventions.md)。

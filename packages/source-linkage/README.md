@@ -1,5 +1,10 @@
 # @hia-doc/source-linkage
 
+The unreleased binding host projection exposes three exact binding versions.
+Old exhaustive TypeScript consumers need an explicit source migration; see the
+[migration guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/generated-binding-typescript-migration.md).
+中文：绑定投影的旧两值穷尽调用需增加第三版本处理，运行兼容不等于源码兼容。
+
 Workspace package for indexing and validating `doc-source-map` manifests and combining them with ordinary source map lookups.
 
 The package reads documentation source map manifests, checks the privacy/path baseline, and exposes normalized indexes that CLI, renderer, LSP, and future browser integrations can consume.

@@ -42,6 +42,10 @@ export interface GeneratedDocumentationBindingHostProjection {
   /** @lang zh-CN 固定绑定契约名，不是对输入来源的认证。 @lang en Fixed binding contract name, not authentication of input origin. */
   bindingContract: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT;
   /** @lang zh-CN 实际受支持绑定版本；失败未知输入沿用旧安全元数据回退，不认证未知版本。 @lang en Actual supported binding version; failed unknown inputs retain the legacy safe-metadata fallback without authenticating unknown versions. */
+  /**
+   * @lang zh-CN 真实三值联合；旧穷尽调用须增加0.3.0-draft分支，旧工件可读不等于旧源码原样可编译。
+   * @lang en Actual three-value union; old exhaustive consumers must add 0.3.0-draft, and readable legacy artifacts do not imply unchanged source compilation.
+   */
   bindingContractVersion: GeneratedDocumentationBindingContractVersion;
   /** @lang zh-CN 按索引绑定顺序保留的独立冻结列表，工厂失败索引对应空列表。 @lang en Detached frozen list in index binding order, empty for factory-produced failed indexes. */
   bindings: readonly GeneratedDocumentationBindingHostBinding[];
