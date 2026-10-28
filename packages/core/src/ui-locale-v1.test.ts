@@ -99,6 +99,21 @@ describe("UI locale 1.0.0 coordinated migration", () => {
     expect(locale.validateDocumentationUiLocaleCompletenessReport(forged).length).toBeGreaterThan(0);
   });
 
+  it("rejects hidden known-field subgraphs without invoking nested accessors", () => {
+    let reads = 0;
+    const metadata = { uiLocale: "en", partLanguages: [], get documentLanguage() { reads += 1; throw new Error("hidden-must-not-run"); } };
+    const source = input();
+    Object.defineProperty(source.surfaces[0]!, "languageMetadata", { enumerable: false, value: [metadata] });
+    expect(() => locale.evaluateDocumentationUiLocaleCompleteness(source)).not.toThrow();
+    expect(locale.evaluateDocumentationUiLocaleCompleteness(source).status).toBe("refused");
+    const report = structuredClone(locale.evaluateDocumentationUiLocaleCompleteness(input()).report!);
+    Object.defineProperty(report.evaluations[0]!.results[0]!, "requirementId", { enumerable: true, get() { reads += 1; throw new Error("hidden-must-not-run"); } });
+    Object.defineProperty(report, "evaluations", { enumerable: false, value: report.evaluations });
+    expect(() => locale.validateDocumentationUiLocaleCompletenessReport(report)).not.toThrow();
+    expect(locale.validateDocumentationUiLocaleCompletenessReport(report).length).toBeGreaterThan(0);
+    expect(reads).toBe(0);
+  });
+
   it("accepts exactly 100,000 total results and refuses one extra requirement before expansion", () => {
     const source = input();
     // <lang><zh-CN>两语言各两模式只展开五万要求，共十万结果；不运行理论五千万对象输入。</zh-CN><en>Two locales and two modes expand fifty thousand requirements to one hundred thousand results; never run the theoretical fifty-million-object input.</en></lang>

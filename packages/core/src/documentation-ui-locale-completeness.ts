@@ -581,7 +581,7 @@ const reportDiagnosticMessages = new Map<DocumentationUiLocaleCompletenessDiagno
  */
 export function evaluateDocumentationUiLocaleCompleteness(value: unknown): DocumentationUiLocaleCompletenessResult {
   // <lang><zh-CN>先拒绝访问器/循环/类实例，不执行普通对象getter或toJSON；Proxy反射副作用不构成沙箱保证。</zh-CN><en>Reject accessors, cycles and class instances without invoking ordinary-object getters/toJSON; proxy reflection is not a sandbox guarantee.</en></lang>
-  if (!isJsonDataGraph(value)) return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input must be ordinary JSON data."));
+  if (!isWireJsonDataGraph(value)) return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input must be ordinary JSON data."));
   // <lang><zh-CN>结构、identity、locale、fallback 与 plaintext privacy 先行校验，防止敏感正文进入 diagnostic/report。</zh-CN><en>Validate shape, identity, locale, fallback, and plain-text privacy first so sensitive text cannot enter diagnostics or reports.</en></lang>
   const inputDiagnostic = validateInput(value);
   if (inputDiagnostic) return refuse(inputDiagnostic);
@@ -791,7 +791,7 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
   }
   const current = version === DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
   if (current && !hasBoundedReportResults(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report exceeds the total result limit.")];
-  if (!isJsonDataGraph(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must be ordinary JSON data.")];
+  if (!isWireJsonDataGraph(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must be ordinary JSON data.")];
   if (value.contract !== DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT) return [diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale completeness contract and version must match exactly.")];
   if (!hasExactKeys(value, reportKeys) || !isReportShape(value)) {
     return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must match the closed-world contract shape.")];
@@ -936,7 +936,7 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
 export function migrateDocumentationUiLocaleCompletenessReport(value: unknown): DocumentationUiLocaleCompletenessResult {
   // <lang><zh-CN>先用数据描述符取旧工件并核总量，再遍历整个输入；缺原始消息不能从旧清单猜正文。</zh-CN><en>Read the legacy artifact via data descriptors and check total size before traversing input; missing original messages cannot be guessed from inventories.</en></lang>
   const legacy = isRecord(value) ? dataProperty(value, "legacyReport") : undefined;
-  if (!isRecord(value) || !isRecord(legacy) || !hasBoundedReportResults(legacy) || !isJsonDataGraph(value)
+  if (!isRecord(value) || !isRecord(legacy) || !hasBoundedReportResults(legacy) || !isWireJsonDataGraph(value)
     || !hasExactKeys(value, ["legacyReport", "sourceInput"]) || legacy.contractVersion !== LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION
     || validateDocumentationUiLocaleCompletenessReport(legacy).length > 0) {
     return refuse(diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale migration requires an exact legacy report and complete source input."));
@@ -994,6 +994,33 @@ function hasBoundedReportResults(report: Record<string, unknown>): boolean {
  */
 function dataProperty(value: object, key: string): unknown {
   try { return Object.getOwnPropertyDescriptor(value, key)?.value; } catch { return undefined; }
+}
+
+/**
+ * @lang zh-CN 在普通JSON图基础上拒绝隐藏自有字段，避免后续已知字段读取进入未被图预检访问的子图；不修改共用JSON辅助器的语义。
+ * @lang en Rejects hidden own fields in an ordinary JSON graph so known-field reads cannot enter subgraphs skipped by graph preflight; shared JSON-helper semantics are unchanged.
+ * @param value <lang><zh-CN>未知内存输入。</zh-CN><en>Unknown in-memory input.</en></lang>
+ * @returns <lang><zh-CN>所有对象自有字段均为可枚举数据属性，数组仅豁免原生length；反射失败为false。</zh-CN><en>All own object fields are enumerable data properties, with only native array length exempt; reflection failures return false.</en></lang>
+ */
+function isWireJsonDataGraph(value: unknown): boolean {
+  if (!isJsonDataGraph(value)) return false;
+  // <lang><zh-CN>第二个只读有界遍历只核可枚举性，共享子图只访问一次；getter不会通过属性取值执行。</zh-CN><en>A second read-only traversal checks enumerability, visiting shared subgraphs once and never invoking getters through property reads.</en></lang>
+  const pending: unknown[] = [value];
+  const seen = new WeakSet<object>();
+  try {
+    while (pending.length > 0) {
+      const current = pending.pop();
+      if (typeof current !== "object" || current === null || seen.has(current)) continue;
+      seen.add(current);
+      for (const key of Object.getOwnPropertyNames(current)) {
+        if (Array.isArray(current) && key === "length") continue;
+        const descriptor = Object.getOwnPropertyDescriptor(current, key);
+        if (!descriptor?.enumerable || !Object.hasOwn(descriptor, "value")) return false;
+        pending.push(descriptor.value);
+      }
+    }
+    return true;
+  } catch { return false; }
 }
 
 /** @lang zh-CN 输入预检返回第一个 public-safe refusal。 @lang en Input preflight returns the first public-safe refusal. */
