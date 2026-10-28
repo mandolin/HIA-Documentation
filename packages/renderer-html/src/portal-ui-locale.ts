@@ -1,7 +1,7 @@
 import {
   evaluateDocumentationUiLocaleCompleteness,
   type DocumentationUiLocaleBundle,
-  type DocumentationUiLocaleCompletenessReport,
+  type CurrentDocumentationUiLocaleCompletenessReport,
   type DocumentationUiLocaleCompletenessSummary,
   type DocumentationUiLocaleMessageDefinition,
   type DocumentationUiLocaleRequirement
@@ -211,7 +211,8 @@ export interface DocumentationPortalUiLocaleAdoptionOptions {
 /** @lang zh-CN Portal owner 生成的已通过 gate 的 report、summary 与 runtime bundle。 @lang en Gate-complete report, summary, and runtime bundles produced by the Portal owner. */
 export interface DocumentationPortalUiLocaleAdoption {
   bundles: Readonly<Record<DocumentationPortalUiLocale, Readonly<Record<string, string>>>>;
-  report: DocumentationUiLocaleCompletenessReport;
+  /** @lang zh-CN 由本次实际消息输入评估的当前1.0.0报告，旧档案不会在owner写者中自动换号。 @lang en Current 1.0.0 report evaluated from this build's actual messages; the owner writer never relabels legacy archives automatically. */
+  report: CurrentDocumentationUiLocaleCompletenessReport;
   reportJson: string;
   summary: DocumentationUiLocaleCompletenessSummary;
 }

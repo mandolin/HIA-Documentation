@@ -189,7 +189,7 @@ const definitions = [
     key: "documentation-ui-locale-completeness",
     ownerPackage: "@hia-doc/core",
     schema: DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA,
-    stability: "draft"
+    stability: "stable-candidate"
   },
   // <lang><zh-CN>source-comment projection 是独立 sidecar contract；普通 source map 不承载正文或完整模型。</zh-CN><en>The source-comment projection is an independent sidecar contract; ordinary source maps carry neither bodies nor the full model.</en></lang>
   {

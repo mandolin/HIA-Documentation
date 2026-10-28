@@ -25,6 +25,6 @@ describe("project manifest candidate distribution", () => {
     expect(entry.stability).toBe("stable-candidate");
     expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(18);
     // <lang><zh-CN>文档地图独立晋升后共七候选，不改变项目清单的版本与形状。</zh-CN><en>The documentation map's independent promotion yields seven candidates without changing the project manifest's version or shape.</en></lang>
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(7);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(8);
   });
 });

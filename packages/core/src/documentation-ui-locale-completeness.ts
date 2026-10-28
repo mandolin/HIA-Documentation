@@ -1,5 +1,6 @@
 import { createHiaDiagnostic } from "./diagnostics.js";
 import type { HiaDiagnostic } from "./model.js";
+import { isJsonDataGraph } from "./json-data.js";
 
 /**
  * @lang zh-CN
@@ -10,11 +11,21 @@ import type { HiaDiagnostic } from "./model.js";
  */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT = "documentation-ui-locale-completeness" as const;
 
-/** @lang zh-CN P1 exact-match 草案版本。 @lang en Exact-match P1 draft version. */
-export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION = "0.1.0-draft" as const;
+/** @lang zh-CN 精确保留的历史读取版本，不是当前写者目标。 @lang en Exact historical reader version, not the current writer target. */
+export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION = "0.1.0-draft" as const;
+
+/** @lang zh-CN 当前写者的精确1.0.0身份，旧报告不得只换号取得此身份。 @lang en Exact 1.0.0 writer identity; legacy reports cannot acquire it by version replacement alone. */
+export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION = "1.0.0" as const;
+
+/** @lang zh-CN 当前报告跨evaluation的总result上限；生成前与深度读取前各自核验。 @lang en Current report-wide result ceiling across evaluations, checked before generation and deep reading. */
+export const DOCUMENTATION_UI_LOCALE_MAX_RESULTS = 100000;
 
 /** @lang zh-CN 公开 schema identity。 @lang en Public schema identity. */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID =
+  "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-1.0.0.schema.json" as const;
+
+/** @lang zh-CN 精确历史Schema身份，内容不因当前身份升级而改写。 @lang en Exact historical schema identity, whose content is not rewritten by the current upgrade. */
+export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json" as const;
 
 /**
@@ -232,16 +243,15 @@ export interface DocumentationUiLocaleCompletenessCompatibility {
 
 /**
  * @lang zh-CN
- * `documentation-ui-locale-completeness@0.1.0-draft` canonical metadata-only wire report。
+ * 新旧精确界面语言报告共享的无正文wire主体，不把旧报告当成当前写者产物。
  *
  * @lang en
- * Canonical metadata-only wire report for `documentation-ui-locale-completeness@0.1.0-draft`.
+ * Shared metadata-only body for exact current and historical UI-locale reports.
  */
-export interface DocumentationUiLocaleCompletenessReport {
+interface DocumentationUiLocaleCompletenessReportBody {
   bundles: DocumentationUiLocaleBundleInventory[];
   compatibility: DocumentationUiLocaleCompletenessCompatibility;
   contract: typeof DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT;
-  contractVersion: typeof DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
   diagnostics: HiaDiagnostic[];
   evaluations: DocumentationUiLocaleEvaluation[];
   fallbackPolicy: DocumentationUiLocaleFallbackPolicy;
@@ -253,6 +263,21 @@ export interface DocumentationUiLocaleCompletenessReport {
   status: "complete" | "incomplete";
   surfaces: DocumentationUiLocaleSurface[];
 }
+
+/** @lang zh-CN 当前1.0.0报告，仅当前评估器或完整输入重建产出。 @lang en Current 1.0.0 report, emitted only by current evaluation or rebuilding with complete input. */
+export interface CurrentDocumentationUiLocaleCompletenessReport extends DocumentationUiLocaleCompletenessReportBody {
+  /** @lang zh-CN 当前写者精确版本。 @lang en Exact current writer version. */
+  contractVersion: typeof DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
+}
+
+/** @lang zh-CN 可精确读取的历史报告，不自动取得当前门禁资格。 @lang en Exactly readable historical report, without automatic current gate qualification. */
+export interface LegacyDocumentationUiLocaleCompletenessReport extends DocumentationUiLocaleCompletenessReportBody {
+  /** @lang zh-CN 历史读取精确版本。 @lang en Exact historical reader version. */
+  contractVersion: typeof LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
+}
+
+/** @lang zh-CN 新旧精确可判别联合；未知相邻版本不在读取能力内。 @lang en Exact discriminated current/legacy union; adjacent unknown versions are unsupported. */
+export type DocumentationUiLocaleCompletenessReport = CurrentDocumentationUiLocaleCompletenessReport | LegacyDocumentationUiLocaleCompletenessReport;
 
 /** @lang zh-CN 整个 completeness gate 的 count-only 摘要。 @lang en Count-only summary for the whole completeness gate. */
 export interface DocumentationUiLocaleCompletenessSummary {
@@ -275,7 +300,7 @@ export interface DocumentationUiLocaleCompletenessSummary {
  */
 export interface DocumentationUiLocaleCompletenessResult {
   diagnostics: HiaDiagnostic[];
-  report?: DocumentationUiLocaleCompletenessReport;
+  report?: CurrentDocumentationUiLocaleCompletenessReport;
   reportJson?: string;
   status: "complete" | "incomplete" | "refused";
   summary?: DocumentationUiLocaleCompletenessSummary;
@@ -299,16 +324,16 @@ const maxReportDiagnostics = 100000;
  * @lang en
  * Draft 2020-12 structural schema; message text is not a wire field, while cross-reference and count parity are enforced by the owner validator.
  */
-export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
+export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
-  $id: DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID,
+  $id: LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID,
   title: "Documentation UI Locale Completeness",
   type: "object",
   additionalProperties: false,
   required: ["contract", "contractVersion", "status", "profileId", "localeScope", "fallbackPolicy", "messages", "bundles", "surfaces", "requirements", "evaluations", "privacy", "compatibility", "diagnostics"],
   properties: {
     contract: { const: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT },
-    contractVersion: { const: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION },
+    contractVersion: { const: LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION },
     status: { enum: ["complete", "incomplete"] },
     profileId: identitySchema,
     localeScope: { $ref: "#/$defs/localeScope" },
@@ -486,6 +511,21 @@ export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
   }
 } as const;
 
+/**
+ * @lang zh-CN 当前结构Schema允许稀疏语言元数据；跨数组十万总预算仍由运行期核验，Schema单独不能证明。
+ * @lang en Current structural schema permits sparse language metadata; the runtime still enforces the cross-array 100,000-result budget, which schema alone cannot prove.
+ */
+export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
+  ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA,
+  $id: DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID,
+  properties: { ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.properties,
+    contractVersion: { const: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION } },
+  $defs: { ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs,
+    surface: { ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs.surface,
+      properties: { ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs.surface.properties,
+        languageMetadata: { ...LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$defs.surface.properties.languageMetadata, minItems: 0 } } } },
+} as const;
+
 const inputKeys = ["bundles", "contentLocales", "defaultUiLocale", "fallbackChains", "messages", "profileId", "requirements", "surfaces", "uiLocales"] as const;
 const reportKeys = ["bundles", "compatibility", "contract", "contractVersion", "diagnostics", "evaluations", "fallbackPolicy", "localeScope", "messages", "privacy", "profileId", "requirements", "status", "surfaces"] as const;
 const messageKeys = ["messageId", "placeholderNames", "visibility"] as const;
@@ -540,6 +580,8 @@ const reportDiagnosticMessages = new Map<DocumentationUiLocaleCompletenessDiagno
  * @returns 深度冻结的 complete/incomplete 报告，或对非法、私密、超出 wire 容量的输入给出 public-safe refusal。 / Deeply frozen complete/incomplete report or a public-safe refusal for malformed, private or wire-overflow input.
  */
 export function evaluateDocumentationUiLocaleCompleteness(value: unknown): DocumentationUiLocaleCompletenessResult {
+  // <lang><zh-CN>先拒绝访问器/循环/类实例，不执行普通对象getter或toJSON；Proxy反射副作用不构成沙箱保证。</zh-CN><en>Reject accessors, cycles and class instances without invoking ordinary-object getters/toJSON; proxy reflection is not a sandbox guarantee.</en></lang>
+  if (!isJsonDataGraph(value)) return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input must be ordinary JSON data."));
   // <lang><zh-CN>结构、identity、locale、fallback 与 plaintext privacy 先行校验，防止敏感正文进入 diagnostic/report。</zh-CN><en>Validate shape, identity, locale, fallback, and plain-text privacy first so sensitive text cannot enter diagnostics or reports.</en></lang>
   const inputDiagnostic = validateInput(value);
   if (inputDiagnostic) return refuse(inputDiagnostic);
@@ -549,6 +591,10 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
   // <lang><zh-CN>全矩阵 evaluation 数可由两个已验证长度计算；超过 schema 限额时在生成任何 report 节点前固定拒绝。</zh-CN><en>The full evaluation count follows from two validated lengths; reject before creating report nodes when it exceeds the schema ceiling.</en></lang>
   if (input.surfaces.length * DOCUMENTATION_UI_LOCALE_MODES.length * input.uiLocales.length > maxReportEvaluations) {
     return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the bounded evaluation limit."));
+  }
+  // <lang><zh-CN>每条要求属于唯一surface/mode，因此总result为R×U；在规范化与报告分配前拒绝超限。</zh-CN><en>Each requirement belongs to one surface/mode, so total results equal R×U; reject overflow before normalization or report allocation.</en></lang>
+  if (input.requirements.length * input.uiLocales.length > DOCUMENTATION_UI_LOCALE_MAX_RESULTS) {
+    return refuse(diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input exceeds the total result limit."));
   }
   const contentLocales = sortLocales(input.contentLocales);
   const uiLocales = sortLocales(input.uiLocales);
@@ -691,7 +737,7 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
   // <lang><zh-CN>最终 report 使用去重 diagnostic、固定 policy/privacy，并生成可重复的 property-sorted JSON。</zh-CN><en>The final report uses deduplicated diagnostics, fixed policy/privacy, and repeatable property-sorted JSON.</en></lang>
   const normalizedDiagnostics = normalizeDiagnostics(diagnostics);
   const status = evaluations.every((evaluation) => evaluation.status === "complete") && normalizedDiagnostics.length === 0 ? "complete" : "incomplete";
-  const report: DocumentationUiLocaleCompletenessReport = {
+  const report: CurrentDocumentationUiLocaleCompletenessReport = {
     contract: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT,
     contractVersion: DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION,
     status,
@@ -738,9 +784,15 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
  */
 export function validateDocumentationUiLocaleCompletenessReport(value: unknown): HiaDiagnostic[] {
   if (!isRecord(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must be an object.")];
-  if (value.contract !== DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT || value.contractVersion !== DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION) {
+  // <lang><zh-CN>描述符读取版本不触发普通getter；当前版先累计result长度，再运行会遍历值的JSON/shape检查。</zh-CN><en>Read the version descriptor without ordinary getters; for current reports sum result lengths before JSON/shape checks traverse values.</en></lang>
+  const version = dataProperty(value, "contractVersion");
+  if (version !== DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION && version !== LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION) {
     return [diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale completeness contract and version must match exactly.")];
   }
+  const current = version === DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
+  if (current && !hasBoundedReportResults(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report exceeds the total result limit.")];
+  if (!isJsonDataGraph(value)) return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must be ordinary JSON data.")];
+  if (value.contract !== DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT) return [diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale completeness contract and version must match exactly.")];
   if (!hasExactKeys(value, reportKeys) || !isReportShape(value)) {
     return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness report must match the closed-world contract shape.")];
   }
@@ -784,8 +836,9 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
     return !includesLocale(report.localeScope.contentLocales, surface.contentLocale)
       || modeIdentities.size !== DOCUMENTATION_UI_LOCALE_MODES.length
       || DOCUMENTATION_UI_LOCALE_MODES.some((mode) => !modeIdentities.has(mode))
-      || metadataIdentities.size !== report.localeScope.uiLocales.length
-      || report.localeScope.uiLocales.some((locale) => !metadataIdentities.has(localeKey(locale)));
+      || (current
+        ? metadataIdentities.size !== surface.languageMetadata.length || surface.languageMetadata.some(({ uiLocale }) => !includesLocale(report.localeScope.uiLocales, uiLocale))
+        : metadataIdentities.size !== report.localeScope.uiLocales.length || report.localeScope.uiLocales.some((locale) => !metadataIdentities.has(localeKey(locale))));
   })) {
     return [diagnostic("ULC_INVALID_CONTRACT", "Surface mode and language-metadata declarations must cover the frozen locale matrix exactly.")];
   }
@@ -803,6 +856,14 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
   if (report.diagnostics.some((item) => !isPublicSafeReportDiagnostic(item, diagnosticPaths))) {
     return [diagnostic("ULC_PRIVACY_BOUNDARY", "UI-locale completeness report diagnostics must use fixed public-safe text and actual structural paths.")];
   }
+  // <lang><zh-CN>新版诊断必须完整对应真实缺口，缺元数据不能靠删诊断伪造通过；旧报告保持原读取规则。</zh-CN><en>Current diagnostics must cover actual gaps completely; deleting missing-metadata findings cannot forge acceptance, while legacy reading retains its rules.</en></lang>
+  if (current) {
+    const actualFindings = new Set(report.diagnostics.map((item) => `${item.message}\u0000${item.path}`));
+    const expectedFindings = [...diagnosticPaths].flatMap(([message, paths]) => [...paths].map((path) => `${message}\u0000${path}`));
+    if (actualFindings.size !== report.diagnostics.length || actualFindings.size !== expectedFindings.length || expectedFindings.some((finding) => !actualFindings.has(finding))) {
+      return [diagnostic("ULC_INVALID_CONTRACT", "UI-locale completeness diagnostics must cover every actual finding.")];
+    }
+  }
   // <lang><zh-CN>组合键确保数量正确但重复同一组合、遗漏另一组合的伪报告也会被拒绝。</zh-CN><en>Combination keys reject reports that preserve counts by duplicating one combination while omitting another.</en></lang>
   const evaluationKeysSeen = new Set<string>();
   for (const evaluation of report.evaluations) {
@@ -812,8 +873,9 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
     const metadata = surface?.languageMetadata.find(({ uiLocale }) => localeEquals(uiLocale, evaluation.uiLocale));
     const evaluationIdentity = `${evaluation.surfaceId}\u0000${evaluation.mode}\u0000${localeKey(evaluation.uiLocale)}`;
     if (!surface || !modeDefinition || !includesLocale(report.localeScope.uiLocales, evaluation.uiLocale)
-      || evaluation.contentLocale !== surface.contentLocale || !metadata || metadata.documentLanguage !== evaluation.documentLanguage
-      || !equalStrings(metadata.partLanguages, evaluation.partLanguages) || evaluationKeysSeen.has(evaluationIdentity)) {
+      || evaluation.contentLocale !== surface.contentLocale || (!metadata && !current)
+      || (metadata?.documentLanguage ?? surface.contentLocale) !== evaluation.documentLanguage
+      || !equalStrings(metadata?.partLanguages ?? [], evaluation.partLanguages) || evaluationKeysSeen.has(evaluationIdentity)) {
       return [diagnostic("ULC_INVALID_CONTRACT", "Evaluation identity, locale, surface, or language metadata drifted from its declaration.")];
     }
     evaluationKeysSeen.add(evaluationIdentity);
@@ -849,7 +911,7 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
     const requirementChannelsDeclared = expectedRequirements.every((requirement) => modeDefinition.channels.includes(requirement.channel));
     const requiredBaseChannels = modeDefinition.channels.includes("visible-text") && modeDefinition.channels.includes("accessible-name");
     const expectedStatus = evaluation.results.length > 0 && evaluation.results.every(({ status }) => status === "covered")
-      && declaredChannelsCovered && requirementChannelsDeclared && requiredBaseChannels
+      && declaredChannelsCovered && requirementChannelsDeclared && requiredBaseChannels && Boolean(metadata)
       && coversLocale(evaluation.documentLanguage, evaluation.partLanguages, evaluation.contentLocale)
       && coversLocale(evaluation.documentLanguage, evaluation.partLanguages, evaluation.uiLocale)
       ? "complete"
@@ -862,6 +924,76 @@ export function validateDocumentationUiLocaleCompletenessReport(value: unknown):
     return [diagnostic("ULC_INVALID_CONTRACT", "Report status does not match evaluations and diagnostics.")];
   }
   return [];
+}
+
+/**
+ * @lang zh-CN 用精确旧报告与完整真实内存消息重新评估当前报告；拒绝无源换号或声明身份漂移。报告不含译文，不能证明历史正文相同或实际DOM通过。
+ * @lang en Re-evaluates a current report from an exact legacy report and complete actual in-memory messages; refuses report-only relabeling or declaration drift. Body-free reports cannot prove historical text equality or DOM compliance.
+ * @param value <lang><zh-CN>仅legacyReport/sourceInput两字段的普通JSON对象；不读文件、环境或网络，不修改输入。</zh-CN><en>Ordinary JSON object with only legacyReport/sourceInput; no file, environment or network reads, or input mutation.</en></lang>
+ * @returns <lang><zh-CN>独立深冻结的新complete/incomplete结果，或固定无部分报告的拒绝；旧complete允许因实际占位符漂移变为incomplete。</zh-CN><en>Detached deeply frozen current complete/incomplete result, or fixed refusal without a partial report; legacy complete may become incomplete due to actual placeholder drift.</en></lang>
+ * @remarks <lang><zh-CN>普通getter/toJSON不执行；Proxy反射副作用和调用前已物化的大对象不受沙箱保护。</zh-CN><en>Ordinary getters/toJSON are not invoked; proxy reflection side effects and already-materialized large objects are not sandboxed.</en></lang>
+ */
+export function migrateDocumentationUiLocaleCompletenessReport(value: unknown): DocumentationUiLocaleCompletenessResult {
+  // <lang><zh-CN>先用数据描述符取旧工件并核总量，再遍历整个输入；缺原始消息不能从旧清单猜正文。</zh-CN><en>Read the legacy artifact via data descriptors and check total size before traversing input; missing original messages cannot be guessed from inventories.</en></lang>
+  const legacy = isRecord(value) ? dataProperty(value, "legacyReport") : undefined;
+  if (!isRecord(value) || !isRecord(legacy) || !hasBoundedReportResults(legacy) || !isJsonDataGraph(value)
+    || !hasExactKeys(value, ["legacyReport", "sourceInput"]) || legacy.contractVersion !== LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION
+    || validateDocumentationUiLocaleCompletenessReport(legacy).length > 0) {
+    return refuse(diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale migration requires an exact legacy report and complete source input."));
+  }
+  // <lang><zh-CN>评估器从实际文本重新比对占位符，结果可以诚实变为不完整，不复制旧状态。</zh-CN><en>The evaluator compares placeholders from actual text; the result may truthfully become incomplete rather than copying historical status.</en></lang>
+  const rebuilt = evaluateDocumentationUiLocaleCompleteness(value.sourceInput);
+  if (!rebuilt.report) return rebuilt;
+  if (stableJson(declarationIdentity(legacy as unknown as LegacyDocumentationUiLocaleCompletenessReport)) !== stableJson(declarationIdentity(rebuilt.report))) {
+    return refuse(diagnostic("ULC_COMPATIBILITY_UNSUPPORTED", "UI-locale migration source declarations must match the legacy report exactly."));
+  }
+  if (validateDocumentationUiLocaleCompletenessReport(rebuilt.report).length > 0) {
+    return refuse(diagnostic("ULC_INVALID_CONTRACT", "Rebuilt UI-locale report does not satisfy the current contract."));
+  }
+  return rebuilt;
+}
+
+/**
+ * @lang zh-CN 选择可由旧报告证明的声明身份，排除正文、版本和评估结果；只用于无损身份配对。
+ * @lang en Selects declaration identities provable from a legacy report, excluding bodies, versions and evaluation outcomes; used only for identity pairing.
+ * @param report <lang><zh-CN>已验证报告。</zh-CN><en>Validated report.</en></lang>
+ * @returns <lang><zh-CN>只读使用的声明投影，不传给调用者。</zh-CN><en>Declaration projection used internally, never returned to callers.</en></lang>
+ */
+function declarationIdentity(report: DocumentationUiLocaleCompletenessReport): unknown {
+  return { profileId: report.profileId, localeScope: report.localeScope, fallbackPolicy: report.fallbackPolicy,
+    messages: report.messages, bundles: report.bundles, surfaces: report.surfaces, requirements: report.requirements };
+}
+
+/**
+ * @lang zh-CN 在读取result值前只累加数组长度；缺结构、访问器或超限返回false，不能替代受限JSON解码。
+ * @lang en Sums array lengths before reading result values; missing shapes, accessors or overflow return false, without replacing bounded JSON decoding.
+ * @param report <lang><zh-CN>尚未深入读取的报告对象。</zh-CN><en>Report object not yet deeply read.</en></lang>
+ * @returns <lang><zh-CN>外层数组和总result容量满足上限。</zh-CN><en>Outer array and total results satisfy their ceilings.</en></lang>
+ */
+function hasBoundedReportResults(report: Record<string, unknown>): boolean {
+  // <lang><zh-CN>预算仅依赖自有数据描述符，不能通过数组或条目的普通访问器执行正文。</zh-CN><en>The budget uses own data descriptors so ordinary array/entry accessors cannot execute bodies.</en></lang>
+  const evaluations = dataProperty(report, "evaluations");
+  if (!Array.isArray(evaluations) || evaluations.length > maxReportEvaluations) return false;
+  let total = 0;
+  for (let index = 0; index < evaluations.length; index += 1) {
+    const evaluation = dataProperty(evaluations, String(index));
+    const results = isRecord(evaluation) ? dataProperty(evaluation, "results") : undefined;
+    if (!Array.isArray(results)) return false;
+    total += results.length;
+    if (total > DOCUMENTATION_UI_LOCALE_MAX_RESULTS) return false;
+  }
+  return true;
+}
+
+/**
+ * @lang zh-CN 仅读取自有数据属性，访问器和反射异常视为缺项；不执行普通getter。
+ * @lang en Reads only own data properties; accessors and reflection errors count as absent, without invoking ordinary getters.
+ * @param value <lang><zh-CN>对象。</zh-CN><en>Object.</en></lang>
+ * @param key <lang><zh-CN>固定字段或数组索引。</zh-CN><en>Fixed field or array index.</en></lang>
+ * @returns <lang><zh-CN>数据值或undefined。</zh-CN><en>Data value or undefined.</en></lang>
+ */
+function dataProperty(value: object, key: string): unknown {
+  try { return Object.getOwnPropertyDescriptor(value, key)?.value; } catch { return undefined; }
 }
 
 /** @lang zh-CN 输入预检返回第一个 public-safe refusal。 @lang en Input preflight returns the first public-safe refusal. */

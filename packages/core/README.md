@@ -1,5 +1,10 @@
 # @hia-doc/core
 
+UI-locale completeness writes contract `1.0.0`, reads exact legacy reports and
+rebuilds them only from complete message input. See the
+[contract and migration guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/documentation-ui-locale-completeness-contract.md).
+中文：界面语言报告当前为1.0.0；十万总结果预算、稀疏元数据和重建式迁移分别核验，包版本未随之发布。
+
 Core HIA document model, field-level i18n types, source metadata types, versioned JSON Schemas, fixture helpers and validation helpers.
 
 This package is intentionally independent from CLI, renderer, IDE, and language-adapter packages. It is the shared base that later HIA packages consume.

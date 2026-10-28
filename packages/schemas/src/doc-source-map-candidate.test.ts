@@ -38,12 +38,12 @@ describe("documentation source-map 1.1.0 candidate distribution", () => {
     }
   });
 
-  it("leaves binding, coordinate evidence and UI-locale drafts independent", () => {
-    // <lang><zh-CN>只晋升这一个契约；绑定/侧载/界面语言的独立门禁不能被顺带跳过。</zh-CN><en>Promote this contract alone; independent binding, sidecar and UI-locale gates must not be bypassed.</en></lang>
-    for (const key of ["generated-documentation-binding", "ordinary-source-map-coordinate-profile", "documentation-ui-locale-completeness"]) {
+  it("leaves binding and coordinate evidence drafts independent", () => {
+    // <lang><zh-CN>只晋升这一个契约；绑定/侧载的独立门禁不能被顺带跳过。</zh-CN><en>Promote this contract alone; independent binding and sidecar gates must not be bypassed.</en></lang>
+    for (const key of ["generated-documentation-binding", "ordinary-source-map-coordinate-profile"]) {
       expect(HIA_SCHEMA_CATALOG.schemas.find((entry) => entry.key === key)?.stability).toBe("draft");
     }
     expect(listHiaSchemas()).toHaveLength(18);
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(7);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(8);
   });
 });

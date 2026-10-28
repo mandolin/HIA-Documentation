@@ -24,7 +24,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `generated-documentation-binding` | `@hia-doc/source-linkage` | `0.3.0-draft` source draft paired with map `1.1.0`; exact `0.2.0-draft` and `0.1.0-draft` history retained |
 | `documentation-source-comment-projection` | `@hia-doc/core` | draft |
 | `documentation-presentation-profile` | `@hia-doc/core` | 1.0.0 source candidate, exact historical 0.1.0-draft identity retained |
-| `documentation-ui-locale-completeness` | `@hia-doc/core` | draft |
+| `documentation-ui-locale-completeness` | `@hia-doc/core` | stable-candidate |
 
 Satellite extraction schemas remain owned and released by their corresponding `*-spec` packages. They should enter this catalog only after a cross-repository version and publication policy exists.
 
@@ -77,7 +77,7 @@ https://mandolin.github.io/HIA-Documentation/schemas/hia-document-1.0.0.schema.j
 https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-projection-0.1.0-draft.schema.json
-https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json
+https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-1.0.0.schema.json
 https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-1.0.0.schema.json
 ```
 
@@ -107,7 +107,7 @@ and `474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b`.
 The first nine digests are unchanged. Those historical map/binding snapshots
 added no catalog entry or stable definition. The separate coordinate profile
 adds one draft entry, so the catalog now contains 18 entries. The documentation
-map `1.1.0` is a reviewed stable definition candidate, bringing that count to seven;
+map `1.1.0` is a reviewed stable definition candidate, with UI-locale completeness `1.0.0` bringing the candidate count to eight;
 the current binding and coordinate profile remain draft pending their own acceptance.
 See [source range conventions](doc-source-map-range-conventions.md)
 and the [coordinate evidence contract](ordinary-source-map-coordinate-profile.md).

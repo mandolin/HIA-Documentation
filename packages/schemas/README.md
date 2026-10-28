@@ -96,7 +96,7 @@ history bytes after TypeScript compilation. The current map `1.1.0` is a
 `stable-candidate`; the binding remains draft. See `docs/generated-documentation-binding-contract.md` in the repository
 for exact pairing and complete-bundle migration.
 
-The independent coordinate profile is `0.1.0-draft`; it does not change the older map or binding identities. The current catalog has 18 entries, including this draft and seven reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
+The independent coordinate profile is `0.1.0-draft`; it does not change the older map or binding identities. The current catalog has 18 entries, including this draft and eight reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
 
 Package versions, contract versions and registry availability are separate.
 Read each catalog entry's contract version and stability; the presence of a

@@ -81,7 +81,7 @@ function createInput(): DocumentationUiLocaleCompletenessInput {
 describe("documentation-ui-locale-completeness", () => {
   it("publishes an exact closed-world neutral contract", () => {
     expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT).toBe("documentation-ui-locale-completeness");
-    expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION).toBe("0.1.0-draft");
+    expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION).toBe("1.0.0");
     expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.$schema).toBe("https://json-schema.org/draft/2020-12/schema");
     expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA.additionalProperties).toBe(false);
     expect(DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES).toEqual([

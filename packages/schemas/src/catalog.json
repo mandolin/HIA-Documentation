@@ -129,13 +129,13 @@
       "stability": "stable-candidate"
     },
     {
-      "contractVersion": "0.1.0-draft",
+      "contractVersion": "1.0.0",
       "key": "documentation-ui-locale-completeness",
       "ownerPackage": "@hia-doc/core",
       "path": "./documentation-ui-locale-completeness.schema.json",
-      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json",
-      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json",
-      "stability": "draft"
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-1.0.0.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-1.0.0.schema.json",
+      "stability": "stable-candidate"
     },
     {
       "contractVersion": "0.1.0-draft",

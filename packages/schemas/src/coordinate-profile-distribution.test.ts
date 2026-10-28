@@ -27,7 +27,7 @@ describe("ordinary source-map coordinate profile distribution", () => {
     expect(getHiaSchema(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID.replace("0.1.0-draft", "1.0.0"))).toBeUndefined();
     expect(listHiaSchemas()).toHaveLength(18);
     // <lang><zh-CN>文档地图已独立取得候选标记，坐标侧载仍保持自己的草案身份。</zh-CN><en>The documentation map has independently become a candidate; this coordinate sidecar retains its own draft identity.</en></lang>
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(7);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(8);
   });
 
   it("pins the source-slot coordinate and privacy wire boundary", () => {

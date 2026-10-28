@@ -29,7 +29,7 @@ This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 
 | Documentation locale-resolution sidecar | `DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation source-comment projection | `DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation presentation profile | `DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION` | `0.1.0-draft` |
-| Documentation UI locale completeness | `DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION` | `0.1.0-draft` |
+| Documentation UI locale completeness | `DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION` | `1.0.0` |
 | HTML-authoring source-comment integration verification | `HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation terminology | `DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION` | `0.1.0-draft` |
 | Documentation producer descriptor/result | `DOCUMENTATION_PRODUCER_CONTRACT_VERSION` | `1.0.0` candidate; exact legacy reader `0.1.0-draft` |
