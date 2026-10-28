@@ -6,6 +6,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolvePublicReleaseIntent } from "./lib/public-release-intent.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const releasePlanPath = path.join(rootDir, "release/public-packages.json");
@@ -15,6 +16,8 @@ const bootstrapScriptPath = path.join(rootDir, "scripts/bootstrap-public-release
 const rootLicense = await readFile(path.join(rootDir, "LICENSE"), "utf8");
 const releasePlan = JSON.parse(await readFile(releasePlanPath, "utf8"));
 const publishReady = process.argv.includes("--publish-ready");
+// <lang><zh-CN>候选资格与全已发布恢复为显式互斥操作；日常检查仍允许已发布清单。</zh-CN><en>Candidate eligibility and fully-published resume are explicit separate operations; daily checks still allow published plans.</en></lang>
+const resumeVerify = process.argv.includes("--resume-verify");
 
 const packageEntries = releasePlan.packages ?? [];
 const candidatesByName = new Map();
@@ -88,7 +91,9 @@ assert(bootstrapWorkflow.includes("resume_partial_batch"), "npm bootstrap workfl
 assert(bootstrapScript.includes("--provenance"), "npm bootstrap script must publish with provenance.");
 assert(bootstrapScript.includes("--resume"), "npm bootstrap script must support explicit partial-batch resume.");
 
+resolvePublicReleaseIntent(packageEntries, { publishReady, resumeVerify, resume: process.argv.includes("--resume") });
 console.log(
+  resumeVerify ? "Public release plan permits read-only resume verification; registry existence remains unverified." :
   publishReady
     ? `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the publish-ready release train.`
     : `Public release plan check passed: ${packageEntries.length} @hia-doc packages match the post-D3 release train.`

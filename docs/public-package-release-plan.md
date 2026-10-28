@@ -10,6 +10,36 @@ pnpm run distribution:check
 
 ## Current State
 
+### Publish readiness and explicit resume
+
+`--publish-ready` requires at least one `candidate` or `patch-candidate` after
+manifest validation. Daily source checks still allow all entries to be
+`published`; that state is not permission to republish current source.
+
+The bootstrap workflow selects one operation before checking credentials.
+Ordinary/partial publication uses the candidate gate and the existing explicit
+`--resume` handling. When the plan is entirely published and the resume input is
+explicit, it validates the fully published manifest, then runs:
+
+```sh
+node scripts/verify-public-release-resume.mjs --resume
+pnpm run release:postpublish:batch-smoke --resume-verify --resume
+```
+
+The resume verifier requires every exact target to exist in the registry;
+missing versions, request failures or mixed candidate plans are refused.
+This path reads no publication credential, executes no pack/publish, and still
+installs published packages with lifecycle scripts disabled for consumer checks.
+It does not prove registry archives equal this source checkout. The direct
+bootstrap script likewise treats an entirely published explicit resume as
+read-only, even when the historical invocation includes `--publish`.
+
+Read-only resume does not run the publication/content-packing gate. Publication
+still requires the full publish-ready release gate; ordinary source CI retains
+its full checks independently of terminal resume.
+
+中文：候选发布、部分恢复、全已发布只读核验是不同路径；只读恢复不取发布凭据、不执行打包/发布，仍做后置消费。
+
 The current source candidate declares Node.js `^22.23.4 || ^24.22.1` across the
 workspace root and thirteen npm packages. This change is unreleased. Existing
 npm contents and engine declarations remain independent; see

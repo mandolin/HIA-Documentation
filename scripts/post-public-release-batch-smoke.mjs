@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { waitForNpmPackageVersions } from "./lib/npm-registry.mjs";
+import { resolvePublicReleaseIntent } from "./lib/public-release-intent.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -14,6 +15,9 @@ const registry = releasePlan.registry ?? "https://registry.npmjs.org/";
 const entries = [...(releasePlan.packages ?? [])].sort((left, right) =>
   left.publishOrder - right.publishOrder || left.name.localeCompare(right.name)
 );
+// <lang><zh-CN>只读恢复仅安装已发布归档做消费核验，跳过所有npm pack；必须显式恢复且清单全已发布。</zh-CN><en>Read-only resume installs published archives for consumer checks and skips every npm pack; require explicit resume and a fully published plan.</en></lang>
+const resumeVerify = process.argv.includes("--resume-verify");
+if (resumeVerify) resolvePublicReleaseIntent(entries, { resumeVerify: true, resume: process.argv.includes("--resume") });
 
 /**
  * 在全新临时项目中复核首发包的 registry 可见性、tarball 下载、clean install 与 ESM 导入。
@@ -26,8 +30,10 @@ async function main() {
   try {
     await waitForNpmPackageVersions({ registry, entries });
     await runNpm(["init", "-y"], tempDir);
-    for (const spec of specs) {
-      await runNpm(["pack", spec, `--registry=${registry}`, "--pack-destination", tempDir], tempDir);
+    if (!resumeVerify) {
+      for (const spec of specs) {
+        await runNpm(["pack", spec, `--registry=${registry}`, "--pack-destination", tempDir], tempDir);
+      }
     }
     await runNpm(["install", "--ignore-scripts", "--no-audit", "--fund=false", `--registry=${registry}`, ...specs], tempDir);
     await smokeImports(tempDir);

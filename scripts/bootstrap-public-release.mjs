@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { readNpmPackageVersion } from "./lib/npm-registry.mjs";
+import { resolvePublicReleaseIntent, verifyPublishedReleaseBatch } from "./lib/public-release-intent.mjs";
 
 const execFileAsync = promisify(execFile);
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +27,15 @@ async function main() {
   assert(entries.length > 0, "The public release plan must list at least one package.");
   await Promise.all(entries.map(assertPublishReadyManifest));
 
+  // <lang><zh-CN>全已发布且显式恢复时只核精确registry，不读取发布凭据或进入打包；混合批次仍要求候选。</zh-CN><en>A fully-published explicit resume only verifies exact registry targets, without credentials or packing; mixed batches still require candidates.</en></lang>
+  const terminalResume = resume && entries.every((entry) => entry.releaseStatus === "published");
+  resolvePublicReleaseIntent(entries, { publishReady: !terminalResume, resumeVerify: terminalResume, resume });
+  if (terminalResume) {
+    await verifyPublishedReleaseBatch({ entries, registry, resume });
+    console.log("Bootstrap resume-verify completed; no pack or npm publish executed. Continue with post-consumer verification.");
+    return;
+  }
+
   const registryStates = await Promise.all(entries.map(readRegistryState));
   const alreadyPublished = registryStates.filter((state) => state.status === "published");
   const pending = registryStates.filter((state) => state.status === "unpublished");
@@ -45,12 +55,12 @@ async function main() {
     return;
   }
 
-  assert(process.env.NODE_AUTH_TOKEN, "NODE_AUTH_TOKEN is required only for --publish.");
   if (pending.length === 0) {
     assert(resume, "No unpublished target versions remain in this release batch.");
     console.log("Bootstrap resume found every approved target version already public; skipping npm publish and continuing to post-publish verification.");
     return;
   }
+  assert(process.env.NODE_AUTH_TOKEN, "NODE_AUTH_TOKEN is required only for --publish.");
 
   const packRoot = await mkdtemp(path.join(os.tmpdir(), "hia-npm-bootstrap-"));
   try {
