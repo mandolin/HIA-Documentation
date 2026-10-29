@@ -1,5 +1,14 @@
 # @hia-doc/config
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 HIA 文档工具共享的配置 contract 与 loader。
 
 共享资源可通过`docs.theme.assets`配置同站URL；`docs.theme.colors`由普通单文档/项目构建及显式资源生成命令共同消费。

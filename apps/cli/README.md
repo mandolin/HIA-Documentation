@@ -1,5 +1,14 @@
 # @hia-doc/cli
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 项目构建使用有背压的逐文件输出和有界源码片段读取，避免同文件并发读取及整站HTML积压。
 See [large project builds](../../docs/project-build-memory.md) for source authority, line/byte limits, diagnostics and memory boundaries.
 

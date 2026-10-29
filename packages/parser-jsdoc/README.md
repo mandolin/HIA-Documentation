@@ -1,5 +1,14 @@
 # @hia-doc/parser-jsdoc
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 JSDoc integration adapter for HIA core documents.
 
 This package consumes the `hia-jsdoc-integration` JSON emitted by `@mandolin/jsdoc-plugin-hia-sys` and converts it into the language-neutral `@hia-doc/core` document shape.

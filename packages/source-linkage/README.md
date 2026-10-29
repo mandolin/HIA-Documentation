@@ -1,5 +1,14 @@
 # @hia-doc/source-linkage
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 The unreleased binding host projection exposes three exact binding versions.
 Old exhaustive TypeScript consumers need an explicit source migration; see the
 [migration guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/generated-binding-typescript-migration.md).

@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/profile",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Documentation profile runtime for HIA documentation tools.",
   "license": "MIT",
   "repository": {

@@ -1,5 +1,14 @@
 # @hia-doc/renderer-html
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 HIA 文档的 HTML renderer，同时支持单一 document 与统一项目站。
 
 The renderer consumes `@hia-doc/core` data and returns file payloads. It does not read from disk or own CLI behavior.

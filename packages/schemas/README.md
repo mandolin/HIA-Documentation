@@ -1,5 +1,14 @@
 # @hia-doc/schemas
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 Machine-readable JSON Schema distribution for HIA documentation contracts.
 
 This package is a versioned snapshot catalog. Contract ownership remains with the package named by each catalog entry; `@hia-doc/schemas` does not redefine or independently version those contracts.

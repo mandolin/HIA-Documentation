@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Twelve coordinated 1.0.0 source candidates
+
+- 主仓十二必要包协调为`1.0.0`源码候选；发行清单逐项为`candidate`，尚未发布npm。独立语言服务器仍为原`0.1.0`，其余工具不自动升版；原18运行/5开发workspace依赖保持，实际归档与普通安装另验。
+- Coordinate twelve required package source candidates at `1.0.0`, without announcing registry availability. Preserve independent tool identities, runtime floors, draft artifact identities and exact historical readers. Review [package migration](docs/package-v1-migration.md), especially the binding TypeScript union and UI report rebuilding requirements.
+
 ## Unreleased — Public API candidate inventory
 
 - 固定十二必要包的根导出、JSON子路径、命令入口、签名和声明指纹清单；发行门禁拒绝未经复核的漂移。集中补齐56个公开节点双语说明，保持运行语义和类型结构。

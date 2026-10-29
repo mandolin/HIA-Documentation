@@ -3,8 +3,10 @@
  * @lang zh-CN 核已确认的两条LTS候选运行范围与已发布身份拒绝；配置测试不能替代实际安装/运行。
  * @lang en Checks the confirmed two-LTS candidate runtime range and refusal of published identities; configuration tests do not replace actual installation/execution.
  */
-import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -42,9 +44,31 @@ describe("candidate package runtime policy", () => {
     // <lang><zh-CN>逐包检查防止根清单正确但归档实际声明仍旧。</zh-CN><en>Check each package so a correct root cannot conceal stale archive declarations.</en></lang>
     expect(manifest(entry.path + "/package.json").engines.node).toBe(expectedRange);
   });
-  it.each(plan.packages)("keeps already published $name identities unavailable for publication", entry => {
-    // <lang><zh-CN>子进程只解析本地清单，不能发起发布；已有身份不得因源码变更而重用。</zh-CN><en>The subprocess only resolves local manifests and cannot publish; source changes must not permit reuse of existing identities.</en></lang>
-    expect(entry.releaseStatus).toBe("published");
-    expect(() => execFileSync(process.execPath, [fileURLToPath(new URL("../scripts/resolve-public-release-package.mjs", import.meta.url)), entry.name, "--publish-ready"], { encoding: "utf8", windowsHide: true, stdio: "pipe" })).toThrow(/releaseStatus is published/);
+  it.each(plan.packages)("refuses published $name identities and resolves candidate identities", entry => {
+    // <lang><zh-CN>每个实际包的三种状态在隔离副本中执行，避免把当前发行阶段写死为全已发布。</zh-CN><en>Execute three states for each actual package in an isolated copy rather than pinning the repository's release phase to fully published.</en></lang>
+    const root = mkdtempSync(join(tmpdir(), "hia-runtime-policy-"));
+    try {
+      mkdirSync(join(root, "scripts"));
+      mkdirSync(join(root, "release"));
+      mkdirSync(join(root, entry.path), {recursive: true});
+      copyFileSync(new URL("../scripts/resolve-public-release-package.mjs", import.meta.url), join(root, "scripts/resolve-public-release-package.mjs"));
+      writeFileSync(join(root, entry.path, "package.json"), JSON.stringify(manifest(entry.path + "/package.json")));
+      for (const releaseStatus of ["published", "candidate", "patch-candidate"]) {
+        writeFileSync(join(root, "release/public-packages.json"), JSON.stringify({...plan, packages: [{...entry, releaseStatus}]}));
+        // <lang><zh-CN>子进程仅解析清单；拒绝态不变，候选态只返回元数据而不pack/publish。</zh-CN><en>The subprocess only resolves manifests; published identities remain refused and candidate states return metadata without packing/publishing.</en></lang>
+        const result = spawnSync(process.execPath, [join(root, "scripts/resolve-public-release-package.mjs"), entry.name, "--publish-ready"], {encoding: "utf8", windowsHide: true});
+        if (releaseStatus === "published") {
+          expect(result.status).not.toBe(0);
+          expect(result.stderr).toContain("releaseStatus is published");
+        } else {
+          expect(result.status).toBe(0);
+          expect(JSON.parse(result.stdout)).toMatchObject({package_name: entry.name, target_version: entry.targetVersion});
+        }
+      }
+    } finally {
+      // <lang><zh-CN>递归清理前核本次创建目录的绝对父目录和专属前缀。</zh-CN><en>Verify the created directory's absolute parent and task-specific prefix before recursive cleanup.</en></lang>
+      if (dirname(resolve(root)) !== resolve(tmpdir()) || !basename(root).startsWith("hia-runtime-policy-")) throw new Error("Unsafe policy test cleanup path.");
+      rmSync(root, {recursive: true, force: true});
+    }
   });
 });

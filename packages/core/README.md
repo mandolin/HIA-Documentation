@@ -1,5 +1,14 @@
 # @hia-doc/core
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 UI-locale completeness writes contract `1.0.0`, reads exact legacy reports and
 rebuilds them only from complete message input. See the
 [contract and migration guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/documentation-ui-locale-completeness-contract.md).

@@ -1,5 +1,14 @@
 # @hia-doc/profile
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 Documentation profile runtime for HIA documentation tools.
 
 The package loads and validates documentation profiles, resolves tag aliases across `extends`, exposes registry query helpers, and reports profile diagnostics. It does not parse source code, generate HTML, or mutate the core document model.

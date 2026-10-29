@@ -1,5 +1,14 @@
 # @hia-doc/plugin-sdk
 
+## 1.0.0 source candidate
+
+This source tree targets a coordinated 1.0.0 package candidate. It does not
+announce npm availability. See the [package migration guide](../../docs/package-v1-migration.md)
+for matching dependencies, artifact versions and source compatibility.
+
+中文：当前为1.0.0源码候选，实际发布及工件版本请分别核对迁移说明。
+
+
 Contracts and runtime helpers for documentation producers.
 
 A producer keeps its own standalone API and adds a small HIA-compatible surface:

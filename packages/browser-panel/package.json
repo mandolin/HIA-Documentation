@@ -1,6 +1,6 @@
 {
   "name": "@hia-doc/browser-panel",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Static browser panel renderer for HIA source-linked documentation lookup.",
   "license": "MIT",
   "repository": {

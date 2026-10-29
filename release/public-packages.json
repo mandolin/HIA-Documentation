@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1.0-draft",
-  "releaseTrain": "trusted-publisher-patch-release",
+  "releaseTrain": "required-packages-v1-candidate",
   "scope": "@hia-doc",
   "registry": "https://registry.npmjs.org/",
   "runtimeNodeRange": "^22.23.4 || ^24.22.1",
@@ -25,90 +25,90 @@
     {
       "name": "@hia-doc/core",
       "path": "packages/core",
-      "targetVersion": "0.1.2",
+      "targetVersion": "1.0.0",
       "publishOrder": 10,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/config",
       "path": "packages/config",
-      "targetVersion": "0.1.6",
+      "targetVersion": "1.0.0",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/profile",
       "path": "packages/profile",
-      "targetVersion": "0.1.0",
+      "targetVersion": "1.0.0",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/parser-jsdoc",
       "path": "packages/parser-jsdoc",
-      "targetVersion": "0.1.0",
+      "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "adapter-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/plugin-sdk",
       "path": "packages/plugin-sdk",
-      "targetVersion": "0.1.2",
+      "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "producer-sdk",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/source-linkage",
       "path": "packages/source-linkage",
-      "targetVersion": "0.1.1",
+      "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "owner-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/theme-default",
       "path": "packages/theme-default",
-      "targetVersion": "0.1.4",
+      "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/browser-panel",
       "path": "packages/browser-panel",
-      "targetVersion": "0.1.0",
+      "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "browser-tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/profiles",
       "path": "packages/profiles",
-      "targetVersion": "0.1.0",
+      "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "distribution",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/renderer-html",
       "path": "packages/renderer-html",
-      "targetVersion": "0.1.8",
+      "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/schemas",
       "path": "packages/schemas",
-      "targetVersion": "0.1.4",
+      "targetVersion": "1.0.0",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     },
     {
       "name": "@hia-doc/lsp",
@@ -121,10 +121,10 @@
     {
       "name": "@hia-doc/cli",
       "path": "apps/cli",
-      "targetVersion": "0.1.11",
+      "targetVersion": "1.0.0",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "published"
+      "releaseStatus": "candidate"
     }
   ],
   "excludedPackages": [
