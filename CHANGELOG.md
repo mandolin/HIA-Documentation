@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Default theme API boundaries
+
+- 补齐默认主题全部公开接口的副本所有权、颜色拒绝、只读常量与类型输入说明；新增常驻边界测试，保持默认CSS、浏览器脚本、运行语义和契约版本。
+- Document default-theme API ownership, color rejection, shared readonly constants and typed inputs; add boundary regressions without changing default assets, runtime semantics or contract versions.
+
 ## Unreleased — UI locale 1.0.0 and publication intent
 
 - 界面语言报告当前1.0.0，保留精确旧读与历史字节；新增真实输入重建、十万总结果预算和稀疏元数据incomplete。Portal/JSDoc能力协调，契约目录八必要项均为候选；包/系统正式发行分别验收。

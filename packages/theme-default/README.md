@@ -22,6 +22,9 @@ The theme intentionally does not emit or style a WAI-ARIA `tree` contract. Arrow
 
 ## Theme Contract
 
+See the [complete API guide](../../docs/default-theme-api.md) for public exports,
+copy ownership, safe color inputs, fixed errors and typed label boundaries.
+
 `documentation-portal-theme@0.1.0-draft` is owned by this package. The contract exposes a metadata-only reference for renderers and a complete light/dark semantic color-token set. Portal pages now provide three owner-local skins and a visible selector. A browser may persist the reader's local skin/scheme preference, but the preference never enters the contract, renderer manifest, presentation profile, or search index.
 
 Existing `--hia-bg`, `--hia-surface`, `--hia-border`, `--hia-text`, `--hia-muted`, `--hia-accent`, `--hia-accent-soft`, `--hia-code-bg`, and `--hia-code-text` variables remain additive aliases. Removing, renaming, or changing the semantics of a token requires a new contract version.

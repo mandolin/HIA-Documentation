@@ -11,8 +11,8 @@ export const DOCUMENTATION_PORTAL_THEME_CONTRACT = "documentation-portal-theme";
 export const DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION = "0.1.0-draft";
 
 /**
- * @lang zh-CN W-P104 首批稳定的 semantic color token 名称。
- * @lang en Stable semantic color-token names introduced by the W-P104 slice.
+ * @lang zh-CN 品牌覆盖允许的十四个 semantic color token 名称；调用者不得改写此共享常量，运行时未冻结。
+ * @lang en Fourteen semantic color-token names admitted by brand overrides; callers must not mutate this shared constant, which is not frozen at runtime.
  */
 export const DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES = [
   "canvas",
@@ -62,9 +62,13 @@ export type PortalThemeScheme = typeof PORTAL_THEME_SCHEMES[number];
  * @lang en Renderer-neutral Portal skin capability containing no CSS selector, DOM, or token value.
  */
 export interface PortalThemeSkinCapability {
+  /** @lang zh-CN 内置能力名称副本；不包含DOM选择器或颜色值。 @lang en Copied built-in capability names without DOM selectors or color values. */
   capabilities: string[];
+  /** @lang zh-CN 三个内置皮肤之一。 @lang en One of the three built-in skin identities. */
   skinId: PortalThemeSkinId;
+  /** @lang zh-CN 当前皮肤支持的独立scheme数组副本。 @lang en Independent copied array of schemes supported by this skin. */
   supportedSchemes: PortalThemeScheme[];
+  /** @lang zh-CN 精确名称@版本引用，不声明该草案已经稳定。 @lang en Exact name@version reference, without claiming that the draft is stable. */
   tokenContract: string;
 }
 
@@ -134,8 +138,8 @@ export interface DocumentationPortalThemeContract extends DocumentationPortalThe
 }
 
 /**
- * @lang zh-CN 默认主题的 immutable-by-contract 描述；runtime consumer 不得原地改写。
- * @lang en Immutable-by-contract description of the default theme; runtime consumers must not mutate it in place.
+ * @lang zh-CN 默认主题的 immutable-by-contract 描述；调用者不得原地改写，as const不等于运行时深冻结。
+ * @lang en Immutable-by-contract description of the default theme; callers must not mutate it in place, and as const does not imply runtime deep freezing.
  */
 export const DEFAULT_DOCUMENTATION_PORTAL_THEME = {
   contract: DOCUMENTATION_PORTAL_THEME_CONTRACT,
@@ -285,7 +289,7 @@ const PORTAL_THEME_SKINS: readonly PortalThemeSkinDefinition[] = [
  * @lang zh-CN 返回深拷贝的 metadata-only skin catalog，供 neutral presentation profile 使用。
  * @lang en Returns a deep-copied metadata-only skin catalog for neutral presentation profiles.
  *
- * @returns 不含 token value 与 owner selector 的确定性 catalog。Deterministic catalog without token values or owner selectors.
+ * @returns <lang><zh-CN>按内置顺序返回新数组、新记录和嵌套能力/scheme数组，不含token值和owner选择器；无I/O。</zh-CN><en>A fresh array, records and nested capability/scheme arrays in built-in order, without token values, owner selectors or I/O.</en></lang>
  */
 export function getPortalThemeSkinCatalog(): PortalThemeSkinCapability[] {
   return PORTAL_THEME_SKINS.map(({ capabilities, skinId, supportedSchemes, tokenContract }) => ({
@@ -311,8 +315,8 @@ export function getPortalThemeSkinLabel(skinId: PortalThemeSkinId): string {
  * @lang zh-CN 返回内置 scheme 的双语可见标签。
  * @lang en Returns the bilingual visible label for a built-in scheme.
  *
- * @param scheme - Portal scheme identity。Portal scheme identity.
- * @returns 可见标签。Visible label.
+ * @param scheme <lang><zh-CN>仅接受类型闭集dark/light/system；调用者须在进入此函数前验证外部输入。</zh-CN><en>Accepts only the typed dark/light/system set; callers must validate external input before invoking this function.</en></lang>
+ * @returns <lang><zh-CN>对应的双语标签；不提供未知输入的运行时验证或fallback。</zh-CN><en>The corresponding bilingual label; no runtime validation or fallback for unknown inputs is provided.</en></lang>
  */
 export function getPortalThemeSchemeLabel(scheme: PortalThemeScheme): string {
   return ({ dark: "Dark / 深色", light: "Light / 浅色", system: "System / 跟随系统" })[scheme];
@@ -337,7 +341,7 @@ export interface HiaThemeAsset {
  * @lang zh-CN 返回不含 token 值的默认 theme reference 副本，供 renderer 安全投射。
  * @lang en Returns a copy of the default theme reference without token values for safe renderer projection.
  *
- * @returns 默认主题的公开 metadata-only reference。Public metadata-only reference for the default theme.
+ * @returns <lang><zh-CN>每次新建的五字段普通记录；无嵌套对象、不带token值或本地偏好、无I/O。</zh-CN><en>A new five-field plain record per call, without nested objects, token values, local preferences or I/O.</en></lang>
  */
 export function getDefaultDocumentationPortalThemeReference(): DocumentationPortalThemeReference {
   return {
@@ -359,6 +363,7 @@ export function getDefaultDocumentationPortalThemeReference(): DocumentationPort
 export function getDefaultThemeAssets(options: HiaThemeAssetOptions = {}): HiaThemeAsset[] {
   // <lang><zh-CN>只在副本中追加已校验的颜色，默认常量和JS资源不变，不接收任意CSS片段。</zh-CN><en>Append validated colors only to a copy, leaving default constants and JavaScript unchanged and accepting no arbitrary CSS fragments.</en></lang>
   const declarations = createBrandColorDeclarations(options);
+  // <lang><zh-CN>空覆盖保持原CSS字节，否则仅在新字符串末尾追加已验证规则。</zh-CN><en>Empty overrides preserve original CSS bytes; otherwise append validated rules only to a new string.</en></lang>
   const branding = declarations.length
     ? `\n\n:root, :root[data-hia-skin], :root[data-hia-skin][data-hia-scheme] {\n${declarations.join("\n")}\n}`
     : "";
@@ -378,24 +383,34 @@ export function getDefaultThemeAssets(options: HiaThemeAssetOptions = {}): HiaTh
 
 /** @lang zh-CN 默认主题的构建期品牌选项；只改变明确颜色，不声明新皮肤或公开权限。 @lang en Build-time brand options for the default theme, changing only explicit colors without declaring a new skin or disclosure permission. */
 export interface HiaThemeAssetOptions {
-  /** @lang zh-CN 封闭semantic token名及#RGB/#RGBA/#RRGGBB/#RRGGBBAA值，适用于当前配色；调用者须复核所选scheme对比度。 @lang en Closed semantic token names and hex color values, applying to the selected palette; callers must review contrast for their chosen scheme. */
+  /** @lang zh-CN 自有可枚举数据属性；容器是普通或null-prototype对象，所有自有键须为可枚举数据token及#RGB/#RGBA/#RRGGBB/#RRGGBBAA字面量；缺省/undefined/空记录不覆盖，继承colors不消费。调用者须复核对比度。 @lang en Own enumerable data property; the container is a plain or null-prototype object whose own keys must be enumerable data tokens with literal hex values. Omitted/undefined/empty records add no override, inherited colors are ignored, and callers must review contrast. */
   colors?: Partial<Record<DocumentationPortalThemeColorTokenName, string>>;
 }
 
-/** @lang zh-CN 快照普通数据选项并生成安全颜色声明；非法值/访问器/反射异常统一拒绝，不回显原值。 @lang en Snapshots ordinary data options into safe color declarations, uniformly rejecting invalid values/accessors/reflection failures without echoing values. */
+/**
+ * @lang zh-CN 快照普通数据选项并生成安全颜色声明；非法值/访问器/反射异常统一拒绝，不回显原值。Proxy反射可能有副作用，不提供沙箱隔离。
+ * @lang en Snapshots ordinary data options into safe color declarations, uniformly rejecting invalid values/accessors/reflection failures without echoing values. Proxy reflection can have side effects; this is not a sandbox.
+ * @param options <lang><zh-CN>仅消费自有colors；其它选项不参与颜色生成。</zh-CN><en>Only own colors are consumed; other options do not participate in color generation.</en></lang>
+ * @returns <lang><zh-CN>按颜色自有键顺序的新声明数组。</zh-CN><en>A fresh declaration array in color own-key order.</en></lang>
+ * @throws {TypeError} <lang><zh-CN>固定HIA_THEME_COLORS_INVALID，不回显输入。</zh-CN><en>Fixed HIA_THEME_COLORS_INVALID without input echo.</en></lang>
+ */
 function createBrandColorDeclarations(options: HiaThemeAssetOptions): string[] {
   try {
     // <lang><zh-CN>描述符读取不调用getter；颜色容器只接受普通对象或null-prototype对象。</zh-CN><en>Descriptor reads do not invoke getters; color containers accept only ordinary or null-prototype objects.</en></lang>
     const descriptor = Object.getOwnPropertyDescriptor(options, "colors");
     if (!descriptor) return [];
     if (!("value" in descriptor) || !descriptor.enumerable) throw new TypeError();
+    // <lang><zh-CN>描述符中的原始值只在本次验证使用，不触发属性取值或字符串转换。</zh-CN><en>Use the raw descriptor value only for this validation, without property reads or string coercion.</en></lang>
     const colors: unknown = descriptor.value;
     if (colors === undefined) return [];
     if (!colors || typeof colors !== "object" || Array.isArray(colors) || ![Object.prototype, null].includes(Object.getPrototypeOf(colors))) throw new TypeError();
+    // <lang><zh-CN>仅收集已通过闭集和字面量检查的声明，不修改输入记录。</zh-CN><en>Collect only declarations passing closed-name and literal checks, without modifying the input record.</en></lang>
     const declarations: string[] = [];
     for (const name of Reflect.ownKeys(colors)) {
+      // <lang><zh-CN>逐一检查包括Symbol和隐藏键的全部自有属性；getter不执行。</zh-CN><en>Inspect all own properties, including symbols and hidden keys, without executing getters.</en></lang>
       const property = Object.getOwnPropertyDescriptor(colors, name);
       if (typeof name !== "string" || !DOCUMENTATION_PORTAL_THEME_COLOR_TOKEN_NAMES.includes(name as DocumentationPortalThemeColorTokenName) || !property?.enumerable || !("value" in property)) throw new TypeError();
+      // <lang><zh-CN>每个值保持unknown直到字面量验证，不调用用户转换钩子。</zh-CN><en>Keep each value unknown until literal validation, without invoking user coercion hooks.</en></lang>
       const value: unknown = property.value;
       if (typeof value !== "string" || value.trim() !== value || !/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(value)) throw new TypeError();
       declarations.push(`  --hia-color-${themeTokenCssName(name as DocumentationPortalThemeColorTokenName)}: ${value};`);
