@@ -31,6 +31,10 @@ step rewrites their eighteen runtime and five development dependency edges to th
 matching package versions. Applications should consume a verified matching set;
 workspace links alone do not prove that an npm installation works. The dependency
 order remains in [the release manifest](../release/public-packages.json).
+For pending targets, `previousPublishedVersion` records the separately verified
+older npm version. A published package-family listing refers to that older release;
+it does not make the new candidate target available. Registry observations still
+need refreshing before actual publication.
 
 Supported runtimes remain `^22.23.4 || ^24.22.1`. This migration adds no runtime
 dependency and makes no new Node.js major-version promise.

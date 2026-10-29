@@ -37,6 +37,11 @@ for (const entry of packageEntries) {
   assert(/^\d+\.\d+\.\d+$/.test(entry.targetVersion ?? ""), `${entry.name}: targetVersion must be npm SemVer without prerelease.`);
   assert(Number.isInteger(entry.publishOrder), `${entry.name}: publishOrder must be an integer.`);
   assert(allowedReleaseStatuses.has(entry.releaseStatus), `${entry.name}: releaseStatus must be one of ${[...allowedReleaseStatuses].join(", ")}.`);
+  // <lang><zh-CN>旧已发布版本与候选目标分开；字段是维护者登记的历史事实，不是本检查器进行的registry查询。</zh-CN><en>Separate a previously published version from the candidate target; this field records maintainer-substantiated history, not a registry query performed by this checker.</en></lang>
+  if (entry.previousPublishedVersion !== undefined) {
+    assert(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(entry.previousPublishedVersion), `${entry.name}: previousPublishedVersion must be an exact release version.`);
+    assert(entry.previousPublishedVersion !== entry.targetVersion, `${entry.name}: previousPublishedVersion must differ from the target.`);
+  }
   candidatesByName.set(entry.name, entry);
 }
 

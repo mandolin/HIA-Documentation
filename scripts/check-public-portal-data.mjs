@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isPublishedPackageFamily } from "./lib/public-package-family.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const portalDataPath = path.join(mainRepoRoot, "reference", "public-portal-data.json");
@@ -84,10 +85,9 @@ function validateEcosystem(data, publicPackages, profileCatalog, schemaCatalog) 
   const maturityIds = new Set((data.maturityScale ?? []).map((item) => item.id));
   assertEqualSets(["bridge-consumable", "local-consumable", "published-consumable", "workspace-incubation"], [...maturityIds], "Maturity scale");
 
-  // 中英说明：patch-candidate 表示已有公开版本的包族正在准备补丁发布；公开门户仍应列为可见核心包。
-  // EN: patch-candidate means an already-public package family is preparing a patch; the public portal should still list it as a visible core package.
+  // <lang><zh-CN>包族可保留已发布旧版，但candidate本身不是发布证据；待发条目必须另有明确旧版声明，不能把目标1.0.0误称已发布。</zh-CN><en>A family may retain a published older version, but a candidate alone is not publication evidence; pending entries need a separate prior-version declaration without claiming their 1.0.0 target is published.</en></lang>
   const publicCorePackages = publicPackages.packages
-    .filter((item) => item.releaseStatus === "published" || item.releaseStatus === "patch-candidate")
+    .filter(isPublishedPackageFamily)
     .map((item) => item.name)
     .sort(compareStableText);
   assert(data.ecosystem.corePackages.scope === publicPackages.scope, "Core package scope drifted.");

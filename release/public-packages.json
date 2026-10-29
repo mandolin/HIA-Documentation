@@ -28,7 +28,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 10,
       "kind": "owner-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.2"
     },
     {
       "name": "@hia-doc/config",
@@ -36,7 +37,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.6"
     },
     {
       "name": "@hia-doc/profile",
@@ -44,7 +46,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 20,
       "kind": "owner-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.0"
     },
     {
       "name": "@hia-doc/parser-jsdoc",
@@ -52,7 +55,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "adapter-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.0"
     },
     {
       "name": "@hia-doc/plugin-sdk",
@@ -60,7 +64,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "producer-sdk",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.2"
     },
     {
       "name": "@hia-doc/source-linkage",
@@ -68,7 +73,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "owner-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.1"
     },
     {
       "name": "@hia-doc/theme-default",
@@ -76,7 +82,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 30,
       "kind": "renderer-asset-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.4"
     },
     {
       "name": "@hia-doc/browser-panel",
@@ -84,7 +91,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "browser-tooling-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.0"
     },
     {
       "name": "@hia-doc/profiles",
@@ -92,7 +100,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "distribution",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.0"
     },
     {
       "name": "@hia-doc/renderer-html",
@@ -100,7 +109,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 40,
       "kind": "renderer-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.8"
     },
     {
       "name": "@hia-doc/schemas",
@@ -108,7 +118,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 50,
       "kind": "distribution",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.4"
     },
     {
       "name": "@hia-doc/lsp",
@@ -124,7 +135,8 @@
       "targetVersion": "1.0.0",
       "publishOrder": 70,
       "kind": "tooling-runtime",
-      "releaseStatus": "candidate"
+      "releaseStatus": "candidate",
+      "previousPublishedVersion": "0.1.11"
     }
   ],
   "excludedPackages": [
