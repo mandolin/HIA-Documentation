@@ -286,9 +286,16 @@ Options:
                       Explicit safe-relative ordinary source-map coordinate sidecar for docs coordinate-verify.
 `;
 
+/**
+ * @lang zh-CN 命令行宿主注入的工作目录与输出回调；调用方负责回调副作用和最终消息去向。
+ * @lang en CLI-host working directory and output callbacks; callers own callback effects and final message destinations.
+ */
 export interface CliIo {
+  /** @lang zh-CN 宿主解析相对输入/输出路径的工作目录，不自动授权读取任意仓库。 @lang en Host working directory for relative input/output paths, without automatic authority over arbitrary repositories. */
   cwd: string;
+  /** @lang zh-CN 普通输出消息回调，最终流/文件去向及副作用由宿主负责。 @lang en Normal-output callback; the host owns stream/file destinations and side effects. */
   stdout: (message: string) => void;
+  /** @lang zh-CN 诊断/错误消息回调，不把回调本身当作隐私过滤器。 @lang en Diagnostic/error callback, which is not itself a privacy filter. */
   stderr: (message: string) => void;
 }
 

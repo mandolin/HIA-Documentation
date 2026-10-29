@@ -35,7 +35,15 @@ import historicalUiLocale from "./history/documentation-ui-locale-completeness-0
 import historicalGeneratedBinding from "./history/generated-documentation-binding-0.1.0-draft.schema.json" with { type: "json" };
 import historicalGeneratedBindingV02 from "./history/generated-documentation-binding-0.2.0-draft.schema.json" with { type: "json" };
 
+/**
+ * @lang zh-CN Schema目录metadata的精确草案版本，独立于每项定义的契约版本和包版本。
+ * @lang en Exact draft version of schema-catalog metadata, independent of individual contract and package versions.
+ */
 export const HIA_SCHEMA_CATALOG_VERSION = "0.1.0-draft";
+/**
+ * @lang zh-CN 公开canonical schema URL的固定基址；作为metadata返回，不执行网络访问。
+ * @lang en Fixed base URL for public canonical schemas, returned as metadata without network access.
+ */
 export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Documentation/schemas/";
 /** @lang zh-CN 与生成 catalog 顺序一致的当前 schema key；不包括历史快照。 @lang en Current schema keys in generated-catalog order, excluding historical snapshots. */
 export const HIA_SCHEMA_KEYS = [
@@ -59,12 +67,24 @@ export const HIA_SCHEMA_KEYS = [
   "project-manifest"
 ] as const;
 
+/**
+ * @lang zh-CN 当前owner schema键的闭集，不包括历史URL；历史定义通过精确schema ID读取。
+ * @lang en Closed current owner-schema keys, excluding historical URLs; historical definitions are read through exact schema IDs.
+ */
 export type HiaSchemaKey = typeof HIA_SCHEMA_KEYS[number];
+/**
+ * @lang zh-CN 含$id/$schema身份的JSON Schema数据视图，不是验证后实例或运行代码。
+ * @lang en JSON Schema data view with $id/$schema identity, not a validated instance or executable code.
+ */
 export type HiaJsonSchema = Record<string, unknown> & {
   $id: string;
   $schema: string;
 };
 
+/**
+ * @lang zh-CN 每项owner定义的路径、精确版本、公开身份和成熟度；候选成熟度不代表已经发行。
+ * @lang en Owner definition path, exact version, public identity and maturity; candidate maturity does not imply publication.
+ */
 export interface HiaSchemaCatalogEntry {
   contractVersion: string;
   key: HiaSchemaKey;
@@ -76,6 +96,10 @@ export interface HiaSchemaCatalogEntry {
   stability: "active-pre-1.0" | "draft" | "stable-candidate";
 }
 
+/**
+ * @lang zh-CN 当前schema分发目录的metadata与条目数组，不包含历史工件正文。
+ * @lang en Metadata and entries for the current schema-distribution catalog, without historical artifact bodies.
+ */
 export interface HiaSchemaCatalog {
   catalogVersion: string;
   publicBaseUrl: string;
@@ -110,6 +134,10 @@ const historicalSchemas: readonly HiaJsonSchema[] = [
   historicalUiLocale, historicalGeneratedBinding, historicalGeneratedBindingV02
 ];
 
+/**
+ * @lang zh-CN 共享目录数据，调用方不得改写；未做运行时深冻结，不等于可变schema查询副本。
+ * @lang en Shared catalog data that callers must not mutate; it is not deeply frozen at runtime and is distinct from copied schema-query results.
+ */
 export const HIA_SCHEMA_CATALOG = catalogData as HiaSchemaCatalog;
 
 /**

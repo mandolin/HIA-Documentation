@@ -72,6 +72,10 @@ export * from "./portal-ui-locale.js";
 export * from "./presentation-profile.js";
 export { renderThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
 
+/**
+ * @lang zh-CN HTML输出文件清单的精确版本0.1.0，独立于包、文档及各引用工件版本。
+ * @lang en Exact HTML output-manifest version 0.1.0, independent of package, document and referenced-artifact versions.
+ */
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
 /**
  * 项目导航索引的中性 contract 名称；供静态 portal、搜索与宿主导航消费。
@@ -94,6 +98,10 @@ export const HIA_PROJECT_RELATION_GRAPH_CONTRACT = "hia-project-relation-graph";
  */
 export const HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION = "0.1.0-draft";
 
+/**
+ * @lang zh-CN 宿主可写入的内存文件记录：输出相对路径、正文、MIME及角色；renderer不执行文件写入。
+ * @lang en In-memory file record for host-owned writing: output-relative path, contents, MIME and role; the renderer performs no file writes.
+ */
 export interface RenderedHtmlFile {
   path: string;
   contents: string;
@@ -101,6 +109,10 @@ export interface RenderedHtmlFile {
   role: "entry" | "asset" | "index";
 }
 
+/**
+ * @lang zh-CN 文档/项目渲染选项；普通文档保持单页，项目选项仅在对应项目路径消费。默认主题资源包含，locale缺省由文档/项目决定。
+ * @lang en Document/project rendering options; documents stay single-page and project options apply only to project paths. Theme assets default on and omitted locale follows document/project metadata.
+ */
 export interface RenderHtmlOptions {
   locale?: string;
   title?: string;
@@ -116,9 +128,25 @@ export interface RenderHtmlOptions {
   projectSite?: RenderProjectSiteOptions;
 }
 
+/**
+ * @lang zh-CN 项目条目的领域分组闭集；all为汇总视图，不声明每个领域已全面支持。
+ * @lang en Closed project-entry domain groups; all is an aggregate view, not a claim of complete domain support.
+ */
 export type RenderProjectView = "all" | "js" | "css" | "html" | "dotnet" | "powershell" | "other";
+/**
+ * @lang zh-CN 项目站分页布局闭集；默认split-site，single-page为显式兼容选择。
+ * @lang en Closed project-site layouts; split-site is the default and single-page an explicit compatibility choice.
+ */
 export type RenderProjectSiteLayout = "split-site" | "single-page";
+/**
+ * @lang zh-CN 源码正文/链接呈现策略闭集，默认和公开授权由项目站策略决定。
+ * @lang en Closed source body/link presentation policy, with defaults and disclosure authority determined by project-site policy.
+ */
 export type RenderProjectSourcePresentation = "none" | "link" | "embed" | "fetch";
+/**
+ * @lang zh-CN 公开同源源码的展开时或手动加载策略，不授权获取任意URL。
+ * @lang en On-expand or manual loading of public same-origin source assets, without authorizing arbitrary URLs.
+ */
 export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
 
 /** @lang zh-CN Portal 的构建时默认 skin/scheme；运行时选择不改变内容 identity。 @lang en Build-time Portal skin/scheme defaults; runtime selection does not change content identity. */
@@ -130,6 +158,10 @@ export interface RenderProjectThemeOptions {
 /** @lang zh-CN 主题owner的安全品牌颜色及既有皮肤/配色，不接收自定义CSS或代码。 @lang en Theme-owner safe brand colors plus existing skin/scheme, without custom CSS or code. */
 export interface RenderHtmlThemeOptions extends RenderProjectThemeOptions, HiaThemeAssetOptions {}
 
+/**
+ * @lang zh-CN 项目站布局、信息架构、语言、主题和源码策略；显式信息架构才启用对应契约投影，不改变canonical条目身份。
+ * @lang en Project-site layout, information architecture, locales, theme and source policy; explicit information architecture enables its projections without changing canonical entry identities.
+ */
 export interface RenderProjectSiteOptions {
   /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
   layout?: RenderProjectSiteLayout;
@@ -188,6 +220,10 @@ export interface RenderProjectSourceCommentProjectionOptions {
   locale: string;
 }
 
+/**
+ * @lang zh-CN 调用方已聚合的项目、条目及可选关系/投影；renderer不自行发现文件或认证owner输入事实。
+ * @lang en Caller-aggregated project, entries and optional relations/projections; the renderer neither discovers files nor attests owner-input facts.
+ */
 export interface RenderProjectHtmlInput {
   project: RenderProjectInfo;
   entries: RenderProjectEntry[];
@@ -221,6 +257,10 @@ export interface RenderProjectHtmlInput {
   diagnostics?: HiaDiagnostic[];
 }
 
+/**
+ * @lang zh-CN 项目的可公开身份、标题、语言和产品版本；产品版本仅作metadata，不参与路由。
+ * @lang en Public project identity, title, locales and product version; product version is metadata only and never participates in routing.
+ */
 export interface RenderProjectInfo {
   id?: string;
   name: string;
@@ -290,6 +330,10 @@ export interface RenderProjectOwnerAdoptionSummary {
   };
 }
 
+/**
+ * @lang zh-CN 已用文档化配置规范的轻量引用；profileVersion与包/规范根版本独立，path仅作来源metadata。
+ * @lang en Lightweight reference to a used documentation profile; profileVersion is independent of package/root versions and path is provenance metadata only.
+ */
 export interface RenderProjectProfileRef {
   profileId: string;
   profileVersion?: string;
@@ -297,6 +341,10 @@ export interface RenderProjectProfileRef {
   path?: string;
 }
 
+/**
+ * @lang zh-CN 文档源码映射文件的版本、计数和关联摘要，不含源码正文；计数由上游提供，不作为权限或精度证明。
+ * @lang en Version, counts and linkage summary for a documentation source-map file without source bodies; upstream counts prove neither authority nor coordinate precision.
+ */
 export interface RenderProjectDocSourceMapRef {
   artifactCount?: number;
   path: string;
@@ -312,6 +360,10 @@ export interface RenderProjectDocSourceMapRef {
   unresolvedEntryCount?: number;
 }
 
+/**
+ * @lang zh-CN 普通位置映射的轻量身份/路径/语言引用；不内嵌映射段或授权读取文件。
+ * @lang en Lightweight identity/path/language reference to an ordinary position map, without embedded mappings or file-read authority.
+ */
 export interface RenderProjectSourceMapRef {
   id: string;
   kind?: string;
@@ -319,8 +371,16 @@ export interface RenderProjectSourceMapRef {
   path?: string;
 }
 
+/**
+ * @lang zh-CN 项目关系节点的entry/source/artifact/endpoint闭集，不授权对相应目标执行动作。
+ * @lang en Closed entry/source/artifact/endpoint relation-node kinds, without authorizing actions on those targets.
+ */
 export type RenderProjectRelationNodeKind = "entry" | "source" | "artifact" | "endpoint";
 
+/**
+ * @lang zh-CN 项目关系语义闭集，表达文档/源码/生成物/端点/成员关联，不推断额外关系。
+ * @lang en Closed project-relation semantics for documentation/source/artifact/endpoint/member links, without inferring additional relationships.
+ */
 export type RenderProjectRelationKind =
   | "documents-source"
   | "documents-generated-artifact"
@@ -369,6 +429,10 @@ export interface RenderProjectRelation {
   metadata?: Record<string, string | number | boolean | null>;
 }
 
+/**
+ * @lang zh-CN 结构化项目条目及可选本地化、来源和关系摘要；身份由输入提供，正文/源码公开须经过相应owner与呈现策略验证。
+ * @lang en Structured project entry with optional localization, source and relation summaries; inputs own identities and body/source disclosure requires owner and presentation-policy validation.
+ */
 export interface RenderProjectEntry {
   id: string;
   name: string;
@@ -420,6 +484,10 @@ export interface RenderProjectEntryHierarchyRef {
   interfaceIds?: string[];
 }
 
+/**
+ * @lang zh-CN 条目到文档源码映射的轻量关联及来源/产物摘要；不代替共享reader的范围/列单位精确查询。
+ * @lang en Lightweight entry-to-documentation-map linkage and source/artifact summary, without replacing precise range/column-unit queries in the shared reader.
+ */
 export interface RenderProjectEntryDocSourceMapRef {
   artifactConfidence?: string;
   artifactPath?: string;
@@ -436,6 +504,10 @@ export interface RenderProjectEntryDocSourceMapRef {
   sourceRangeSource?: string;
 }
 
+/**
+ * @lang zh-CN 输入工件的kind/path及可选精确契约引用，仅作溯源，不读取或自动迁移所指文件。
+ * @lang en Input-artifact kind/path and optional exact contract reference for provenance only, without reading or automatically migrating the referenced file.
+ */
 export interface RenderProjectInputRef {
   kind: string;
   path: string;
@@ -444,6 +516,10 @@ export interface RenderProjectInputRef {
   contractVersion?: string;
 }
 
+/**
+ * @lang zh-CN 源码定位和已授权公开资产/预览的输入引用；本地path不自动公开正文，fetch/link使用构建生成的同源资产。
+ * @lang en Source-location reference and authorized public asset/preview inputs; a local path never automatically discloses bodies, and fetch/link use build-generated same-origin assets.
+ */
 export interface RenderProjectSourceRef {
   confidence?: string;
   fetchUrl?: string;
@@ -503,6 +579,10 @@ export interface RenderProjectSourceUsabilityRef {
   };
 }
 
+/**
+ * @lang zh-CN 调用方提供的源码预览正文、语言和一基范围；存在该结构不等于已获公开授权。
+ * @lang en Caller-provided source-preview body, language and one-based range; its presence is not disclosure authorization.
+ */
 export interface RenderProjectSourcePreviewRef {
   content: string;
   defaultExpanded?: boolean;
@@ -513,6 +593,10 @@ export interface RenderProjectSourcePreviewRef {
   };
 }
 
+/**
+ * @lang zh-CN 渲染后的内存文件、诊断和manifest；宿主负责按许可写入与部署，调用前后不获得新的执行权限。
+ * @lang en Rendered in-memory files, diagnostics and manifest; hosts own authorized writing/deployment and gain no new execution authority.
+ */
 export interface RenderHtmlResult {
   files: RenderedHtmlFile[];
   diagnostics: HiaDiagnostic[];
@@ -537,6 +621,10 @@ export interface RenderHtmlWriteResult {
   manifest: RenderHtmlManifest;
 }
 
+/**
+ * @lang zh-CN 本次输出文件及项目引用的body-free清单；只登记本次拥有的文件，不伪报外部共享资源或真实发布状态。
+ * @lang en Body-free inventory of output files and project references, listing only files owned by this build rather than external shared assets or actual publication status.
+ */
 export interface RenderHtmlManifest {
   schemaVersion: typeof HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION;
   renderer: "@hia-doc/renderer-html";
@@ -582,6 +670,10 @@ export interface RenderProjectUiLocaleCompletenessRef {
   uiLocaleCount: number;
 }
 
+/**
+ * @lang zh-CN 输出清单中的相对路径、文件角色与MIME，不包含正文或文件系统写入权限。
+ * @lang en Relative path, file role and MIME in an output inventory, without contents or filesystem-write authority.
+ */
 export interface RenderHtmlManifestFile {
   path: string;
   role: RenderedHtmlFile["role"];
@@ -694,6 +786,10 @@ export interface RenderProjectNavigationIndex {
   };
 }
 
+/**
+ * @lang zh-CN 按类型、配置层或源码根聚合的导航分组闭集，不改变条目canonical身份。
+ * @lang en Closed navigation grouping by kind, profile layer or source root, without changing canonical entry identities.
+ */
 export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "source-root";
 
 /**
@@ -708,6 +804,10 @@ export interface RenderProjectNavigationGroup {
   views: RenderProjectView[];
 }
 
+/**
+ * @lang zh-CN 项目导航树节点类别闭集，仅表示已有层级，不额外推断语言命名空间或文件结构。
+ * @lang en Closed project navigation-tree node kinds representing supplied hierarchy without inferring language namespaces or filesystem structure.
+ */
 export type RenderProjectNavigationTreeNodeKind =
   | "view"
   | "assembly"
@@ -805,6 +905,14 @@ export interface RenderProjectSourceCommentProjectionSummary {
   };
 }
 
+/**
+ * @lang zh-CN 把已结构化文档渲染为单页内存文件与manifest；默认包含主题资源，外部资源模式只返回引用，不写文件。
+ * @lang en Renders a structured document into single-page in-memory files and a manifest; theme assets default on, while external-asset mode returns references without file writes.
+ * @param document <lang><zh-CN>调用方已校验的HIA文档；此函数不是完整文档验证器。</zh-CN><en>Caller-validated HIA document; this function is not a complete document validator.</en></lang>
+ * @param options <lang><zh-CN>标题、初始语言、主题及资产路由；项目策略仅按已声明兼容范围消费。</zh-CN><en>Title, initial locale, theme and asset routing; project policies apply only within their documented compatibility scope.</en></lang>
+ * @returns <lang><zh-CN>有序内存文件、诊断和仅本次文件清单。</zh-CN><en>Ordered in-memory files, diagnostics and inventory of files owned by this build.</en></lang>
+ * @throws {TypeError} <lang><zh-CN>显式主题颜色或资源路由非法时拒绝，不静默忽略。</zh-CN><en>Invalid explicit theme colors or asset routing are rejected rather than silently ignored.</en></lang>
+ */
 export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOptions = {}): RenderHtmlResult {
   const pageTitle = options.title ?? document.title;
   const includeThemeAssets = options.includeThemeAssets ?? true;

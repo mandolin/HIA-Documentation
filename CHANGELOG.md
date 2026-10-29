@@ -1,5 +1,9 @@
 # 变更日志 / Changelog
 
+## Unreleased — Public API candidate inventory
+
+- 固定十二必要包的根导出、JSON子路径、命令入口、签名和声明指纹清单；发行门禁拒绝未经复核的漂移。集中补齐56个公开节点双语说明，保持运行语义和类型结构。
+- Record the twelve required packages' API candidate inventory and reject unreviewed drift in release checks. Complete documentation for 56 public nodes without changing runtime semantics or type structure; package publication and behavioral acceptance remain separate.
 ## Unreleased — Browser panel identity attribute encoding
 
 - 浏览器面板对条目、关系和打开请求ID的HTML属性落点统一编码，阻止引号/标签注入并保留dataset及消息中的原身份；保留布局、数据版本和宿主权限边界。

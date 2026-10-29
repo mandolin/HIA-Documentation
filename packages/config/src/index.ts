@@ -11,14 +11,42 @@ import { isProjectManifestJsonDataGraph } from "./manifest-json-data.js";
 
 export * from "./project-manifest.js";
 
+/**
+ * @lang zh-CN 项目配置的精确根版本0.1.0，独立于软件包版本；省略根版本沿既有兼容校验。
+ * @lang en Exact project-config root version 0.1.0, independent of package versions; omission retains existing compatibility validation.
+ */
 export const HIA_CONFIG_SCHEMA_VERSION = "0.1.0";
+/**
+ * @lang zh-CN 当前目录配置发现的默认有序文件名；共享只读约定，不向父目录递归发现。
+ * @lang en Default ordered filenames for current-directory config discovery; shared readonly by contract, without recursive ancestor discovery.
+ */
 export const HIA_CONFIG_FILE_NAMES = ["hia.config.json"] as const;
+/**
+ * @lang zh-CN 旧源码策略闭集none/file/external；保留兼容输入，不授予文件或网络权限。
+ * @lang en Legacy none/file/external source modes, retained as compatibility inputs without filesystem or network authority.
+ */
 export const HIA_CONFIG_SOURCE_MODES = ["none", "file", "external"] as const;
+/**
+ * @lang zh-CN 旧源码链接打开方式闭集；现代项目链接沿用浏览器导航。
+ * @lang en Closed legacy source-link opening modes; modern project links use browser navigation.
+ */
 export const HIA_CONFIG_SOURCE_OPEN_MODES = ["same-tab", "new-tab"] as const;
+/**
+ * @lang zh-CN 源码呈现模式none/link/embed/fetch；正文公开与资产安全仍需独立授权。
+ * @lang en Source presentation modes none/link/embed/fetch; source disclosure and asset safety require separate authorization.
+ */
 export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"] as const;
+/**
+ * @lang zh-CN 同源公开源码资产的展开时或手动加载策略，不控制构建期文件访问。
+ * @lang en On-expand or manual loading of same-origin public source assets, without controlling build-time file access.
+ */
 export const HIA_CONFIG_SOURCE_FETCH_TRIGGERS = ["on-expand", "manual"] as const;
 /** @lang zh-CN CLI 可执行的 build-time 源码公开授权。 @lang en Build-time source-publication authorization executable by the CLI. */
 export const HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES = ["none", "explicit-public"] as const;
+/**
+ * @lang zh-CN 项目输出布局split-site/single-page的闭集，不改变单文档入口的单页语义。
+ * @lang en Closed split-site/single-page project layouts, without changing single-document rendering semantics.
+ */
 export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
 /**
  * Portal IA contract 的中性 identity；config 只验证 vocabulary，不成为 runtime contract owner。
@@ -56,11 +84,19 @@ export const HIA_CONFIG_PORTAL_SKINS = ["portal.classic", "portal.graphite", "po
 /** @lang zh-CN skin 正交的 scheme 选择。 @lang en Scheme selection orthogonal to skin. */
 export const HIA_CONFIG_PORTAL_SCHEMES = ["system", "light", "dark"] as const;
 
+/**
+ * @lang zh-CN 静态项目配置根，字段省略由各消费方应用默认值；不是可执行配置或验证证明。
+ * @lang en Static project-config root whose omitted fields use consumer defaults; neither executable configuration nor proof of validation.
+ */
 export interface HiaProjectConfig {
   schemaVersion?: string;
   docs?: HiaDocsConfig;
 }
 
+/**
+ * @lang zh-CN 文档输入、输出、语言与呈现策略；相对路径由宿主结合配置baseDir解释，结构验证不执行构建。
+ * @lang en Documentation inputs, outputs, locales and presentation policy; hosts resolve relative paths against config baseDir, and structural validation does not execute builds.
+ */
 export interface HiaDocsConfig {
   input?: string;
   projectManifest?: string;
@@ -73,6 +109,10 @@ export interface HiaDocsConfig {
   source?: HiaSourceLinkConfig;
 }
 
+/**
+ * @lang zh-CN 已实现HTML输出选项；项目布局、界面语言与正文语言独立，缺省遵循renderer文档。
+ * @lang en Implemented HTML-output options with independent project layout, UI locale and content locale; omissions follow renderer documentation.
+ */
 export interface HiaRendererHtmlConfig {
   /** 生成站点标题。Generated site title. */
   title?: string;
@@ -170,6 +210,10 @@ export interface HiaThemeAssetsConfig {
   baseUrl?: string;
 }
 
+/**
+ * @lang zh-CN 构建期源码公开与呈现策略；外部旧URL仅产生迁移诊断，明确公开资产策略与本地根由宿主校验。
+ * @lang en Build-time source disclosure/presentation policy; legacy external URLs yield migration diagnostics, while hosts validate explicit public-asset policy and local roots.
+ */
 export interface HiaSourceLinkConfig {
   /** 是否启用源码呈现；false 会覆盖 presentation 并按 none 处理。Whether source presentation is enabled; false overrides presentation as none. */
   enabled?: boolean;
@@ -197,12 +241,20 @@ export interface HiaSourceLinkConfig {
   openMode?: typeof HIA_CONFIG_SOURCE_OPEN_MODES[number];
 }
 
+/**
+ * @lang zh-CN 只读配置加载参数；cwd默认进程目录，显式configPath优先，否则按fileNames顺序在cwd查找。
+ * @lang en Readonly loading options; cwd defaults to the process directory, explicit configPath takes priority, otherwise fileNames are searched in order within cwd.
+ */
 export interface HiaConfigLoadOptions {
   cwd?: string;
   configPath?: string;
   fileNames?: readonly string[];
 }
 
+/**
+ * @lang zh-CN 加载结果及诊断；baseDir/path是宿主内部绝对路径，不能直接作为公开诊断投射。found表示已定位路径，不表示验证成功。
+ * @lang en Loaded config and diagnostics; baseDir/path are host-internal absolute paths and must not be projected directly into public diagnostics. Found indicates a located path, not validation success.
+ */
 export interface HiaLoadedProjectConfig {
   config: HiaProjectConfig;
   found: boolean;
@@ -211,6 +263,12 @@ export interface HiaLoadedProjectConfig {
   path?: string;
 }
 
+/**
+ * @lang zh-CN 只读加载显式或发现的JSON配置，不改文件；未发现返回空配置/found=false，读取或解析失败返回固定安全诊断。
+ * @lang en Loads explicit or discovered JSON configuration without writing files; absence returns empty config/found=false, while read/parse failures produce fixed safe diagnostics.
+ * @param options <lang><zh-CN>工作目录、显式路径及有序候选名，缺省使用当前目录。</zh-CN><en>Working directory, explicit path and ordered names, defaulting to the current directory.</en></lang>
+ * @returns <lang><zh-CN>配置、诊断及内部操作路径；调用者须检查error，不因found而接受无效配置。</zh-CN><en>Config, diagnostics and internal operational paths; callers must check errors rather than accepting invalid config merely because found is true.</en></lang>
+ */
 export async function loadHiaProjectConfig(options: HiaConfigLoadOptions = {}): Promise<HiaLoadedProjectConfig> {
   const cwd = path.resolve(options.cwd || process.cwd());
   const configPath = options.configPath
@@ -261,6 +319,13 @@ export async function loadHiaProjectConfig(options: HiaConfigLoadOptions = {}): 
   }
 }
 
+/**
+ * @lang zh-CN 按候选顺序在给定目录解析路径并检查可访问性，返回首个存在路径；不向父目录搜索或读取正文。
+ * @lang en Resolves candidate paths in the given directory and returns the first accessible path, without ancestor search or body reads.
+ * @param cwd <lang><zh-CN>用于解析候选名的宿主目录。</zh-CN><en>Host directory used to resolve candidate names.</en></lang>
+ * @param fileNames <lang><zh-CN>有序候选名；可自定义，调用方负责路径范围。</zh-CN><en>Ordered customizable names; callers own the path boundary.</en></lang>
+ * @returns <lang><zh-CN>首个可访问路径，或undefined；不证明该路径是有效JSON文件。</zh-CN><en>The first accessible path or undefined, without proving it is a valid JSON file.</en></lang>
+ */
 export async function findHiaConfigPath(cwd: string, fileNames: readonly string[] = HIA_CONFIG_FILE_NAMES): Promise<string | undefined> {
   for (const fileName of fileNames) {
     const candidate = path.resolve(cwd, fileName);
@@ -319,6 +384,10 @@ export function validateHiaProjectConfig(value: unknown): HiaDiagnostic[] {
   return diagnostics;
 }
 
+/**
+ * @lang zh-CN 纯检查诊断数组是否含error；warning/info不阻断，数组和诊断不改写。
+ * @lang en Purely checks for error severity; warning/info do not block and neither the array nor diagnostics are mutated.
+ */
 export function hasConfigErrors(diagnostics: HiaDiagnostic[]): boolean {
   return diagnostics.some((diagnostic) => diagnostic.severity === "error");
 }

@@ -1,5 +1,8 @@
 # HIA Contract Index
 
+Package-level roots, subpaths and CLI bins are recorded separately in the
+[public API candidate inventory](public-api-surface.md).
+
 This page indexes the versioned contracts implemented in this monorepo. Pre-1.0 and draft contracts are not stable API promises; package versions and contract versions must be checked independently.
 
 ## Version Snapshot

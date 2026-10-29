@@ -39,11 +39,35 @@ export const DOCUMENTATION_PORTAL_TOPIC_SECTIONS = [
 /** 首轮 touched-label catalog 的 locale 闭集。Locale vocabulary for the first touched-label catalog. */
 export const DOCUMENTATION_PORTAL_UI_LOCALES = ["zh-CN", "en"] as const;
 
+/**
+ * @lang zh-CN 逻辑内容边界entry/semantic-container，独立于加载时机。
+ * @lang en Logical entry/semantic-container content boundaries, independent of loading timing.
+ */
 export type DocumentationPortalContentGrouping = typeof DOCUMENTATION_PORTAL_CONTENT_GROUPINGS[number];
+/**
+ * @lang zh-CN 片段lazy/eager获取策略，不改变规范条目身份。
+ * @lang en Lazy/eager fragment acquisition policy, without changing canonical entry identities.
+ */
 export type DocumentationPortalLoadingStrategy = typeof DOCUMENTATION_PORTAL_LOADING_STRATEGIES[number];
+/**
+ * @lang zh-CN 成员独立呈现或随父项呈现的闭集，不取消成员canonical路由。
+ * @lang en Closed separate/with-parent member placement, without removing canonical member routes.
+ */
 export type DocumentationPortalMemberPlacement = typeof DOCUMENTATION_PORTAL_MEMBER_PLACEMENTS[number];
+/**
+ * @lang zh-CN 语义层级路径类别闭集，由owner显式提供，不自动猜测。
+ * @lang en Closed semantic-path kinds explicitly supplied by the owner rather than automatically inferred.
+ */
 export type DocumentationPortalSemanticPathKind = typeof DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS[number];
+/**
+ * @lang zh-CN 条目主题分区闭集，用于稳定内容关系，不单独承诺新视觉设计。
+ * @lang en Closed entry-topic sections defining content relationships without independently promising a new visual design.
+ */
 export type DocumentationPortalTopicSection = typeof DOCUMENTATION_PORTAL_TOPIC_SECTIONS[number];
+/**
+ * @lang zh-CN 界面chrome语言zh-CN/en闭集，独立于文档正文locale。
+ * @lang en Closed zh-CN/en UI-chrome locales, independent of document-content locale.
+ */
 export type DocumentationPortalUiLocale = typeof DOCUMENTATION_PORTAL_UI_LOCALES[number];
 
 /** renderer 接受的显式 IA 配置；缺失整个对象时必须保留 P3。Explicit IA input; omitting the whole object must preserve P3. */
