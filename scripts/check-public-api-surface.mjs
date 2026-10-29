@@ -36,9 +36,10 @@ export async function collectPublicApiSurface(root) {
       const declaration = symbol.declarations[0];
       const owner = declaration.getSourceFile();
       const type = checker.getTypeOfSymbolAtLocation(symbol, declaration);
-      const fields = ts.isInterfaceDeclaration(declaration) ? declaration.members.map((member) => ({ name: member.name?.getText(owner), optional: Boolean(member.questionToken), type: member.type ? printer.printNode(ts.EmitHint.Unspecified, member.type, owner) : null })) : [];
+      const fields = ts.isInterfaceDeclaration(declaration) ? declaration.members.map((member) => ({ name: member.name?.getText(owner), optional: Boolean(member.questionToken), type: member.type ? printer.printNode(ts.EmitHint.Unspecified, member.type, owner).replaceAll("\r\n", "\n") : null })) : [];
       // <lang><zh-CN>全部声明的去注释指纹补充类型别名、readonly、默认值和常量初始化值；变更需复核，不自动判为破坏性。</zh-CN><en>Comment-free fingerprints of all declarations additionally cover aliases, readonly modifiers, defaults and constant initializers; changes require review rather than automatically implying breakage.</en></lang>
-      const declarationFingerprints = symbol.declarations.map((node) => createHash("sha256").update(printer.printNode(ts.EmitHint.Unspecified, node, node.getSourceFile())).digest("hex"));
+      // <lang><zh-CN>打印器会保留模板字面量内部的源换行；按ECMAScript模板值规则统一真实CRLF，保留反斜杠转义数据，防止检出平台造成漂移。</zh-CN><en>The printer preserves source line endings inside template literals; normalize actual CRLF according to ECMAScript template-value rules while retaining escaped data, avoiding checkout-platform drift.</en></lang>
+      const declarationFingerprints = symbol.declarations.map((node) => createHash("sha256").update(printer.printNode(ts.EmitHint.Unspecified, node, node.getSourceFile()).replaceAll("\r\n", "\n")).digest("hex"));
       return { name: exported.name, kind: ts.SyntaxKind[declaration.kind], owner: path.relative(root, owner.fileName).split(path.sep).join("/"), signatures: type.getCallSignatures().map((signature) => checker.signatureToString(signature)), fields, declarationFingerprints };
     }).sort((a, b) => a.name.localeCompare(b.name, "en"));
     packages.push({ name: entry.name, candidateTargetVersion: "1.0.0", source: `${entry.path}/src/index.ts`, exportsMap: manifest.exports, bin: manifest.bin ?? {}, exports });

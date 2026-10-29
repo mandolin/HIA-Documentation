@@ -6,6 +6,8 @@ fields, package subpaths and command-line bins for a `1.0.0` package candidate.
 Comment-free declaration fingerprints also detect changes to aliases, readonly
 modifiers, default expressions and exported constant initializers. A changed
 fingerprint requires review; it does not automatically mean a breaking change.
+Physical CRLF line endings are normalized before fingerprinting so checkout
+platforms agree; literal backslash escapes remain significant.
 It is release-engineering metadata, not a runtime wire contract or proof that a
 package has been published.
 
