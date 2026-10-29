@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Browser panel identity attribute encoding
+
+- 浏览器面板对条目、关系和打开请求ID的HTML属性落点统一编码，阻止引号/标签注入并保留dataset及消息中的原身份；保留布局、数据版本和宿主权限边界。
+- Encode entry, relation and open-request IDs at browser-panel HTML attribute sinks, preventing quote/markup injection while preserving parsed identities and original request messages. Layout, data versions and host authorization boundaries remain unchanged.
+
 ## Unreleased — Default theme API boundaries
 
 - 补齐默认主题全部公开接口的副本所有权、颜色拒绝、只读常量与类型输入说明；新增常驻边界测试，保持默认CSS、浏览器脚本、运行语义和契约版本。

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @lang zh-CN 将调用方提供的索引与项目数据投射为内存浏览器面板产物；HTML编码保护显示落点，不验证权限或执行宿主命令。
+ * @lang en Projects caller-supplied indexes and project data into in-memory browser-panel artifacts; HTML encoding protects display sinks without validating authority or executing host commands.
+ */
 import {
   findGeneratedPositionForOriginal,
   querySourceLinkedPosition,
@@ -754,6 +759,7 @@ export interface RenderBrowserPanelResult {
  * Normalized doc-source-map, ordinary source map, and project metadata.
  * @returns 可序列化的浏览器面板 payload，不执行文件 I/O。
  * Serializable browser panel payload; this function performs no file I/O.
+ * @remarks <lang><zh-CN>调用方负责输入图、公开范围与正文脱敏；部分project/range/metadata对象仍借用输入引用，返回值不是冻结快照。</zh-CN><en>Callers own graph validation, disclosure scope and text redaction; some project/range/metadata objects retain input references, so the result is not a frozen snapshot.</en></lang>
  */
 export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput): BrowserPanelPayload {
   const docSourceMaps = input.docSourceMaps.map((docMap) => createDocSourceMapSummary(docMap));
@@ -789,6 +795,7 @@ export function createBrowserPanelPayload(input: CreateBrowserPanelPayloadInput)
  * Browser panel payload created by {@link createBrowserPanelPayload}.
  * @returns HTML 入口、JSON payload 与 manifest 文件。
  * HTML entry, JSON payload, and manifest files.
+ * @remarks <lang><zh-CN>可信typed payload入口，不校验未知版本或执行权限；HTML编码只保护输出上下文，不重写数据ID或授权宿主请求。</zh-CN><en>A trusted typed-payload entry without unknown-version or execution-authority validation; HTML encoding protects output contexts without rewriting data IDs or authorizing host requests.</en></lang>
  */
 export function renderBrowserPanel(payload: BrowserPanelPayload): RenderBrowserPanelResult {
   const fileMetadata: BrowserPanelManifest["files"] = [
@@ -1396,19 +1403,25 @@ const PANEL_SCRIPT = `
     });
   }
 
+  /** @lang zh-CN 依现有选择/筛选状态更新条目列表，只把ID作为已编码属性值。 @lang en Updates the entry list using existing selection/filter state, treating IDs only as encoded attribute values. */
   function renderList() {
+    // <lang><zh-CN>当前可见条目是只读payload投影，不在显示中改写身份。</zh-CN><en>Visible entries are a readonly payload projection; display never rewrites identities.</en></lang>
     const entries = visibleEntries();
     if (selectedKind === "entry" && !entries.some((entry) => entry.id === selectedId)) selectedId = entries[0]?.id || "";
-    list.innerHTML = entries.map((entry) => '<li><button type="button" data-entry-id="' + entry.id + '" aria-current="' + String(selectedKind === "entry" && entry.id === selectedId) + '"><span class="hia-entry-title">' + escapeHtml(entry.label) + '</span><span class="hia-entry-meta">' + escapeHtml(entry.domain.toUpperCase() + " / " + entry.kind + " / " + entry.lookup.status) + '</span></button></li>').join("");
+    // <lang><zh-CN>ID在HTML属性落点编码；dataset解析后仍为原值，不改变选择身份。</zh-CN><en>Encode IDs at the HTML attribute sink; parsed dataset values retain original selection identities.</en></lang>
+    list.innerHTML = entries.map((entry) => '<li><button type="button" data-entry-id="' + escapeHtml(entry.id) + '" aria-current="' + String(selectedKind === "entry" && entry.id === selectedId) + '"><span class="hia-entry-title">' + escapeHtml(entry.label) + '</span><span class="hia-entry-meta">' + escapeHtml(entry.domain.toUpperCase() + " / " + entry.kind + " / " + entry.lookup.status) + '</span></button></li>').join("");
     for (const button of list.querySelectorAll("button")) button.addEventListener("click", () => { selectedKind = "entry"; selectedId = button.dataset.entryId || ""; render(); });
   }
 
+  /** @lang zh-CN 渲染既有关系列表并保持原始ID的选择行为，不将ID解释为markup。 @lang en Renders the existing relation list, preserving original-ID selection without interpreting IDs as markup. */
   function renderRelationList() {
+    // <lang><zh-CN>筛选副本只用于本轮显示；公开关系ID仍来自原payload。</zh-CN><en>The filtered copy is used for this rendering only; public relation IDs still come from the original payload.</en></lang>
     const relations = visibleRelations();
     if (!relationSection || !relationList) return;
     relationSection.hidden = relations.length === 0;
     if (selectedKind === "relation" && !relations.some((relation) => relation.id === selectedRelationId)) selectedRelationId = relations[0]?.id || "";
-    relationList.innerHTML = relations.map((relation) => '<li><button type="button" data-relation-id="' + relation.id + '" aria-current="' + String(selectedKind === "relation" && relation.id === selectedRelationId) + '"><span class="hia-entry-title">' + escapeHtml(relation.label) + '</span><span class="hia-entry-meta">' + escapeHtml(relation.kind + (relation.confidence ? " / " + relation.confidence : "")) + '</span></button></li>').join("");
+    // <lang><zh-CN>关系ID可含引号或字符引用，不能将它作为可信HTML片段。</zh-CN><en>Relation IDs may contain quotes or character references and must never be treated as trusted HTML fragments.</en></lang>
+    relationList.innerHTML = relations.map((relation) => '<li><button type="button" data-relation-id="' + escapeHtml(relation.id) + '" aria-current="' + String(selectedKind === "relation" && relation.id === selectedRelationId) + '"><span class="hia-entry-title">' + escapeHtml(relation.label) + '</span><span class="hia-entry-meta">' + escapeHtml(relation.kind + (relation.confidence ? " / " + relation.confidence : "")) + '</span></button></li>').join("");
     for (const button of relationList.querySelectorAll("button")) button.addEventListener("click", () => { selectedKind = "relation"; selectedRelationId = button.dataset.relationId || ""; render(); });
   }
 
@@ -1440,8 +1453,10 @@ const PANEL_SCRIPT = `
     bindOpenRequestButtons(detail, relation.openRequests || []);
   }
 
+  /** @lang zh-CN 输出宿主请求按钮的既有markup，编码属性与标签，不执行请求。 @lang en Emits existing host-request button markup with encoded attributes and labels, without executing requests. */
   function renderOpenButtons(requests) {
-    return requests.map((request) => '<button type="button" data-open-request="' + request.id + '">' + escapeHtml(request.label) + '</button>').join("") || '<span class="hia-empty">No open request available.</span>';
+    // <lang><zh-CN>原始请求ID仅在属性落点编码；消息中仍传递原请求，不添加命令执行。</zh-CN><en>Encode raw request IDs only at the attribute sink; messages retain original requests and add no command execution.</en></lang>
+    return requests.map((request) => '<button type="button" data-open-request="' + escapeHtml(request.id) + '">' + escapeHtml(request.label) + '</button>').join("") || '<span class="hia-empty">No open request available.</span>';
   }
 
   function bindOpenRequestButtons(root, requests) {
