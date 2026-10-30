@@ -48,7 +48,7 @@ Published identities remain unavailable for republishing until a new version is
 explicitly assigned and qualified. Current checked-in targets appear below;
 dated publication reports describe their original checkpoints.
 
-中文：当前源码候选采用已验证22/24补丁下限；保留既有包版本及已发布状态，不能重发同一身份。
+中文：当前源码候选采用已验证22/24补丁下限，十二必要包已设1.0.0候选身份；独立工具与历史发布记录分开，不能重发旧身份。
 
 ### Historical Portal tree layout patch — 2026-10-25
 
@@ -104,32 +104,31 @@ The original thirteen-package bootstrap and subsequent Trusted Publisher rehears
 - License: MIT.
 - Current source runtime Node range: `^22.23.4 || ^24.22.1` (unreleased).
 - First release version: `0.1.0` for every public package.
-- Latest patch rehearsal: `@hia-doc/theme-default@0.1.1`.
+- Historical bootstrap patch rehearsal: `@hia-doc/theme-default@0.1.1`.
 - Current package state: public packages with explicit `publishConfig.access: "public"`.
 - Trusted Publisher: configured for `mandolin/HIA-Documentation` and `.github/workflows/npm-trusted-publish.yml`.
 
 ## Current checked-in identities
 
-Targets and `published` flags reflect the release manifest. They do not assert
-that the current source payload equals the registry archive at the same identity.
+Targets and status below reflect the checked-in release manifest. Twelve necessary packages are unreleased 1.0.0 source candidates; this does not execute or approve publication. Historical package versions above retain their dated scope.
 
 | Order | Package | Kind | Target | Status |
 | --- | --- | --- | --- | --- |
-| 10 | `@hia-doc/core` | owner runtime | `0.1.2` | published |
-| 20 | `@hia-doc/config` | owner runtime | `0.1.6` | published |
-| 20 | `@hia-doc/profile` | owner runtime | `0.1.0` | published |
-| 30 | `@hia-doc/parser-jsdoc` | adapter runtime | `0.1.0` | published |
-| 30 | `@hia-doc/plugin-sdk` | producer SDK | `0.1.2` | published |
-| 30 | `@hia-doc/source-linkage` | owner runtime | `0.1.1` | published |
-| 30 | `@hia-doc/theme-default` | renderer asset runtime | `0.1.4` | published |
-| 40 | `@hia-doc/browser-panel` | browser tooling runtime | `0.1.0` | published |
-| 40 | `@hia-doc/profiles` | distribution | `0.1.0` | published |
-| 40 | `@hia-doc/renderer-html` | renderer runtime | `0.1.8` | published |
-| 50 | `@hia-doc/schemas` | distribution | `0.1.4` | published |
-| 60 | `@hia-doc/lsp` | tooling runtime | `0.1.0` | published |
-| 70 | `@hia-doc/cli` | tooling runtime | `0.1.11` | published |
+| 10 | `@hia-doc/core` | owner-runtime | `1.0.0` | candidate |
+| 20 | `@hia-doc/config` | owner-runtime | `1.0.0` | candidate |
+| 20 | `@hia-doc/profile` | owner-runtime | `1.0.0` | candidate |
+| 30 | `@hia-doc/parser-jsdoc` | adapter-runtime | `1.0.0` | candidate |
+| 30 | `@hia-doc/plugin-sdk` | producer-sdk | `1.0.0` | candidate |
+| 30 | `@hia-doc/source-linkage` | owner-runtime | `1.0.0` | candidate |
+| 30 | `@hia-doc/theme-default` | renderer-asset-runtime | `1.0.0` | candidate |
+| 40 | `@hia-doc/browser-panel` | browser-tooling-runtime | `1.0.0` | candidate |
+| 40 | `@hia-doc/profiles` | distribution | `1.0.0` | candidate |
+| 40 | `@hia-doc/renderer-html` | renderer-runtime | `1.0.0` | candidate |
+| 50 | `@hia-doc/schemas` | distribution | `1.0.0` | candidate |
+| 60 | `@hia-doc/lsp` | tooling-runtime | `0.1.0` | published |
+| 70 | `@hia-doc/cli` | tooling-runtime | `1.0.0` | candidate |
 
-`@hia-doc/vscode-extension` is excluded from this npm train because it should be distributed through VSIX or Marketplace release governance.
+The private `@hia-doc/vscode-extension` development shell is excluded from this npm train. VSIX/Marketplace qualification and actual host evidence are separate from npm source-candidate qualification.
 
 ## Publishing Model
 

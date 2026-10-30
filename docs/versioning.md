@@ -14,28 +14,30 @@ This document describes package and serializable-contract versioning for the HIA
 
 ## Package Versions
 
-These values describe checked-in package manifests, not a live npm registry lookup. A publishable manifest does not prove that its version is available in the registry, and a package version does not make every exported contract stable.
+These values describe checked-in manifests and release-plan status, not a live npm registry lookup. A candidate package identity is not a published version or a system release. Contract versions remain independent.
 
 | Package | Manifest version | Publication / version policy |
 | --- | --- | --- |
 | main-repo root | private 0.0.0 | Workspace marker; not an npm product. |
-| `@hia-doc/core` | `0.1.2` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/config` | `0.1.6` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/profile` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/parser-jsdoc` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/plugin-sdk` | `0.1.2` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/source-linkage` | `0.1.1` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/theme-default` | `0.1.4` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/browser-panel` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/profiles` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/renderer-html` | `0.1.8` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/schemas` | `0.1.4` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/lsp` | `0.1.0` | Publishable manifest; contract versions remain independent. |
-| `@hia-doc/cli` | `0.1.11` | Publishable manifest; contract versions remain independent. |
-| @mandolin/jsdoc-plugin-hia-sys | 0.1.3 | Publishable manifest; independently versioned JSDoc integration. |
-| @mandolin/jsdoc-theme-hia | 0.1.2 | Publishable manifest; independently versioned JSDoc theme. |
+| `@hia-doc/core` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.2`. |
+| `@hia-doc/config` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.6`. |
+| `@hia-doc/profile` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.0`. |
+| `@hia-doc/parser-jsdoc` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.0`. |
+| `@hia-doc/plugin-sdk` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.2`. |
+| `@hia-doc/source-linkage` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.1`. |
+| `@hia-doc/theme-default` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.4`. |
+| `@hia-doc/browser-panel` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.0`. |
+| `@hia-doc/profiles` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.0`. |
+| `@hia-doc/renderer-html` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.8`. |
+| `@hia-doc/schemas` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.4`. |
+| `@hia-doc/lsp` | `0.1.0` | Independent tooling; release-plan status `published` is not a fresh registry query. |
+| `@hia-doc/cli` | `1.0.0` | Unreleased source candidate; prior release-plan identity `0.1.11`. |
+| `@mandolin/jsdoc-plugin-hia-sys` | `1.0.0` | Unreleased independent JSDoc integration source candidate. |
+| `@mandolin/jsdoc-theme-hia` | `1.0.0` | Unreleased independent JSDoc theme source candidate. |
 
-A private satellite workspace root is a container marker. Its child packages have their own versions and publication flags; do not infer their publication state from the workspace root. See the [compatibility matrix](compatibility-matrix.md) and each package manifest.
+中文：十二个主仓必要包和两个独立JSDoc包为1.0.0源码候选；旧npm身份、独立语言服务器及系统正式发行分别管理。
+
+Private satellite roots are containers. Child packages have independent versions, and publication must be checked against each owner release manifest. See the [compatibility matrix](compatibility-matrix.md).
 
 ## Contract Versions
 
@@ -56,8 +58,10 @@ A private satellite workspace root is a container marker. Its child packages hav
 | JSDoc adapter bridge | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
 | JSDoc adapter metadata | `0.1.0` | Active pre-1.0 contract | `@hia-doc/parser-jsdoc` |
 | Project docs manifest | `1.0.0` source candidate; exact legacy `0.1.0-draft` | Source contract candidate | `@hia-doc/config` |
-| HTMDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-htmdoc` |
-| CSSDoc extraction artifact | `0.1.0-draft` | Draft | `HIA/hia-cssdoc` |
+| HTMDoc extraction artifact / profile | `1.0.0`; exact legacy `0.1.0-draft` | Reviewed source candidate with explicit lossless migration | `HIA/hia-htmdoc` |
+| CSSDoc extraction artifact / profile | `1.0.0`; exact legacy `0.1.0-draft` | Reviewed source candidate with explicit lossless migration | `HIA/hia-cssdoc` |
+| JSDoc configuration / umbrella | `1.0.0`; exact legacy `0.1.0-draft` | Reviewed source candidate; Integration/page-map stay fixed `0.1.0` compatibility profiles | `HIA/hia-jsdoc` |
+| .NET configuration / seven domain artifacts | `1.0.0`; exact legacy `0.1.0-draft` | Reviewed source candidate with explicit lossless migration; static-analysis scope unchanged | `HIA/hia-dotnetdoc` |
 | Doc source map | `1.1.0`; exact previous `1.0.0` and legacy `0.1.0-draft` readers | Reviewed source contract candidate; package/host adoption and publication remain separate | `@hia-doc/source-linkage` |
 | Doc source map schema | `1.1.0`; original `1.0.0` and `0.1.0-draft` historical bytes retained | Catalog stable-candidate; unchanged wire/schema identity | `@hia-doc/source-linkage` |
 | Ordinary source map coordinate profile | `0.1.0-draft` | Independent catalog draft; strict per-slot verification remains a release acceptance condition | `@hia-doc/source-linkage` |

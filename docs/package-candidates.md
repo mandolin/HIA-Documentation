@@ -15,26 +15,27 @@ are checked-in identities, not approval to republish them or a system 1.0.0 rele
 
 ## Checked-in identities
 
-The machine-readable owner is [the release manifest](../release/public-packages.json).
-All rows retain `published` status, so publish-ready package resolution refuses
-them. Twelve require stable package qualification; the independent language-server
-package remains a separate tooling surface.
+The machine-readable owner is [the release manifest](../release/public-packages.json). Twelve necessary packages have completed source-candidate qualification and now carry `candidate` status with `1.0.0` targets. The independent language server remains separately versioned. A status of `candidate` is not publication readiness: publish preflight, registry/provenance, consumer verification and release approval are separate gates.
 
-| Package | Current version | Qualification scope |
-| --- | --- | --- |
-| `@hia-doc/core` | `0.1.2` | Stable qualification required |
-| `@hia-doc/config` | `0.1.6` | Stable qualification required |
-| `@hia-doc/profile` | `0.1.0` | Stable qualification required |
-| `@hia-doc/parser-jsdoc` | `0.1.0` | Stable qualification required |
-| `@hia-doc/plugin-sdk` | `0.1.2` | Stable qualification required |
-| `@hia-doc/source-linkage` | `0.1.1` | Stable qualification required |
-| `@hia-doc/theme-default` | `0.1.4` | Stable qualification required |
-| `@hia-doc/browser-panel` | `0.1.0` | Stable qualification required |
-| `@hia-doc/profiles` | `0.1.0` | Stable qualification required |
-| `@hia-doc/renderer-html` | `0.1.8` | Stable qualification required |
-| `@hia-doc/schemas` | `0.1.4` | Stable qualification required |
-| `@hia-doc/lsp` | `0.1.0` | Independent tooling qualification |
-| `@hia-doc/cli` | `0.1.11` | Stable qualification required |
+The previous column records the plan's prior published identity, not a fresh registry query or permission to replace that archive.
+
+| Package | Current version | Status | Previous release-plan identity |
+| --- | --- | --- | --- |
+| `@hia-doc/core` | `1.0.0` | candidate | `0.1.2` |
+| `@hia-doc/config` | `1.0.0` | candidate | `0.1.6` |
+| `@hia-doc/profile` | `1.0.0` | candidate | `0.1.0` |
+| `@hia-doc/parser-jsdoc` | `1.0.0` | candidate | `0.1.0` |
+| `@hia-doc/plugin-sdk` | `1.0.0` | candidate | `0.1.2` |
+| `@hia-doc/source-linkage` | `1.0.0` | candidate | `0.1.1` |
+| `@hia-doc/theme-default` | `1.0.0` | candidate | `0.1.4` |
+| `@hia-doc/browser-panel` | `1.0.0` | candidate | `0.1.0` |
+| `@hia-doc/profiles` | `1.0.0` | candidate | `0.1.0` |
+| `@hia-doc/renderer-html` | `1.0.0` | candidate | `0.1.8` |
+| `@hia-doc/schemas` | `1.0.0` | candidate | `0.1.4` |
+| `@hia-doc/lsp` | `0.1.0` | published | Separately versioned tooling |
+| `@hia-doc/cli` | `1.0.0` | candidate | `0.1.11` |
+
+中文：十二包1.0.0是已审源码候选；不得继续将旧0.x写作当前源码身份，也不得据此宣称npm发布、正式系统发行或允许重发旧包。
 
 ## Reproduce candidate checks
 
@@ -54,8 +55,8 @@ version from npm whose contents differ from this checkout.
 
 Check each archive's manifest, exact rewritten dependencies and installed contents.
 A successful local candidate install does not prove registry contents, provenance,
-cross-repository compatibility or release approval. Before a real release, assign
-unused versions, complete API/contract qualification and repeat relevant registry,
+cross-repository compatibility or release approval. Before a real release, verify target versions remain unused, retain the completed
+API/contract qualification evidence and repeat relevant registry,
 provenance and consumer checks under [release governance](release-governance.md).
 
 VSIX runtime staging checks the deployed LSP engine against the current release

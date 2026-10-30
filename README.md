@@ -27,7 +27,9 @@ pnpm run hia -- docs build --config hia.config.example.json
 
 ## Contract Baseline
 
-当前 core document schema 为 `0.2.0`。text i18n 与 source 子模型同为 `0.2.0`。config、renderer manifest、protocol envelope 和 JSDoc adapter bridge 当前为 `0.1.0`。
+当前 core document schema 为 `1.0.0`，text i18n、source 子模型与 protocol envelope 同为 `1.0.0` 源码候选；精确保留文档/子模型 `0.2.0` 与 envelope `0.1.0` 的旧版读取。config、renderer manifest 和 JSDoc adapter bridge 仍为 `0.1.0`。包版本、工件契约版本和系统正式发行分别管理。
+
+十二个必要主仓包目前为 `1.0.0` 源码候选，独立语言服务器仍为 `0.1.0`，VS Code 开发壳仍为私有 `0.0.0`。源码候选不表示已发布到 npm；当前身份及原发布版本见[候选安装指南](docs/package-candidates.md)。
 
 开发者入口：
 
@@ -94,9 +96,9 @@ JSDoc 用户侧集成包放在 `../HIA/jsdoc-plugin-hia-sys/`，JSDoc 主题放�
 - `@hia-doc/config`: 加载并验证 `hia.config.json`，为 CLI、LSP 和 IDE 集成提供共享配置契约。
 - `@hia-doc/profile`: 加载并归一化 documentation profile draft，提供 tag/rule/mapping/diagnostic registry 查询、alias resolution 和 profile diagnostics。
 - `@hia-doc/profiles`: 分发 7 个 official stable/bridge profiles，提供 JSON subpath、catalog 和 defensive-copy API。
-- `@hia-doc/plugin-sdk`: 定义 `documentation-producer@0.1.0-draft`，校验并执行显式加载的单次 producer module；不负责自动发现、进程调度或 watch graph。
+- `@hia-doc/plugin-sdk`: 定义 `documentation-producer@1.0.0` 与结果契约，精确读取旧 `0.1.0-draft`，校验并执行显式加载的单次 producer module；不负责自动发现、进程调度或 watch graph。
 - `@hia-doc/schemas`: 分发 owner-preserving JSON Schema snapshots；不替代各 owner runtime validator。
-- `@hia-doc/source-linkage`: 源码实现 `doc-source-map@1.0.0` 的类别/具体来源与显式迁移，精确兼容旧 `0.1.0-draft`，导出 Draft 2020-12 schema；完整稳定候选审查仍在进行，新增能力尚未发布。见[来源与迁移](docs/doc-source-map-provenance.md)。
+- `@hia-doc/source-linkage`: 源码实现 `doc-source-map@1.1.0` 的逐引用范围约定、类别/具体来源与显式迁移，精确兼容 `1.0.0` 和旧 `0.1.0-draft`，导出 Draft 2020-12 schema。普通源码地图的严格坐标核验另有证据与授权要求，不由数值锚点自动保证；源码候选尚未发布。见[范围约定](docs/doc-source-map-range-conventions.md)与[来源和迁移](docs/doc-source-map-provenance.md)。
 - `@hia-doc/parser-jsdoc`: 将 `jsdoc-plugin-hia-sys` 的 HIA Integration JSON 转换为 core document，并清理 metadata、diagnostic data 和本机路径。
 - `@hia-doc/lsp`: LSP 服务、diagnostics、resource index、profile-derived completion/hover/capability、authoring location、resource action/preflight、definition 和 folding，只消费 core document 与 normalized profile runtime。
 - `@hia-doc/theme-default`: 默认 CSS/JS 静态主题资产。
