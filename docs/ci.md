@@ -25,7 +25,7 @@ This is the baseline for ordinary validation jobs. Workflows that need broader p
 
 ## Main Repository
 
-The main repository CI uses Node.js 20.x, enables pnpm through Corepack and installs dependencies with the committed lockfile:
+The main repository CI uses Node.js 22/24 on Ubuntu 24.04 and Windows Server 2025, enables pnpm 10.34.4 through Corepack and installs dependencies with the committed lockfile:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -36,14 +36,17 @@ This covers TypeScript build, unit tests, e2e tests, schema/profile distribution
 
 ## JSDoc Satellite Packages
 
-The JSDoc package CI runs on Node.js 18.x and 20.x because the package engines support Node.js 18 and newer:
+Current JSDoc source candidates require Node.js `^22.23.4 || ^24.22.1`. Their CI verifies both supported lines on Linux and Windows. Historical npm archives retain their original engine declarations. When the owner repository declares pinned development archives, prepare them from its exact `owner-sources.json` checkouts before frozen installation:
 
 ```bash
-npm install --no-audit --fund=false
+npm run prepare:owners
+npm ci --ignore-scripts --no-audit --no-fund
 npm run release:gate
 ```
 
 This covers package syntax checks, fixture tests, real JSDoc example builds, generated output cleanup, release metadata checks and pack dry-runs.
+
+The public reference and Pages workflows pin the JSDoc umbrella and its plugin/theme owners, run the umbrella's existing archive-integrity preparation, and install only the seven source projects declared in the reference definition. The two archive-owner checkouts are build dependencies; they do not become additional reference producers. See [public reference build](public-reference-build.md).
 
 ## Security Baseline
 
@@ -56,7 +59,7 @@ CI workflows must:
 - Prefer npm Trusted Publishing before adding an automated npm publish job.
 - Keep Pages publication on the `github-pages` environment, isolate source-read credentials to the build job, and verify deployed portal routes plus schema ids before reporting success.
 
-The current workflows are validation-only and do not consume npm or GitHub publication secrets.
+Ordinary validation workflows do not publish npm packages. Reference builds use the scoped read-only GitHub App checkout credential described above; Pages uses its existing deployment permission. These roles do not grant npm publication permission.
 
 ## Troubleshooting
 

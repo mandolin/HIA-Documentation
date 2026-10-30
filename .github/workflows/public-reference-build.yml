@@ -112,13 +112,45 @@ jobs:
           token: ${{ steps.reference_app_token.outputs.token }}
           persist-credentials: false
 
+      # 中文：复用JSDoc owner-sources已锁定的两个来源；不访问私有WorkZone或发布npm。
+      # English: Reuse the two sources pinned by JSDoc owner-sources without accessing private WorkZone or publishing npm.
+      - name: Check out pinned JSDoc plugin owner
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/jsdoc-plugin-hia-sys
+          ref: 15970dc9da0f8e120677eab7eba3e959dcf42a34
+          path: reference/sources/jsdoc-plugin-hia-sys
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Check out pinned JSDoc theme owner
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/jsdoc-theme-hia
+          ref: 0df2ca9bbf40e159d8da69aac80b3c31136b1a05
+          path: reference/sources/jsdoc-theme-hia
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
+      - name: Prepare pinned JSDoc owner archives
+        working-directory: reference/sources/hia-jsdoc
+        shell: pwsh
+        run: npm run prepare:owners
+
       - name: Install selected source dependencies
-        shell: bash
+        shell: pwsh
         run: |
-          set -euo pipefail
-          for source in reference/sources/*; do
-            npm ci --ignore-scripts --prefix "$source"
-          done
+          $ErrorActionPreference='Stop'
+          # 中文：安装集合来自既有七源声明，不把两个归档owner误当reference输入工程。
+          # English: Install only the seven declared sources, never treating archive owners as reference input projects.
+          $definition=Get-Content reference/public-reference-build.definition.json -Raw|ConvertFrom-Json
+          foreach($source in $definition.sources|Where-Object {$_.workspace -eq 'source'}){
+            Push-Location (Join-Path reference/sources $source.id)
+            try{
+              npm ci --ignore-scripts --no-audit --no-fund
+              if($LASTEXITCODE){throw 'Selected reference source installation failed.'}
+            }finally{Pop-Location}
+          }
 
       - name: Build and verify public reference
         run: |

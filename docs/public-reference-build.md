@@ -1,6 +1,6 @@
 # Public Reference Build
 
-The public reference build assembles the first-party HIA documentation artifacts from an explicit source allowlist. It is the W-P14.2 build boundary used by the remote GitHub Actions gate; it does not deploy GitHub Pages or read private workspace materials.
+The public reference build assembles first-party HIA documentation artifacts from an explicit source allowlist. The build command produces a checked artifact; Pages deployment is a separate workflow step. Private workspace materials are excluded.
 
 ## Source Boundary
 
@@ -15,6 +15,10 @@ The canonical definition is [`reference/public-reference-build.definition.json`]
 - `mandolin/hia-vuedoc`
 
 Remote automation checks out the seven satellites into `reference/sources/` with the read-only `HIA Reference Builder` GitHub App token. The token is used only by checkout actions with `persist-credentials: false`; the builder receives no credential environment variable.
+
+The JSDoc umbrella retains the reviewed `main` ref; its resolved commit is recorded in each build. Its existing `owner-sources.json` requires `mandolin/jsdoc-plugin-hia-sys` at `15970dc9da0f8e120677eab7eba3e959dcf42a34` and `mandolin/jsdoc-theme-hia` at `0df2ca9bbf40e159d8da69aac80b3c31136b1a05`. Both workflows check out those sibling owners and run `npm run prepare:owners` in the umbrella before `npm ci`. That helper verifies exact Git origins/commits and archive SHA/SRI against the unchanged lock; it does not replace missing source candidates with older registry packages.
+
+Installation iterates the definition's seven `workspace: source` records. The two archive owners are build dependencies rather than extra source producers or entries in the reference provenance inventory. When the umbrella changes its owner declarations, update both workflows to the newly declared exact owner commits and verify archive identities. The preparation helper rejects mismatching checkouts. Local checkouts need the same preparation before building; no owner manifest or lock rewrite is required.
 
 ## Local Verification
 
