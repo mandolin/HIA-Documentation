@@ -10,6 +10,10 @@ The site combines first-party documentation generated from the explicit public s
 
 The artifact also includes generated public portal pages for ecosystem discovery, adoption guidance, operations status, IDE/DevTools host anchors and public documentation navigation. These pages are assembled from reviewed public metadata before the final Pages artifact is written.
 
+## Offline product website candidate
+
+A separate offline assembler combines the product website and documentation entries with this reference artifact. It emits the distinct site version index and retains the complete old reference under `legacy-reference/`, while preserving non-root technical routes. This is not a production root cutover: the live routes described below and the existing reference commands retain their current semantics. See [the site index and migration guide](site-version-index.md).
+
 ## Public Routes
 
 | Route | Purpose |

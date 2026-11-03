@@ -38,3 +38,8 @@ Astro 7.4.5 is a MIT build dependency. Image optimization is disabled and its op
 - `src/styles/` and `public/`: local website assets.
 
 Run `pnpm site:test` for boundary regression checks. The artifact checker rejects missing pages, broken internal references, incorrect locales, source maps, and private-path representations while allowing the public product name. The composed production artifact and deployment require their own checks.
+
+
+## Site index and reference composition
+
+An offline composed candidate combines this website with the existing reference artifact, retains a complete `legacy-reference/` namespace, and emits the distinct `hia-site-version-index@1.0.0` root index. See [the index and migration guide](../docs/site-version-index.md). `pnpm site:compose` and `pnpm site:compose:check` do not deploy or change the existing reference build workflow.

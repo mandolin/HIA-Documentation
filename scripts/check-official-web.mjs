@@ -34,7 +34,8 @@ export function assertPublicText(value) {
     assert(layer < 5, "Public output exceeds supported encoding depth.");
   }
   normalized = normalized.replaceAll("\\", "/");
-  assert(!/(?:work-zone\s*\/|ai\/codex\/|Github_mandolin|\b[a-z]:\/|file:\/{1,}|(?:^|[\s"'=])\/\/[^/\s"'<>]+\/|\/(?:Users|home)\/[^/\s"'<>]+\/)/i.test(normalized), "Public output contains a private path marker.");
+  // <lang lang="zh-CN">裸file://可作为协议说明；后接实际主机或路径的file URI仍拒绝，不对特定文档开白名单。</lang><lang lang="en">A bare file:// may name the scheme; file URIs followed by a host or path still fail, without document-specific exemptions.</lang>
+  assert(!/(?:work-zone\s*\/|ai\/codex\/|Github_mandolin|\b[a-z]:\/|file:\/+(?=[^\s"'<>/])|(?:^|[\s"'=])\/\/[^/\s"'<>]+\/|\/(?:Users|home)\/[^/\s"'<>]+\/)/i.test(normalized), "Public output contains a private path marker.");
 }
 
 /**

@@ -29,3 +29,9 @@ test("Literal percent cannot hide an encoded private path", () => {
   assert.throws(() => assertPublicText("100% public work%2Dzone%2Fnotes"));
   assert.throws(() => assertPublicText(String.raw`\\server\share\private`));
 });
+test("a bare file protocol label is not a local file URL", () => {
+  assert.doesNotThrow(() => assertPublicText('Use <code>file://</code> only as a protocol label.'));
+  assert.throws(() => assertPublicText('file:///sample/private.txt'));
+  assert.throws(() => assertPublicText('file://server/share/private.txt'));
+  assert.throws(() => assertPublicText('file&#58;///sample/private.txt'));
+});

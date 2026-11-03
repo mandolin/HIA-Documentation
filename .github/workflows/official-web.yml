@@ -7,6 +7,8 @@ on:
     paths:
       - "site/**"
       - "scripts/check-official-web*"
+      - "scripts/check-official-site.mjs"
+      - "scripts/compose-official-web.mjs"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
