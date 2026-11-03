@@ -16,6 +16,8 @@ const generatedDependencyDirectories = new Set([
 ]);
 
 const directDependencyAudit = [
+  // <lang lang="zh-CN">官网仅构建时使用Astro，不进入公开运行包。</lang><lang lang="en">Astro builds the website only and is excluded from published runtime packages.</lang>
+  { name: "astro", dependencyType: "devDependencies", versionRange: "7.4.5", license: "MIT", purpose: "Static official website generation with custom bilingual templates." },
   {
     name: "@jridgewell/trace-mapping",
     dependencyType: "dependencies",

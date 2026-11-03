@@ -1,3 +1,7 @@
 packages:
   - "packages/*"
   - "apps/*"
+# 中文：官网不使用图片优化，排除其可选LGPL二进制闭包。 English: website image optimization is unused; exclude its optional LGPL binary closure.
+ignoredOptionalDependencies:
+  - "sharp"
+  - "@img/*"

@@ -1,0 +1,21 @@
+---
+/** @lang zh-CN 官网首页叙事与真实入口。 @lang en Product homepage narrative and real entry points. */
+import { href } from "../lib/routes.mjs";
+const { locale } = Astro.props;
+const en = locale === "en";
+const text = (zh: string, english: string) => en ? english : zh;
+const url = (kind: string) => href(kind, locale, import.meta.env.BASE_URL);
+const domains = [
+  ["JS", "JavaScript", text("JSDoc注释、字段级双语与文档集成。", "JSDoc comments, field-level localization, and documentation integration.")],
+  ["HTML", "HTML", text("结构、模板语义与生成关系。", "Structure, template semantics, and generation relations.")],
+  ["CSS", "CSS", text("样式语义、设计标记与关联。", "Style semantics, design tokens, and relations.")],
+  [".NET", ".NET", text("C#与ASP.NET文档工件、签名与来源。", "C# and ASP.NET artifacts, signatures, and sources.")],
+];
+---
+<main id="main" class="container">
+  <section class="hero"><div><p class="eyebrow">Code → Knowledge → Documentation</p><h1>{en ? <>Make knowledge<br /><span>readable.</span></> : <>让代码的知识，<br />成为<span>可用的文档。</span></>}</h1><p class="lede">{text("从源码注释、领域语义到双语文档与可追溯的参考。为开发者与人工智能，共用一份可信事实。", "From source comments and domain semantics to bilingual documentation and traceable references. One trusted source for developers and AI.")}</p><div class="actions"><a href={url("start")} class="button primary">{text("开始使用 →", "Get started →")}</a><a href={"https://mandolin.github.io/HIA-Documentation/" + locale + "/"} class="button">{text("浏览代码文档", "Browse code documentation")}</a></div><p class="hero-note"><span class="pill blue">{text("1.0.0 预览", "1.0.0 preview")}</span> {text("正式初版正在准备中", "The first formal release is in preparation")}</p></div>
+    <div class="hero-panel" aria-label={text("从双语注释到文档的生成过程", "From bilingual comments to documentation")}><div class="panel-head"><span>profile-service.js</span><span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span></div><div class="code-stage"><pre><span class="comment">{'/**\n * @lang zh-CN 生成用户资料摘要。\n * @lang en Builds a profile summary.\n */'}</span>{'\n'}<span class="keyword">export function</span>{' buildProfileSummary(profile) {\n  '}<span class="comment">{'// 领域语义与源码关联，随文档保留。\n  // Preserve semantics and source linkage.'}</span>{'\n  '}<span class="keyword">return</span>{' formatSummary(profile);\n}'}</pre></div><div class="pipeline"><span><b>{text("源码与注释", "Source comments")}</b>{text("真实输入", "Real input")}</span><span class="connector" aria-hidden="true">→</span><span><b>{text("HIA文档模型", "HIA model")}</b>{text("统一语义", "Shared semantics")}</span><span class="connector" aria-hidden="true">→</span><span><b>{text("可阅读的文档", "Readable docs")}</b>{text("双语与追溯", "Languages and sources")}</span></div></div>
+  </section>
+  <section class="section"><div class="section-head"><div><p class="eyebrow">One system. Multiple domains.</p><h2>{text("跨越技术领域，保持阅读的一致性。", "Consistent reading across domains.")}</h2><p>{text("连接现有四个核心领域，各领域的语法与精度边界独立说明。", "Four established core domains, each with explicit syntax and precision boundaries.")}</p></div><a href={url("features")}>{text("查看功能特性 →", "Explore features →")}</a></div><div class="grid">{domains.map(([mark, name, description]) => <a class="card" href={url("features") + "#domains"}><span class="card-number">{mark}</span><h3>{name}</h3><p>{description}</p><span class="card-footer">{text("继续了解 →", "Learn more →")}</span></a>)}</div></section>
+  <section class="section"><div class="section-head"><div><p class="eyebrow">Find your next step</p><h2>{text("按你的任务，进入文档。", "Find documentation for your task.")}</h2></div></div><slot /></section>
+</main>

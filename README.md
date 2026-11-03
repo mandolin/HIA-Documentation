@@ -25,6 +25,10 @@ pnpm run hia -- docs build --project-manifest fixtures/project-mixed.hia-project
 pnpm run hia -- docs build --config hia.config.example.json
 ```
 
+## 官网源码与本地预览
+
+HIA-Documentation-Sys 的中英产品页面与初始文档入口使用独立静态构建。运行 `pnpm site:build`、`pnpm site:check` 和 `pnpm site:preview`；使用方式、路由与能力范围见 [官网源码说明](site/README.md)。产物位于 `dist/official-web-preview/`，该命令不替换现有参考站或执行部署。
+
 ## Contract Baseline
 
 当前 core document schema 为 `1.0.0`，text i18n、source 子模型与 protocol envelope 同为 `1.0.0` 源码候选；精确保留文档/子模型 `0.2.0` 与 envelope `0.1.0` 的旧版读取。config、renderer manifest 和 JSDoc adapter bridge 仍为 `0.1.0`。包版本、工件契约版本和系统正式发行分别管理。

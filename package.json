@@ -30,6 +30,11 @@
     "api:check": "node scripts/check-public-api-surface.mjs",
     "release:gate": "pnpm run check && pnpm run api:check && pnpm run schema:check && pnpm run schema:site && pnpm run distribution:check && pnpm run reference:definition:check && pnpm run reference:portal:data:check && pnpm run reference:portal:build && pnpm run reference:portal:check && node scripts/release-gate-jsdoc-smoke.mjs && pnpm run governance:check && pnpm run license:audit",
     "release:gate:publish-ready": "pnpm run check && pnpm run schema:check && pnpm run schema:site && pnpm run distribution:check:publish-ready && pnpm run reference:definition:check && pnpm run reference:portal:data:check && pnpm run reference:portal:build && pnpm run reference:portal:check && node scripts/release-gate-jsdoc-smoke.mjs && pnpm run governance:check && pnpm run license:audit",
+    "site:licenses": "node scripts/check-official-web-licenses.mjs",
+    "site:check": "node scripts/check-official-web.mjs",
+    "site:test": "node --test scripts/check-official-web.test.mjs",
+    "site:build": "astro build --config site/astro.config.mjs",
+    "site:preview": "astro preview --config site/astro.config.mjs",
     "reference:build": "node scripts/build-public-reference.mjs",
     "reference:check": "node scripts/check-public-reference-build.mjs",
     "reference:definition:check": "node scripts/build-public-reference.mjs --check-definition",
@@ -232,6 +237,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
+    "astro": "7.4.5",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
     "vitest": "2.1.9"

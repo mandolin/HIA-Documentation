@@ -1,0 +1,41 @@
+---
+/**
+ * @lang zh-CN 从显式清单生成静态中英页面，不从磁盘目录推断发布或语言覆盖。
+ * @lang en Generate static bilingual pages from an explicit inventory, without inferring release or translation coverage from directories.
+ */
+import SiteShell from "../layouts/SiteShell.astro";
+import Home from "../components/Home.astro";
+import Features from "../components/Features.astro";
+import Docs from "../components/Docs.astro";
+import DocCards from "../components/DocCards.astro";
+import Article from "../components/Article.astro";
+import Versions from "../components/Versions.astro";
+import { Content as StartZh } from "../content/start.zh-CN.md";
+import { Content as StartEn } from "../content/start.en.md";
+import { locales, kinds, route, href, labels } from "../lib/routes.mjs";
+/**
+ * @lang zh-CN 仅为已有双语正文枚举构建路径；根页面使用undefined参数。
+ * @lang en Enumerate only existing bilingual content; the root page uses an undefined parameter.
+ * @returns {Array} Astro静态路径与页面参数。 Static Astro paths and props.
+ */
+export function getStaticPaths() {
+  return locales.flatMap(locale => kinds.map(kind => ({
+    params: { path: route(kind, locale).replace(/\/$/, "") || undefined },
+    props: { locale, kind },
+  })));
+}
+// <lang lang="zh-CN">构建属性来自上方固定清单，不接受请求参数或远程内容。</lang><lang lang="en">Build props come from the fixed inventory, never request parameters or remote content.</lang>
+const { locale, kind } = Astro.props;
+const en = locale === "en";
+const text = (zh: string, english: string) => en ? english : zh;
+---
+<SiteShell locale={locale} kind={kind}>
+  {kind === "home" && <Home locale={locale}><DocCards locale={locale} /></Home>}
+  {kind === "features" && <Features locale={locale} />}
+  {kind === "docs" && <Docs locale={locale} />}
+  {["start", "versions", "search"].includes(kind) && <Article locale={locale} kind={kind}>
+    {kind === "start" && (en ? <StartEn /> : <StartZh />)}
+    {kind === "versions" && <Versions locale={locale} />}
+    {kind === "search" && <><p class="eyebrow">Documentation directory</p><h1>{labels[locale].search}</h1><p class="lede">{text("从当前语言的页面目录继续阅读。", "Continue through the current-language page directory.")}</p><p>{text("此页为静态目录，无脚本仍可使用；顶部搜索仅筛选下列官网入口，完整文档与接口索引尚未接入。", "This static directory works without scripts. Header search filters these website entries only; full documentation and API indexing is not connected yet.")}</p><nav id="directory" class="results" aria-label={text("当前语言目录", "Current language directory")}>{kinds.filter(topic => topic !== "search").map(topic => <a href={href(topic, locale, import.meta.env.BASE_URL)}>{labels[locale][topic as keyof typeof labels.en]}</a>)}</nav></>}
+  </Article>}
+</SiteShell>

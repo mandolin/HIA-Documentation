@@ -57,6 +57,10 @@ not replace those notices. This tool pin introduces no new application dependenc
 The older `@types/node` range below is a type declaration baseline, not production
 support for Node.js 20.
 
+## Website Build Dependency
+
+`astro@7.4.5` (MIT) generates the static official website from custom bilingual templates. It is a development dependency, requires Node.js >=22.23.4, and is excluded from public runtime packages. See [the upstream license](https://github.com/withastro/astro/blob/main/LICENSE) and [the exact registry record](https://registry.npmjs.org/astro/7.4.5). Reviewed on 2026-11-03. Static output contains no source maps or server adapter. Optional Sharp/image binaries are excluded by `ignoredOptionalDependencies` and the passthrough image service. `pnpm site:licenses` checks the reachable installed build closure; the allowlist includes MIT/Apache/BSD/ISC plus BlueOak-1.0.0, CC0-1.0 and the existing Lightning CSS MPL-2.0 file license. No third-party sources are modified or redistributed as public runtime packages. Astro uses Vite 8 and Lightning CSS 1.33; the existing Vitest graph also resolves the compatible shared Lightning CSS peer. Review its regression results when updating the lockfile.
+
 ## Direct Dependencies
 
 | Dependency | Declared As | Version Range | Purpose | License |
@@ -64,6 +68,7 @@ support for Node.js 20.
 | `@jridgewell/trace-mapping` | `dependencies` | `^0.3.31` | Ordinary source map generated/original position lookup for `@hia-doc/source-linkage`. | MIT |
 | `@types/node` | `devDependencies` | `^20.19.43` | Node.js 20 type definitions for workspace packages and tests. | MIT |
 | `@types/vscode` | `devDependencies` | `^1.92.0` | VS Code extension API type definitions. | MIT |
+| `astro` | `devDependencies` | `7.4.5` | Static website build with custom bilingual templates. | MIT |
 | `tsx` | `devDependencies` | `^4.23.0` | Development-time TypeScript CLI runner for package scripts. | MIT |
 | `typescript` | `devDependencies` | `^6.0.3` | TypeScript compiler and declaration output. | Apache-2.0 |
 | `vitest` | `devDependencies` | `2.1.9` | Unit and integration test runner. | MIT |

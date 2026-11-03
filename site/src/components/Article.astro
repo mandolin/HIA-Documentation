@@ -1,0 +1,20 @@
+---
+/** @lang zh-CN 已确认三栏阅读布局，目录与移动折叠入口共享同一组实际锚点。 @lang en Confirmed three-column reading layout; desktop and mobile outlines share real anchors. */
+import { href, labels } from "../lib/routes.mjs";
+const { locale, kind } = Astro.props;
+const en = locale === "en";
+const text = (zh: string, english: string) => en ? english : zh;
+const url = (topic: string) => href(topic, locale, import.meta.env.BASE_URL);
+const outline = kind === "start"
+  ? [["input", text("准备输入", "Prepare input")], ["build", text("构建文档", "Build documentation")], ["read", text("阅读与检查", "Read and check")], ["next", text("下一步", "Next steps")]]
+  : kind === "versions"
+    ? [["current", text("当前文档", "Current documentation")], ["archives", text("历史封版", "Archives")], ["policy", text("保留与切换规则", "Retention and switching")]]
+    : [["directory", text("当前语言目录", "Current language directory")]];
+const sidebar = ["start", "versions", "search"];
+---
+<nav class="tabs" aria-label={text("文档栏目", "Documentation categories")}><div class="container tabs-inner"><a href={url("docs")}>{text("文档首页", "Documentation home")}</a><a href={url("start")} aria-current={kind === "start" ? "page" : undefined}>{text("学习", "Learn")}</a><a href={"https://mandolin.github.io/HIA-Documentation/" + locale + "/docs/"}>{text("参考", "Reference")}</a><a href="https://github.com/mandolin/HIA-Documentation/blob/main/packages/plugin-sdk/README.md">{text("开发文档", "Development")}</a><a href={"https://mandolin.github.io/HIA-Documentation/" + locale + "/"}>{text("代码文档", "Code documentation")}</a></div></nav>
+<div class="container docs-layout"><aside class="sidebar" aria-label={text("文档目录", "Documentation directory")}><span class="sidebar-label">{text("开始阅读", "Start reading")}</span>{sidebar.map(topic => <a href={url(topic)} aria-current={kind === topic ? "page" : undefined}>{labels[locale][topic as keyof typeof labels.en]}</a>)}</aside><main id="main" class="doc-body">
+  <details class="mobile-outline"><summary>{text("文档目录", "Documentation directory")}</summary><nav aria-label={text("手机文档目录", "Mobile documentation directory")}>{sidebar.map(topic => <a href={url(topic)} aria-current={kind === topic ? "page" : undefined}>{labels[locale][topic as keyof typeof labels.en]}</a>)}</nav></details>
+  <details class="mobile-outline"><summary>{text("本页内容", "On this page")}</summary><nav aria-label={text("手机本页内容", "Mobile page outline")}>{outline.map(([id, title]) => <a href={"#" + id}>{title}</a>)}</nav></details>
+  <div class="breadcrumbs"><a href={url("docs")}>{labels[locale].docs}</a><span>/</span>{labels[locale][kind as keyof typeof labels.en]}</div><slot /><div class="reading-footer"><a href={url("docs")}>{text("← 文档首页", "← Documentation home")}</a><a href={url(kind === "versions" ? "start" : "versions")}>{labels[locale][kind === "versions" ? "start" : "versions"]} →</a></div>
+</main><aside class="toc" aria-label={text("本页内容", "On this page")}><strong>{text("本页内容", "On this page")}</strong>{outline.map(([id, title]) => <a href={"#" + id}>{title}</a>)}</aside></div>

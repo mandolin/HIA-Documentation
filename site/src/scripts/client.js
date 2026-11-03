@@ -1,0 +1,107 @@
+/**
+ * @lang zh-CN 官网本页增强：安全的目录筛选、模态焦点与显示设置；不持久化、不联网、不执行源码。
+ * @lang en Page-local enhancement for safe directory filtering, modal focus, and display settings; no persistence, network access, or source execution.
+ */
+// <lang lang="zh-CN">增强初始化后才展示脚本专属控件；基础链接始终存在。</lang><lang lang="en">Expose script-only controls only after initialization; ordinary links remain available.</lang>
+document.documentElement.dataset.js = "ready";
+
+/**
+ * @lang zh-CN 打开本页已声明的原生对话框。
+ * @lang en Open an existing native dialog in this document.
+ * @param {string | undefined} id - 受控对话框标识。 Controlled dialog ID.
+ * @returns {void} 仅改变本页模态状态。 Changes only local modal state.
+ */
+function openDialog(id) {
+  // <lang lang="zh-CN">仅允许固定两个模态；不将属性作为选择器或URL解释。</lang><lang lang="en">Allow only the two fixed modals without interpreting attributes as selectors or URLs.</lang>
+  const dialog = id && ["search-dialog", "settings-dialog"].includes(id) ? document.getElementById(id) : null;
+  if (dialog instanceof HTMLDialogElement && !dialog.open) dialog.showModal();
+}
+
+// <lang lang="zh-CN">声明式按钮仅控制本页已存在节点。</lang><lang lang="en">Declarative buttons control existing local nodes only.</lang>
+for (const button of document.querySelectorAll("[data-dialog]")) button.addEventListener("click", () => openDialog(button.dataset.dialog));
+for (const button of document.querySelectorAll("[data-close]")) button.addEventListener("click", () => button.closest("dialog")?.close());
+
+// <lang lang="zh-CN">主题只影响当前页；系统选择同时响应系统主题变化。</lang><lang lang="en">Theme affects this page only; system choice also follows system-theme changes.</lang>
+const media = matchMedia("(prefers-color-scheme: dark)");
+const themeSelect = document.querySelector("[data-theme-select]");
+/**
+ * @lang zh-CN 应用封闭主题值，不保存用户偏好。
+ * @lang en Apply a closed theme choice without persisting preferences.
+ * @returns {void} 更新根元素主题属性。 Updates the root theme attribute.
+ */
+function applyTheme() {
+  // <lang lang="zh-CN">选择值来自本页select，不接受查询参数覆盖。</lang><lang lang="en">Read the local select rather than accepting query overrides.</lang>
+  const choice = themeSelect?.value;
+  document.documentElement.dataset.theme = choice === "system" ? (media.matches ? "dark" : "light") : choice === "dark" ? "dark" : "light";
+}
+themeSelect?.addEventListener("change", applyTheme);
+media.addEventListener("change", () => { if (themeSelect?.value === "system") applyTheme(); });
+document.querySelector("[data-wrap-select]")?.addEventListener("change", (event) => {
+  document.documentElement.dataset.wrap = event.target.value === "wrap" ? "wrap" : "scroll";
+});
+
+// <lang lang="zh-CN">构建时目录只含同语言实际页面；查询不会作为HTML或链接插入。</lang><lang lang="en">The build-time directory contains real same-language pages; queries never become HTML or links.</lang>
+const entries = JSON.parse(document.getElementById("page-directory")?.textContent ?? "[]");
+const english = document.documentElement.lang === "en";
+// <lang lang="zh-CN">复制只读取同一可见代码块；拒绝时提示手动选择，不读取其它页面或本机文件。</lang><lang lang="en">Copy only the same visible code block; denied access offers manual selection without reading other pages or local files.</lang>
+for (const button of document.querySelectorAll("[data-copy]")) button.addEventListener("click", async () => {
+  const block = button.closest(".code-box");
+  const content = block?.querySelector("pre")?.textContent;
+  const status = block?.querySelector(".copy-status");
+  if (!content || !status) return;
+  try { await navigator.clipboard.writeText(content); status.textContent = english ? "Copied" : "已复制"; }
+  catch { status.textContent = english ? "Please select the code manually" : "请手动选择代码"; }
+});
+/**
+ * @lang zh-CN 用安全DOM节点筛选当前语言的固定目录；空结果保留普通目录入口。
+ * @lang en Filter the fixed current-language directory through safe DOM nodes, retaining a directory link for empty results.
+ * @param {HTMLInputElement} input - 当前查询输入。 Current query input.
+ * @param {HTMLElement} target - 本页结果区域。 Local results container.
+ * @returns {void} 替换结果节点，不保存原始查询。 Replaces result nodes without storing queries.
+ */
+function updateSearch(input, target) {
+  // <lang lang="zh-CN">不做模糊语义匹配；子串过滤只覆盖已有页面标题。</lang><lang lang="en">Substring matching covers existing page titles, not semantic or full-text search.</lang>
+  const query = input.value.trim().toLocaleLowerCase();
+  const matches = entries.filter(entry => entry.title.toLocaleLowerCase().includes(query));
+  target.replaceChildren();
+  for (const entry of matches) {
+    // <lang lang="zh-CN">目标来自构建目录，显示文字始终用textContent写入。</lang><lang lang="en">Targets come from the build directory and text always uses textContent.</lang>
+    const link = document.createElement("a");
+    link.href = entry.href;
+    link.textContent = entry.title;
+    target.append(link);
+  }
+  if (!matches.length) {
+    // <lang lang="zh-CN">空结果与索引失败不同，静态目录始终提供恢复路径。</lang><lang lang="en">No matches differs from index failure; the static directory remains the recovery path.</lang>
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = english ? "No matching pages. Continue from the static directory below." : "没有匹配页面。可从下方静态目录继续阅读。";
+    target.append(empty);
+  }
+}
+for (const input of document.querySelectorAll("[data-search-input]")) {
+  // <lang lang="zh-CN">每个查询框只更新其明确绑定的本页区域。</lang><lang lang="en">Each query updates only its explicitly bound local container.</lang>
+  const target = document.getElementById(input.dataset.searchInput);
+  if (target) {
+    input.addEventListener("input", () => updateSearch(input, target));
+    updateSearch(input, target);
+  }
+}
+
+// <lang lang="zh-CN">模态首尾键盘循环与Esc显式处理，避免search输入吞Esc；原生close恢复触发焦点。</lang><lang lang="en">Explicit modal focus cycling and Escape handling prevent search inputs consuming Escape; native close restores trigger focus.</lang>
+document.addEventListener("keydown", (event) => {
+  const dialog = document.querySelector("dialog[open]");
+  if (event.key === "Tab" && dialog) {
+    // <lang lang="zh-CN">只遍历当前模态内可见且启用的普通控件。</lang><lang lang="en">Traverse only visible enabled native controls inside the active modal.</lang>
+    const controls = [...dialog.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')].filter(element => element.getClientRects().length);
+    const first = controls[0];
+    const last = controls.at(-1);
+    if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { event.preventDefault(); first?.focus(); }
+  }
+  if (event.key === "Escape") {
+    if (dialog) { event.preventDefault(); dialog.close(); }
+    else for (const disclosure of document.querySelectorAll(".header details[open]")) { disclosure.open = false; disclosure.querySelector("summary")?.focus(); }
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); openDialog("search-dialog"); }
+});

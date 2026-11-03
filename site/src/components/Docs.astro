@@ -1,0 +1,9 @@
+---
+/** @lang zh-CN 文档总入口保持四类平级，并将完整技术整合与当前页面范围区分。 @lang en Documentation entry preserves four peer categories and makes the current integration scope explicit. */
+import { href } from "../lib/routes.mjs";
+import DocCards from "./DocCards.astro";
+const { locale } = Astro.props;
+const en = locale === "en";
+const text = (zh: string, english: string) => en ? english : zh;
+---
+<main id="main" class="container"><div class="page-intro"><p class="eyebrow">Documentation</p><h1>{text("从理解，到使用，再到扩展。", "Understand. Use. Extend.")}</h1><p class="lede">{text("选择与你当前任务对应的入口。手册解释如何使用；代码文档展示具体接口和来源。", "Choose the entry for your task. Manuals explain usage; code documentation presents concrete APIs and sources.")}</p><span class="pill blue">{text("1.0.0 预览 · 简体中文", "1.0.0 preview · English")}</span></div><DocCards locale={locale} /><section class="section entry-section"><div class="section-head"><div><h2>{text("第一次来到这里？", "New here?")}</h2><p>{text("从一个公开工件开始，了解一次完整的文档构建。", "Start with a public artifact and follow a documentation build.")}</p></div><a href={href("start", locale, import.meta.env.BASE_URL)} class="button primary">{text("阅读入门 →", "Read first steps →")}</a></div><p>{text("目前已接入官网与第一次使用正文。其余参考和代码文档链接到现有公开站点或仓库，并保留其实际语言与能力边界。", "The website and first-steps article are integrated here. Other references and code documentation link to the existing public site or repository, retaining their actual languages and capability boundaries.")}</p></section><div class="notice"><strong>{text("关于版本", "About versions")}</strong><p>{text("正式发布后主文档跟随最新稳定版；旧大版本各保留最后一版。当前没有可供切换的历史封版。", "After formal release, main documentation follows the latest stable release. Each older major retains its final edition. No historical archive is available yet.")}</p><a href={href("versions", locale, import.meta.env.BASE_URL)}>{text("了解保留规则 →", "Read the retention policy →")}</a></div></main>
