@@ -62,7 +62,10 @@ import {
 import {
   createOfficialHiaProfileSet,
   HIA_OFFICIAL_PROFILE_CATALOG,
-  HIA_OFFICIAL_PROFILE_IDS
+  HIA_OFFICIAL_PROFILE_IDS,
+  getOfficialTsDocProjectProfile,
+  createOfficialTsDocProjectProfileSet,
+  HIA_TSDOC_PROJECT_PROFILE_CATALOG
 } from "../packages/profiles/dist/index.js";
 import {
   DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA,
@@ -205,6 +208,14 @@ assert(
 );
 assert(createOfficialHiaProfileSet().diagnostics.length === 0, "Official profile distribution has runtime diagnostics.");
 assert(HIA_OFFICIAL_PROFILE_CATALOG.profiles.length === profiles.length, "Official profile catalog size drifted.");
+
+// <lang><zh-CN>新版TS规范单独校验和显式组装，不与旧同ID项一起塞入默认集合。</zh-CN><en>Validate and explicitly assemble the new TS profile separately instead of inserting both same-ID versions into the default set.</en></lang>
+const tsDocProjectProfile = await readJson("packages/profiles/src/profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json");
+assert(validateHiaProfile(tsDocProjectProfile).length === 0, "TypeScript project profile has schema diagnostics.");
+assert(JSON.stringify(tsDocProjectProfile) === JSON.stringify(getOfficialTsDocProjectProfile()), "Built project profile differs from its canonical source.");
+assert(createOfficialTsDocProjectProfileSet().diagnostics.length === 0, "Explicit TypeScript project set has diagnostics.");
+assert(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profileSchemaVersion === tsDocProjectProfile.schemaVersion, "Project profile catalog schema identity differs.");
+assert(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profiles.length === 1 && HIA_TSDOC_PROJECT_PROFILE_CATALOG.profiles[0].profileVersion === tsDocProjectProfile.profileVersion, "Project profile catalog version differs.");
 
 assert(
   DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA.$id === DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID,

@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 七份官方文档化配置规范与草案目录的分发入口；访问器复制配置，目录常量/直接JSON导出是共享元数据。
- * @lang en Distribution entry for seven official documentation profiles and their draft catalog; accessors copy profiles while the catalog constant/direct JSON exports are shared metadata.
+ * @lang zh-CN 七份默认规范及显式TypeScript项目版本的分发入口；访问器复制配置，目录常量/直接JSON导出是共享元数据。
+ * @lang en Distribution entry for seven default profiles and an explicit TypeScript project version; accessors copy profiles while catalogs/direct JSON exports are shared metadata.
  */
 import catalogData from "./catalog.json" with { type: "json" };
 import cssdocProfileData from "./profiles/cssdoc.profile.json" with { type: "json" };
@@ -11,6 +11,8 @@ import jsdocProfileData from "./profiles/jsdoc.profile.json" with { type: "json"
 import pugHtmdocBridgeProfileData from "./profiles/pug-htmdoc-bridge.profile.json" with { type: "json" };
 import sassCssdocBridgeProfileData from "./profiles/sass-cssdoc-bridge.profile.json" with { type: "json" };
 import tsJsdocBridgeProfileData from "./profiles/ts-jsdoc-bridge.profile.json" with { type: "json" };
+import tsDocProjectProfileData from "./profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json" with { type: "json" };
+import tsDocProjectCatalogData from "./tsdoc-project-catalog.json" with { type: "json" };
 import { createHiaProfileSet } from "@hia-doc/profile";
 import type { HiaDocumentationProfile, HiaProfileLayer, HiaProfileSet } from "@hia-doc/profile";
 
@@ -72,6 +74,29 @@ const officialProfileById = new Map(
 
 /** @lang zh-CN 共享且未冻结的目录对象，与catalog.json导出共享模块数据；调用者须只读使用或自行复制。 @lang en Shared, unfrozen catalog object using the catalog.json module data; callers must treat it as read-only or clone it themselves. */
 export const HIA_OFFICIAL_PROFILE_CATALOG = catalogData as HiaOfficialProfileCatalog;
+
+/** @lang zh-CN 显式项目规范目录；形状版本不变，schema版本仅描述该目录的一份新规范。共享元数据须只读使用。 @lang en Explicit project profile catalog; its shape version is unchanged and schema version describes its one new profile. Treat shared metadata as read-only. */
+export const HIA_TSDOC_PROJECT_PROFILE_CATALOG = tsDocProjectCatalogData as HiaOfficialProfileCatalog;
+
+/**
+ * @lang zh-CN 显式取得TypeScript项目桥接0.2独立副本，不改变旧默认读取或推断任意版本。
+ * @lang en Explicitly get an independent TypeScript project bridge 0.2 copy without changing legacy defaults or inferring arbitrary versions.
+ * @returns <lang><zh-CN>使用已确认1.0结构的0.2草案规范副本；不授予执行/源码公开许可。</zh-CN><en>A draft 0.2 profile copy using the confirmed 1.0 structure, without execution/source-publication permission.</en></lang>
+ */
+export function getOfficialTsDocProjectProfile(): HiaDocumentationProfile {
+  return structuredClone(tsDocProjectProfileData) as HiaDocumentationProfile;
+}
+
+/**
+ * @lang zh-CN 显式为项目链组装规范集合，仅替换旧TS项；六份原父/同级规范保持精确版本。
+ * @lang en Explicitly assemble a project-chain profile set, replacing only the legacy TS entry while retaining the six original parent/peer versions.
+ * @returns <lang><zh-CN>独立集合和诊断；同一集合每身份仍只有一版，不自动切换现有项目。</zh-CN><en>An independent set and diagnostics; each identity still has one version per set and existing projects are not switched automatically.</en></lang>
+ */
+export function createOfficialTsDocProjectProfileSet(): HiaProfileSet {
+  // <lang><zh-CN>先取旧分发的独立副本，在送入原runtime前明确选择新TS版本，不修改包内数据或运行时选择规则。</zh-CN><en>Start from defensive legacy copies and select the new TS version before invoking the existing runtime, without mutating package data or selection rules.</en></lang>
+  const profiles = listOfficialHiaProfiles().map((profile) => profile.profileId === "ts-jsdoc-bridge" ? getOfficialTsDocProjectProfile() : profile);
+  return createHiaProfileSet({profiles});
+}
 
 /**
  * @lang zh-CN 按官方固定顺序列出七份配置，不解析继承或选择默认配置。

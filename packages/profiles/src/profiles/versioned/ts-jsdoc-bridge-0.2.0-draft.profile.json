@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0.0",
+  "profileId": "ts-jsdoc-bridge",
+  "profileVersion": "0.2.0-draft",
+  "displayName": "TypeScript Project Documentation Bridge",
+  "layer": "bridge",
+  "extends": ["jsdoc", "doc-source-map"],
+  "contracts": [
+    { "name": "hia-tsdoc-extraction", "version": "0.2.0-draft", "role": "consumes" },
+    { "name": "hia-ts-jsdoc-bridge", "version": "0.2.0-draft", "role": "produces" },
+    { "name": "hia-core-document", "version": "0.2.0", "role": "produces" },
+    { "name": "doc-source-map", "version": "1.1.0", "role": "produces" }
+  ],
+  "targets": ["typescript-source", "typescript-symbol", "tsdoc-extraction", "ts-jsdoc-bridge", "hia-document", "doc-source-map-manifest"],
+  "tags": [
+    {
+      "name": "typeParam", "status": "experimental", "scope": ["block"],
+      "targets": ["typescript-symbol"], "repeatable": true,
+      "valueGrammar": "type-parameter-name [description]",
+      "mapsTo": { "field": "i18n.fields", "fieldPathPattern": "typeParams.<name>.description" },
+      "metadata": { "documentation": { "zh-CN": "保留真实类型参数文档及字段级语言，不执行类型代码。", "en": "Retain actual type-parameter documentation and field locales without executing type code." } }
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "ts-jsdoc/type-only-symbol-policy", "category": "bridge", "defaultSeverity": "info",
+      "optionsSchema": { "type": "object", "properties": { "typeOnlySymbolPolicy": { "const": "core-symbol" } }, "additionalProperties": false },
+      "appliesTo": ["typescript-symbol"],
+      "messages": { "default": "Actual project types and members remain visible as HIA symbols with original documentation and parentage.", "zh-CN": "项目真实类型与成员作为可见HIA符号保留原文档和父项。" },
+      "fixable": false, "hasSuggestions": false
+    },
+    {
+      "ruleId": "ts-jsdoc/project-emission-evidence", "category": "source-map", "defaultSeverity": "error",
+      "optionsSchema": { "type": "object", "additionalProperties": false },
+      "appliesTo": ["ts-jsdoc-bridge", "doc-source-map-manifest"],
+      "messages": { "default": "Project extraction has no JavaScript emission or ordinary-map evidence; preserve actual direct source linkage only.", "zh-CN": "项目提取没有JavaScript发射或普通地图证明，只保留实际直接源码关联。" },
+      "fixable": false, "hasSuggestions": false
+    }
+  ],
+  "mappings": [
+    {
+      "from": "typescript-symbol", "to": "hia-symbol", "conditions": ["supported-authorized-declaration"],
+      "confidence": "high", "sourcePolicy": "actual-typescript-ast-exclusive-utf16", "metadataPolicy": "preserve-full-fields-parent-and-public-entry", "diagnostics": []
+    },
+    {
+      "from": "typescript-symbol", "to": "ts-jsdoc-bridge-symbol", "conditions": ["supported-authorized-declaration"],
+      "confidence": "high", "sourcePolicy": "actual-typescript-ast-exclusive-utf16", "metadataPolicy": "preserve-full-fields-and-explicit-non-emission", "diagnostics": []
+    }
+  ],
+  "diagnostics": [],
+  "capabilities": {
+    "sourceMap": { "index": true, "locations": true },
+    "ordinarySourceMap": { "produces": false },
+    "nativeJsdocExecution": false,
+    "sourcesContentPolicy": "none",
+    "rangeConvention": { "endBoundary": "exclusive", "columnUnit": "utf16-code-unit" },
+    "documentation": { "zh-CN": "本规范描述已实现项目链的语义，不执行规则、不授予源码访问或声称产品/发行验收。", "en": "This profile describes implemented project-chain semantics without executing rules, granting source access, or claiming product/release acceptance." }
+  }
+}

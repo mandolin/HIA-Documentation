@@ -6,6 +6,7 @@
 import { createOfficialHiaProfileSet, getOfficialHiaProfile, HIA_OFFICIAL_PROFILE_CATALOG, HIA_OFFICIAL_PROFILE_IDS, listOfficialHiaProfiles } from "../src/index.js";
 import type { HiaOfficialProfileCatalog, HiaOfficialProfileCatalogEntry, HiaOfficialProfileId } from "../src/index.js";
 import type { HiaDocumentationProfile, HiaProfileSet } from "@hia-doc/profile";
+import {getOfficialTsDocProjectProfile,createOfficialTsDocProjectProfileSet,HIA_TSDOC_PROJECT_PROFILE_CATALOG} from "../src/index.js";
 
 // <lang><zh-CN>官方ID是闭集，但string查询允许未知输入并保留undefined结果。</zh-CN><en>Official IDs form a closed set, while string queries permit unknown input and retain undefined results.</en></lang>
 const id: HiaOfficialProfileId = "cssdoc";
@@ -22,3 +23,9 @@ const guaranteed: HiaDocumentationProfile = getOfficialHiaProfile("cssdoc");
 // @ts-expect-error The exported literal array is readonly in the type system.
 HIA_OFFICIAL_PROFILE_IDS.push("new");
 void [id, maybe, entries, set, catalog, entry, ids, unknownId, guaranteed];
+
+// <lang><zh-CN>新项目采用具有独立入口和已存在的真实公开类型，旧读取的undefined边界不被扩大。</zh-CN><en>New project adoption has separate entries with actual existing public types, without widening legacy lookup's undefined boundary.</en></lang>
+const projectProfile: HiaDocumentationProfile = getOfficialTsDocProjectProfile();
+const projectSet: HiaProfileSet = createOfficialTsDocProjectProfileSet();
+const projectCatalog: HiaOfficialProfileCatalog = HIA_TSDOC_PROJECT_PROFILE_CATALOG;
+void [projectProfile,projectSet,projectCatalog];

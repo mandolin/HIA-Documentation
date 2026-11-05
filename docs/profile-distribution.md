@@ -95,6 +95,16 @@ Extension profiles should:
 - mark experimental tags as `experimental` until they are proven;
 - document migration plans before proposing an extension tag for the official set.
 
+## Explicit TypeScript project adoption
+
+Use `getOfficialTsDocProjectProfile()` or `createOfficialTsDocProjectProfileSet()` for the generic project chain. This explicitly selects `ts-jsdoc-bridge@0.2.0-draft` without changing the default seven-profile catalog or legacy getters. The new profile uses the existing `documentation-profile@1.0.0` structure; its domain semantics remain a draft. It preserves actual types/members and complete supported fields, with direct `doc-source-map@1.1.0` linkage and no JavaScript emission/native JSDoc/ordinary-map proof.
+
+The explicit set contains the new TS profile plus six unchanged legacy parents/peers, each read by its exact existing version. It does not register two versions under one identity or introduce runtime version negotiation. The new standalone catalog at `@hia-doc/profiles/tsdoc-project/catalog.json` uses the existing catalog shape and contains only that new TS profile. Its `profileSchemaVersion: "1.0.0"` describes those listed assets, not the default catalog. The explicit profile subpath is `@hia-doc/profiles/ts-jsdoc-bridge/0.2.0-draft.profile.json`.
+
+The owning TypeScript producer must generate the corresponding extraction/bridge drafts; a profile alone does not upgrade an artifact or grant source access. The source candidate, package publication, full project adoption and product acceptance remain separate checks.
+
+For the twelve first-party core package modules, see [generating core package APIs](core-package-api-generation.md). The build explicitly selects this profile and compares actual generated fields against the independent entry audit.
+
 ## Change Gate
 
 Profile changes must update the canonical JSON file, runtime/distribution tests and compatibility or migration documentation when behavior changes.

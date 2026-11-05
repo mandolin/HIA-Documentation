@@ -1,0 +1,237 @@
+{
+  "description": "Explicit first-party package inputs for generated API coverage; not a release or coverage assertion.",
+  "packages": [
+    {
+      "name": "@hia-doc/browser-panel",
+      "owner": "main-repo",
+      "directory": "packages/browser-panel",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/config",
+      "owner": "main-repo",
+      "directory": "packages/config",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/core",
+      "owner": "main-repo",
+      "directory": "packages/core",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/parser-jsdoc",
+      "owner": "main-repo",
+      "directory": "packages/parser-jsdoc",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/plugin-sdk",
+      "owner": "main-repo",
+      "directory": "packages/plugin-sdk",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/profile",
+      "owner": "main-repo",
+      "directory": "packages/profile",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/profiles",
+      "owner": "main-repo",
+      "directory": "packages/profiles",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/renderer-html",
+      "owner": "main-repo",
+      "directory": "packages/renderer-html",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/schemas",
+      "owner": "main-repo",
+      "directory": "packages/schemas",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/source-linkage",
+      "owner": "main-repo",
+      "directory": "packages/source-linkage",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/theme-default",
+      "owner": "main-repo",
+      "directory": "packages/theme-default",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/cli",
+      "owner": "main-repo",
+      "directory": "apps/cli",
+      "sourceEntry": "src/index.ts"
+    },
+    {
+      "name": "@hia-doc/jsdoc-doc-source-map",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-doc-source-map"
+    },
+    {
+      "name": "@hia-doc/jsdoc-extra-plugin-registry",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-extra-plugin-registry"
+    },
+    {
+      "name": "@hia-doc/jsdoc-plugin-hia-bridge",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-plugin-hia-bridge"
+    },
+    {
+      "name": "@hia-doc/jsdoc-preset",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-preset"
+    },
+    {
+      "name": "@hia-doc/jsdoc-producer",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-producer"
+    },
+    {
+      "name": "@hia-doc/jsdoc-runner",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-runner"
+    },
+    {
+      "name": "@hia-doc/jsdoc-spec",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-spec"
+    },
+    {
+      "name": "@hia-doc/jsdoc-theme-bridge",
+      "owner": "hia-jsdoc",
+      "directory": "packages/jsdoc-theme-bridge"
+    },
+    {
+      "name": "@hia-doc/cem-adapter",
+      "owner": "hia-htmdoc",
+      "directory": "packages/cem-adapter"
+    },
+    {
+      "name": "@hia-doc/htmdoc-producer",
+      "owner": "hia-htmdoc",
+      "directory": "packages/htmdoc-producer"
+    },
+    {
+      "name": "@hia-doc/htmdoc-runner",
+      "owner": "hia-htmdoc",
+      "directory": "packages/htmdoc-runner"
+    },
+    {
+      "name": "@hia-doc/htmdoc-spec",
+      "owner": "hia-htmdoc",
+      "directory": "packages/htmdoc-spec"
+    },
+    {
+      "name": "@hia-doc/html-doc-adapter",
+      "owner": "hia-htmdoc",
+      "directory": "packages/html-doc-adapter"
+    },
+    {
+      "name": "@hia-doc/html-doc-extractor",
+      "owner": "hia-htmdoc",
+      "directory": "packages/html-doc-extractor"
+    },
+    {
+      "name": "@hia-doc/html-doc-source-map",
+      "owner": "hia-htmdoc",
+      "directory": "packages/html-doc-source-map"
+    },
+    {
+      "name": "@hia-doc/html-parser",
+      "owner": "hia-htmdoc",
+      "directory": "packages/html-parser"
+    },
+    {
+      "name": "@hia-doc/css-doc-adapter",
+      "owner": "hia-cssdoc",
+      "directory": "packages/css-doc-adapter"
+    },
+    {
+      "name": "@hia-doc/css-doc-extractor",
+      "owner": "hia-cssdoc",
+      "directory": "packages/css-doc-extractor"
+    },
+    {
+      "name": "@hia-doc/css-doc-source-map",
+      "owner": "hia-cssdoc",
+      "directory": "packages/css-doc-source-map"
+    },
+    {
+      "name": "@hia-doc/css-parser",
+      "owner": "hia-cssdoc",
+      "directory": "packages/css-parser"
+    },
+    {
+      "name": "@hia-doc/cssdoc-producer",
+      "owner": "hia-cssdoc",
+      "directory": "packages/cssdoc-producer"
+    },
+    {
+      "name": "@hia-doc/cssdoc-runner",
+      "owner": "hia-cssdoc",
+      "directory": "packages/cssdoc-runner"
+    },
+    {
+      "name": "@hia-doc/cssdoc-spec",
+      "owner": "hia-cssdoc",
+      "directory": "packages/cssdoc-spec"
+    },
+    {
+      "name": "@hia-doc/design-token-bridge",
+      "owner": "hia-cssdoc",
+      "directory": "packages/design-token-bridge"
+    },
+    {
+      "name": "@hia-doc/dotnet-source-extractor",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnet-source-extractor"
+    },
+    {
+      "name": "@hia-doc/dotnet-xml-doc-extractor",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnet-xml-doc-extractor"
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-adapter",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnetdoc-adapter"
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-producer",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnetdoc-producer"
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-runner",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnetdoc-runner"
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-spec",
+      "owner": "hia-dotnetdoc",
+      "directory": "packages/dotnetdoc-spec"
+    },
+    {
+      "name": "@mandolin/jsdoc-plugin-hia-sys",
+      "owner": "jsdoc-plugin-hia-sys",
+      "directory": ""
+    },
+    {
+      "name": "@mandolin/jsdoc-theme-hia",
+      "owner": "jsdoc-theme-hia",
+      "directory": ""
+    }
+  ]
+}

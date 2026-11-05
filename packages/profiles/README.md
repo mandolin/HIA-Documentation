@@ -42,6 +42,22 @@ import cssdoc from "@hia-doc/profiles/cssdoc.profile.json" with { type: "json" }
 
 The distributed files use `documentation-profile@0.1.0-draft`. The runtime now exposes a separate `1.0.0` source schema candidate and retains an exact legacy reader; it does not rewrite these files. Domain-profile, schema, catalog and npm versions remain independent.
 
+## Explicit TypeScript project profile
+
+The generic TypeScript project chain has an independent `ts-jsdoc-bridge@0.2.0-draft` profile using the already supported `documentation-profile@1.0.0` structure. It declares extraction/bridge `0.2.0-draft`, HIA core document `0.2.0` and direct documentation source map `1.1.0`. Actual types and members remain visible. It does not claim JavaScript emission, native JSDoc execution or ordinary-map coordinate evidence.
+
+```ts
+import {
+  getOfficialTsDocProjectProfile,
+  createOfficialTsDocProjectProfileSet,
+  HIA_TSDOC_PROJECT_PROFILE_CATALOG
+} from "@hia-doc/profiles";
+```
+
+The first two functions return independent data. The explicit set selects the new TS profile and keeps the six original parent/peer versions. Existing getters, default sets and `catalog.json` retain their seven original profiles. A runtime set still admits only one version per identity; select the version before creating a set. Catalog constants and JSON imports remain shared metadata.
+
+Explicit JSON subpaths are `@hia-doc/profiles/ts-jsdoc-bridge/0.2.0-draft.profile.json` and `@hia-doc/profiles/tsdoc-project/catalog.json`. The new catalog retains the existing catalog shape/version and describes only the new profile's schema. Neither a new profile nor the stable wire structure establishes a published npm package or stable domain-profile semantics.
+
 ## Status
 
 The manifest is publishable. Source changes and local tarballs do not prove registry availability or stable-release qualification. Publication requires approved release versions, npm scope ownership, Trusted Publishing ownership and a registry install smoke. The package uses the MIT license.
