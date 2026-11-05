@@ -13,10 +13,11 @@ import { collectPackageEntries, collectModuleExports } from "./lib/package-api-i
  * @lang zh-CN 按显式首方允许清单审计实际导出；编译器不执行模块、发出JS或声称注释精度。
  * @lang en Audit actual exports against an explicit first-party allowlist; the compiler neither executes modules nor emits JS or claims comment precision.
  * @param {string} workspaceRoot - 包含main-repo/HIA的容器目录。 Container holding main-repo/HIA.
+ * @param {object} [options] - 显式includeMembers时附加成员审核，不改变默认清单。 Explicit includeMembers adds member inspection without changing the default inventory.
  * @returns {object} 仅含安全相对路径/名称/版本/摘要的审核结果。 Audit containing only safe relative paths, names, versions, and hashes.
  * @throws {Error} 允许清单、包身份、源码或资源不完整。 Incomplete allowlist, identity, source, or resource.
  */
-export function auditRequiredPackages(workspaceRoot) {
+export function auditRequiredPackages(workspaceRoot, options = {}) {
   const mainRoot=fileURLToPath(new URL("../",import.meta.url));
   const scope=JSON.parse(fs.readFileSync(path.join(mainRoot,"reference/required-package-api.inputs.json"),"utf8"));
   if(scope.packages.length!==44 || new Set(scope.packages.map(item=>item.name)).size!==44) throw new Error("Required package scope must contain 44 unique names.");
@@ -31,7 +32,7 @@ export function auditRequiredPackages(workspaceRoot) {
     if(manifest.name!==item.name) throw new Error("Required API package identity mismatch.");
     const entries=collectPackageEntries(packageRoot,manifest,item.sourceEntry);
     const sources=[...new Set(entries.filter(entry=>["runtime-module","type-declaration","command"].includes(entry.kind)).map(entry=>path.posix.join(item.directory,entry.source)))];
-    const modules=collectModuleExports(ownerRoot,sources);
+    const modules=collectModuleExports(ownerRoot,sources,options);
     const head=execFileSync("git",["-C",ownerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim();
     packages.push({name:item.name,owner:item.owner,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256:createHash("sha256").update(bytes).digest("hex"),entries,modules});
   }

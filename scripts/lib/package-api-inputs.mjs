@@ -5,6 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
+import {collectStaticMemberDeclarations} from "./package-api-members.mjs";
 
 /**
  * @lang zh-CN 将包内相对目标解析为已存在的普通文件；不接受点段、编码或联接重定向。
@@ -84,9 +85,10 @@ export function collectPackageEntries(root, manifest, sourceEntry) {
  * @lang en Use the installed TypeScript compiler to inspect explicit module re-exports and aliases without execution; unknown declarations remain unresolved.
  * @param {string} root - 允许的源码归属根。 Allowed source ownership root.
  * @param {string[]} sources - 相对模块路径。 Relative module paths.
+ * @param {object} [options] - 显式includeMembers时追加独立静态成员审核；默认输出保持。 Explicit includeMembers adds a static member audit; default output stays unchanged.
  * @returns {object[]} 导出名、声明是否纯类型、语法种类和归属位置；声明分类不代替type-only重导出可用性分析。 Export names, declaration-only type flags, syntax kinds and owner locations; declaration classification does not establish type-only re-export availability.
  */
-export function collectModuleExports(root, sources) {
+export function collectModuleExports(root, sources, options = {}) {
   const files = [...new Set(sources)].map(source=>path.join(root,checkedFile(root,source)));
   const program = ts.createProgram(files,{allowJs:true,checkJs:false,noEmit:true,skipLibCheck:true,target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext});
   const checker = program.getTypeChecker();
@@ -103,7 +105,9 @@ export function collectModuleExports(root, sources) {
         const position = owner.getLineAndCharacterOfPosition(declaration.getStart(owner));
         return {path:relative,line:position.line+1,column:position.character+1,kind:ts.SyntaxKind[declaration.kind]};
       });
-      return { name:exported.name, declarationName:symbol.name, declarationTypeOnly:(symbol.flags & ts.SymbolFlags.Value)===0, status:declarations.length ? "resolved" : "unresolved", declarations };
+      // <lang><zh-CN>成员盘点是显式附加核对，不改变旧根绑定清单，也不参与文档符号构造。</zh-CN><en>Member inspection is an explicit additional check; it changes neither legacy root inventories nor documentation symbol construction.</en></lang>
+      const members=options.includeMembers?collectStaticMemberDeclarations({checker,symbol,source,root}):{};
+      return { name:exported.name, declarationName:symbol.name, declarationTypeOnly:(symbol.flags & ts.SymbolFlags.Value)===0, status:declarations.length ? "resolved" : "unresolved", declarations,...members };
     }).sort((a,b)=>a.name.localeCompare(b.name,"en")) : [];
     return {path:path.relative(root,file).split(path.sep).join("/"),moduleRecognized:Boolean(module),syntacticDiagnostics:program.getSyntacticDiagnostics(source).map(item=>item.code),exports};
   });

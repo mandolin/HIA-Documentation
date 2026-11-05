@@ -16,10 +16,11 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
  * @lang zh-CN 在既有工件协议下逐来源核验原生声明，返回实际关联与缺口；不执行目标包。
  * @lang en Verify native declarations per source under existing artifact protocols, returning actual associations and gaps without executing target packages.
  * @param {string} workspaceRoot - 本主仓所属授权容器。 Authorized container owning this main repository.
+ * @param {object} [options] - 显式includeMembers核对嵌套成员，保留旧默认根绑定检查。 Explicit includeMembers checks nested members while preserving the default root-binding audit.
  * @returns {Promise<object>} 关联报告与主仓相对输出路径，非完整覆盖/发行许可。 Association report and main-relative output, not full coverage/release permission.
  * @throws {Error} 文件边界、工件协议、核心字段或来源无效。 Invalid file boundary, artifact protocol, core fields or sources.
  */
-export async function auditSatelliteNativeApi(workspaceRoot) {
+export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   // <lang><zh-CN>工作区和工具均固定为本主仓所属容器；不能用调用参数替换生产器实现。
   // </zh-CN><en>Both workspace and tools are fixed to this main repository's container; arguments cannot substitute another producer.</en></lang>
   const mainRoot=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
@@ -29,7 +30,7 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
   const pluginPath=path.join(container,"HIA/jsdoc-plugin-hia-sys/src/index.cjs");
   for(const file of [producerPath,pluginPath]) assert.equal(fs.realpathSync(file),file,"Tool path redirected.");
   const {jsdocProducer}=await import(pathToFileURL(producerPath));
-  const inventory=auditRequiredPackages(container);
+  const inventory=auditRequiredPackages(container,options);
   const packages=inventory.packages.filter(item=>item.owner!=="main-repo");
   assert.equal(packages.length,32);
   const dist=path.join(mainRoot,"dist");
@@ -40,9 +41,17 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
   // </zh-CN><en>Produce each actual source once with artifact scope intact; the cache never deduplicates by node name.</en></lang>
   const documents=new Map();
   const rows=[];
+  // <lang><zh-CN>根绑定与成员路径分别计数，不把默认别名或同一实现的多个访问路径算成独立函数。</zh-CN><en>Count root bindings separately from member access paths; default aliases and multiple paths to one implementation are not independent functions.</en></lang>
+  const memberRows=[];
+  const memberBoundaries=[];
   for(const pack of packages) {
     const modules=pack.modules.filter(module=>/\.(mjs|cjs|js)$/.test(module.path));
-    for(const module of modules) for(const binding of module.exports.filter(item=>!item.declarationTypeOnly)) {
+    for(const module of modules) for(const rootBinding of module.exports.filter(item=>!item.declarationTypeOnly)) {
+      // <lang><zh-CN>成员期望只来自编译器独立清单；生产仍读取真实原声明文件，动态/资源边界单独登记。</zh-CN><en>Member expectations come only from the independent compiler inventory; production still reads actual declaration files and records dynamic/resource boundaries separately.</en></lang>
+      const candidates=[{binding:rootBinding},...(rootBinding.members??[]).map(binding=>({binding,memberPath:binding.memberPath}))];
+      for(const boundary of rootBinding.memberBoundaries??[]) memberBoundaries.push({package:pack.name,module:module.path,name:rootBinding.name,...boundary});
+      for(const candidate of candidates) {
+      const binding=candidate.binding;
       for(const declaration of binding.declarations) {
         if(!declaration.path || !/\.(mjs|cjs|js)$/.test(declaration.path)) continue;
         const source=`HIA/${pack.owner}/${declaration.path}`;
@@ -94,7 +103,10 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
         documents.set(source,record);
       }
       const association=associateNativeJsdocBinding({binding,owner:pack.owner,outputs:[...documents.values()]});
-      rows.push({package:pack.name,owner:pack.owner,sourceHead:pack.sourceHead,module:module.path,name:binding.name,declarationName:binding.declarationName,...association});
+      const row={package:pack.name,owner:pack.owner,sourceHead:pack.sourceHead,module:module.path,name:rootBinding.name,declarationName:binding.declarationName,...association};
+      if(candidate.memberPath) memberRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable});
+      else rows.push(row);
+      }
     }
   }
   // <lang><zh-CN>未注释历史模块、缺签名、类型入口与最终页面仍分别登记；位置关联不能冒称全部内容验收。
@@ -102,6 +114,12 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
   const callableSignatureGaps=rows.filter(row=>row.status==="associated" && row.declarations.some(item=>item.isCallable&&!item.hasSignature)).map(row=>({package:row.package,module:row.module,name:row.name}));
   const callableBindings=rows.filter(row=>row.declarations.some(item=>item.isCallable)).length;
   const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
+  if(options.includeMembers) {
+    // <lang><zh-CN>已关联但缺正文/调用签名仍不算成员内容通过；数组等未展开边界保持显式未核。</zh-CN><en>Association alone cannot pass members without prose/callable signatures; unexpanded boundaries such as arrays remain explicitly unverified.</en></lang>
+    const gaps=memberRows.filter(row=>row.status!=="associated"||row.declarations.some(item=>!item.hasText)||row.expectedCallable&&row.declarations.some(item=>!item.hasSignature));
+    const callableRows=memberRows.filter(row=>row.expectedCallable);
+    report.memberAudit={accessPaths:memberRows.length,associatedPaths:memberRows.filter(row=>row.status==="associated").length,contentGaps:gaps.length,callablePaths:callableRows.length,callableContentGaps:gaps.filter(row=>row.expectedCallable).length,rows:memberRows,boundaries:memberBoundaries,complete:gaps.length===0&&memberBoundaries.length===0};
+  }
   assertPublicRootOmission(report,container);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
   return {report,output:path.relative(mainRoot,output).replaceAll("\\","/")};
@@ -111,8 +129,8 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
 // </zh-CN><en>Only explicit inspection permits completion with gaps; the default gate exits nonzero when any binding is blocked.</en></lang>
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2);
-  assert((args.length===2 || args.length===3 && args[2]==="--inspect") && args[0]==="--workspace-root","Expected --workspace-root with optional --inspect.");
-  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]));
-  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,coverageComplete:false,output}));
-  if((report.blockedBindings || report.callableSignatureGaps.length) && args.length!==3) process.exitCode=1;
+  assert(args.length>=2&&args.length<=4&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members"].includes(arg)),"Expected --workspace-root with optional --members and --inspect.");
+  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members")});
+  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,...(report.memberAudit?{memberPaths:report.memberAudit.accessPaths,memberContentGaps:report.memberAudit.contentGaps,memberBoundaries:report.memberAudit.boundaries.length}:{}),coverageComplete:false,output}));
+  if((report.blockedBindings || report.callableSignatureGaps.length || report.memberAudit&&!report.memberAudit.complete) && !args.includes("--inspect")) process.exitCode=1;
 }
