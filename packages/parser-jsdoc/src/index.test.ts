@@ -17,6 +17,23 @@ async function readIntegrationFixture(name = "jsdoc-integration.basic.json") {
   return JSON.parse(await readFile(fixturePath, "utf8")) as unknown;
 }
 
+it("preserves an explicit source-proven signature without synthesizing old ones",async()=>{
+  const input=await readIntegrationFixture() as {ir:{nodes:Record<string,unknown>[]}};
+  const before=convertJSDocIntegrationToHiaDocument(input,{includeEmptySymbols:true});
+  expect(before.symbols.every(symbol=>symbol.signature===undefined)).toBe(true);
+  input.ir.nodes[0]!.signature="actual(first = {}, ...rest) → object";
+  const document=convertJSDocIntegrationToHiaDocument(input,{includeEmptySymbols:true});
+  expect(document.symbols.find(symbol=>symbol.id===input.ir.nodes[0]!.id)?.signature).toBe(input.ir.nodes[0]!.signature);
+});
+
+it("omits invalid or blank signatures rather than coercing them",async()=>{
+  for(const signature of [null,[],{},42,true,"", "  "]) {
+    const input=await readIntegrationFixture() as {ir:{nodes:Record<string,unknown>[]}};
+    input.ir.nodes[0]!.signature=signature;
+    expect(convertJSDocIntegrationToHiaDocument(input,{includeEmptySymbols:true}).symbols.every(symbol=>symbol.signature===undefined)).toBe(true);
+  }
+});
+
 function findDuplicateIds(ids: string[]): string[] {
   return ids.filter((id, index) => ids.indexOf(id) !== index);
 }

@@ -99,7 +99,9 @@ export async function auditSatelliteNativeApi(workspaceRoot) {
   }
   // <lang><zh-CN>未注释历史模块、缺签名、类型入口与最终页面仍分别登记；位置关联不能冒称全部内容验收。
   // </zh-CN><en>Undocumented historical modules, missing signatures, type entries and final pages remain separately recorded; position association is not full content acceptance.</en></lang>
-  const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,rows,sources:[...documents.values()].map(({integration,document,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),"callable-signature-projection","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
+  const callableSignatureGaps=rows.filter(row=>row.status==="associated" && row.declarations.some(item=>item.isCallable&&!item.hasSignature)).map(row=>({package:row.package,module:row.module,name:row.name}));
+  const callableBindings=rows.filter(row=>row.declarations.some(item=>item.isCallable)).length;
+  const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
   assertPublicRootOmission(report,container);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
   return {report,output:path.relative(mainRoot,output).replaceAll("\\","/")};
@@ -111,6 +113,6 @@ if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[
   const args=process.argv.slice(2);
   assert((args.length===2 || args.length===3 && args[2]==="--inspect") && args[0]==="--workspace-root","Expected --workspace-root with optional --inspect.");
   const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]));
-  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,coverageComplete:false,output}));
-  if(report.blockedBindings && args.length!==3) process.exitCode=1;
+  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,coverageComplete:false,output}));
+  if((report.blockedBindings || report.callableSignatureGaps.length) && args.length!==3) process.exitCode=1;
 }

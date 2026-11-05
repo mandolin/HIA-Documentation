@@ -45,6 +45,10 @@ test("loss of parameter or return metadata fails verification",()=>{
   const data=fixture();data.outputs[0].document.symbols[0].metadata.jsdoc.returns=[];
   assert.throws(()=>associateNativeJsdocBinding(data),/metadata/i);
 });
+test("loss of a source-proven callable signature fails verification",()=>{
+  const data=fixture();data.outputs[0].integration.ir.nodes[0].signature="original(options) → string";
+  assert.throws(()=>associateNativeJsdocBinding(data),/signature/i);
+});
 test("changed core source position fails verification",()=>{
   const data=fixture();data.outputs[0].document.symbols[0].source.definedIn.position.line=13;
   assert.throws(()=>associateNativeJsdocBinding(data),/source/i);

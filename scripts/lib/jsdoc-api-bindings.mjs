@@ -31,6 +31,7 @@ export function associateNativeJsdocBinding({binding,owner,outputs}) {
     assert.equal(symbols.length,1,"Missing or ambiguous core declaration.");
     const symbol=symbols[0];
     assert.equal(symbol.name,node.name,"Core declaration name changed.");
+    if(node.signature) assert.equal(symbol.signature,node.signature,"Native signature changed in core conversion.");
     assert.deepEqual(symbol.metadata?.jsdoc,node.jsdoc,"Native metadata changed in core conversion.");
     assert.equal(symbol.source?.definedIn?.relativePath,node.source.definedIn.relativePath,"Core source declaration changed.");
     assert.deepEqual(symbol.source?.definedIn?.position,node.source.definedIn.position,"Core source position changed.");
@@ -50,7 +51,7 @@ export function associateNativeJsdocBinding({binding,owner,outputs}) {
       if(field.defaultText) assert.equal(actual.defaultText,field.defaultText,"Native localized default text changed.");
     }
     if(node.summary && !node.i18n?.fields?.description) assert.equal(symbol.summary,node.summary,"Native summary changed in core conversion.");
-    declarations.push({source,line:expected.line,artifact:output.artifact,nodeId:node.id,i18nFields:fields.length,hasText:Boolean(node.summary || fields.some(([,field])=>field.defaultText || Object.values(field.localizedText??{}).some(Boolean)))});
+    declarations.push({source,line:expected.line,artifact:output.artifact,nodeId:node.id,i18nFields:fields.length,isCallable:["function","class"].includes(node.kind)||Boolean(node.signature),hasSignature:Boolean(node.signature),hasText:Boolean(node.summary || fields.some(([,field])=>field.defaultText || Object.values(field.localizedText??{}).some(Boolean)))});
   }
   return {status:gaps.length ? "blocked" : "associated",declarations,gaps};
 }

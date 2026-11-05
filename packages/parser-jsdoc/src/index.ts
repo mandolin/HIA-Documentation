@@ -399,6 +399,11 @@ function mapIntegrationNodeToSymbol(
     symbol.summary = summary;
   }
 
+  // <lang><zh-CN>只保留生产者显式提供的非空签名文本，不从旧参数注释推断调用形态或授予源码读取权限。</zh-CN><en>Retain only explicit nonblank producer signature text, never inferring call shape from legacy parameter comments or granting source-read permission.</en></lang>
+  if (typeof node.signature === "string" && node.signature.trim()) {
+    symbol.signature = node.signature;
+  }
+
   if (longname) {
     symbol.longname = longname;
   }

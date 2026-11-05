@@ -45,3 +45,5 @@ The compatibility fixtures are:
 `jsdoc-integration.real-basic.json` is generated from the JPHS basic example, with local machine paths replaced by synthetic absolute paths. It intentionally preserves the real producer shape so the adapter can prove it cleans metadata, removes synthetic nodes, normalizes source link mode and emits a valid core document.
 
 See `docs/adapter-authoring-notes.md` and `docs/contract-index.md` for the adapter-to-core boundary.
+
+An explicit nonblank integration-node `signature` is preserved as the existing core symbol signature. The adapter does not infer it from parameter comments, read source files or grant source-preview permission. Legacy nodes without the optional field retain their old projection. The producer remains responsible for the signature's provenance and public-safe content.
