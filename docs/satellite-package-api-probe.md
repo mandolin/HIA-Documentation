@@ -22,3 +22,5 @@ node --test scripts/satellite-jsdoc-probe.test.mjs
 ```
 
 These integration tests skip when the workspace variable is absent. A skip is not validation evidence; the satellite repositories are required for a real run.
+
+For original-declaration association beyond entry parsing, use the [native API association audit](satellite-native-api-association.md). It processes source files separately and reports unresolved bindings explicitly. Its stricter result is distinct from a successful parsing probe.

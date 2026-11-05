@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath,pathToFileURL} from "node:url";
+import ts from "typescript";
 
 // <lang><zh-CN>仅显式联调时加载已授权工具；单主仓CI不隐式克隆卫星或安装依赖。</zh-CN><en>Load authorized tools only for explicit integration; main-only CI never implicitly clones satellites or installs dependencies.</en></lang>
 const workspace=process.env.HIA_API_WORKSPACE_ROOT;
@@ -73,4 +74,25 @@ export function sample(){return 1;}
 `);
   assert.equal(result.status,"success");
   assert(JSON.parse(fs.readFileSync(path.join(output,"hia-integration.json"))).ir.nodes.some(item=>item.name==="sample"));
+});
+
+test("projection documentation retains literal fields and optional range typing",{skip:!enabled},()=>{
+  // <lang><zh-CN>用真实TypeScript读取标准JSDoc返回类型，防止为让JSDoc通过而将完整结构降级为Object。
+  // </zh-CN><en>Read the standard JSDoc return type through real TypeScript so native-parser compatibility cannot degrade its structure to Object.</en></lang>
+  const file=path.join(fs.realpathSync(workspace),"HIA/hia-htmdoc/packages/htmdoc-runner/src/html-authoring-source-comment-integration.mjs");
+  const program=ts.createProgram([file],{allowJs:true,checkJs:false,noEmit:true,skipLibCheck:true,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext});
+  const checker=program.getTypeChecker();
+  const source=program.getSourceFile(file);
+  const exported=checker.getExportsOfModule(checker.getSymbolAtLocation(source)).find(item=>item.name==="createHtmlAuthoringSourceCommentProjectionRequest");
+  const signature=checker.getTypeOfSymbolAtLocation(exported,source).getCallSignatures()[0];
+  const returned=checker.getReturnTypeOfSignature(signature);
+  assert.equal(checker.getTypeOfPropertyOfType(returned,"contract").value,"documentation-source-comment-projection");
+  assert.equal(checker.getTypeOfPropertyOfType(returned,"contractVersion").value,"0.1.0-draft");
+  assert.deepEqual(checker.getTypeOfPropertyOfType(returned,"source").getProperties().map(item=>item.name).sort(),["docSourceMapEntryId","documentId","sourceId","symbolId"]);
+  assert.deepEqual(checker.getTypeOfPropertyOfType(returned,"contentPolicy").types.map(item=>item.value).sort(),["explicit-projected-text","none"]);
+  const comment=checker.getIndexTypeOfType(checker.getTypeOfPropertyOfType(returned,"comments"),ts.IndexKind.Number);
+  assert.equal(checker.getTypeOfPropertyOfType(comment,"order").value,0);
+  assert.equal(checker.getTypeOfPropertyOfType(comment,"commentId").value,"comment.description");
+  assert.equal(Boolean(comment.getProperty("range").flags & ts.SymbolFlags.Optional),true);
+  assert.deepEqual(checker.getTypeOfPropertyOfType(comment,"localizedText").getStringIndexType().flags,ts.TypeFlags.String);
 });

@@ -37,6 +37,8 @@ test("compiler resolves root re-exports, aliases, and type-only names",()=>{
   assert.deepEqual(result.exports.map(entry=>entry.name),["ALIAS","COUNT","Item"]);
   assert(result.exports.every(entry=>entry.declarations[0].path==="src/value.ts"));
   assert.equal(result.exports.find(entry=>entry.name==="COUNT").declarations[0].kind,"VariableDeclaration");
+  assert.equal(result.exports.find(entry=>entry.name==="Item").declarationTypeOnly,true);
+  assert.equal(result.exports.find(entry=>entry.name==="COUNT").declarationTypeOnly,false);
 });
 test("compiler inspection never executes a target with top-level effects",()=>{
   const result=collectModuleExports(root,["src/entry.mjs"])[0];

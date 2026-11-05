@@ -84,7 +84,7 @@ export function collectPackageEntries(root, manifest, sourceEntry) {
  * @lang en Use the installed TypeScript compiler to inspect explicit module re-exports and aliases without execution; unknown declarations remain unresolved.
  * @param {string} root - 允许的源码归属根。 Allowed source ownership root.
  * @param {string[]} sources - 相对模块路径。 Relative module paths.
- * @returns {object[]} 导出名、语法种类和归属位置；无源码正文或绝对路径。 Export names, syntax kinds, and owner locations, without bodies or absolute paths.
+ * @returns {object[]} 导出名、声明是否纯类型、语法种类和归属位置；声明分类不代替type-only重导出可用性分析。 Export names, declaration-only type flags, syntax kinds and owner locations; declaration classification does not establish type-only re-export availability.
  */
 export function collectModuleExports(root, sources) {
   const files = [...new Set(sources)].map(source=>path.join(root,checkedFile(root,source)));
@@ -103,7 +103,7 @@ export function collectModuleExports(root, sources) {
         const position = owner.getLineAndCharacterOfPosition(declaration.getStart(owner));
         return {path:relative,line:position.line+1,column:position.character+1,kind:ts.SyntaxKind[declaration.kind]};
       });
-      return { name:exported.name, declarationName:symbol.name, status:declarations.length ? "resolved" : "unresolved", declarations };
+      return { name:exported.name, declarationName:symbol.name, declarationTypeOnly:(symbol.flags & ts.SymbolFlags.Value)===0, status:declarations.length ? "resolved" : "unresolved", declarations };
     }).sort((a,b)=>a.name.localeCompare(b.name,"en")) : [];
     return {path:path.relative(root,file).split(path.sep).join("/"),moduleRecognized:Boolean(module),syntacticDiagnostics:program.getSyntacticDiagnostics(source).map(item=>item.code),exports};
   });
