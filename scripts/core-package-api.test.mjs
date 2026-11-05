@@ -1,7 +1,10 @@
 /** @lang zh-CN 核心包生成链的独立导出/字段/来源查缺回归。 @lang en Regressions for independent export/field/source coverage checks of generated core package APIs. */
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {verifyProjectApiProjection,assertPublicRootOmission} from "./lib/core-package-api.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {verifyProjectApiProjection,assertPublicRootOmission,writeCoreApiReport} from "./lib/core-package-api.mjs";
 
 /**
  * @lang zh-CN 构造两个公开入口的独立期望和富字段投影，不执行实际源码。
@@ -41,4 +44,29 @@ test("unexpected exports and JSON-escaped machine roots fail",()=>{
   assert.throws(()=>assertPublicRootOmission({value:root},root));
   assert.throws(()=>assertPublicRootOmission({value:"file:///K:/Owned Space/Example/source.ts"},root));
   assert.doesNotThrow(()=>assertPublicRootOmission({value:"src/public.ts"},root));
+});
+
+test("summary writes only a real directory and refuses a redirected directory",()=>{
+  const parent=fileURLToPath(new URL("../dist/",import.meta.url));
+  fs.mkdirSync(parent,{recursive:true});
+  const root=fs.realpathSync(fs.mkdtempSync(path.join(parent,"api-summary-")));
+  const actual=path.join(root,"output");
+  fs.mkdirSync(actual);
+  writeCoreApiReport(actual,{status:"checked"});
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(actual,"core-package-api-report.json"),"utf8")),{status:"checked"});
+  const alias=path.join(root,"alias");
+  fs.symlinkSync(actual,alias,process.platform==="win32" ? "junction" : "dir");
+  assert.throws(()=>writeCoreApiReport(alias,{status:"wrong"}));
+  assert.equal(JSON.parse(fs.readFileSync(path.join(actual,"core-package-api-report.json"),"utf8")).status,"checked");
+});
+
+test("summary cannot overwrite another file through an existing hard link",()=>{
+  const parent=fileURLToPath(new URL("../dist/",import.meta.url));
+  fs.mkdirSync(parent,{recursive:true});
+  const root=fs.realpathSync(fs.mkdtempSync(path.join(parent,"api-summary-")));
+  const retained=path.join(root,"retained.json");
+  fs.writeFileSync(retained,"retain");
+  fs.linkSync(retained,path.join(root,"core-package-api-report.json"));
+  assert.throws(()=>writeCoreApiReport(root,{status:"wrong"}));
+  assert.equal(fs.readFileSync(retained,"utf8"),"retain");
 });

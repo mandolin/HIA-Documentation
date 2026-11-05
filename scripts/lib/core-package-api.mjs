@@ -3,6 +3,8 @@
  * @lang en Independent projection checks for generated core package docs; inventories supply expectations while complete fields/actual sources must come from producer output.
  */
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 
 /**
  * @lang zh-CN 对每个公开绑定、每条声明/父项/签名/注释和HIA字段/来源逐项比对，不按摘要或符号计数接受丢失。
@@ -66,4 +68,23 @@ export function verifyProjectApiProjection({modules,extraction,document,bridge})
 export function assertPublicRootOmission(value,root) {
   const text=JSON.stringify(value);
   for(const variant of new Set([root,root.replaceAll("\\","/"),root.replaceAll("/","\\")])) assert(!text.includes(JSON.stringify(variant).slice(1,-1)),"Generated artifacts disclose the machine root.");
+}
+
+/**
+ * @lang zh-CN 将汇总写入本轮真实输出根，拒绝目录重定向和既有链接目标；静态检查不承诺并发换向防护。
+ * @lang en Write the summary under this run's real output root, refusing directory redirection and existing linked targets; static checks do not promise concurrent-swap protection.
+ * @param {string} outputDirectory - 生产器已创建的绝对规范目录。 Absolute canonical directory already created by the producer.
+ * @param {object} report - 可序列化汇总。 Serializable summary.
+ * @returns {void} 写入完成；不创建目录或清理未知文件。 Completes without creating directories or cleaning unknown files.
+ */
+export function writeCoreApiReport(outputDirectory,report) {
+  // <lang><zh-CN>汇总也必须遵守生产器的输出边界，不能在校验完工件后绕过链接检查写文件。</zh-CN><en>The summary shares the producer's output boundary and cannot bypass link checks after artifact validation.</en></lang>
+  assert(path.isAbsolute(outputDirectory),"Report output must be absolute.");
+  assert.equal(path.relative(path.resolve(outputDirectory),fs.realpathSync(outputDirectory)),"","Report directory is redirected.");
+  const target=path.join(outputDirectory,"core-package-api-report.json");
+  try {
+    const state=fs.lstatSync(target);
+    assert(!state.isSymbolicLink() && state.isFile() && state.nlink===1,"Report target is linked or not a regular file.");
+  } catch(error) {if(error?.code!=="ENOENT") throw error;}
+  fs.writeFileSync(target,JSON.stringify(report,null,2)+"\n","utf8");
 }

@@ -12,7 +12,7 @@ import {validateHiaDocument} from "../packages/core/dist/index.js";
 import {validateDocSourceMap} from "../packages/source-linkage/dist/index.js";
 import {createOfficialTsDocProjectProfileSet,getOfficialTsDocProjectProfile} from "../packages/profiles/dist/index.js";
 import {auditRequiredPackages} from "./audit-required-package-api.mjs";
-import {verifyProjectApiProjection,assertPublicRootOmission} from "./lib/core-package-api.mjs";
+import {verifyProjectApiProjection,assertPublicRootOmission,writeCoreApiReport} from "./lib/core-package-api.mjs";
 
 /**
  * @lang zh-CN 从调用者明确授权的工作区加载HIA自有生产器，输出只在主仓dist；独立审计不替代生成。
@@ -80,7 +80,7 @@ export async function buildCorePackageApi(workspaceRoot) {
   // <lang><zh-CN>资源/bin仅在独立审计中登记，不能混算成符号/页面已完成；其它32包必须保持开放。</zh-CN><en>Resources/bins are inventory-only and cannot count as completed symbols/pages; the other 32 packages remain open.</en></lang>
   const report={purpose:"core-package-api-generation-verification",scope:"twelve-core-package-modules",requiredPackages:44,generatedPackages:rows.length,remainingPackages:inventory.packages.filter(pack=>pack.owner!=="main-repo").map(pack=>pack.name),profile:{profileId:profile.profileId,profileVersion:profile.profileVersion,schemaVersion:profile.schemaVersion},producer:result.producer,rows,summary:{bindings:rows.reduce((sum,row)=>sum+row.bindings,0),symbols:rows.reduce((sum,row)=>sum+row.symbols,0),i18nFields:rows.reduce((sum,row)=>sum+row.i18nFields,0),artifacts:result.artifacts.length,auditedResourceOrCommandEntries:packages.flatMap(pack=>pack.entries).filter(entry=>["json-resource","command"].includes(entry.kind)).length},pending:["resource-and-command-page-acceptance","remaining-32-package-chains","complete-source-comment-and-translation-review","generated-page-visual-and-interaction-acceptance"],releaseProof:false};
   // <lang><zh-CN>摘要写入本owner忽略目录，重建不清理未知文件；只有本轮清单可作为当轮成功依据。</zh-CN><en>Write the report into this owner's ignored directory without deleting unknown files; only this run's manifest establishes current success.</en></lang>
-  fs.writeFileSync(path.join(outputDirectory,"core-package-api-report.json"),JSON.stringify(report,null,2)+"\n");
+  writeCoreApiReport(outputDirectory,report);
   return report;
 }
 
