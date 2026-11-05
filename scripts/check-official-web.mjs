@@ -6,7 +6,9 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { locales, kinds, route, href } from "../site/src/lib/routes.mjs";
+import { locales, kinds, manualKinds, route, href } from "../site/src/lib/routes.mjs";
+import { readSearchIndex } from "../site/src/lib/search.mjs";
+import { currentDocumentation } from "../site/src/lib/version-index.mjs";
 
 /**
  * @lang zh-CN 拒绝公开文本中的本地路径与私有工作区标记，允许独立的公开产品名称。
@@ -81,7 +83,12 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
     // <lang lang="zh-CN">清单独立验证每页语言、主内容与同主题译文目标。</lang><lang lang="en">Validate each page locale, main content, and same-topic alternate independently.</lang>
     const file = route(kind, locale) + "index.html";
     const html = texts.get(file);
-    assert(html?.includes(`<html lang="${locale}">`), "Incorrect page locale.");
+    assert(html?.includes(`<html lang="${locale}"`), "Incorrect page locale.");
+    // <lang lang="zh-CN">内嵌检索与真实手册清单逐项对应，不接受只有标题的伪全文索引。</lang><lang lang="en">Match the embedded index to actual manuals, rejecting title-only substitutes for body search.</lang>
+    const indexText = html.match(/<script type="application\/json" id="page-directory">([\s\S]*?)<\/script>/)?.[1];
+    const entries = readSearchIndex(indexText, locale, currentDocumentation.version);
+    assert.deepEqual(entries.map(entry => entry.href), manualKinds.map(topic => href(topic, locale)), "Search manual inventory disagrees with actual routes.");
+    assert(entries.every(entry => entry.text.length > 100), "Search bodies are missing.");
     assert.equal((html.match(/<h1(?:\s|>)/g) ?? []).length, 1, "Each page requires exactly one primary heading.");
     assert(html.includes('id="main"') && html.includes("HIA-Documentation-Sys"), "Required website structure is missing.");
     assert(html.includes(`hreflang="${locale === "en" ? "zh-CN" : "en"}"`), "Alternate language is missing.");

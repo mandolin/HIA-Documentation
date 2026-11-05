@@ -1,0 +1,56 @@
+/**
+ * @lang zh-CN 正文检索必须命中实际内容，隔离语言/版本并区分坏索引与空结果。
+ * @lang en Content search must match body text, isolate locale/version, and distinguish invalid indexes from empty results.
+ */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { searchDocuments, readSearchIndex } from "../src/lib/search.mjs";
+import { href, route } from "../src/lib/routes.mjs";
+import { readFile } from "node:fs/promises";
+
+// <lang lang="zh-CN">同题不同语言/版本的合成公开正文，避免仅测标题匹配。</lang><lang lang="en">Synthetic public bodies share a topic across locales/versions to exercise more than title matching.</lang>
+const entries = [
+  { title: "品牌与来源", href: href("theme-source", "zh-CN"), locale: "zh-CN", version: "1.0.0", text: "共享资源只有一个写入者。accent 使用 #0047AB。" },
+  { title: "Branding", href: href("theme-source", "en"), locale: "en", version: "1.0.0", text: "Assets have one writer. accent uses #0047AB." },
+  { title: "Old", href: "/HIA-Documentation/docs/archive/v0/en/", locale: "en", version: "0.9.0", text: "Legacy-only secret-search-token" },
+];
+
+test("new reference/development routes remain explicit translated deep links", () => {
+  assert.equal(route("reference", "zh-CN"), "docs/zh-CN/reference/");
+  assert.equal(route("development", "en"), "docs/en/development/");
+  assert.equal(route("domains", "en"), "docs/en/learn/domains/");
+});
+test("body terms and multiple literal words match without mixing locales or versions", () => {
+  assert.equal(searchDocuments(entries, "写入者", "zh-CN", "1.0.0").length, 1);
+  assert.equal(searchDocuments(entries, "writer ACCENT", "en", "1.0.0").length, 1);
+  assert.equal(searchDocuments(entries, "writer", "zh-CN", "1.0.0").length, 0);
+  assert.equal(searchDocuments(entries, "secret-search-token", "en", "1.0.0").length, 0);
+});
+test("queries are literal and bounded, not regular expressions or markup", () => {
+  assert.deepEqual(searchDocuments(entries, "[.*", "en", "1.0.0"), []);
+  assert.deepEqual(searchDocuments(entries, '<script>alert(1)</script>', "en", "1.0.0"), []);
+  assert.throws(() => searchDocuments(entries, "x".repeat(501), "en", "1.0.0"), /query/i);
+});
+test("results retain an extract around body matches and never mutate the input", () => {
+  const before = JSON.stringify(entries);
+  const result = searchDocuments(entries, "#0047AB", "en", "1.0.0");
+  assert.match(result[0].excerpt, /#0047AB/);
+  assert.equal(JSON.stringify(entries), before);
+  assert.equal(searchDocuments(Array(30).fill(entries[1]), "", "en", "1.0.0").length, 20);
+});
+test("malformed index differs from an empty valid index and never echoes rejected bytes", () => {
+  assert.deepEqual(readSearchIndex("[]", "en", "1.0.0"), []);
+  for (const raw of ["private malformed", JSON.stringify([{...entries[1], href:"javascript:alert(1)"}]), JSON.stringify([entries[0]])]) {
+    assert.throws(() => readSearchIndex(raw, "en", "1.0.0"), error => error.message === "Search index unavailable.");
+  }
+  assert.equal(readSearchIndex(JSON.stringify([entries[1]]), "en", "1.0.0").length, 1);
+});
+
+test("English workflows retain every shared Chinese configuration and command example", async () => {
+  for (const topic of ["domains", "project-language", "theme-source", "deployment-versions"]) {
+    // <lang lang="zh-CN">针对共用代码逐块比对，避免提升英文时只留下指向另一语言的above描述。</lang><lang lang="en">Compare shared code blocks individually so English promotion cannot leave only a reference to examples in another language.</lang>
+    const zh = await readFile(new URL(`../src/content/${topic}.zh-CN.md`, import.meta.url), "utf8");
+    const en = await readFile(new URL(`../src/content/${topic}.en.md`, import.meta.url), "utf8");
+    for (const block of zh.matchAll(/~~~[^\n]*\n([\s\S]*?)\n~~~/g)) assert(en.includes(block[1]), "English shared example is missing: " + topic);
+  }
+});

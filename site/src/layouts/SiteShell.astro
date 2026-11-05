@@ -3,7 +3,9 @@
  * @lang zh-CN 官网公共壳：固定顶部、显式双语对应、版本说明及渐进增强；不读取账户、存储或工作区。
  * @lang en Shared website shell with fixed navigation, explicit translations, versions, and progressive enhancement; no account, storage, or workspace access.
  */
-import { href, labels } from "../lib/routes.mjs";
+import { href, labels, manualKinds } from "../lib/routes.mjs";
+import { manualSearchEntries } from "../lib/content.mjs";
+import { currentDocumentation } from "../lib/version-index.mjs";
 import "../styles/site.css";
 interface Props { locale: "zh-CN" | "en"; kind: string; }
 const { locale, kind } = Astro.props;
@@ -14,11 +16,13 @@ const text = (zh: string, english: string) => en ? english : zh;
 const url = (topic: string) => href(topic, locale, import.meta.env.BASE_URL);
 const title = labels[locale][kind as keyof typeof labels.en];
 // <lang lang="zh-CN">文档子页共享顶部文档选中态，具体主题仍由正文目录表达。</lang><lang lang="en">Documentation children share the top-level documentation state while the article directory identifies the topic.</lang>
-const activeTopic = ["start", "versions", "search"].includes(kind) ? "docs" : kind;
+const activeTopic = [...manualKinds, "versions", "search"].includes(kind) ? "docs" : kind;
+const versionLabel = currentDocumentation.version + text(" 预览", " preview");
+const currentTopic = activeTopic === "docs" ? kind : "docs";
 const nav = ["home", "features", "docs"];
 ---
 <!doctype html>
-<html lang={locale}>
+<html lang={locale} data-documentation-version={currentDocumentation.version}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -33,7 +37,7 @@ const nav = ["home", "features", "docs"];
     <a class="skip" href="#main">{text("跳到正文", "Skip to content")}</a>
     <header class="header"><div class="header-inner">
       <a class="brand" href={url("home")}><span class="brand-mark" aria-hidden="true">HIA</span><span class="brand-title">HIA-Documentation-Sys<span class="brand-caption">{text("面向人与人工智能的文档体系", "Documentation for people and AI")}</span></span></a>
-      <details class="version"><summary class="tool">{text("1.0.0 预览", "1.0.0 preview")} <span aria-hidden="true">⌄</span></summary><div class="version-menu"><p>{text("文档版本", "Documentation version")}</p><a href={url("docs")} aria-current="true">{text("1.0.0 预览 · 发布准备中", "1.0.0 preview · Release preparation")}</a><p>{text("尚无历史大版本封版", "No archived major versions yet")}</p><a href={url("versions")}>{text("历史版本与保留规则 →", "Archives and retention →")}</a></div></details>
+      <details class="version"><summary class="tool">{versionLabel} <span aria-hidden="true">⌄</span></summary><div class="version-menu"><p>{text("文档版本", "Documentation version")}</p><a href={url(currentTopic)} aria-current="true" data-preserve-anchor>{versionLabel} · {text("发布准备中", "Release preparation")}</a><p>{text("尚无历史大版本封版", "No archived major versions yet")}</p><a href={url("versions")}>{text("历史版本与保留规则 →", "Archives and retention →")}</a></div></details>
       <nav class="top-nav" aria-label={text("主导航", "Main navigation")}>{nav.map(topic => <a href={url(topic)} aria-current={activeTopic === topic ? "page" : undefined}>{labels[locale][topic as keyof typeof labels.en]}</a>)}<a href={url("features") + "#examples"}>{text("演示项目", "Examples")}</a></nav>
       <div class="header-tools">
         <button class="tool search-trigger js-only" data-dialog="search-dialog">{labels[locale].search}<kbd>Ctrl K</kbd></button>
@@ -46,12 +50,12 @@ const nav = ["home", "features", "docs"];
     <div class="page"><slot />
       <footer class="footer"><div class="container footer-inner"><span>HIA-Documentation-Sys · {text("文档，与代码共同演进。", "Documentation evolves with code.")}</span><nav aria-label={text("页脚", "Footer")}><a href={url("docs")}>{labels[locale].docs}</a><a href={url("versions")}>{labels[locale].versions}</a><a href="https://github.com/mandolin/HIA-Documentation/issues">{text("反馈与支持", "Feedback and support")}</a></nav></div></footer>
     </div>
-    <dialog id="search-dialog" aria-labelledby="search-title"><div class="dialog-head"><h2 id="search-title">{labels[locale].search}</h2><button class="tool" data-close aria-label={text("关闭搜索", "Close search")}>Esc · {text("关闭", "Close")}</button></div><div class="dialog-body"><label for="search-query">{text("当前语言的页面目录", "Page directory in the current language")}</label><input class="search-input" id="search-query" autofocus type="search" placeholder={text("搜索主题…", "Search topics…")} data-search-input="dialog-results" /><div id="dialog-results" class="results" aria-live="polite"></div><p class="sample-tag">{text("仅筛选本官网已生成的页面入口；完整文档与接口搜索尚未接入。查询不离开当前页面。", "Filters generated website page entries only; full documentation and API search is not connected yet. Queries stay on this page.")}</p><a href={url("search")}>{text("打开静态目录 →", "Open the static directory →")}</a></div></dialog>
+    <dialog id="search-dialog" aria-labelledby="search-title"><div class="dialog-head"><h2 id="search-title">{labels[locale].search}</h2><button class="tool" data-close aria-label={text("关闭搜索", "Close search")}>Esc · {text("关闭", "Close")}</button></div><div class="dialog-body"><label for="search-query">{versionLabel} · {text("简体中文手册", "English manuals")}</label><input class="search-input" id="search-query" autofocus type="search" maxlength="500" placeholder={text("搜索手册正文…", "Search manual content…")} data-search-input="dialog-results" /><div id="dialog-results" class="results" aria-live="polite"></div><p class="sample-tag">{text("本地检索九篇当前语言手册的标题与正文。尚未索引生成API或外链技术深页。查询不离开本页，最多显示20项。", "Locally searches nine current-language manual titles and bodies. Generated APIs and linked technical references are not indexed yet. Queries stay on this page; at most 20 results are shown.")}</p><a href={url("search")}>{text("打开静态目录 →", "Open the static directory →")}</a></div></dialog>
     <dialog id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-head"><h2 id="settings-title">{text("阅读设置", "Reading settings")}</h2><button class="tool" data-close>{text("关闭", "Close")}</button></div><div class="dialog-body">
       <label class="setting-row">{text("外观", "Appearance")}<select data-theme-select><option value="light">{text("浅色", "Light")}</option><option value="dark">{text("深色", "Dark")}</option><option value="system">{text("跟随系统", "System")}</option></select></label>
       <label class="setting-row">{text("代码长行", "Long code lines")}<select data-wrap-select><option value="scroll">{text("块内滚动", "Scroll in block")}</option><option value="wrap">{text("自动换行", "Wrap")}</option></select></label>
       <p class="sample-tag">{text("设置只影响当前页面，不写入Cookie或本地存储。", "Settings affect this page only, without cookies or local storage.")}</p>
     </div></dialog>
-    <script type="application/json" id="page-directory" set:html={JSON.stringify(Object.entries(labels[locale]).map(([topic, title]) => ({ title, href: url(topic) }))).replace(/</g, "\\u003c")} />
+    <script type="application/json" id="page-directory" set:html={JSON.stringify(manualSearchEntries(locale)).replace(/</g, "\\u003c")} />
   </body>
 </html>

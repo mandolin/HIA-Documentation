@@ -6,9 +6,9 @@ const en = locale === "en";
 const text = (zh: string, english: string) => en ? english : zh;
 const entries = [
   [href("start", locale, import.meta.env.BASE_URL), text("学习", "Learn"), text("从第一次构建开始，理解输入、文档模型和阅读方式。", "Build your first document and understand inputs, the model, and reading.")],
-  ["https://mandolin.github.io/HIA-Documentation/" + locale + "/docs/", text("参考", "Reference"), text("查找命令、配置、契约与兼容规则。现有技术参考入口。", "Commands, configuration, contracts, and compatibility in the existing reference.")],
-  ["https://github.com/mandolin/HIA-Documentation/blob/main/packages/plugin-sdk/README.md", text("开发文档", "Development"), text("了解架构、适配器与软件开发工具包。现有仓库文档。", "Architecture, adapters, and the software development kit in the source repository.")],
-  ["https://mandolin.github.io/HIA-Documentation/" + locale + "/", text("代码文档", "Code documentation"), text("阅读HIA工具生成的接口、字段与源码关联。现有生成站点。", "Read HIA-generated APIs, fields, and source relations on the existing generated site.")],
+  [href("reference", locale, import.meta.env.BASE_URL), text("参考", "Reference"), text("查找命令、配置、契约与兼容规则及其权威定义。", "Find commands, configuration, contracts, compatibility, and their authoritative definitions.")],
+  [href("development", locale, import.meta.env.BASE_URL), text("开发文档", "Development"), text("了解架构、适配器与软件开发工具包的责任边界。", "Understand architecture, adapters, and software development kit responsibilities.")],
+  [href("code-reference", locale, import.meta.env.BASE_URL), text("代码文档", "Code documentation"), text("进入HIA真实生成的接口参考，区分工具API与领域样本。", "Enter HIA-generated references and distinguish tool APIs from domain samples.")],
 ];
 ---
 <div class="grid">{entries.map(([target, title, description], index) => <a class="card" href={target}><span class="card-number">{String(index + 1).padStart(2, "0")}</span><h3>{title}</h3><p>{description}</p><span class="card-footer">{text("继续了解 →", "Continue →")}</span></a>)}</div>

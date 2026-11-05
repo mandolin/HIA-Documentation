@@ -1,7 +1,8 @@
 /**
- * @lang zh-CN 官网本页增强：安全的目录筛选、模态焦点与显示设置；不持久化、不联网、不执行源码。
- * @lang en Page-local enhancement for safe directory filtering, modal focus, and display settings; no persistence, network access, or source execution.
+ * @lang zh-CN 官网本页增强：安全的正文检索、模态焦点与显示设置；不持久化、不联网、不执行源码。
+ * @lang en Page-local enhancement for safe body search, modal focus, and display settings; no persistence, network access, or source execution.
  */
+import { readSearchIndex, searchDocuments } from "../lib/search.mjs";
 // <lang lang="zh-CN">增强初始化后才展示脚本专属控件；基础链接始终存在。</lang><lang lang="en">Expose script-only controls only after initialization; ordinary links remain available.</lang>
 document.documentElement.dataset.js = "ready";
 
@@ -41,8 +42,12 @@ document.querySelector("[data-wrap-select]")?.addEventListener("change", (event)
 });
 
 // <lang lang="zh-CN">构建时目录只含同语言实际页面；查询不会作为HTML或链接插入。</lang><lang lang="en">The build-time directory contains real same-language pages; queries never become HTML or links.</lang>
-const entries = JSON.parse(document.getElementById("page-directory")?.textContent ?? "[]");
 const english = document.documentElement.lang === "en";
+const version = document.documentElement.dataset.documentationVersion;
+// <lang lang="zh-CN">校验失败单独保留，不让增强脚本崩溃或把坏索引伪装为零结果。</lang><lang lang="en">Retain validation failure separately so enhancement survives and a broken index cannot masquerade as zero matches.</lang>
+let entries;
+try { entries = readSearchIndex(document.getElementById("page-directory")?.textContent, document.documentElement.lang, version); }
+catch { entries = undefined; }
 // <lang lang="zh-CN">复制只读取同一可见代码块；拒绝时提示手动选择，不读取其它页面或本机文件。</lang><lang lang="en">Copy only the same visible code block; denied access offers manual selection without reading other pages or local files.</lang>
 for (const button of document.querySelectorAll("[data-copy]")) button.addEventListener("click", async () => {
   const block = button.closest(".code-box");
@@ -53,22 +58,31 @@ for (const button of document.querySelectorAll("[data-copy]")) button.addEventLi
   catch { status.textContent = english ? "Please select the code manually" : "请手动选择代码"; }
 });
 /**
- * @lang zh-CN 用安全DOM节点筛选当前语言的固定目录；空结果保留普通目录入口。
- * @lang en Filter the fixed current-language directory through safe DOM nodes, retaining a directory link for empty results.
+ * @lang zh-CN 用安全DOM节点检索当前语言/版本正文；空结果与失败均保留普通目录入口。
+ * @lang en Search exact-locale/version bodies through safe DOM nodes; both empty and failed searches retain the static directory.
  * @param {HTMLInputElement} input - 当前查询输入。 Current query input.
  * @param {HTMLElement} target - 本页结果区域。 Local results container.
  * @returns {void} 替换结果节点，不保存原始查询。 Replaces result nodes without storing queries.
  */
 function updateSearch(input, target) {
-  // <lang lang="zh-CN">不做模糊语义匹配；子串过滤只覆盖已有页面标题。</lang><lang lang="en">Substring matching covers existing page titles, not semantic or full-text search.</lang>
-  const query = input.value.trim().toLocaleLowerCase();
-  const matches = entries.filter(entry => entry.title.toLocaleLowerCase().includes(query));
   target.replaceChildren();
+  if (!entries) {
+    const error = document.createElement("p");
+    error.className = "notice error";
+    error.textContent = english ? "The current search index is unavailable. Continue from the static directory." : "当前检索索引暂不可用。请从静态目录继续阅读。";
+    target.append(error);
+    return;
+  }
+  // <lang lang="zh-CN">查询限制与控件一致，不编译正则或发起网络请求。</lang><lang lang="en">The query bound matches the input control without compiling regexes or making network requests.</lang>
+  const matches = searchDocuments(entries, input.value.slice(0, 500), document.documentElement.lang, version);
   for (const entry of matches) {
     // <lang lang="zh-CN">目标来自构建目录，显示文字始终用textContent写入。</lang><lang lang="en">Targets come from the build directory and text always uses textContent.</lang>
     const link = document.createElement("a");
     link.href = entry.href;
     link.textContent = entry.title;
+    const excerpt = document.createElement("small");
+    excerpt.textContent = entry.excerpt;
+    link.append(excerpt);
     target.append(link);
   }
   if (!matches.length) {
@@ -77,6 +91,22 @@ function updateSearch(input, target) {
     empty.className = "empty";
     empty.textContent = english ? "No matching pages. Continue from the static directory below." : "没有匹配页面。可从下方静态目录继续阅读。";
     target.append(empty);
+  }
+}
+
+// <lang lang="zh-CN">切换显式语言或当前版本时保留原锚点；目标缺小节时展示已确认提示，绝不切换到其它主题。</lang><lang lang="en">Preserve fragments on explicit language/current-version navigation; missing sections show confirmed feedback without changing the topic.</lang>
+for (const link of document.querySelectorAll('a[hreflang],.mobile-nav a[lang],[data-preserve-anchor]')) {
+  link.addEventListener("click", () => { if (location.hash) link.hash = location.hash; });
+}
+if (location.hash) {
+  let anchor;
+  try { anchor = decodeURIComponent(location.hash.slice(1)); } catch { anchor = undefined; }
+  if (anchor && !document.getElementById(anchor)) {
+    const warning = document.createElement("p");
+    warning.className = "notice warning";
+    warning.setAttribute("role", "status");
+    warning.textContent = english ? "This topic is available, but the original section cannot be located. Continue through the page outline." : "已找到主题，原小节暂不可定位。可从本页内容继续阅读。";
+    document.querySelector(".breadcrumbs")?.after(warning);
   }
 }
 for (const input of document.querySelectorAll("[data-search-input]")) {
