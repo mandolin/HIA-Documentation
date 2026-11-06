@@ -82,3 +82,16 @@ descriptions. Verify the generated `localizedText` fields for both languages
 when checking bilingual completeness.
 
 中文：运行时属性引用声明文件入口中的值时，成员审核保留JavaScript实际赋值来源并核对其原生注释。双语属性应逐语言使用独立@lang标签，并检查生成后的两种localizedText正文。
+
+## Frozen root-array resources
+
+```powershell
+node scripts/audit-frozen-array-resources.mjs --workspace-root ..
+node scripts/audit-satellite-native-api.mjs --workspace-root .. --members --schema-resources --array-resources
+```
+
+The resource command produces frozen string arrays from their owner-local plain-data definitions, records actual derivation evidence, checks independent source analysis and exact public declarations, and runs JSONdoc for every array root and element. Each result retains JavaScript element origins separately from generated JSON locations. Unsupported source syntax, nonfrozen or nonstring arrays, declaration conflicts and failed production remain unverified.
+
+Explicit `--array-resources` adds `arrayMemberAudit` while retaining the native and Schema reports. Only uniquely verified root-array boundaries receive separate data coverage. Descriptor copies, nested arrays and callable plugin elements keep their own boundaries. Any remaining gap or boundary keeps the strict command nonzero. Run `node --test scripts/frozen-array-resources.test.mjs` for the corresponding regressions.
+
+中文说明。冻结根数组由既有有限原生生产器记录B，独立A和公开声明分别核验，再实际生成逐值HIA文档和地图。新增开关只消解本次通过的根数组边界，描述符复制及插件函数数组继续独立验收。包内纯数据模块通过原入口导入和导出同一对象，原字符串及顺序按实际消费核对。
