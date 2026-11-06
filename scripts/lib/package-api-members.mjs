@@ -20,16 +20,32 @@ export function collectStaticMemberDeclarations({checker,symbol,source,root}) {
    * @returns {object} 原实现symbol或命名空间容器本身。 Original implementation symbol or namespace container itself.
    */
   function resolveValue(value) {
-    const seen=new Set();
-    while(value&&!seen.has(value)) {
+    // <lang><zh-CN>跟踪本条引用链的symbol身份，循环引用在本地终止。</zh-CN><en>Track symbol identities on this reference chain and terminate cycles locally.</en></lang>
+    const seen = new Set();
+    while (value && !seen.has(value)) {
       seen.add(value);
-      // <lang><zh-CN>编译器模块symbol名可包含绝对路径；命名空间容器保留当前属性声明，不输出内部模块身份。</zh-CN><en>Compiler module symbol names can contain absolute paths; namespace containers retain the current property declaration instead of exposing internal module identity.</en></lang>
-      if(value.flags&ts.SymbolFlags.Alias) {const target=checker.getAliasedSymbol(value);if(target.declarations?.some(ts.isSourceFile)) return value;value=target;continue;}
-      const declaration=value.valueDeclaration??value.declarations?.[0];
-      // <lang><zh-CN>重命名属性可引用另一模块函数；记录实现来源，而非把对象字面量位置当函数声明。</zh-CN><en>A renamed property may reference another module's function; retain implementation provenance rather than treating the object literal as its function declaration.</en></lang>
-      if(declaration&&ts.isShorthandPropertyAssignment(declaration)) {const target=checker.getShorthandAssignmentValueSymbol(declaration);if(target?.declarations?.some(ts.isSourceFile)) return value;if(target&&target!==value){value=target;continue;}}
-      if(declaration&&ts.isPropertyAssignment(declaration)&&(ts.isIdentifier(declaration.initializer)||ts.isPropertyAccessExpression(declaration.initializer))) {const target=checker.getSymbolAtLocation(declaration.initializer);if(target?.declarations?.some(ts.isSourceFile)) return value;if(target&&target!==value){value=target;continue;}}
-      break;
+      // <lang><zh-CN>从当前声明中识别直接引用，目标仅用于静态来源核对。</zh-CN><en>Identify a direct reference in the current declaration for static provenance checks.</en></lang>
+      const declaration = value.valueDeclaration ?? value.declarations?.[0];
+      let target;
+      if (value.flags & ts.SymbolFlags.Alias) {
+        target = checker.getAliasedSymbol(value);
+      } else if (declaration && ts.isShorthandPropertyAssignment(declaration)) {
+        target = checker.getShorthandAssignmentValueSymbol(declaration);
+      } else if (declaration && ts.isPropertyAssignment(declaration)
+        && (ts.isIdentifier(declaration.initializer) || ts.isPropertyAccessExpression(declaration.initializer))) {
+        target = checker.getSymbolAtLocation(declaration.initializer);
+      }
+      if (!target || target === value) break;
+
+      // <lang><zh-CN>先解析导入别名，才能检查真实目标属于运行源码还是声明文件。</zh-CN><en>Resolve import aliases before checking whether their actual targets belong to runtime source or declaration files.</en></lang>
+      if (target.flags & ts.SymbolFlags.Alias) target = checker.getAliasedSymbol(target);
+      const targetDeclarations = target.declarations ?? [];
+      const namespaceTarget = targetDeclarations.some(ts.isSourceFile);
+      const declarationOnlyTarget = targetDeclarations.length > 0
+        && targetDeclarations.every(item => item.getSourceFile().isDeclarationFile);
+      // <lang><zh-CN>命名空间和纯类型目标保留当前赋值来源，供真实JSDoc内容及源码核对使用。</zh-CN><en>Namespace and declaration-only targets retain the current assignment source for actual JSDoc content and source verification.</en></lang>
+      if (namespaceTarget || declarationOnlyTarget) return value;
+      value = target;
     }
     return value;
   }

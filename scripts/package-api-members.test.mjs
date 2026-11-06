@@ -62,3 +62,21 @@ test("opaque object annotations and dynamic values cannot imply complete member 
   assert(bindings.find(item=>item.name==="opaque").memberBoundaries.some(item=>item.reason==="opaque-object-type"));
   assert(bindings.find(item=>item.name==="dynamic").memberBoundaries.some(item=>item.reason==="dynamic-type"));
 });
+
+test("runtime properties referencing declaration-only imports retain their actual assignment source",()=>{
+  const dependency = path.join(root, "node_modules", "typed-runtime");
+  fs.mkdirSync(dependency, {recursive: true});
+  fs.writeFileSync(path.join(dependency, "package.json"), JSON.stringify({
+    type: "module",
+    exports: {".": {types: "./index.d.mts", default: "./index.mjs"}}
+  }));
+  fs.writeFileSync(path.join(dependency, "index.d.mts"), 'export declare const VERSION: "1.0.0";');
+  fs.writeFileSync(path.join(dependency, "index.mjs"), 'throw new Error("Target must never execute"); export const VERSION = "1.0.0";');
+  fs.writeFileSync(path.join(root, "declared.mjs"), 'import {VERSION} from "typed-runtime"; export const descriptor = {version: VERSION};');
+  const binding = collectModuleExports(root, ["declared.mjs"], {includeMembers: true})[0].exports[0];
+  const version = binding.members.find(member => member.memberPath.join(".") === "version");
+  assert.equal(version.status, "resolved");
+  assert.equal(version.declarationName, "version");
+  assert.equal(version.declarations[0].path, "declared.mjs");
+  assert.equal(version.declarations[0].kind, "PropertyAssignment");
+});

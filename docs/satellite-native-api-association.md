@@ -41,3 +41,16 @@ Arrays, recursive types, unions/intersections, index signatures, dynamic types a
 With `--members`, any member-content gap or recorded boundary makes the default command exit nonzero. Add `--inspect` only to inspect partial results; the report continues to mark incomplete coverage. The original command without `--members` retains the root-binding check. Run the member-inventory regressions with `node --test scripts/package-api-members.test.mjs`.
 
 中文：显式成员审核保留访问路径和原实现两种事实，真实内容仍由JSDoc生成；可调用成员通过不代表schema数据、数组、动态/实例成员或完整译文通过。缺口与未展开边界使严格命令失败，inspect仅用于查看未完成结果。
+
+When a runtime property references an imported value exposed through a
+declaration-file entry, member inspection retains the JavaScript assignment as
+its documentation source. This allows the property's actual JSDoc comment and
+source range to be verified. References to runtime implementations continue to
+resolve their original declarations. Declaration-file APIs have their own
+coverage requirements.
+
+Use separate canonical `@lang` tags for English and Simplified Chinese property
+descriptions. Verify the generated `localizedText` fields for both languages
+when checking bilingual completeness.
+
+中文：运行时属性引用声明文件入口中的值时，成员审核保留JavaScript实际赋值来源并核对其原生注释。双语属性应逐语言使用独立@lang标签，并检查生成后的两种localizedText正文。
