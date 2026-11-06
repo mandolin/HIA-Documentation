@@ -92,3 +92,34 @@ it, any unverified binding or missing exact member declaration produces a
 nonzero exit.
 
 中文补充。该审核把真实JS声明、JSON资源和生成文档逐值连接，保留两类源码位置。静态数据证明与模块执行后状态分别记录。动态克隆修改、现有成员门禁采用、独立类型、schema引用及页面验收继续逐项处理。
+
+## Definition initialization graphs
+
+The separate `readStaticJsonInitializationGraph(root, modulePath, exportName)`
+helper in `scripts/lib/static-initialization-graph.mjs` audits finite plain-data
+definitions. It retains object identities across aliases, shallow spreads,
+structured clones, ordered property assignments and shallow freezes. It checks
+the complete definition module and its data dependencies, including unused
+initializers. It reads source files without importing or executing them.
+
+Available results contain the final value, per-value provenance, assignment
+history, source digests and static model events. They use the evidence kind
+`static-definition-initialization`. Reexport wrappers have separate linkage
+records. Runtime state remains unverified, and the model assumes standard,
+unmodified builtins. These records describe static inference.
+
+The initial subset supports constant data, named and single-star reexports,
+data imports, object/array spreads, `structuredClone`, `Object.freeze`,
+`Object.keys`, `Object.values` and static dotted writes to locally owned plain
+objects. Unknown calls, accessors, computed writes, array writes, writes into
+imported objects, cyclic JSON values and resource-budget violations return
+fixed unverified reasons. Namespace handles cannot become JSON values.
+
+This helper has its own regression suite in `api:check`. The existing schema
+association command continues using the initializer-only reader. Adopting
+producer-recorded derivation evidence and the independent graph result into
+that command requires the corresponding integration checks.
+
+中文补充。新入口完整核定义模块，分别保留对象身份、最终值、被覆盖声明及写入来源。
+根包装模块的重导出只证明绑定，模型事件标为静态推导。生产侧实际派生记录及组合门禁
+继续分别接入和验收，原命令的未核结果不会因新增入口自动清零。
