@@ -68,9 +68,9 @@ export function verifyPlainDataProduction(root, modulePath, exportName, evidence
     }
     const staticSpreads = independent.events.filter(event=>event.kind==="spread");
     const recordedSpreads = replay.initialization.steps.filter(step=>step.kind==="spread").map(step=>{
-      if (!independent.events.some(event=>event.kind==="allocate" && event.type==="object" && sameSource(step.source,event.origin))) throw new Error();
+      if (!independent.events.some(event=>event.kind==="allocate" && ["object","array"].includes(event.type) && sameSource(step.source,event.origin))) throw new Error();
       const range = step.source.range;
-      // <lang><zh-CN>首位spread在同一对象内最先起始，嵌套spread另有自己的对象范围。</zh-CN><en>The leading spread starts first within its object; nested spreads have their own object ranges.</en></lang>
+      // <lang><zh-CN>首位对象spread或唯一数组spread在本容器内最先起始，嵌套spread另有独立容器范围。</zh-CN><en>The leading object spread or sole array spread starts first within its container; nested spreads have independent container ranges.</en></lang>
       const matches = staticSpreads.filter(event=>event.origin.path===byResource.get(step.source.resourceId)
         && (event.origin.range.start.line>range.start.line || event.origin.range.start.line===range.start.line && event.origin.range.start.column>=range.start.column)
         && (event.origin.range.end.line<range.end.line || event.origin.range.end.line===range.end.line && event.origin.range.end.column<=range.end.column))
@@ -85,8 +85,8 @@ export function verifyPlainDataProduction(root, modulePath, exportName, evidence
       if (!inferred || row.type !== inferred.type || !sameSource(row.valueSource,inferred.origin)) throw new Error();
       const parentPointer = row.pointer.slice(0,row.pointer.lastIndexOf("/"));
       const parent = row.pointer ? byPointer.get(parentPointer) : undefined;
-      // <lang><zh-CN>草案数组槽声明使用数组创建范围，逐元素原值来源仍独立精确比较。</zh-CN><en>Draft array-slot declarations use array-creation ranges; each element's original value source is still compared exactly.</en></lang>
-      const declaration = parent?.type === "array" ? parent.origin : inferred.declaration;
+      // <lang><zh-CN>复制数组槽沿用原数组的创建范围，容器副本与逐元素原值来源分别精确比较。</zh-CN><en>Copied array slots retain their original array-creation range; copied containers and original element values are compared separately.</en></lang>
+      const declaration = inferred.arraySlotSource ?? (parent?.type === "array" ? parent.origin : inferred.declaration);
       if (!sameSource(row.source,declaration)) throw new Error();
       const history = inferred.valueDeclarationSources.filter(source=>source.kind!=="VariableDeclaration");
       if (row.previousSources.length !== history.length || row.previousSources.some((source,index)=>!sameSource(source,history[index]))) throw new Error();

@@ -28,7 +28,12 @@ with a `WeakMap`. Events describe this actual JSON production and carry the
 
 Supported inputs contain const data declarations, explicit relative named
 imports, literal values, static own-property reads and the operations above.
-An object spread must be the first property and occur once. Later static fields
+An object spread must be the first property and occur once. An array spread must
+be the sole array element, such as `[...knownArray]`, with a previously produced
+dense ordinary array. Its new mutable shell preserves child identities and
+original slot sources through the existing same-type `spread` event. Mixed or
+multiple spreads, sparse arrays and other iterable values are rejected.
+Later static fields
 are recorded as writes. Unknown calls, dynamic keys, external imports, import
 cycles, prototype-related keys, duplicate declarations, duplicate initial fields,
 foreign/frozen writes and array writes are rejected. Input syntax, graph size,
@@ -75,3 +80,5 @@ coverage. The separate verification report describes its selected-export scope.
 再通过SDK读取、独立静态定义分析和JSONdoc逐值来源交叉核验。输入仓库只读，
 产出保存在主仓独立dist目录，最终报告写入后才表示该次构建完成。完整模块运行、
 未选中值、主体真实性与页面验收分别管理。
+
+单源数组展开复用已有同类型浅复制规则，副本外壳、子对象共享、原槽创建位置及逐元素值来源分别核验。数组外壳冻结与元素冻结分别记录，暂存描述符的对象浅展开会继续共享原数组。裸包依赖和混合运行模块沿现有边界拒绝，实际目标采用须另核其依赖闭包。

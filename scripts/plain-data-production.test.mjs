@@ -169,3 +169,54 @@ test("runs the actual development build and SDK JSONdoc path with an isolated fi
   fs.writeFileSync(path.join(repository,"schemas/hia-jsdoc-config-1.0.0.schema.json"),'{}\n');
   await assert.rejects(()=>buildJsdocConfigProduction(root),/Generated current config resource differs/);
 });
+
+test("records a single array spread as an existing shallow-copy step with original slot sources",()=>{
+  const root=fixture('const child={v:1}; const old=Object.freeze([child,child]); export const DATA=[...old];');
+  const generated=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+  assert.equal(generated.nativeValue[0],generated.nativeValue[1]);
+  assert.equal(Object.isFrozen(generated.nativeValue),false);
+  assert.equal(generated.evidence.details.produce.steps.filter(step=>step.kind==="spread").length,1);
+  assert.equal(verifyPlainDataProduction(root,"entry.mjs","DATA",generated.evidence,generated.artifact).status,"verified");
+});
+
+test("array copies retain distinct shells, inherited staging aliases and original imported slots",()=>{
+  const root=fixture('import {KINDS} from "./data.mjs"; const descriptor=Object.freeze({inputKinds:[...KINDS]}); export const DATA={base:descriptor,staged:Object.freeze({...descriptor})};',{"data.mjs":'export const KINDS=Object.freeze(["one","two"]);'});
+  const generated=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+  assert.equal(generated.nativeValue.base.inputKinds,generated.nativeValue.staged.inputKinds);
+  assert.equal(verifyPlainDataProduction(root,"entry.mjs","DATA",generated.evidence,generated.artifact).status,"verified");
+});
+
+test("mixed spreads, multiple spreads, sparse arrays and non-array iterables stay rejected",()=>{
+  for(const expression of ['["head",...old]','[...old,...old]','[..."text"]','[...[,1]]']) {
+    const root=fixture(`const old=[1]; export const DATA=${expression};`);
+    assert.throws(()=>producePlainDataModule(root,"entry.mjs","DATA","array.json"));
+  }
+});
+
+test("repeated array copies and cloned copies preserve slot provenance and shallow child sharing",()=>{
+  const root=fixture('const child={v:1}; const old=[child]; const first=[...old]; const second=[...first]; export const DATA={old,first,second,cloned:structuredClone(second)};');
+  const generated=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+  assert.notEqual(generated.nativeValue.old,generated.nativeValue.first);
+  assert.notEqual(generated.nativeValue.first,generated.nativeValue.second);
+  assert.equal(generated.nativeValue.old[0],generated.nativeValue.second[0]);
+  assert.notEqual(generated.nativeValue.second[0],generated.nativeValue.cloned[0]);
+  assert.equal(verifyPlainDataProduction(root,"entry.mjs","DATA",generated.evidence,generated.artifact).status,"verified");
+});
+
+test("equal array JSON cannot conceal a tampered spread operation range",()=>{
+  const root=fixture('const old=["value"]; export const DATA=[...old];');
+  const generated=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+  generated.evidence.details.produce.steps.find(step=>step.kind==="spread").source.range.start.column++;
+  assert.equal(readPlainDataInitialization(generated.evidence,"produce").status,"replayed");
+  assert.equal(verifyPlainDataProduction(root,"entry.mjs","DATA",generated.evidence,generated.artifact).status,"rejected");
+});
+
+test("empty and repeated-value array copies retain each original slot and deterministic records",()=>{
+  for(const source of ['[]','["same","same"]']) {
+    const root=fixture(`const old=${source}; export const DATA=[...old];`);
+    const first=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+    const second=producePlainDataModule(root,"entry.mjs","DATA","array.json");
+    assert.deepEqual(first.evidence,second.evidence);
+    assert.equal(verifyPlainDataProduction(root,"entry.mjs","DATA",first.evidence,first.artifact).status,"verified");
+  }
+});

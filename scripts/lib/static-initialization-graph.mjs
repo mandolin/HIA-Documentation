@@ -15,7 +15,7 @@ import { readStaticJsonExport } from "./static-json-export.mjs";
  * @param {string} root <lang><zh-CN>显式授权的物理仓库根。</zh-CN><en>Explicitly authorized physical repository root.</en></lang>
  * @param {string} modulePath <lang><zh-CN>仓内模块相对路径。</zh-CN><en>Repository-relative module path.</en></lang>
  * @param {string} exportName <lang><zh-CN>确切公开导出名。</zh-CN><en>Exact public export name.</en></lang>
- * @returns {object} <lang><zh-CN>available含值、来源和事件；unverified含固定原因。均不证明包装模块或运行时状态。</zh-CN><en>Available contains values, provenance and events; unverified contains a fixed reason. Neither proves wrapper or runtime state.</en></lang>
+ * @returns {object} <lang><zh-CN>available含值、来源和事件，数组槽创建范围独立保存；unverified含固定原因。均不证明包装模块或运行时状态。</zh-CN><en>Available contains values, provenance and events, retaining array-slot creation ranges separately; unverified contains a fixed reason. Neither proves wrapper or runtime state.</en></lang>
  */
 export function readStaticJsonInitializationGraph(root, modulePath, exportName) {
   // <lang><zh-CN>文件、图和事件只在本次请求内共享，防止跨请求状态或摘要缓存污染。</zh-CN><en>Files, graph nodes and events are shared within this request only, preventing cross-request state or digest-cache contamination.</en></lang>
@@ -346,7 +346,10 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
           if (spread.type !== "array") boundary("non-array-spread");
           for (const [, slot] of entries(spread)) setSlot(array, String(array.properties.size), { ...slot });
           event("spread", origin(element), { sourceNodeId: spread.id, graphNodeId: array.id });
-        } else setSlot(array, String(array.properties.size), { node: expression(context, element, depth + 1), declaration: origin(element), history: [], writes: [] });
+        } else {
+          // <lang><zh-CN>数组槽在既有SDK事件中由创建数组范围声明；浅复制保留该槽的原创建范围，元素值来源继续独立保存。</zh-CN><en>Existing SDK events declare array slots at the creating array range; shallow copies retain that original slot range while value origins remain separate.</en></lang>
+          setSlot(array, String(array.properties.size), { node: expression(context, element, depth + 1), declaration: origin(element), arraySlotSource:source, history: [], writes: [] });
+        }
       }
       return array;
     }
@@ -543,6 +546,7 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
       nodes.push({
         pointer, type: node.type, origin: node.origin, declaration: slot.declaration ?? node.origin,
         valueDeclarationSources: [...(slot.history ?? []), ...node.aliases], writeSources: slot.writes ?? [],
+        ...(slot.arraySlotSource ? {arraySlotSource:slot.arraySlotSource} : {}),
         ...(node.properties ? { graphNodeId: node.id } : { value: node.value })
       });
       if (!node.properties) return node.value;

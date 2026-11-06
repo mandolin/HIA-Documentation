@@ -128,6 +128,17 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
       return ref;
     }
     if (ts.isArrayLiteralExpression(node)) {
+      // <lang><zh-CN>既有spread事件支持同类型浅复制；首版生产仅接受唯一数组展开，原槽来源及子对象身份随边保留。</zh-CN><en>The existing spread event supports same-type shallow copies; production accepts one sole array spread, retaining original slot provenance and child identities on copied edges.</en></lang>
+      if(node.elements.length===1 && ts.isSpreadElement(node.elements[0])) {
+        const original=expression(context,node.elements[0].expression,depth+1);
+        if(!Array.isArray(original.value)) reject();
+        edges+=original.properties.size;
+        if(edges>20000) reject();
+        const ref=identity([...original.value],source);
+        ref.properties=new Map(original.properties);
+        record(source,"spread",{nodeId:ref.id,sourceNodeId:original.id});
+        return ref;
+      }
       const children = node.elements.map(element=>expression(context,element,depth+1));
       const ref = identity(children.map(child=>child.value),source);
       for (const [index,child] of children.entries()) ref.properties.set(String(index),{ref:child,source});
