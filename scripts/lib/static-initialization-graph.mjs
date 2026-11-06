@@ -362,7 +362,10 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
           if (!ts.isPropertyAssignment(property) && !ts.isShorthandPropertyAssignment(property) || property.objectAssignmentInitializer) boundary("non-data-property");
           const key = propertyKey(property.name);
           const value = ts.isShorthandPropertyAssignment(property) ? binding(context, key) : expression(context, property.initializer, depth + 1);
-          setSlot(object, key, { node: value, declaration: origin(property), history: [], writes: [] });
+          // <lang><zh-CN>字面量覆盖spread字段时保留旧声明来源，与新值和实际写入事件分开。</zh-CN><en>Preserve the old declaration when a literal overrides a spread field, separately from the new value and explicit write events.</en></lang>
+          const previous = object.properties.get(key);
+          chargeProvenance((previous?.history.length ?? 0) + (previous ? 1 : 0));
+          setSlot(object, key, { node: value, declaration: origin(property), history: previous ? [...previous.history,previous.declaration] : [], writes: [] });
         }
       }
       return object;

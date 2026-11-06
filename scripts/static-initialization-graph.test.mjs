@@ -220,3 +220,13 @@ test("bounds alias-provenance expansion independently of JSON node count", () =>
   const source = ['const p={};', ...Array.from({ length: 600 }, (_, i) => `const alias${i}=p;`), `export const DATA=[${Array(600).fill("p").join(",")}];`].join("\n");
   assert.equal(read(source).reason, "provenance-budget");
 });
+
+test("retains the overwritten spread field declaration separately from the new value", () => {
+  const result = read('const old={v:1}; export const DATA={...old,v:2};');
+  assert.equal(result.status,"available");
+  const field = result.nodes.find(node=>node.pointer==="/v");
+  assert.equal(field.value,2);
+  assert.equal(field.valueDeclarationSources.length,1);
+  assert.equal(field.valueDeclarationSources[0].range.start.column,12);
+  assert.equal(field.declaration.range.start.column,44);
+});

@@ -1,5 +1,8 @@
 # Artifact Derivation Evidence
 
+An actual finite-data production command and its independent selected-export
+verification are described in [Finite Data Production](../plain-data-production.md).
+
 `artifact-derivation-evidence` is an independent `0.1.0-draft` sidecar contract
 for source and artifact identities, production activities and derivation claims.
 The SDK provides its reader through an explicit subpath.
