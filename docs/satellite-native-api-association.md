@@ -131,6 +131,11 @@ object literals. Each slot and object member must have actual JSDoc/Core content
 distinct English and Chinese fields, required callable signatures and independent
 AST ranges matching the documentation source map.
 
+Compiler source text is bound by digest to produced source bytes. The array's
+initializer and each object member must match the same run, and sources are
+rechecked after production. Edits during generation remain unverified or fail
+the audit instead of reusing a cached declaration graph.
+
 The first supported shape excludes holes, spreads, calls, getters, computed or
 duplicate keys, prototype setters, external files, shadowed loaders and ambiguous
 exports. Explicit targets must match their original source files. Limits are

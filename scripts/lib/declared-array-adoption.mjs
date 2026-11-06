@@ -14,7 +14,13 @@ import {isDeepStrictEqual} from "node:util";
  */
 export function adoptDeclaredArrayMembers(base,{arrays,rows}) {
   // <lang><zh-CN>每个节点需要实际声明和内容，空列表不能按every的真值冒称通过。</zh-CN><en>Each node needs actual declarations and content; an empty list cannot pass through vacuous every results.</en></lang>
-  const gaps=rows.filter(row=>row.status!=="associated"||!row.declarations.length||row.declarations.some(item=>!item.hasText||row.expectedCallable&&!item.hasSignature)||!row.distinctLocaleText||!row.sourceRangeVerified);
+  const gaps=rows.filter(row=>
+    row.status!=="associated" ||
+    !row.declarations.length ||
+    row.declarations.some(item=>!item.hasText||row.expectedCallable&&!item.hasSignature) ||
+    !row.distinctLocaleText ||
+    !row.sourceRangeVerified
+  );
   // <lang><zh-CN>身份字段和分段路径共同限定边界，防止同名其它包或入口借用覆盖。</zh-CN><en>Identity fields and segmented paths jointly delimit boundaries, preventing coverage reuse across packages or entries.</en></lang>
   const sameIdentity=(left,right)=>left.package===right.package&&left.module===right.module&&left.name===right.name;
   const resolved=[];
@@ -23,7 +29,13 @@ export function adoptDeclaredArrayMembers(base,{arrays,rows}) {
     const matches=arrays.filter(array=>sameIdentity(array,boundary)&&isDeepStrictEqual(array.memberPath,boundary.memberPath));
     if(boundary.reason!=="array-elements"||matches.length!==1) return true;
     const array=matches[0];
-    if(array.scope!=="declared-array-initializer"||!array.slots.length||array.boundaries.length||!array.expectedPaths.length) return true;
+    if(
+      array.scope!=="declared-array-initializer" ||
+      !array.sourceBytesVerified ||
+      !array.slots.length ||
+      array.boundaries.length ||
+      !array.expectedPaths.length
+    ) return true;
     // <lang><zh-CN>固定槽位索引须连续，所有期望路径须唯一，父对象节点也须在内容清单中。</zh-CN><en>Slot indices must be consecutive and expected paths unique; parent object nodes must also occur in the content inventory.</en></lang>
     const expected=new Set(array.expectedPaths.map(memberPath=>JSON.stringify(memberPath)));
     if(expected.size!==array.expectedPaths.length||array.slots.some((slot,index)=>!isDeepStrictEqual(slot.memberPath,[...array.memberPath,String(index)])||!expected.has(JSON.stringify(slot.memberPath)))) return true;
@@ -35,5 +47,17 @@ export function adoptDeclaredArrayMembers(base,{arrays,rows}) {
   });
   // <lang><zh-CN>父审核失败继续阻断，声明覆盖不提供模块初始化或宿主执行许可。</zh-CN><en>Parent audit failures remain blocking; declaration coverage grants neither module-initialization proof nor host execution authority.</en></lang>
   const inheritedFailures=[base.unverifiedSchemaBindings,base.unverifiedFrozenArrayBindings,base.unverifiedDescriptors,base.unverifiedDescriptorPaths].some(count=>count>0);
-  return {...base,boundaries,declaredArrayRows:rows,resolvedDeclaredArrays:resolved,declaredArrayAccessPaths:rows.length,declaredArrayCallablePaths:rows.filter(row=>row.expectedCallable).length,declaredArrayContentGaps:gaps.length,contentGaps:base.contentGaps+gaps.length,scope:"declared-array-initializer",runtimeStateVerified:false,complete:base.contentGaps===0&&gaps.length===0&&boundaries.length===0&&resolved.length===arrays.length&&!inheritedFailures};
+  return {
+    ...base,
+    boundaries,
+    declaredArrayRows:rows,
+    resolvedDeclaredArrays:resolved,
+    declaredArrayAccessPaths:rows.length,
+    declaredArrayCallablePaths:rows.filter(row=>row.expectedCallable).length,
+    declaredArrayContentGaps:gaps.length,
+    contentGaps:base.contentGaps+gaps.length,
+    scope:"declared-array-initializer",
+    runtimeStateVerified:false,
+    complete:base.contentGaps===0&&gaps.length===0&&boundaries.length===0&&resolved.length===arrays.length&&!inheritedFailures
+  };
 }

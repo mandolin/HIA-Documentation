@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {collectModuleExports} from "./lib/package-api-inputs.mjs";
+import {collectStaticMemberDeclarations} from "./lib/package-api-members.mjs";
+import ts from "typescript";
 
 // <lang><zh-CN>夹具只写本owner的唯一忽略目录，保留供复核，不递归清理未知目录。</zh-CN><en>Fixtures occupy a unique ignored owner directory retained for review; no unknown directory is recursively removed.</en></lang>
 const dist=fileURLToPath(new URL("../dist/",import.meta.url));
@@ -178,4 +180,20 @@ test("ambiguous exports, spreads, getters, duplicate keys and shadowed require s
     assert.deepEqual(binding.declaredArrays,[],name);
     assert(binding.memberBoundaries.length>0,name);
   }
+});
+
+test("cached compiler declarations cannot cover an array edited after parsing", () => {
+  // <lang><zh-CN>编译器缓存旧槽位后清空实际文件中的数组，复现构建期间编辑导致的来源错配。</zh-CN><en>Clear the on-disk array after the compiler caches a slot, reproducing source mismatch during a build.</en></lang>
+  const file=path.join(root,"array-edited.cjs");
+  fs.writeFileSync(path.join(root,"micro-cached.cjs"),'module.exports={name:"cached",run(){}};');
+  fs.writeFileSync(file,'const micro=require("./micro-cached.cjs");const plugins=[micro];exports.api={plugins};');
+  const program=ts.createProgram([file],{allowJs:true,noEmit:true,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext});
+  const checker=program.getTypeChecker();
+  const source=program.getSourceFile(file);
+  const symbol=checker.getExportsOfModule(checker.getSymbolAtLocation(source))[0];
+  checker.getTypeOfSymbolAtLocation(symbol,symbol.valueDeclaration??source);
+  fs.writeFileSync(file,'const micro=require("./micro-cached.cjs");const plugins=[];exports.api={plugins};');
+  const result=collectStaticMemberDeclarations({checker,symbol,source,root,includeDeclaredArrays:true});
+  assert.deepEqual(result.declaredArrays,[]);
+  assert(result.memberBoundaries.some(row=>row.reason==="array-elements"));
 });

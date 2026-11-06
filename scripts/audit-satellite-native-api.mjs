@@ -132,7 +132,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
           const node=nodes[0];
           const fields=node.i18n?.fields?.description?.localizedText;
           const refs=output.sourceMap?.entries.filter(entry=>entry.symbolId===node.id).flatMap(entry=>entry.sourceRefs.filter(ref=>output.sourceMap.sources.find(source=>source.id===ref.sourceId)?.path===output.source))??[];
-          return {locale:Boolean(fields?.en&&fields?.["zh-CN"]&&fields.en!==fields["zh-CN"]),range:Boolean(expected.range&&refs.length===1&&isDeepStrictEqual(refs[0].range,expected.range)&&isDeepStrictEqual(refs[0].rangeConvention,{endBoundary:"exclusive",columnUnit:"utf16-code-unit"}))};
+          return {locale:Boolean(fields?.en&&fields?.["zh-CN"]&&fields.en!==fields["zh-CN"]),range:Boolean(expected.sourceSha256===output.sha256&&expected.range&&refs.length===1&&isDeepStrictEqual(refs[0].range,expected.range)&&isDeepStrictEqual(refs[0].rangeConvention,{endBoundary:"exclusive",columnUnit:"utf16-code-unit"}))};
         });
         declaredArrayRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable,originalDeclarations:binding.declarations,distinctLocaleText:checks.length>0&&checks.every(check=>check.locale),sourceRangeVerified:checks.length>0&&checks.every(check=>check.range)});
       }
@@ -172,6 +172,12 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
     report.descriptorMemberAudit.descriptorAssociationOutput=descriptors.output;
   }
   if(options.includeDeclaredArrays) {
+    // <lang><zh-CN>生成结束后再次核源字节，不能把编译器缓存的旧图关联到运行中已修改的文件。</zh-CN><en>Recheck source bytes after production so a cached compiler graph cannot attach to files edited during the run.</en></lang>
+    for(const record of documents.values()) assert.equal(createHash("sha256").update(fs.readFileSync(path.join(container,record.source))).digest("hex"),record.sha256,"Native documentation source changed during production.");
+    for(const array of declaredArrays) {
+      // <lang><zh-CN>数组声明本身也须与本轮实际生产的来源字节相同，槽位索引不能借用旧初始化器。</zh-CN><en>The array declaration itself must match this run's produced source bytes; slot indices cannot reuse an old initializer.</en></lang>
+      array.sourceBytesVerified=array.sourceDeclarations.length>0&&array.sourceDeclarations.every(declaration=>declaration.sourceSha256===documents.get(`HIA/${packages.find(pack=>pack.name===array.package).owner}/${declaration.path}`)?.sha256);
+    }
     // <lang><zh-CN>新增采用层仅消解实际通过的声明边界，原生和三资源层保持可分别查看。</zh-CN><en>The new adoption layer resolves only actually verified declaration boundaries; native and three resource layers remain independently inspectable.</en></lang>
     report.declaredArrayMemberAudit=adoptDeclaredArrayMembers(report.descriptorMemberAudit??report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit,{arrays:declaredArrays,rows:declaredArrayRows});
     if(report.declaredArrayMemberAudit.complete) report.pending=report.pending.filter(item=>item!=="nested-public-member-content");

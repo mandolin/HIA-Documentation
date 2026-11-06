@@ -16,7 +16,7 @@ function fixture() {
   // <lang><zh-CN>身份精确到包、入口及公开根，路径不能跨根相互借用。</zh-CN><en>Identity includes package, entry and public root; paths cannot borrow coverage across roots.</en></lang>
   const identity={package:"@example/plugin",module:"index.cjs",name:"api"};
   const rows=[["plugins","0"],["plugins","0","run"]].map((memberPath,index)=>({...identity,memberPath,status:"associated",expectedCallable:index===1,distinctLocaleText:true,sourceRangeVerified:true,declarations:[{hasText:true,hasSignature:index===1}]}));
-  return {base:{contentGaps:0,boundaries:[{...identity,memberPath:["plugins"],reason:"array-elements"}],complete:false},arrays:[{...identity,memberPath:["plugins"],scope:"declared-array-initializer",mutable:true,slots:[{memberPath:["plugins","0"]}],boundaries:[],expectedPaths:rows.map(row=>row.memberPath)}],rows};
+  return {base:{contentGaps:0,boundaries:[{...identity,memberPath:["plugins"],reason:"array-elements"}],complete:false},arrays:[{...identity,memberPath:["plugins"],scope:"declared-array-initializer",sourceBytesVerified:true,mutable:true,slots:[{memberPath:["plugins","0"]}],boundaries:[],expectedPaths:rows.map(row=>row.memberPath)}],rows};
 }
 
 test("complete declared slots resolve only their own old boundary",()=>{
@@ -57,9 +57,10 @@ test("missing prose, signatures, distinct locale fields or exact ranges remain g
 });
 
 test("wrong scope, unknown inner boundaries and mismatched slots remain unverified",()=>{
-  for(const kind of ["scope","inner","slots","empty"]){
+  for(const kind of ["scope","bytes","inner","slots","empty"]){
     const input=fixture();
     if(kind==="scope") input.arrays[0].scope="runtime-state";
+    if(kind==="bytes") input.arrays[0].sourceBytesVerified=false;
     if(kind==="inner") input.arrays[0].boundaries.push({memberPath:["plugins","0","unknown"],reason:"dynamic-type"});
     if(kind==="slots") input.arrays[0].slots[0].memberPath=["plugins","3"];
     if(kind==="empty") input.arrays[0].expectedPaths=[];

@@ -5,6 +5,7 @@
  */
 import path from "node:path";
 import fs from "node:fs";
+import {createHash} from "node:crypto";
 import ts from "typescript";
 
 /**
@@ -72,7 +73,7 @@ export function collectStaticMemberDeclarations({checker,symbol,source,root,incl
       const position=file.getLineAndCharacterOfPosition(declaration.getStart(file));
       // <lang><zh-CN>新增声明模式单独保存AST半开范围，旧默认位置对象不增加字段。</zh-CN><en>The new declaration mode retains half-open AST ranges separately; legacy position objects gain no fields.</en></lang>
       const end=withRanges?file.getLineAndCharacterOfPosition(declaration.getEnd()):undefined;
-      return {path:relative,line:position.line+1,column:position.character+1,kind:ts.SyntaxKind[declaration.kind],...(end?{range:{start:{line:position.line+1,column:position.character+1},end:{line:end.line+1,column:end.character+1}}}:{})};
+      return {path:relative,line:position.line+1,column:position.character+1,kind:ts.SyntaxKind[declaration.kind],...(end?{sourceSha256:createHash("sha256").update(file.text,"utf8").digest("hex"),range:{start:{line:position.line+1,column:position.character+1},end:{line:end.line+1,column:end.character+1}}}:{})};
     });
   }
   /**
@@ -135,7 +136,7 @@ export function collectStaticMemberDeclarations({checker,symbol,source,root,incl
     }
     // <lang><zh-CN>前缀后的全路径及原/新成员总量共同受既有上限约束，拒绝静默截断。</zh-CN><en>Fully prefixed paths and combined old/new member counts share existing limits, rejecting silent truncation.</en></lang>
     if(rows.some(row=>row.memberPath.length>32)||members.length+declaredArrayMembers.length+rows.length>10000) throw new Error("Declared array resource limit exceeded.");
-    declaredArrays.push({memberPath,scope:"declared-array-initializer",mutable:true,slots,boundaries,expectedPaths:rows.map(row=>row.memberPath)});
+    declaredArrays.push({memberPath,scope:"declared-array-initializer",mutable:true,sourceDeclarations:declarationsOf(value,true),slots,boundaries,expectedPaths:rows.map(row=>row.memberPath)});
     declaredArrayMembers.push(...rows);
   }
   /**
@@ -149,7 +150,7 @@ export function collectStaticMemberDeclarations({checker,symbol,source,root,incl
     const relative=path.relative(root,file.fileName).split(path.sep).join("/");
     if(relative.startsWith("../")||path.isAbsolute(relative)||relative.split("/").includes("node_modules")) return false;
     const physical=fs.lstatSync(file.fileName);
-    return physical.isFile()&&!physical.isSymbolicLink()&&physical.nlink===1&&fs.realpathSync(file.fileName)===path.resolve(file.fileName);
+    return physical.isFile()&&!physical.isSymbolicLink()&&physical.nlink===1&&fs.realpathSync(file.fileName)===path.resolve(file.fileName)&&fs.readFileSync(file.fileName,"utf8")===file.text;
   }
   /**
    * @lang zh-CN 以当前访问链检测递归，兄弟别名分别保留；不遍历函数返回值或运行getter。
