@@ -85,7 +85,7 @@ export function collectPackageEntries(root, manifest, sourceEntry) {
  * @lang en Use the installed TypeScript compiler to inspect explicit module re-exports and aliases without execution; unknown declarations remain unresolved.
  * @param {string} root - 允许的源码归属根。 Allowed source ownership root.
  * @param {string[]} sources - 相对模块路径。 Relative module paths.
- * @param {object} [options] - 显式includeMembers时追加独立静态成员审核；默认输出保持。 Explicit includeMembers adds a static member audit; default output stays unchanged.
+ * @param {object} [options] - includeMembers追加静态成员；includeDeclaredArrays仅在成员模式下额外记录声明槽位，默认输出保持。 includeMembers adds static members; includeDeclaredArrays records separate declaration slots only in member mode, preserving defaults.
  * @returns {object[]} 导出名、声明是否纯类型、语法种类和归属位置；声明分类不代替type-only重导出可用性分析。 Export names, declaration-only type flags, syntax kinds and owner locations; declaration classification does not establish type-only re-export availability.
  */
 export function collectModuleExports(root, sources, options = {}) {
@@ -106,7 +106,7 @@ export function collectModuleExports(root, sources, options = {}) {
         return {path:relative,line:position.line+1,column:position.character+1,kind:ts.SyntaxKind[declaration.kind]};
       });
       // <lang><zh-CN>成员盘点是显式附加核对，不改变旧根绑定清单，也不参与文档符号构造。</zh-CN><en>Member inspection is an explicit additional check; it changes neither legacy root inventories nor documentation symbol construction.</en></lang>
-      const members=options.includeMembers?collectStaticMemberDeclarations({checker,symbol,source,root}):{};
+      const members=options.includeMembers?collectStaticMemberDeclarations({checker,symbol,source,root,includeDeclaredArrays:options.includeDeclaredArrays===true}):{};
       return { name:exported.name, declarationName:symbol.name, declarationTypeOnly:(symbol.flags & ts.SymbolFlags.Value)===0, status:declarations.length ? "resolved" : "unresolved", declarations,...members };
     }).sort((a,b)=>a.name.localeCompare(b.name,"en")) : [];
     return {path:path.relative(root,file).split(path.sep).join("/"),moduleRecognized:Boolean(module),syntacticDiagnostics:program.getSyntacticDiagnostics(source).map(item=>item.code),exports};

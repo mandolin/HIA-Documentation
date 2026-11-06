@@ -17,6 +17,19 @@ test("aliases associate the actual declaration and preserve localized fields",()
   assert.equal(result.declarations[0].nodeId,"jsdoc:function:original");
   assert.equal(result.declarations[0].i18nFields,1);
 });
+
+test("qualified CommonJS declarations match native terminal names and exact longnames",()=>{
+  // <lang><zh-CN>JSDoc把module.exports的name记为exports，longname保留完整身份。</zh-CN><en>JSDoc records the name of module.exports as exports while retaining its full identity in longname.</en></lang>
+  const data=fixture();
+  data.binding.declarationName="exports";
+  data.binding.declarationLongname="module.exports";
+  data.outputs[0].integration.ir.nodes[0].name="exports";
+  data.outputs[0].integration.ir.nodes[0].longname="module.exports";
+  data.outputs[0].document.symbols[0].name="exports";
+  assert.equal(associateNativeJsdocBinding(data).status,"associated");
+  data.outputs[0].integration.ir.nodes[0].longname="other.exports";
+  assert.equal(associateNativeJsdocBinding(data).status,"blocked");
+});
 test("a same-name entry placeholder cannot replace the original declaration",()=>{
   const data=fixture();data.outputs[0].integration.ir.nodes[0].source.definedIn.relativePath="HIA/owner/src/index.mjs";
   assert.equal(associateNativeJsdocBinding(data).status,"blocked");

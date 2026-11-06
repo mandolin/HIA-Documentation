@@ -1,4 +1,8 @@
-/** @lang zh-CN 逐文件实际生产并关联卫星公开JavaScript声明，缺失字段/来源/生产证据不能按同名占位通过。 @lang en Produce each actual source file and associate public satellite JavaScript declarations, rejecting missing fields/sources/production evidence rather than accepting name placeholders. */
+/**
+ * @file
+ * @lang zh-CN 逐文件实际生成卫星JavaScript文档，独立核对原声明、成员与可选数组槽位，缺证据时阻断。
+ * @lang en Produces actual satellite JavaScript documentation per source and independently checks declarations, members and optional array slots, blocking missing evidence.
+ */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -15,12 +19,14 @@ import {auditSchemaResourceAssociations} from "./audit-schema-resource-associati
 import {adoptSchemaResourceMembers} from "./lib/schema-resource-adoption.mjs";
 import {auditFrozenArrayResources,adoptFrozenArrayResources} from "./audit-frozen-array-resources.mjs";
 import {auditDescriptorResources,adoptDescriptorResources} from "./audit-descriptor-resources.mjs";
+import {adoptDeclaredArrayMembers} from "./lib/declared-array-adoption.mjs";
+import {isDeepStrictEqual} from "node:util";
 
 /**
  * @lang zh-CN 在既有工件协议下逐来源核验原生声明，返回实际关联与缺口；不执行目标包。
  * @lang en Verify native declarations per source under existing artifact protocols, returning actual associations and gaps without executing target packages.
  * @param {string} workspaceRoot - 本主仓所属授权容器。 Authorized container owning this main repository.
- * @param {object} [options] - 显式includeMembers核对嵌套成员，保留旧默认根绑定检查。 Explicit includeMembers checks nested members while preserving the default root-binding audit.
+ * @param {object} [options] - includeMembers核对嵌套成员，includeDeclaredArrays另增声明槽位、双语和精确地图审核层；均默认关闭。 includeMembers checks nested members and includeDeclaredArrays adds a separate declaration-slot, locale and exact-map layer; both default off.
  * @returns {Promise<object>} 关联报告与主仓相对输出路径，非完整覆盖/发行许可。 Association report and main-relative output, not full coverage/release permission.
  * @throws {Error} 文件边界、工件协议、核心字段或来源无效。 Invalid file boundary, artifact protocol, core fields or sources.
  */
@@ -28,6 +34,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   assert(!options.schemaResources || options.includeMembers,"Schema resources require explicit member auditing.");
   assert(!options.arrayResources || options.includeMembers,"Array resources require explicit member auditing.");
   assert(!options.descriptorResources || options.includeMembers,"Descriptor resources require explicit member auditing.");
+  assert(!options.includeDeclaredArrays || options.includeMembers,"Declared arrays require explicit member auditing.");
   // <lang><zh-CN>工作区和工具均固定为本主仓所属容器；不能用调用参数替换生产器实现。
   // </zh-CN><en>Both workspace and tools are fixed to this main repository's container; arguments cannot substitute another producer.</en></lang>
   const mainRoot=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
@@ -51,11 +58,14 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   // <lang><zh-CN>根绑定与成员路径分别计数，不把默认别名或同一实现的多个访问路径算成独立函数。</zh-CN><en>Count root bindings separately from member access paths; default aliases and multiple paths to one implementation are not independent functions.</en></lang>
   const memberRows=[];
   const memberBoundaries=[];
+  // <lang><zh-CN>声明数组的编译器期望与原生成员分别保留，不改变旧审核层计数。</zh-CN><en>Compiler expectations for declared arrays remain separate from native members, preserving old audit-layer counts.</en></lang>
+  const declaredArrays=[],declaredArrayRows=[];
   for(const pack of packages) {
     const modules=pack.modules.filter(module=>/\.(mjs|cjs|js)$/.test(module.path));
     for(const module of modules) for(const rootBinding of module.exports.filter(item=>!item.declarationTypeOnly)) {
       // <lang><zh-CN>成员期望只来自编译器独立清单；生产仍读取真实原声明文件，动态/资源边界单独登记。</zh-CN><en>Member expectations come only from the independent compiler inventory; production still reads actual declaration files and records dynamic/resource boundaries separately.</en></lang>
-      const candidates=[{binding:rootBinding},...(rootBinding.members??[]).map(binding=>({binding,memberPath:binding.memberPath}))];
+      const candidates=[{binding:rootBinding},...(rootBinding.members??[]).map(binding=>({binding,memberPath:binding.memberPath})),...(rootBinding.declaredArrayMembers??[]).map(binding=>({binding,memberPath:binding.memberPath,declaredArray:true}))];
+      for(const array of rootBinding.declaredArrays??[]) declaredArrays.push({package:pack.name,module:module.path,name:rootBinding.name,...array});
       for(const boundary of rootBinding.memberBoundaries??[]) memberBoundaries.push({package:pack.name,module:module.path,name:rootBinding.name,...boundary});
       for(const candidate of candidates) {
       const binding=candidate.binding;
@@ -91,6 +101,8 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
           };
           record.integration=read("jsdoc-integration");
           const map=read("doc-source-map");
+          // <lang><zh-CN>声明数组额外核对原AST范围，内部地图仅供本次比较，不写入公开来源摘要。</zh-CN><en>Declared arrays additionally verify original AST ranges; the internal map is used only for this comparison and is omitted from source summaries.</en></lang>
+          if(options.includeDeclaredArrays) record.sourceMap=map;
           assert.equal(record.integration.contract,"hia-jsdoc-integration");
           assert.equal(record.integration.contractVersion,"0.1.0");
           assert.equal(map.contractVersion,"1.1.0");
@@ -111,7 +123,20 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
       }
       const association=associateNativeJsdocBinding({binding,owner:pack.owner,outputs:[...documents.values()]});
       const row={package:pack.name,owner:pack.owner,sourceHead:pack.sourceHead,module:module.path,name:rootBinding.name,declarationName:binding.declarationName,...association};
-      if(candidate.memberPath) memberRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable,...(options.schemaResources?{originalDeclarations:binding.declarations}:{})});
+      if(candidate.declaredArray) {
+        // <lang><zh-CN>每个新节点同时核实际双语区别、原AST范围和独立地图；默认成员仍沿旧规则。</zh-CN><en>Each new node verifies distinct actual locales, original AST range and independent map; default members retain their old rules.</en></lang>
+        const checks=binding.declarations.map(expected=>{
+          const output=documents.get(`HIA/${pack.owner}/${expected.path}`);
+          const nodes=output?.integration.ir.nodes.filter(node=>node.name===binding.declarationName&&(!binding.declarationLongname||node.longname===binding.declarationLongname)&&node.source?.definedIn?.position?.line===expected.line)??[];
+          if(nodes.length!==1) return {locale:false,range:false};
+          const node=nodes[0];
+          const fields=node.i18n?.fields?.description?.localizedText;
+          const refs=output.sourceMap?.entries.filter(entry=>entry.symbolId===node.id).flatMap(entry=>entry.sourceRefs.filter(ref=>output.sourceMap.sources.find(source=>source.id===ref.sourceId)?.path===output.source))??[];
+          return {locale:Boolean(fields?.en&&fields?.["zh-CN"]&&fields.en!==fields["zh-CN"]),range:Boolean(expected.range&&refs.length===1&&isDeepStrictEqual(refs[0].range,expected.range)&&isDeepStrictEqual(refs[0].rangeConvention,{endBoundary:"exclusive",columnUnit:"utf16-code-unit"}))};
+        });
+        declaredArrayRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable,originalDeclarations:binding.declarations,distinctLocaleText:checks.length>0&&checks.every(check=>check.locale),sourceRangeVerified:checks.length>0&&checks.every(check=>check.range)});
+      }
+      else if(candidate.memberPath) memberRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable,...(options.schemaResources?{originalDeclarations:binding.declarations}:{})});
       else rows.push(row);
       }
     }
@@ -120,7 +145,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   // </zh-CN><en>Undocumented historical modules, missing signatures, type entries and final pages remain separately recorded; position association is not full content acceptance.</en></lang>
   const callableSignatureGaps=rows.filter(row=>row.status==="associated" && row.declarations.some(item=>item.isCallable&&!item.hasSignature)).map(row=>({package:row.package,module:row.module,name:row.name}));
   const callableBindings=rows.filter(row=>row.declarations.some(item=>item.isCallable)).length;
-  const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
+  const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,sourceMap,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
   if(options.includeMembers) {
     // <lang><zh-CN>已关联但缺正文/调用签名仍不算成员内容通过；数组等未展开边界保持显式未核。</zh-CN><en>Association alone cannot pass members without prose/callable signatures; unexpanded boundaries such as arrays remain explicitly unverified.</en></lang>
     const gaps=memberRows.filter(row=>row.status!=="associated"||row.declarations.some(item=>!item.hasText)||row.expectedCallable&&row.declarations.some(item=>!item.hasSignature));
@@ -146,6 +171,11 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
     report.descriptorMemberAudit=adoptDescriptorResources(report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit,descriptors.report);
     report.descriptorMemberAudit.descriptorAssociationOutput=descriptors.output;
   }
+  if(options.includeDeclaredArrays) {
+    // <lang><zh-CN>新增采用层仅消解实际通过的声明边界，原生和三资源层保持可分别查看。</zh-CN><en>The new adoption layer resolves only actually verified declaration boundaries; native and three resource layers remain independently inspectable.</en></lang>
+    report.declaredArrayMemberAudit=adoptDeclaredArrayMembers(report.descriptorMemberAudit??report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit,{arrays:declaredArrays,rows:declaredArrayRows});
+    if(report.declaredArrayMemberAudit.complete) report.pending=report.pending.filter(item=>item!=="nested-public-member-content");
+  }
   assertPublicRootOmission(report,container);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
   return {report,output:path.relative(mainRoot,output).replaceAll("\\","/")};
@@ -155,11 +185,12 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
 // </zh-CN><en>Only explicit inspection permits completion with gaps; the default gate exits nonzero when any binding is blocked.</en></lang>
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2);
-  assert(args.length>=2&&args.length<=7&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members","--schema-resources","--array-resources","--descriptor-resources"].includes(arg))&&(!args.some(arg=>["--schema-resources","--array-resources","--descriptor-resources"].includes(arg))||args.includes("--members")),"Expected --workspace-root with optional --members, --schema-resources, --array-resources, --descriptor-resources and --inspect.");
-  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members"),schemaResources:args.includes("--schema-resources"),arrayResources:args.includes("--array-resources"),descriptorResources:args.includes("--descriptor-resources")});
+  assert(args.length>=2&&args.length<=8&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members","--schema-resources","--array-resources","--descriptor-resources","--declared-arrays"].includes(arg))&&(!args.some(arg=>["--schema-resources","--array-resources","--descriptor-resources","--declared-arrays"].includes(arg))||args.includes("--members")),"Expected --workspace-root with optional --members, --schema-resources, --array-resources, --descriptor-resources, --declared-arrays and --inspect.");
+  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members"),schemaResources:args.includes("--schema-resources"),arrayResources:args.includes("--array-resources"),descriptorResources:args.includes("--descriptor-resources"),includeDeclaredArrays:args.includes("--declared-arrays")});
   console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,...(report.memberAudit?{memberPaths:report.memberAudit.accessPaths,memberContentGaps:report.memberAudit.contentGaps,memberBoundaries:report.memberAudit.boundaries.length}:{}),...(report.schemaMemberAudit?{schemaResourcePaths:report.schemaMemberAudit.schemaResourcePaths,combinedContentGaps:report.schemaMemberAudit.contentGaps,combinedBoundaries:report.schemaMemberAudit.boundaries.length,unverifiedSchemaBindings:report.schemaMemberAudit.unverifiedSchemaBindings}:{}),coverageComplete:false,output}));
   if(report.arrayMemberAudit) console.log(JSON.stringify({frozenArrayBindings:report.arrayMemberAudit.frozenArrayBindings,frozenArrayElements:report.arrayMemberAudit.frozenArrayElements,remainingBoundaries:report.arrayMemberAudit.boundaries.length,arrayAssociationOutput:report.arrayMemberAudit.arrayAssociationOutput}));
   if(report.descriptorMemberAudit) console.log(JSON.stringify({descriptorArrayPaths:report.descriptorMemberAudit.descriptorArrayPaths,remainingBoundaries:report.descriptorMemberAudit.boundaries.length,descriptorAssociationOutput:report.descriptorMemberAudit.descriptorAssociationOutput}));
-  const memberAudit=report.descriptorMemberAudit??report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit;
+  if(report.declaredArrayMemberAudit) console.log(JSON.stringify({declaredArrayPaths:report.declaredArrayMemberAudit.declaredArrayAccessPaths,declaredArrayCallablePaths:report.declaredArrayMemberAudit.declaredArrayCallablePaths,declaredArrayContentGaps:report.declaredArrayMemberAudit.declaredArrayContentGaps,remainingBoundaries:report.declaredArrayMemberAudit.boundaries.length,scope:report.declaredArrayMemberAudit.scope,runtimeStateVerified:false}));
+  const memberAudit=report.declaredArrayMemberAudit??report.descriptorMemberAudit??report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit;
   if((report.blockedBindings || report.callableSignatureGaps.length || memberAudit&&!memberAudit.complete) && !args.includes("--inspect")) process.exitCode=1;
 }

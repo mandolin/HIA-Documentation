@@ -117,3 +117,33 @@ distinct inventory branches. Installed-package consumption validates the actual
 public entries in addition to source-level audits.
 
 中文说明。描述符纯模块通过首方metadata入口取得版本及输入/输出种类，实际B/A/JSONdoc和原声明逐路径核验后才登记覆盖。新增子入口单独列入必要包清单，暂存共享、数组可变性和类型分支分别验收。插件函数数组及完整产品验收继续独立处理。
+
+## Declared callable-object arrays
+
+```powershell
+node scripts/audit-satellite-native-api.mjs --workspace-root .. --members --schema-resources --array-resources --descriptor-resources --declared-arrays
+```
+
+Explicit `--declared-arrays` adds a separate `declaredArrayMemberAudit`, retaining
+all original audit layers. It follows identifiers in direct `const` array
+initializers through owned relative `.cjs` requires to unique `module.exports`
+object literals. Each slot and object member must have actual JSDoc/Core content,
+distinct English and Chinese fields, required callable signatures and independent
+AST ranges matching the documentation source map.
+
+The first supported shape excludes holes, spreads, calls, getters, computed or
+duplicate keys, prototype setters, external files, shadowed loaders and ambiguous
+exports. Explicit targets must match their original source files. Limits are
+128 slots, 32 path segments and 10,000 combined members per public binding.
+Unknown inner boundaries or exhausted budgets keep strict verification failing.
+
+The result's scope is `declared-array-initializer` and `runtimeStateVerified`
+remains false. Mutable objects, module setup, host filtering and execution order
+retain their separate runtime semantics. Complete declaration content can pass
+this member gate while type-only APIs, translations elsewhere, commands and
+generated-page acceptance retain their own coverage requirements.
+
+中文说明。显式模式按源码槽位读取可调用对象，逐对象与成员复用真实原生文档，不将函数
+写成纯JSON数据。原生、Schema、冻结数组和描述符审核层分别保留。新增层只核声明内容，
+完整匹配正文、参数、返回、区分语言字段及AST/地图范围后才消解对应声明边界。
+数组及对象可变、初始化setup与配置筛选和排序继续按宿主实际规则处理。

@@ -1,10 +1,14 @@
-/** @lang zh-CN 按原声明来源关联真实JSDoc与核心文档，审核清单不参与构造符号。 @lang en Associates real JSDoc/core documents by original declaration sources; audit inputs never construct symbols. */
+/**
+ * @file
+ * @lang zh-CN 按原声明来源及可选完整名称关联真实JSDoc与核心文档，审核清单不构造符号。
+ * @lang en Associates actual JSDoc and core documents by original sources and optional qualified names; audit inventories never construct symbols.
+ */
 import assert from "node:assert/strict";
 
 /**
  * @lang zh-CN 核对一个公开绑定的全部原声明、原生元数据、逐字段译文和实际来源；缺失/歧义显式阻断。
  * @lang en Verify every original declaration, native metadata, localized field and actual source for a public binding; missing or ambiguous evidence is blocked.
- * @param {object} input - 独立binding/owner期望与本轮outputs。 Independent binding/owner expectations and actual outputs.
+ * @param {object} input - 独立binding/owner期望与本轮outputs；可选binding.declarationLongname进一步限定CommonJS完整身份，缺省保持旧匹配。 Independent binding/owner expectations and actual outputs; optional binding.declarationLongname constrains qualified CommonJS identity, preserving legacy matching when absent.
  * @returns {object} 工件作用域关联或明确缺口；不是签名/译文完整性或发行验收。 Artifact-scoped association or explicit gaps, not complete signature/translation or release acceptance.
  * @throws {Error} 已有关联中的核心字段或来源被丢失/改写。 A core field or source in an existing association was lost or changed.
  */
@@ -24,7 +28,7 @@ export function associateNativeJsdocBinding({binding,owner,outputs}) {
     const output=documents[0];
     assert.equal(output.integration.contract,"hia-jsdoc-integration");
     assert.equal(output.integration.contractVersion,"0.1.0");
-    const nodes=output.integration.ir.nodes.filter(node=>node.name===binding.declarationName && node.source?.definedIn?.relativePath===source && node.source.definedIn.position?.line===expected.line);
+    const nodes=output.integration.ir.nodes.filter(node=>node.name===binding.declarationName && (!binding.declarationLongname||node.longname===binding.declarationLongname) && node.source?.definedIn?.relativePath===source && node.source.definedIn.position?.line===expected.line);
     if(nodes.length!==1) {gaps.push({source,line:expected.line,reason:nodes.length ? "ambiguous-native-declaration" : "missing-native-declaration"});continue;}
     const node=nodes[0];
     const symbols=output.document.symbols.filter(symbol=>symbol.id===node.id);

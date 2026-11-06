@@ -111,3 +111,71 @@ test("object intersections and branded boolean intersections remain unverified",
     assert.deepEqual(bindings.find(item=>item.name===name).memberBoundaries,[{memberPath:[],reason:"composite-type"}],name);
   }
 });
+
+test("explicit declared arrays retain CommonJS slot identities and old member boundaries", () => {
+  // <lang><zh-CN>目标顶层抛错用于证明清单不执行模块，重复引用须保留不同槽位。</zh-CN><en>A top-level throw proves the inventory does not execute modules; repeated references retain separate slots.</en></lang>
+  fs.writeFileSync(path.join(root,"micro.cjs"),'throw new Error("DO_NOT_RUN"); module.exports={name:"micro", run(event, context){return event;}};');
+  fs.writeFileSync(path.join(root,"array.cjs"),'const micro=require("./micro.cjs"); const plugins=[micro,micro]; exports.api={plugins};');
+  const old=collectModuleExports(root,["array.cjs"],{includeMembers:true})[0].exports[0];
+  const current=collectModuleExports(root,["array.cjs"],{includeMembers:true,includeDeclaredArrays:true})[0].exports[0];
+  assert.deepEqual(current.members,old.members);
+  assert.deepEqual(current.memberBoundaries,old.memberBoundaries);
+  assert.equal(current.declaredArrays[0].scope,"declared-array-initializer");
+  assert.equal(current.declaredArrays[0].slots.length,2);
+  assert.equal(current.declaredArrayMembers[0].declarationName,"exports");
+  assert.equal(current.declaredArrayMembers[0].declarationLongname,"module.exports");
+  assert.deepEqual(current.declaredArrayMembers.map(row=>row.memberPath),[["plugins","0"],["plugins","0","name"],["plugins","0","run"],["plugins","1"],["plugins","1","name"],["plugins","1","run"]]);
+  assert(current.declaredArrayMembers.filter(row=>row.isCallable).every(row=>row.declarations[0].path==="micro.cjs"));
+  assert(!Object.hasOwn(old,"declaredArrays"));
+});
+
+test("declared arrays reject holes, spreads, calls, primitive slots and mutable bindings", () => {
+  for(const [name,statement]of [
+    ["hole","const plugins=[micro,,micro]"],
+    ["spread","const plugins=[...micro]"],
+    ["call","const plugins=[micro()]"],
+    ["primitive","const plugins=[42]"],
+    ["mutable","let plugins=[micro]"],
+    ["wrapped","const plugins=Object.freeze([micro])"]
+  ]){
+    // <lang><zh-CN>每个拒绝输入单独编译，固定原数组边界且没有部分槽位通过。</zh-CN><en>Compile each rejected input independently, retaining its original array boundary with no partially accepted slots.</en></lang>
+    const file=`array-${name}.cjs`;
+    fs.writeFileSync(path.join(root,file),`const micro=require("./micro.cjs"); ${statement}; exports.api={plugins};`);
+    const binding=collectModuleExports(root,[file],{includeMembers:true,includeDeclaredArrays:true})[0].exports[0];
+    assert.deepEqual(binding.declaredArrays,[],name);
+    assert.deepEqual(binding.declaredArrayMembers,[],name);
+    assert(binding.memberBoundaries.length>0,name);
+  }
+});
+
+test("declared arrays enforce slot budgets and reject external or ambiguous object sources", () => {
+  fs.writeFileSync(path.join(root,"array-large.cjs"),`const micro=require("./micro.cjs");const plugins=[${Array(129).fill("micro").join(",")}]; exports.api={plugins};`);
+  assert.throws(()=>collectModuleExports(root,["array-large.cjs"],{includeMembers:true,includeDeclaredArrays:true}),/resource limit/);
+  fs.mkdirSync(path.join(root,"node_modules/foreign"),{recursive:true});
+  fs.writeFileSync(path.join(root,"node_modules/foreign/index.js"),'module.exports={run(){}}');
+  fs.writeFileSync(path.join(root,"array-foreign.cjs"),'const micro=require("foreign");const plugins=[micro];exports.api={plugins};');
+  const binding=collectModuleExports(root,["array-foreign.cjs"],{includeMembers:true,includeDeclaredArrays:true})[0].exports[0];
+  assert.deepEqual(binding.declaredArrays,[]);
+  assert(binding.memberBoundaries.some(row=>row.reason==="array-elements"));
+});
+
+test("ambiguous exports, spreads, getters, duplicate keys and shadowed require stay unverified", () => {
+  for(const [name,objectSource,entryPrefix]of [
+    ["ambiguous",'module.exports={run(){}};module.exports={other(){}};',""],
+    ["spread",'module.exports={...{name:"value"},run(){}};',""],
+    ["getter",'module.exports={get run(){throw new Error("DO_NOT_RUN")}};',""],
+    ["duplicate",'module.exports={name:"first",name:"second",run(){}};',""],
+    ["shadowed",'module.exports={run(){}};','const actual=require; function require(value){return actual(value);}'],
+    ["annotation",'module.exports={run(){}};','/** @type {typeof import("./micro.cjs")} */'],
+    ["prototype",'module.exports={__proto__:{},run(){}};',""],
+    ["module-shadow",'const module={};module.exports={run(){}};',""]
+  ]){
+    // <lang><zh-CN>未知对象形状和伪require分别保留原边界，任何getter或钩子都不执行。</zh-CN><en>Unknown object shapes and fake require retain their original boundaries; neither getters nor hooks execute.</en></lang>
+    const file=`object-${name}.cjs`,entry=`entry-${name}.cjs`;
+    fs.writeFileSync(path.join(root,file),objectSource);
+    fs.writeFileSync(path.join(root,entry),`${entryPrefix} const micro=require("./${file}");const plugins=[micro];exports.api={plugins};`);
+    const binding=collectModuleExports(root,[entry],{includeMembers:true,includeDeclaredArrays:true})[0].exports[0];
+    assert.deepEqual(binding.declaredArrays,[],name);
+    assert(binding.memberBoundaries.length>0,name);
+  }
+});
