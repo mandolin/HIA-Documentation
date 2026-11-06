@@ -21,7 +21,7 @@ import { createDocSourceMapIndex } from "../packages/source-linkage/dist/index.j
  * @lang en Explicitly generates independently audited resources and verifies complete values, provenance and snapshots per file, with content locale declared by the caller.
  * @param {string} workspaceRoot <lang><zh-CN>本项目工作区容器。</zh-CN><en>This project's workspace container.</en></lang>
  * @param {string} locale <lang><zh-CN>实际正文语言，未分类资源可显式声明und。</zh-CN><en>Actual content locale; unclassified resources may explicitly use und.</en></lang>
- * @returns {Promise<object>} <lang><zh-CN>本轮生成及交叉核验报告，后续schema语义和页面验收单列。</zh-CN><en>Production and cross-check report, with subsequent schema semantics and page acceptance listed separately.</en></lang>
+ * @returns {Promise<object>} <lang><zh-CN>生成报告、输出位置、实际SDK工件/来源顺序和独立审核输入；后续语义及页面验收单列。</zh-CN><en>Production report, output location, actual SDK artifacts/source order and independent audit inputs; subsequent semantics and page acceptance remain separate.</en></lang>
  */
 export async function buildRequiredJsonResources(workspaceRoot, locale) {
   const root = fileURLToPath(new URL("../", import.meta.url));
@@ -49,7 +49,7 @@ export async function buildRequiredJsonResources(workspaceRoot, locale) {
   const report = { purpose: "required-json-resource-production", requiredPackages: audit.summary.requiredPackages, contentLocale: locale, producer: result.producer, resources: rows.length, sourceFiles: sources.length, artifacts: result.artifacts.length, values: rows.reduce((sum, row) => sum + row.values, 0), referenceOccurrences: rows.reduce((sum, row) => sum + row.referenceOccurrences, 0), rows, pending: ["schema-aware-reference-evaluation", "js-export-resource-association", "complete-content-language-review", "generated-page-design-and-interaction-acceptance"], coverageComplete: false, releaseProof: false };
   assertPublicRootOmission(report, workspaceRoot);
   fs.writeFileSync(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
-  return { report, output: path.relative(root, output).replaceAll("\\", "/") };
+  return { report, output: path.relative(root, output).replaceAll("\\", "/"), artifacts: result.artifacts, resourceAudit: audit, sourcePaths: sources };
 }
 
 // <lang><zh-CN>命令显式要求容器根及语言，不从本机环境推断资源语言。</zh-CN><en>The command explicitly requires the container root and locale, without inferring resource language from the machine environment.</en></lang>
