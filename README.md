@@ -85,6 +85,7 @@ HIA-Documentation-Sys 的中英产品页面与初始文档入口使用独立静�
 - `packages/plugin-sdk`: documentation producer descriptor/request/result contract、schema 和 runtime helper。
 - `packages/schemas`: core/config/profile/doc-source-map schema 快照与 catalog。
 - `packages/parser-jsdoc`: JSDoc Integration JSON 到 HIA core IR 的底层适配。
+- `packages/jsondoc`: 通用JSON资源的完整值树文档、原始数值词法、逐值来源与SDK生产器。
 - `packages/source-linkage`: doc-source-map schema、索引、路径/隐私校验与查询模型。
 - `packages/lsp`: 面向多 IDE 的 LSP diagnostics 与服务入口。
 - `packages/renderer-html`: HIA HTML 渲染协议。

@@ -1,7 +1,7 @@
 # Package candidates and runtime support
 
 The current checkout declares Node.js **`^22.23.4 || ^24.22.1`** for its private
-workspace root and all thirteen npm packages. These floors are the tested patches
+workspace root and all fourteen npm packages. These floors are the tested patches
 on the supported Node.js 22 and 24 lines. CI tests their latest patches on Linux
 and Windows; publishing continues to use Node.js 24. Other major versions and
 earlier patches are outside this candidate's declared support range.
@@ -25,6 +25,7 @@ The previous column records the plan's prior published identity, not a fresh reg
 | `@hia-doc/config` | `1.0.0` | candidate | `0.1.6` |
 | `@hia-doc/profile` | `1.0.0` | candidate | `0.1.0` |
 | `@hia-doc/parser-jsdoc` | `1.0.0` | candidate | `0.1.0` |
+| `@hia-doc/jsondoc` | `1.0.0` | candidate | — |
 | `@hia-doc/plugin-sdk` | `1.0.0` | candidate | `0.1.2` |
 | `@hia-doc/source-linkage` | `1.0.0` | candidate | `0.1.1` |
 | `@hia-doc/theme-default` | `1.0.0` | candidate | `0.1.4` |

@@ -14,6 +14,7 @@ const packagePaths = [
   "packages/core/package.json",
   "packages/lsp/package.json",
   "packages/parser-jsdoc/package.json",
+  "packages/jsondoc/package.json",
   "packages/plugin-sdk/package.json",
   "packages/profile/package.json",
   "packages/profiles/package.json",

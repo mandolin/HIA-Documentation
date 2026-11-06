@@ -69,6 +69,7 @@ support for Node.js 20.
 | `@types/node` | `devDependencies` | `^20.19.43` | Node.js 20 type definitions for workspace packages and tests. | MIT |
 | `@types/vscode` | `devDependencies` | `^1.92.0` | VS Code extension API type definitions. | MIT |
 | `astro` | `devDependencies` | `7.4.5` | Static website build with custom bilingual templates. | MIT |
+| `jsonc-parser` | `dependencies` | `3.3.1` | Original JSON value trees and UTF16 offsets for `@hia-doc/jsondoc`. | MIT |
 | `tsx` | `devDependencies` | `^4.23.0` | Development-time TypeScript CLI runner for package scripts. | MIT |
 | `typescript` | `devDependencies` | `^6.0.3` | TypeScript compiler and declaration output. | Apache-2.0 |
 | `vitest` | `devDependencies` | `2.1.9` | Unit and integration test runner. | MIT |

@@ -16,6 +16,8 @@ const generatedDependencyDirectories = new Set([
 ]);
 
 const directDependencyAudit = [
+  // <lang><zh-CN>通用JSON生产使用原始值树和偏移，MIT精确版本已完成许可审查。</zh-CN><en>Generic JSON production uses original value trees and offsets from an exact MIT version reviewed for licensing.</en></lang>
+  { name: "jsonc-parser", dependencyType: "dependencies", versionRange: "3.3.1", license: "MIT", purpose: "Lossless JSON value trees and UTF16 offsets for @hia-doc/jsondoc." },
   // <lang lang="zh-CN">官网仅构建时使用Astro，不进入公开运行包。</lang><lang lang="en">Astro builds the website only and is excluded from published runtime packages.</lang>
   { name: "astro", dependencyType: "devDependencies", versionRange: "7.4.5", license: "MIT", purpose: "Static official website generation with custom bilingual templates." },
   {

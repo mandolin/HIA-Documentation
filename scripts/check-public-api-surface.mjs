@@ -10,8 +10,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
 /**
- * @lang zh-CN 收集发行清单中十二必要包的实际根、子路径、bin和声明；独立语言服务器不在首版必要包组。
- * @lang en Collects actual roots, subpaths, bins and declarations of twelve required release packages; the standalone language server is outside this required group.
+ * @lang zh-CN 收集发行清单中十三必要包的实际根、子路径、bin和声明；独立语言服务器不在首版必要包组。
+ * @lang en Collects actual roots, subpaths, bins and declarations of thirteen required release packages; the standalone language server is outside this required group.
  * @param {string} root <lang><zh-CN>受信主仓根目录，只读。</zh-CN><en>Trusted main-repository root, read-only.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>不含绝对路径或源码正文的候选清单。</zh-CN><en>Candidate inventory without absolute paths or source bodies.</en></lang>
  */
@@ -19,7 +19,7 @@ export async function collectPublicApiSurface(root) {
   // <lang><zh-CN>清单决定包组；不扫描业务仓或任意第三方包。</zh-CN><en>The release plan defines package scope; no business repository or arbitrary dependency is scanned.</en></lang>
   const plan = JSON.parse(await readFile(path.join(root, "release/public-packages.json"), "utf8"));
   const entries = plan.packages.filter((entry) => entry.name !== "@hia-doc/lsp").sort((a, b) => a.name.localeCompare(b.name, "en"));
-  if (entries.length !== 12) throw new Error("Required API package scope must contain twelve packages.");
+  if (entries.length !== 13) throw new Error("Required API package scope must contain thirteen packages.");
   // <lang><zh-CN>源入口沿包目录约定，类型程序不emit也不执行模块。</zh-CN><en>Source entries follow package directories; the type program neither emits nor executes modules.</en></lang>
   const roots = entries.map((entry) => path.join(root, entry.path, "src/index.ts"));
   const program = ts.createProgram(roots, { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext, resolveJsonModule: true, skipLibCheck: true, noEmit: true });

@@ -91,6 +91,21 @@ importers:
         specifier: workspace:*
         version: link:../plugin-sdk
 
+  packages/jsondoc:
+    dependencies:
+      '@hia-doc/core':
+        specifier: workspace:*
+        version: link:../core
+      '@hia-doc/plugin-sdk':
+        specifier: workspace:*
+        version: link:../plugin-sdk
+      '@hia-doc/source-linkage':
+        specifier: workspace:*
+        version: link:../source-linkage
+      jsonc-parser:
+        specifier: 3.3.1
+        version: 3.3.1
+
   packages/lsp:
     dependencies:
       '@hia-doc/config':

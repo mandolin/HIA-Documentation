@@ -1,6 +1,6 @@
 /**
- * @lang zh-CN 审核44必要包的真实exports/main/bin、源码声明与资源；只读目标，只写主仓专用清单，不声称文档已覆盖。
- * @lang en Audit actual exports/main/bin, source declarations, and resources for 44 required packages; targets are read-only and only an owner inventory is written, without claiming documentation coverage.
+ * @lang zh-CN 审核45必要包的真实exports/main/bin、源码声明与资源；只读目标，只写主仓专用清单，不声称文档已覆盖。
+ * @lang en Audit actual exports/main/bin, source declarations, and resources for 45 required packages; targets are read-only and only an owner inventory is written, without claiming documentation coverage.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,7 +20,7 @@ import { collectPackageEntries, collectModuleExports } from "./lib/package-api-i
 export function auditRequiredPackages(workspaceRoot, options = {}) {
   const mainRoot=fileURLToPath(new URL("../",import.meta.url));
   const scope=JSON.parse(fs.readFileSync(path.join(mainRoot,"reference/required-package-api.inputs.json"),"utf8"));
-  if(scope.packages.length!==44 || new Set(scope.packages.map(item=>item.name)).size!==44) throw new Error("Required package scope must contain 44 unique names.");
+  if(scope.packages.length!==45 || new Set(scope.packages.map(item=>item.name)).size!==45) throw new Error("Required package scope must contain 45 unique names.");
   const packages=[];
   for(const item of scope.packages) {
     // <lang lang="zh-CN">根来自固定owner而非清单任意绝对路径；实际manifest名称必须匹配。</lang><lang lang="en">Roots come from fixed owners rather than arbitrary absolute manifest paths; actual package names must match.</lang>
@@ -36,7 +36,7 @@ export function auditRequiredPackages(workspaceRoot, options = {}) {
     const head=execFileSync("git",["-C",ownerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim();
     packages.push({name:item.name,owner:item.owner,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256:createHash("sha256").update(bytes).digest("hex"),entries,modules});
   }
-  return {description:"44必要包静态入口及编译器导出审核；不是文档生成覆盖/语义验收/发行证明。",packages,summary:{packages:packages.length,entries:packages.reduce((sum,item)=>sum+item.entries.length,0),modules:packages.reduce((sum,item)=>sum+item.modules.length,0),exports:packages.reduce((sum,item)=>sum+item.modules.reduce((total,module)=>total+module.exports.length,0),0)}};
+  return {description:"45必要包静态入口及编译器导出审核；不是文档生成覆盖/语义验收/发行证明。",packages,summary:{packages:packages.length,entries:packages.reduce((sum,item)=>sum+item.entries.length,0),modules:packages.reduce((sum,item)=>sum+item.modules.length,0),exports:packages.reduce((sum,item)=>sum+item.modules.reduce((total,module)=>total+module.exports.length,0),0)}};
 }
 
 // <lang lang="zh-CN">命令入口只写本主仓dist，不接收任意输出路径或执行目标包命令。</lang><lang lang="en">The command writes only this owner's dist, accepting no arbitrary output path or target command execution.</lang>

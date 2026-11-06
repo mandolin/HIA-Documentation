@@ -1,6 +1,6 @@
 /**
- * @lang zh-CN 以显式44包审计为期望，通过通用项目生产器生成12个核心包模块API；不执行被文档化模块。
- * @lang en Generate module APIs for the 12 core packages through the generic project producer against an explicit 44-package audit, without executing documented modules.
+ * @lang zh-CN 以显式45包审计为期望，通过通用项目生产器生成13个核心包模块API；不执行被文档化模块。
+ * @lang en Generate module APIs for the 13 core packages through the generic project producer against an explicit 45-package audit, without executing documented modules.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,7 +18,7 @@ import {verifyProjectApiProjection,assertPublicRootOmission,writeCoreApiReport} 
  * @lang zh-CN 从调用者明确授权的工作区加载HIA自有生产器，输出只在主仓dist；独立审计不替代生成。
  * @lang en Load the HIA-owned producer from a caller-authorized workspace and write only main-repo dist output; independent auditing never replaces generation.
  * @param {string} workspaceRoot - 包含main-repo/HIA的容器。 Container holding main-repo/HIA.
- * @returns {Promise<object>} 本轮模块生成/逐字段校验与剩余范围报告，非44包完成或发行证明。 Module generation/field-check and remaining-scope report, not 44-package completion or release proof.
+ * @returns {Promise<object>} 本轮模块生成/逐字段校验与剩余范围报告，非45包完成或发行证明。 Module generation/field-check and remaining-scope report, not 45-package completion or release proof.
  * @throws {Error} 身份、来源、生成、字段或实际核心验证失败。 Invalid identity/source, generation, field preservation or actual core validation.
  */
 export async function buildCorePackageApi(workspaceRoot) {
@@ -35,7 +35,7 @@ export async function buildCorePackageApi(workspaceRoot) {
   const {readTsJsDocBridgeArtifact}=await import(pathToFileURL(path.join(producerRoot,"packages/ts-jsdoc-bridge/src/index.mjs")));
   const inventory=auditRequiredPackages(container);
   const packages=inventory.packages.filter(item=>item.owner==="main-repo");
-  assert.equal(packages.length,12,"Expected all twelve core packages.");
+  assert.equal(packages.length,13,"Expected all thirteen core packages.");
   // <lang><zh-CN>显式选择新TS规范，不修改旧默认集合；声明必须与实际生产器输出的精确契约对应。</zh-CN><en>Explicitly select the new TS profile without mutating legacy defaults; its declarations must match actual producer output contracts.</en></lang>
   const profile=getOfficialTsDocProjectProfile();
   assert.deepEqual(createOfficialTsDocProjectProfileSet().diagnostics,[]);
@@ -78,7 +78,7 @@ export async function buildCorePackageApi(workspaceRoot) {
     rows.push({name:pack.name,sourceHead:pack.sourceHead,manifestSha256:pack.manifestSha256,sourceDigests,auditedResources,modules:pack.modules.map(module=>module.path),artifacts,...checks});
   }
   // <lang><zh-CN>资源/bin仅在独立审计中登记，不能混算成符号/页面已完成；其它32包必须保持开放。</zh-CN><en>Resources/bins are inventory-only and cannot count as completed symbols/pages; the other 32 packages remain open.</en></lang>
-  const report={purpose:"core-package-api-generation-verification",scope:"twelve-core-package-modules",requiredPackages:44,generatedPackages:rows.length,remainingPackages:inventory.packages.filter(pack=>pack.owner!=="main-repo").map(pack=>pack.name),profile:{profileId:profile.profileId,profileVersion:profile.profileVersion,schemaVersion:profile.schemaVersion},producer:result.producer,rows,summary:{bindings:rows.reduce((sum,row)=>sum+row.bindings,0),symbols:rows.reduce((sum,row)=>sum+row.symbols,0),i18nFields:rows.reduce((sum,row)=>sum+row.i18nFields,0),artifacts:result.artifacts.length,auditedResourceOrCommandEntries:packages.flatMap(pack=>pack.entries).filter(entry=>["json-resource","command"].includes(entry.kind)).length},pending:["resource-and-command-page-acceptance","remaining-32-package-chains","complete-source-comment-and-translation-review","generated-page-visual-and-interaction-acceptance"],releaseProof:false};
+  const report={purpose:"core-package-api-generation-verification",scope:"thirteen-core-package-modules",requiredPackages:45,generatedPackages:rows.length,remainingPackages:inventory.packages.filter(pack=>pack.owner!=="main-repo").map(pack=>pack.name),profile:{profileId:profile.profileId,profileVersion:profile.profileVersion,schemaVersion:profile.schemaVersion},producer:result.producer,rows,summary:{bindings:rows.reduce((sum,row)=>sum+row.bindings,0),symbols:rows.reduce((sum,row)=>sum+row.symbols,0),i18nFields:rows.reduce((sum,row)=>sum+row.i18nFields,0),artifacts:result.artifacts.length,auditedResourceOrCommandEntries:packages.flatMap(pack=>pack.entries).filter(entry=>["json-resource","command"].includes(entry.kind)).length},pending:["resource-and-command-page-acceptance","remaining-32-package-chains","complete-source-comment-and-translation-review","generated-page-visual-and-interaction-acceptance"],releaseProof:false};
   // <lang><zh-CN>摘要写入本owner忽略目录，重建不清理未知文件；只有本轮清单可作为当轮成功依据。</zh-CN><en>Write the report into this owner's ignored directory without deleting unknown files; only this run's manifest establishes current success.</en></lang>
   writeCoreApiReport(outputDirectory,report);
   return report;

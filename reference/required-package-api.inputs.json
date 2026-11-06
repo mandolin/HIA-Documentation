@@ -20,6 +20,12 @@
       "sourceEntry": "src/index.ts"
     },
     {
+      "name": "@hia-doc/jsondoc",
+      "owner": "main-repo",
+      "directory": "packages/jsondoc",
+      "sourceEntry": "src/index.ts"
+    },
+    {
       "name": "@hia-doc/parser-jsdoc",
       "owner": "main-repo",
       "directory": "packages/parser-jsdoc",

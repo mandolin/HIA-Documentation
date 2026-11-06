@@ -12,8 +12,8 @@ import {inspectJsonResource, readJsonResourceBytes} from "./lib/json-resource-au
 import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
 
 /**
- * @lang zh-CN 从当前主仓所属容器读取44必要包，输出独立审核快照。
- * @lang en Reads the 44 required packages from this main repository's container and writes an independent audit snapshot.
+ * @lang zh-CN 从当前主仓所属容器读取45必要包，输出独立审核快照。
+ * @lang en Reads the 45 required packages from this main repository's container and writes an independent audit snapshot.
  * @param {string} workspaceRoot - 授权工作区容器。 Authorized workspace container.
  * @returns {object} 实际审核报告与主仓相对输出位置。 Actual audit report and main-relative output location.
  * @throws {Error} 清单、物理边界、JSON或写入位置无效。 Invalid manifest, physical boundary, JSON or output location.
@@ -24,8 +24,8 @@ export function auditRequiredJsonResources(workspaceRoot) {
   const container = fs.realpathSync(workspaceRoot);
   assert.equal(fs.realpathSync(path.join(container, "main-repo")), mainRoot);
   const scope = JSON.parse(readJsonResourceBytes(mainRoot, "reference/required-package-api.inputs.json"));
-  assert.equal(scope.packages.length, 44);
-  assert.equal(new Set(scope.packages.map(item => item.name)).size, 44);
+  assert.equal(scope.packages.length, 45);
+  assert.equal(new Set(scope.packages.map(item => item.name)).size, 45);
   const owners = new Set(["main-repo", "hia-jsdoc", "hia-htmdoc", "hia-cssdoc", "hia-dotnetdoc", "jsdoc-plugin-hia-sys", "jsdoc-theme-hia"]);
   const manifests = [];
   const entries = [];

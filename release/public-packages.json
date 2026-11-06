@@ -137,6 +137,14 @@
       "kind": "tooling-runtime",
       "releaseStatus": "candidate",
       "previousPublishedVersion": "0.1.11"
+    },
+    {
+      "name": "@hia-doc/jsondoc",
+      "path": "packages/jsondoc",
+      "targetVersion": "1.0.0",
+      "publishOrder": 40,
+      "kind": "adapter-runtime",
+      "releaseStatus": "candidate"
     }
   ],
   "excludedPackages": [

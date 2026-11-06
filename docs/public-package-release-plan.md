@@ -41,14 +41,22 @@ its full checks independently of terminal resume.
 中文：候选发布、部分恢复、全已发布只读核验是不同路径；只读恢复不取发布凭据、不执行打包/发布，仍做后置消费。
 
 The current source candidate declares Node.js `^22.23.4 || ^24.22.1` across the
-workspace root and thirteen npm packages. This change is unreleased. Existing
+workspace root and fourteen npm packages. This change is unreleased. Existing
 npm contents and engine declarations remain independent; see
 [candidate identity and clean-install guidance](package-candidates.md).
 Published identities remain unavailable for republishing until a new version is
 explicitly assigned and qualified. Current checked-in targets appear below;
 dated publication reports describe their original checkpoints.
 
-中文：当前源码候选采用已验证22/24补丁下限，十二必要包已设1.0.0候选身份；独立工具与历史发布记录分开，不能重发旧身份。
+中文：当前源码候选采用已验证22/24补丁下限，十三必要包已设1.0.0候选身份；独立工具与历史发布记录分开，不能重发旧身份。
+
+The required first-release scope includes `@hia-doc/jsondoc`, a reusable JSON
+resource documentation producer at target `1.0.0`. The full project scope is
+45 packages, comprising 13 required packages in this repository and 32 satellite
+packages. The standalone LSP remains separately listed in this release plan.
+The JSON producer reuses core 1.0.0, doc-source-map 1.1.0 and producer SDK 1.0.0.
+
+中文补充。JSON生产包纳入同一打包、许可证、安装与CI标准。候选版本身份及范围登记需通过相应发布验收。
 
 ### Historical Portal tree layout patch — 2026-10-25
 
@@ -118,6 +126,7 @@ Targets and status below reflect the checked-in release manifest. Twelve necessa
 | 20 | `@hia-doc/config` | owner-runtime | `1.0.0` | candidate |
 | 20 | `@hia-doc/profile` | owner-runtime | `1.0.0` | candidate |
 | 30 | `@hia-doc/parser-jsdoc` | adapter-runtime | `1.0.0` | candidate |
+| 40 | `@hia-doc/jsondoc` | adapter-runtime | `1.0.0` | candidate |
 | 30 | `@hia-doc/plugin-sdk` | producer-sdk | `1.0.0` | candidate |
 | 30 | `@hia-doc/source-linkage` | owner-runtime | `1.0.0` | candidate |
 | 30 | `@hia-doc/theme-default` | renderer-asset-runtime | `1.0.0` | candidate |

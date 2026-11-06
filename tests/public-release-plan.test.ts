@@ -19,11 +19,12 @@ describe("public release intent", () => {
   });
 
   /** @lang zh-CN 必要包的候选身份精确协调，不能误升独立语言服务器或伪称已发布。 @lang en Required candidate identities are coordinated exactly, without promoting the independent language server or claiming publication. */
-  it("coordinates twelve v1 targets while preserving the independent language server", () => {
+  it("coordinates thirteen v1 targets while preserving the independent language server", () => {
     // <lang><zh-CN>读取实际发行清单而非复制候选列表，保持根包目标可验。</zh-CN><en>Read the actual release plan rather than duplicating its candidate list.</en></lang>
     const plan = JSON.parse(readFileSync(new URL("../release/public-packages.json", import.meta.url), "utf8"));
     const required = plan.packages.filter((entry: {name: string}) => entry.name !== "@hia-doc/lsp");
-    expect(required).toHaveLength(12);
+    expect(required).toHaveLength(13);
+    expect(required.find((entry: {name: string}) => entry.name === "@hia-doc/jsondoc")).toMatchObject({ targetVersion: "1.0.0", releaseStatus: "candidate", path: "packages/jsondoc" });
     expect(required.every((entry: {targetVersion: string; releaseStatus: string}) => entry.targetVersion === "1.0.0" && ["candidate", "published"].includes(entry.releaseStatus))).toBe(true);
     expect(plan.packages.find((entry: {name: string}) => entry.name === "@hia-doc/lsp")).toMatchObject({targetVersion: "0.1.0", releaseStatus: "published"});
   });

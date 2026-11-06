@@ -1,0 +1,17 @@
+{
+  "name": "@hia-doc/jsondoc",
+  "version": "1.0.0",
+  "description": "Lossless JSON resource documentation and exact source provenance for HIA.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/mandolin/HIA-Documentation.git", "directory": "packages/jsondoc" },
+  "engines": { "node": "^22.23.4 || ^24.22.1" },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "publishConfig": { "access": "public" },
+  "scripts": { "build": "tsc -p tsconfig.json", "test": "cd ../.. && vitest run packages/jsondoc/src" },
+  "dependencies": { "@hia-doc/core": "workspace:*", "@hia-doc/plugin-sdk": "workspace:*", "@hia-doc/source-linkage": "workspace:*", "jsonc-parser": "3.3.1" },
+  "sideEffects": false
+}

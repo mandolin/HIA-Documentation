@@ -19,8 +19,8 @@ describe("public API candidate inventory", () => {
   it("keeps declaration fingerprints portable across checkout line endings", async () => {
     // <lang><zh-CN>测试目录由本用例唯一创建，不读取工作区产品源码。</zh-CN><en>This case owns a uniquely created directory and never reads workspace product source.</en></lang>
     const root = mkdtempSync(join(tmpdir(), "hia-api-surface-"));
-    // <lang><zh-CN>十二个极小包满足收集范围，不引入第三方依赖或真实发行状态。</zh-CN><en>Twelve minimal packages satisfy collection scope without third-party dependencies or real release state.</en></lang>
-    const packages = Array.from({ length: 12 }, (_, index) => ({ name: `@fixture/package-${index}`, path: `packages/package-${index}` }));
+    // <lang><zh-CN>十三个极小包满足收集范围，不引入第三方依赖或真实发行状态。</zh-CN><en>Thirteen minimal packages satisfy collection scope without third-party dependencies or real release state.</en></lang>
+    const packages = Array.from({ length: 13 }, (_, index) => ({ name: `@fixture/package-${index}`, path: `packages/package-${index}` }));
     // <lang><zh-CN>真实换行和字面反斜杠转义必须区分，类型字段也使用多行模板。</zh-CN><en>Distinguish physical line endings from literal backslash escapes and cover multiline template types in fields.</en></lang>
     const source = 'export const VALUE = `first\nsecond`;\nexport const ESCAPED = `first\\r\\nsecond`;\nexport interface Shape { value: `first\nsecond` }\n';
     try {

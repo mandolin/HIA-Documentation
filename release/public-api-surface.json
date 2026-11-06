@@ -11162,6 +11162,89 @@
       ]
     },
     {
+      "name": "@hia-doc/jsondoc",
+      "candidateTargetVersion": "1.0.0",
+      "source": "packages/jsondoc/src/index.ts",
+      "exportsMap": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js"
+        }
+      },
+      "bin": {},
+      "exports": [
+        {
+          "name": "generateJsonDocumentation",
+          "kind": "FunctionDeclaration",
+          "owner": "packages/jsondoc/src/resource.ts",
+          "signatures": [
+            "(input: string | Uint8Array<ArrayBufferLike>, options: JsonDocumentationOptions): JsonDocumentationResult"
+          ],
+          "fields": [],
+          "declarationFingerprints": [
+            "b3ece1d2257c59e4dca5f646f655d9e51f1a1aa4f15f431ec8453b6f5728d1d7"
+          ]
+        },
+        {
+          "name": "JsonDocumentationOptions",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/jsondoc/src/resource.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "path",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "locale",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "1c1beb8a308ef00f21fc63f502bf8e8a0d6dadb92934aaed0aa6359525ba7f45"
+          ]
+        },
+        {
+          "name": "jsonDocumentationProducer",
+          "kind": "VariableDeclaration",
+          "owner": "packages/jsondoc/src/producer.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "e487e080ff7d25c371c1f1e4094448d33ef1628ff00dcd178e389ed06a6d861f"
+          ]
+        },
+        {
+          "name": "JsonDocumentationResult",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/jsondoc/src/resource.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "document",
+              "optional": false,
+              "type": "HiaDocument"
+            },
+            {
+              "name": "sourceMap",
+              "optional": false,
+              "type": "Record<string, unknown>"
+            },
+            {
+              "name": "sourceText",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "7c260f8c76c1039e62ae60c5547974782332fc5167f79c6d0be62ac16de66a11"
+          ]
+        }
+      ]
+    },
+    {
       "name": "@hia-doc/parser-jsdoc",
       "candidateTargetVersion": "1.0.0",
       "source": "packages/parser-jsdoc/src/index.ts",
