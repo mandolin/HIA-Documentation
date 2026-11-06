@@ -77,6 +77,8 @@ export function collectStaticMemberDeclarations({checker,symbol,source,root}) {
     if(members.length>10000||memberPath.length>32) throw new Error("Static member inventory resource limit exceeded.");
     if(type.flags&(ts.TypeFlags.Any|ts.TypeFlags.Unknown|ts.TypeFlags.TypeParameter)) {memberBoundaries.push({memberPath,reason:"dynamic-type"});return;}
     if(type.flags&ts.TypeFlags.NonPrimitive) {memberBoundaries.push({memberPath,reason:"opaque-object-type"});return;}
+    // <lang><zh-CN>boolean原语在编译器中是true/false联合，但没有待展开的对象成员；混合联合与交叉类型继续保留边界。</zh-CN><en>The compiler represents primitive boolean as a true/false union with no object members to expand; mixed unions and intersections remain explicit boundaries.</en></lang>
+    if(type.flags&ts.TypeFlags.Boolean) return;
     if(type.isUnionOrIntersection()) {memberBoundaries.push({memberPath,reason:"composite-type"});return;}
     if(!(type.flags&ts.TypeFlags.Object)) return;
     if(ancestors.has(type)) {memberBoundaries.push({memberPath,reason:"recursive-type"});return;}

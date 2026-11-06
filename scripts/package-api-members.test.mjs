@@ -80,3 +80,34 @@ test("runtime properties referencing declaration-only imports retain their actua
   assert.equal(version.declarations[0].path, "declared.mjs");
   assert.equal(version.declarations[0].kind, "PropertyAssignment");
 });
+
+test("inferred and annotated boolean primitives have no object-member expansion boundary",()=>{
+  // <lang><zh-CN>真实编译器将boolean编码为true/false联合；声明位置仍由独立成员清单保留。</zh-CN><en>The real compiler encodes boolean as a true/false union; the independent member inventory must still retain declaration positions.</en></lang>
+  fs.writeFileSync(path.join(root,"booleans.mts"), 'throw new Error("Must never execute"); export const flags = {enabled: true, disabled: false}; export declare const flag: boolean; export declare const pair: true | false; export declare const annotated: {enabled: boolean};');
+  const bindings=collectModuleExports(root,["booleans.mts"],{includeMembers:true})[0].exports;
+  for(const name of ["flags","flag","pair","annotated"]) {
+    assert.deepEqual(bindings.find(item=>item.name===name).memberBoundaries,[],name);
+  }
+  const flags=bindings.find(item=>item.name==="flags");
+  assert.deepEqual(flags.members.map(item=>item.memberPath),[["disabled"],["enabled"]]);
+  assert(flags.members.every(item=>item.status==="resolved"&&item.declarations[0].path==="booleans.mts"));
+});
+
+test("boolean-containing mixed unions and literal unions retain composite boundaries",()=>{
+  // <lang><zh-CN>布尔原语修正不得放行含对象分支或其它标量分支的真实联合。</zh-CN><en>The boolean-primitive correction must not admit genuine unions containing object or other scalar alternatives.</en></lang>
+  fs.writeFileSync(path.join(root,"unions.mts"), 'export declare const objectChoice: boolean | {nested: string}; export declare const scalarChoice: boolean | string; export declare const literals: "a" | "b"; export declare const nested: {choice: boolean | {next: number}};');
+  const bindings=collectModuleExports(root,["unions.mts"],{includeMembers:true})[0].exports;
+  for(const name of ["objectChoice","scalarChoice","literals"]) {
+    assert.deepEqual(bindings.find(item=>item.name===name).memberBoundaries,[{memberPath:[],reason:"composite-type"}],name);
+  }
+  assert.deepEqual(bindings.find(item=>item.name==="nested").memberBoundaries,[{memberPath:["choice"],reason:"composite-type"}]);
+});
+
+test("object intersections and branded boolean intersections remain unverified",()=>{
+  // <lang><zh-CN>附带成员的交叉类型仍需单独设计，不按布尔字面分支或对象成员数量猜测覆盖。</zh-CN><en>Member-bearing intersections still need separate design; neither boolean-literal branches nor property counts establish coverage.</en></lang>
+  fs.writeFileSync(path.join(root,"intersections.mts"), 'export declare const combined: {left: string} & {right: number}; export declare const branded: boolean & {readonly tag: "flag"};');
+  const bindings=collectModuleExports(root,["intersections.mts"],{includeMembers:true})[0].exports;
+  for(const name of ["combined","branded"]) {
+    assert.deepEqual(bindings.find(item=>item.name===name).memberBoundaries,[{memberPath:[],reason:"composite-type"}],name);
+  }
+});
