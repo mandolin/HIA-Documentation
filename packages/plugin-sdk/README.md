@@ -87,3 +87,19 @@ marked `stable-candidate` in schema distribution. Package versions and registry
 availability are independent; verify the exact package/source revision consumed.
 Candidate source changes do not republish an older package version or constitute
 a formal system release.
+
+## Draft derivation evidence
+
+The explicit `@hia-doc/plugin-sdk/derivation-evidence` subpath provides
+`readArtifactDerivationEvidence` and the independent `0.1.0-draft` contract.
+It returns a defensive snapshot after bounded structure/reference checks.
+Readable records carry separate unverified states for actual bytes, source
+links, profile semantics and producer authenticity.
+
+The schema is also exported at
+`@hia-doc/plugin-sdk/artifact-derivation-evidence.schema.json`.
+See the [contract reference](https://github.com/mandolin/HIA-Documentation/blob/main/docs/contracts/artifact-derivation-evidence.md)
+for fields, limits and consumer responsibilities.
+
+中文补充。草案入口明确区分生产声明与静态推导，读取通过仅登记结构与引用检查。
+实际字节、来源、规则语义和生产方身份继续由消费者分别核验。

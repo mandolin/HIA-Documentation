@@ -25,11 +25,15 @@ const expectedNames = [
 ];
 
 describe("producer public API declaration gate", () => {
-  it("keeps the reviewed root allowlist and no hidden bin/subpath API", () => {
+  it("keeps the reviewed root allowlist and explicit draft subpaths", () => {
     expect(exports.map((symbol) => symbol.getName()).sort()).toEqual([...expectedNames].sort());
     // <lang><zh-CN>manifest声明也是公开边界，不把root符号清单当作子路径和CLI的替代。</zh-CN><en>The manifest is also a public boundary; the root symbol list does not substitute for subpath and CLI review.</en></lang>
     const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-    expect(manifest.exports).toEqual({ ".": { types: "./dist/index.d.ts", import: "./dist/index.js" } });
+    expect(manifest.exports).toEqual({
+      ".": { types: "./dist/index.d.ts", import: "./dist/index.js" },
+      "./derivation-evidence": { types: "./dist/derivation-evidence.d.ts", import: "./dist/derivation-evidence.js" },
+      "./artifact-derivation-evidence.schema.json": "./dist/artifact-derivation-evidence.schema.json"
+    });
     expect(manifest.bin).toBeUndefined();
   });
   it("documents every exported declaration in canonical Chinese and English", () => {

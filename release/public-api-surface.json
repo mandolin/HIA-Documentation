@@ -11574,6 +11574,11 @@
       "candidateTargetVersion": "1.0.0",
       "source": "packages/plugin-sdk/src/index.ts",
       "exportsMap": {
+        "./derivation-evidence": {
+          "types": "./dist/derivation-evidence.d.ts",
+          "import": "./dist/derivation-evidence.js"
+        },
+        "./artifact-derivation-evidence.schema.json": "./dist/artifact-derivation-evidence.schema.json",
         ".": {
           "types": "./dist/index.d.ts",
           "import": "./dist/index.js"
@@ -15939,6 +15944,7 @@
           "import": "./dist/index.js"
         },
         "./catalog.json": "./dist/catalog.json",
+        "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
         "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
         "./business-flow-documentation-projection.schema.json": "./dist/schemas/business-flow-documentation-projection.schema.json",
         "./documentation-profile.schema.json": "./dist/schemas/documentation-profile.schema.json",
@@ -16000,7 +16006,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "9e4929af23b39893d4951072d543fe5f4b055e222681b386eedccc31dbfc4f22"
+            "be9d2d4ed95af5f0ea90fc5415db8041d1f8a2004011cf396d1a51e243ad0c00"
           ]
         },
         {

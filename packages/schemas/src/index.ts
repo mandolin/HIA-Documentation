@@ -4,6 +4,7 @@
  * @lang en Distributes current owner JSON Schema snapshots and fixed historical identities; source-linkage still owns coordinate evidence, and this module does not infer compatible versions.
  */
 import catalogData from "./catalog.json" with { type: "json" };
+import artifactDerivationEvidenceSchemaData from "./schemas/artifact-derivation-evidence.schema.json" with { type: "json" };
 import businessFlowDocumentationSchemaData from "./schemas/business-flow-documentation.schema.json" with { type: "json" };
 import businessFlowDocumentationProjectionSchemaData from "./schemas/business-flow-documentation-projection.schema.json" with { type: "json" };
 import documentationProfileSchemaData from "./schemas/documentation-profile.schema.json" with { type: "json" };
@@ -47,6 +48,7 @@ export const HIA_SCHEMA_CATALOG_VERSION = "0.1.0-draft";
 export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Documentation/schemas/";
 /** @lang zh-CN 与生成 catalog 顺序一致的当前 schema key；不包括历史快照。 @lang en Current schema keys in generated-catalog order, excluding historical snapshots. */
 export const HIA_SCHEMA_KEYS = [
+  "artifact-derivation-evidence",
   "business-flow-documentation",
   "business-flow-documentation-projection",
   "documentation-profile",
@@ -107,6 +109,7 @@ export interface HiaSchemaCatalog {
 }
 
 const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
+  "artifact-derivation-evidence": artifactDerivationEvidenceSchemaData,
   "business-flow-documentation": businessFlowDocumentationSchemaData,
   "business-flow-documentation-projection": businessFlowDocumentationProjectionSchemaData,
   "documentation-profile": documentationProfileSchemaData,

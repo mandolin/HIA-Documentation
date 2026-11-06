@@ -15,6 +15,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./derivation-evidence": {
+      "types": "./dist/derivation-evidence.d.ts",
+      "import": "./dist/derivation-evidence.js"
+    },
+    "./artifact-derivation-evidence.schema.json": "./dist/artifact-derivation-evidence.schema.json",
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"

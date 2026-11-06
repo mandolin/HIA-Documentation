@@ -45,6 +45,10 @@ import {
   DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA
 } from "../../plugin-sdk/dist/index.js";
 import {
+  ARTIFACT_DERIVATION_EVIDENCE_CONTRACT_VERSION,
+  ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA
+} from "../../plugin-sdk/dist/derivation-evidence.js";
+import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
   GENERATED_DOCUMENTATION_BINDING_JSON_SCHEMA,
@@ -60,6 +64,15 @@ const checkOnly = process.argv.includes("--check");
 const publicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 
 const definitions = [
+  // <lang><zh-CN>独立侧车保留明确draft身份，包的1.0候选不将它自动升级为稳定。</zh-CN><en>The separate sidecar retains its explicit draft identity; the package's 1.0 candidate does not automatically promote it to stable.</en></lang>
+  {
+    contractVersion: ARTIFACT_DERIVATION_EVIDENCE_CONTRACT_VERSION,
+    fileName: "artifact-derivation-evidence.schema.json",
+    key: "artifact-derivation-evidence",
+    ownerPackage: "@hia-doc/plugin-sdk",
+    schema: ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA,
+    stability: "draft"
+  },
   // <lang><zh-CN>业务流程 schema 只承载 owner-authored 非执行事实；图语义与 code target registry 仍由 core pure validator/producer 校验。</zh-CN><en>The business-flow schema carries only owner-authored non-executable facts; core's pure validator/producer still enforces graph semantics and the code-target registry.</en></lang>
   {
     contractVersion: BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,

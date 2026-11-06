@@ -6,6 +6,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { ARTIFACT_DERIVATION_EVIDENCE_SCHEMA_ID, ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA } from "../packages/plugin-sdk/dist/derivation-evidence.js";
 import {
   HIA_PROJECT_MANIFEST_JSON_SCHEMA,
   HIA_PROJECT_MANIFEST_SCHEMA_ID,
@@ -343,6 +344,7 @@ const ownerSchemas = new Map([
   [HIA_PROFILE_SCHEMA_ID, HIA_PROFILE_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID, DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA],
   [DOCUMENTATION_PRODUCER_RESULT_SCHEMA_ID, DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA],
+  [ARTIFACT_DERIVATION_EVIDENCE_SCHEMA_ID, ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA],
   [DOC_SOURCE_MAP_SCHEMA_ID, DOC_SOURCE_MAP_JSON_SCHEMA],
   // <lang><zh-CN>独立坐标证据草案按自己的 canonical 身份同步，不合并进 doc-source-map 旧根。</zh-CN><en>Synchronize the separate coordinate evidence draft by its own canonical identity rather than folding it into an older documentation-map root.</en></lang>
   [ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA],
