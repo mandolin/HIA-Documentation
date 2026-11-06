@@ -28,6 +28,34 @@ The strict audit also rejects callable declarations whose native signatures are 
 
 ## Nested object members
 
+An explicit combined data mode also accepts verified Schema JSON content.
+
+```powershell
+node scripts/audit-satellite-native-api.mjs --workspace-root .. --members --schema-resources
+```
+
+The original `memberAudit` retains native JSDoc results. `schemaMemberAudit`
+separately reports native content, actual Schema-resource content and unresolved
+gaps. Data adoption requires actual JSON documentation/map artifacts, exact
+member declarations and matching native source bytes. Callable members, failed
+native production and native ambiguities retain their original requirements.
+
+The current JSDoc config also requires its installed draft sidecar and independent
+native-production/static-definition checks. Original type declarations can point
+to a previous value's binding after a verified overwrite. Such links are recorded
+as `previous-value-alias`, with exact predecessor selectors and current field
+history. They do not replace current value sources.
+
+Only Schema array-element boundaries covered by a verified complete JSON subtree
+receive separate data coverage. Other type, recursive, dynamic and instance
+boundaries remain unresolved. Any combined gap, boundary or required Schema
+failure keeps the strict command nonzero. `--inspect` only collects partial
+results. The command without `--schema-resources` retains native-only behavior.
+
+中文说明。组合模式保留原生正文审核，另采纳真实JSON数据及精确来源证据。字段值
+与原生注释分别计量，历史值别名关系单独留证。仅已核完整JSON子树的Schema数组
+边界可登记数据覆盖，类型和其它未核范围继续阻断严格验收。
+
 ```powershell
 node scripts/audit-satellite-native-api.mjs --workspace-root .. --members
 ```

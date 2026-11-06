@@ -13,6 +13,9 @@ import { buildRequiredJsonResources } from "./build-required-json-resources.mjs"
 import { readStaticJsonExport, compareStaticJsonResource } from "./lib/static-json-export.mjs";
 import { verifyJsonResourceProjection } from "./lib/json-resource-projection.mjs";
 import { assertPublicRootOmission } from "./lib/core-package-api.mjs";
+import { readStaticJsonInitializationGraph } from "./lib/static-initialization-graph.mjs";
+import { readJsdocConfigEvidence } from "./lib/jsdoc-config-evidence.mjs";
+import { matchSchemaMemberDeclarations } from "./lib/schema-resource-adoption.mjs";
 
 /**
  * @lang zh-CN 审核卫星运行时schema命名导出，类型声明分支单列；未知初始化过程继续失败。
@@ -32,7 +35,20 @@ export async function auditSchemaResourceAssociations(workspaceRoot) {
     const identity = { package: pack.name, owner: pack.owner, module: module.path, name: binding.name };
     if (!/\.(?:mjs|cjs|js)$/.test(module.path)) { declarationBranches.push(identity); continue; }
     // <lang><zh-CN>候选名只用于限定本次盘点，内容相等仍须逐值及实际工件证明。</zh-CN><en>Candidate names only delimit this inventory; content equality still requires per-value and actual-artifact proof.</en></lang>
-    const declared = readStaticJsonExport(path.join(container, "HIA", pack.owner), module.path, binding.name);
+    const repository=path.join(container,"HIA",pack.owner);
+    const imperative=pack.name==="@hia-doc/jsdoc-runner" && binding.name==="HIA_JSDOC_CONFIG_JSON_SCHEMA";
+    let production;
+    let previous;
+    let declared;
+    if(imperative) {
+      // <lang><zh-CN>已确认试点必须有真实安装件B；缺失或冲突不降级为更宽松静态读取。</zh-CN><en>The confirmed trial requires actual installed B; missing/conflicting evidence never degrades to a more permissive static read.</en></lang>
+      production=readJsdocConfigEvidence(path.join(repository,pack.directory));
+      if(production.status!=="verified") {rows.push({...identity,status:"unverified",reason:production.reason});continue;}
+      declared=readStaticJsonInitializationGraph(repository,module.path,binding.name);
+      previous=readStaticJsonInitializationGraph(repository,module.path,"HIA_JSDOC_LEGACY_CONFIG_JSON_SCHEMA");
+      const legacyResources=generated.resourceAudit.entries.filter(resource=>resource.schemaId===previous.value?.$id);
+      if(previous.status!=="available" || legacyResources.length!==1 || compareStaticJsonResource(previous,legacyResources[0]).status!=="equal") {rows.push({...identity,status:"unverified",reason:"unverified-predecessor-schema"});continue;}
+    } else declared=readStaticJsonExport(repository,module.path,binding.name);
     if (declared.status !== "available") { rows.push({ ...identity, status: "unverified", reason: declared.reason }); continue; }
     const candidates = generated.resourceAudit.entries.filter(resource => resource.schemaId && resource.schemaId === declared.value?.$id);
     const comparisons = candidates.map(resource => ({ resource, comparison: compareStaticJsonResource(declared, resource) }));
@@ -54,19 +70,26 @@ export async function auditSchemaResourceAssociations(workspaceRoot) {
     // <lang><zh-CN>JS声明和JSON来源保持各自位置，通过Pointer与核心符号身份连接，不互相覆盖范围。</zh-CN><en>JS declaration and JSON provenance retain their respective positions, connected by pointers and core symbol identity without overwriting ranges.</en></lang>
     const symbols = new Map(document.symbols.map(symbol => [symbol.metadata.json.pointer, symbol]));
     const declaredValues = new Map(declared.nodes.map(node => [node.pointer, node]));
+    const previousValues=new Map((previous?.nodes??[]).map(node=>[node.pointer,node]));
     const members = (binding.members ?? []).map(member => {
       const pointer = "/" + member.memberPath.map(key => key.replaceAll("~", "~0").replaceAll("/", "~1")).join("/");
       const value = declaredValues.get(pointer);
       const actual = symbols.get(pointer);
       assert(value && actual, "Schema member pointer missing from actual documentation.");
       const source = value.declaration ?? value.origin;
-      const provenance = [source, ...value.valueDeclarationSources];
-      const declarationsMatch = member.declarations.length > 0 && member.declarations.every(declaration => provenance.some(origin => declaration.path === origin.path && declaration.kind === origin.kind && declaration.line === origin.range.start.line && declaration.column === origin.range.start.column));
-      return { memberPath: member.memberPath, pointer, symbolId: actual.id, declarationSource: source, valueDeclarationSources: value.valueDeclarationSources, originalDeclarations: member.declarations, declarationsMatch };
+      const matched=matchSchemaMemberDeclarations(member,value,previousValues.get(pointer));
+      const predecessor=previousValues.get(pointer);
+      return { memberPath: member.memberPath, pointer, symbolId: actual.id, declarationSource: source, valueDeclarationSources: value.valueDeclarationSources, originalDeclarations: member.declarations, declarationsMatch:matched.matches,declarationMatchKinds:matched.kinds,...(matched.kinds.includes("previous-value-alias")?{previousDeclarationSource:predecessor.declaration??predecessor.origin,previousValueSources:[predecessor.origin,...predecessor.valueDeclarationSources]}:{}) };
     });
-    rows.push({ ...identity, status: "associated", evidenceKind: declared.evidenceKind, runtimeStateVerified: false, schemaId: resource.schemaId, resource: { package: resource.package, subpath: resource.subpath, source: resource.source, sha256: resource.sha256 }, values: declared.nodes.length, sources: declared.sources.map(source => ({ ...source, path: `HIA/${pack.owner}/${source.path}` })), members, boundaryPointers: (binding.memberBoundaries ?? []).map(boundary => ({ ...boundary, pointer: boundary.memberPath.length ? "/" + boundary.memberPath.map(key => key.replaceAll("~", "~0").replaceAll("/", "~1")).join("/") : "" })), generated: { documentId: document.id, mapId: map.id, hashes } });
+    const boundaryPointers=(binding.memberBoundaries??[]).map(boundary=>{
+      const pointer=boundary.memberPath.length?"/"+boundary.memberPath.map(key=>key.replaceAll("~","~0").replaceAll("/","~1")).join("/"):"";
+      const value=declaredValues.get(pointer);
+      const symbol=symbols.get(pointer);
+      return {...boundary,pointer,...(value&&symbol?{valueType:value.type,symbolId:symbol.id,subtreeValues:declared.nodes.filter(node=>node.pointer===pointer || node.pointer.startsWith(pointer+"/")).length}:{})};
+    });
+    rows.push({ ...identity, status: "associated", evidenceKind: declared.evidenceKind, runtimeStateVerified: false,...(production?{production,linkage:declared.linkage}:{}), schemaId: resource.schemaId, resource: { package: resource.package, subpath: resource.subpath, source: resource.source, sha256: resource.sha256 }, values: declared.nodes.length, sources: declared.sources.map(source => ({ ...source, path: `HIA/${pack.owner}/${source.path}` })), members, boundaryPointers, generated: { documentId: document.id, mapId: map.id, hashes } });
   }
-  const report = { purpose: "static-schema-resource-documentation-association", requiredPackages: inventory.packages.length, runtimeBindings: rows.length, associatedBindings: rows.filter(row => row.status === "associated").length, unverifiedBindings: rows.filter(row => row.status !== "associated").length, values: rows.reduce((sum, row) => sum + (row.values ?? 0), 0), matchedMemberPointers: rows.reduce((sum, row) => sum + (row.members?.length ?? 0), 0), exactMemberDeclarations: rows.reduce((sum, row) => sum + (row.members?.filter(member => member.declarationsMatch).length ?? 0), 0), rows, declarationBranches, generatedResourceReportSha256: createHash("sha256").update(JSON.stringify(generated.report, null, 2) + "\n").digest("hex"), pending: ["imperative-clone-update-initialization", "native-member-gate-adoption", "type-declaration-api-content", "schema-reference-semantics", "generated-page-acceptance"], coverageComplete: false, releaseProof: false };
+  const report = { purpose: "static-schema-resource-documentation-association", requiredPackages: inventory.packages.length, runtimeBindings: rows.length, associatedBindings: rows.filter(row => row.status === "associated").length, unverifiedBindings: rows.filter(row => row.status !== "associated").length, values: rows.reduce((sum, row) => sum + (row.values ?? 0), 0), matchedMemberPointers: rows.reduce((sum, row) => sum + (row.members?.length ?? 0), 0), exactMemberDeclarations: rows.reduce((sum, row) => sum + (row.members?.filter(member => member.declarationsMatch).length ?? 0), 0), previousValueAliases:rows.reduce((sum,row)=>sum+(row.members?.filter(member=>member.declarationMatchKinds.includes("previous-value-alias")).length??0),0), rows, declarationBranches, generatedResourceReportSha256: createHash("sha256").update(JSON.stringify(generated.report, null, 2) + "\n").digest("hex"), pending: ["native-member-gate-adoption", "type-declaration-api-content", "schema-reference-semantics", "generated-page-acceptance"], coverageComplete: false, releaseProof: false };
   assertPublicRootOmission(report, container);
   const output = fs.mkdtempSync(path.join(mainRoot, "dist/schema-resource-association-"));
   fs.writeFileSync(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", { flag: "wx" });

@@ -13,6 +13,7 @@ import { runDocumentationProducer } from "../packages/plugin-sdk/dist/index.js";
 import { jsonDocumentationProducer } from "../packages/jsondoc/dist/index.js";
 import { validateHiaDocument } from "../packages/core/dist/index.js";
 import { createDocSourceMapIndex } from "../packages/source-linkage/dist/index.js";
+import { JSDOC_CONFIG_EVIDENCE_PATH } from "./lib/jsdoc-config-evidence.mjs";
 
 /**
  * @lang zh-CN 只读真实JSDoc定义，生成原生JSON/B并核A和JSONdoc；仅向本仓独立dist目录写入。
@@ -51,6 +52,15 @@ export async function buildJsdocConfigProduction(workspaceRoot) {
   assert.deepEqual(indexed.diagnostics,[]);
   const audited = inspectJsonResource(generated.artifact);
   const projection = verifyJsonResourceProjection({...audited,source:"schema.json"},document,map,produced[2]);
+  // <lang><zh-CN>另以真实包根生产可安装侧车，路径无需了解多仓布局，运行器源码保持只读。</zh-CN><en>Separately produce an installable sidecar at the actual package root, requiring no multi-repository layout knowledge and leaving runner source read-only.</en></lang>
+  const packageRoot=path.join(repository,"packages/jsdoc-runner");
+  const packaged=producePlainDataModule(packageRoot,"src/schema.mjs",exportName,"schemas/hia-jsdoc-config-1.0.0.schema.json");
+  assert(packaged.artifact.equals(generated.artifact),"Package-root production differs.");
+  const packagedVerification=verifyPlainDataProduction(packageRoot,"src/schema.mjs",exportName,packaged.evidence,packaged.artifact);
+  assert.equal(packagedVerification.status,"verified");
+  const packagedPath="package/"+JSDOC_CONFIG_EVIDENCE_PATH;
+  fs.mkdirSync(path.dirname(path.join(output,packagedPath)),{recursive:true});
+  fs.writeFileSync(path.join(output,packagedPath),JSON.stringify(packaged.evidence,null,2)+"\n",{flag:"wx"});
   // <lang><zh-CN>输出清单绑定本次实际字节，运行时版本与随机目录不进入确定性报告。</zh-CN><en>The output manifest binds actual bytes; runtime versions and random directories stay outside the deterministic report.</en></lang>
   const sha = bytes=>createHash("sha256").update(bytes).digest("hex");
   const jsondocPaths = result.artifacts.map(artifact=>"jsondoc/"+path.basename(artifact.path));
@@ -59,10 +69,10 @@ export async function buildJsdocConfigProduction(workspaceRoot) {
     // <lang><zh-CN>验证后在本次独立目录内移动单个文件，去掉生产器原子批次UUID，保留字节及同目录引用。</zh-CN><en>After verification, move individual files within this isolated directory to omit the producer's atomic-batch UUID, retaining bytes and sibling references.</en></lang>
     fs.renameSync(path.join(output,"jsondoc",artifact.path),path.join(output,jsondocPaths[index]));
   }
-  const files = ["schema.json","derivation-evidence.json",...jsondocPaths].map(relative=>({path:relative,sha256:sha(fs.readFileSync(path.join(output,relative)))}));
+  const files = ["schema.json","derivation-evidence.json",...jsondocPaths,packagedPath].map(relative=>({path:relative,sha256:sha(fs.readFileSync(path.join(output,relative)))}));
   const report = {status:"verified",purpose:"jsdoc-config-native-production",definitionModule:modulePath,exportName,producer:generated.evidence.producer,evidenceOrigin:generated.evidence.evidenceOrigin,
     inputSources:generated.evidence.resources.filter(resource=>resource.kind==="source"),verification,jsondoc:projection,files,events:generated.evidence.details.produce.steps.length,
-    legacyResource:{sha256:sha(legacyBytes),unchanged:true},coverageComplete:false,releaseProof:false,
+    legacyResource:{sha256:sha(legacyBytes),unchanged:true},packagedEvidence:{path:packagedPath,verification:packagedVerification},coverageComplete:false,releaseProof:false,
     pending:["native-member-gate-adoption","new-subpath-complete-api-generation","schema-reference-evaluation","generated-page-acceptance","W-P152-overall-acceptance"]};
   assertPublicRootOmission(report,workspaceRoot);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});

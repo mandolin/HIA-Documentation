@@ -158,7 +158,7 @@ test("runs the actual development build and SDK JSONdoc path with an isolated fi
   fs.writeFileSync(path.join(repository,"schemas/hia-jsdoc-config-0.1.0-draft.schema.json"),expected);
   const result=await buildJsdocConfigProduction(root);
   assert.equal(result.report.status,"verified");
-  assert.equal(result.report.files.length,5);
+  assert.equal(result.report.files.length,6);
   assert.equal(result.report.jsondoc.values,2);
   const main=fileURLToPath(new URL("../",import.meta.url));
   for(const file of result.report.files) assert.equal(createHash("sha256").update(fs.readFileSync(path.join(main,result.output,file.path))).digest("hex"),file.sha256);

@@ -11,6 +11,8 @@ import {validateDocSourceMap} from "../packages/source-linkage/dist/index.js";
 import {auditRequiredPackages} from "./audit-required-package-api.mjs";
 import {associateNativeJsdocBinding} from "./lib/jsdoc-api-bindings.mjs";
 import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
+import {auditSchemaResourceAssociations} from "./audit-schema-resource-associations.mjs";
+import {adoptSchemaResourceMembers} from "./lib/schema-resource-adoption.mjs";
 
 /**
  * @lang zh-CN 在既有工件协议下逐来源核验原生声明，返回实际关联与缺口；不执行目标包。
@@ -21,6 +23,7 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
  * @throws {Error} 文件边界、工件协议、核心字段或来源无效。 Invalid file boundary, artifact protocol, core fields or sources.
  */
 export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
+  assert(!options.schemaResources || options.includeMembers,"Schema resources require explicit member auditing.");
   // <lang><zh-CN>工作区和工具均固定为本主仓所属容器；不能用调用参数替换生产器实现。
   // </zh-CN><en>Both workspace and tools are fixed to this main repository's container; arguments cannot substitute another producer.</en></lang>
   const mainRoot=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
@@ -104,7 +107,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
       }
       const association=associateNativeJsdocBinding({binding,owner:pack.owner,outputs:[...documents.values()]});
       const row={package:pack.name,owner:pack.owner,sourceHead:pack.sourceHead,module:module.path,name:rootBinding.name,declarationName:binding.declarationName,...association};
-      if(candidate.memberPath) memberRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable});
+      if(candidate.memberPath) memberRows.push({...row,memberPath:candidate.memberPath,expectedCallable:binding.isCallable,...(options.schemaResources?{originalDeclarations:binding.declarations}:{})});
       else rows.push(row);
       }
     }
@@ -119,6 +122,13 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
     const gaps=memberRows.filter(row=>row.status!=="associated"||row.declarations.some(item=>!item.hasText)||row.expectedCallable&&row.declarations.some(item=>!item.hasSignature));
     const callableRows=memberRows.filter(row=>row.expectedCallable);
     report.memberAudit={accessPaths:memberRows.length,associatedPaths:memberRows.filter(row=>row.status==="associated").length,contentGaps:gaps.length,callablePaths:callableRows.length,callableContentGaps:gaps.filter(row=>row.expectedCallable).length,rows:memberRows,boundaries:memberBoundaries,complete:gaps.length===0&&memberBoundaries.length===0};
+    if(options.schemaResources) {
+      // <lang><zh-CN>原生结果保留原状；实际数据审核另走固定生成链，不能用外部报告或成功标志替换。</zh-CN><en>Retain native results unchanged; actual data auditing uses a separate fixed production chain without external report/success-flag substitution.</en></lang>
+      const schema=await auditSchemaResourceAssociations(container);
+      report.schemaMemberAudit=adoptSchemaResourceMembers({memberRows,boundaries:memberBoundaries,schemaReport:schema.report,sourceRecords:[...documents.values()]});
+      report.schemaMemberAudit.associationReportSha256=createHash("sha256").update(JSON.stringify(schema.report,null,2)+"\n").digest("hex");
+      report.schemaMemberAudit.associationOutput=schema.output;
+    }
   }
   assertPublicRootOmission(report,container);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
@@ -129,8 +139,9 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
 // </zh-CN><en>Only explicit inspection permits completion with gaps; the default gate exits nonzero when any binding is blocked.</en></lang>
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2);
-  assert(args.length>=2&&args.length<=4&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members"].includes(arg)),"Expected --workspace-root with optional --members and --inspect.");
-  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members")});
-  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,...(report.memberAudit?{memberPaths:report.memberAudit.accessPaths,memberContentGaps:report.memberAudit.contentGaps,memberBoundaries:report.memberAudit.boundaries.length}:{}),coverageComplete:false,output}));
-  if((report.blockedBindings || report.callableSignatureGaps.length || report.memberAudit&&!report.memberAudit.complete) && !args.includes("--inspect")) process.exitCode=1;
+  assert(args.length>=2&&args.length<=5&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members","--schema-resources"].includes(arg))&&(!args.includes("--schema-resources")||args.includes("--members")),"Expected --workspace-root with optional --members, --schema-resources and --inspect.");
+  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members"),schemaResources:args.includes("--schema-resources")});
+  console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,...(report.memberAudit?{memberPaths:report.memberAudit.accessPaths,memberContentGaps:report.memberAudit.contentGaps,memberBoundaries:report.memberAudit.boundaries.length}:{}),...(report.schemaMemberAudit?{schemaResourcePaths:report.schemaMemberAudit.schemaResourcePaths,combinedContentGaps:report.schemaMemberAudit.contentGaps,combinedBoundaries:report.schemaMemberAudit.boundaries.length,unverifiedSchemaBindings:report.schemaMemberAudit.unverifiedSchemaBindings}:{}),coverageComplete:false,output}));
+  const memberAudit=report.schemaMemberAudit??report.memberAudit;
+  if((report.blockedBindings || report.callableSignatureGaps.length || memberAudit&&!memberAudit.complete) && !args.includes("--inspect")) process.exitCode=1;
 }
