@@ -31,7 +31,7 @@ export async function auditFrozenArrayResources(workspaceRoot) {
         const identity={package:pack.name,owner:pack.owner,module:module.path,name:binding.name,declarations:binding.declarations};
         try {
           assert.equal(binding.declarations.length,1);
-          const result=await buildFrozenArrayResource({root:path.join(container,"HIA",pack.owner),modulePath:module.path,exportName:binding.name,definitionModule:binding.declarations[0].path,declarations:binding.declarations});
+          const result=await buildFrozenArrayResource({root:path.join(container,"HIA",pack.owner),modulePath:module.path,exportName:binding.name,definitionModule:binding.declarations[0].path,declarations:binding.declarations,options:{authorizedPackages:[]}});
           const directory="array-"+rows.length;
           fs.mkdirSync(path.join(output,directory));
           for(const file of [...result.report.files,{path:"report.json"}]) {

@@ -8,6 +8,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import ts from "typescript";
 import { readStaticJsonExport } from "./static-json-export.mjs";
+import {createMetadataDependencyPolicy} from "./metadata-dependencies.mjs";
 
 /**
  * @lang zh-CN 静态核验确切导出的定义初始化图。重导出只证明绑定，目标模块始终只读。
@@ -15,9 +16,10 @@ import { readStaticJsonExport } from "./static-json-export.mjs";
  * @param {string} root <lang><zh-CN>显式授权的物理仓库根。</zh-CN><en>Explicitly authorized physical repository root.</en></lang>
  * @param {string} modulePath <lang><zh-CN>仓内模块相对路径。</zh-CN><en>Repository-relative module path.</en></lang>
  * @param {string} exportName <lang><zh-CN>确切公开导出名。</zh-CN><en>Exact public export name.</en></lang>
+ * @param {object} [dependencyOptions] <lang><zh-CN>显式authorizedPackages授权metadata依赖，缺省保留相对依赖限制。</zh-CN><en>Explicit authorizedPackages grants metadata dependencies; defaults retain relative-only restrictions.</en></lang>
  * @returns {object} <lang><zh-CN>available含值、来源和事件，数组槽创建范围独立保存；unverified含固定原因。均不证明包装模块或运行时状态。</zh-CN><en>Available contains values, provenance and events, retaining array-slot creation ranges separately; unverified contains a fixed reason. Neither proves wrapper or runtime state.</en></lang>
  */
-export function readStaticJsonInitializationGraph(root, modulePath, exportName) {
+export function readStaticJsonInitializationGraph(root, modulePath, exportName,dependencyOptions={}) {
   // <lang><zh-CN>文件、图和事件只在本次请求内共享，防止跨请求状态或摘要缓存污染。</zh-CN><en>Files, graph nodes and events are shared within this request only, preventing cross-request state or digest-cache contamination.</en></lang>
   const modules = new Map();
   const events = [];
@@ -25,6 +27,7 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
   const resolving = new Set();
   const options = { allowJs: true, module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext };
   let base;
+  let metadataPolicy;
   let nodeCount = 0;
   let edgeCount = 0;
   let expressionCount = 0;
@@ -220,9 +223,11 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
    * @returns {object} <lang><zh-CN>依赖上下文。</zh-CN><en>Dependency context.</en></lang>
    */
   function dependency(context, specifier) {
+    if(metadataPolicy&&typeof specifier==="string"&&!/^\.\.?\//.test(specifier)) return moduleAt(metadataPolicy.resolve(specifier,context.relative));
     if (typeof specifier !== "string" || !/^\.\.?\//.test(specifier) || /[\\:%?#\u0000-\u001f]/.test(specifier)) boundary("unsupported-dependency");
     const requested = path.relative(base, path.resolve(path.dirname(context.file), specifier));
     if (path.isAbsolute(requested) || requested === ".." || requested.startsWith(`..${path.sep}`)) boundary("unsafe-source-path");
+    if(metadataPolicy&&specifier.endsWith(".mjs")) return moduleAt(requested.split(path.sep).join("/"));
     const resolved = ts.resolveModuleName(specifier, context.file, options, ts.sys).resolvedModule;
     if (!resolved) boundary("unresolved-runtime-import");
     return moduleAt(path.relative(base, resolved.resolvedFileName).split(path.sep).join("/"));
@@ -521,6 +526,7 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
   try {
     if (typeof root !== "string" || typeof modulePath !== "string" || typeof exportName !== "string" || !exportName) boundary("invalid-request");
     base = fs.realpathSync(root);
+    metadataPolicy=createMetadataDependencyPolicy(base,dependencyOptions);
     const target = definition(moduleAt(modulePath), exportName, true);
     initialize(target.context);
     const tree = binding(target.context, target.local);
@@ -561,7 +567,8 @@ export function readStaticJsonInitializationGraph(root, modulePath, exportName) 
       status: "available", evidenceKind: "static-definition-initialization", runtimeStateVerified: false,
       module: modulePath, exportName, definitionModule: target.context.relative,
       assumptions: ["standard-unmodified-builtins"], value, nodes, events, linkage,
-      sources: [...modules.values()].map(context => ({ path: context.relative, sha256: context.sha256, role: context.state === "done" ? "definition-initialization" : "export-linkage" }))
+      sources: [...modules.values()].map(context => ({ path: context.relative, sha256: context.sha256, role: context.state === "done" ? "definition-initialization" : "export-linkage" })).concat((metadataPolicy?.manifests??[]).map(manifest=>({path:manifest.path,sha256:manifest.sha256,role:"metadata-manifest"}))),
+      ...(metadataPolicy?{dependencyResolutions:metadataPolicy.resolutions}:{})
     };
   } catch (error) {
     return { status: "unverified", reason: error.initializationBoundary ?? "source-read-failed", module: modulePath, exportName, runtimeStateVerified: false };

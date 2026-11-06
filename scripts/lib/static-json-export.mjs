@@ -8,6 +8,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import ts from "typescript";
 import { inspectJsonResource } from "./json-resource-audit.mjs";
+import {createMetadataDependencyPolicy} from "./metadata-dependencies.mjs";
 
 /**
  * @lang zh-CN 静态读取一个模块的JSON形状导出，保留逐值来源；结果仅证明初始化声明数据。
@@ -15,13 +16,15 @@ import { inspectJsonResource } from "./json-resource-audit.mjs";
  * @param {string} root <lang><zh-CN>显式授权的仓库物理根。</zh-CN><en>Explicitly authorized physical repository root.</en></lang>
  * @param {string} modulePath <lang><zh-CN>根内模块相对路径。</zh-CN><en>Root-relative module path.</en></lang>
  * @param {string} exportName <lang><zh-CN>确切公开导出名。</zh-CN><en>Exact public export name.</en></lang>
+ * @param {object} [dependencyOptions] <lang><zh-CN>显式metadata依赖授权及运行时mjs模式；缺省行为保留。</zh-CN><en>Explicit metadata grants and runtime mjs mode, with default behavior retained.</en></lang>
  * @returns {object} <lang><zh-CN>available包含值、Pointer和来源，unverified包含固定原因码。</zh-CN><en>Available includes values, pointers and sources; unverified includes a fixed reason code.</en></lang>
  */
-export function readStaticJsonExport(root, modulePath, exportName) {
+export function readStaticJsonExport(root, modulePath, exportName,dependencyOptions={}) {
   // <lang><zh-CN>缓存和循环集合仅服务本次导出，不复用先前文件内容或运行状态。</zh-CN><en>Caches and cycle sets belong to this export only, never reusing earlier file contents or runtime state.</en></lang>
   const base = fs.realpathSync(root);
   const modules = new Map();
   const active = new Set();
+  let metadataPolicy;
   const jsonLineStarts = new WeakMap();
   let steps = 0;
   const compilerOptions = { allowJs: true, moduleResolution: ts.ModuleResolutionKind.NodeNext, module: ts.ModuleKind.NodeNext };
@@ -230,6 +233,11 @@ export function readStaticJsonExport(root, modulePath, exportName) {
    * @returns {object} <lang><zh-CN>授权目标模块。</zh-CN><en>Authorized target module.</en></lang>
    */
   function importedModule(context, specifier) {
+    if(metadataPolicy) {
+      // <lang><zh-CN>显式运行时模式读取确切mjs，避免同名声明文件替代实际元数据；裸包仍需逐项授权。</zh-CN><en>Explicit runtime mode reads exact mjs files so declarations cannot replace actual metadata; bare packages still require individual grants.</en></lang>
+      if(!/^\.\.?\//.test(specifier)) return moduleAt(metadataPolicy.resolve(specifier,path.relative(base,context.source.fileName).split(path.sep).join("/")));
+      if(specifier.endsWith(".mjs")) return moduleAt(path.relative(base,path.resolve(path.dirname(context.source.fileName),specifier)).split(path.sep).join("/"));
+    }
     const resolved = ts.resolveModuleName(specifier, context.source.fileName, compilerOptions, ts.sys, resolutionCache).resolvedModule;
     if (!resolved || resolved.resolvedFileName.endsWith(".d.ts")) boundary("unresolved-runtime-import");
     const relative = path.relative(base, fs.realpathSync(resolved.resolvedFileName)).split(path.sep).join("/");
@@ -376,6 +384,7 @@ export function readStaticJsonExport(root, modulePath, exportName) {
   }
 
   try {
+    metadataPolicy=createMetadataDependencyPolicy(base,dependencyOptions);
     const tree = exported(moduleAt(modulePath), exportName);
     const nodes = [];
     let pointerUnits = 0;
@@ -400,7 +409,7 @@ export function readStaticJsonExport(root, modulePath, exportName) {
       return node.value;
     }
     const value = materialize(tree, "");
-    return { status: "available", evidenceKind: "static-initializer-data", module: modulePath, exportName, value, nodes, sources: [...modules.values()].map(module => ({ path: module.relative, sha256: module.sha256 })) };
+    return { status: "available", evidenceKind: "static-initializer-data", module: modulePath, exportName, value, nodes, sources: [...modules.values()].map(module => ({ path: module.relative, sha256: module.sha256 })).concat((metadataPolicy?.manifests??[]).map(manifest=>({path:manifest.path,sha256:manifest.sha256}))),...(metadataPolicy?{dependencyResolutions:metadataPolicy.resolutions}:{}) };
   } catch (error) {
     return { status: "unverified", reason: error.staticJsonBoundary ?? "source-read-failed", module: modulePath, exportName };
   }

@@ -14,9 +14,10 @@ import { compareStaticJsonResource } from "./static-json-export.mjs";
  * @param {string} exportName <lang><zh-CN>预先固定的导出名。</zh-CN><en>Export name fixed in advance.</en></lang>
  * @param {unknown} evidence <lang><zh-CN>实际生产侧车，先取得防御性快照。</zh-CN><en>Actual production sidecar, defensively snapshotted first.</en></lang>
  * @param {Buffer} artifact <lang><zh-CN>本次实际输出的原始字节。</zh-CN><en>Original bytes of the actual output.</en></lang>
+ * @param {object} [options] <lang><zh-CN>调用者的显式metadata依赖授权，不由侧车推断。</zh-CN><en>Explicit caller metadata grants, never inferred from a sidecar.</en></lang>
  * @returns {object} <lang><zh-CN>指定树的字节/值/来源/共享关系验证或固定阶段拒绝。包装模块、未选中值及生产主体真实性均不提升。</zh-CN><en>Selected-tree byte/value/provenance/sharing verification or a fixed-stage rejection. Wrapper modules, unselected values and producer authenticity are not promoted.</en></lang>
  */
-export function verifyPlainDataProduction(root, modulePath, exportName, evidence, artifact) {
+export function verifyPlainDataProduction(root, modulePath, exportName, evidence, artifact,options={}) {
   // <lang><zh-CN>阶段标记来自固定本地枚举，异常文案不会进入结果。</zh-CN><en>Stage markers come from a fixed local enumeration; exception messages never enter results.</en></lang>
   let phase = "structure";
   try {
@@ -33,7 +34,7 @@ export function verifyPlainDataProduction(root, modulePath, exportName, evidence
     if (sha(artifact) !== outputs[0].sha256) throw new Error();
     for (const resource of sources) if (sha(readJsonResourceBytes(root,resource.path)) !== resource.sha256) throw new Error();
     phase = "static-definition";
-    const independent = readStaticJsonInitializationGraph(root,modulePath,exportName);
+    const independent = readStaticJsonInitializationGraph(root,modulePath,exportName,options);
     if (independent.status !== "available" || independent.definitionModule !== modulePath) throw new Error();
     const recordedSources = sources.map(row=>({path:row.path,sha256:row.sha256})).sort((a,b)=>a.path.localeCompare(b.path));
     const staticSources = independent.sources.map(row=>({path:row.path,sha256:row.sha256})).sort((a,b)=>a.path.localeCompare(b.path));
@@ -97,6 +98,6 @@ export function verifyPlainDataProduction(root, modulePath, exportName, evidence
         staticToNative.set(inferred.graphNodeId,row.nodeId);
       }
     }
-    return {status:"verified",coverage:"selected-export-json-tree",values:replay.valueLinks.length,sourceFiles:sources.length,resourceBytes:true,traceSemantics:true,operationSources:true,finalValue:true,selectedValueSources:true,selectedPropertySources:true,selectedFieldHistory:true,sharedContainers:true,wrapperRuntime:false,producerAuthenticity:false};
+    return {status:"verified",coverage:"selected-export-json-tree",values:replay.valueLinks.length,sourceFiles:sources.length,resourceBytes:true,traceSemantics:true,operationSources:true,finalValue:true,selectedValueSources:true,selectedPropertySources:true,selectedFieldHistory:true,sharedContainers:true,wrapperRuntime:false,producerAuthenticity:false,...(independent.dependencyResolutions?{dependencyResolutions:independent.dependencyResolutions}:{})};
   } catch { return {status:"rejected",reason:phase}; }
 }

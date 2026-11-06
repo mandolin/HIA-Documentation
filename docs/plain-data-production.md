@@ -82,3 +82,23 @@ coverage. The separate verification report describes its selected-export scope.
 未选中值、主体真实性与页面验收分别管理。
 
 单源数组展开复用已有同类型浅复制规则，副本外壳、子对象共享、原槽创建位置及逐元素值来源分别核验。数组外壳冻结与元素冻结分别记录，暂存描述符的对象浅展开会继续共享原数组。裸包依赖和混合运行模块沿现有边界拒绝，实际目标采用须另核其依赖闭包。
+
+## Authorized metadata dependencies
+
+The optional `authorizedPackages` setting enables explicit first-party metadata
+dependencies under `@hia-doc/` for production, initializer linkage and independent verification.
+Each grant specifies `name`, exact `version`, a canonical `root` relative to the
+authorized source root, and `subpaths: ["./metadata"]`. Defaults retain the
+relative-dependency boundary. Authority comes from the caller, never from a
+sidecar or a package specifier.
+
+This bounded mode accepts a direct `.mjs` export target or a flat
+`types`/`default` export object. The runtime target follows `default`; declaration
+APIs are audited separately. Actual manifest bytes join the evidence's source
+inputs, and the verification report retains the selected target and conditions.
+Node confirms the exact physical file without executing it. Unknown conditions,
+wildcards, unlisted names or versions, links, traversal, cycles and exhausted
+budgets remain rejected. Pure definition modules and their dependencies are
+still checked completely.
+
+中文说明。显式首方模式按包名、精确版本和授权根读取metadata子入口，manifest摘要与代码源共同核验。初批支持直接mjs及平面types/default，运行源与声明源分别读取。该模式保留完整纯模块检查，默认权限与旧身份按原规则处理。

@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import ts from "typescript";
 import { readJsonResourceBytes } from "./json-resource-audit.mjs";
 import { readPlainDataInitialization } from "../../packages/plugin-sdk/dist/plain-data-initialization.js";
+import {createMetadataDependencyPolicy} from "./metadata-dependencies.mjs";
 
 /**
  * @lang zh-CN 对已授权定义执行有限原生数据操作并记录实际产出；不执行任意ESM或函数体，不写文件。
@@ -17,10 +18,11 @@ import { readPlainDataInitialization } from "../../packages/plugin-sdk/dist/plai
  * @param {string} modulePath <lang><zh-CN>根内.mjs定义模块相对路径。</zh-CN><en>Relative .mjs definition-module path beneath the root.</en></lang>
  * @param {string} exportName <lang><zh-CN>确切const导出名。</zh-CN><en>Exact const export name.</en></lang>
  * @param {string} artifactPath <lang><zh-CN>输出根内的逻辑JSON路径，调用方显式绑定输入/输出根。</zh-CN><en>Logical JSON path under an output root, with input/output roots explicitly bound by the caller.</en></lang>
- * @returns {object} <lang><zh-CN>实际JSON字节、原生值与producer-recorded侧车。内部重放已核，源码和主体信任仍分别待核。</zh-CN><en>Actual JSON bytes, native value and producer-recorded sidecar. Internal replay is checked; source and producer trust remain separately unverified.</en></lang>
+ * @param {object} [options] <lang><zh-CN>显式authorizedPackages模式按包名/版本/根授权metadata依赖，缺省拒绝裸包。</zh-CN><en>Explicit authorizedPackages mode authorizes metadata dependencies by package/version/root; defaults reject bare packages.</en></lang>
+ * @returns {object} <lang><zh-CN>实际JSON字节、原生值与producer-recorded侧车；显式模式另记解析证明。内部重放已核，源码和主体信任仍分别待核。</zh-CN><en>Actual JSON bytes, native value and producer-recorded sidecar, with separate resolution records in explicit mode. Internal replay is checked; source and producer trust remain separately unverified.</en></lang>
  * @throws {Error} <lang><zh-CN>越界定义或预算拒绝，固定错误不回显私有输入。</zh-CN><en>Out-of-scope definitions or budgets are rejected with fixed errors that omit private input.</en></lang>
  */
-export function producePlainDataModule(root, modulePath, exportName, artifactPath) {
+export function producePlainDataModule(root, modulePath, exportName, artifactPath,options={}) {
   // <lang><zh-CN>对象身份及依赖状态均按本次生产持有，避免跨构建缓存和原生引用泄漏。</zh-CN><en>Object identities and dependency state belong to this production, avoiding cross-build caches and native-reference leakage.</en></lang>
   const modules = new Map();
   const identities = new WeakMap();
@@ -30,6 +32,7 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
   let edges = 0;
   let sourceBytes = 0;
   let base;
+  let metadataPolicy;
   /** @lang zh-CN 固定失败不会带出源码、路径或系统异常。 @lang en Fixed failures omit source, paths and system errors. */
   function reject() { throw new Error("Plain data production rejected."); }
   /** @lang zh-CN 固定路径是逻辑根内文件，禁止重定向和歧义写法。 @lang en Fixed paths denote files beneath logical roots, excluding redirects and ambiguous forms. */
@@ -241,8 +244,11 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
     }
     for (const statement of ast.statements) if (ts.isImportDeclaration(statement)) {
       const specifier = statement.moduleSpecifier.text;
-      if (typeof specifier !== "string" || !/^\.\.?\//.test(specifier) || /[\\:%?#\u0000-\u001f]/.test(specifier)) reject();
-      const dependency = load(path.posix.normalize(path.posix.join(path.posix.dirname(modulePath),specifier)),depth+1);
+      if(typeof specifier!=="string"||/[\\:%?#\u0000-\u001f]/.test(specifier)) reject();
+      // <lang><zh-CN>裸包仅经本次显式授权策略定位；相对依赖继续原模块/物理边界。</zh-CN><en>Bare packages resolve only through this invocation's explicit grants; relative dependencies retain existing module and physical boundaries.</en></lang>
+      const target=/^\.\.?\//.test(specifier)?path.posix.normalize(path.posix.join(path.posix.dirname(modulePath),specifier)):metadataPolicy?.resolve(specifier,modulePath);
+      if(!target) reject();
+      const dependency = load(target,depth+1);
       for (const item of statement.importClause.namedBindings.elements) {
         const ref = dependency.exports.get(item.propertyName?.text ?? item.name.text);
         if (!ref) reject();
@@ -275,6 +281,7 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
   try {
     if (typeof root !== "string" || typeof exportName !== "string" || !exportName.trim()) reject();
     base = fs.realpathSync(root);
+    metadataPolicy=createMetadataDependencyPolicy(base,options);
     relative(artifactPath);
     const entry = load(modulePath);
     const result = entry.exports.get(exportName);
@@ -299,6 +306,8 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
     const artifact = Buffer.from(JSON.stringify(result.value,null,2)+"\n");
     const sha = bytes=>createHash("sha256").update(bytes).digest("hex");
     const sources = [...modules.values()].map(context=>({id:context.id,kind:"source",path:context.path,sha256:sha(context.bytes)}));
+    // <lang><zh-CN>实际使用的manifest字节纳入活动输入，与代码源分别绑定摘要。</zh-CN><en>Actually used manifest bytes join activity inputs with digests distinct from code sources.</en></lang>
+    for(const [index,manifest]of (metadataPolicy?.manifests??[]).entries()) sources.push({id:"metadata-manifest-"+index,kind:"source",path:manifest.path,sha256:manifest.sha256});
     const inputs = sources.map(resource=>resource.id);
     const evidence = {contract:"artifact-derivation-evidence",contractVersion:"0.1.0-draft",id:"plain-data-production",producer:{id:"plain-data-native-producer",version:"0.1.0-draft"},evidenceOrigin:"producer-recorded",coverage:"resource",
       resources:[...sources,{id:"output",kind:"artifact",path:artifactPath,sha256:sha(artifact)}],
@@ -307,6 +316,6 @@ export function producePlainDataModule(root, modulePath, exportName, artifactPat
       details:{produce:{contract:"plain-data-initialization",contractVersion:"0.1.0-draft",entryResourceId:entry.id,steps,result:{resourceId:"output",bindingName:exportName}}}};
     const replay = readPlainDataInitialization(evidence,"produce");
     if (replay.status !== "replayed" || !Buffer.from(JSON.stringify(replay.value,null,2)+"\n").equals(artifact)) reject();
-    return {status:"produced",artifact,evidence,nativeValue:result.value};
+    return {status:"produced",artifact,evidence,nativeValue:result.value,...(metadataPolicy?{dependencyResolutions:metadataPolicy.resolutions}:{})};
   } catch { reject(); }
 }

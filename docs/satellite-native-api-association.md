@@ -95,3 +95,25 @@ The resource command produces frozen string arrays from their owner-local plain-
 Explicit `--array-resources` adds `arrayMemberAudit` while retaining the native and Schema reports. Only uniquely verified root-array boundaries receive separate data coverage. Descriptor copies, nested arrays and callable plugin elements keep their own boundaries. Any remaining gap or boundary keeps the strict command nonzero. Run `node --test scripts/frozen-array-resources.test.mjs` for the corresponding regressions.
 
 中文说明。冻结根数组由既有有限原生生产器记录B，独立A和公开声明分别核验，再实际生成逐值HIA文档和地图。新增开关只消解本次通过的根数组边界，描述符复制及插件函数数组继续独立验收。包内纯数据模块通过原入口导入和导出同一对象，原字符串及顺序按实际消费核对。
+
+## Producer descriptor data
+
+```powershell
+node scripts/audit-descriptor-resources.mjs --workspace-root ..
+node scripts/audit-satellite-native-api.mjs --workspace-root .. --members --schema-resources --array-resources --descriptor-resources
+```
+
+The descriptor audit uses each owned runner's explicit `metadata` entry with its
+actual package name, version and authorized root. It produces descriptor JSON,
+records derivation evidence, verifies independent source analysis and runs the
+actual JSONdoc producer. Public array access paths must match original compiler
+declarations and the complete documented subtree. Staged descriptors retain
+their shallowly shared arrays, while the copied arrays remain mutable.
+
+Explicit `--descriptor-resources` adds `descriptorMemberAudit`. Other audit layers
+remain available separately, and each unresolved boundary still keeps the strict
+command nonzero. Metadata runtime exports and declaration-file entries are
+distinct inventory branches. Installed-package consumption validates the actual
+public entries in addition to source-level audits.
+
+中文说明。描述符纯模块通过首方metadata入口取得版本及输入/输出种类，实际B/A/JSONdoc和原声明逐路径核验后才登记覆盖。新增子入口单独列入必要包清单，暂存共享、数组可变性和类型分支分别验收。插件函数数组及完整产品验收继续独立处理。

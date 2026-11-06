@@ -14,6 +14,7 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
 import {auditSchemaResourceAssociations} from "./audit-schema-resource-associations.mjs";
 import {adoptSchemaResourceMembers} from "./lib/schema-resource-adoption.mjs";
 import {auditFrozenArrayResources,adoptFrozenArrayResources} from "./audit-frozen-array-resources.mjs";
+import {auditDescriptorResources,adoptDescriptorResources} from "./audit-descriptor-resources.mjs";
 
 /**
  * @lang zh-CN 在既有工件协议下逐来源核验原生声明，返回实际关联与缺口；不执行目标包。
@@ -26,6 +27,7 @@ import {auditFrozenArrayResources,adoptFrozenArrayResources} from "./audit-froze
 export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   assert(!options.schemaResources || options.includeMembers,"Schema resources require explicit member auditing.");
   assert(!options.arrayResources || options.includeMembers,"Array resources require explicit member auditing.");
+  assert(!options.descriptorResources || options.includeMembers,"Descriptor resources require explicit member auditing.");
   // <lang><zh-CN>工作区和工具均固定为本主仓所属容器；不能用调用参数替换生产器实现。
   // </zh-CN><en>Both workspace and tools are fixed to this main repository's container; arguments cannot substitute another producer.</en></lang>
   const mainRoot=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
@@ -138,6 +140,12 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
     report.arrayMemberAudit=adoptFrozenArrayResources(report.schemaMemberAudit??report.memberAudit,arrays.report);
     report.arrayMemberAudit.arrayAssociationOutput=arrays.output;
   }
+  if(options.descriptorResources) {
+    // <lang><zh-CN>仅在本次B/A/JSONdoc及原声明核验后采用描述符数组，旧审核层分别保留。</zh-CN><en>Adopt descriptor arrays only after current B/A/JSONdoc and original-declaration verification, retaining previous audit layers separately.</en></lang>
+    const descriptors=await auditDescriptorResources(container);
+    report.descriptorMemberAudit=adoptDescriptorResources(report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit,descriptors.report);
+    report.descriptorMemberAudit.descriptorAssociationOutput=descriptors.output;
+  }
   assertPublicRootOmission(report,container);
   fs.writeFileSync(path.join(output,"report.json"),JSON.stringify(report,null,2)+"\n",{flag:"wx"});
   return {report,output:path.relative(mainRoot,output).replaceAll("\\","/")};
@@ -147,10 +155,11 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
 // </zh-CN><en>Only explicit inspection permits completion with gaps; the default gate exits nonzero when any binding is blocked.</en></lang>
 if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href) {
   const args=process.argv.slice(2);
-  assert(args.length>=2&&args.length<=6&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members","--schema-resources","--array-resources"].includes(arg))&&(!args.some(arg=>["--schema-resources","--array-resources"].includes(arg))||args.includes("--members")),"Expected --workspace-root with optional --members, --schema-resources, --array-resources and --inspect.");
-  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members"),schemaResources:args.includes("--schema-resources"),arrayResources:args.includes("--array-resources")});
+  assert(args.length>=2&&args.length<=7&&args[0]==="--workspace-root"&&new Set(args.slice(2)).size===args.length-2&&args.slice(2).every(arg=>["--inspect","--members","--schema-resources","--array-resources","--descriptor-resources"].includes(arg))&&(!args.some(arg=>["--schema-resources","--array-resources","--descriptor-resources"].includes(arg))||args.includes("--members")),"Expected --workspace-root with optional --members, --schema-resources, --array-resources, --descriptor-resources and --inspect.");
+  const {report,output}=await auditSatelliteNativeApi(path.resolve(args[1]),{includeMembers:args.includes("--members"),schemaResources:args.includes("--schema-resources"),arrayResources:args.includes("--array-resources"),descriptorResources:args.includes("--descriptor-resources")});
   console.log(JSON.stringify({runtimeBindings:report.runtimeBindings,associatedBindings:report.associatedBindings,blockedBindings:report.blockedBindings,callableBindings:report.callableBindings,signatureGaps:report.callableSignatureGaps.length,...(report.memberAudit?{memberPaths:report.memberAudit.accessPaths,memberContentGaps:report.memberAudit.contentGaps,memberBoundaries:report.memberAudit.boundaries.length}:{}),...(report.schemaMemberAudit?{schemaResourcePaths:report.schemaMemberAudit.schemaResourcePaths,combinedContentGaps:report.schemaMemberAudit.contentGaps,combinedBoundaries:report.schemaMemberAudit.boundaries.length,unverifiedSchemaBindings:report.schemaMemberAudit.unverifiedSchemaBindings}:{}),coverageComplete:false,output}));
   if(report.arrayMemberAudit) console.log(JSON.stringify({frozenArrayBindings:report.arrayMemberAudit.frozenArrayBindings,frozenArrayElements:report.arrayMemberAudit.frozenArrayElements,remainingBoundaries:report.arrayMemberAudit.boundaries.length,arrayAssociationOutput:report.arrayMemberAudit.arrayAssociationOutput}));
-  const memberAudit=report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit;
+  if(report.descriptorMemberAudit) console.log(JSON.stringify({descriptorArrayPaths:report.descriptorMemberAudit.descriptorArrayPaths,remainingBoundaries:report.descriptorMemberAudit.boundaries.length,descriptorAssociationOutput:report.descriptorMemberAudit.descriptorAssociationOutput}));
+  const memberAudit=report.descriptorMemberAudit??report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit;
   if((report.blockedBindings || report.callableSignatureGaps.length || memberAudit&&!memberAudit.complete) && !args.includes("--inspect")) process.exitCode=1;
 }
