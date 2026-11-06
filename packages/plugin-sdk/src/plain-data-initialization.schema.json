@@ -1,0 +1,457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/plain-data-initialization-0.1.0-draft.schema.json",
+  "$comment": "中文：有限数据初始化声明轨迹，重放内部语义与实际源码、字节核验分别记录。 English: Finite data-initialization claim traces, separating replay semantics from actual source and byte verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "entryResourceId",
+    "steps",
+    "result"
+  ],
+  "properties": {
+    "contract": {
+      "const": "plain-data-initialization"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "entryResourceId": {
+      "$ref": "#/$defs/id"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resourceId",
+        "bindingName"
+      ],
+      "properties": {
+        "resourceId": {
+          "$ref": "#/$defs/id"
+        },
+        "bindingName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "pattern": "\\S"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line",
+        "column"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resourceId",
+        "range",
+        "rangeConvention"
+      ],
+      "properties": {
+        "resourceId": {
+          "$ref": "#/$defs/id"
+        },
+        "range": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start",
+            "end"
+          ],
+          "properties": {
+            "start": {
+              "$ref": "#/$defs/position"
+            },
+            "end": {
+              "$ref": "#/$defs/position"
+            }
+          }
+        },
+        "rangeConvention": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "endBoundary",
+            "columnUnit"
+          ],
+          "properties": {
+            "endBoundary": {
+              "const": "exclusive"
+            },
+            "columnUnit": {
+              "const": "utf16-code-unit"
+            }
+          }
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "nodeId",
+        "source"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "maxLength": 2000000,
+          "not": {
+            "enum": [
+              "__proto__",
+              "prototype",
+              "constructor"
+            ]
+          }
+        },
+        "nodeId": {
+          "$ref": "#/$defs/id"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "step": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "value"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "literal"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 2000000
+                },
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "properties"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "object"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "properties": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 20000,
+              "items": {
+                "$ref": "#/$defs/property"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "items"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "array"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 20000,
+              "items": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "name"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "bind"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "sourceNodeId",
+            "copies"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "clone"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "sourceNodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "copies": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 10000,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "fromNodeId",
+                  "toNodeId"
+                ],
+                "properties": {
+                  "fromNodeId": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "toNodeId": {
+                    "$ref": "#/$defs/id"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId",
+            "sourceNodeId"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "spread"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "sourceNodeId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "targetNodeId",
+            "key",
+            "valueNodeId"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "write"
+            },
+            "targetNodeId": {
+              "$ref": "#/$defs/id"
+            },
+            "key": {
+              "type": "string",
+              "maxLength": 2000000,
+              "not": {
+                "enum": [
+                  "__proto__",
+                  "prototype",
+                  "constructor"
+                ]
+              }
+            },
+            "valueNodeId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sequence",
+            "source",
+            "kind",
+            "nodeId"
+          ],
+          "properties": {
+            "sequence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            "source": {
+              "$ref": "#/$defs/source"
+            },
+            "kind": {
+              "const": "freeze"
+            },
+            "nodeId": {
+              "$ref": "#/$defs/id"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

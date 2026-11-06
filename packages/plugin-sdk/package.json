@@ -15,6 +15,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
+    "./plain-data-initialization": {
+      "types": "./dist/plain-data-initialization.d.ts",
+      "import": "./dist/plain-data-initialization.js"
+    },
+    "./plain-data-initialization.schema.json": "./dist/plain-data-initialization.schema.json",
     "./derivation-evidence": {
       "types": "./dist/derivation-evidence.d.ts",
       "import": "./dist/derivation-evidence.js"

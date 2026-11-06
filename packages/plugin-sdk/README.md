@@ -103,3 +103,19 @@ for fields, limits and consumer responsibilities.
 
 中文补充。草案入口明确区分生产声明与静态推导，读取通过仅登记结构与引用检查。
 实际字节、来源、规则语义和生产方身份继续由消费者分别核验。
+
+## Plain-data initialization draft
+
+`@hia-doc/plugin-sdk/plain-data-initialization` provides the independent
+`0.1.0-draft` rule and `readPlainDataInitialization`. The reader validates
+declared object identities, cloning/spreading, ordered writes, shallow freezing,
+module-scoped const bindings and per-value provenance. Replayed traces retain
+separate unverified states for actual files, source conformance and producer
+authenticity. The JSON schema is exported through
+`@hia-doc/plugin-sdk/plain-data-initialization.schema.json`.
+
+See the [rule reference](https://github.com/mandolin/HIA-Documentation/blob/main/docs/contracts/plain-data-initialization.md)
+for event fields, graph constraints and limits.
+
+中文补充。规则入口验证声明轨迹内部语义，结果逐值保留共享身份与来源。
+实际文件、源码符合性和生产方身份继续按各自证据核验。

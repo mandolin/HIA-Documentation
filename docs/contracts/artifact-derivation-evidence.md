@@ -18,6 +18,9 @@ The reader accepts decoded ordinary JSON data and returns an owned defensive
 snapshot. Byte decoding, duplicate-key handling and input authorization belong
 to the caller. It performs no file reads or producer execution.
 
+The [plain-data initialization rule](plain-data-initialization.md) provides a
+separate exact-profile reader for finite data-event traces.
+
 ## Record Structure
 
 | Field | Meaning |

@@ -48,6 +48,7 @@ import {
   ARTIFACT_DERIVATION_EVIDENCE_CONTRACT_VERSION,
   ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA
 } from "../../plugin-sdk/dist/derivation-evidence.js";
+import { PLAIN_DATA_INITIALIZATION_CONTRACT_VERSION, PLAIN_DATA_INITIALIZATION_JSON_SCHEMA } from "../../plugin-sdk/dist/plain-data-initialization.js";
 import {
   DOC_SOURCE_MAP_JSON_SCHEMA,
   DOC_SOURCE_MAP_SCHEMA_VERSION,
@@ -64,6 +65,15 @@ const checkOnly = process.argv.includes("--check");
 const publicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 
 const definitions = [
+  // <lang><zh-CN>规则身份与通用证据侧车分开，明确保留draft状态。</zh-CN><en>Rule identity is separate from the generic evidence sidecar and explicitly retains draft status.</en></lang>
+  {
+    contractVersion: PLAIN_DATA_INITIALIZATION_CONTRACT_VERSION,
+    fileName: "plain-data-initialization.schema.json",
+    key: "plain-data-initialization",
+    ownerPackage: "@hia-doc/plugin-sdk",
+    schema: PLAIN_DATA_INITIALIZATION_JSON_SCHEMA,
+    stability: "draft"
+  },
   // <lang><zh-CN>独立侧车保留明确draft身份，包的1.0候选不将它自动升级为稳定。</zh-CN><en>The separate sidecar retains its explicit draft identity; the package's 1.0 candidate does not automatically promote it to stable.</en></lang>
   {
     contractVersion: ARTIFACT_DERIVATION_EVIDENCE_CONTRACT_VERSION,

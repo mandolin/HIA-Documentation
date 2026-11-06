@@ -95,6 +95,7 @@
     "schemas": {
       "minimumCount": 12,
       "keys": [
+        "plain-data-initialization",
         "artifact-derivation-evidence",
         "business-flow-documentation",
         "business-flow-documentation-projection",

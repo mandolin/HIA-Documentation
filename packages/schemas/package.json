@@ -20,6 +20,7 @@
       "import": "./dist/index.js"
     },
     "./catalog.json": "./dist/catalog.json",
+    "./plain-data-initialization.schema.json": "./dist/schemas/plain-data-initialization.schema.json",
     "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
     "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
     "./business-flow-documentation-projection.schema.json": "./dist/schemas/business-flow-documentation-projection.schema.json",

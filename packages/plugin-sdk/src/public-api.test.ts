@@ -32,7 +32,9 @@ describe("producer public API declaration gate", () => {
     expect(manifest.exports).toEqual({
       ".": { types: "./dist/index.d.ts", import: "./dist/index.js" },
       "./derivation-evidence": { types: "./dist/derivation-evidence.d.ts", import: "./dist/derivation-evidence.js" },
-      "./artifact-derivation-evidence.schema.json": "./dist/artifact-derivation-evidence.schema.json"
+      "./artifact-derivation-evidence.schema.json": "./dist/artifact-derivation-evidence.schema.json",
+      "./plain-data-initialization": { types: "./dist/plain-data-initialization.d.ts", import: "./dist/plain-data-initialization.js" },
+      "./plain-data-initialization.schema.json": "./dist/plain-data-initialization.schema.json"
     });
     expect(manifest.bin).toBeUndefined();
   });

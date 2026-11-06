@@ -11574,6 +11574,11 @@
       "candidateTargetVersion": "1.0.0",
       "source": "packages/plugin-sdk/src/index.ts",
       "exportsMap": {
+        "./plain-data-initialization": {
+          "types": "./dist/plain-data-initialization.d.ts",
+          "import": "./dist/plain-data-initialization.js"
+        },
+        "./plain-data-initialization.schema.json": "./dist/plain-data-initialization.schema.json",
         "./derivation-evidence": {
           "types": "./dist/derivation-evidence.d.ts",
           "import": "./dist/derivation-evidence.js"
@@ -15944,6 +15949,7 @@
           "import": "./dist/index.js"
         },
         "./catalog.json": "./dist/catalog.json",
+        "./plain-data-initialization.schema.json": "./dist/schemas/plain-data-initialization.schema.json",
         "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
         "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
         "./business-flow-documentation-projection.schema.json": "./dist/schemas/business-flow-documentation-projection.schema.json",
@@ -16006,7 +16012,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "be9d2d4ed95af5f0ea90fc5415db8041d1f8a2004011cf396d1a51e243ad0c00"
+            "3b012280cd8dcaad834bab0741341a3a7d7bc1caf6ec01410ffa96f963102d39"
           ]
         },
         {
