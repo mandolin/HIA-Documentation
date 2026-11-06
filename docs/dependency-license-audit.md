@@ -90,6 +90,18 @@ These dependencies are not part of the permissive open-source allowlist. They ar
 
 ## Internal Workspace Dependencies
 
+### JSON Schema Test Validation
+
+`ajv` version `8.20.0` is a root development dependency under the MIT license. Tests use its
+Draft 2020-12 implementation to independently check contract schemas. Runtime
+packages use their own bounded readers and declare no Ajv dependency. The exact
+version and resolved dependencies are recorded in the workspace lockfile.
+[Official schema support](https://ajv.js.org/json-schema.html#draft-2020-12-breaking),
+[versioned license](https://github.com/ajv-validator/ajv/blob/v8.20.0/LICENSE).
+
+中文补充。Ajv用于测试中的独立Schema复核，声明为根开发依赖，采用精确8.20.0/MIT。
+对应版本、用途及许可检查已登记，运行包的验证与安装依赖分别治理。
+
 Dependencies declared as `workspace:*` or named under `@hia-doc/*` are internal workspace links and are not treated as third-party dependencies by this audit.
 
 ## Adding A Dependency

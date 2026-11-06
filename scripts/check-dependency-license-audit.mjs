@@ -16,6 +16,8 @@ const generatedDependencyDirectories = new Set([
 ]);
 
 const directDependencyAudit = [
+  // <lang><zh-CN>派生证据测试用独立2020-12引擎核对Schema，精确MIT开发依赖不进入SDK运行包。</zh-CN><en>Derivation-evidence tests cross-check schemas with an independent 2020-12 engine; the exact MIT development dependency is excluded from SDK runtimes.</en></lang>
+  { name: "ajv", dependencyType: "devDependencies", versionRange: "8.20.0", license: "MIT", purpose: "Independent JSON Schema 2020-12 conformance checks in tests." },
   // <lang><zh-CN>通用JSON生产使用原始值树和偏移，MIT精确版本已完成许可审查。</zh-CN><en>Generic JSON production uses original value trees and offsets from an exact MIT version reviewed for licensing.</en></lang>
   { name: "jsonc-parser", dependencyType: "dependencies", versionRange: "3.3.1", license: "MIT", purpose: "Lossless JSON value trees and UTF16 offsets for @hia-doc/jsondoc." },
   // <lang lang="zh-CN">官网仅构建时使用Astro，不进入公开运行包。</lang><lang lang="en">Astro builds the website only and is excluded from published runtime packages.</lang>

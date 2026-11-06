@@ -239,6 +239,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
+    "ajv": "8.20.0",
     "astro": "7.4.5",
     "tsx": "^4.23.0",
     "typescript": "^6.0.3",
