@@ -5,6 +5,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
+import assert from "node:assert/strict";
+import {createHash} from "node:crypto";
 import {collectStaticMemberDeclarations} from "./package-api-members.mjs";
 
 /**
@@ -31,11 +33,19 @@ function checkedFile(root, target) {
  * @param {string} root - 显式包根。 Explicit package root.
  * @param {object} manifest - 实际package.json。 Actual package manifest.
  * @param {string} [sourceEntry] - 已审定的根源码入口，用于编译型包。 Reviewed source entry for compiled packages.
+ * @param {object} [sourceEntries={}] <lang><zh-CN>审核清单显式指定的代码子路径到包内TS原始源映射，资源不可覆盖。</zh-CN><en>Explicit audited code-subpath mappings to owned TypeScript sources, without resource substitution.</en></lang>
  * @returns {object[]} 所有条件分支与命令入口，含被阻止项。 All condition branches and commands, including blocked entries.
  * @throws {Error} 目标、通配或源码入口不支持。 Unsupported target, wildcard, or source entry.
  */
-export function collectPackageEntries(root, manifest, sourceEntry) {
+export function collectPackageEntries(root, manifest, sourceEntry, sourceEntries = {}) {
   const entries = [];
+  // <lang><zh-CN>子路径来源只按显式清单授权，不从dist名称推测；未使用或非代码映射必须拒绝。</zh-CN><en>Subpath provenance is explicitly authorized, never guessed from dist names; unused or non-code mappings are rejected.</en></lang>
+  if(!sourceEntries || typeof sourceEntries!=="object" || Array.isArray(sourceEntries) || ![Object.prototype,null].includes(Object.getPrototypeOf(sourceEntries))) throw new Error("Invalid package API source mappings.");
+  const usedSources=new Set();
+  for(const [subpath,target] of Object.entries(sourceEntries)) {
+    if(!/^\.\/[a-z0-9][a-z0-9/-]*$/.test(subpath) || typeof target!=="string" || !/\.(?:[cm]?ts|tsx)$/.test(target) || /\.d\.(?:[cm]?ts)$/.test(target)) throw new Error("Invalid package API source mapping.");
+    checkedFile(root,target);
+  }
   /**
    * @lang zh-CN 递归保留条件路径，不把types或另一个运行时分支静默丢弃。
    * @lang en Recursively retain condition paths rather than silently omitting types or alternate runtime branches.
@@ -64,7 +74,10 @@ export function collectPackageEntries(root, manifest, sourceEntry) {
     const target = checkedFile(root,value);
     const kind = channel === "bin" ? "command" : /\.d\.(?:ts|mts|cts)$/.test(target) ? "type-declaration" : target.endsWith(".json") ? "json-resource" : /\.(?:[cm]?js|tsx?)$/.test(target) ? "runtime-module" : "unsupported";
     if (kind === "unsupported") throw new Error("Unsupported package API file kind.");
-    const source = sourceEntry && (subpath === "." || channel === "bin") && ["runtime-module","type-declaration","command"].includes(kind) ? checkedFile(root,sourceEntry) : target;
+    const code=["runtime-module","type-declaration","command"].includes(kind);
+    const mapped=channel==="exports" && code && Object.hasOwn(sourceEntries,subpath);
+    const source = mapped ? checkedFile(root,sourceEntries[subpath]) : sourceEntry && (subpath === "." || channel === "bin") && code ? checkedFile(root,sourceEntry) : target;
+    if(mapped) usedSources.add(subpath);
     entries.push({ channel, subpath, conditions, kind, target, source });
   }
   // <lang lang="zh-CN">exports存在时优先；没有exports才按main入口，bin始终独立登记，不运行命令。</lang><lang lang="en">Prefer exports when present, otherwise use main; always inventory bins separately without executing commands.</lang>
@@ -77,6 +90,7 @@ export function collectPackageEntries(root, manifest, sourceEntry) {
   else throw new Error("Package API root entry is undeclared.");
   const bins = typeof manifest.bin === "string" ? { [manifest.name.split("/").at(-1)]:manifest.bin } : manifest.bin ?? {};
   for (const [name,target] of Object.entries(bins)) visit(target,name,[],"bin");
+  if(Object.keys(sourceEntries).some(subpath=>!usedSources.has(subpath))) throw new Error("Unused package API source mapping.");
   return entries;
 }
 
@@ -110,5 +124,36 @@ export function collectModuleExports(root, sources, options = {}) {
       return { name:exported.name, declarationName:symbol.name, declarationTypeOnly:(symbol.flags & ts.SymbolFlags.Value)===0, status:declarations.length ? "resolved" : "unresolved", declarations,...members };
     }).sort((a,b)=>a.name.localeCompare(b.name,"en")) : [];
     return {path:path.relative(root,file).split(path.sep).join("/"),moduleRecognized:Boolean(module),syntacticDiagnostics:program.getSyntacticDiagnostics(source).map(item=>item.code),exports};
+  });
+}
+
+/**
+ * @lang zh-CN 独立核显式子路径原始TS与两类发行入口的导出名，保留条件和字节摘要。
+ * @lang en Independently checks authored TypeScript against both distribution export-name sets, retaining conditions and byte digests.
+ * @param {string} root <lang><zh-CN>授权owner根。</zh-CN><en>Authorized owner root.</en></lang>
+ * @param {string} directory <lang><zh-CN>包内相对目录或空串。</zh-CN><en>Relative package directory or empty string.</en></lang>
+ * @param {object[]} entries <lang><zh-CN>已核入口，资源及根映射按原规则处理。</zh-CN><en>Validated entries, leaving resources and root mappings under their original rules.</en></lang>
+ * @returns {object[]} <lang><zh-CN>逐条件导出名及源/发行摘要，仅证明名称对应，不执行或证明运行值。</zh-CN><en>Per-condition export names and source/distribution digests, proving name alignment without execution or runtime-value claims.</en></lang>
+ * @throws {Error} <lang><zh-CN>来源、语法或发行名集合不一致。</zh-CN><en>Inconsistent provenance, syntax or distribution name sets.</en></lang>
+ */
+export function verifyCompiledSubpathSources(root,directory,entries) {
+  const mapped=entries.filter(entry=>entry.channel==="exports" && entry.subpath!=="." && entry.source!==entry.target && ["runtime-module","type-declaration"].includes(entry.kind));
+  if(!mapped.length) return [];
+  // <lang><zh-CN>原源与发行目标在同一静态程序中解析，JS入口的顶层代码不会执行。</zh-CN><en>Resolve authored and distributed targets in one static program without evaluating JavaScript entry code.</en></lang>
+  const relative=file=>checkedFile(root,path.posix.join(directory,file));
+  const paths=[...new Set(mapped.flatMap(entry=>[relative(entry.source),relative(entry.target)]))];
+  const modules=collectModuleExports(root,paths);
+  return mapped.map(entry=>{
+    const source=relative(entry.source);
+    const target=relative(entry.target);
+    const original=modules.find(module=>module.path===source);
+    const emitted=modules.find(module=>module.path===target);
+    assert(original.moduleRecognized&&emitted.moduleRecognized&&original.syntacticDiagnostics.length===0&&emitted.syntacticDiagnostics.length===0,"Invalid compiled subpath syntax.");
+    // <lang><zh-CN>声明分支须覆盖全部类型/值名；运行分支只覆盖有值身份的名字，差异不能被来源提示掩盖。</zh-CN><en>Declaration branches cover all type/value names; runtime branches cover value identities only, so provenance hints cannot hide mismatches.</en></lang>
+    const expected=original.exports.filter(binding=>entry.kind==="type-declaration" || !binding.declarationTypeOnly).map(binding=>binding.name);
+    const actual=emitted.exports.map(binding=>binding.name);
+    assert.deepEqual(actual,expected,"Compiled subpath exports differ from authored source.");
+    const digest=file=>createHash("sha256").update(fs.readFileSync(path.join(root,file))).digest("hex");
+    return {subpath:entry.subpath,conditions:entry.conditions,kind:entry.kind,source,target,exports:actual,sourceSha256:digest(source),targetSha256:digest(target),verification:"export-names"};
   });
 }

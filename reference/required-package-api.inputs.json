@@ -35,7 +35,11 @@
       "name": "@hia-doc/plugin-sdk",
       "owner": "main-repo",
       "directory": "packages/plugin-sdk",
-      "sourceEntry": "src/index.ts"
+      "sourceEntry": "src/index.ts",
+      "sourceEntries": {
+        "./plain-data-initialization": "src/plain-data-initialization.ts",
+        "./derivation-evidence": "src/derivation-evidence.ts"
+      }
     },
     {
       "name": "@hia-doc/profile",

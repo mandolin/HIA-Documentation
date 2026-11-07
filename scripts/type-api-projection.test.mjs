@@ -100,6 +100,20 @@ test("anonymous union/intersection members enter independent expectations", () =
     assert(expected.bindings.flatMap(binding => binding.declarations.flatMap(root => root.members)).some(member => member.kind === "IndexSignature"));
     assert.equal(expected.bindings.flatMap(binding=>binding.declarations.flatMap(root=>root.expressions)).length,8);
 });
+
+test("explicit 0.4 inventory retains generic targets, arguments and readonly array operands",()=>{
+    fs.writeFileSync(path.join(root,"wrapped.mts"),'export type Bound = Readonly<{items: readonly {value:string}[]}>;');
+    const modules=collectModuleExports(root,["wrapped.mts"]);
+    const legacy=collectTypeApiExpectations(root,modules);
+    const current=collectTypeApiExpectations(root,modules,{extractionVersion:"0.4.0-draft"});
+    assert.equal(legacy.bindings[0].declarations[0].expressions.length,1);
+    const expressions=current.bindings[0].declarations[0].expressions;
+    assert.equal(expressions.length,5);
+    assert.equal(expressions[0].targetName,"Readonly");
+    assert.equal(expressions[1].argumentIndex,0);
+    assert.equal(expressions.find(item=>item.operator==="type-operator").typeOperator,"readonly");
+    assert.equal(current.bindings[0].declarations[0].members.length,2);
+});
 test("missing anonymous member output remains a strict gap", () => {
     const input = fixture();
     input.extraction.symbols = input.extraction.symbols.filter(node => !node.parentId);

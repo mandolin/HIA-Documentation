@@ -80,4 +80,18 @@ describe("explicit TypeScript project profile distribution",()=>{
     const manifest=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
     expect(manifest.exports["./ts-jsdoc-bridge/0.3.0-draft.profile.json"]).toBe("./dist/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json");
   });
+
+  it("selects wrapped 0.4 independently and retains the 0.3 profile",()=>{
+    const profile=getOfficialTsDocProjectProfile("0.4.0-draft");
+    expect(validateHiaProfile(profile)).toEqual([]);
+    expect(profile.profileVersion).toBe("0.4.0-draft");
+    expect(createOfficialTsDocProjectProfileSet("0.4.0-draft").diagnostics).toEqual([]);
+    expect(getOfficialTsDocProjectProfile("0.3.0-draft").profileVersion).toBe("0.3.0-draft");
+    expect(getOfficialTsDocProjectProfile().profileVersion).toBe("0.2.0-draft");
+    const manifest=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
+    expect(manifest.exports["./ts-jsdoc-bridge/0.4.0-draft.profile.json"]).toBe("./dist/profiles/versioned/ts-jsdoc-bridge-0.4.0-draft.profile.json");
+    expect(manifest.exports["./tsdoc-project/0.4.0-draft/catalog.json"]).toBe("./dist/tsdoc-wrapped-project-catalog.json");
+    profile.contracts.length=0;
+    expect(getOfficialTsDocProjectProfile("0.4.0-draft").contracts.length).toBeGreaterThan(0);
+  });
 });

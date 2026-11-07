@@ -13,9 +13,9 @@ import {readTsDocProjectSchemas} from "./lib/tsdoc-project-schemas.mjs";
 
 const source=fileURLToPath(new URL("../packages/schemas/src/",import.meta.url));
 
-test("five satellite schema snapshots compile with exact identities and digests",async()=>{
+test("seven satellite schema snapshots compile with exact identities and digests",async()=>{
   const {snapshots}=await readTsDocProjectSchemas(source);
-  assert.equal(snapshots.length,5);
+  assert.equal(snapshots.length,7);
   const ajv=new Ajv2020({strict:false});
   for(const item of snapshots) assert.equal(typeof ajv.compile(item.schema),"function");
 });
@@ -36,6 +36,26 @@ test("0.3 schema requires explicit mode, exact profile and type-only source cont
     if(mode==="runtime") invalid.symbols[0].classification="runtime";
     if(mode==="comment") invalid.symbols[0].comment={};
     if(mode==="branch") invalid.symbols[0].metadata.typeExpression.branchIndex=-1;
+    assert.equal(validate(invalid),false,mode);
+  }
+});
+
+test("0.4 schema requires role-specific wrapper metadata and keeps 0.3 exact", async () => {
+  const {snapshots} = await readTsDocProjectSchemas(source);
+  const ajv = new Ajv2020({strict:false});
+  const validate = ajv.compile(snapshots.find(item => item.entry.key === "hia-tsdoc-extraction-0.4.0-draft").schema);
+  const previous = ajv.compile(snapshots.find(item => item.entry.key === "hia-tsdoc-extraction-0.3.0-draft").schema);
+  const range = {start:{line:1,column:1},end:{line:1,column:30}};
+  const symbol = {id:"node",name:"application",kind:"ts-type-application",classification:"type-only",exported:false,parentId:"parent",signature:"Readonly<string>",source:{path:"index.ts",range,rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"}},metadata:{modulePath:"index.ts",syntaxKind:"TypeReference",typeExpression:{operator:"application",syntaxKind:"TypeReference",targetName:"Readonly"}}};
+  const artifact = {contract:"hia-tsdoc-extraction",contractVersion:"0.4.0-draft",producer:{name:"test",version:"1"},profile:{id:"ts-jsdoc-bridge",version:"0.4.0-draft"},source:{path:"index.ts",language:"typescript",sourcesContentPolicy:"none"},artifacts:[],modules:[{path:"index.ts",exports:[]}],symbols:[symbol],comments:[],diagnostics:[],metadata:{typeExpressions:"0.4.0-draft"}};
+  assert.equal(validate(artifact),true,JSON.stringify(validate.errors));
+  assert.equal(previous(artifact),false);
+  for (const mode of ["target", "argument", "keyword", "mode"]) {
+    const invalid = structuredClone(artifact);
+    if (mode === "target") delete invalid.symbols[0].metadata.typeExpression.targetName;
+    if (mode === "argument") invalid.symbols[0].metadata.typeExpression.argumentIndex = -1;
+    if (mode === "keyword") invalid.symbols[0].metadata.typeExpression.typeOperator = "readonly";
+    if (mode === "mode") invalid.metadata.typeExpressions = "0.3.0-draft";
     assert.equal(validate(invalid),false,mode);
   }
 });

@@ -16,7 +16,7 @@ const main=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
 const owner=path.join(path.dirname(main),"HIA/hia-tsdoc/packages/tsdoc-spec/src/index.mjs");
 assert.equal(fs.realpathSync(owner),owner);
 const spec=await import(pathToFileURL(owner));
-const schemas=[spec.TSDOC_EXTRACTION_JSON_SCHEMA,spec.TSDOC_PROJECT_EXTRACTION_JSON_SCHEMA,spec.TSDOC_PROJECT_BRIDGE_JSON_SCHEMA,spec.TSDOC_STRUCTURED_EXTRACTION_JSON_SCHEMA,spec.TSDOC_STRUCTURED_BRIDGE_JSON_SCHEMA];
+const schemas=[spec.TSDOC_EXTRACTION_JSON_SCHEMA,spec.TSDOC_PROJECT_EXTRACTION_JSON_SCHEMA,spec.TSDOC_PROJECT_BRIDGE_JSON_SCHEMA,spec.TSDOC_STRUCTURED_EXTRACTION_JSON_SCHEMA,spec.TSDOC_STRUCTURED_BRIDGE_JSON_SCHEMA,spec.TSDOC_WRAPPED_EXTRACTION_JSON_SCHEMA,spec.TSDOC_WRAPPED_BRIDGE_JSON_SCHEMA];
 const directory=path.join(main,"packages/schemas/src");
 const entries=[];
 for(const schema of schemas) {

@@ -51,6 +51,26 @@
       "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-ts-jsdoc-bridge-0.3.0-draft.json",
       "sha256": "810a8bc7fafd572d71b8af1db8e290e32ecf9e4c87f1206bb9dc603f7547983c",
       "stability": "draft"
+    },
+    {
+      "key": "hia-tsdoc-extraction-0.4.0-draft",
+      "contractVersion": "0.4.0-draft",
+      "ownerPackage": "@hia-doc/tsdoc-spec",
+      "path": "./tsdoc-project/hia-tsdoc-extraction-0.4.0-draft.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-tsdoc-extraction-0.4.0-draft.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-tsdoc-extraction-0.4.0-draft.json",
+      "sha256": "0bfa3447b7679f2e250e5e9637172a9042b821cee381856f0631b37a990484e5",
+      "stability": "draft"
+    },
+    {
+      "key": "hia-ts-jsdoc-bridge-0.4.0-draft",
+      "contractVersion": "0.4.0-draft",
+      "ownerPackage": "@hia-doc/tsdoc-spec",
+      "path": "./tsdoc-project/hia-ts-jsdoc-bridge-0.4.0-draft.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-ts-jsdoc-bridge-0.4.0-draft.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-ts-jsdoc-bridge-0.4.0-draft.json",
+      "sha256": "8c674a9c5d3915fade644f12210de0161bfe61d94cd624cff0a3927e6fa17815",
+      "stability": "draft"
     }
   ]
 }

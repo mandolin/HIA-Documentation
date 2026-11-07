@@ -7,96 +7,466 @@ import { createHiaDiagnostic, type HiaDiagnostic, type HiaSourceRange } from "@h
 import { readArtifactDerivationEvidence, type ArtifactDerivationEvidence } from "./derivation-evidence.js";
 import schema from "./plain-data-initialization.schema.json" with { type: "json" };
 
-/** @lang zh-CN 有限初始化规则身份。 @lang en Finite initialization rule identity. */
+/**
+ * @lang zh-CN 有限初始化规则身份。
+ * @lang en Finite initialization rule identity.
+ */
 export const PLAIN_DATA_INITIALIZATION_CONTRACT = "plain-data-initialization" as const;
-/** @lang zh-CN 精确独立规则草案版本。 @lang en Exact independent rule draft version. */
+/**
+ * @lang zh-CN 精确独立规则草案版本。
+ * @lang en Exact independent rule draft version.
+ */
 export const PLAIN_DATA_INITIALIZATION_CONTRACT_VERSION = "0.1.0-draft" as const;
-/** @lang zh-CN 规则Schema身份，作为元数据使用。 @lang en Rule schema identity, used as metadata. */
+/**
+ * @lang zh-CN 规则Schema身份，作为元数据使用。
+ * @lang en Rule schema identity, used as metadata.
+ */
 export const PLAIN_DATA_INITIALIZATION_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/plain-data-initialization-0.1.0-draft.schema.json" as const;
-/** @lang zh-CN 结构Schema，图和时序约束由纯reader额外校验。 @lang en Structural schema, with graph and ordering constraints additionally checked by the pure reader. */
+/**
+ * @lang zh-CN 结构Schema，图和时序约束由纯reader额外校验。
+ * @lang en Structural schema, with graph and ordering constraints additionally checked by the pure reader.
+ */
 export const PLAIN_DATA_INITIALIZATION_JSON_SCHEMA = schema;
 
-/** @lang zh-CN 引用活动输入资源的显式排除终点UTF16范围。 @lang en Explicit exclusive-end UTF16 range referencing an activity input resource. */
+/**
+ * @lang zh-CN 引用活动输入资源的显式排除终点UTF16范围。
+ * @lang en Explicit exclusive-end UTF16 range referencing an activity input resource.
+ */
 export interface PlainDataInitializationSource {
-  /** @lang zh-CN 活动输入资源身份。 @lang en Activity input resource identity. */
+  /**
+   * @lang zh-CN 活动输入资源身份。
+   * @lang en Activity input resource identity.
+   */
   readonly resourceId: string;
-  /** @lang zh-CN 沿用核心范围且显式提供一基列。 @lang en Reuses the core range with explicit one-based columns. */
-  readonly range: HiaSourceRange & { start: { line: number; column: number }; end: { line: number; column: number } };
-  /** @lang zh-CN 固定终点及列单位。 @lang en Fixed end boundary and column unit. */
-  readonly rangeConvention: { readonly endBoundary: "exclusive"; readonly columnUnit: "utf16-code-unit" };
+  /**
+   * @lang zh-CN 沿用核心范围且显式提供一基列。
+   * @lang en Reuses the core range with explicit one-based columns.
+   */
+  readonly range: HiaSourceRange & {
+    /**
+     * @lang zh-CN 一基范围起点，使用原始UTF-16列。
+     * @lang en One-based range start in original UTF-16 columns.
+     */
+    start: {
+    /**
+     * @lang zh-CN 原始源码的一基行号。
+     * @lang en One-based line number in the original source.
+     */
+    line: number;
+    /**
+     * @lang zh-CN 原始源码的一基UTF-16代码单元列号。
+     * @lang en One-based UTF-16 code-unit column in the original source.
+     */
+    column: number };
+    /**
+     * @lang zh-CN 一基排除终点，不能计入被引用范围。
+     * @lang en One-based exclusive end, excluded from the referenced range.
+     */
+    end: {
+    /**
+     * @lang zh-CN 原始源码的一基行号。
+     * @lang en One-based line number in the original source.
+     */
+    line: number;
+    /**
+     * @lang zh-CN 原始源码的一基UTF-16代码单元列号。
+     * @lang en One-based UTF-16 code-unit column in the original source.
+     */
+    column: number } };
+  /**
+   * @lang zh-CN 固定终点及列单位。
+   * @lang en Fixed end boundary and column unit.
+   */
+  readonly rangeConvention: {
+    /**
+     * @lang zh-CN 固定排除终点约定。
+     * @lang en Fixed exclusive-end convention.
+     */
+    readonly endBoundary: "exclusive";
+    /**
+     * @lang zh-CN 固定UTF-16代码单元列单位。
+     * @lang en Fixed UTF-16 code-unit column unit.
+     */
+    readonly columnUnit: "utf16-code-unit" };
 }
-/** @lang zh-CN 所有事件的声明顺序和来源。 @lang en Declared order and provenance shared by all events. */
+/**
+ * @lang zh-CN 所有事件的声明顺序和来源。
+ * @lang en Declared order and provenance shared by all events.
+ */
 interface StepBase {
-  /** @lang zh-CN 从零连续编号。 @lang en Contiguous numbering starting at zero. */
+  /**
+   * @lang zh-CN 从零连续编号。
+   * @lang en Contiguous numbering starting at zero.
+   */
   readonly sequence: number;
-  /** @lang zh-CN 声明此操作的输入源码位置。 @lang en Claimed input-source location of this operation. */
+  /**
+   * @lang zh-CN 声明此操作的输入源码位置。
+   * @lang en Claimed input-source location of this operation.
+   */
   readonly source: PlainDataInitializationSource;
 }
-/** @lang zh-CN 对象自有数据属性及其独立声明来源。 @lang en Own data property and its separate declaration provenance. */
+/**
+ * @lang zh-CN 对象自有数据属性及其独立声明来源。
+ * @lang en Own data property and its separate declaration provenance.
+ */
 export interface PlainDataInitializationProperty {
-  /** @lang zh-CN 普通字符串键。 @lang en Ordinary string key. */
+  /**
+   * @lang zh-CN 普通字符串键。
+   * @lang en Ordinary string key.
+   */
   readonly key: string;
-  /** @lang zh-CN 已分配的值身份。 @lang en Previously allocated value identity. */
+  /**
+   * @lang zh-CN 已分配的值身份。
+   * @lang en Previously allocated value identity.
+   */
   readonly nodeId: string;
-  /** @lang zh-CN 属性声明选择器。 @lang en Property-declaration selector. */
+  /**
+   * @lang zh-CN 属性声明选择器。
+   * @lang en Property-declaration selector.
+   */
   readonly source: PlainDataInitializationSource;
 }
-/** @lang zh-CN 闭集有限事件，引用必须按序存在，clone映射覆盖全部可达容器。 @lang en Closed finite events whose references must already exist; clone maps cover all reachable containers. */
+/**
+ * @lang zh-CN 闭集有限事件，引用必须按序存在，clone映射覆盖全部可达容器。
+ * @lang en Closed finite events whose references must already exist; clone maps cover all reachable containers.
+ */
 export type PlainDataInitializationStep = Readonly<StepBase & (
-  | { kind: "literal"; nodeId: string; value: string | number | boolean | null }
-  | { kind: "object"; nodeId: string; properties: readonly PlainDataInitializationProperty[] }
-  | { kind: "array"; nodeId: string; items: readonly string[] }
-  | { kind: "bind"; nodeId: string; name: string }
-  | { kind: "clone"; nodeId: string; sourceNodeId: string; copies: readonly { fromNodeId: string; toNodeId: string }[] }
-  | { kind: "spread"; nodeId: string; sourceNodeId: string }
-  | { kind: "write"; targetNodeId: string; key: string; valueNodeId: string }
-  | { kind: "freeze"; nodeId: string }
+  | {
+    /**
+     * @lang zh-CN 固定literal事件判别值。
+     * @lang en Fixed literal event discriminator.
+     */
+    kind: "literal";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 字面量事件声明的JSON原始值。
+     * @lang en JSON primitive value claimed by the literal event.
+     */
+    value: string | number | boolean | null }
+  | {
+    /**
+     * @lang zh-CN 固定object事件判别值。
+     * @lang en Fixed object event discriminator.
+     */
+    kind: "object";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 对象节点的自有数据属性及各属性声明来源。
+     * @lang en Own data properties of the object node and their declaration provenance.
+     */
+    properties: readonly PlainDataInitializationProperty[] }
+  | {
+    /**
+     * @lang zh-CN 固定array事件判别值。
+     * @lang en Fixed array event discriminator.
+     */
+    kind: "array";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 按数组顺序排列的元素节点身份。
+     * @lang en Element node identities in array order.
+     */
+    items: readonly string[] }
+  | {
+    /**
+     * @lang zh-CN 固定bind事件判别值。
+     * @lang en Fixed bind event discriminator.
+     */
+    kind: "bind";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 本次绑定事件在入口作用域声明的const名称。
+     * @lang en Const name declared in the entry scope by this binding event.
+     */
+    name: string }
+  | {
+    /**
+     * @lang zh-CN 固定clone事件判别值。
+     * @lang en Fixed clone event discriminator.
+     */
+    kind: "clone";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 复制或展开操作所引用的原节点身份。
+     * @lang en Original node identity referenced by a clone or spread operation.
+     */
+    sourceNodeId: string;
+    /**
+     * @lang zh-CN 克隆所需的可达容器原节点到新节点映射。
+     * @lang en Original-to-new node mappings for reachable containers required by cloning.
+     */
+    copies: readonly {
+    /**
+     * @lang zh-CN 克隆映射中的原容器节点身份。
+     * @lang en Original container-node identity in the clone mapping.
+     */
+    fromNodeId: string;
+    /**
+     * @lang zh-CN 克隆映射为该容器分配的新节点身份。
+     * @lang en New node identity allocated to that container by the clone mapping.
+     */
+    toNodeId: string }[] }
+  | {
+    /**
+     * @lang zh-CN 固定spread事件判别值。
+     * @lang en Fixed spread event discriminator.
+     */
+    kind: "spread";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string;
+    /**
+     * @lang zh-CN 复制或展开操作所引用的原节点身份。
+     * @lang en Original node identity referenced by a clone or spread operation.
+     */
+    sourceNodeId: string }
+  | {
+    /**
+     * @lang zh-CN 固定write事件判别值。
+     * @lang en Fixed write event discriminator.
+     */
+    kind: "write";
+    /**
+     * @lang zh-CN 本次写入所修改的目标容器节点身份。
+     * @lang en Target container-node identity modified by this write.
+     */
+    targetNodeId: string;
+    /**
+     * @lang zh-CN 本次写入选择的自有数据属性键。
+     * @lang en Own data-property key selected by this write.
+     */
+    key: string;
+    /**
+     * @lang zh-CN 本次写入引用的替换值节点身份。
+     * @lang en Replacement value-node identity referenced by this write.
+     */
+    valueNodeId: string }
+  | {
+    /**
+     * @lang zh-CN 固定freeze事件判别值。
+     * @lang en Fixed freeze event discriminator.
+     */
+    kind: "freeze";
+    /**
+     * @lang zh-CN 当前事件涉及的轨迹内节点身份，新建或引用约束由事件种类检查。
+     * @lang en Trace-local node identity for this event, with creation or reference constraints checked by event kind.
+     */
+    nodeId: string }
 )>;
-/** @lang zh-CN 活动的精确规则payload及所选导出绑定。 @lang en Exact activity-rule payload and selected export binding. */
+/**
+ * @lang zh-CN 活动的精确规则payload及所选导出绑定。
+ * @lang en Exact activity-rule payload and selected export binding.
+ */
 export type PlainDataInitialization = {
-  /** @lang zh-CN 固定规则身份。 @lang en Fixed rule identity. */
+  /**
+   * @lang zh-CN 固定规则身份。
+   * @lang en Fixed rule identity.
+   */
   readonly contract: typeof PLAIN_DATA_INITIALIZATION_CONTRACT;
-  /** @lang zh-CN 精确版本。 @lang en Exact version. */
+  /**
+   * @lang zh-CN 精确版本。
+   * @lang en Exact version.
+   */
   readonly contractVersion: typeof PLAIN_DATA_INITIALIZATION_CONTRACT_VERSION;
-  /** @lang zh-CN 导出绑定所属输入资源。 @lang en Input resource owning the export binding. */
+  /**
+   * @lang zh-CN 导出绑定所属输入资源。
+   * @lang en Input resource owning the export binding.
+   */
   readonly entryResourceId: string;
-  /** @lang zh-CN 连续顺序的声明事件。 @lang en Claim events in contiguous order. */
+  /**
+   * @lang zh-CN 连续顺序的声明事件。
+   * @lang en Claim events in contiguous order.
+   */
   readonly steps: readonly PlainDataInitializationStep[];
-  /** @lang zh-CN 声明输出及入口作用域中的const绑定。 @lang en Claimed output and const binding in the entry scope. */
-  readonly result: { readonly resourceId: string; readonly bindingName: string };
+  /**
+   * @lang zh-CN 声明输出及入口作用域中的const绑定。
+   * @lang en Claimed output and const binding in the entry scope.
+   */
+  readonly result: {
+    /**
+     * @lang zh-CN 所选活动输出的资源身份，须与证据内声明对应。
+     * @lang en Selected activity-output resource identity, matching its evidence declaration.
+     */
+    readonly resourceId: string;
+    /**
+     * @lang zh-CN 入口作用域中选定的const导出绑定名。
+     * @lang en Selected const export binding name in the entry scope.
+     */
+    readonly bindingName: string };
 };
-/** @lang zh-CN 最终JSON访问路径、共享身份及不同种类的来源。 @lang en Final JSON access path, shared identity and distinct provenance categories. */
+/**
+ * @lang zh-CN 最终JSON访问路径、共享身份及不同种类的来源。
+ * @lang en Final JSON access path, shared identity and distinct provenance categories.
+ */
 export interface PlainDataInitializationValueLink {
-  /** @lang zh-CN RFC6901位置，根为空字符串。 @lang en RFC6901 location, with the empty string for the root. */
+  /**
+   * @lang zh-CN RFC6901位置，根为空字符串。
+   * @lang en RFC6901 location, with the empty string for the root.
+   */
   readonly pointer: string;
-  /** @lang zh-CN 轨迹内节点名，不作跨记录身份。 @lang en Trace-local node name, not a cross-record identity. */
+  /**
+   * @lang zh-CN 轨迹内节点名，不作跨记录身份。
+   * @lang en Trace-local node name, not a cross-record identity.
+   */
   readonly nodeId: string;
-  /** @lang zh-CN 实际JSON值类型。 @lang en Actual JSON value type. */
+  /**
+   * @lang zh-CN 实际JSON值类型。
+   * @lang en Actual JSON value type.
+   */
   readonly type: "object" | "array" | "string" | "number" | "boolean" | "null";
-  /** @lang zh-CN 当前属性来源或节点来源。 @lang en Current property provenance or node provenance. */
+  /**
+   * @lang zh-CN 当前属性来源或节点来源。
+   * @lang en Current property provenance or node provenance.
+   */
   readonly source: PlainDataInitializationSource;
-  /** @lang zh-CN 原值产生位置。 @lang en Original value-producing location. */
+  /**
+   * @lang zh-CN 原值产生位置。
+   * @lang en Original value-producing location.
+   */
   readonly valueSource: PlainDataInitializationSource;
-  /** @lang zh-CN 被覆盖的属性声明来源。 @lang en Overwritten property-declaration provenance. */
+  /**
+   * @lang zh-CN 被覆盖的属性声明来源。
+   * @lang en Overwritten property-declaration provenance.
+   */
   readonly previousSources: readonly PlainDataInitializationSource[];
-  /** @lang zh-CN 当前节点及直接属性边参与的克隆/展开来源，按事件去重并排序。 @lang en Clone/spread provenance involving this node and its direct property edge, deduplicated and ordered by event. */
+  /**
+   * @lang zh-CN 当前节点及直接属性边参与的克隆/展开来源，按事件去重并排序。
+   * @lang en Clone/spread provenance involving this node and its direct property edge, deduplicated and ordered by event.
+   */
   readonly transformationSources: readonly PlainDataInitializationSource[];
-  /** @lang zh-CN 与变换来源逐项对应的事件序号，同一位置的不同操作仍独立。 @lang en Event sequences corresponding to transformation sources; distinct operations at one location remain distinct. */
+  /**
+   * @lang zh-CN 与变换来源逐项对应的事件序号，同一位置的不同操作仍独立。
+   * @lang en Event sequences corresponding to transformation sources; distinct operations at one location remain distinct.
+   */
   readonly transformationSequences: readonly number[];
 }
-/** @lang zh-CN 重放只核轨迹内部语义，实际字节、源码及记录方继续未核。 @lang en Replay checks internal trace semantics only; actual bytes, source and recorder remain unverified. */
+/**
+ * @lang zh-CN 重放只核轨迹内部语义，实际字节、源码及记录方继续未核。
+ * @lang en Replay checks internal trace semantics only; actual bytes, source and recorder remain unverified.
+ */
 export type PlainDataInitializationReadResult =
-  | { readonly status: "invalid"; readonly diagnostics: readonly HiaDiagnostic[] }
-  | { readonly status: "replayed"; readonly diagnostics: readonly []; readonly evidence: ArtifactDerivationEvidence;
-      readonly activityId: string; readonly initialization: PlainDataInitialization; readonly value: unknown;
-      readonly valueLinks: readonly PlainDataInitializationValueLink[];
-      readonly verification: { readonly structure: true; readonly traceSemantics: true; readonly artifactBytes: false; readonly sourceLinks: false; readonly sourceConformance: false; readonly producerAuthenticity: false } };
+  | {
+    /**
+     * @lang zh-CN 当前分支的invalid读取状态。
+     * @lang en The invalid read status for this branch.
+     */
+    readonly status: "invalid";
+    /**
+     * @lang zh-CN 当前读取分支的受控诊断，成功分支为空。
+     * @lang en Controlled diagnostics for this read branch, empty on success.
+     */
+    readonly diagnostics: readonly HiaDiagnostic[] }
+  | {
+    /**
+     * @lang zh-CN 当前分支的replayed读取状态。
+     * @lang en The replayed read status for this branch.
+     */
+    readonly status: "replayed";
+    /**
+     * @lang zh-CN 当前读取分支的受控诊断，成功分支为空。
+     * @lang en Controlled diagnostics for this read branch, empty on success.
+     */
+    readonly diagnostics: readonly [];
+    /**
+     * @lang zh-CN 已完成结构读取的独立证据快照。
+     * @lang en Owned evidence snapshot after structural reading.
+     */
+    readonly evidence: ArtifactDerivationEvidence;
 
-/** @lang zh-CN 内部属性槽保持值引用与字段历史分别演化。 @lang en Internal slots evolve value references and field histories separately. */
+    /**
+     * @lang zh-CN 本次重放选择的证据活动身份。
+     * @lang en Evidence activity selected for this replay.
+     */
+    readonly activityId: string;
+    /**
+     * @lang zh-CN 该活动声明的有限初始化规则payload。
+     * @lang en Finite initialization-rule payload claimed by this activity.
+     */
+    readonly initialization: PlainDataInitialization;
+    /**
+     * @lang zh-CN 从所选绑定重放得到的最终值，消费前仍需缩窄。
+     * @lang en Final value replayed from the selected binding, requiring narrowing before consumption.
+     */
+    readonly value: unknown;
+
+    /**
+     * @lang zh-CN 最终JSON各访问位置的值与来源关联。
+     * @lang en Value and provenance links for final JSON access locations.
+     */
+    readonly valueLinks: readonly PlainDataInitializationValueLink[];
+
+    /**
+     * @lang zh-CN 逐维度核验状态，false维度仍需对应证据。
+     * @lang en Per-dimension verification state, with false dimensions requiring their own evidence.
+     */
+    readonly verification: {
+    /**
+     * @lang zh-CN 已通过结构、身份和引用检查。
+     * @lang en Structure, identity and reference checks have passed.
+     */
+    readonly structure: true;
+    /**
+     * @lang zh-CN 有限轨迹已按声明的初始化规则重放。
+     * @lang en The finite trace was replayed under its declared initialization rules.
+     */
+    readonly traceSemantics: true;
+    /**
+     * @lang zh-CN 本次读取尚未核对实际工件原字节。
+     * @lang en Actual artifact bytes remain unchecked by this read.
+     */
+    readonly artifactBytes: false;
+    /**
+     * @lang zh-CN 本次读取尚未核对实际源码链接或范围。
+     * @lang en Actual source links and ranges remain unchecked by this read.
+     */
+    readonly sourceLinks: false;
+    /**
+     * @lang zh-CN 本次读取尚未证明源码与声明轨迹相符。
+     * @lang en Source conformance to the claimed trace remains unproved by this read.
+     */
+    readonly sourceConformance: false;
+    /**
+     * @lang zh-CN 本次读取尚未认证生产主体身份。
+     * @lang en Producer authenticity remains unchecked by this read.
+     */
+    readonly producerAuthenticity: false } };
+
+/**
+ * @lang zh-CN 内部属性槽保持值引用与字段历史分别演化。
+ * @lang en Internal slots evolve value references and field histories separately.
+ */
 interface Slot { nodeId: string; source: PlainDataInitializationSource; history: PlainDataInitializationSource[]; transforms: Transformation[] }
-/** @lang zh-CN 顺序身份区分同一源码位置发生的多个变换。 @lang en Sequence identities distinguish multiple transformations at one source location. */
+/**
+ * @lang zh-CN 顺序身份区分同一源码位置发生的多个变换。
+ * @lang en Sequence identities distinguish multiple transformations at one source location.
+ */
 interface Transformation { sequence: number; source: PlainDataInitializationSource }
-/** @lang zh-CN 有身份的堆记录，所有权及浅冻结属于对象而非绑定。 @lang en Identified heap record whose ownership and shallow freezing belong to objects rather than bindings. */
+/**
+ * @lang zh-CN 有身份的堆记录，所有权及浅冻结属于对象而非绑定。
+ * @lang en Identified heap record whose ownership and shallow freezing belong to objects rather than bindings.
+ */
 interface HeapNode { id: string; kind: "literal" | "object" | "array"; value: string | number | boolean | null; owner: string;
   source: PlainDataInitializationSource; frozen: boolean; properties: Map<string, Slot>; transforms: Transformation[] }
 
@@ -118,35 +488,53 @@ export function readPlainDataInitialization(input: unknown, activityId: string):
   let edges = 0;
   let provenanceUnits = 0;
   let inputs: ReadonlySet<string> = new Set();
-  /** @lang zh-CN 固定失败身份只在本次请求内可识别。 @lang en Fixed failure identities are recognizable only within this request. */
+  /**
+   * @lang zh-CN 固定失败身份只在本次请求内可识别。
+   * @lang en Fixed failure identities are recognizable only within this request.
+   */
   function reject(reason: string, fieldPath: string): never {
     const error = {};
     failures.set(error, { reason, fieldPath });
     throw error;
   }
-  /** @lang zh-CN 有界列表保持wire顺序。 @lang en Bounded lists retain wire order. */
+  /**
+   * @lang zh-CN 有界列表保持wire顺序。
+   * @lang en Bounded lists retain wire order.
+   */
   function list(value: unknown, field: string, maximum: number): unknown[] {
     if (!Array.isArray(value) || value.length > maximum) reject("collection", field);
     return value;
   }
-  /** @lang zh-CN 检查全部必需且闭集的对象字段。 @lang en Checks entirely required, closed object fields. */
+  /**
+   * @lang zh-CN 检查全部必需且闭集的对象字段。
+   * @lang en Checks entirely required, closed object fields.
+   */
   function fields(value: unknown, keys: readonly string[], field: string): Record<string, unknown> {
     if (!value || typeof value !== "object" || Array.isArray(value)) reject("shape", field);
     const row = value as Record<string, unknown>;
     if (Object.keys(row).length !== keys.length || keys.some(key => !Object.hasOwn(row, key))) reject("shape", field);
     return row;
   }
-  /** @lang zh-CN 节点身份使用已确认的小写工具命名。 @lang en Node identities use the confirmed lowercase tool naming rules. */
+  /**
+   * @lang zh-CN 节点身份使用已确认的小写工具命名。
+   * @lang en Node identities use the confirmed lowercase tool naming rules.
+   */
   function id(value: unknown, field: string): string {
     if (typeof value !== "string" || value.length > 160 || !/^[a-z0-9][a-z0-9._-]*$/.test(value)) reject("identity", field);
     return value;
   }
-  /** @lang zh-CN 绑定名保留源语言大小写，但拒绝空白与控制字符。 @lang en Binding names preserve source-language casing while rejecting blank names and control characters. */
+  /**
+   * @lang zh-CN 绑定名保留源语言大小写，但拒绝空白与控制字符。
+   * @lang en Binding names preserve source-language casing while rejecting blank names and control characters.
+   */
   function name(value: unknown, field: string): string {
     if (typeof value !== "string" || !value.trim() || value.length > 200 || /[\u0000-\u001f]/.test(value)) reject("binding", field);
     return value;
   }
-  /** @lang zh-CN 核显式来源结构及活动输入范围，实际文件长度仍未核。 @lang en Checks explicit provenance shape and activity-input scope, leaving actual file lengths unverified. */
+  /**
+   * @lang zh-CN 核显式来源结构及活动输入范围，实际文件长度仍未核。
+   * @lang en Checks explicit provenance shape and activity-input scope, leaving actual file lengths unverified.
+   */
   function source(value: unknown, field: string): PlainDataInitializationSource {
     const row = fields(value, ["resourceId", "range", "rangeConvention"], field);
     if (!inputs.has(id(row.resourceId, field))) reject("source-resource", field);
@@ -159,18 +547,27 @@ export function readPlainDataInitialization(input: unknown, activityId: string):
     if (convention.endBoundary !== "exclusive" || convention.columnUnit !== "utf16-code-unit") reject("source-convention", field);
     return row as unknown as PlainDataInitializationSource;
   }
-  /** @lang zh-CN 引用只指向已分配节点，禁止猜测前向定义。 @lang en References point only to allocated nodes, without guessing forward definitions. */
+  /**
+   * @lang zh-CN 引用只指向已分配节点，禁止猜测前向定义。
+   * @lang en References point only to allocated nodes, without guessing forward definitions.
+   */
   function node(value: unknown, field: string): HeapNode {
     const found = heap.get(id(value, field));
     if (!found) reject("node-reference", field);
     return found;
   }
-  /** @lang zh-CN 约束来源复制总量，防止小图放大历史数组。 @lang en Bounds total provenance copying so small graphs cannot amplify history arrays. */
+  /**
+   * @lang zh-CN 约束来源复制总量，防止小图放大历史数组。
+   * @lang en Bounds total provenance copying so small graphs cannot amplify history arrays.
+   */
   function charge(count: number): void {
     provenanceUnits += count;
     if (provenanceUnits > 200000) reject("provenance-budget", "steps");
   }
-  /** @lang zh-CN 分配唯一身份，actor资源决定对象所有权。 @lang en Allocates unique identities whose actor resources determine object ownership. */
+  /**
+   * @lang zh-CN 分配唯一身份，actor资源决定对象所有权。
+   * @lang en Allocates unique identities whose actor resources determine object ownership.
+   */
   function allocate(value: unknown, kind: HeapNode["kind"], provenance: PlainDataInitializationSource, field: string): HeapNode {
     const key = id(value, field);
     if (heap.has(key)) reject("duplicate-node", field);
@@ -179,12 +576,18 @@ export function readPlainDataInitialization(input: unknown, activityId: string):
     heap.set(key, created);
     return created;
   }
-  /** @lang zh-CN 原型相关键按首版保守边界拒绝，其它键只作数据。 @lang en Prototype-related keys follow the initial conservative boundary; other keys are data only. */
+  /**
+   * @lang zh-CN 原型相关键按首版保守边界拒绝，其它键只作数据。
+   * @lang en Prototype-related keys follow the initial conservative boundary; other keys are data only.
+   */
   function key(value: unknown, field: string): string {
     if (typeof value !== "string" || ["__proto__", "prototype", "constructor"].includes(value)) reject("property-key", field);
     return value;
   }
-  /** @lang zh-CN 每条属性边和替换分别计费。 @lang en Charges each property edge and replacement separately. */
+  /**
+   * @lang zh-CN 每条属性边和替换分别计费。
+   * @lang en Charges each property edge and replacement separately.
+   */
   function set(target: HeapNode, key: string, slot: Slot): void {
     if (++edges > 20000) reject("edge-budget", "steps");
     target.properties.set(key, slot);
@@ -330,7 +733,10 @@ export function readPlainDataInitialization(input: unknown, activityId: string):
     const links: PlainDataInitializationValueLink[] = [];
     const active = new Set<string>();
     let pointerUnits = 0;
-    /** @lang zh-CN 最后读取活图，循环与共享展开预算分别校验。 @lang en Reads the final live graph, checking cycles and shared-expansion budgets separately. */
+    /**
+     * @lang zh-CN 最后读取活图，循环与共享展开预算分别校验。
+     * @lang en Reads the final live graph, checking cycles and shared-expansion budgets separately.
+     */
     function materialize(current: HeapNode, pointer: string, slot?: Slot, depth = 0): unknown {
       if (active.has(current.id)) reject("cyclic-json-value", "result");
       if (depth > 128) reject("depth-budget", "result");

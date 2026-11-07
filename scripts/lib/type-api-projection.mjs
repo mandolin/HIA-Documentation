@@ -14,10 +14,12 @@ import ts from "typescript";
  * @lang en Resolves original declarations and every physical member from an independent export inventory, without executing sources or expanding inherited members.
  * @param {string} root <lang><zh-CN>已授权owner根。</zh-CN><en>Authorized owner root.</en></lang>
  * @param {object[]} modules <lang><zh-CN>独立编译器模块与导出。</zh-CN><en>Independent compiler modules and exports.</en></lang>
+ * @param {object} [options] <lang><zh-CN>显式extractionVersion为0.4时增加语法包装期望，默认保留0.3。</zh-CN><en>Explicit extractionVersion 0.4 adds wrapper expectations, retaining 0.3 by default.</en></lang>
  * @returns {object} <lang><zh-CN>逐绑定期望和实际读取源摘要。</zh-CN><en>Per-binding expectations and read-source digests.</en></lang>
  * @throws {Error} <lang><zh-CN>原声明不安全、缺失或预算超限。</zh-CN><en>Unsafe or missing declarations, or exhausted resource budgets.</en></lang>
  */
-export function collectTypeApiExpectations(root, modules) {
+export function collectTypeApiExpectations(root, modules, options = {}) {
+    const wrapped=options.extractionVersion === "0.4.0-draft";
     // <lang><zh-CN>缓存仅保存本次读取的源与摘要，所有位置使用原始UTF-16文本。</zh-CN><en>The cache holds sources and digests read in this call only; positions use original UTF-16 text.</en></lang>
     const sources = new Map();
     const bindings = [];
@@ -102,16 +104,25 @@ export function collectTypeApiExpectations(root, modules) {
                  * @lang zh-CN 以独立编译器记录匿名结构及分支的真实位置，不借用生产结果。
                  * @lang en Records actual anonymous structure and branch locations using the independent compiler, without borrowing producer output.
                  */
-                function expression(node, parentRange, branchIndex) {
+                function expression(node, parentRange, branchIndex, argumentIndex) {
                     while(node.kind === ts.SyntaxKind.ParenthesizedType) node=node.type;
                     const syntax=ts.SyntaxKind[node.kind];
-                    const operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
-                    const item=describe(node,source,operator === "opaque" ? "type" : operator);
-                    expressions.push({...item,signature:node.getText(source),operator,parentRange,...(branchIndex !== undefined ? {branchIndex} : {})});
+                    let operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
+                    if(wrapped) {
+                        if(node.kind === ts.SyntaxKind.TypeReference && node.typeArguments?.length) operator="application";
+                        if(node.kind === ts.SyntaxKind.ArrayType) operator="array";
+                        if(node.kind === ts.SyntaxKind.TypeOperator && node.operator === ts.SyntaxKind.ReadonlyKeyword) operator="type-operator";
+                    }
+                    const item=describe(node,source,operator === "opaque" ? "type" : operator === "type-operator" ? "readonly" : operator);
+                    expressions.push({...item,signature:node.getText(source),operator,parentRange,...(branchIndex !== undefined ? {branchIndex} : {}),...(argumentIndex !== undefined ? {argumentIndex} : {}),...(operator === "application" ? {targetName:node.typeName.getText(source)} : {}),...(operator === "type-operator" ? {typeOperator:"readonly"} : {})});
                     total++;
                     assert(total <= 20000,"Type inventory resource limit exceeded.");
                     if(operator === "union" || operator === "intersection") {
                         for(const [index,branch] of node.types.entries()) expression(branch,item.range,index);
+                    } else if(operator === "application") {
+                        for(const [index,argument] of node.typeArguments.entries()) expression(argument,item.range,undefined,index);
+                    } else if(operator === "array" || operator === "type-operator") {
+                        expression(operator === "array" ? node.elementType : node.type,item.range);
                     }
                 }
                 /**
@@ -122,7 +133,8 @@ export function collectTypeApiExpectations(root, modules) {
                     if(!node.type || ![ts.SyntaxKind.TypeAliasDeclaration,ts.SyntaxKind.PropertySignature,ts.SyntaxKind.PropertyDeclaration,ts.SyntaxKind.IndexSignature].includes(node.kind)) return;
                     let type=node.type;
                     while(type.kind === ts.SyntaxKind.ParenthesizedType) type=type.type;
-                    if(node.kind === ts.SyntaxKind.TypeAliasDeclaration || [ts.SyntaxKind.TypeLiteral,ts.SyntaxKind.UnionType,ts.SyntaxKind.IntersectionType].includes(type.kind)) {
+                    if(node.kind === ts.SyntaxKind.TypeAliasDeclaration || [ts.SyntaxKind.TypeLiteral,ts.SyntaxKind.UnionType,ts.SyntaxKind.IntersectionType].includes(type.kind)
+                        || wrapped && (type.kind === ts.SyntaxKind.ArrayType || type.kind === ts.SyntaxKind.TypeReference&&type.typeArguments?.length>0 || type.kind === ts.SyntaxKind.TypeOperator&&type.operator===ts.SyntaxKind.ReadonlyKeyword)) {
                         expression(type,describe(node,source,"").range);
                     }
                 }
@@ -186,7 +198,7 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
                 const node = nodes.length === 1 ? nodes[0] : undefined;
                 let parent = node ? descendants.find(candidate => candidate.id === node.parentId) : undefined;
                 // <lang><zh-CN>新版已校验的结构容器透明于物理成员归属，最终仍须核最近原声明范围。</zh-CN><en>Validated new structural containers are transparent to physical member ownership, while the nearest original declaration range still must match.</en></lang>
-                while (extraction.contractVersion === "0.3.0-draft" && parent?.metadata?.typeExpression && ["ts-type-literal","ts-union-type","ts-intersection-type","ts-type-expression"].includes(parent.kind)) {
+                while (["0.3.0-draft","0.4.0-draft"].includes(extraction.contractVersion) && parent?.metadata?.typeExpression && ["ts-type-literal","ts-union-type","ts-intersection-type","ts-type-expression","ts-type-application","ts-array-type","ts-type-operator"].includes(parent.kind)) {
                     parent = descendants.find(candidate => candidate.id === parent.parentId);
                 }
                 const result = check(member, node);
@@ -195,15 +207,15 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
                 members.push({ ...result, module: binding.module, binding: binding.name });
             }
             // <lang><zh-CN>新结构节点也按独立AST逐项核，不以107个物理成员通过代替分支语义。</zh-CN><en>Check new structural nodes against the independent AST too; physical-member coverage alone cannot establish branch semantics.</en></lang>
-            if(extraction.contractVersion === "0.3.0-draft") {
+            if(["0.3.0-draft","0.4.0-draft"].includes(extraction.contractVersion)) {
                 const structural=descendants.filter(node=>node.metadata?.typeExpression);
                 for(const item of declaration.expressions ?? []) {
                     const candidates=structural.filter(node=>node.source.path===item.path && isDeepStrictEqual(node.source.range,item.range));
                     const node=candidates.length===1 ? candidates[0] : undefined;
                     const parent=node ? descendants.find(value=>value.id===node.parentId) : undefined;
                     const gaps=[];
-                    const role={operator:item.operator,syntaxKind:item.kind,...(item.branchIndex !== undefined ? {branchIndex:item.branchIndex} : {})};
-                    const kind=({object:"ts-type-literal",union:"ts-union-type",intersection:"ts-intersection-type",opaque:"ts-type-expression"})[item.operator];
+                    const role={operator:item.operator,syntaxKind:item.kind,...(item.branchIndex !== undefined ? {branchIndex:item.branchIndex} : {}),...(item.argumentIndex !== undefined ? {argumentIndex:item.argumentIndex} : {}),...(item.targetName !== undefined ? {targetName:item.targetName} : {}),...(item.typeOperator !== undefined ? {typeOperator:item.typeOperator} : {})};
+                    const kind=({object:"ts-type-literal",union:"ts-union-type",intersection:"ts-intersection-type",opaque:"ts-type-expression",application:"ts-type-application",array:"ts-array-type","type-operator":"ts-type-operator"})[item.operator];
                     if(!node) gaps.push("missing-or-ambiguous-expression");
                     else {
                         if(node.kind!==kind || node.name!==item.name || node.signature!==item.signature || node.classification!=="type-only" || Object.hasOwn(node,"comment")) gaps.push("expression-content-mismatch");

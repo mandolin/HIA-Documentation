@@ -1,6 +1,6 @@
 # Generating the core package APIs
 
-The twelve core packages can generate their module API documents through the generic HIA TypeScript project producer. The entry audit covers the fixed 44-package scope, but this build command generates only the twelve core packages. Its report explicitly lists the remaining 32 packages and pending resource/command pages, source-comment/translation review and generated-page acceptance.
+The thirteen core packages can generate their module API documents through the generic HIA TypeScript project producer. The entry audit covers the fixed 45-package scope. This build command generates the thirteen core packages and records the remaining 32 packages and pending resource/command pages, source-comment/translation review and generated-page acceptance.
 
 Prerequisites: build the main repository, prepare the HIA-owned workspace with `main-repo/` and the explicit satellite directories in `HIA/`, and install the matching TypeScript producer source candidate. The project producer API is required; an older installed single-file runner is not a substitute. The command loads only that authorized HIA tool; documented packages are inspected statically and are never imported or executed.
 
@@ -14,4 +14,24 @@ Each package produces extraction, full semantic bridge, HIA and direct documenta
 
 The build does not clean unknown output files. Use only the successful current result manifest and registered outputs; stale files do not establish a successful current run. It does not deploy a website or publish packages. The old reference build and original profile/default catalog retain their existing behavior.
 
-Independent satellite type declarations have a separate original-member audit. Its strict report retains anonymous union/intersection member gaps. See [Auditing satellite type declarations](satellite-type-api.md).
+Independent satellite type declarations have a separate original-member audit using explicit 0.3 selection. See [Auditing satellite type declarations](satellite-type-api.md).
+
+## Compiled SDK subpaths
+
+The audited input file explicitly maps the SDK derivation-evidence and plain-data-initialization code subpaths to authored TypeScript. Both distribution conditions and their original targets remain in the inventory. A static comparison checks each declaration branch against all authored export names and each runtime branch against value exports. Missing or extra names fail before generation. The recorded source and target digests identify the inspected bytes. This check establishes name correspondence. Runtime values and type compatibility require their package checks.
+
+Run the separate strict wrapper audit for complete SDK subpath members.
+
+```sh
+node scripts/audit-sdk-subpath-api.mjs --workspace-root ..
+```
+
+This uses the same generic producer with explicit 0.4 selection and verifies authored declarations, bilingual fields, physical members and generic/array/readonly expression nodes against the independent compiler. Its unique output directory contains the four actual artifacts and a report. The main core build retains its 0.2 mode. SDK declarations share identities across export conditions only through their explicit source mappings.
+
+JSON resources use their own per-value generation and provenance checks.
+
+```sh
+node scripts/build-required-json-resources.mjs --workspace-root .. --locale und
+```
+
+Here `und` explicitly records unclassified resource language. The report records actual values, lexical reference occurrences and source locations. Module counts cannot establish resource or rendered-page acceptance.

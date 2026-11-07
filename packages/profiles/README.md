@@ -67,3 +67,9 @@ The manifest is publishable. Source changes and local tarballs do not prove regi
 Select getOfficialTsDocProjectProfile('0.3.0-draft') or createOfficialTsDocProjectProfileSet('0.3.0-draft') for structured type expressions. Omitted versions still select 0.2. The separate HIA_TSDOC_STRUCTURED_PROJECT_PROFILE_CATALOG and JSON subpaths ./ts-jsdoc-bridge/0.3.0-draft.profile.json and ./tsdoc-project/0.3.0-draft/catalog.json expose the new profile. Each set has one exact version per identity.
 
 中文说明。0.3规范与目录须显式读取，原七规范默认和0.2项目目录保留。类型结构不意味着执行权限或发射证明。
+
+## Generic and array type wrappers
+
+Explicitly select `getOfficialTsDocProjectProfile('0.4.0-draft')` or `createOfficialTsDocProjectProfileSet('0.4.0-draft')` for generic applications, array elements and `readonly` operands. `HIA_TSDOC_WRAPPED_PROJECT_PROFILE_CATALOG`, `./ts-jsdoc-bridge/0.4.0-draft.profile.json` and `./tsdoc-project/0.4.0-draft/catalog.json` describe this exact profile. Target names record source syntax. Generic evaluation, inherited-member expansion and runtime identity remain outside this model.
+
+中文说明。0.4 须显式选择，保留泛型目标与实参顺序、数组元素及 `readonly` 操作数。默认仍为 0.2，0.3 的读取与拒绝边界保持。详见主仓 `docs/sdk-type-wrappers.md`。

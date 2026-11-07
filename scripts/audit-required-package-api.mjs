@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { collectPackageEntries, collectModuleExports } from "./lib/package-api-inputs.mjs";
+import { collectPackageEntries, collectModuleExports, verifyCompiledSubpathSources } from "./lib/package-api-inputs.mjs";
 
 /**
  * @lang zh-CN 按显式首方允许清单审计实际导出；编译器不执行模块、发出JS或声称注释精度。
@@ -30,11 +30,12 @@ export function auditRequiredPackages(workspaceRoot, options = {}) {
     const bytes=fs.readFileSync(path.join(packageRoot,"package.json"));
     const manifest=JSON.parse(bytes.toString("utf8"));
     if(manifest.name!==item.name) throw new Error("Required API package identity mismatch.");
-    const entries=collectPackageEntries(packageRoot,manifest,item.sourceEntry);
+    const entries=collectPackageEntries(packageRoot,manifest,item.sourceEntry,item.sourceEntries);
+    const sourceMappings=verifyCompiledSubpathSources(ownerRoot,item.directory,entries);
     const sources=[...new Set(entries.filter(entry=>["runtime-module","type-declaration","command"].includes(entry.kind)).map(entry=>path.posix.join(item.directory,entry.source)))];
     const modules=collectModuleExports(ownerRoot,sources,options);
     const head=execFileSync("git",["-C",ownerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim();
-    packages.push({name:item.name,owner:item.owner,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256:createHash("sha256").update(bytes).digest("hex"),entries,modules});
+    packages.push({name:item.name,owner:item.owner,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256:createHash("sha256").update(bytes).digest("hex"),entries,modules,...(sourceMappings.length?{sourceMappings}:{})});
   }
   return {description:"45必要包静态入口及编译器导出审核；不是文档生成覆盖/语义验收/发行证明。",packages,summary:{packages:packages.length,entries:packages.reduce((sum,item)=>sum+item.entries.length,0),modules:packages.reduce((sum,item)=>sum+item.modules.length,0),exports:packages.reduce((sum,item)=>sum+item.modules.reduce((total,module)=>total+module.exports.length,0),0)}};
 }

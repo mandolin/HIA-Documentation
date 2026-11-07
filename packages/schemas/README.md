@@ -114,6 +114,6 @@ release qualification must be verified for the exact package version consumed.
 
 ## Satellite TypeScript project schemas
 
-The separate ./tsdoc-project/catalog.json export records five owner-preserving snapshots with digests. Individual files are exported under ./tsdoc-project/*.json. They cover extraction 0.1, extraction/bridge 0.2 and extraction/bridge 0.3. The main-owner catalog and getHiaSchema() keep their existing scope. Schema Pages also serves each canonical identity and tsdoc-project-catalog.json. From a prepared workspace, run node scripts/sync-tsdoc-project-schemas.mjs --check in main-repo to compare snapshots with the authorized TypeScript owner. Schemas check structure while the owner readers additionally validate source trees and references.
+The separate ./tsdoc-project/catalog.json export records seven owner-preserving snapshots with digests. Individual files are exported under ./tsdoc-project/*.json. They cover extraction 0.1 and extraction/bridge pairs 0.2, 0.3 and 0.4. The main-owner catalog and getHiaSchema() keep their existing scope. Schema Pages also serves each canonical identity and tsdoc-project-catalog.json. From a prepared workspace, run node scripts/sync-tsdoc-project-schemas.mjs --check in main-repo to compare snapshots with the authorized TypeScript owner. Schemas check structure while the owner readers additionally validate source trees and references.
 
-中文说明。卫星定义以独立目录分发并核摘要，保留原owner与旧身份，0.3迁移重新生产。不增造原来不存在的0.1桥接schema。
+中文说明。卫星定义以独立目录分发并核摘要，保留原owner与旧身份，0.3/0.4迁移重新生产。不增造原来不存在的0.1桥接schema。

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectPackageEntries, collectModuleExports } from "./lib/package-api-inputs.mjs";
+import { collectPackageEntries, collectModuleExports, verifyCompiledSubpathSources } from "./lib/package-api-inputs.mjs";
 
 // <lang lang="zh-CN">测试仅在本owner的忽略dist创建独立目录，不清理未知路径。</lang><lang lang="en">Tests create only unique ignored dist directories inside this owner, never cleaning unknown paths.</lang>
 const dist = fileURLToPath(new URL("../dist/",import.meta.url));
@@ -28,6 +28,39 @@ test("retain every condition, schema resource, and bin separately",()=>{
 test("legacy main and explicit blocked exports are retained",()=>{
   assert.equal(collectPackageEntries(root,{main:"src/entry.mjs"})[0].channel,"main");
   assert.equal(collectPackageEntries(root,{exports:{"./private":null}})[0].kind,"blocked");
+});
+
+test("explicit compiled subpath sources retain both distribution branches and authored provenance",()=>{
+  fs.mkdirSync(path.join(root,"dist"),{recursive:true});
+  fs.writeFileSync(path.join(root,"dist/value.js"),'throw new Error("Do not execute"); export const COUNT=3;');
+  fs.writeFileSync(path.join(root,"dist/value.d.ts"),'export declare const COUNT: number; export interface Item { value: string; }');
+  const manifest={exports:{"./value":{types:"./dist/value.d.ts",import:"./dist/value.js"}}};
+  const unchanged=collectPackageEntries(root,manifest,"src/index.ts");
+  assert.deepEqual(unchanged.map(entry=>entry.source),["dist/value.d.ts","dist/value.js"]);
+  const entries=collectPackageEntries(root,manifest,"src/index.ts",{"./value":"src/value.ts"});
+  assert.deepEqual(entries.map(entry=>entry.source),["src/value.ts","src/value.ts"]);
+  assert.deepEqual(entries.map(entry=>entry.target),["dist/value.d.ts","dist/value.js"]);
+  assert.deepEqual(entries.map(entry=>entry.conditions),[["types"],["import"]]);
+  assert.deepEqual(collectModuleExports(root,["src/value.ts"])[0].exports.map(entry=>entry.name),["COUNT","Item"]);
+  const verified=verifyCompiledSubpathSources(root,"",entries);
+  assert.deepEqual(verified.map(row=>row.exports),[["COUNT","Item"],["COUNT"]]);
+});
+
+test("compiled source mappings reject missing type exports and extra runtime bindings",()=>{
+  fs.mkdirSync(path.join(root,"broken"),{recursive:true});
+  fs.writeFileSync(path.join(root,"broken/value.d.ts"),'export declare const COUNT: number;');
+  fs.writeFileSync(path.join(root,"broken/value.js"),'export const COUNT=3; export const Item=4;');
+  for(const target of ["./broken/value.d.ts","./broken/value.js"]) {
+    const entries=collectPackageEntries(root,{exports:{"./value":target}},undefined,{"./value":"src/value.ts"});
+    assert.throws(()=>verifyCompiledSubpathSources(root,"",entries),/exports/);
+  }
+});
+
+test("authored subpath hints cannot redirect resources, invent entries or escape owners",()=>{
+  const manifest={exports:{"./value":"./src/entry.mjs","./resource":"./src/schemas/example.json"}};
+  for(const hints of [null,{"./missing":"src/value.ts"},{"./resource":"src/value.ts"},{".":"src/value.ts"},{"./value":"../value.ts"},{"./value":"src/missing.ts"},{"./value":"src/schemas/example.json"}]) {
+    assert.throws(()=>collectPackageEntries(root,manifest,"src/index.ts",hints));
+  }
 });
 test("unsupported patterns, arrays, escapes, missing targets fail explicitly",()=>{
   for(const target of ["../outside.mjs","./src/../src/entry.mjs","./src/%65ntry.mjs","./src/*.mjs","./missing.mjs",["./src/entry.mjs"]]) assert.throws(()=>collectPackageEntries(root,{exports:{".":target}}));

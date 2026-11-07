@@ -224,6 +224,12 @@ assert(validateHiaProfile(structuredTsDocProfile).length===0,"Structured TypeScr
 assert(JSON.stringify(structuredTsDocProfile)===JSON.stringify(getOfficialTsDocProjectProfile("0.3.0-draft")),"Built structured profile differs from source.");
 assert(createOfficialTsDocProjectProfileSet("0.3.0-draft").diagnostics.length===0,"Structured TypeScript profile set has diagnostics.");
 
+// <lang><zh-CN>泛型与数组包装以独立精确身份核源及构建产物，默认集合继续由前述检查固定。</zh-CN><en>Check generic/array wrappers against their exact source and build identity, retaining the default set checked above.</en></lang>
+const wrappedTsDocProfile = await readJson("packages/profiles/src/profiles/versioned/ts-jsdoc-bridge-0.4.0-draft.profile.json");
+assert(validateHiaProfile(wrappedTsDocProfile).length === 0, "Wrapped TypeScript profile has schema diagnostics.");
+assert(JSON.stringify(wrappedTsDocProfile) === JSON.stringify(getOfficialTsDocProjectProfile("0.4.0-draft")), "Built wrapped profile differs from source.");
+assert(createOfficialTsDocProjectProfileSet("0.4.0-draft").diagnostics.length === 0, "Wrapped TypeScript profile set has diagnostics.");
+
 assert(
   DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA.$id === DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID,
   "Documentation producer descriptor schema id drifted."

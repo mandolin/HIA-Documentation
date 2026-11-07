@@ -9,17 +9,17 @@ import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 
 /**
- * @lang zh-CN 只读核验五份明确身份的快照，不把卫星草案并入主owner默认目录。
- * @lang en Read-only validation of five explicit snapshots, keeping satellite drafts separate from the main-owner default catalog.
+ * @lang zh-CN 只读核验七份明确身份的快照，不把卫星草案并入主owner默认目录。
+ * @lang en Read-only validation of seven explicit snapshots, keeping satellite drafts separate from the main-owner default catalog.
  * @param {string} directory <lang><zh-CN>schema包的src或dist根。</zh-CN><en>Schema package src or dist root.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>已核目录及原字节快照。</zh-CN><en>Validated catalog and original-byte snapshots.</en></lang>
  * @throws {Error} <lang><zh-CN>身份、路径、摘要或内容冲突。</zh-CN><en>Conflicting identity, path, digest or content.</en></lang>
  */
 export async function readTsDocProjectSchemas(directory) {
-  // <lang><zh-CN>五份身份为已有提取0.1、提取/桥接0.2及新增0.3，旧桥接未另造schema。</zh-CN><en>The five identities cover existing extraction 0.1, extraction/bridge 0.2 and new 0.3; no legacy bridge schema is invented.</en></lang>
+  // <lang><zh-CN>七份身份为已有提取0.1及提取/桥接0.2、0.3、0.4，旧桥接未另造schema。</zh-CN><en>The seven identities cover extraction 0.1 and extraction/bridge 0.2, 0.3 and 0.4; no legacy bridge schema is invented.</en></lang>
   const catalogBytes=await fs.readFile(path.join(directory,"tsdoc-project-catalog.json"));
   const catalog=JSON.parse(catalogBytes);
-  const identities=["hia-tsdoc-extraction-0.1.0-draft","hia-tsdoc-extraction-0.2.0-draft","hia-ts-jsdoc-bridge-0.2.0-draft","hia-tsdoc-extraction-0.3.0-draft","hia-ts-jsdoc-bridge-0.3.0-draft"];
+  const identities=["hia-tsdoc-extraction-0.1.0-draft","hia-tsdoc-extraction-0.2.0-draft","hia-ts-jsdoc-bridge-0.2.0-draft","hia-tsdoc-extraction-0.3.0-draft","hia-ts-jsdoc-bridge-0.3.0-draft","hia-tsdoc-extraction-0.4.0-draft","hia-ts-jsdoc-bridge-0.4.0-draft"];
   assert.equal(catalog.catalogVersion,"0.1.0-draft");
   assert.equal(catalog.publicBaseUrl,"https://mandolin.github.io/HIA-Documentation/schemas/");
   assert.deepEqual(catalog.schemas.map(entry=>entry.key),identities);

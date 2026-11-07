@@ -46,7 +46,7 @@ export function auditRequiredJsonResources(workspaceRoot) {
     const manifest = JSON.parse(manifestBytes);
     assert.equal(manifest.name, item.name);
     manifests.push({package: item.name, owner: item.owner, directory: item.directory, hardLinkCount: manifestState.nlink, sha256: createHash("sha256").update(manifestBytes).digest("hex")});
-    const exported = collectPackageEntries(packageRoot, manifest, item.sourceEntry);
+    const exported = collectPackageEntries(packageRoot, manifest, item.sourceEntry, item.sourceEntries);
     for (const entry of exported.filter(candidate => candidate.kind === "json-resource")) {
       // <lang><zh-CN>资源事实来自实际声明文件，包的代码入口仅参与静态清单读取。</zh-CN><en>Resource facts come from the actual declared files, while code entries participate through static inventory reads.</en></lang>
       const bytes = readJsonResourceBytes(packageRoot, entry.target);
