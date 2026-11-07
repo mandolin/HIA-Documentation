@@ -7,6 +7,7 @@ import { copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readHistoricalSchemas } from "../../../scripts/lib/schema-history.mjs";
+import { readTsDocProjectSchemas } from "../../../scripts/lib/tsdoc-project-schemas.mjs";
 
 /**
  * @lang zh-CN 先校验全部源快照，再复制原字节；不删除目录、不更新预期摘要。
@@ -30,4 +31,9 @@ export async function copySchemaHistory(packageRoot) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   console.log(`Preserved ${await copySchemaHistory(packageRoot)} historical schema snapshots byte-for-byte.`);
+  // <lang><zh-CN>卫星项目定义单独核原字节，避免编译时重排破坏目录摘要。</zh-CN><en>Validate satellite project bytes separately so compiler formatting cannot invalidate catalog digests.</en></lang>
+  const projects=await readTsDocProjectSchemas(path.join(packageRoot,"src"));
+  await mkdir(path.join(packageRoot,"dist/tsdoc-project"),{recursive:true});
+  for(const item of projects.snapshots) await copyFile(path.join(packageRoot,"src/tsdoc-project",item.filename),path.join(packageRoot,"dist/tsdoc-project",item.filename));
+  await copyFile(path.join(packageRoot,"src/tsdoc-project-catalog.json"),path.join(packageRoot,"dist/tsdoc-project-catalog.json"));
 }

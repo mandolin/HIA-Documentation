@@ -70,11 +70,35 @@ test("aliases retain separate roots with exact member provenance", () => {
     assert.equal(result.complete, true);
     assert.equal(result.runtimeStateVerified, false);
 });
+
+test("only explicit 0.3 structural containers are transparent to physical member ownership", () => {
+    const input = fixture();
+    const root = input.extraction.symbols.find(node => node.id === "root-0");
+    const member = input.extraction.symbols.find(node => node.id === "field-0");
+    input.extraction.symbols.push({id:"object-0",kind:"ts-type-literal",name:"object",signature:"{}",classification:"type-only",parentId:root.id,source:member.source,metadata:{typeExpression:{operator:"object",syntaxKind:"TypeLiteral"}}});
+    input.expected.bindings[0].declarations[0].expressions=[{name:"object",kind:"TypeLiteral",path:member.source.path,range:member.source.range,signature:"{}",operator:"object",parentRange:root.source.range}];
+    input.map.entries.push({symbolId:"object-0",sourceRefs:[{sourceId:"source",range:member.source.range,rangeSourceDetail:"typescript-native-ast:declaration",rangeConvention:{endBoundary:"exclusive",columnUnit:"utf16-code-unit"}}]});
+    member.parentId="object-0";
+    assert.equal(verifyTypeApiProjection(input).complete,false);
+    input.extraction.contractVersion="0.3.0-draft";
+    assert.equal(verifyTypeApiProjection(input).complete,true);
+    for(const change of ["branch","signature","map"]) {
+        const changed=structuredClone(input);
+        const node=changed.extraction.symbols.find(item=>item.id==="object-0");
+        if(change==="branch") node.metadata.typeExpression.branchIndex=3;
+        if(change==="signature") node.signature="invented";
+        if(change==="map") changed.map.entries.find(item=>item.symbolId==="object-0").sourceRefs=[];
+        assert.equal(verifyTypeApiProjection(changed).expressionGaps,1,change);
+    }
+    input.extraction.symbols.find(node=>node.id==="object-0").kind="ts-runtime-class";
+    assert.equal(verifyTypeApiProjection(input).complete,false);
+});
 test("anonymous union/intersection members enter independent expectations", () => {
     fs.writeFileSync(path.join(root, "branches.mts"), 'export type Input = {kind: string} & ({path: string} | {paths: string[]}); export type Json = string | {[key: string]: unknown};');
     const expected = collectTypeApiExpectations(root, collectModuleExports(root, ["branches.mts"]));
     assert.equal(expected.bindings.flatMap(binding => binding.declarations.flatMap(root => root.members)).length, 4);
     assert(expected.bindings.flatMap(binding => binding.declarations.flatMap(root => root.members)).some(member => member.kind === "IndexSignature"));
+    assert.equal(expected.bindings.flatMap(binding=>binding.declarations.flatMap(root=>root.expressions)).length,8);
 });
 test("missing anonymous member output remains a strict gap", () => {
     const input = fixture();

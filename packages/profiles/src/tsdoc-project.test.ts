@@ -65,4 +65,19 @@ describe("explicit TypeScript project profile distribution",()=>{
     expect(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profileSchemaVersion).toBe("1.0.0");
     expect(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profiles).toEqual([{profileId:"ts-jsdoc-bridge",profileVersion:"0.2.0-draft",layer:"bridge",path:"./ts-jsdoc-bridge/0.2.0-draft.profile.json"}]);
   });
+
+  it("selects 0.3 explicitly while retaining exact defaults and separate copies",()=>{
+    const profile=getOfficialTsDocProjectProfile("0.3.0-draft");
+    expect(profile.profileVersion).toBe("0.3.0-draft");
+    expect(validateHiaProfile(profile)).toEqual([]);
+    expect(profile.contracts.filter(ref=>ref.name.startsWith("hia-ts")).every(ref=>ref.version==="0.3.0-draft")).toBe(true);
+    expect(createOfficialTsDocProjectProfileSet("0.3.0-draft").diagnostics).toEqual([]);
+    expect(createOfficialTsDocProjectProfileSet("0.3.0-draft").profiles.get("ts-jsdoc-bridge")?.profileVersion).toBe("0.3.0-draft");
+    profile.contracts.length=0;
+    expect(getOfficialTsDocProjectProfile("0.3.0-draft").contracts.length).toBeGreaterThan(0);
+    expect(getOfficialTsDocProjectProfile().profileVersion).toBe("0.2.0-draft");
+    expect(()=>getOfficialTsDocProjectProfile("9.0.0" as "0.3.0-draft")).toThrow();
+    const manifest=JSON.parse(readFileSync(new URL("../package.json",import.meta.url),"utf8"));
+    expect(manifest.exports["./ts-jsdoc-bridge/0.3.0-draft.profile.json"]).toBe("./dist/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json");
+  });
 });

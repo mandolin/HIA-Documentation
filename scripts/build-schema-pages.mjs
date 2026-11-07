@@ -2,6 +2,7 @@ import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readHistoricalSchemas } from "./lib/schema-history.mjs";
+import { readTsDocProjectSchemas } from "./lib/tsdoc-project-schemas.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageDistDir = path.join(rootDir, "packages", "schemas", "dist");
@@ -14,6 +15,7 @@ assert(catalog.publicBaseUrl === "https://mandolin.github.io/HIA-Documentation/s
 
 // <lang><zh-CN>清理前完整读取历史快照与当前定义；摘要、身份或冲突失败时保留既有本地产物。</zh-CN><en>Read all historical snapshots and current definitions before cleanup, retaining existing local artifacts on digest, identity, or conflict failure.</en></lang>
 const history = await readHistoricalSchemas(path.join(packageDistDir, "history"), catalog.publicBaseUrl);
+const tsDocProjects = await readTsDocProjectSchemas(packageDistDir);
 // <lang><zh-CN>当前定义及其 canonical/alias 文件名构成本次分发写入计划。</zh-CN><en>Current definitions and their canonical/alias filenames form this distribution's write plan.</en></lang>
 const currentSchemas = [];
 const destinations = new Map();
@@ -39,6 +41,12 @@ for (const { entry, bytes } of history) {
   // <lang><zh-CN>当前 owner 仍使用历史 ID 时只能分发相同定义；新版本不能覆盖旧 canonical 地址或碰撞别名。</zh-CN><en>When an owner still uses a historical ID it must distribute the same definition; a new version cannot overwrite an old canonical URL or collide with an alias.</en></lang>
   const current = destinations.get(entry.fileName);
   assert(!current || JSON.stringify(current) === JSON.stringify(JSON.parse(bytes.toString("utf8"))), `${entry.key}: current schema conflicts with immutable history.`);
+}
+
+// <lang><zh-CN>卫星独立目录也在清理前核重复canonical身份，不能覆盖主owner或历史文件。</zh-CN><en>Check satellite canonical identities before cleanup too, refusing collisions with main-owner or historical files.</en></lang>
+for(const item of tsDocProjects.snapshots) {
+  assert(!destinations.has(item.filename)&&!history.some(row=>row.entry.fileName===item.filename),"Satellite schema identity collides.");
+  destinations.set(item.filename,item.schema);
 }
 
 // <lang><zh-CN>递归清理仅允许仓库 dist 下的固定站点目录，先核对最终绝对路径。</zh-CN><en>Recursive cleanup is permitted only for the fixed site directory under the repository's dist; verify the final absolute path first.</en></lang>
@@ -67,6 +75,8 @@ for (const { entry, bytes } of history) {
 }
 await copyFile(path.join(packageDistDir, "history", "index.json"), path.join(siteSchemaDir, "history.json"));
 await copyFile(path.join(packageDistDir, "catalog.json"), path.join(siteSchemaDir, "catalog.json"));
+for(const item of tsDocProjects.snapshots) await writeFile(path.join(siteSchemaDir,item.filename),item.bytes);
+await writeFile(path.join(siteSchemaDir,"tsdoc-project-catalog.json"),tsDocProjects.catalogBytes);
 await writeFile(path.join(siteDir, ".nojekyll"), "", "utf8");
 await writeFile(path.join(siteDir, "index.html"), renderIndex(links), "utf8");
 await writeFile(path.join(siteSchemaDir, "index.html"), renderIndex(links, "../"), "utf8");

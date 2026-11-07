@@ -97,11 +97,41 @@ export function collectTypeApiExpectations(root, modules) {
                 assert(original, "Missing original type declaration.");
                 const expected = describe(original, source, binding.name);
                 const members = [];
+                const expressions = [];
+                /**
+                 * @lang zh-CN 以独立编译器记录匿名结构及分支的真实位置，不借用生产结果。
+                 * @lang en Records actual anonymous structure and branch locations using the independent compiler, without borrowing producer output.
+                 */
+                function expression(node, parentRange, branchIndex) {
+                    while(node.kind === ts.SyntaxKind.ParenthesizedType) node=node.type;
+                    const syntax=ts.SyntaxKind[node.kind];
+                    const operator=({TypeLiteral:"object",UnionType:"union",IntersectionType:"intersection"})[syntax] ?? "opaque";
+                    const item=describe(node,source,operator === "opaque" ? "type" : operator);
+                    expressions.push({...item,signature:node.getText(source),operator,parentRange,...(branchIndex !== undefined ? {branchIndex} : {})});
+                    total++;
+                    assert(total <= 20000,"Type inventory resource limit exceeded.");
+                    if(operator === "union" || operator === "intersection") {
+                        for(const [index,branch] of node.types.entries()) expression(branch,item.range,index);
+                    }
+                }
+                /**
+                 * @lang zh-CN 只为确认的类型别名/属性子集建立表达式期望，保留其它原声明投影。
+                 * @lang en Builds expression expectations only for the confirmed alias/property subset, retaining other original declaration projections.
+                 */
+                function ownType(node) {
+                    if(!node.type || ![ts.SyntaxKind.TypeAliasDeclaration,ts.SyntaxKind.PropertySignature,ts.SyntaxKind.PropertyDeclaration,ts.SyntaxKind.IndexSignature].includes(node.kind)) return;
+                    let type=node.type;
+                    while(type.kind === ts.SyntaxKind.ParenthesizedType) type=type.type;
+                    if(node.kind === ts.SyntaxKind.TypeAliasDeclaration || [ts.SyntaxKind.TypeLiteral,ts.SyntaxKind.UnionType,ts.SyntaxKind.IntersectionType].includes(type.kind)) {
+                        expression(type,describe(node,source,"").range);
+                    }
+                }
                 /**
                  * @lang zh-CN 逐物理类型成员递归，匿名类型容器不会隐藏成员。
                  * @lang en Visits every physical member without hiding members inside anonymous containers.
                  */
                 function visit(node, parent) {
+                    ownType(node);
                     let next = parent;
                     if (memberKinds.has(node.kind)) {
                         const member = describe(node, source, node.name?.getText(source) ?? ts.SyntaxKind[node.kind]);
@@ -113,8 +143,9 @@ export function collectTypeApiExpectations(root, modules) {
                     }
                     ts.forEachChild(node, child => visit(child, next));
                 }
+                ownType(original);
                 ts.forEachChild(original, child => visit(child, expected.range));
-                declarations.push({ ...expected, members });
+                declarations.push({ ...expected, members, expressions });
                 total++;
                 assert(total <= 20000, "Type inventory resource limit exceeded.");
             }
@@ -130,7 +161,7 @@ export function collectTypeApiExpectations(root, modules) {
  * @returns {object} <lang><zh-CN>明确的根/成员结果和缺口。</zh-CN><en>Explicit root/member results and gaps.</en></lang>
  */
 export function verifyTypeApiProjection({ expected, extraction, map }) {
-    const roots = [], members = [];
+    const roots = [], members = [], expressions = [];
     for (const binding of expected.bindings) {
         // <lang><zh-CN>公开入口及名限定允许的根ID，子节点只能来自该根的实际父项链。</zh-CN><en>The public entry and name delimit root IDs; children must belong to the root's actual parent chain.</en></lang>
         const actual = extraction.modules.find(module => module.path === binding.module)?.exports.find(item => item.name === binding.name);
@@ -153,11 +184,40 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
             for (const member of declaration.members) {
                 const nodes = descendants.filter(node => node.name === member.name && node.source.path === member.path && isDeepStrictEqual(node.source.range, member.range));
                 const node = nodes.length === 1 ? nodes[0] : undefined;
-                const parent = node ? descendants.find(candidate => candidate.id === node.parentId) : undefined;
+                let parent = node ? descendants.find(candidate => candidate.id === node.parentId) : undefined;
+                // <lang><zh-CN>新版已校验的结构容器透明于物理成员归属，最终仍须核最近原声明范围。</zh-CN><en>Validated new structural containers are transparent to physical member ownership, while the nearest original declaration range still must match.</en></lang>
+                while (extraction.contractVersion === "0.3.0-draft" && parent?.metadata?.typeExpression && ["ts-type-literal","ts-union-type","ts-intersection-type","ts-type-expression"].includes(parent.kind)) {
+                    parent = descendants.find(candidate => candidate.id === parent.parentId);
+                }
                 const result = check(member, node);
                 if (node && (parent?.source.path !== member.path || !isDeepStrictEqual(parent?.source.range, member.parentRange)))
                     result.gaps.push("parent-mismatch");
                 members.push({ ...result, module: binding.module, binding: binding.name });
+            }
+            // <lang><zh-CN>新结构节点也按独立AST逐项核，不以107个物理成员通过代替分支语义。</zh-CN><en>Check new structural nodes against the independent AST too; physical-member coverage alone cannot establish branch semantics.</en></lang>
+            if(extraction.contractVersion === "0.3.0-draft") {
+                const structural=descendants.filter(node=>node.metadata?.typeExpression);
+                for(const item of declaration.expressions ?? []) {
+                    const candidates=structural.filter(node=>node.source.path===item.path && isDeepStrictEqual(node.source.range,item.range));
+                    const node=candidates.length===1 ? candidates[0] : undefined;
+                    const parent=node ? descendants.find(value=>value.id===node.parentId) : undefined;
+                    const gaps=[];
+                    const role={operator:item.operator,syntaxKind:item.kind,...(item.branchIndex !== undefined ? {branchIndex:item.branchIndex} : {})};
+                    const kind=({object:"ts-type-literal",union:"ts-union-type",intersection:"ts-intersection-type",opaque:"ts-type-expression"})[item.operator];
+                    if(!node) gaps.push("missing-or-ambiguous-expression");
+                    else {
+                        if(node.kind!==kind || node.name!==item.name || node.signature!==item.signature || node.classification!=="type-only" || Object.hasOwn(node,"comment")) gaps.push("expression-content-mismatch");
+                        if(!isDeepStrictEqual(node.metadata.typeExpression,role)) gaps.push("expression-role-mismatch");
+                        if(parent?.source.path!==item.path || !isDeepStrictEqual(parent?.source.range,item.parentRange)) gaps.push("expression-parent-mismatch");
+                        const entries=map.entries.filter(entry=>entry.symbolId===node.id);
+                        const refs=entries.flatMap(entry=>entry.sourceRefs);
+                        if(entries.length!==1 || refs.length!==1 || refs[0].rangeSourceDetail!=="typescript-native-ast:declaration"
+                            || map.sources.find(source=>source.id===refs[0].sourceId)?.path!==item.path || !isDeepStrictEqual(refs[0].range,item.range)
+                            || !isDeepStrictEqual(refs[0].rangeConvention,{endBoundary:"exclusive",columnUnit:"utf16-code-unit"})) gaps.push("expression-map-mismatch");
+                    }
+                    expressions.push({name:item.name,path:item.path,range:item.range,module:binding.module,binding:binding.name,...(node ? {symbolId:node.id} : {}),gaps});
+                }
+                if(structural.length !== (declaration.expressions?.length ?? 0)) roots.at(-1).gaps.push("expression-count-mismatch");
             }
             if (rootNodes.length !== binding.declarations.length)
                 roots.at(-1).gaps.push("root-declaration-count");
@@ -205,6 +265,7 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
     }
     const rootGaps = roots.filter(row => row.gaps.length);
     const memberGaps = members.filter(row => row.gaps.length);
+    const expressionGaps = expressions.filter(row => row.gaps.length);
     return {
         bindings: expected.bindings.length,
         rootDeclarations: roots.length,
@@ -213,9 +274,13 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
         verifiedMembers: members.length - memberGaps.length,
         rootGaps: rootGaps.length,
         memberGaps: memberGaps.length,
+        expressions: expressions.length,
+        verifiedExpressions: expressions.length - expressionGaps.length,
+        expressionGaps: expressionGaps.length,
+        expressionResults: expressions,
         roots,
         membersResults: members,
-        complete: roots.length > 0 && rootGaps.length === 0 && memberGaps.length === 0,
+        complete: roots.length > 0 && rootGaps.length === 0 && memberGaps.length === 0 && expressionGaps.length === 0,
         runtimeStateVerified: false
     };
 }

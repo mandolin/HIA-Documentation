@@ -218,6 +218,11 @@ assert(JSON.stringify(tsDocProjectProfile) === JSON.stringify(getOfficialTsDocPr
 assert(createOfficialTsDocProjectProfileSet().diagnostics.length === 0, "Explicit TypeScript project set has diagnostics.");
 assert(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profileSchemaVersion === tsDocProjectProfile.schemaVersion, "Project profile catalog schema identity differs.");
 assert(HIA_TSDOC_PROJECT_PROFILE_CATALOG.profiles.length === 1 && HIA_TSDOC_PROJECT_PROFILE_CATALOG.profiles[0].profileVersion === tsDocProjectProfile.profileVersion, "Project profile catalog version differs.");
+// <lang><zh-CN>结构化版本必须显式采用，默认旧目录及规范仍由上段独立核验。</zh-CN><en>The structured version requires explicit adoption; the preceding checks independently retain the legacy catalog and profile.</en></lang>
+const structuredTsDocProfile=await readJson("packages/profiles/src/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json");
+assert(validateHiaProfile(structuredTsDocProfile).length===0,"Structured TypeScript profile has schema diagnostics.");
+assert(JSON.stringify(structuredTsDocProfile)===JSON.stringify(getOfficialTsDocProjectProfile("0.3.0-draft")),"Built structured profile differs from source.");
+assert(createOfficialTsDocProjectProfileSet("0.3.0-draft").diagnostics.length===0,"Structured TypeScript profile set has diagnostics.");
 
 assert(
   DOCUMENTATION_PRODUCER_DESCRIPTOR_JSON_SCHEMA.$id === DOCUMENTATION_PRODUCER_DESCRIPTOR_SCHEMA_ID,

@@ -13,6 +13,8 @@ import sassCssdocBridgeProfileData from "./profiles/sass-cssdoc-bridge.profile.j
 import tsJsdocBridgeProfileData from "./profiles/ts-jsdoc-bridge.profile.json" with { type: "json" };
 import tsDocProjectProfileData from "./profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json" with { type: "json" };
 import tsDocProjectCatalogData from "./tsdoc-project-catalog.json" with { type: "json" };
+import tsDocStructuredProfileData from "./profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json" with { type: "json" };
+import tsDocStructuredCatalogData from "./tsdoc-structured-project-catalog.json" with { type: "json" };
 import { createHiaProfileSet } from "@hia-doc/profile";
 import type { HiaDocumentationProfile, HiaProfileLayer, HiaProfileSet } from "@hia-doc/profile";
 
@@ -79,22 +81,31 @@ export const HIA_OFFICIAL_PROFILE_CATALOG = catalogData as HiaOfficialProfileCat
 export const HIA_TSDOC_PROJECT_PROFILE_CATALOG = tsDocProjectCatalogData as HiaOfficialProfileCatalog;
 
 /**
- * @lang zh-CN 显式取得TypeScript项目桥接0.2独立副本，不改变旧默认读取或推断任意版本。
- * @lang en Explicitly get an independent TypeScript project bridge 0.2 copy without changing legacy defaults or inferring arbitrary versions.
- * @returns <lang><zh-CN>使用已确认1.0结构的0.2草案规范副本；不授予执行/源码公开许可。</zh-CN><en>A draft 0.2 profile copy using the confirmed 1.0 structure, without execution/source-publication permission.</en></lang>
+ * @lang zh-CN 显式0.3类型表达式目录，独立于原项目目录和七份默认规范。
+ * @lang en Explicit 0.3 type-expression catalog, separate from the original project catalog and seven default profiles.
  */
-export function getOfficialTsDocProjectProfile(): HiaDocumentationProfile {
-  return structuredClone(tsDocProjectProfileData) as HiaDocumentationProfile;
+export const HIA_TSDOC_STRUCTURED_PROJECT_PROFILE_CATALOG = tsDocStructuredCatalogData as HiaOfficialProfileCatalog;
+
+/**
+ * @lang zh-CN 按精确版本取得TypeScript项目桥接独立副本，省略仍为0.2，不推断任意版本。
+ * @lang en Gets an independent TypeScript project bridge by exact version, defaulting to 0.2 without inferring arbitrary versions.
+ * @param version <lang><zh-CN>精确0.2或0.3身份，省略使用0.2。</zh-CN><en>Exact 0.2 or 0.3 identity, defaulting to 0.2.</en></lang>
+ * @returns <lang><zh-CN>使用已确认1.0结构的选定草案规范副本；不授予执行/源码公开许可。</zh-CN><en>The selected draft profile copy using the confirmed 1.0 structure, without execution/source-publication permission.</en></lang>
+ */
+export function getOfficialTsDocProjectProfile(version: "0.2.0-draft" | "0.3.0-draft" = "0.2.0-draft"): HiaDocumentationProfile {
+  if(version !== "0.2.0-draft" && version !== "0.3.0-draft") throw new Error("Unsupported TypeScript project profile version.");
+  return structuredClone(version === "0.3.0-draft" ? tsDocStructuredProfileData : tsDocProjectProfileData) as HiaDocumentationProfile;
 }
 
 /**
  * @lang zh-CN 显式为项目链组装规范集合，仅替换旧TS项；六份原父/同级规范保持精确版本。
  * @lang en Explicitly assemble a project-chain profile set, replacing only the legacy TS entry while retaining the six original parent/peer versions.
+ * @param version <lang><zh-CN>精确项目版本，省略保留0.2选择。</zh-CN><en>Exact project version, preserving 0.2 selection when omitted.</en></lang>
  * @returns <lang><zh-CN>独立集合和诊断；同一集合每身份仍只有一版，不自动切换现有项目。</zh-CN><en>An independent set and diagnostics; each identity still has one version per set and existing projects are not switched automatically.</en></lang>
  */
-export function createOfficialTsDocProjectProfileSet(): HiaProfileSet {
+export function createOfficialTsDocProjectProfileSet(version: "0.2.0-draft" | "0.3.0-draft" = "0.2.0-draft"): HiaProfileSet {
   // <lang><zh-CN>先取旧分发的独立副本，在送入原runtime前明确选择新TS版本，不修改包内数据或运行时选择规则。</zh-CN><en>Start from defensive legacy copies and select the new TS version before invoking the existing runtime, without mutating package data or selection rules.</en></lang>
-  const profiles = listOfficialHiaProfiles().map((profile) => profile.profileId === "ts-jsdoc-bridge" ? getOfficialTsDocProjectProfile() : profile);
+  const profiles = listOfficialHiaProfiles().map((profile) => profile.profileId === "ts-jsdoc-bridge" ? getOfficialTsDocProjectProfile(version) : profile);
   return createHiaProfileSet({profiles});
 }
 

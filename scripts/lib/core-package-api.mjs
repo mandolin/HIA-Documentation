@@ -53,6 +53,12 @@ export function verifyProjectApiProjection({modules,extraction,document,bridge})
     assert.deepEqual(pair.source,symbol.source);
     assert.equal(core.source?.definedIn?.relativePath,symbol.source.path);
     assert.deepEqual(core.source.definedIn.range,symbol.source.range);
+    // <lang><zh-CN>0.3分支角色必须到达核心和桥接，不能只保留签名后丢掉联合/交叉语义。</zh-CN><en>0.3 branch roles must reach core and bridge outputs, retaining union/intersection semantics beyond signatures.</en></lang>
+    if(symbol.metadata?.typeExpression) {
+      assert.equal(core.kind,"typedef");
+      assert.deepEqual(core.metadata.tsdoc.typeExpression,symbol.metadata.typeExpression);
+      assert.deepEqual(pair.metadata.typeExpression,symbol.metadata.typeExpression);
+    }
     if(symbol.comment?.i18n) {assert.deepEqual(core.i18n,symbol.comment.i18n);i18nFields+=Object.keys(symbol.comment.i18n.fields).length;}
   }
   return {bindings,symbols:expected.size,i18nFields};

@@ -28,7 +28,9 @@
     "./sass-cssdoc-bridge.profile.json": "./dist/profiles/sass-cssdoc-bridge.profile.json",
     "./ts-jsdoc-bridge.profile.json": "./dist/profiles/ts-jsdoc-bridge.profile.json",
     "./ts-jsdoc-bridge/0.2.0-draft.profile.json": "./dist/profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json",
+    "./ts-jsdoc-bridge/0.3.0-draft.profile.json": "./dist/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json",
     "./tsdoc-project/catalog.json": "./dist/tsdoc-project-catalog.json",
+    "./tsdoc-project/0.3.0-draft/catalog.json": "./dist/tsdoc-structured-project-catalog.json",
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],

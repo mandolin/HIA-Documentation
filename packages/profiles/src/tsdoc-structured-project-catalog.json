@@ -1,0 +1,12 @@
+{
+  "catalogVersion": "0.1.0-draft",
+  "profileSchemaVersion": "1.0.0",
+  "profiles": [
+    {
+      "profileId": "ts-jsdoc-bridge",
+      "profileVersion": "0.3.0-draft",
+      "layer": "bridge",
+      "path": "./ts-jsdoc-bridge/0.3.0-draft.profile.json"
+    }
+  ]
+}

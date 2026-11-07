@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-ts-jsdoc-bridge-0.2.0-draft.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "producer",
+    "profile",
+    "source",
+    "modules",
+    "artifact",
+    "runtimeSymbols",
+    "typeOnlySymbols",
+    "diagnostics",
+    "metadata"
+  ],
+  "properties": {
+    "contract": {
+      "const": "hia-ts-jsdoc-bridge"
+    },
+    "contractVersion": {
+      "const": "0.2.0-draft"
+    },
+    "producer": {
+      "type": "object"
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "ts-jsdoc-bridge"
+        },
+        "version": {
+          "const": "0.2.0-draft"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "language",
+        "sourcesContentPolicy"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "language": {
+          "const": "typescript"
+        },
+        "sourcesContentPolicy": {
+          "const": "none"
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "$ref": "#/$defs/module"
+      }
+    },
+    "artifact": {
+      "type": "null"
+    },
+    "runtimeSymbols": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/symbol"
+          },
+          {
+            "required": [
+              "bridgeStatus"
+            ],
+            "properties": {
+              "classification": {
+                "const": "runtime"
+              },
+              "bridgeStatus": {
+                "const": "not-emitted"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "typeOnlySymbols": {
+      "type": "array",
+      "items": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/symbol"
+          },
+          {
+            "required": [
+              "bridgeStatus"
+            ],
+            "properties": {
+              "classification": {
+                "const": "type-only"
+              },
+              "bridgeStatus": {
+                "const": "ts-only"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "diagnostics": {
+      "type": "array"
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "symbolOrder"
+      ],
+      "properties": {
+        "symbolOrder": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/nonempty"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nonempty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*[\\\\:%?#\\u0000-\\u001f\\u007f])(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*\\/$).+$"
+    },
+    "position": {
+      "type": "object",
+      "required": [
+        "line",
+        "column"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      }
+    },
+    "convention": {
+      "type": "object",
+      "required": [
+        "endBoundary",
+        "columnUnit"
+      ],
+      "properties": {
+        "endBoundary": {
+          "const": "exclusive"
+        },
+        "columnUnit": {
+          "const": "utf16-code-unit"
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "required": [
+        "path",
+        "exports"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "declarationName",
+              "symbolIds"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/nonempty"
+              },
+              "declarationName": {
+                "$ref": "#/$defs/nonempty"
+              },
+              "symbolIds": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "$ref": "#/$defs/nonempty"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "symbol": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "classification",
+        "signature",
+        "source",
+        "metadata"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "name": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "kind": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "classification": {
+          "enum": [
+            "runtime",
+            "type-only"
+          ]
+        },
+        "signature": {
+          "type": "string"
+        },
+        "parentId": {
+          "$ref": "#/$defs/nonempty"
+        },
+        "source": {
+          "type": "object",
+          "required": [
+            "path",
+            "range",
+            "rangeConvention"
+          ],
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/path"
+            },
+            "range": {
+              "$ref": "#/$defs/range"
+            },
+            "rangeConvention": {
+              "$ref": "#/$defs/convention"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "required": [
+            "modulePath"
+          ],
+          "properties": {
+            "modulePath": {
+              "$ref": "#/$defs/path"
+            }
+          }
+        }
+      }
+    }
+  }
+}

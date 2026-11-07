@@ -61,3 +61,9 @@ Explicit JSON subpaths are `@hia-doc/profiles/ts-jsdoc-bridge/0.2.0-draft.profil
 ## Status
 
 The manifest is publishable. Source changes and local tarballs do not prove registry availability or stable-release qualification. Publication requires approved release versions, npm scope ownership, Trusted Publishing ownership and a registry install smoke. The package uses the MIT license.
+
+## Structured TypeScript projects
+
+Select getOfficialTsDocProjectProfile('0.3.0-draft') or createOfficialTsDocProjectProfileSet('0.3.0-draft') for structured type expressions. Omitted versions still select 0.2. The separate HIA_TSDOC_STRUCTURED_PROJECT_PROFILE_CATALOG and JSON subpaths ./ts-jsdoc-bridge/0.3.0-draft.profile.json and ./tsdoc-project/0.3.0-draft/catalog.json expose the new profile. Each set has one exact version per identity.
+
+中文说明。0.3规范与目录须显式读取，原七规范默认和0.2项目目录保留。类型结构不意味着执行权限或发射证明。

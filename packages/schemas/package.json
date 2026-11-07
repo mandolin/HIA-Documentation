@@ -20,6 +20,12 @@
       "import": "./dist/index.js"
     },
     "./catalog.json": "./dist/catalog.json",
+    "./tsdoc-project/catalog.json": "./dist/tsdoc-project-catalog.json",
+    "./tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json",
+    "./tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json",
+    "./tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json",
+    "./tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json",
+    "./tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json",
     "./plain-data-initialization.schema.json": "./dist/schemas/plain-data-initialization.schema.json",
     "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
     "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",

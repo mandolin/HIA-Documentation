@@ -30,7 +30,7 @@ export async function auditSatelliteTypeApi(workspaceRoot) {
     const producerFile = path.join(container, "HIA/hia-tsdoc/packages/tsdoc-producer/src/index.mjs");
     assert.equal(fs.realpathSync(producerFile), producerFile);
     const { tsdocProjectProducer } = await import(pathToFileURL(producerFile));
-    const profile = getOfficialTsDocProjectProfile();
+    const profile = getOfficialTsDocProjectProfile("0.3.0-draft");
     const inventory = auditRequiredPackages(container);
     const packages = inventory.packages.filter(pack => pack.owner !== "main-repo" && pack.modules.some(module => module.exports.some(binding => binding.declarationTypeOnly)));
     const dist = path.join(main, "dist");
@@ -50,6 +50,7 @@ export async function auditSatelliteTypeApi(workspaceRoot) {
         assert.equal(fs.realpathSync(ownerDist), ownerDist);
         const generated = fs.mkdtempSync(path.join(ownerDist, "declaration-api-"));
         const result = await runDocumentationProducer(tsdocProjectProducer, {
+            options: {extractionVersion:"0.3.0-draft"},
             workspaceRoot: ownerRoot, outputDirectory: generated, inputs: [
                 {
                     kind: "typescript-project", paths: modules.map(module => module.path), artifactBasePath: "types", title: "Declared package APIs"
@@ -120,6 +121,9 @@ export async function auditSatelliteTypeApi(workspaceRoot) {
         verifiedMembers: groups.reduce((sum, group) => sum + group.verifiedMembers, 0),
         rootGaps: groups.reduce((sum, group) => sum + group.rootGaps, 0),
         memberGaps: groups.reduce((sum, group) => sum + group.memberGaps, 0),
+        expressions: groups.reduce((sum, group) => sum + group.expressions, 0),
+        verifiedExpressions: groups.reduce((sum, group) => sum + group.verifiedExpressions, 0),
+        expressionGaps: groups.reduce((sum, group) => sum + group.expressionGaps, 0),
         complete: groups.length > 0 && groups.every(group => group.complete),
         runtimeStateVerified: false,
         coverageComplete: false,
@@ -142,6 +146,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
         verifiedMembers: report.verifiedMembers,
         rootGaps: report.rootGaps,
         memberGaps: report.memberGaps,
+        expressions: report.expressions,
+        expressionGaps: report.expressionGaps,
         complete: report.complete,
         output
     }));

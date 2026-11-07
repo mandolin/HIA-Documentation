@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/hia-tsdoc-extraction-0.1.0-draft.json",
+  "type": "object",
+  "required": [
+    "contract",
+    "contractVersion",
+    "producer",
+    "profile",
+    "source",
+    "artifacts",
+    "symbols",
+    "comments",
+    "diagnostics"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "contract": {
+      "const": "hia-tsdoc-extraction"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "producer": {
+      "type": "object"
+    },
+    "profile": {
+      "type": "object"
+    },
+    "source": {
+      "type": "object"
+    },
+    "artifacts": {
+      "type": "array"
+    },
+    "symbols": {
+      "type": "array"
+    },
+    "comments": {
+      "type": "array"
+    },
+    "diagnostics": {
+      "type": "array"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

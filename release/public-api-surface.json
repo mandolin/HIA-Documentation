@@ -12869,7 +12869,9 @@
         "./sass-cssdoc-bridge.profile.json": "./dist/profiles/sass-cssdoc-bridge.profile.json",
         "./ts-jsdoc-bridge.profile.json": "./dist/profiles/ts-jsdoc-bridge.profile.json",
         "./ts-jsdoc-bridge/0.2.0-draft.profile.json": "./dist/profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json",
+        "./ts-jsdoc-bridge/0.3.0-draft.profile.json": "./dist/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json",
         "./tsdoc-project/catalog.json": "./dist/tsdoc-project-catalog.json",
+        "./tsdoc-project/0.3.0-draft/catalog.json": "./dist/tsdoc-structured-project-catalog.json",
         "./package.json": "./package.json"
       },
       "bin": {},
@@ -12891,11 +12893,11 @@
           "kind": "FunctionDeclaration",
           "owner": "packages/profiles/src/index.ts",
           "signatures": [
-            "(): HiaProfileSet"
+            "(version?: \"0.2.0-draft\" | \"0.3.0-draft\"): HiaProfileSet"
           ],
           "fields": [],
           "declarationFingerprints": [
-            "6c708f049a87157a746b3828210a8d43d4c2be476d8f8dcbc46d20ce9dc14aa6"
+            "218f6f40b81a539907fa9724ffa61e44d3189506b58d9fa1f1377b4835e77f61"
           ]
         },
         {
@@ -12915,11 +12917,11 @@
           "kind": "FunctionDeclaration",
           "owner": "packages/profiles/src/index.ts",
           "signatures": [
-            "(): HiaDocumentationProfile"
+            "(version?: \"0.2.0-draft\" | \"0.3.0-draft\"): HiaDocumentationProfile"
           ],
           "fields": [],
           "declarationFingerprints": [
-            "8a02172324b14a034818ed35423175bbb32de2ab64b6376a27fc272163e40cc2"
+            "fd0d44f3048c46e6b31f83ece77922095a39883b49b37b1360f5ee2cf7dc45bf"
           ]
         },
         {
@@ -12970,6 +12972,16 @@
           "fields": [],
           "declarationFingerprints": [
             "db2e92aad323cde1bd0af90f9ef9e794acad43909d5cf23aa1cfa65767aceae5"
+          ]
+        },
+        {
+          "name": "HIA_TSDOC_STRUCTURED_PROJECT_PROFILE_CATALOG",
+          "kind": "VariableDeclaration",
+          "owner": "packages/profiles/src/index.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "df5e84660ac1da0472f0d373779e8830c77e7e492e3e4b75013413c300d1670a"
           ]
         },
         {
@@ -15949,6 +15961,12 @@
           "import": "./dist/index.js"
         },
         "./catalog.json": "./dist/catalog.json",
+        "./tsdoc-project/catalog.json": "./dist/tsdoc-project-catalog.json",
+        "./tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json",
+        "./tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json",
+        "./tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json",
+        "./tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json",
+        "./tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json",
         "./plain-data-initialization.schema.json": "./dist/schemas/plain-data-initialization.schema.json",
         "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
         "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
