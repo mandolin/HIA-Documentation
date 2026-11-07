@@ -159,47 +159,110 @@ export interface DocSourceMapIndexOptions {
  * @lang en Mutable body-free metadata snapshot of a documentation source map; counts are computed at creation, and invalid/unsupported-version indexes may retain partial metadata, so check status before consumption.
  */
 export interface DocSourceMapIndex {
-  /** @lang zh-CN 顶层产物声明数，含未使用节点和重复路径；无效重复身份不在此去重。 @lang en Number of top-level artifact declarations, including unused nodes/repeated paths; invalid duplicate identities are not deduplicated here. */
+  /**
+   * @lang zh-CN 顶层产物声明数，含未使用节点和重复路径；无效重复身份不在此去重。
+   * @lang en Number of top-level artifact declarations, including unused nodes/repeated paths; invalid duplicate identities are not deduplicated here.
+   */
   artifactCount: number;
-  /** @lang zh-CN 已投影的生成文档绑定sidecar声明数，不是绑定或展开数量。 @lang en Number of projected generated-documentation-binding sidecar declarations, not bindings or expansions. */
+  /**
+   * @lang zh-CN 已投影的生成文档绑定sidecar声明数，不是绑定或展开数量。
+   * @lang en Number of projected generated-documentation-binding sidecar declarations, not bindings or expansions.
+   */
   bindingSidecarCount: number;
-  /** @lang zh-CN 按声明顺序新建的最小绑定sidecar元数据；不读取或验证其正文。 @lang en New minimal binding-sidecar metadata in declaration order, without reading or validating its body. */
+  /**
+   * @lang zh-CN 按声明顺序新建的最小绑定sidecar元数据；不读取或验证其正文。
+   * @lang en New minimal binding-sidecar metadata in declaration order, without reading or validating its body.
+   */
   bindingSidecars: DocSourceMapGeneratedBindingSidecar[];
-  /** @lang zh-CN 按声明顺序新建的语言解析sidecar元数据，不含资源正文、locator或已解析文本。 @lang en New locale-resolution sidecar metadata in declaration order, without resource bodies, locators or resolved text. */
+  /**
+   * @lang zh-CN 按声明顺序新建的语言解析sidecar元数据，不含资源正文、locator或已解析文本。
+   * @lang en New locale-resolution sidecar metadata in declaration order, without resource bodies, locators or resolved text.
+   */
   localeResolutionSidecars: DocSourceMapLocaleResolutionSidecar[];
-  /** @lang zh-CN 已投影语言解析sidecar声明数，不是locale或资源数量。 @lang en Number of projected locale-resolution sidecar declarations, not locales or resources. */
+  /**
+   * @lang zh-CN 已投影语言解析sidecar声明数，不是locale或资源数量。
+   * @lang en Number of projected locale-resolution sidecar declarations, not locales or resources.
+   */
   localeResolutionSidecarCount: number;
-  /** @lang zh-CN 按声明顺序新建的语言资源发现sidecar元数据，不含受控声明/catalog或资源正文。 @lang en New locale-discovery sidecar metadata in declaration order, without controlled declarations/catalogs or resource bodies. */
+  /**
+   * @lang zh-CN 按声明顺序新建的语言资源发现sidecar元数据，不含受控声明/catalog或资源正文。
+   * @lang en New locale-discovery sidecar metadata in declaration order, without controlled declarations/catalogs or resource bodies.
+   */
   localeDiscoverySidecars: DocSourceMapLocaleDiscoverySidecar[];
-  /** @lang zh-CN 已投影语言资源发现sidecar声明数，不证明任何资源已读取。 @lang en Number of projected locale-discovery sidecar declarations, proving no resource was read. */
+  /**
+   * @lang zh-CN 已投影语言资源发现sidecar声明数，不证明任何资源已读取。
+   * @lang en Number of projected locale-discovery sidecar declarations, proving no resource was read.
+   */
   localeDiscoverySidecarCount: number;
-  /** @lang zh-CN 固定索引类别doc-source-map；即使输入类别错误也使用此值，不作为接纳证明。 @lang en Fixed index kind doc-source-map, even for a wrong input contract; this is not proof of admission. */
+  /**
+   * @lang zh-CN 固定索引类别doc-source-map；即使输入类别错误也使用此值，不作为接纳证明。
+   * @lang en Fixed index kind doc-source-map, even for a wrong input contract; this is not proof of admission.
+   */
   contract: typeof DOC_SOURCE_MAP_CONTRACT;
-  /** @lang zh-CN 可取得时保留输入的非空版本文本，未知标签也可保留；检查status而非只看标签。 @lang en Input nonempty version text when available, including unsupported labels; check status rather than the label alone. */
+  /**
+   * @lang zh-CN 可取得时保留输入的非空版本文本，未知标签也可保留；检查status而非只看标签。
+   * @lang en Input nonempty version text when available, including unsupported labels; check status rather than the label alone.
+   */
   contractVersion?: string;
-  /** @lang zh-CN 本次新建的可变owner诊断序列，含结构/版本/引用/路径/隐私及输入诊断；合法上下文与输入消息未脱敏。 @lang en New mutable owner diagnostic sequence, including structure/version/reference/path/privacy and input diagnostics; valid context and input messages are unsanitized. */
+  /**
+   * @lang zh-CN 本次新建的可变owner诊断序列，含结构/版本/引用/路径/隐私及输入诊断；合法上下文与输入消息未脱敏。
+   * @lang en New mutable owner diagnostic sequence, including structure/version/reference/path/privacy and input diagnostics; valid context and input messages are unsanitized.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 按输入顺序新建的可变条目列表；无效状态仍可含部分投影，不应绕过状态消费。 @lang en New mutable entry list in input order; unusable states may retain partial projections that must not bypass the status gate. */
+  /**
+   * @lang zh-CN 按输入顺序新建的可变条目列表；无效状态仍可含部分投影，不应绕过状态消费。
+   * @lang en New mutable entry list in input order; unusable states may retain partial projections that must not bypass the status gate.
+   */
   entries: DocSourceMapIndexedEntry[];
-  /** @lang zh-CN 本次投影条目数，创建后修改entries不会自动重算。 @lang en Number of projected entries at creation; later entries mutation does not recompute it. */
+  /**
+   * @lang zh-CN 本次投影条目数，创建后修改entries不会自动重算。
+   * @lang en Number of projected entries at creation; later entries mutation does not recompute it.
+   */
   entryCount: number;
-  /** @lang zh-CN 可取得时复制输入的非空身份文本，不裁剪或授予信任/公开权限。 @lang en Input nonempty identity text when available, without trimming or granting trust/publication authority. */
+  /**
+   * @lang zh-CN 可取得时复制输入的非空身份文本，不裁剪或授予信任/公开权限。
+   * @lang en Input nonempty identity text when available, without trimming or granting trust/publication authority.
+   */
   id?: string;
-  /** @lang zh-CN 同时具有已解析路径且confidence非none、来源非unresolved的source/artifact引用的条目数；不要求range或selector。 @lang en Entries with both source/artifact references having resolved paths, confidence other than none and provenance other than unresolved; ranges/selectors are not required. */
+  /**
+   * @lang zh-CN 同时具有已解析路径且confidence非none、来源非unresolved的source/artifact引用的条目数；不要求range或selector。
+   * @lang en Entries with both source/artifact references having resolved paths, confidence other than none and provenance other than unresolved; ranges/selectors are not required.
+   */
   linkedEntryCount: number;
-  /** @lang zh-CN 非空时保留调用方诊断路径原文；空string省略，未规范化或脱敏，不授予文件访问权限。 @lang en Caller diagnostic path retained verbatim when nonempty; empty strings are omitted, with no normalization/sanitization or file-access authority. */
+  /**
+   * @lang zh-CN 非空时保留调用方诊断路径原文；空string省略，未规范化或脱敏，不授予文件访问权限。
+   * @lang en Caller diagnostic path retained verbatim when nonempty; empty strings are omitted, with no normalization/sanitization or file-access authority.
+   */
   path?: string;
-  /** @lang zh-CN 顶层来源声明数，含未使用声明与相同路径，不等于可定位文件数量。 @lang en Number of top-level source declarations, including unused declarations/shared paths, not the number of navigable files. */
+  /**
+   * @lang zh-CN 顶层来源声明数，含未使用声明与相同路径，不等于可定位文件数量。
+   * @lang en Number of top-level source declarations, including unused declarations/shared paths, not the number of navigable files.
+   */
   sourceCount: number;
-  /** @lang zh-CN 按声明顺序新建的普通位置映射链接元数据，不含mappings/sourcesContent且不加载文件或URL。 @lang en New ordinary position-map link metadata in declaration order, excluding mappings/sourcesContent and loading no file or URL. */
+  /**
+   * @lang zh-CN 按声明顺序新建的普通位置映射链接元数据，不含mappings/sourcesContent且不加载文件或URL。
+   * @lang en New ordinary position-map link metadata in declaration order, excluding mappings/sourcesContent and loading no file or URL.
+   */
   sourceMaps: DocSourceMapSourceMapLink[];
-  /** @lang zh-CN 已投影普通位置映射声明数，不是映射段数或可执行链数量。 @lang en Number of projected ordinary map declarations, not mapping segments or executable chains. */
+  /**
+   * @lang zh-CN 已投影普通位置映射声明数，不是映射段数或可执行链数量。
+   * @lang en Number of projected ordinary map declarations, not mapping segments or executable chains.
+   */
   sourceMapCount: number;
-  /** @lang zh-CN 复制根privacy策略，缺省为none；embed/redacted也不会令本索引携带源码正文。 @lang en Root privacy policy, defaulting to none; embed/redacted still do not put source bodies into this index. */
+  /**
+   * @lang zh-CN 复制根privacy策略，缺省为none；embed/redacted也不会令本索引携带源码正文。
+   * @lang en Root privacy policy, defaulting to none; embed/redacted still do not put source bodies into this index.
+   */
   sourcesContentPolicy: string;
-  /** @lang zh-CN owner边界结果；error优先invalid，其次未知版本unsupported-version，否则available；不替代完整schema/跨链或公开安全验证。 @lang en Owner boundary result: errors yield invalid before unsupported-version, otherwise available; not complete schema/cross-chain or public-safety validation. */
+  /**
+   * @lang zh-CN owner边界结果；error优先invalid，其次未知版本unsupported-version，否则available；不替代完整schema/跨链或公开安全验证。
+   * @lang en Owner boundary result: errors yield invalid before unsupported-version, otherwise available; not complete schema/cross-chain or public-safety validation.
+   */
   status: "available" | "invalid" | "unsupported-version";
-  /** @lang zh-CN 未满足双侧可用引用谓词的条目数，与linkedEntryCount之和等于创建时entryCount。 @lang en Entries not satisfying the bilateral usable-reference predicate; together with linkedEntryCount equals entryCount at creation. */
+  /**
+   * @lang zh-CN 未满足双侧可用引用谓词的条目数，与linkedEntryCount之和等于创建时entryCount。
+   * @lang en Entries not satisfying the bilateral usable-reference predicate; together with linkedEntryCount equals entryCount at creation.
+   */
   unresolvedEntryCount: number;
 }
 
@@ -208,25 +271,55 @@ export interface DocSourceMapIndex {
  * @lang en Mutable entry projection retaining order/repeated references without the complete artifact, open extensions or sidecar bodies.
  */
 export interface DocSourceMapIndexedEntry {
-  /** @lang zh-CN 按引用顺序新建的产物链接列表，不合并重复产物或选择器。 @lang en New artifact-link list in reference order, without merging repeated artifacts/selectors. */
+  /**
+   * @lang zh-CN 按引用顺序新建的产物链接列表，不合并重复产物或选择器。
+   * @lang en New artifact-link list in reference order, without merging repeated artifacts/selectors.
+   */
   artifactLinks: DocSourceMapArtifactLink[];
-  /** @lang zh-CN 输入非空分类文本原值；为被动元数据，不推导权限或稳定性。 @lang en Original nonempty classification text; passive metadata inferring no permissions or stability. */
+  /**
+   * @lang zh-CN 输入非空分类文本原值；为被动元数据，不推导权限或稳定性。
+   * @lang en Original nonempty classification text; passive metadata inferring no permissions or stability.
+   */
   classification?: string;
-  /** @lang zh-CN 输入entry诊断的非空code/字符串列表，保持顺序；不是根HIA诊断，severity/message不在此投影。 @lang en Ordered nonempty codes/strings from entry diagnostics, not root HIA diagnostics; severity/message are not projected here. */
+  /**
+   * @lang zh-CN 输入entry诊断的非空code/字符串列表，保持顺序；不是根HIA诊断，severity/message不在此投影。
+   * @lang en Ordered nonempty codes/strings from entry diagnostics, not root HIA diagnostics; severity/message are not projected here.
+   */
   diagnostics: string[];
-  /** @lang zh-CN 最小sidecar/binding身份对列表，保持重复与顺序；不加载binding正文或证明bindingId存在。 @lang en Minimal sidecar/binding identity pairs retaining repeats/order; no binding body is loaded and bindingId existence is not proven. */
+  /**
+   * @lang zh-CN 最小sidecar/binding身份对列表，保持重复与顺序；不加载binding正文或证明bindingId存在。
+   * @lang en Minimal sidecar/binding identity pairs retaining repeats/order; no binding body is loaded and bindingId existence is not proven.
+   */
   generatedBindingRefs: DocSourceMapGeneratedBindingRef[];
-  /** @lang zh-CN 条目身份原值；旧宽输入省略时使用entry:<一基序号>回退，不是全局稳定身份。 @lang en Original entry identity; permissive legacy omissions fall back to entry:<one-based ordinal>, not a globally stable identity. */
+  /**
+   * @lang zh-CN 条目身份原值；旧宽输入省略时使用entry:<一基序号>回退，不是全局稳定身份。
+   * @lang en Original entry identity; permissive legacy omissions fall back to entry:<one-based ordinal>, not a globally stable identity.
+   */
   id: string;
-  /** @lang zh-CN 条目kind原值；旧宽输入省略时回退entry，不解释领域行为。 @lang en Original entry kind, defaulting to entry for permissive legacy omissions without interpreting domain behavior. */
+  /**
+   * @lang zh-CN 条目kind原值；旧宽输入省略时回退entry，不解释领域行为。
+   * @lang en Original entry kind, defaulting to entry for permissive legacy omissions without interpreting domain behavior.
+   */
   kind: string;
-  /** @lang zh-CN 输入关系类别的非空文本，不执行关系或跨链计算。 @lang en Nonempty input relation-kind text, without executing relations or cross-chain computation. */
+  /**
+   * @lang zh-CN 输入关系类别的非空文本，不执行关系或跨链计算。
+   * @lang en Nonempty input relation-kind text, without executing relations or cross-chain computation.
+   */
   relationKind?: string;
-  /** @lang zh-CN 按引用顺序新建的来源链接列表；同一来源的多个范围和重复引用保留。 @lang en New source-link list in reference order, retaining multiple ranges/repeated references to one source. */
+  /**
+   * @lang zh-CN 按引用顺序新建的来源链接列表；同一来源的多个范围和重复引用保留。
+   * @lang en New source-link list in reference order, retaining multiple ranges/repeated references to one source.
+   */
   sourceLinks: DocSourceMapSourceLink[];
-  /** @lang zh-CN 可选非空符号身份原值，不裁剪、大小写折叠或验证目标符号是否存在。 @lang en Optional original nonempty symbol identity, without trimming, case folding or verifying target-symbol existence. */
+  /**
+   * @lang zh-CN 可选非空符号身份原值，不裁剪、大小写折叠或验证目标符号是否存在。
+   * @lang en Optional original nonempty symbol identity, without trimming, case folding or verifying target-symbol existence.
+   */
   symbolId?: string;
-  /** @lang zh-CN 可选非空符号类别文本，仅供查询筛选与元数据使用。 @lang en Optional nonempty symbol-kind text for query filtering and metadata only. */
+  /**
+   * @lang zh-CN 可选非空符号类别文本，仅供查询筛选与元数据使用。
+   * @lang en Optional nonempty symbol-kind text for query filtering and metadata only.
+   */
   symbolKind?: string;
 }
 
@@ -235,9 +328,15 @@ export interface DocSourceMapIndexedEntry {
  * @lang en Mutable minimal identity pair for an independent generated-documentation-binding sidecar, without its binding model.
  */
 export interface DocSourceMapGeneratedBindingRef {
-  /** @lang zh-CN sidecar内部binding身份原值；普通索引不打开sidecar验证此身份。 @lang en Original binding identity within the sidecar; the ordinary index does not open the sidecar to verify it. */
+  /**
+   * @lang zh-CN sidecar内部binding身份原值；普通索引不打开sidecar验证此身份。
+   * @lang en Original binding identity within the sidecar; the ordinary index does not open the sidecar to verify it.
+   */
   bindingId: string;
-  /** @lang zh-CN 声明的sidecar身份原值；未知声明可伴warning保留，不自动解析路径。 @lang en Original declared sidecar identity; unknown declarations may be retained with a warning, without automatic path resolution. */
+  /**
+   * @lang zh-CN 声明的sidecar身份原值；未知声明可伴warning保留，不自动解析路径。
+   * @lang en Original declared sidecar identity; unknown declarations may be retained with a warning, without automatic path resolution.
+   */
   sidecarId: string;
 }
 
@@ -246,13 +345,25 @@ export interface DocSourceMapGeneratedBindingRef {
  * @lang en Mutable generated-documentation-binding sidecar declaration metadata; optional types retain legacy/failed-projection compatibility without promising body availability.
  */
 export interface DocSourceMapGeneratedBindingSidecar {
-  /** @lang zh-CN 非空声明契约原文；owner成功还要求匹配绑定契约，字段存在不等于正文验证。 @lang en Nonempty declared contract text; owner success also requires the binding contract, and presence is not body validation. */
+  /**
+   * @lang zh-CN 非空声明契约原文；owner成功还要求匹配绑定契约，字段存在不等于正文验证。
+   * @lang en Nonempty declared contract text; owner success also requires the binding contract, and presence is not body validation.
+   */
   contract?: string;
-  /** @lang zh-CN 非空声明版本原文，普通索引支持精确旧/当前绑定标签；不执行整组迁移。 @lang en Nonempty declared version text; the ordinary index supports exact legacy/current binding labels without executing bundle migration. */
+  /**
+   * @lang zh-CN 非空声明版本原文，普通索引支持精确旧/当前绑定标签；不执行整组迁移。
+   * @lang en Nonempty declared version text; the ordinary index supports exact legacy/current binding labels without executing bundle migration.
+   */
   contractVersion?: string;
-  /** @lang zh-CN 声明身份原值；旧投影缺省回退generated-binding-sidecar:<一基序号>，不表示owner接纳缺失身份。 @lang en Original declaration identity; omission projection falls back to generated-binding-sidecar:<one-based ordinal>, not owner admission of missing identity. */
+  /**
+   * @lang zh-CN 声明身份原值；旧投影缺省回退generated-binding-sidecar:<一基序号>，不表示owner接纳缺失身份。
+   * @lang en Original declaration identity; omission projection falls back to generated-binding-sidecar:<one-based ordinal>, not owner admission of missing identity.
+   */
   id: string;
-  /** @lang zh-CN 非空声明路径原值；owner另检查安全相对路径，不读取文件或授予发布权限。 @lang en Original nonempty declared path; the owner separately checks safe relative paths without file reads or publication authority. */
+  /**
+   * @lang zh-CN 非空声明路径原值；owner另检查安全相对路径，不读取文件或授予发布权限。
+   * @lang en Original nonempty declared path; the owner separately checks safe relative paths without file reads or publication authority.
+   */
   path?: string;
 }
 
@@ -261,13 +372,25 @@ export interface DocSourceMapGeneratedBindingSidecar {
  * @lang en Mutable minimal locale-resolution sidecar declaration without resolved locale-resource bodies.
  */
 export interface DocSourceMapLocaleResolutionSidecar {
-  /** @lang zh-CN 复制非空契约文本，owner成功要求语言解析契约；不检查外部正文。 @lang en Copies nonempty contract text; owner success requires the locale-resolution contract, without inspecting external bodies. */
+  /**
+   * @lang zh-CN 复制非空契约文本，owner成功要求语言解析契约；不检查外部正文。
+   * @lang en Copies nonempty contract text; owner success requires the locale-resolution contract, without inspecting external bodies.
+   */
   contract?: string;
-  /** @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确语言解析版本。 @lang en Copies nonempty version text; owner success requires the exact supported locale-resolution version. */
+  /**
+   * @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确语言解析版本。
+   * @lang en Copies nonempty version text; owner success requires the exact supported locale-resolution version.
+   */
   contractVersion?: string;
-  /** @lang zh-CN 声明身份原值；缺省投影回退locale-resolution-sidecar:<一基序号>，不豁免身份验证。 @lang en Original declaration identity; omission projection falls back to locale-resolution-sidecar:<one-based ordinal> without bypassing identity validation. */
+  /**
+   * @lang zh-CN 声明身份原值；缺省投影回退locale-resolution-sidecar:<一基序号>，不豁免身份验证。
+   * @lang en Original declaration identity; omission projection falls back to locale-resolution-sidecar:<one-based ordinal> without bypassing identity validation.
+   */
   id: string;
-  /** @lang zh-CN 声明路径原值，owner要求安全相对路径；不加载resource body、locator或resolved text。 @lang en Original declared path, required by the owner to be safe and relative; no resource body, locator or resolved text is loaded. */
+  /**
+   * @lang zh-CN 声明路径原值，owner要求安全相对路径；不加载resource body、locator或resolved text。
+   * @lang en Original declared path, required by the owner to be safe and relative; no resource body, locator or resolved text is loaded.
+   */
   path?: string;
 }
 
@@ -276,13 +399,25 @@ export interface DocSourceMapLocaleResolutionSidecar {
  * @lang en Mutable minimal locale-discovery sidecar declaration, counted separately from resolution sidecars and carrying no catalog contents.
  */
 export interface DocSourceMapLocaleDiscoverySidecar {
-  /** @lang zh-CN 复制非空声明契约，owner成功要求documentation-locale-resource-declaration；不执行发现。 @lang en Copies the nonempty declaration contract; owner success requires documentation-locale-resource-declaration without executing discovery. */
+  /**
+   * @lang zh-CN 复制非空声明契约，owner成功要求documentation-locale-resource-declaration；不执行发现。
+   * @lang en Copies the nonempty declaration contract; owner success requires documentation-locale-resource-declaration without executing discovery.
+   */
   contract?: string;
-  /** @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确声明版本。 @lang en Copies nonempty version text; owner success requires the exact supported declaration version. */
+  /**
+   * @lang zh-CN 复制非空版本文本，owner成功要求已支持的精确声明版本。
+   * @lang en Copies nonempty version text; owner success requires the exact supported declaration version.
+   */
   contractVersion?: string;
-  /** @lang zh-CN 声明身份原值；缺省投影回退locale-discovery-sidecar:<一基序号>，不承诺全局唯一。 @lang en Original declaration identity; omission projection falls back to locale-discovery-sidecar:<one-based ordinal> without promising global uniqueness. */
+  /**
+   * @lang zh-CN 声明身份原值；缺省投影回退locale-discovery-sidecar:<一基序号>，不承诺全局唯一。
+   * @lang en Original declaration identity; omission projection falls back to locale-discovery-sidecar:<one-based ordinal> without promising global uniqueness.
+   */
   id: string;
-  /** @lang zh-CN 非空声明路径原值；不读取controlled declaration/catalog、正文或范围，不授予访问权限。 @lang en Original nonempty declared path; reads no controlled declaration/catalog, body or range and grants no access authority. */
+  /**
+   * @lang zh-CN 非空声明路径原值；不读取controlled declaration/catalog、正文或范围，不授予访问权限。
+   * @lang en Original nonempty declared path; reads no controlled declaration/catalog, body or range and grants no access authority.
+   */
   path?: string;
 }
 
@@ -291,21 +426,45 @@ export interface DocSourceMapLocaleDiscoverySidecar {
  * @lang en Mutable source-reference metadata with path/language resolved from top-level declarations; unknown identities may retain links without paths.
  */
 export interface DocSourceMapSourceLink {
-  /** @lang zh-CN 引用层置信度原值；缺省不推导，none排除该链接的linked资格，不表示概率。 @lang en Original reference confidence; omissions are not inferred and none excludes this link from linked eligibility, not a probability. */
+  /**
+   * @lang zh-CN 引用层置信度原值；缺省不推导，none排除该链接的linked资格，不表示概率。
+   * @lang en Original reference confidence; omissions are not inferred and none excludes this link from linked eligibility, not a probability.
+   */
   confidence?: string;
-  /** @lang zh-CN 已声明来源节点的非空语言文本，未知来源不从引用扩展推导。 @lang en Nonempty language text from the declared source node, never inferred from reference extensions for unknown sources. */
+  /**
+   * @lang zh-CN 已声明来源节点的非空语言文本，未知来源不从引用扩展推导。
+   * @lang en Nonempty language text from the declared source node, never inferred from reference extensions for unknown sources.
+   */
   language?: string;
-  /** @lang zh-CN 已声明来源节点的非空路径原值，不做查询规范化；未知来源可省略，不授予文件访问。 @lang en Original nonempty declared-source path without query normalization; optional for unknown sources and granting no file access. */
+  /**
+   * @lang zh-CN 已声明来源节点的非空路径原值，不做查询规范化；未知来源可省略，不授予文件访问。
+   * @lang en Original nonempty declared-source path without query normalization; optional for unknown sources and granting no file access.
+   */
   path?: string;
-  /** @lang zh-CN 独立复制的一基起止坐标，省略列保留省略；1.1.0由rangeConvention声明端点语义，旧版保持包含式查询。缺失范围仍可能linked。 @lang en Independently copied one-based endpoints, preserving omitted columns; 1.1.0 declares endpoint semantics through rangeConvention while older queries remain inclusive. Missing ranges may still be linked. */
+  /**
+   * @lang zh-CN 独立复制的一基起止坐标，省略列保留省略；1.1.0由rangeConvention声明端点语义，旧版保持包含式查询。缺失范围仍可能linked。
+   * @lang en Independently copied one-based endpoints, preserving omitted columns; 1.1.0 declares endpoint semantics through rangeConvention while older queries remain inclusive. Missing ranges may still be linked.
+   */
   range?: HiaSourceRange;
-  /** @lang zh-CN 1.1.0范围逐引用声明的端点与列单位，独立复制；旧版没有此精度证明。 @lang en Independently copied per-reference endpoint and column unit for 1.1.0 ranges; older versions have no such precision proof. */
+  /**
+   * @lang zh-CN 1.1.0范围逐引用声明的端点与列单位，独立复制；旧版没有此精度证明。
+   * @lang en Independently copied per-reference endpoint and column unit for 1.1.0 ranges; older versions have no such precision proof.
+   */
   rangeConvention?: DocSourceMapRangeConvention;
-  /** @lang zh-CN 引用层来源标签；当前版通用类别、精确旧reader可含具体工具来源，unresolved排除该链接的linked资格。 @lang en Reference provenance label: current common category or concrete origin from the exact legacy reader; unresolved excludes linked eligibility. */
+  /**
+   * @lang zh-CN 引用层来源标签；当前版通用类别、精确旧reader可含具体工具来源，unresolved排除该链接的linked资格。
+   * @lang en Reference provenance label: current common category or concrete origin from the exact legacy reader; unresolved excludes linked eligibility.
+   */
   rangeSource?: string;
-  /** @lang zh-CN 引用自身声明的非空白具体来源文本，不从中推导类别、置信度或权限。 @lang en Nonblank concrete origin declared on this reference, inferring no category, confidence or permissions. */
+  /**
+   * @lang zh-CN 引用自身声明的非空白具体来源文本，不从中推导类别、置信度或权限。
+   * @lang en Nonblank concrete origin declared on this reference, inferring no category, confidence or permissions.
+   */
   rangeSourceDetail?: string;
-  /** @lang zh-CN 来源引用身份原值，不合并重复引用或声称外部文件存在。 @lang en Original source-reference identity, without merging repeated references or claiming external file existence. */
+  /**
+   * @lang zh-CN 来源引用身份原值，不合并重复引用或声称外部文件存在。
+   * @lang en Original source-reference identity, without merging repeated references or claiming external file existence.
+   */
   sourceId: string;
 }
 
@@ -314,19 +473,40 @@ export interface DocSourceMapSourceLink {
  * @lang en Mutable artifact-reference metadata; path/language come from top-level artifact declarations, without artifact bodies or complete ranges.
  */
 export interface DocSourceMapArtifactLink {
-  /** @lang zh-CN 产物引用身份原值；未知身份可保留无path链接并伴warning。 @lang en Original artifact-reference identity; unknown identities may retain pathless links with a warning. */
+  /**
+   * @lang zh-CN 产物引用身份原值；未知身份可保留无path链接并伴warning。
+   * @lang en Original artifact-reference identity; unknown identities may retain pathless links with a warning.
+   */
   artifactId: string;
-  /** @lang zh-CN 引用置信度原值，none排除该链接的linked资格；不计算或推导置信度。 @lang en Original reference confidence; none excludes linked eligibility, without computing or inferring confidence. */
+  /**
+   * @lang zh-CN 引用置信度原值，none排除该链接的linked资格；不计算或推导置信度。
+   * @lang en Original reference confidence; none excludes linked eligibility, without computing or inferring confidence.
+   */
   confidence?: string;
-  /** @lang zh-CN 已声明产物节点的非空语言文本，不采用引用扩展覆盖值。 @lang en Nonempty language text from the declared artifact node, not overridden by reference extensions. */
+  /**
+   * @lang zh-CN 已声明产物节点的非空语言文本，不采用引用扩展覆盖值。
+   * @lang en Nonempty language text from the declared artifact node, not overridden by reference extensions.
+   */
   language?: string;
-  /** @lang zh-CN 已声明产物节点的非空路径原值，不规范化或读取产物；未知身份可省略。 @lang en Original nonempty declared-artifact path, without normalization or artifact reads; optional for unknown identities. */
+  /**
+   * @lang zh-CN 已声明产物节点的非空路径原值，不规范化或读取产物；未知身份可省略。
+   * @lang en Original nonempty declared-artifact path, without normalization or artifact reads; optional for unknown identities.
+   */
   path?: string;
-  /** @lang zh-CN 引用层来源标签；当前通用类别与精确旧reader标签保持，unresolved排除linked资格。 @lang en Reference provenance label retaining current categories/exact legacy labels; unresolved excludes linked eligibility. */
+  /**
+   * @lang zh-CN 引用层来源标签；当前通用类别与精确旧reader标签保持，unresolved排除linked资格。
+   * @lang en Reference provenance label retaining current categories/exact legacy labels; unresolved excludes linked eligibility.
+   */
   rangeSource?: string;
-  /** @lang zh-CN 引用自身非空白具体来源文本，仅作描述，不加载工具或推导通用类别。 @lang en Nonblank reference-local concrete origin text, descriptive only without loading tools or inferring common categories. */
+  /**
+   * @lang zh-CN 引用自身非空白具体来源文本，仅作描述，不加载工具或推导通用类别。
+   * @lang en Nonblank reference-local concrete origin text, descriptive only without loading tools or inferring common categories.
+   */
   rangeSourceDetail?: string;
-  /** @lang zh-CN 可选非空选择器原值；不解析或执行，不要求其存在才能linked。 @lang en Optional original nonempty selector, neither parsed nor executed and not required for linked eligibility. */
+  /**
+   * @lang zh-CN 可选非空选择器原值；不解析或执行，不要求其存在才能linked。
+   * @lang en Optional original nonempty selector, neither parsed nor executed and not required for linked eligibility.
+   */
   selector?: string;
 }
 
@@ -335,56 +515,122 @@ export interface DocSourceMapArtifactLink {
  * @lang en Mutable ordinary position-map link declaration, not a TraceMap instance or loaded mapping data.
  */
 export interface DocSourceMapSourceMapLink {
-  /** @lang zh-CN 映射声明身份原值；旧宽投影缺省时回退node:<一基序号>。 @lang en Original map declaration identity; permissive legacy omission projection falls back to node:<one-based ordinal>. */
+  /**
+   * @lang zh-CN 映射声明身份原值；旧宽投影缺省时回退node:<一基序号>。
+   * @lang en Original map declaration identity; permissive legacy omission projection falls back to node:<one-based ordinal>.
+   */
   id: string;
-  /** @lang zh-CN 可选非空映射类别文本；不根据此字段加载解析器或执行转换。 @lang en Optional nonempty map-kind text, without loading parsers or executing transforms from this field. */
+  /**
+   * @lang zh-CN 可选非空映射类别文本；不根据此字段加载解析器或执行转换。
+   * @lang en Optional nonempty map-kind text, without loading parsers or executing transforms from this field.
+   */
   kind?: string;
-  /** @lang zh-CN 可选非空语言文本，仅为声明元数据。 @lang en Optional nonempty language text, serving only as declaration metadata. */
+  /**
+   * @lang zh-CN 可选非空语言文本，仅为声明元数据。
+   * @lang en Optional nonempty language text, serving only as declaration metadata.
+   */
   language?: string;
-  /** @lang zh-CN 声明的非空相对路径原值；当前owner要求提供安全路径，不读文件/URL或sourceMappingURL。 @lang en Original nonempty relative declared path; the current owner requires a safe path without reading files/URLs or sourceMappingURL. */
+  /**
+   * @lang zh-CN 声明的非空相对路径原值；当前owner要求提供安全路径，不读文件/URL或sourceMappingURL。
+   * @lang en Original nonempty relative declared path; the current owner requires a safe path without reading files/URLs or sourceMappingURL.
+   */
   path?: string;
 }
 
-/** @lang zh-CN 文档语义筛选；已知字段须为普通自有数据，可选 undefined 按省略处理，未知字段不消费。 @lang en Documentation filters; known fields must be ordinary own data, optional undefined is treated as omitted, and unknown fields are not consumed. */
+/**
+ * @lang zh-CN 文档语义筛选；已知字段须为普通自有数据，可选 undefined 按省略处理，未知字段不消费。
+ * @lang en Documentation filters; known fields must be ordinary own data, optional undefined is treated as omitted, and unknown fields are not consumed.
+ */
 export interface DocSourceMapQuery {
-  /** @lang zh-CN 非空白工件路径；仅规范化分隔符与首个 ./。 @lang en Nonblank artifact path; only separators and the initial ./ are normalized. */
+  /**
+   * @lang zh-CN 非空白工件路径；仅规范化分隔符与首个 ./。
+   * @lang en Nonblank artifact path; only separators and the initial ./ are normalized.
+   */
   artifactPath?: string;
-  /** @lang zh-CN 非空白精确选择器，仅在提供工件路径时筛选。 @lang en Nonblank exact selector, filtering only when an artifact path is supplied. */
+  /**
+   * @lang zh-CN 非空白精确选择器，仅在提供工件路径时筛选。
+   * @lang en Nonblank exact selector, filtering only when an artifact path is supplied.
+   */
   selector?: string;
-  /** @lang zh-CN 非空白源码路径，不读取文件。 @lang en Nonblank source path; no file is read. */
+  /**
+   * @lang zh-CN 非空白源码路径，不读取文件。
+   * @lang en Nonblank source path; no file is read.
+   */
   sourcePath?: string;
-  /** @lang zh-CN 一基安全整数位置；旧版省略列为1，新版精确查询要求显式列。仅在提供源码路径时筛选。 @lang en One-based safe integer position; older versions default omitted columns to one, while current exact lookup requires an explicit column. Filters only with a source path. */
+  /**
+   * @lang zh-CN 一基安全整数位置；旧版省略列为1，新版精确查询要求显式列。仅在提供源码路径时筛选。
+   * @lang en One-based safe integer position; older versions default omitted columns to one, while current exact lookup requires an explicit column. Filters only with a source path.
+   */
   position?: HiaSourcePosition;
-  /** @lang zh-CN 1.1.0位置查询的调用方已知列单位；缺省或unknown不产生精确命中，不执行单位换算。 @lang en Caller-known column unit for 1.1.0 positional lookup; omission or unknown gives no exact hit, without unit conversion. */
+  /**
+   * @lang zh-CN 1.1.0位置查询的调用方已知列单位；缺省或unknown不产生精确命中，不执行单位换算。
+   * @lang en Caller-known column unit for 1.1.0 positional lookup; omission or unknown gives no exact hit, without unit conversion.
+   */
   columnUnit?: DocSourceMapColumnUnit;
-  /** @lang zh-CN 非空白符号身份，精确匹配不裁剪。 @lang en Nonblank symbol identity, matched exactly without trimming. */
+  /**
+   * @lang zh-CN 非空白符号身份，精确匹配不裁剪。
+   * @lang en Nonblank symbol identity, matched exactly without trimming.
+   */
   symbolId?: string;
-  /** @lang zh-CN 非空白符号种类，精确匹配。 @lang en Nonblank symbol kind, matched exactly. */
+  /**
+   * @lang zh-CN 非空白符号种类，精确匹配。
+   * @lang en Nonblank symbol kind, matched exactly.
+   */
   symbolKind?: string;
 }
 
-/** @lang zh-CN 查询状态与借用的条目/query引用，不构成不可变或可公开数据保证。 @lang en Query status and borrowed entry/query references, without an immutability or public-safety guarantee. */
+/**
+ * @lang zh-CN 查询状态与借用的条目/query引用，不构成不可变或可公开数据保证。
+ * @lang en Query status and borrowed entry/query references, without an immutability or public-safety guarantee.
+ */
 export interface DocSourceMapQueryResult {
-  /** @lang zh-CN 原索引诊断及适用的固定查询错误；不修改索引。 @lang en Original index diagnostics plus any fixed query error, without mutating the index. */
+  /**
+   * @lang zh-CN 原索引诊断及适用的固定查询错误；不修改索引。
+   * @lang en Original index diagnostics plus any fixed query error, without mutating the index.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 按原顺序返回的条目引用；invalid/unsupported-version为空。 @lang en Entry references in original order; empty for invalid/unsupported-version. */
+  /**
+   * @lang zh-CN 按原顺序返回的条目引用；invalid/unsupported-version为空。
+   * @lang en Entry references in original order; empty for invalid/unsupported-version.
+   */
   entries: DocSourceMapIndexedEntry[];
-  /** @lang zh-CN 返回条目数量，无额外总量估计。 @lang en Returned entry count, without an additional total estimate. */
+  /**
+   * @lang zh-CN 返回条目数量，无额外总量估计。
+   * @lang en Returned entry count, without an additional total estimate.
+   */
   matchedEntryCount: number;
-  /** @lang zh-CN 原始调用者查询引用，未脱敏，不应用作可信日志数据。 @lang en Original caller query reference, unsanitized and unsuitable as trusted log data. */
+  /**
+   * @lang zh-CN 原始调用者查询引用，未脱敏，不应用作可信日志数据。
+   * @lang en Original caller query reference, unsanitized and unsuitable as trusted log data.
+   */
   query: DocSourceMapQuery;
-  /** @lang zh-CN 非法查询为invalid，其余沿用索引状态。 @lang en Invalid queries yield invalid; otherwise the index status is retained. */
+  /**
+   * @lang zh-CN 非法查询为invalid，其余沿用索引状态。
+   * @lang en Invalid queries yield invalid; otherwise the index status is retained.
+   */
   status: DocSourceMapIndex["status"];
 }
 
-/** @lang zh-CN 两种位置偏置；默认向下最近。 @lang en The two position biases; defaults to greatest lower bound. */
+/**
+ * @lang zh-CN 两种位置偏置；默认向下最近。
+ * @lang en The two position biases; defaults to greatest lower bound.
+ */
 export type OrdinarySourceMapBias = "greatest-lower-bound" | "least-upper-bound";
 
-/** @lang zh-CN 普通/null原型的自有数据路径选项；无I/O或发布授权，未知扩展不读。 @lang en Own-data path options in a plain/null-prototype record; no I/O or publication authority, and unknown extensions are unread. */
+/**
+ * @lang zh-CN 普通/null原型的自有数据路径选项；无I/O或发布授权，未知扩展不读。
+ * @lang en Own-data path options in a plain/null-prototype record; no I/O or publication authority, and unknown extensions are unread.
+ */
 export interface OrdinarySourceMapIndexOptions {
-  /** @lang zh-CN 可选工件上下文，规范分隔符与开头./；空字符串省略，不裁剪空白。 @lang en Optional artifact context with normalized separators/leading ./; empty strings are omitted and whitespace is untrimmed. */
+  /**
+   * @lang zh-CN 可选工件上下文，规范分隔符与开头./；空字符串省略，不裁剪空白。
+   * @lang en Optional artifact context with normalized separators/leading ./; empty strings are omitted and whitespace is untrimmed.
+   */
   artifactPath?: string;
-  /** @lang zh-CN 可选库解析基准及诊断上下文，原string保持；不是公开安全路径。 @lang en Optional library resolution base and diagnostic context, retaining the original string; not a public-safe path. */
+  /**
+   * @lang zh-CN 可选库解析基准及诊断上下文，原string保持；不是公开安全路径。
+   * @lang en Optional library resolution base and diagnostic context, retaining the original string; not a public-safe path.
+   */
   path?: string;
 }
 
@@ -393,27 +639,57 @@ export interface OrdinarySourceMapIndexOptions {
  * @lang en Independent body-free mutable ordinary position index; counts are creation-time snapshots, lookups update library caches, and tampering invalidates reliance on validation.
  */
 export interface OrdinarySourceMapIndex {
-  /** @lang zh-CN 显式options的非空产物上下文，规范分隔符/开头./；不从map.file推导，不授予文件访问或发布权限。 @lang en Nonempty explicit artifact context from options, normalizing separators/initial ./; not inferred from map.file and granting no file-access/publication authority. */
+  /**
+   * @lang zh-CN 显式options的非空产物上下文，规范分隔符/开头./；不从map.file推导，不授予文件访问或发布权限。
+   * @lang en Nonempty explicit artifact context from options, normalizing separators/initial ./; not inferred from map.file and granting no file-access/publication authority.
+   */
   artifactPath?: string;
-  /** @lang zh-CN 本次索引的可变诊断列表；成功为空，拒绝使用固定错误并保留合法未脱敏上下文，结果可能借用此列表/记录。 @lang en Mutable diagnostics for this creation; empty on success, fixed on rejection with valid unsanitized context, and possibly borrowed by result lists/records. */
+  /**
+   * @lang zh-CN 本次索引的可变诊断列表；成功为空，拒绝使用固定错误并保留合法未脱敏上下文，结果可能借用此列表/记录。
+   * @lang en Mutable diagnostics for this creation; empty on success, fixed on rejection with valid unsanitized context, and possibly borrowed by result lists/records.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 所有映射段数，含无原始位置的段；invalid为零，后续修改实例不自动重算。 @lang en Count of all mapping segments, including unmapped segments; zero when invalid and not automatically recomputed after instance mutation. */
+  /**
+   * @lang zh-CN 所有映射段数，含无原始位置的段；invalid为零，后续修改实例不自动重算。
+   * @lang en Count of all mapping segments, including unmapped segments; zero when invalid and not automatically recomputed after instance mutation.
+   */
   mappingCount: number;
-  /** @lang zh-CN 非空options.path原文，作为库解析基准与诊断上下文；空string省略，未脱敏或授予访问权限。 @lang en Original nonempty options.path used as library resolution base and diagnostic context; empty strings omitted, without sanitization or access authority. */
+  /**
+   * @lang zh-CN 非空options.path原文，作为库解析基准与诊断上下文；空string省略，未脱敏或授予访问权限。
+   * @lang en Original nonempty options.path used as library resolution base and diagnostic context; empty strings omitted, without sanitization or access authority.
+   */
   path?: string;
-  /** @lang zh-CN 原始sources槽位中非空string的分隔符/开头./规范化新列表，保留重复、滤空/null；不是库resolvedSources。 @lang en New separator/initial-./ normalized list of nonempty string slots from raw sources, retaining duplicates and filtering empty/null slots; not library resolvedSources. */
+  /**
+   * @lang zh-CN 原始sources槽位中非空string的分隔符/开头./规范化新列表，保留重复、滤空/null；不是库resolvedSources。
+   * @lang en New separator/initial-./ normalized list of nonempty string slots from raw sources, retaining duplicates and filtering empty/null slots; not library resolvedSources.
+   */
   sources: string[];
-  /** @lang zh-CN 创建时公开sources列表长度，不是原始槽位数、唯一路径数或有映射文件数。 @lang en Public sources-list length at creation, not raw slot count, unique paths or mapped-file count. */
+  /**
+   * @lang zh-CN 创建时公开sources列表长度，不是原始槽位数、唯一路径数或有映射文件数。
+   * @lang en Public sources-list length at creation, not raw slot count, unique paths or mapped-file count.
+   */
   sourceCount: number;
-  /** @lang zh-CN 构造边界available或invalid，不含unmapped；空的合法map仍available，不证明完整ECMA-426符合或公开安全。 @lang en Construction status available or invalid, never unmapped; a valid empty map remains available without proving full ECMA-426 conformance or public safety. */
+  /**
+   * @lang zh-CN 构造边界available或invalid，不含unmapped；空的合法map仍available，不证明完整ECMA-426符合或公开安全。
+   * @lang en Construction status available or invalid, never unmapped; a valid empty map remains available without proving full ECMA-426 conformance or public safety.
+   */
   status: "available" | "invalid";
-  /** @lang zh-CN 仅正常构造提供的独立无正文TraceMap，保留既有解析路径；可变cache随查找更新，不共享调用方实例/cache。 @lang en Independent body-free TraceMap on successful construction, retaining existing resolved paths; mutable lookup caches do not share the caller instance/caches. */
+  /**
+   * @lang zh-CN 仅正常构造提供的独立无正文TraceMap，保留既有解析路径；可变cache随查找更新，不共享调用方实例/cache。
+   * @lang en Independent body-free TraceMap on successful construction, retaining existing resolved paths; mutable lookup caches do not share the caller instance/caches.
+   */
   traceMap?: TraceMap;
 }
 
-/** @lang zh-CN 普通/null原型自有数据选项；可选偏置省略时统一向下最近，未知值拒绝。 @lang en Plain/null-prototype own-data options; omitted bias consistently defaults to greatest lower bound, while unknown values are rejected. */
+/**
+ * @lang zh-CN 普通/null原型自有数据选项；可选偏置省略时统一向下最近，未知值拒绝。
+ * @lang en Plain/null-prototype own-data options; omitted bias consistently defaults to greatest lower bound, while unknown values are rejected.
+ */
 export interface OrdinarySourceMapLookupOptions {
-  /** @lang zh-CN greatest-lower-bound或least-upper-bound查找偏置；省略时采用greatest-lower-bound，不进行坐标插值。 @lang en Lookup bias, greatest-lower-bound or least-upper-bound; omission uses greatest-lower-bound without coordinate interpolation. */
+  /**
+   * @lang zh-CN greatest-lower-bound或least-upper-bound查找偏置；省略时采用greatest-lower-bound，不进行坐标插值。
+   * @lang en Lookup bias, greatest-lower-bound or least-upper-bound; omission uses greatest-lower-bound without coordinate interpolation.
+   */
   bias?: OrdinarySourceMapBias;
 }
 
@@ -422,11 +698,20 @@ export interface OrdinarySourceMapLookupOptions {
  * @lang en Original-position context or successful mapping; direct-helper input echoes borrow the original position, while mapped outputs/combined snapshots have separate ownership.
  */
 export interface SourceMapOriginalPosition {
-  /** @lang zh-CN 库映射提供的可选非空符号名；输入上下文不推导name，无名映射省略此字段。 @lang en Optional nonempty symbol name supplied by a mapping; input context does not infer names and nameless mappings omit it. */
+  /**
+   * @lang zh-CN 库映射提供的可选非空符号名；输入上下文不推导name，无名映射省略此字段。
+   * @lang en Optional nonempty symbol name supplied by a mapping; input context does not infer names and nameless mappings omit it.
+   */
   name?: string;
-  /** @lang zh-CN HIA一基行/列；映射输出新建坐标，直接反向helper回显原position对象并保留省略列，非法runtime回显不是类型证明。 @lang en HIA one-based line/column; mapped outputs have fresh coordinates, direct reverse helpers echo the original position/omitted columns, and invalid runtime echoes do not prove types. */
+  /**
+   * @lang zh-CN HIA一基行/列；映射输出新建坐标，直接反向helper回显原position对象并保留省略列，非法runtime回显不是类型证明。
+   * @lang en HIA one-based line/column; mapped outputs have fresh coordinates, direct reverse helpers echo the original position/omitted columns, and invalid runtime echoes do not prove types.
+   */
   position: HiaSourcePosition;
-  /** @lang zh-CN 映射输出为库解析路径的分隔符/开头./规范化文本；输入回显仅规范化primitive string，非法runtime值可能原样保留，未脱敏。 @lang en Mapped output is a separator/initial-./ normalized library-resolved path; input echoes normalize primitive strings only and may retain invalid runtime values, without sanitization. */
+  /**
+   * @lang zh-CN 映射输出为库解析路径的分隔符/开头./规范化文本；输入回显仅规范化primitive string，非法runtime值可能原样保留，未脱敏。
+   * @lang en Mapped output is a separator/initial-./ normalized library-resolved path; input echoes normalize primitive strings only and may retain invalid runtime values, without sanitization.
+   */
   sourcePath: string;
 }
 
@@ -435,9 +720,15 @@ export interface SourceMapOriginalPosition {
  * @lang en Generated-position context or mapping; presence alone does not prove success, so inspect the enclosing result status.
  */
 export interface SourceMapGeneratedPosition {
-  /** @lang zh-CN 可选非空产物上下文，规范分隔符/开头./；来自索引options或联合请求，不执行文件读取。 @lang en Optional nonempty artifact context with normalized separators/initial ./, from index options or a combined request, without file reads. */
+  /**
+   * @lang zh-CN 可选非空产物上下文，规范分隔符/开头./；来自索引options或联合请求，不执行文件读取。
+   * @lang en Optional nonempty artifact context with normalized separators/initial ./, from index options or a combined request, without file reads.
+   */
   artifactPath?: string;
-  /** @lang zh-CN HIA一基坐标；直接正向helper回显原输入引用，反向映射输出新建，联合结果使用已投影快照；无公开安全/序列化保证。 @lang en HIA one-based coordinates; direct forward helpers echo the input reference, reverse mappings create fresh coordinates, and combined results use projected snapshots, without public-safety/serialization guarantees. */
+  /**
+   * @lang zh-CN HIA一基坐标；直接正向helper回显原输入引用，反向映射输出新建，联合结果使用已投影快照；无公开安全/序列化保证。
+   * @lang en HIA one-based coordinates; direct forward helpers echo the input reference, reverse mappings create fresh coordinates, and combined results use projected snapshots, without public-safety/serialization guarantees.
+   */
   position: HiaSourcePosition;
 }
 
@@ -446,13 +737,25 @@ export interface SourceMapGeneratedPosition {
  * @lang en Generated-to-original lookup result; generated is request context and only available carries a successful original mapping.
  */
 export interface SourceMapOriginalLookupResult {
-  /** @lang zh-CN 正常/未映射/索引失败分支借用原索引列表；新增参数拒绝使用新列表并借用已有记录，均未统一深冻结。 @lang en Normal/unmapped/index-failure branches borrow the index list; new argument rejection creates a list borrowing existing records, without uniform deep freezing. */
+  /**
+   * @lang zh-CN 正常/未映射/索引失败分支借用原索引列表；新增参数拒绝使用新列表并借用已有记录，均未统一深冻结。
+   * @lang en Normal/unmapped/index-failure branches borrow the index list; new argument rejection creates a list borrowing existing records, without uniform deep freezing.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 始终保留的生成请求上下文，position借用原输入，invalid/unmapped时也存在且可能含非法runtime值。 @lang en Always-retained generated request context whose position borrows input; present even for invalid/unmapped and possibly containing invalid runtime values. */
+  /**
+   * @lang zh-CN 始终保留的生成请求上下文，position借用原输入，invalid/unmapped时也存在且可能含非法runtime值。
+   * @lang en Always-retained generated request context whose position borrows input; present even for invalid/unmapped and possibly containing invalid runtime values.
+   */
   generated: SourceMapGeneratedPosition;
-  /** @lang zh-CN available时的新建原始映射含一基坐标/解析路径及可选name；invalid/unmapped时省略。 @lang en Fresh original mapping when available, with one-based coordinates/resolved path and optional name; omitted when invalid/unmapped. */
+  /**
+   * @lang zh-CN available时的新建原始映射含一基坐标/解析路径及可选name；invalid/unmapped时省略。
+   * @lang en Fresh original mapping when available, with one-based coordinates/resolved path and optional name; omitted when invalid/unmapped.
+   */
   original?: SourceMapOriginalPosition;
-  /** @lang zh-CN available表示得到映射，unmapped表示有效但无映射，invalid表示索引或参数拒绝；不从回显字段推导。 @lang en available means mapped, unmapped means a valid miss, and invalid means rejected index/arguments; never infer it from echo fields. */
+  /**
+   * @lang zh-CN available表示得到映射，unmapped表示有效但无映射，invalid表示索引或参数拒绝；不从回显字段推导。
+   * @lang en available means mapped, unmapped means a valid miss, and invalid means rejected index/arguments; never infer it from echo fields.
+   */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
@@ -461,13 +764,25 @@ export interface SourceMapOriginalLookupResult {
  * @lang en Original-to-one-generated lookup result; original is input context, not proof of a forward mapping check.
  */
 export interface SourceMapGeneratedLookupResult {
-  /** @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建列表并复用旧记录，不修改原索引诊断。 @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list reusing old records without modifying index diagnostics. */
+  /**
+   * @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建列表并复用旧记录，不修改原索引诊断。
+   * @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list reusing old records without modifying index diagnostics.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN available时的新生成位置/坐标容器，invalid/unmapped省略；不与输入position共享坐标对象。 @lang en Fresh generated position/coordinate containers when available, omitted for invalid/unmapped and not sharing the input position. */
+  /**
+   * @lang zh-CN available时的新生成位置/坐标容器，invalid/unmapped省略；不与输入position共享坐标对象。
+   * @lang en Fresh generated position/coordinate containers when available, omitted for invalid/unmapped and not sharing the input position.
+   */
   generated?: SourceMapGeneratedPosition;
-  /** @lang zh-CN 始终保留的原始请求上下文，规范primitive来源路径且position借用原输入；不是可信/脱敏回显。 @lang en Always-retained original request context with normalized primitive source path and borrowed input position; not a trusted/sanitized echo. */
+  /**
+   * @lang zh-CN 始终保留的原始请求上下文，规范primitive来源路径且position借用原输入；不是可信/脱敏回显。
+   * @lang en Always-retained original request context with normalized primitive source path and borrowed input position; not a trusted/sanitized echo.
+   */
   original: SourceMapOriginalPosition;
-  /** @lang zh-CN available为单个映射，unmapped为有效未命中，invalid为拒绝；不同于文档map版本状态。 @lang en available for one mapping, unmapped for a valid miss and invalid for rejection, distinct from documentation-map version states. */
+  /**
+   * @lang zh-CN available为单个映射，unmapped为有效未命中，invalid为拒绝；不同于文档map版本状态。
+   * @lang en available for one mapping, unmapped for a valid miss and invalid for rejection, distinct from documentation-map version states.
+   */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
@@ -476,33 +791,72 @@ export interface SourceMapGeneratedLookupResult {
  * @lang en Original-to-all-generated result with fresh list/output coordinates, retaining library order without additional project sorting.
  */
 export interface SourceMapAllGeneratedLookupResult {
-  /** @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建含原记录与固定错误的列表。 @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list with existing records and a fixed error. */
+  /**
+   * @lang zh-CN 正常/未映射/索引失败借用索引列表；参数拒绝新建含原记录与固定错误的列表。
+   * @lang en Normal/unmapped/index-failure branches borrow the index list; argument rejection creates a list with existing records and a fixed error.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 本次新建的可变生成位置列表，逐项恢复HIA一基列；invalid/unmapped为空，不承诺跨版本库排序。 @lang en New mutable generated-position list with HIA one-based columns restored per item; empty when invalid/unmapped, without promising cross-version library ordering. */
+  /**
+   * @lang zh-CN 本次新建的可变生成位置列表，逐项恢复HIA一基列；invalid/unmapped为空，不承诺跨版本库排序。
+   * @lang en New mutable generated-position list with HIA one-based columns restored per item; empty when invalid/unmapped, without promising cross-version library ordering.
+   */
   generated: SourceMapGeneratedPosition[];
-  /** @lang zh-CN 始终保留的原始请求上下文，position仍借用调用者原对象，省略列不补入回显。 @lang en Always-retained original request context borrowing the caller position, without inserting omitted columns into the echo. */
+  /**
+   * @lang zh-CN 始终保留的原始请求上下文，position仍借用调用者原对象，省略列不补入回显。
+   * @lang en Always-retained original request context borrowing the caller position, without inserting omitted columns into the echo.
+   */
   original: SourceMapOriginalPosition;
-  /** @lang zh-CN 有结果available，无结果unmapped，拒绝invalid；空数组不能单独区分后两者。 @lang en available with results, unmapped on a valid miss and invalid on rejection; an empty list alone cannot distinguish the last two. */
+  /**
+   * @lang zh-CN 有结果available，无结果unmapped，拒绝invalid；空数组不能单独区分后两者。
+   * @lang en available with results, unmapped on a valid miss and invalid on rejection; an empty list alone cannot distinguish the last two.
+   */
   status: OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
-/** @lang zh-CN 显式位置或元数据筛选，只消费已知自有数据；双向输入的旧顺序不证明一致性。 @lang en Explicit position or metadata filters, consuming known own data only; legacy dual-input ordering does not establish consistency. */
+/**
+ * @lang zh-CN 显式位置或元数据筛选，只消费已知自有数据；双向输入的旧顺序不证明一致性。
+ * @lang en Explicit position or metadata filters, consuming known own data only; legacy dual-input ordering does not establish consistency.
+ */
 export interface SourceLinkedLookupQuery {
-  /** @lang zh-CN 可选非空白生成路径；匹配前仅规范化分隔符和首个 ./。 @lang en Optional nonblank generated path, normalizing only separators and the initial ./ for matching. */
+  /**
+   * @lang zh-CN 可选非空白生成路径；匹配前仅规范化分隔符和首个 ./。
+   * @lang en Optional nonblank generated path, normalizing only separators and the initial ./ for matching.
+   */
   generatedPath?: string;
-  /** @lang zh-CN 可选一基安全整数生成位置，省略列为1。 @lang en Optional one-based safe integer generated position, defaulting an omitted column to one. */
+  /**
+   * @lang zh-CN 可选一基安全整数生成位置，省略列为1。
+   * @lang en Optional one-based safe integer generated position, defaulting an omitted column to one.
+   */
   generatedPosition?: HiaSourcePosition;
-  /** @lang zh-CN 可选一基安全整数原始位置，配合原始路径时启用反向查找；1.1.0语义命中还要求显式列与originalColumnUnit。 @lang en Optional one-based safe integer original position enabling reverse lookup with its source path; 1.1.0 semantic hits also require an explicit column and originalColumnUnit. */
+  /**
+   * @lang zh-CN 可选一基安全整数原始位置，配合原始路径时启用反向查找；1.1.0语义命中还要求显式列与originalColumnUnit。
+   * @lang en Optional one-based safe integer original position enabling reverse lookup with its source path; 1.1.0 semantic hits also require an explicit column and originalColumnUnit.
+   */
   originalPosition?: HiaSourcePosition;
-  /** @lang zh-CN 联合查询向1.1.0语义映射传递的原始列单位；未声明时不得从普通map推断。 @lang en Original column unit passed to 1.1.0 semantic lookup; it is never inferred from an ordinary map. */
+  /**
+   * @lang zh-CN 联合查询向1.1.0语义映射传递的原始列单位；未声明时不得从普通map推断。
+   * @lang en Original column unit passed to 1.1.0 semantic lookup; it is never inferred from an ordinary map.
+   */
   originalColumnUnit?: DocSourceMapColumnUnit;
-  /** @lang zh-CN 可选非空白原始路径；旧版缺原始位置时仍未启用，新版1.1.0则作为来源元数据筛选，并须与生成位置解析路径一致。 @lang en Optional nonblank original path; older maps leave it inactive without an original position, while 1.1.0 uses it as a source metadata filter and checks it against a resolved generated-position path. */
+  /**
+   * @lang zh-CN 可选非空白原始路径；旧版缺原始位置时仍未启用，新版1.1.0则作为来源元数据筛选，并须与生成位置解析路径一致。
+   * @lang en Optional nonblank original path; older maps leave it inactive without an original position, while 1.1.0 uses it as a source metadata filter and checks it against a resolved generated-position path.
+   */
   originalSourcePath?: string;
-  /** @lang zh-CN 可选非空白精确选择器，不执行选择器。 @lang en Optional nonblank exact selector; selectors are not executed. */
+  /**
+   * @lang zh-CN 可选非空白精确选择器，不执行选择器。
+   * @lang en Optional nonblank exact selector; selectors are not executed.
+   */
   selector?: string;
-  /** @lang zh-CN 可选非空白精确符号身份，不裁剪正文。 @lang en Optional nonblank exact symbol identity, without trimming. */
+  /**
+   * @lang zh-CN 可选非空白精确符号身份，不裁剪正文。
+   * @lang en Optional nonblank exact symbol identity, without trimming.
+   */
   symbolId?: string;
-  /** @lang zh-CN 可选非空白精确符号种类。 @lang en Optional nonblank exact symbol kind. */
+  /**
+   * @lang zh-CN 可选非空白精确符号种类。
+   * @lang en Optional nonblank exact symbol kind.
+   */
   symbolKind?: string;
 }
 
@@ -511,19 +865,40 @@ export interface SourceLinkedLookupQuery {
  * @lang en Combined documentation/position result; status composes requested branches rather than recomputing the highest severity of all diagnostics, and the original query echo is unsanitized.
  */
 export interface SourceLinkedLookupResult {
-  /** @lang zh-CN 新建聚合列表，记录可借用原索引；仅普通位置收集序列按对象身份去重，不是全列表按内容去重。 @lang en New aggregate list possibly borrowing index records; only the ordinary-position collection is deduplicated by object identity, not the entire list by content. */
+  /**
+   * @lang zh-CN 新建聚合列表，记录可借用原索引；仅普通位置收集序列按对象身份去重，不是全列表按内容去重。
+   * @lang en New aggregate list possibly borrowing index records; only the ordinary-position collection is deduplicated by object identity, not the entire list by content.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN available时按语义筛选顺序新建列表并借用文档索引条目；其它状态为空，不复制/冻结条目。 @lang en Fresh list borrowing documentation-index entries in semantic-filter order when available, empty otherwise, without cloning/freezing entries. */
+  /**
+   * @lang zh-CN available时按语义筛选顺序新建列表并借用文档索引条目；其它状态为空，不复制/冻结条目。
+   * @lang en Fresh list borrowing documentation-index entries in semantic-filter order when available, empty otherwise, without cloning/freezing entries.
+   */
   entries: DocSourceMapIndexedEntry[];
-  /** @lang zh-CN 适用时保留的生成位置/请求上下文，来自库映射或已投影输入快照；invalid/unmapped/版本失败也可能存在。 @lang en Generated mapping/request context when applicable, from a library mapping or projected input snapshot; may remain for invalid/unmapped/version failures. */
+  /**
+   * @lang zh-CN 适用时保留的生成位置/请求上下文，来自库映射或已投影输入快照；invalid/unmapped/版本失败也可能存在。
+   * @lang en Generated mapping/request context when applicable, from a library mapping or projected input snapshot; may remain for invalid/unmapped/version failures.
+   */
   generated?: SourceMapGeneratedPosition;
-  /** @lang zh-CN 本次返回条目数量，非available为零；不是底层索引总数或映射段数。 @lang en Number of entries returned for this call, zero unless available; not index totals or mapping-segment count. */
+  /**
+   * @lang zh-CN 本次返回条目数量，非available为零；不是底层索引总数或映射段数。
+   * @lang en Number of entries returned for this call, zero unless available; not index totals or mapping-segment count.
+   */
   matchedEntryCount: number;
-  /** @lang zh-CN 适用时保留的库映射或原始请求快照，坐标不借用调用者query位置；文档版本失败仍可保留。 @lang en Library mapping/original request snapshot when applicable, with coordinates not borrowing caller-query positions; may remain after documentation-version failure. */
+  /**
+   * @lang zh-CN 适用时保留的库映射或原始请求快照，坐标不借用调用者query位置；文档版本失败仍可保留。
+   * @lang en Library mapping/original request snapshot when applicable, with coordinates not borrowing caller-query positions; may remain after documentation-version failure.
+   */
   original?: SourceMapOriginalPosition;
-  /** @lang zh-CN 调用者原query引用；未知环/非法runtime数据可能仍在回显中，不作可信类型/可序列化或公开安全保证。 @lang en Original caller-query reference; unknown cycles/invalid runtime data may remain in echoes, without trusted-type/serialization/public-safety guarantees. */
+  /**
+   * @lang zh-CN 调用者原query引用；未知环/非法runtime数据可能仍在回显中，不作可信类型/可序列化或公开安全保证。
+   * @lang en Original caller-query reference; unknown cycles/invalid runtime data may remain in echoes, without trusted-type/serialization/public-safety guarantees.
+   */
   query: SourceLinkedLookupQuery;
-  /** @lang zh-CN 文档可用性及被请求位置结果的组合；metadata-only不要求普通索引可用，因此可available且带其error诊断。 @lang en Composition of documentation availability and requested lookups; metadata-only requests need no available ordinary index and may be available with its error diagnostics. */
+  /**
+   * @lang zh-CN 文档可用性及被请求位置结果的组合；metadata-only不要求普通索引可用，因此可available且带其error诊断。
+   * @lang en Composition of documentation availability and requested lookups; metadata-only requests need no available ordinary index and may be available with its error diagnostics.
+   */
   status: DocSourceMapIndex["status"] | OrdinarySourceMapIndex["status"] | "unmapped";
 }
 
@@ -726,9 +1101,15 @@ export function validateDocSourceMap(value: unknown, options: DocSourceMapIndexO
   return createDocSourceMapIndex(value, options).diagnostics;
 }
 
-/** @lang zh-CN 单工件迁移的路径与逐引用精度证据选项；证据仅供旧范围升1.1.0，不能授权读取源码。 @lang en Standalone migration options for diagnostic path and per-reference precision evidence; evidence only upgrades old ranges to 1.1.0 and grants no source-read authority. */
+/**
+ * @lang zh-CN 单工件迁移的路径与逐引用精度证据选项；证据仅供旧范围升1.1.0，不能授权读取源码。
+ * @lang en Standalone migration options for diagnostic path and per-reference precision evidence; evidence only upgrades old ranges to 1.1.0 and grants no source-read authority.
+ */
 export interface DocSourceMapMigrationOptions extends DocSourceMapIndexOptions {
-  /** @lang zh-CN 旧工件每个带范围来源引用的显式约定证据，按数组序号精确匹配；无范围时省略。 @lang en Explicit convention evidence for every older ranged source reference, matched by array ordinals; omit when no ranges exist. */
+  /**
+   * @lang zh-CN 旧工件每个带范围来源引用的显式约定证据，按数组序号精确匹配；无范围时省略。
+   * @lang en Explicit convention evidence for every older ranged source reference, matched by array ordinals; omit when no ranges exist.
+   */
   rangeEvidence?: readonly DocSourceMapRangeEvidence[];
 }
 
@@ -737,7 +1118,10 @@ export interface DocSourceMapMigrationOptions extends DocSourceMapIndexOptions {
  * @lang en Mutable standalone migration result: the factory returns a fresh manifest on success and omits that own property on refusal, without changing input/disk. This interface has a status-union field and an optional record rather than a discriminated union. Manually constructed values may be inconsistent; check status, manifest presence and unknown fields separately, without inferring publication safety from the type.
  */
 export interface DocSourceMapMigrationResult {
-  /** @lang zh-CN migrated表示任一精确旧版凭必要证据升至1.1.0，already-current表示1.1.0独立复制；invalid/unsupported-version均无局部manifest。它是本次factory检查的快照，调用者修改可写结果/诊断后不会自动重算，也不是schema完整验证或公开授权。 @lang en migrated upgrades either exact older version to 1.1.0 with required evidence, while already-current independently clones 1.1.0; invalid/unsupported-version expose no partial manifest. This is a factory snapshot, not recomputed after caller edits and not proof of full schema validation or publication authority. */
+  /**
+   * @lang zh-CN migrated表示任一精确旧版凭必要证据升至1.1.0，already-current表示1.1.0独立复制；invalid/unsupported-version均无局部manifest。它是本次factory检查的快照，调用者修改可写结果/诊断后不会自动重算，也不是schema完整验证或公开授权。
+   * @lang en migrated upgrades either exact older version to 1.1.0 with required evidence, while already-current independently clones 1.1.0; invalid/unsupported-version expose no partial manifest. This is a factory snapshot, not recomputed after caller edits and not proof of full schema validation or publication authority.
+   */
   status: "migrated" | "already-current" | "invalid" | "unsupported-version";
   /**
    * @lang zh-CN factory成功时提供后置owner检查通过的新可写JSON图，跨输入/调用不共享可变节点，同一图内部共享关系保留。只复制可枚举string键，不保留原型/描述符、隐藏或Symbol扩展；保留开放JSON扩展、原诊断及显式获准正文，不自动脱敏。Record字段仍unknown，不能代替完整类型化工件或公开门禁；失败省略此属性。
@@ -767,7 +1151,10 @@ export function migrateDocSourceMap(value: unknown, options: DocSourceMapMigrati
   // <lang><zh-CN>整个迁移仅投影一次原选项，前后索引校验只获得该独立快照。</zh-CN><en>Project original options once for the entire migration; before/after index validation receives this independent snapshot only.</en></lang>
   const preparedOptions = prepareSourceLinkagePathOptions(options);
   if (!preparedOptions) return { status: "invalid", diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", "Mapping options must contain an own string diagnostic path.", "error")] };
-  /** @lang zh-CN 所有失败均通过静态文本隔离，不转发含原数据的局部索引。 @lang en Isolates every failure with static text rather than forwarding partial indexes containing source data. */
+  /**
+   * @lang zh-CN 所有失败均通过静态文本隔离，不转发含原数据的局部索引。
+   * @lang en Isolates every failure with static text rather than forwarding partial indexes containing source data.
+   */
   const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): DocSourceMapMigrationResult => ({
     status, diagnostics: [createSourceLinkageDiagnostic("DOC_SOURCE_MAP_MIGRATION_INVALID", message, "error", preparedOptions.path)]
   });
@@ -1395,7 +1782,10 @@ function isLinkedEntry(entry: DocSourceMapIndexedEntry): boolean {
   return hasUsableSource && hasUsableArtifact;
 }
 
-/** @lang zh-CN 投影已声明的查询数据；拒绝访问器/错误类型，不读取未知扩展，不修改调用者。 @lang en Projects declared query data, rejecting accessors/wrong types without reading unknown extensions or mutating callers. */
+/**
+ * @lang zh-CN 投影已声明的查询数据；拒绝访问器/错误类型，不读取未知扩展，不修改调用者。
+ * @lang en Projects declared query data, rejecting accessors/wrong types without reading unknown extensions or mutating callers.
+ */
 function prepareDocSourceMapQuery(value: unknown): DocSourceMapQuery | undefined {
   try {
     if (!isPlainQueryRecord(value)) return undefined;
@@ -1440,10 +1830,16 @@ function prepareDocSourceMapQuery(value: unknown): DocSourceMapQuery | undefined
   }
 }
 
-/** @lang zh-CN 联合查询投影的内部结果，错误类型只决定固定诊断，不携带输入正文。 @lang en Internal combined-query projection result; the error kind selects a fixed diagnostic without carrying input text. */
+/**
+ * @lang zh-CN 联合查询投影的内部结果，错误类型只决定固定诊断，不携带输入正文。
+ * @lang en Internal combined-query projection result; the error kind selects a fixed diagnostic without carrying input text.
+ */
 type PreparedSourceLinkedQuery = { query: SourceLinkedLookupQuery } | { error: "query" | "position" | "semantic" };
 
-/** @lang zh-CN 投影联合查询的五字符串与两坐标，只读已知自有描述符；反射异常收敛为固定查询错误。 @lang en Projects the combined query's five strings and two positions through known own descriptors only, converting reflection errors into fixed query failure. */
+/**
+ * @lang zh-CN 投影联合查询的五字符串与两坐标，只读已知自有描述符；反射异常收敛为固定查询错误。
+ * @lang en Projects the combined query's five strings and two positions through known own descriptors only, converting reflection errors into fixed query failure.
+ */
 function prepareSourceLinkedQuery(value: unknown): PreparedSourceLinkedQuery {
   try {
     if (!isPlainQueryRecord(value)) return { error: "query" };
@@ -1487,7 +1883,10 @@ function prepareSourceLinkedQuery(value: unknown): PreparedSourceLinkedQuery {
   }
 }
 
-/** @lang zh-CN 输入投影只接受本realm普通或null原型对象，不接受数组/类实例；反射异常由外层收敛。 @lang en Input projections accept same-realm plain/null-prototype records, excluding arrays/class instances; the caller catches reflection failures. */
+/**
+ * @lang zh-CN 输入投影只接受本realm普通或null原型对象，不接受数组/类实例；反射异常由外层收敛。
+ * @lang en Input projections accept same-realm plain/null-prototype records, excluding arrays/class instances; the caller catches reflection failures.
+ */
 function isPlainQueryRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   // <lang><zh-CN>原型仅用于数据形状判定，不沿原型读取筛选条件。</zh-CN><en>The prototype determines data shape only; filters are never read through it.</en></lang>
@@ -1495,7 +1894,10 @@ function isPlainQueryRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-/** @lang zh-CN 对已投影数据应用既有筛选交集；同路径和位置/选择器必须在同一引用命中。 @lang en Applies existing filter intersections to projected data; a path and position/selector must match the same reference. */
+/**
+ * @lang zh-CN 对已投影数据应用既有筛选交集；同路径和位置/选择器必须在同一引用命中。
+ * @lang en Applies existing filter intersections to projected data; a path and position/selector must match the same reference.
+ */
 function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSourceMapQuery, contractVersion: string | undefined): boolean {
   if (query.symbolId && entry.symbolId !== query.symbolId) {
     return false;
@@ -1522,7 +1924,10 @@ function matchesDocSourceMapQuery(entry: DocSourceMapIndexedEntry, query: DocSou
   return true;
 }
 
-/** @lang zh-CN 新版仅在端点与列单位可证明且一致时比较；旧版保留双端包含与省略列为1。 @lang en Current ranges compare only with proven matching endpoints and column units; older versions retain inclusive endpoints and omitted-column default one. */
+/**
+ * @lang zh-CN 新版仅在端点与列单位可证明且一致时比较；旧版保留双端包含与省略列为1。
+ * @lang en Current ranges compare only with proven matching endpoints and column units; older versions retain inclusive endpoints and omitted-column default one.
+ */
 function containsPosition(range: HiaSourceRange | undefined, position: HiaSourcePosition, contractVersion: string | undefined, convention?: DocSourceMapRangeConvention, queryColumnUnit?: DocSourceMapColumnUnit): boolean {
   if (!range) {
     return false;
@@ -1537,7 +1942,10 @@ function containsPosition(range: HiaSourceRange | undefined, position: HiaSource
   return comparePositions(position, range.start) >= 0 && comparePositions(position, range.end) <= 0;
 }
 
-/** @lang zh-CN 按core既有规则比较行列，缺省列为1，不推断行长或字符单位。 @lang en Compares positions under existing core rules, defaulting omitted columns to one without inferring line length or character units. */
+/**
+ * @lang zh-CN 按core既有规则比较行列，缺省列为1，不推断行长或字符单位。
+ * @lang en Compares positions under existing core rules, defaulting omitted columns to one without inferring line length or character units.
+ */
 function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): number {
   if (left.line !== right.line) {
     return left.line - right.line;
@@ -1546,7 +1954,10 @@ function comparePositions(left: HiaSourcePosition, right: HiaSourcePosition): nu
   return (left.column ?? 1) - (right.column ?? 1);
 }
 
-/** @lang zh-CN 保留原输入回显；仅primitive string规范化，非法runtime对象不执行replaceAll/toString，回显不作可信类型证明。 @lang en Retains raw input echoes, normalizing primitive strings only without invoking replaceAll/toString on invalid runtime objects; echoes never prove trusted types. */
+/**
+ * @lang zh-CN 保留原输入回显；仅primitive string规范化，非法runtime对象不执行replaceAll/toString，回显不作可信类型证明。
+ * @lang en Retains raw input echoes, normalizing primitive strings only without invoking replaceAll/toString on invalid runtime objects; echoes never prove trusted types.
+ */
 function createOriginalPosition(sourcePath: string, position: HiaSourcePosition): SourceMapOriginalPosition {
   return {
     position,
@@ -1605,7 +2016,10 @@ function invalidOrdinaryIndex(options: OrdinarySourceMapIndexOptions = {}): Ordi
   };
 }
 
-/** @lang zh-CN 只投影已知自有坐标，省略列保留；不执行getter，不读取扩展，反射异常只作失败。 @lang en Projects known own coordinates only while retaining omitted columns, without executing getters/reading extensions; reflection errors become failure only. */
+/**
+ * @lang zh-CN 只投影已知自有坐标，省略列保留；不执行getter，不读取扩展，反射异常只作失败。
+ * @lang en Projects known own coordinates only while retaining omitted columns, without executing getters/reading extensions; reflection errors become failure only.
+ */
 function prepareOrdinaryLookupPosition(value: unknown): HiaSourcePosition | undefined {
   try {
     if (!isPlainQueryRecord(value)) return undefined;
@@ -1620,7 +2034,10 @@ function prepareOrdinaryLookupPosition(value: unknown): HiaSourcePosition | unde
   }
 }
 
-/** @lang zh-CN 偏置只接受两种已声明值及undefined省略，拒绝形状/访问器/异常，不读取未知选项。 @lang en Bias accepts the two declared values or undefined omission only, rejecting invalid shapes/accessors/errors without reading unknown options. */
+/**
+ * @lang zh-CN 偏置只接受两种已声明值及undefined省略，拒绝形状/访问器/异常，不读取未知选项。
+ * @lang en Bias accepts the two declared values or undefined omission only, rejecting invalid shapes/accessors/errors without reading unknown options.
+ */
 function prepareOrdinaryLookupOptions(value: unknown): OrdinarySourceMapLookupOptions | undefined {
   try {
     if (!isPlainQueryRecord(value)) return undefined;
@@ -1635,11 +2052,17 @@ function prepareOrdinaryLookupOptions(value: unknown): OrdinarySourceMapLookupOp
   }
 }
 
-/** @lang zh-CN 返回固定坐标错误，不回显坐标对象或底层异常；不修改原索引诊断。 @lang en Returns a fixed position error without reflecting the position object or underlying exception; does not mutate index diagnostics. */
+/**
+ * @lang zh-CN 返回固定坐标错误，不回显坐标对象或底层异常；不修改原索引诊断。
+ * @lang en Returns a fixed position error without reflecting the position object or underlying exception; does not mutate index diagnostics.
+ */
 function invalidOrdinaryPositionDiagnostics(index: OrdinarySourceMapIndex): HiaDiagnostic[] {
   return [...index.diagnostics, createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_POSITION_INVALID", "HIA lookup positions require positive integer lines and optional positive integer columns.", "error", index.path)];
 }
-/** @lang zh-CN 固定路径/偏置输入拒绝，不反射原值/异常，不修改索引诊断；显式path上下文仍未脱敏。 @lang en Fixed path/bias rejection without reflecting values/errors or mutating index diagnostics; explicit path context remains unsanitized. */
+/**
+ * @lang zh-CN 固定路径/偏置输入拒绝，不反射原值/异常，不修改索引诊断；显式path上下文仍未脱敏。
+ * @lang en Fixed path/bias rejection without reflecting values/errors or mutating index diagnostics; explicit path context remains unsanitized.
+ */
 function invalidOrdinaryQueryDiagnostics(index: OrdinarySourceMapIndex): HiaDiagnostic[] {
   return [...index.diagnostics, createSourceLinkageDiagnostic("ORDINARY_SOURCE_MAP_QUERY_INVALID", "Ordinary lookup paths and options require declared primitive paths and own data bias values.", "error", index.path)];
 }

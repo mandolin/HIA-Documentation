@@ -14,28 +14,55 @@ import {
 } from "./constants.js";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 
-/** @lang zh-CN 已核查四种既有工件来源的精确映射，禁止前缀/关键词推测。 @lang en Exact mappings for four reviewed artifact origins, prohibiting prefix/keyword inference. */
+/**
+ * @lang zh-CN 已核查四种既有工件来源的精确映射，禁止前缀/关键词推测。
+ * @lang en Exact mappings for four reviewed artifact origins, prohibiting prefix/keyword inference.
+ */
 const legacyCategories: Readonly<Record<string, string>> = Object.freeze({
   "typescript-compiler": "compiler", "ordinary-source-map": "source-map", "pug-location": "parser", "htmdoc-bridge": "adapter"
 });
-/** @lang zh-CN 内部迁移准备结果，失败不返回局部工件。 @lang en Internal migration-preparation result; failures never return a partial artifact. */
+/**
+ * @lang zh-CN 内部迁移准备结果，失败不返回局部工件。
+ * @lang en Internal migration-preparation result; failures never return a partial artifact.
+ */
 export interface PreparedDocSourceMapMigration {
-  /** @lang zh-CN 完整复制后待新版验证的对象，不保证语义已通过。 @lang en Complete cloned object pending current-version validation, without a semantic-validity guarantee. */
+  /**
+   * @lang zh-CN 完整复制后待新版验证的对象，不保证语义已通过。
+   * @lang en Complete cloned object pending current-version validation, without a semantic-validity guarantee.
+   */
   manifest?: Record<string, unknown>;
-  /** @lang zh-CN 不含调用方正文的固定错误说明。 @lang en Fixed error explanation without caller bodies. */
+  /**
+   * @lang zh-CN 不含调用方正文的固定错误说明。
+   * @lang en Fixed error explanation without caller bodies.
+   */
   issue?: string;
 }
-/** @lang zh-CN 旧引用的逐项外部精度证据，按原工件数组序号精确定位，不依sourceId合并。 @lang en Per-reference external precision evidence for older maps, addressed by original array ordinals without merging duplicate source IDs. */
+/**
+ * @lang zh-CN 旧引用的逐项外部精度证据，按原工件数组序号精确定位，不依sourceId合并。
+ * @lang en Per-reference external precision evidence for older maps, addressed by original array ordinals without merging duplicate source IDs.
+ */
 export interface DocSourceMapRangeEvidence {
-  /** @lang zh-CN entries中的零基序号。 @lang en Zero-based ordinal in entries. */
+  /**
+   * @lang zh-CN entries中的零基序号。
+   * @lang en Zero-based ordinal in entries.
+   */
   entryIndex: number;
-  /** @lang zh-CN 对应sourceRefs中的零基序号。 @lang en Zero-based ordinal in that entry's sourceRefs. */
+  /**
+   * @lang zh-CN 对应sourceRefs中的零基序号。
+   * @lang en Zero-based ordinal in that entry's sourceRefs.
+   */
   sourceRefIndex: number;
-  /** @lang zh-CN 可核实的终点与列单位；unknown须显式声明，不能从来源名称推断。 @lang en Verified endpoint and column unit; unknown is explicit and never inferred from origin names. */
+  /**
+   * @lang zh-CN 可核实的终点与列单位；unknown须显式声明，不能从来源名称推断。
+   * @lang en Verified endpoint and column unit; unknown is explicit and never inferred from origin names.
+   */
   rangeConvention: DocSourceMapRangeConvention;
 }
 
-/** @lang zh-CN 内部目标版本选择，旧绑定整组可保留1.0.0配对。 @lang en Internal target-version selection so older binding bundles can retain their 1.0.0 pair. */
+/**
+ * @lang zh-CN 内部目标版本选择，旧绑定整组可保留1.0.0配对。
+ * @lang en Internal target-version selection so older binding bundles can retain their 1.0.0 pair.
+ */
 export interface DocSourceMapMigrationPreparationOptions {
   coordinatedBindings?: true;
   targetVersion?: typeof DOC_SOURCE_MAP_CONTRACT_VERSION | typeof DOC_SOURCE_MAP_1_0_0_CONTRACT_VERSION;

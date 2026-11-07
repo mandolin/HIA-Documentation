@@ -16,24 +16,48 @@ import { prepareSourceLinkagePathOptions } from "./path-options.js";
  * @lang en Own-data options for bundle migration. By default, legacy drafts advance to the published 0.2/1.0 pair while published pairs are copied independently. Only an explicit 0.3 target enters the 1.1 range convention, requiring per-reference evidence for older ranged references.
  */
 export interface GeneratedDocumentationBindingBundleMigrationOptions extends DocSourceMapIndexOptions {
-  /** @lang zh-CN 唯一可显式请求的升级目标；省略时按输入代际保持已公开配对。 @lang en The only explicit upgrade target; omission preserves the published pair appropriate to the input generation. */
+  /**
+   * @lang zh-CN 唯一可显式请求的升级目标；省略时按输入代际保持已公开配对。
+   * @lang en The only explicit upgrade target; omission preserves the published pair appropriate to the input generation.
+   */
   targetVersion?: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION;
-  /** @lang zh-CN 显式升级到0.3时旧映射每个带范围sourceRef的原数组序号与范围约定；多余、冲突或缺失均拒绝。 @lang en Original array ordinals and conventions for each older ranged map sourceRef when upgrading to 0.3; surplus, conflicting or missing evidence refuses the whole bundle. */
+  /**
+   * @lang zh-CN 显式升级到0.3时旧映射每个带范围sourceRef的原数组序号与范围约定；多余、冲突或缺失均拒绝。
+   * @lang en Original array ordinals and conventions for each older ranged map sourceRef when upgrading to 0.3; surplus, conflicting or missing evidence refuses the whole bundle.
+   */
   rangeEvidence?: readonly DocSourceMapRangeEvidence[];
-  /** @lang zh-CN 旧绑定每个带范围sourceIntent或contribution引用的独立约定证据；索引基于原sidecar/binding/contribution数组。 @lang en Independent convention evidence for each ranged old binding sourceIntent or contribution reference, indexed by the original sidecar/binding/contribution arrays. */
+  /**
+   * @lang zh-CN 旧绑定每个带范围sourceIntent或contribution引用的独立约定证据；索引基于原sidecar/binding/contribution数组。
+   * @lang en Independent convention evidence for each ranged old binding sourceIntent or contribution reference, indexed by the original sidecar/binding/contribution arrays.
+   */
   bindingRangeEvidence?: readonly GeneratedBindingRangeEvidence[];
 }
 
-/** @lang zh-CN 两类旧绑定引用共享的原数组序号与范围约定，不能以sourceId代替。 @lang en Original array ordinals and convention shared by both old binding reference kinds, never replaced by sourceId. */
+/**
+ * @lang zh-CN 两类旧绑定引用共享的原数组序号与范围约定，不能以sourceId代替。
+ * @lang en Original array ordinals and convention shared by both old binding reference kinds, never replaced by sourceId.
+ */
 interface GeneratedBindingRangeEvidenceCoordinates {
-  /** @lang zh-CN 输入bindingSidecars数组的零基序号。 @lang en Zero-based ordinal in the input bindingSidecars array. */
+  /**
+   * @lang zh-CN 输入bindingSidecars数组的零基序号。
+   * @lang en Zero-based ordinal in the input bindingSidecars array.
+   */
   sidecarIndex: number;
-  /** @lang zh-CN 该sidecar的bindings数组零基序号。 @lang en Zero-based ordinal in that sidecar's bindings array. */
+  /**
+   * @lang zh-CN 该sidecar的bindings数组零基序号。
+   * @lang en Zero-based ordinal in that sidecar's bindings array.
+   */
   bindingIndex: number;
-  /** @lang zh-CN 可核实的终点与列单位；unknown需显式声明。 @lang en Verified endpoint and column unit; unknown must be explicit. */
+  /**
+   * @lang zh-CN 可核实的终点与列单位；unknown需显式声明。
+   * @lang en Verified endpoint and column unit; unknown must be explicit.
+   */
   rangeConvention: DocSourceMapRangeConvention;
 }
-/** @lang zh-CN 精确定位旧绑定源码引用的外部证据：主意图禁止贡献序号，贡献引用必须带序号；不从映射工件相似坐标推断。 @lang en External evidence for an exact old binding source reference: sourceIntent forbids contribution ordinals and contributions require one, without inference from similar map coordinates. */
+/**
+ * @lang zh-CN 精确定位旧绑定源码引用的外部证据：主意图禁止贡献序号，贡献引用必须带序号；不从映射工件相似坐标推断。
+ * @lang en External evidence for an exact old binding source reference: sourceIntent forbids contribution ordinals and contributions require one, without inference from similar map coordinates.
+ */
 export type GeneratedBindingRangeEvidence = GeneratedBindingRangeEvidenceCoordinates & (
   { /** @lang zh-CN 主源码意图引用。 @lang en Main source-intent reference. */ kind: "sourceIntent"; contributionIndex?: never }
   | { /** @lang zh-CN 组合贡献源码引用。 @lang en Composition contribution source reference. */ kind: "contribution"; /** @lang zh-CN 原贡献数组零基序号。 @lang en Original zero-based contribution ordinal. */ contributionIndex: number }
@@ -55,13 +79,25 @@ export interface GeneratedDocumentationBindingMigrationBundle {
    */
   bindingSidecars: Record<string, unknown>[];
 }
-/** @lang zh-CN 普通可写结果interface，不是状态与bundle关联的判别联合；原子成功/拒绝形态由factory保证，人工构造或后续修改不具备同等证明。 @lang en Ordinary writable result interface, not a discriminated union tying status to bundle; the factory guarantees atomic success/refusal shapes, unlike manual construction or later edits. */
+/**
+ * @lang zh-CN 普通可写结果interface，不是状态与bundle关联的判别联合；原子成功/拒绝形态由factory保证，人工构造或后续修改不具备同等证明。
+ * @lang en Ordinary writable result interface, not a discriminated union tying status to bundle; the factory guarantees atomic success/refusal shapes, unlike manual construction or later edits.
+ */
 export interface GeneratedDocumentationBindingBundleMigrationResult {
-  /** @lang zh-CN 四值可写状态：实际升级为migrated、原配对独立复制为already-current、非法组为invalid、未知工件/目标版本为unsupported-version。它是调用时观察；修改bundle/diagnostics不重算状态，也不能仅缩小status就推断bundle存在。 @lang en Writable four-literal status: migrated for an actual upgrade, already-current for independent same-pair copying, invalid for malformed bundles and unsupported-version for unknown artifact/target versions. It is a call-time observation; later edits do not recompute status, and narrowing status alone does not prove bundle presence. */
+  /**
+   * @lang zh-CN 四值可写状态：实际升级为migrated、原配对独立复制为already-current、非法组为invalid、未知工件/目标版本为unsupported-version。它是调用时观察；修改bundle/diagnostics不重算状态，也不能仅缩小status就推断bundle存在。
+   * @lang en Writable four-literal status: migrated for an actual upgrade, already-current for independent same-pair copying, invalid for malformed bundles and unsupported-version for unknown artifact/target versions. It is a call-time observation; later edits do not recompute status, and narrowing status alone does not prove bundle presence.
+   */
   status: "migrated" | "already-current" | "invalid" | "unsupported-version";
-  /** @lang zh-CN factory仅在两种成功状态提供自有完整目标组；失败连自有bundle属性也省略，无局部产物。接口仍为可选字段，消费者须另查存在性及unknown内容；人工构造可不与status配套。复制/可写性遵循容器字段，调用者自行决定是否写出/公开，成功不是脱敏证明。 @lang en The factory supplies an own complete target bundle only for its two successful statuses; refusals omit even the own bundle property and return no partial artifacts. The interface field remains optional: consumers must separately check presence and unknown content, and manual construction need not match status. Cloning/mutability follow the container fields; callers decide whether to write/publish, without treating success as proof of sanitization. */
+  /**
+   * @lang zh-CN factory仅在两种成功状态提供自有完整目标组；失败连自有bundle属性也省略，无局部产物。接口仍为可选字段，消费者须另查存在性及unknown内容；人工构造可不与status配套。复制/可写性遵循容器字段，调用者自行决定是否写出/公开，成功不是脱敏证明。
+   * @lang en The factory supplies an own complete target bundle only for its two successful statuses; refusals omit even the own bundle property and return no partial artifacts. The interface field remains optional: consumers must separately check presence and unknown content, and manual construction need not match status. Cloning/mutability follow the container fields; callers decide whether to write/publish, without treating success as proof of sanitization.
+   */
   bundle?: GeneratedDocumentationBindingMigrationBundle;
-  /** @lang zh-CN 每次新建的可写诊断数组：成功为空，即使bundle工件内仍有获准warning/info或原文本；不汇总工件诊断。拒绝仅含一条固定GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error，不回显被拒工件自由文本，但可保留合法且未脱敏的选项path。无输入/其它调用别名，编辑列表/诊断不更新status。 @lang en Fresh writable diagnostics per call: empty on success even when bundle artifacts retain admitted warnings/info or raw text; artifact diagnostics are not aggregated. Refusal contains one fixed GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error without rejected artifact free text, but may retain a valid unsanitized options.path. No aliases to inputs or other calls; editing the list/diagnostics does not update status. */
+  /**
+   * @lang zh-CN 每次新建的可写诊断数组：成功为空，即使bundle工件内仍有获准warning/info或原文本；不汇总工件诊断。拒绝仅含一条固定GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error，不回显被拒工件自由文本，但可保留合法且未脱敏的选项path。无输入/其它调用别名，编辑列表/诊断不更新status。
+   * @lang en Fresh writable diagnostics per call: empty on success even when bundle artifacts retain admitted warnings/info or raw text; artifact diagnostics are not aggregated. Refusal contains one fixed GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID error without rejected artifact free text, but may retain a valid unsanitized options.path. No aliases to inputs or other calls; editing the list/diagnostics does not update status.
+   */
   diagnostics: HiaDiagnostic[];
 }
 
@@ -78,7 +114,10 @@ export interface GeneratedDocumentationBindingBundleMigrationResult {
 export function migrateGeneratedDocumentationBindingBundle(value: unknown, options: GeneratedDocumentationBindingBundleMigrationOptions = {}): GeneratedDocumentationBindingBundleMigrationResult {
   // <lang><zh-CN>路径是非公开保证的诊断上下文；先复制，后续输入图/失败处理不再读原options。</zh-CN><en>The path is diagnostic context without public-safety guarantees; snapshot it before input-graph checks/failure handling.</en></lang>
   const preparedOptions = prepareSourceLinkagePathOptions(options);
-  /** @lang zh-CN 失败只包含固定说明，不透传验证器中的调用者身份/正文。 @lang en Failures contain fixed explanations only, without forwarding caller identities/bodies from validators. */
+  /**
+   * @lang zh-CN 失败只包含固定说明，不透传验证器中的调用者身份/正文。
+   * @lang en Failures contain fixed explanations only, without forwarding caller identities/bodies from validators.
+   */
   const refused = (message: string, status: "invalid" | "unsupported-version" = "invalid"): GeneratedDocumentationBindingBundleMigrationResult => ({ status, diagnostics: [createHiaDiagnostic("GENERATED_DOCUMENTATION_BINDING_MIGRATION_INVALID", message, "error", preparedOptions?.path ? { targetPath: preparedOptions.path } : {})] });
   if (!preparedOptions) return refused("Migration options must contain an own string diagnostic path.");
   try {
@@ -185,7 +224,10 @@ function applyBindingRangeEvidence(sidecars: Record<string, unknown>[], inputVer
   return evidence.size === 0;
 }
 
-/** @lang zh-CN 单个旧引用仅消费精确匹配的约定证据；冲突的旧扩展不静默覆盖。 @lang en A single old reference consumes only its exact evidence; conflicting legacy extensions are never silently overwritten. */
+/**
+ * @lang zh-CN 单个旧引用仅消费精确匹配的约定证据；冲突的旧扩展不静默覆盖。
+ * @lang en A single old reference consumes only its exact evidence; conflicting legacy extensions are never silently overwritten.
+ */
 function applyBindingReferenceConvention(reference: Record<string, unknown>, key: string, evidence: Map<string, DocSourceMapRangeConvention>): boolean {
   const convention = evidence.get(key);
   if (!convention) return false;
@@ -199,14 +241,20 @@ function applyBindingReferenceConvention(reference: Record<string, unknown>, key
   return true;
 }
 
-/** @lang zh-CN 证据字段必须全部是可枚举字符串自有数据键，隐藏字段与Symbol也拒绝，避免验证与JSON投影分歧。 @lang en Evidence fields must be exactly enumerable own string keys; hidden fields and symbols also refuse, preventing validation/JSON projection drift. */
+/**
+ * @lang zh-CN 证据字段必须全部是可枚举字符串自有数据键，隐藏字段与Symbol也拒绝，避免验证与JSON投影分歧。
+ * @lang en Evidence fields must be exactly enumerable own string keys; hidden fields and symbols also refuse, preventing validation/JSON projection drift.
+ */
 function hasExactEnumerableFields(value: Record<string, unknown>, expected: string): boolean {
   return Object.keys(value).sort().join(",") === expected
     && Object.getOwnPropertyNames(value).sort().join(",") === expected
     && Object.getOwnPropertySymbols(value).length === 0;
 }
 
-/** @lang zh-CN 核显式组内配对与引用闭包，不读取外部symbol工件、不推导表达式语义。 @lang en Checks explicit group-local pairing/reference closure without reading external symbol artifacts or inferring expression semantics. */
+/**
+ * @lang zh-CN 核显式组内配对与引用闭包，不读取外部symbol工件、不推导表达式语义。
+ * @lang en Checks explicit group-local pairing/reference closure without reading external symbol artifacts or inferring expression semantics.
+ */
 function validBundle(map: Record<string, unknown>, sidecars: Record<string, unknown>[]): boolean {
   // <lang><zh-CN>文档索引先检查路径/版本/隐私，sidecar个数与身份必须精确覆盖声明。</zh-CN><en>The document index first checks paths/versions/privacy; sidecar count and identities must exactly cover declarations.</en></lang>
   const index = createDocSourceMapIndex(map);
@@ -233,7 +281,13 @@ function validBundle(map: Record<string, unknown>, sidecars: Record<string, unkn
   }
   return true;
 }
-/** @lang zh-CN 已预检对象数组视图；外层已验证的形状不在此静默修复。 @lang en Object-array view after preflight, without silently repairing shapes validated by the outer boundary. */
+/**
+ * @lang zh-CN 已预检对象数组视图；外层已验证的形状不在此静默修复。
+ * @lang en Object-array view after preflight, without silently repairing shapes validated by the outer boundary.
+ */
 function records(value: unknown): Record<string, unknown>[] { return Array.isArray(value) ? value.filter(record) : []; }
-/** @lang zh-CN 普通JSON预检后的对象判断，不提供独立沙箱。 @lang en Object check after ordinary-JSON preflight, without an independent sandbox. */
+/**
+ * @lang zh-CN 普通JSON预检后的对象判断，不提供独立沙箱。
+ * @lang en Object check after ordinary-JSON preflight, without an independent sandbox.
+ */
 function record(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }

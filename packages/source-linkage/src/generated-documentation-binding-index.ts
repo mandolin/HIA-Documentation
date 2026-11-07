@@ -38,13 +38,22 @@ import type {
  * executes adapter expressions or locals.
  */
 export interface GeneratedDocumentationBindingIndexOptions {
-  /** @lang zh-CN 必需自有数据引用，来自本包工厂且嵌套数组/条目未篡改；头部检查不是来源认证。 @lang en Required own-data reference from this package's factory with untampered nested arrays/entries; header checks do not authenticate origin. */
+  /**
+   * @lang zh-CN 必需自有数据引用，来自本包工厂且嵌套数组/条目未篡改；头部检查不是来源认证。
+   * @lang en Required own-data reference from this package's factory with untampered nested arrays/entries; header checks do not authenticate origin.
+   */
   docSourceMapIndex: DocSourceMapIndex;
-  /** @lang zh-CN 可选自有string诊断上下文，原空/空白行为保持且未脱敏。 @lang en Optional own string diagnostic context retaining prior empty/whitespace behavior and remaining unsanitized. */
+  /**
+   * @lang zh-CN 可选自有string诊断上下文，原空/空白行为保持且未脱敏。
+   * @lang en Optional own string diagnostic context retaining prior empty/whitespace behavior and remaining unsanitized.
+   */
   path?: string;
 }
 
-/** @lang zh-CN 仅包含实际消费头部的内部视图；数组借用而非深复制/认证。 @lang en Internal view containing consumed headers only; arrays are borrowed rather than deeply copied/authenticated. */
+/**
+ * @lang zh-CN 仅包含实际消费头部的内部视图；数组借用而非深复制/认证。
+ * @lang en Internal view containing consumed headers only; arrays are borrowed rather than deeply copied/authenticated.
+ */
 type BindingDocSourceMapView = Pick<DocSourceMapIndex, "contract" | "contractVersion" | "id" | "status" | "diagnostics" | "entries" | "bindingSidecars" | "entryCount">;
 
 /**
@@ -53,33 +62,75 @@ type BindingDocSourceMapView = Pick<DocSourceMapIndex, "contract" | "contractVer
  * @remarks <lang><zh-CN>需保持工厂结果未篡改。诊断列表冻结，但继承的诊断记录未统一深冻结；本索引含来源身份/范围，不是宿主公开安全投影或原工件的保真副本。</zh-CN><en>Factory results must remain untampered. The diagnostic list is frozen, but inherited diagnostic records are not uniformly deep-frozen. This index carries source identities/ranges and is neither a public-safe host projection nor a lossless artifact copy.</en></lang>
  */
 export interface GeneratedDocumentationBindingIndex {
-  /** @lang zh-CN 规范化绑定数量；失败索引为零。 @lang en Number of normalized bindings, zero for failed indexes. */
+  /**
+   * @lang zh-CN 规范化绑定数量；失败索引为零。
+   * @lang en Number of normalized bindings, zero for failed indexes.
+   */
   bindingCount: number;
-  /** @lang zh-CN 按sidecar声明顺序的冻结绑定列表，查询可借用其节点。 @lang en Frozen bindings in sidecar declaration order; queries may borrow these nodes. */
+  /**
+   * @lang zh-CN 按sidecar声明顺序的冻结绑定列表，查询可借用其节点。
+   * @lang en Frozen bindings in sidecar declaration order; queries may borrow these nodes.
+   */
   bindings: readonly GeneratedDocumentationBindingIndexedBinding[];
-  /** @lang zh-CN 固定绑定契约名，不认证输入来源。 @lang en Fixed binding contract name, not input-origin authentication. */
+  /**
+   * @lang zh-CN 固定绑定契约名，不认证输入来源。
+   * @lang en Fixed binding contract name, not input-origin authentication.
+   */
   contract: typeof GENERATED_DOCUMENTATION_BINDING_CONTRACT;
-  /** @lang zh-CN 原输入自有非空版本标签，失败时也可能未知或省略，不是兼容证明。 @lang en Original own nonempty version label, potentially unknown/omitted on failure, not proof of compatibility. */
+  /**
+   * @lang zh-CN 原输入自有非空版本标签，失败时也可能未知或省略，不是兼容证明。
+   * @lang en Original own nonempty version label, potentially unknown/omitted on failure, not proof of compatibility.
+   */
   contractVersion?: string;
-  /** @lang zh-CN 映射、owner校验、验证通过的提取及联接诊断，按阶段/原顺序保留重复项；提取仅复制code/severity与固定正文，不复制id/subjectId/扩展。任意error使关系为空。 @lang en Map, owner-validation, validated extraction and linkage diagnostics in stage/input order with duplicates; extraction copies only code/severity and fixed text, excluding id/subjectId/extensions. Any error empties relations. */
+  /**
+   * @lang zh-CN 映射、owner校验、验证通过的提取及联接诊断，按阶段/原顺序保留重复项；提取仅复制code/severity与固定正文，不复制id/subjectId/扩展。任意error使关系为空。
+   * @lang en Map, owner-validation, validated extraction and linkage diagnostics in stage/input order with duplicates; extraction copies only code/severity and fixed text, excluding id/subjectId/extensions. Any error empties relations.
+   */
   diagnostics: readonly HiaDiagnostic[];
-  /** @lang zh-CN 可用索引所配映射的全部条目数，不限于有关联的条目；失败为零。 @lang en All entries in the paired map for an available index, not just linked entries; zero on failure. */
+  /**
+   * @lang zh-CN 可用索引所配映射的全部条目数，不限于有关联的条目；失败为零。
+   * @lang en All entries in the paired map for an available index, not just linked entries; zero on failure.
+   */
   docSourceMapEntryCount: number;
-  /** @lang zh-CN 规范化全局展开数量，非目标数量。 @lang en Global normalized expansion count, not a target count. */
+  /**
+   * @lang zh-CN 规范化全局展开数量，非目标数量。
+   * @lang en Global normalized expansion count, not a target count.
+   */
   expansionCount: number;
-  /** @lang zh-CN 按原声明顺序的冻结展开列表，不按order排序。 @lang en Frozen expansions in original declaration order, never sorted by order. */
+  /**
+   * @lang zh-CN 按原声明顺序的冻结展开列表，不按order排序。
+   * @lang en Frozen expansions in original declaration order, never sorted by order.
+   */
   expansions: readonly GeneratedDocumentationBindingIndexedExpansion[];
-  /** @lang zh-CN 关联任一绑定的唯一文档条目数，同条目跨绑定仅计一次。 @lang en Unique documentation entries linked to any binding, counted once across bindings. */
+  /**
+   * @lang zh-CN 关联任一绑定的唯一文档条目数，同条目跨绑定仅计一次。
+   * @lang en Unique documentation entries linked to any binding, counted once across bindings.
+   */
   linkedDocSourceMapEntryCount: number;
-  /** @lang zh-CN 原sidecar非空身份，失败时也可保留；不是路径或信任信号。 @lang en Original nonempty sidecar identity, possibly retained on failure; neither a path nor trust signal. */
+  /**
+   * @lang zh-CN 原sidecar非空身份，失败时也可保留；不是路径或信任信号。
+   * @lang en Original nonempty sidecar identity, possibly retained on failure; neither a path nor trust signal.
+   */
   sidecarId?: string;
-  /** @lang zh-CN 既有可用/非法/不支持版本状态；只有available携带可消费关系。 @lang en Existing available/invalid/unsupported-version state; only available carries consumable relations. */
+  /**
+   * @lang zh-CN 既有可用/非法/不支持版本状态；只有available携带可消费关系。
+   * @lang en Existing available/invalid/unsupported-version state; only available carries consumable relations.
+   */
   status: "available" | "invalid" | "unsupported-version";
-  /** @lang zh-CN 全局规范化目标数，共享目标按身份只计一次。 @lang en Global normalized target count, counting shared identities once. */
+  /**
+   * @lang zh-CN 全局规范化目标数，共享目标按身份只计一次。
+   * @lang en Global normalized target count, counting shared identities once.
+   */
   targetCount: number;
-  /** @lang zh-CN 按sidecar目标声明顺序的冻结列表，可含无展开引用的声明目标。 @lang en Frozen targets in sidecar declaration order, potentially including declared targets with no expansion references. */
+  /**
+   * @lang zh-CN 按sidecar目标声明顺序的冻结列表，可含无展开引用的声明目标。
+   * @lang en Frozen targets in sidecar declaration order, potentially including declared targets with no expansion references.
+   */
   targets: readonly GeneratedDocumentationBindingIndexedTarget[];
-  /** @lang zh-CN 无文档条目关联的绑定数量，不等于无目标绑定数。 @lang en Bindings without linked documentation entries, not bindings without targets. */
+  /**
+   * @lang zh-CN 无文档条目关联的绑定数量，不等于无目标绑定数。
+   * @lang en Bindings without linked documentation entries, not bindings without targets.
+   */
   unlinkedBindingCount: number;
 }
 
@@ -88,25 +139,55 @@ export interface GeneratedDocumentationBindingIndex {
  * @lang en Indexed binding summary retaining source/scope and ordered relation edges without executing references.
  */
 export interface GeneratedDocumentationBindingIndexedBinding {
-  /** @lang zh-CN 原语言适配器身份。 @lang en Original language-adapter identity. */
+  /**
+   * @lang zh-CN 原语言适配器身份。
+   * @lang en Original language-adapter identity.
+   */
   adapterId: string;
-  /** @lang zh-CN 声明/成员路径摘要，不是可执行表达式。 @lang en Declaration/member-path summary, not an executable expression. */
+  /**
+   * @lang zh-CN 声明/成员路径摘要，不是可执行表达式。
+   * @lang en Declaration/member-path summary, not an executable expression.
+   */
   bindingRef: GeneratedDocumentationBindingReference;
-  /** @lang zh-CN 组合策略与贡献身份摘要，无贡献正文或覆盖上下文。 @lang en Composition policy/contribution-identity summary without contribution bodies or override contexts. */
+  /**
+   * @lang zh-CN 组合策略与贡献身份摘要，无贡献正文或覆盖上下文。
+   * @lang en Composition policy/contribution-identity summary without contribution bodies or override contexts.
+   */
   composition: GeneratedDocumentationBindingComposition;
-  /** @lang zh-CN 按映射条目遍历顺序收集并去重的条目身份。 @lang en Entry identities collected and deduplicated in map-entry traversal order. */
+  /**
+   * @lang zh-CN 按映射条目遍历顺序收集并去重的条目身份。
+   * @lang en Entry identities collected and deduplicated in map-entry traversal order.
+   */
   docSourceMapEntryIds: readonly string[];
-  /** @lang zh-CN 按全局展开遍历顺序收集的展开身份。 @lang en Expansion identities collected in global expansion traversal order. */
+  /**
+   * @lang zh-CN 按全局展开遍历顺序收集的展开身份。
+   * @lang en Expansion identities collected in global expansion traversal order.
+   */
   expansionIds: readonly string[];
-  /** @lang zh-CN 原绑定不透明身份，字符串原样保留。 @lang en Original opaque binding identity retained verbatim. */
+  /**
+   * @lang zh-CN 原绑定不透明身份，字符串原样保留。
+   * @lang en Original opaque binding identity retained verbatim.
+   */
   id: string;
-  /** @lang zh-CN 绑定自身的三个独立质量维度。 @lang en The binding's own three independent quality dimensions. */
+  /**
+   * @lang zh-CN 绑定自身的三个独立质量维度。
+   * @lang en The binding's own three independent quality dimensions.
+   */
   resolution: GeneratedDocumentationBindingResolution;
-  /** @lang zh-CN 结构化作用域摘要，不包含别名列表。 @lang en Structured scope summary excluding aliases. */
+  /**
+   * @lang zh-CN 结构化作用域摘要，不包含别名列表。
+   * @lang en Structured scope summary excluding aliases.
+   */
   scope: GeneratedDocumentationBindingScope;
-  /** @lang zh-CN 意图类别/字段及来源身份/范围摘要，不保留locale或未知扩展。 @lang en Intent kind/field and source identity/range summary without locale or unknown extensions. */
+  /**
+   * @lang zh-CN 意图类别/字段及来源身份/范围摘要，不保留locale或未知扩展。
+   * @lang en Intent kind/field and source identity/range summary without locale or unknown extensions.
+   */
   sourceIntent: GeneratedDocumentationBindingSourceIntent;
-  /** @lang zh-CN 展开边首次出现顺序去重的目标身份，不是目标声明顺序。 @lang en Target identities deduplicated in first-seen expansion-edge order, not target declaration order. */
+  /**
+   * @lang zh-CN 展开边首次出现顺序去重的目标身份，不是目标声明顺序。
+   * @lang en Target identities deduplicated in first-seen expansion-edge order, not target declaration order.
+   */
   targetIds: readonly string[];
 }
 
@@ -115,19 +196,40 @@ export interface GeneratedDocumentationBindingIndexedBinding {
  * @lang en One expansion between a declaration and generated targets, retaining original order and independent quality dimensions.
  */
 export interface GeneratedDocumentationBindingIndexedExpansion {
-  /** @lang zh-CN 原所属绑定身份。 @lang en Original owning binding identity. */
+  /**
+   * @lang zh-CN 原所属绑定身份。
+   * @lang en Original owning binding identity.
+   */
   bindingId: string;
-  /** @lang zh-CN 原展开身份。 @lang en Original expansion identity. */
+  /**
+   * @lang zh-CN 原展开身份。
+   * @lang en Original expansion identity.
+   */
   id: string;
-  /** @lang zh-CN 原实例键状态/值/来源及隐私声明，不运行实例表达式。 @lang en Original key state/value/origin and privacy declaration, without evaluating instance expressions. */
+  /**
+   * @lang zh-CN 原实例键状态/值/来源及隐私声明，不运行实例表达式。
+   * @lang en Original key state/value/origin and privacy declaration, without evaluating instance expressions.
+   */
   instanceKey: GeneratedDocumentationBindingInstanceKey;
-  /** @lang zh-CN 原非负安全整数次序元数据，列表不据此重排。 @lang en Original nonnegative safe-integer order metadata, never used to reorder the list. */
+  /**
+   * @lang zh-CN 原非负安全整数次序元数据，列表不据此重排。
+   * @lang en Original nonnegative safe-integer order metadata, never used to reorder the list.
+   */
   order: number;
-  /** @lang zh-CN 展开自身的质量三维。 @lang en This expansion's own quality dimensions. */
+  /**
+   * @lang zh-CN 展开自身的质量三维。
+   * @lang en This expansion's own quality dimensions.
+   */
   resolution: GeneratedDocumentationBindingResolution;
-  /** @lang zh-CN 原展开scope身份，不推导文件系统位置。 @lang en Original expansion scope identity, without inferring filesystem locations. */
+  /**
+   * @lang zh-CN 原展开scope身份，不推导文件系统位置。
+   * @lang en Original expansion scope identity, without inferring filesystem locations.
+   */
   scopeId: string;
-  /** @lang zh-CN 原展开目标引用列表的规范化冻结副本。 @lang en Normalized frozen copy of the expansion's target references. */
+  /**
+   * @lang zh-CN 原展开目标引用列表的规范化冻结副本。
+   * @lang en Normalized frozen copy of the expansion's target references.
+   */
   targetIds: readonly string[];
 }
 
@@ -136,99 +238,219 @@ export interface GeneratedDocumentationBindingIndexedExpansion {
  * @lang en Frozen target-to-binding summary with globally linked edges and an optional generated range.
  */
 export interface GeneratedDocumentationBindingIndexedTarget {
-  /** @lang zh-CN 按展开边首次出现顺序去重的绑定身份。 @lang en Binding identities deduplicated in first-seen expansion-edge order. */
+  /**
+   * @lang zh-CN 按展开边首次出现顺序去重的绑定身份。
+   * @lang en Binding identities deduplicated in first-seen expansion-edge order.
+   */
   bindingIds: readonly string[];
-  /** @lang zh-CN 按目标绑定边汇总其全部条目并首次出现去重，可跨多个绑定。 @lang en All entries aggregated through target binding edges and first-seen deduplicated across bindings. */
+  /**
+   * @lang zh-CN 按目标绑定边汇总其全部条目并首次出现去重，可跨多个绑定。
+   * @lang en All entries aggregated through target binding edges and first-seen deduplicated across bindings.
+   */
   docSourceMapEntryIds: readonly string[];
-  /** @lang zh-CN 引用此目标的展开身份，按展开遍历顺序保留。 @lang en Referencing expansion identities in expansion traversal order. */
+  /**
+   * @lang zh-CN 引用此目标的展开身份，按展开遍历顺序保留。
+   * @lang en Referencing expansion identities in expansion traversal order.
+   */
   expansionIds: readonly string[];
-  /** @lang zh-CN 原目标不透明身份，不是URL。 @lang en Original opaque target identity, not a URL. */
+  /**
+   * @lang zh-CN 原目标不透明身份，不是URL。
+   * @lang en Original opaque target identity, not a URL.
+   */
   id: string;
-  /** @lang zh-CN 目标类别/工件/符号/选择器/范围摘要，不执行DOM查找。 @lang en Target kind/artifact/symbol/selector/range summary without DOM lookup. */
+  /**
+   * @lang zh-CN 目标类别/工件/符号/选择器/范围摘要，不执行DOM查找。
+   * @lang en Target kind/artifact/symbol/selector/range summary without DOM lookup.
+   */
   identity: GeneratedDocumentationBindingTargetIdentity;
-  /** @lang zh-CN 目标自身的质量三维。 @lang en This target's own quality dimensions. */
+  /**
+   * @lang zh-CN 目标自身的质量三维。
+   * @lang en This target's own quality dimensions.
+   */
   resolution: GeneratedDocumentationBindingResolution;
 }
 
-/** @lang zh-CN 受限声明引用摘要，不是完整adapter AST或执行入口。 @lang en Restricted declaration-reference summary, neither a complete adapter AST nor execution entry. */
+/**
+ * @lang zh-CN 受限声明引用摘要，不是完整adapter AST或执行入口。
+ * @lang en Restricted declaration-reference summary, neither a complete adapter AST nor execution entry.
+ */
 export interface GeneratedDocumentationBindingReference {
-  /** @lang zh-CN 原引用类别。 @lang en Original reference kind. */
+  /**
+   * @lang zh-CN 原引用类别。
+   * @lang en Original reference kind.
+   */
   kind: string;
-  /** @lang zh-CN 规范化非空成员路径段列表，可为空列表，独立冻结。 @lang en Independently frozen list of normalized nonempty member-path segments, possibly empty. */
+  /**
+   * @lang zh-CN 规范化非空成员路径段列表，可为空列表，独立冻结。
+   * @lang en Independently frozen list of normalized nonempty member-path segments, possibly empty.
+   */
   memberPath: readonly string[];
-  /** @lang zh-CN 原根声明身份，不解析成程序表达式。 @lang en Original root-declaration identity, never parsed as a program expression. */
+  /**
+   * @lang zh-CN 原根声明身份，不解析成程序表达式。
+   * @lang en Original root-declaration identity, never parsed as a program expression.
+   */
   rootDeclarationId: string;
 }
 
-/** @lang zh-CN 上游文档意图的索引摘要，来源数据不代表公开许可。 @lang en Indexed upstream documentation-intent summary; source metadata grants no publication permission. */
+/**
+ * @lang zh-CN 上游文档意图的索引摘要，来源数据不代表公开许可。
+ * @lang en Indexed upstream documentation-intent summary; source metadata grants no publication permission.
+ */
 export interface GeneratedDocumentationBindingSourceIntent {
-  /** @lang zh-CN 非空意图字段标签才保留。 @lang en Retained only for a nonempty intent-field label. */
+  /**
+   * @lang zh-CN 非空意图字段标签才保留。
+   * @lang en Retained only for a nonempty intent-field label.
+   */
   field?: string;
-  /** @lang zh-CN 原意图类别。 @lang en Original intent kind. */
+  /**
+   * @lang zh-CN 原意图类别。
+   * @lang en Original intent kind.
+   */
   kind: string;
-  /** @lang zh-CN 原sourceRef中的非空来源身份，不自动解析路径。 @lang en Nonempty source identity from sourceRef without automatic path resolution. */
+  /**
+   * @lang zh-CN 原sourceRef中的非空来源身份，不自动解析路径。
+   * @lang en Nonempty source identity from sourceRef without automatic path resolution.
+   */
   sourceId?: string;
-  /** @lang zh-CN 一基行列的规范化冻结来源范围，原省略列保持省略，不重新解释端点约定。 @lang en Normalized frozen source range with one-based coordinates, preserving omitted columns without reinterpreting endpoint conventions. */
+  /**
+   * @lang zh-CN 一基行列的规范化冻结来源范围，原省略列保持省略，不重新解释端点约定。
+   * @lang en Normalized frozen source range with one-based coordinates, preserving omitted columns without reinterpreting endpoint conventions.
+   */
   sourceRange?: HiaSourceRange;
 }
 
-/** @lang zh-CN 保留冻结scope身份的结构摘要，不把别名作为身份。 @lang en Structural summary of frozen scope identity without using aliases as identity. */
+/**
+ * @lang zh-CN 保留冻结scope身份的结构摘要，不把别名作为身份。
+ * @lang en Structural summary of frozen scope identity without using aliases as identity.
+ */
 export interface GeneratedDocumentationBindingScope {
-  /** @lang zh-CN 原scope适配器身份。 @lang en Original scope adapter identity. */
+  /**
+   * @lang zh-CN 原scope适配器身份。
+   * @lang en Original scope adapter identity.
+   */
   adapterId: string;
-  /** @lang zh-CN 原声明槽标签，不运行槽内代码。 @lang en Original declaration-slot label, without executing slot code. */
+  /**
+   * @lang zh-CN 原声明槽标签，不运行槽内代码。
+   * @lang en Original declaration-slot label, without executing slot code.
+   */
   declarationSlot: string;
-  /** @lang zh-CN 原结构化不透明scope身份。 @lang en Original structured opaque scope identity. */
+  /**
+   * @lang zh-CN 原结构化不透明scope身份。
+   * @lang en Original structured opaque scope identity.
+   */
   id: string;
-  /** @lang zh-CN 原语义祖先标签顺序的冻结副本。 @lang en Frozen copy of semantic-ancestry labels in original order. */
+  /**
+   * @lang zh-CN 原语义祖先标签顺序的冻结副本。
+   * @lang en Frozen copy of semantic-ancestry labels in original order.
+   */
   semanticAncestry: readonly string[];
-  /** @lang zh-CN 原scope来源身份，不是文件读取授权。 @lang en Original scope source identity, not file-read authority. */
+  /**
+   * @lang zh-CN 原scope来源身份，不是文件读取授权。
+   * @lang en Original scope source identity, not file-read authority.
+   */
   sourceId: string;
 }
 
-/** @lang zh-CN 三个独立质量标签，由owner检查配对；索引不重算综合分数。 @lang en Three independent quality labels whose pairings are owner-validated; indexing computes no combined score. */
+/**
+ * @lang zh-CN 三个独立质量标签，由owner检查配对；索引不重算综合分数。
+ * @lang en Three independent quality labels whose pairings are owner-validated; indexing computes no combined score.
+ */
 export interface GeneratedDocumentationBindingResolution {
-  /** @lang zh-CN 原confidence标签。 @lang en Original confidence label. */
+  /**
+   * @lang zh-CN 原confidence标签。
+   * @lang en Original confidence label.
+   */
   confidence: string;
-  /** @lang zh-CN 来源覆盖标签，generated-only不是解析类别。 @lang en Provenance-coverage label; generated-only is not a resolution kind. */
+  /**
+   * @lang zh-CN 来源覆盖标签，generated-only不是解析类别。
+   * @lang en Provenance-coverage label; generated-only is not a resolution kind.
+   */
   provenanceCoverage: string;
-  /** @lang zh-CN 原解析类别，不由provenance推导。 @lang en Original resolution kind, never inferred from provenance. */
+  /**
+   * @lang zh-CN 原解析类别，不由provenance推导。
+   * @lang en Original resolution kind, never inferred from provenance.
+   */
   resolutionKind: string;
 }
 
-/** @lang zh-CN 实例键的规范化只读元数据，状态与隐私声明相互独立。 @lang en Normalized read-only instance-key metadata with distinct state and privacy declarations. */
+/**
+ * @lang zh-CN 实例键的规范化只读元数据，状态与隐私声明相互独立。
+ * @lang en Normalized read-only instance-key metadata with distinct state and privacy declarations.
+ */
 export interface GeneratedDocumentationBindingInstanceKey {
-  /** @lang zh-CN 原非空规范化键才保留；missing可无键。 @lang en Retained only for a nonempty normalized key; missing states may omit it. */
+  /**
+   * @lang zh-CN 原非空规范化键才保留；missing可无键。
+   * @lang en Retained only for a nonempty normalized key; missing states may omit it.
+   */
   key?: string;
-  /** @lang zh-CN 原非空来源标签，不自动推断可信级别。 @lang en Original nonempty origin label without inferred trust. */
+  /**
+   * @lang zh-CN 原非空来源标签，不自动推断可信级别。
+   * @lang en Original nonempty origin label without inferred trust.
+   */
   origin?: string;
-  /** @lang zh-CN 仅原声明严格为true时为真，不代表整个索引可公开。 @lang en True only when the original declaration is exactly true, without authorizing publication of the whole index. */
+  /**
+   * @lang zh-CN 仅原声明严格为true时为真，不代表整个索引可公开。
+   * @lang en True only when the original declaration is exactly true, without authorizing publication of the whole index.
+   */
   privacySafe: boolean;
-  /** @lang zh-CN 原stable/unstable/missing状态，不随显示键或数组排序改变。 @lang en Original stable/unstable/missing state, unaffected by display keys or array sorting. */
+  /**
+   * @lang zh-CN 原stable/unstable/missing状态，不随显示键或数组排序改变。
+   * @lang en Original stable/unstable/missing state, unaffected by display keys or array sorting.
+   */
   status: string;
 }
 
-/** @lang zh-CN 下游目标的最小身份与可选范围，允许字符串仍未脱敏。 @lang en Minimal downstream target identity/optional range; permitted strings remain unredacted. */
+/**
+ * @lang zh-CN 下游目标的最小身份与可选范围，允许字符串仍未脱敏。
+ * @lang en Minimal downstream target identity/optional range; permitted strings remain unredacted.
+ */
 export interface GeneratedDocumentationBindingTargetIdentity {
-  /** @lang zh-CN 原非空工件身份才保留。 @lang en Retained only for a nonempty artifact identity. */
+  /**
+   * @lang zh-CN 原非空工件身份才保留。
+   * @lang en Retained only for a nonempty artifact identity.
+   */
   artifactId?: string;
-  /** @lang zh-CN 原目标类别。 @lang en Original target kind. */
+  /**
+   * @lang zh-CN 原目标类别。
+   * @lang en Original target kind.
+   */
   kind: string;
-  /** @lang zh-CN 规范化冻结生成范围，省略列不补值；不改变端点语义。 @lang en Normalized frozen generated range preserving omitted columns without changing endpoint semantics. */
+  /**
+   * @lang zh-CN 规范化冻结生成范围，省略列不补值；不改变端点语义。
+   * @lang en Normalized frozen generated range preserving omitted columns without changing endpoint semantics.
+   */
   range?: HiaSourceRange;
-  /** @lang zh-CN 原非空选择器标签，按数据处理，不执行DOM查询。 @lang en Original nonempty selector label treated as data, without DOM execution. */
+  /**
+   * @lang zh-CN 原非空选择器标签，按数据处理，不执行DOM查询。
+   * @lang en Original nonempty selector label treated as data, without DOM execution.
+   */
   selector?: string;
-  /** @lang zh-CN 原非空文档符号身份才保留，合法artifact-only目标可省略。 @lang en Retained only for a nonempty documentation-symbol identity; valid artifact-only targets may omit it. */
+  /**
+   * @lang zh-CN 原非空文档符号身份才保留，合法artifact-only目标可省略。
+   * @lang en Retained only for a nonempty documentation-symbol identity; valid artifact-only targets may omit it.
+   */
   symbolId?: string;
 }
 
-/** @lang zh-CN 继承/组合策略与贡献身份摘要，不包含来源或覆盖上下文。 @lang en Inheritance/composition policy and contribution-identity summary, excluding source/override contexts. */
+/**
+ * @lang zh-CN 继承/组合策略与贡献身份摘要，不包含来源或覆盖上下文。
+ * @lang en Inheritance/composition policy and contribution-identity summary, excluding source/override contexts.
+ */
 export interface GeneratedDocumentationBindingComposition {
-  /** @lang zh-CN 原贡献声明中非空身份按顺序收集，不重排贡献。 @lang en Nonempty contribution identities collected in declaration order without reordering contributions. */
+  /**
+   * @lang zh-CN 原贡献声明中非空身份按顺序收集，不重排贡献。
+   * @lang en Nonempty contribution identities collected in declaration order without reordering contributions.
+   */
   contributionIds: readonly string[];
-  /** @lang zh-CN 原合并策略标签，索引不重新执行合并。 @lang en Original merge-policy label; indexing does not rerun composition. */
+  /**
+   * @lang zh-CN 原合并策略标签，索引不重新执行合并。
+   * @lang en Original merge-policy label; indexing does not rerun composition.
+   */
   mergePolicy: string;
-  /** @lang zh-CN 原none/inheritance/composition关系标签。 @lang en Original none/inheritance/composition relation label. */
+  /**
+   * @lang zh-CN 原none/inheritance/composition关系标签。
+   * @lang en Original none/inheritance/composition relation label.
+   */
   relation: string;
 }
 
@@ -555,7 +777,10 @@ function prepareBindingIndexOptions(value: unknown): { docSourceMapIndex: Bindin
   }
 }
 
-/** @lang zh-CN 核对明确配对的sidecar/map身份、精确版本与路径，不以相同id推定跨版本兼容。 @lang en Checks explicitly paired sidecar/map identities, exact versions and paths without inferring cross-version compatibility from matching ids. */
+/**
+ * @lang zh-CN 核对明确配对的sidecar/map身份、精确版本与路径，不以相同id推定跨版本兼容。
+ * @lang en Checks explicitly paired sidecar/map identities, exact versions and paths without inferring cross-version compatibility from matching ids.
+ */
 function validateSidecarLinkage(
   sidecar: Record<string, unknown>,
   linkage: Record<string, unknown> | undefined,
@@ -822,7 +1047,10 @@ function createEmptyGeneratedDocumentationBindingIndex(options: {
   });
 }
 
-/** @lang zh-CN 仅读取数据描述符中的版本/id，不执行getter；反射失败返回空元数据。 @lang en Reads version/id data descriptors without executing getters; reflection failure returns empty metadata. */
+/**
+ * @lang zh-CN 仅读取数据描述符中的版本/id，不执行getter；反射失败返回空元数据。
+ * @lang en Reads version/id data descriptors without executing getters; reflection failure returns empty metadata.
+ */
 function readBindingHeader(value: unknown): { contractVersion?: string; sidecarId?: string } {
   try {
     if (typeof value !== "object" || value === null) return {};

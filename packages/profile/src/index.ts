@@ -9,20 +9,41 @@ import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@h
 import { isProfileJsonDataGraph } from "./profile-json-data.js";
 import { traverseProfileInheritance } from "./profile-graph.js";
 
-/** @lang zh-CN 当前源码定义候选的wire版本；reader另精确支持旧0.1.0-draft，与单份profileVersion/包版本独立。 @lang en Wire version of the current source-definition candidate; the reader separately supports exact legacy 0.1.0-draft, independently of individual profileVersion/package versions. */
+/**
+ * @lang zh-CN 当前源码定义候选的wire版本；reader另精确支持旧0.1.0-draft，与单份profileVersion/包版本独立。
+ * @lang en Wire version of the current source-definition candidate; the reader separately supports exact legacy 0.1.0-draft, independently of individual profileVersion/package versions.
+ */
 export const HIA_PROFILE_SCHEMA_VERSION = "1.0.0";
-/** @lang zh-CN 语义分层闭集，不自动排序或建立继承优先级；常量应只读使用。 @lang en Closed semantic layers, without automatic ordering or inheritance precedence; treat the constant as read-only. */
+/**
+ * @lang zh-CN 语义分层闭集，不自动排序或建立继承优先级；常量应只读使用。
+ * @lang en Closed semantic layers, without automatic ordering or inheritance precedence; treat the constant as read-only.
+ */
 export const HIA_PROFILE_LAYERS = ["stable", "compat", "bridge", "extension"] as const;
-/** @lang zh-CN 标签生命周期闭集，alias状态要求目标引用；常量应只读使用。 @lang en Closed tag lifecycle states, with alias status requiring a target reference; treat the constant as read-only. */
+/**
+ * @lang zh-CN 标签生命周期闭集，alias状态要求目标引用；常量应只读使用。
+ * @lang en Closed tag lifecycle states, with alias status requiring a target reference; treat the constant as read-only.
+ */
 export const HIA_PROFILE_TAG_STATUSES = ["stable", "alias", "deprecated", "reserved", "experimental"] as const;
-/** @lang zh-CN 标签适用位置闭集，不代表解析器自动具备所有位置的实现。 @lang en Closed tag scopes, without implying that parsers implement every scope. */
+/**
+ * @lang zh-CN 标签适用位置闭集，不代表解析器自动具备所有位置的实现。
+ * @lang en Closed tag scopes, without implying that parsers implement every scope.
+ */
 export const HIA_PROFILE_TAG_SCOPES = ["block", "inline", "file", "region", "directive"] as const;
-/** @lang zh-CN 声明诊断的严重度闭集，error用于阻止无效输入消费。 @lang en Closed declared diagnostic severities, with error used to block invalid-input consumption. */
+/**
+ * @lang zh-CN 声明诊断的严重度闭集，error用于阻止无效输入消费。
+ * @lang en Closed declared diagnostic severities, with error used to block invalid-input consumption.
+ */
 export const HIA_PROFILE_DIAGNOSTIC_SEVERITIES = ["info", "warning", "error"] as const;
-/** @lang zh-CN 当前schema的完整canonical身份；旧身份独立归档，不是网络抓取指令。 @lang en Complete canonical identity of the current schema; the old identity is archived independently, and this is not a network-fetch instruction. */
+/**
+ * @lang zh-CN 当前schema的完整canonical身份；旧身份独立归档，不是网络抓取指令。
+ * @lang en Complete canonical identity of the current schema; the old identity is archived independently, and this is not a network-fetch instruction.
+ */
 export const HIA_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-1.0.0.schema.json";
 
-/** @lang zh-CN 2020-12结构定义，不裁决继承环/别名链等运行时语义；导出对象应只读使用，未在运行时冻结。 @lang en 2020-12 structural definition, excluding runtime semantics such as inheritance cycles/alias chains; treat this unfrozen exported object as read-only. */
+/**
+ * @lang zh-CN 2020-12结构定义，不裁决继承环/别名链等运行时语义；导出对象应只读使用，未在运行时冻结。
+ * @lang en 2020-12 structural definition, excluding runtime semantics such as inheritance cycles/alias chains; treat this unfrozen exported object as read-only.
+ */
 export const HIA_PROFILE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: HIA_PROFILE_SCHEMA_ID,
@@ -163,195 +184,444 @@ export const HIA_PROFILE_JSON_SCHEMA = {
   }
 } as const;
 
-/** @lang zh-CN 四种已声明语义层的字面类型。 @lang en Literal type of the four declared semantic layers. */
+/**
+ * @lang zh-CN 四种已声明语义层的字面类型。
+ * @lang en Literal type of the four declared semantic layers.
+ */
 export type HiaProfileLayer = typeof HIA_PROFILE_LAYERS[number];
-/** @lang zh-CN 已声明标签生命周期的字面类型。 @lang en Literal type of declared tag lifecycle states. */
+/**
+ * @lang zh-CN 已声明标签生命周期的字面类型。
+ * @lang en Literal type of declared tag lifecycle states.
+ */
 export type HiaProfileTagStatus = typeof HIA_PROFILE_TAG_STATUSES[number];
-/** @lang zh-CN 五类标签位置的字面类型。 @lang en Literal type of the five tag scopes. */
+/**
+ * @lang zh-CN 五类标签位置的字面类型。
+ * @lang en Literal type of the five tag scopes.
+ */
 export type HiaProfileTagScope = typeof HIA_PROFILE_TAG_SCOPES[number];
-/** @lang zh-CN 声明诊断的字面严重度类型。 @lang en Literal severity type for declared diagnostics. */
+/**
+ * @lang zh-CN 声明诊断的字面严重度类型。
+ * @lang en Literal severity type for declared diagnostics.
+ */
 export type HiaProfileDiagnosticSeverity = typeof HIA_PROFILE_DIAGNOSTIC_SEVERITIES[number];
-/** @lang zh-CN 兼容输入的开放对象视图，unknown值仍须经过普通JSON检查，不是有效JSON证明。 @lang en Open object view for compatible inputs; unknown values still require ordinary-JSON validation and are not proof of valid JSON. */
+/**
+ * @lang zh-CN 兼容输入的开放对象视图，unknown值仍须经过普通JSON检查，不是有效JSON证明。
+ * @lang en Open object view for compatible inputs; unknown values still require ordinary-JSON validation and are not proof of valid JSON.
+ */
 export type HiaProfileJsonObject = Record<string, unknown>;
 
-/** @lang zh-CN 两个准入的精确wire版本；不协商未知patch/minor/预发行/build元数据。 @lang en The two admitted exact wire versions, without negotiating unknown patches/minors/prereleases/build metadata. */
+/**
+ * @lang zh-CN 两个准入的精确wire版本；不协商未知patch/minor/预发行/build元数据。
+ * @lang en The two admitted exact wire versions, without negotiating unknown patches/minors/prereleases/build metadata.
+ */
 export type HiaProfileSchemaVersion = typeof HIA_PROFILE_SCHEMA_VERSION | "0.1.0-draft";
 
-/** @lang zh-CN 配置的兼容输入视图，宽string字段不代表通过版本/闭集校验；有效对象由调用者拥有。 @lang en Compatible profile input view; broad string fields do not prove version/closed-set validation, and valid objects remain caller-owned. */
+/**
+ * @lang zh-CN 配置的兼容输入视图，宽string字段不代表通过版本/闭集校验；有效对象由调用者拥有。
+ * @lang en Compatible profile input view; broad string fields do not prove version/closed-set validation, and valid objects remain caller-owned.
+ */
 export interface HiaDocumentationProfile {
-  /** @lang zh-CN 精确wire身份；静态string保留输入兼容，runtime只接受1.0.0与0.1.0-draft，不自动改写。 @lang en Exact wire identity; static string preserves input compatibility, while runtime accepts only 1.0.0 and 0.1.0-draft without rewriting. */
+  /**
+   * @lang zh-CN 精确wire身份；静态string保留输入兼容，runtime只接受1.0.0与0.1.0-draft，不自动改写。
+   * @lang en Exact wire identity; static string preserves input compatibility, while runtime accepts only 1.0.0 and 0.1.0-draft without rewriting.
+   */
   schemaVersion: string;
-  /** @lang zh-CN 小写字母/数字/点/下划线/短横线身份，集合内唯一。 @lang en Identity using lowercase letters/digits/dot/underscore/hyphen, unique within a set. */
+  /**
+   * @lang zh-CN 小写字母/数字/点/下划线/短横线身份，集合内唯一。
+   * @lang en Identity using lowercase letters/digits/dot/underscore/hyphen, unique within a set.
+   */
   profileId: string;
-  /** @lang zh-CN 配置自身语义版本，非空文本，不由schema版本推导。 @lang en The profile's semantic version, nonempty text independent of schema version. */
+  /**
+   * @lang zh-CN 配置自身语义版本，非空文本，不由schema版本推导。
+   * @lang en The profile's semantic version, nonempty text independent of schema version.
+   */
   profileVersion: string;
-  /** @lang zh-CN 展示名称，不作为注册表主键。 @lang en Display name, not a registry key. */
+  /**
+   * @lang zh-CN 展示名称，不作为注册表主键。
+   * @lang en Display name, not a registry key.
+   */
   displayName: string;
-  /** @lang zh-CN 语义层，runtime检查四项闭集，不自动赋予排序或覆盖权。 @lang en Semantic layer, checked against four values at runtime without automatic ordering or override authority. */
+  /**
+   * @lang zh-CN 语义层，runtime检查四项闭集，不自动赋予排序或覆盖权。
+   * @lang en Semantic layer, checked against four values at runtime without automatic ordering or override authority.
+   */
   layer: HiaProfileLayer | string;
-  /** @lang zh-CN 精确父身份列表，可为空；不自动读取文件或解析版本范围。 @lang en Exact parent identity list, possibly empty, without automatic file loading or version-range resolution. */
+  /**
+   * @lang zh-CN 精确父身份列表，可为空；不自动读取文件或解析版本范围。
+   * @lang en Exact parent identity list, possibly empty, without automatic file loading or version-range resolution.
+   */
   extends: string[];
-  /** @lang zh-CN 消费/产生的契约引用，仅检查外壳，不自动验证对应artifact。 @lang en Consumed/produced contract references, with envelope checks only and no automatic artifact validation. */
+  /**
+   * @lang zh-CN 消费/产生的契约引用，仅检查外壳，不自动验证对应artifact。
+   * @lang en Consumed/produced contract references, with envelope checks only and no automatic artifact validation.
+   */
   contracts: HiaProfileContractRef[];
-  /** @lang zh-CN 适用数据面文本列表。 @lang en List of applicable data-surface names. */
+  /**
+   * @lang zh-CN 适用数据面文本列表。
+   * @lang en List of applicable data-surface names.
+   */
   targets: string[];
-  /** @lang zh-CN 本地标签声明，继承查询不回写此数组。 @lang en Local tag declarations, never rewritten by inherited queries. */
+  /**
+   * @lang zh-CN 本地标签声明，继承查询不回写此数组。
+   * @lang en Local tag declarations, never rewritten by inherited queries.
+   */
   tags: HiaProfileTagDefinition[];
-  /** @lang zh-CN 本地规则声明，不由此runtime执行。 @lang en Local rule declarations, not executed by this runtime. */
+  /**
+   * @lang zh-CN 本地规则声明，不由此runtime执行。
+   * @lang en Local rule declarations, not executed by this runtime.
+   */
   rules: HiaProfileRuleDefinition[];
-  /** @lang zh-CN 本地映射声明，不自动执行或深合并。 @lang en Local mapping declarations, without automatic execution or deep merging. */
+  /**
+   * @lang zh-CN 本地映射声明，不自动执行或深合并。
+   * @lang en Local mapping declarations, without automatic execution or deep merging.
+   */
   mappings: HiaProfileMappingDefinition[];
-  /** @lang zh-CN 本地诊断声明，与校验过程产生的诊断数组不同。 @lang en Local diagnostic declarations, distinct from diagnostics emitted by validation. */
+  /**
+   * @lang zh-CN 本地诊断声明，与校验过程产生的诊断数组不同。
+   * @lang en Local diagnostic declarations, distinct from diagnostics emitted by validation.
+   */
   diagnostics: HiaProfileDiagnosticDefinition[];
-  /** @lang zh-CN 能力元数据普通JSON，不自动授予宿主能力或权限。 @lang en Ordinary-JSON capability metadata, without automatic host capabilities or permissions. */
+  /**
+   * @lang zh-CN 能力元数据普通JSON，不自动授予宿主能力或权限。
+   * @lang en Ordinary-JSON capability metadata, without automatic host capabilities or permissions.
+   */
   capabilities: HiaProfileJsonObject;
 }
 
-/** @lang zh-CN 契约名称与可选版本/角色的开放引用外壳，不解析版本范围或网络位置。 @lang en Open reference envelope containing contract name and optional version/role, without version-range or network resolution. */
+/**
+ * @lang zh-CN 契约名称与可选版本/角色的开放引用外壳，不解析版本范围或网络位置。
+ * @lang en Open reference envelope containing contract name and optional version/role, without version-range or network resolution.
+ */
 export interface HiaProfileContractRef {
-  /** @lang zh-CN 非空契约名，不自动加载契约。 @lang en Nonempty contract name; never loads a contract automatically. */
+  /**
+   * @lang zh-CN 非空契约名，不自动加载契约。
+   * @lang en Nonempty contract name; never loads a contract automatically.
+   */
   name: string;
-  /** @lang zh-CN 可选非空版本文本，不在此解析版本范围。 @lang en Optional nonempty version text; ranges are not resolved here. */
+  /**
+   * @lang zh-CN 可选非空版本文本，不在此解析版本范围。
+   * @lang en Optional nonempty version text; ranges are not resolved here.
+   */
   version?: string;
-  /** @lang zh-CN 可选非空角色元数据。 @lang en Optional nonempty role metadata. */
+  /**
+   * @lang zh-CN 可选非空角色元数据。
+   * @lang en Optional nonempty role metadata.
+   */
   role?: string;
 }
 
-/** @lang zh-CN 本地标签外壳；aliasFor参与链解析，其它约束/映射正文保留给领域消费者。 @lang en Local tag envelope; aliasFor participates in chain resolution while other constraints/mapping content remain for domain consumers. */
+/**
+ * @lang zh-CN 本地标签外壳；aliasFor参与链解析，其它约束/映射正文保留给领域消费者。
+ * @lang en Local tag envelope; aliasFor participates in chain resolution while other constraints/mapping content remain for domain consumers.
+ */
 export interface HiaProfileTagDefinition {
-  /** @lang zh-CN 非空字面标签身份，不规范化大小写。 @lang en Nonempty literal tag identity without case normalization. */
+  /**
+   * @lang zh-CN 非空字面标签身份，不规范化大小写。
+   * @lang en Nonempty literal tag identity without case normalization.
+   */
   name: string;
-  /** @lang zh-CN runtime检查生命周期闭集；宽string兼容未知输入。 @lang en Runtime checks the closed lifecycle set; broad string supports unvalidated input. */
+  /**
+   * @lang zh-CN runtime检查生命周期闭集；宽string兼容未知输入。
+   * @lang en Runtime checks the closed lifecycle set; broad string supports unvalidated input.
+   */
   status: HiaProfileTagStatus | string;
-  /** @lang zh-CN 可选非空终点名；非空时参与链解析，alias状态必填。 @lang en Optional nonempty target name; any nonempty value participates in resolution and alias status requires it. */
+  /**
+   * @lang zh-CN 可选非空终点名；非空时参与链解析，alias状态必填。
+   * @lang en Optional nonempty target name; any nonempty value participates in resolution and alias status requires it.
+   */
   aliasFor?: string;
-  /** @lang zh-CN 位置闭集数组，可为空，不自动提供解析能力。 @lang en Possibly empty closed scope list; grants no parser capability. */
+  /**
+   * @lang zh-CN 位置闭集数组，可为空，不自动提供解析能力。
+   * @lang en Possibly empty closed scope list; grants no parser capability.
+   */
   scope: string[];
-  /** @lang zh-CN 非空文本元素数组，可为空。 @lang en Possibly empty array of nonempty target names. */
+  /**
+   * @lang zh-CN 非空文本元素数组，可为空。
+   * @lang en Possibly empty array of nonempty target names.
+   */
   targets: string[];
-  /** @lang zh-CN 可选重复声明元数据；省略不自动补false。 @lang en Optional repeatability metadata; omission does not insert false. */
+  /**
+   * @lang zh-CN 可选重复声明元数据；省略不自动补false。
+   * @lang en Optional repeatability metadata; omission does not insert false.
+   */
   repeatable?: boolean;
-  /** @lang zh-CN 可选非空语法说明，不由runtime解释。 @lang en Optional nonempty grammar description, not interpreted by runtime. */
+  /**
+   * @lang zh-CN 可选非空语法说明，不由runtime解释。
+   * @lang en Optional nonempty grammar description, not interpreted by runtime.
+   */
   valueGrammar?: string;
-  /** @lang zh-CN 冲突名称元数据，不自动执行冲突规则。 @lang en Conflict-name metadata, without automatic rule execution. */
+  /**
+   * @lang zh-CN 冲突名称元数据，不自动执行冲突规则。
+   * @lang en Conflict-name metadata, without automatic rule execution.
+   */
   conflicts?: string[];
-  /** @lang zh-CN 依赖名称元数据，不自动执行依赖规则。 @lang en Required-name metadata, without automatic rule execution. */
+  /**
+   * @lang zh-CN 依赖名称元数据，不自动执行依赖规则。
+   * @lang en Required-name metadata, without automatic rule execution.
+   */
   requires?: string[];
-  /** @lang zh-CN 普通JSON映射正文，不执行。 @lang en Ordinary-JSON mapping body, never executed. */
+  /**
+   * @lang zh-CN 普通JSON映射正文，不执行。
+   * @lang en Ordinary-JSON mapping body, never executed.
+   */
   mapsTo?: HiaProfileJsonObject;
-  /** @lang zh-CN 标签关联代码元数据；此字段不执行跨注册表引用检查。 @lang en Associated-code metadata; this field does not perform cross-registry reference checks. */
+  /**
+   * @lang zh-CN 标签关联代码元数据；此字段不执行跨注册表引用检查。
+   * @lang en Associated-code metadata; this field does not perform cross-registry reference checks.
+   */
   diagnostics?: string[];
-  /** @lang zh-CN 开放普通JSON；隐私与公开筛选仍归调用者。 @lang en Open ordinary JSON; privacy and publication filtering remain caller responsibilities. */
+  /**
+   * @lang zh-CN 开放普通JSON；隐私与公开筛选仍归调用者。
+   * @lang en Open ordinary JSON; privacy and publication filtering remain caller responsibilities.
+   */
   metadata?: HiaProfileJsonObject;
 }
 
-/** @lang zh-CN 规则外壳；optionsSchema不在此执行，messages须含string default且其它值可为空string。 @lang en Rule envelope; optionsSchema is not executed here, and messages requires a string default while other values may be empty strings. */
+/**
+ * @lang zh-CN 规则外壳；optionsSchema不在此执行，messages须含string default且其它值可为空string。
+ * @lang en Rule envelope; optionsSchema is not executed here, and messages requires a string default while other values may be empty strings.
+ */
 export interface HiaProfileRuleDefinition {
-  /** @lang zh-CN 非空规则身份，不执行该规则。 @lang en Nonempty rule identity; does not execute the rule. */
+  /**
+   * @lang zh-CN 非空规则身份，不执行该规则。
+   * @lang en Nonempty rule identity; does not execute the rule.
+   */
   ruleId: string;
-  /** @lang zh-CN 可选非空分类文本。 @lang en Optional nonempty category text. */
+  /**
+   * @lang zh-CN 可选非空分类文本。
+   * @lang en Optional nonempty category text.
+   */
   category?: string;
-  /** @lang zh-CN 可选闭集严重度元数据，不直接发出诊断。 @lang en Optional closed severity metadata; emits no diagnostic itself. */
+  /**
+   * @lang zh-CN 可选闭集严重度元数据，不直接发出诊断。
+   * @lang en Optional closed severity metadata; emits no diagnostic itself.
+   */
   defaultSeverity?: HiaProfileDiagnosticSeverity | string;
-  /** @lang zh-CN 必需的普通JSON对象；不编译或执行其关键字。 @lang en Required ordinary-JSON object; its keywords are not compiled or executed. */
+  /**
+   * @lang zh-CN 必需的普通JSON对象；不编译或执行其关键字。
+   * @lang en Required ordinary-JSON object; its keywords are not compiled or executed.
+   */
   optionsSchema: HiaProfileJsonObject;
-  /** @lang zh-CN 可选非空元素列表，空数组有效。 @lang en Optional list of nonempty items; empty arrays are valid. */
+  /**
+   * @lang zh-CN 可选非空元素列表，空数组有效。
+   * @lang en Optional list of nonempty items; empty arrays are valid.
+   */
   appliesTo?: string[];
-  /** @lang zh-CN 必需default文本，所有值可为空文本；不自动翻译。 @lang en Requires default text; all values may be empty strings, without automatic translation. */
+  /**
+   * @lang zh-CN 必需default文本，所有值可为空文本；不自动翻译。
+   * @lang en Requires default text; all values may be empty strings, without automatic translation.
+   */
   messages: Record<string, string>;
-  /** @lang zh-CN 可选修复能力元数据，不授予写入权限。 @lang en Optional fixability metadata, granting no write permission. */
+  /**
+   * @lang zh-CN 可选修复能力元数据，不授予写入权限。
+   * @lang en Optional fixability metadata, granting no write permission.
+   */
   fixable?: boolean;
-  /** @lang zh-CN 可选建议能力元数据，不执行建议。 @lang en Optional suggestion-capability metadata, without executing suggestions. */
+  /**
+   * @lang zh-CN 可选建议能力元数据，不执行建议。
+   * @lang en Optional suggestion-capability metadata, without executing suggestions.
+   */
   hasSuggestions?: boolean;
-  /** @lang zh-CN 开放普通JSON正文。 @lang en Open ordinary-JSON content. */
+  /**
+   * @lang zh-CN 开放普通JSON正文。
+   * @lang en Open ordinary-JSON content.
+   */
   metadata?: HiaProfileJsonObject;
 }
 
-/** @lang zh-CN 映射文本与策略元数据，不构成可执行代码；diagnostics只检查声明引用。 @lang en Mapping text and policy metadata, not executable code; diagnostics only checks declaration references. */
+/**
+ * @lang zh-CN 映射文本与策略元数据，不构成可执行代码；diagnostics只检查声明引用。
+ * @lang en Mapping text and policy metadata, not executable code; diagnostics only checks declaration references.
+ */
 export interface HiaProfileMappingDefinition {
-  /** @lang zh-CN 非空映射源描述，不作为自动读取路径。 @lang en Nonempty mapping-source description, not an automatic read path. */
+  /**
+   * @lang zh-CN 非空映射源描述，不作为自动读取路径。
+   * @lang en Nonempty mapping-source description, not an automatic read path.
+   */
   from: string;
-  /** @lang zh-CN 非空映射目标描述，不执行转换。 @lang en Nonempty mapping-target description, without executing a transformation. */
+  /**
+   * @lang zh-CN 非空映射目标描述，不执行转换。
+   * @lang en Nonempty mapping-target description, without executing a transformation.
+   */
   to: string;
-  /** @lang zh-CN 可选条件名称列表，不求值。 @lang en Optional condition-name list, never evaluated. */
+  /**
+   * @lang zh-CN 可选条件名称列表，不求值。
+   * @lang en Optional condition-name list, never evaluated.
+   */
   conditions?: string[];
-  /** @lang zh-CN 可选非空置信描述，无数值精度推断。 @lang en Optional nonempty confidence description, without numerical precision inference. */
+  /**
+   * @lang zh-CN 可选非空置信描述，无数值精度推断。
+   * @lang en Optional nonempty confidence description, without numerical precision inference.
+   */
   confidence?: string;
-  /** @lang zh-CN 可选非空来源策略名，不授予来源访问。 @lang en Optional nonempty source-policy name, granting no source access. */
+  /**
+   * @lang zh-CN 可选非空来源策略名，不授予来源访问。
+   * @lang en Optional nonempty source-policy name, granting no source access.
+   */
   sourcePolicy?: string;
-  /** @lang zh-CN 可选非空元数据策略名，不自动脱敏。 @lang en Optional nonempty metadata-policy name, without automatic redaction. */
+  /**
+   * @lang zh-CN 可选非空元数据策略名，不自动脱敏。
+   * @lang en Optional nonempty metadata-policy name, without automatic redaction.
+   */
   metadataPolicy?: string;
-  /** @lang zh-CN 在有效继承视图检查代码，未知引用产生warning。 @lang en Codes checked against the effective inherited view; unknown references produce warnings. */
+  /**
+   * @lang zh-CN 在有效继承视图检查代码，未知引用产生warning。
+   * @lang en Codes checked against the effective inherited view; unknown references produce warnings.
+   */
   diagnostics?: string[];
 }
 
-/** @lang zh-CN 可查询的诊断声明；relatedLocations保持任意普通JSON数组，不解释为文件读取授权。 @lang en Queryable diagnostic declaration; relatedLocations remains an arbitrary ordinary-JSON array and grants no file-reading permission. */
+/**
+ * @lang zh-CN 可查询的诊断声明；relatedLocations保持任意普通JSON数组，不解释为文件读取授权。
+ * @lang en Queryable diagnostic declaration; relatedLocations remains an arbitrary ordinary-JSON array and grants no file-reading permission.
+ */
 export interface HiaProfileDiagnosticDefinition {
-  /** @lang zh-CN 非空代码，同一本地配置内唯一。 @lang en Nonempty code, unique within the local profile. */
+  /**
+   * @lang zh-CN 非空代码，同一本地配置内唯一。
+   * @lang en Nonempty code, unique within the local profile.
+   */
   code: string;
-  /** @lang zh-CN runtime检查info/warning/error闭集。 @lang en Runtime checks the info/warning/error closed set. */
+  /**
+   * @lang zh-CN runtime检查info/warning/error闭集。
+   * @lang en Runtime checks the info/warning/error closed set.
+   */
   severity: HiaProfileDiagnosticSeverity | string;
-  /** @lang zh-CN 可选非空消息引用，不自动解析语言资源。 @lang en Optional nonempty message reference, without automatic locale-resource resolution. */
+  /**
+   * @lang zh-CN 可选非空消息引用，不自动解析语言资源。
+   * @lang en Optional nonempty message reference, without automatic locale-resource resolution.
+   */
   messageKey?: string;
-  /** @lang zh-CN 非空默认消息，不自动对外公开。 @lang en Nonempty default message, not automatically published. */
+  /**
+   * @lang zh-CN 非空默认消息，不自动对外公开。
+   * @lang en Nonempty default message, not automatically published.
+   */
   defaultMessage: string;
-  /** @lang zh-CN 可选非空定位元数据，不自动访问路径。 @lang en Optional nonempty location metadata, without automatic path access. */
+  /**
+   * @lang zh-CN 可选非空定位元数据，不自动访问路径。
+   * @lang en Optional nonempty location metadata, without automatic path access.
+   */
   target?: string;
-  /** @lang zh-CN 任意普通JSON元素数组，不解释为文件权限。 @lang en Array of arbitrary ordinary-JSON items, never interpreted as file permissions. */
+  /**
+   * @lang zh-CN 任意普通JSON元素数组，不解释为文件权限。
+   * @lang en Array of arbitrary ordinary-JSON items, never interpreted as file permissions.
+   */
   relatedLocations?: unknown[];
-  /** @lang zh-CN 可选非空建议文本列表，不执行修复。 @lang en Optional list of nonempty suggestion strings, without executing fixes. */
+  /**
+   * @lang zh-CN 可选非空建议文本列表，不执行修复。
+   * @lang en Optional list of nonempty suggestion strings, without executing fixes.
+   */
   suggestions?: string[];
 }
 
-/** @lang zh-CN 校验的调用者上下文；path原样加入字段定位，不是自动脱敏路径。 @lang en Caller context for validation; path is retained in field locations without automatic sanitization. */
+/**
+ * @lang zh-CN 校验的调用者上下文；path原样加入字段定位，不是自动脱敏路径。
+ * @lang en Caller context for validation; path is retained in field locations without automatic sanitization.
+ */
 export interface HiaProfileLoadOptions {
-  /** @lang zh-CN 调用者路径前缀，原样进入诊断定位，非脱敏值。 @lang en Caller path prefix retained verbatim in diagnostic locations; not a sanitized value. */
+  /**
+   * @lang zh-CN 调用者路径前缀，原样进入诊断定位，非脱敏值。
+   * @lang en Caller path prefix retained verbatim in diagnostic locations; not a sanitized value.
+   */
   path?: string;
 }
 
-/** @lang zh-CN 文件加载的兼容结果视图；先检查diagnostics，profile可能是原始非法对象或空占位，类型本身不是校验通过证明。 @lang en Compatible file-load result view; inspect diagnostics first, because profile may be an invalid raw object or empty placeholder and its type is not validation proof. */
+/**
+ * @lang zh-CN 文件加载的兼容结果视图；先检查diagnostics，profile可能是原始非法对象或空占位，类型本身不是校验通过证明。
+ * @lang en Compatible file-load result view; inspect diagnostics first, because profile may be an invalid raw object or empty placeholder and its type is not validation proof.
+ */
 export interface HiaLoadedProfile {
-  /** @lang zh-CN 解析对象原引用或无效占位；必须先检查diagnostics。 @lang en Original parsed object or invalid placeholder; inspect diagnostics first. */
+  /**
+   * @lang zh-CN 解析对象原引用或无效占位；必须先检查diagnostics。
+   * @lang en Original parsed object or invalid placeholder; inspect diagnostics first.
+   */
   profile: HiaDocumentationProfile;
-  /** @lang zh-CN 本次加载/字段验证诊断，不等于完整集合图验收。 @lang en Diagnostics from this load/field validation, not full set-graph acceptance. */
+  /**
+   * @lang zh-CN 本次加载/字段验证诊断，不等于完整集合图验收。
+   * @lang en Diagnostics from this load/field validation, not full set-graph acceptance.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 输入文件路径原文，不自动公开。 @lang en Original input file path, never automatically published. */
+  /**
+   * @lang zh-CN 输入文件路径原文，不自动公开。
+   * @lang en Original input file path, never automatically published.
+   */
   path?: string;
 }
 
-/** @lang zh-CN 集合的静态配置列表输入；runtime仍防御非法容器/成员。 @lang en Static profile-list input for a set; runtime still defends against invalid containers/members. */
+/**
+ * @lang zh-CN 集合的静态配置列表输入；runtime仍防御非法容器/成员。
+ * @lang en Static profile-list input for a set; runtime still defends against invalid containers/members.
+ */
 export interface HiaProfileSetInput {
-  /** @lang zh-CN 静态配置数组；runtime仍拒绝非法容器/成员。 @lang en Static profile array; runtime still rejects invalid containers/members. */
+  /**
+   * @lang zh-CN 静态配置数组；runtime仍拒绝非法容器/成员。
+   * @lang en Static profile array; runtime still rejects invalid containers/members.
+   */
   profiles: HiaDocumentationProfile[];
 }
 
-/** @lang zh-CN 新注册表及校验诊断；成员保留原引用，语义无效成员仍可检查元数据，使用期间须保持不变。 @lang en New registry and validation diagnostics; members retain original references, semantically invalid entries remain inspectable as metadata, and data must stay unchanged during use. */
+/**
+ * @lang zh-CN 新注册表及校验诊断；成员保留原引用，语义无效成员仍可检查元数据，使用期间须保持不变。
+ * @lang en New registry and validation diagnostics; members retain original references, semantically invalid entries remain inspectable as metadata, and data must stay unchanged during use.
+ */
 export interface HiaProfileSet {
-  /** @lang zh-CN 新Map，成员保持原引用；使用中不得修改。 @lang en New Map retaining original member references; do not mutate during use. */
+  /**
+   * @lang zh-CN 新Map，成员保持原引用；使用中不得修改。
+   * @lang en New Map retaining original member references; do not mutate during use.
+   */
   profiles: Map<string, HiaDocumentationProfile>;
-  /** @lang zh-CN 字段及已知继承/别名/映射诊断，需显式检查错误。 @lang en Field and known inheritance/alias/mapping diagnostics; errors must be checked explicitly. */
+  /**
+   * @lang zh-CN 字段及已知继承/别名/映射诊断，需显式检查错误。
+   * @lang en Field and known inheritance/alias/mapping diagnostics; errors must be checked explicitly.
+   */
   diagnostics: HiaDiagnostic[];
 }
 
-/** @lang zh-CN 精确标签查询，includeAliases默认false；不自动猜测大小写、命名别名或版本。 @lang en Exact tag query, with includeAliases defaulting to false and no inference of case, naming aliases or versions. */
+/**
+ * @lang zh-CN 精确标签查询，includeAliases默认false；不自动猜测大小写、命名别名或版本。
+ * @lang en Exact tag query, with includeAliases defaulting to false and no inference of case, naming aliases or versions.
+ */
 export interface HiaProfileTagQuery {
-  /** @lang zh-CN 精确查询根身份，未知不回退。 @lang en Exact query-root identity, without fallback for unknown IDs. */
+  /**
+   * @lang zh-CN 精确查询根身份，未知不回退。
+   * @lang en Exact query-root identity, without fallback for unknown IDs.
+   */
   profileId: string;
-  /** @lang zh-CN 精确标签名，不做大小写转换。 @lang en Exact tag name, without case folding. */
+  /**
+   * @lang zh-CN 精确标签名，不做大小写转换。
+   * @lang en Exact tag name, without case folding.
+   */
   tagName: string;
-  /** @lang zh-CN 默认false；true仍拒绝失效链。 @lang en Defaults to false; true still rejects invalid chains. */
+  /**
+   * @lang zh-CN 默认false；true仍拒绝失效链。
+   * @lang en Defaults to false; true still rejects invalid chains.
+   */
   includeAliases?: boolean;
 }
 
-/** @lang zh-CN 完整解析的原引用结果：profile是查询根，tag为起点，resolvedTag为终点；新aliasChain只含经过的别名、不含规范终点。 @lang en Original-reference result of complete resolution: profile is the query root, tag the starting point and resolvedTag the endpoint; the new aliasChain includes visited aliases but excludes the canonical endpoint. */
+/**
+ * @lang zh-CN 完整解析的原引用结果：profile是查询根，tag为起点，resolvedTag为终点；新aliasChain只含经过的别名、不含规范终点。
+ * @lang en Original-reference result of complete resolution: profile is the query root, tag the starting point and resolvedTag the endpoint; the new aliasChain includes visited aliases but excludes the canonical endpoint.
+ */
 export interface HiaResolvedProfileTag {
-  /** @lang zh-CN 查询根原引用，不是声明标签的祖先配置。 @lang en Original query-root reference, not the ancestor that declared the tag. */
+  /**
+   * @lang zh-CN 查询根原引用，不是声明标签的祖先配置。
+   * @lang en Original query-root reference, not the ancestor that declared the tag.
+   */
   profile: HiaDocumentationProfile;
-  /** @lang zh-CN 有效视图中的起点原引用。 @lang en Original starting-tag reference in the effective view. */
+  /**
+   * @lang zh-CN 有效视图中的起点原引用。
+   * @lang en Original starting-tag reference in the effective view.
+   */
   tag: HiaProfileTagDefinition;
-  /** @lang zh-CN 完整链终点原引用。 @lang en Original terminal-tag reference from the complete chain. */
+  /**
+   * @lang zh-CN 完整链终点原引用。
+   * @lang en Original terminal-tag reference from the complete chain.
+   */
   resolvedTag: HiaProfileTagDefinition;
-  /** @lang zh-CN 新名称数组，包含经过的别名且不含规范终点。 @lang en New name array including visited aliases and excluding the canonical endpoint. */
+  /**
+   * @lang zh-CN 新名称数组，包含经过的别名且不含规范终点。
+   * @lang en New name array including visited aliases and excluding the canonical endpoint.
+   */
   aliasChain: string[];
 }
 
@@ -403,7 +673,10 @@ export function validateHiaProfile(value: unknown, options: HiaProfileLoadOption
   return [createProfileDiagnostic("HIA_PROFILE_INVALID", "Documentation profile must be an ordinary JSON object.", "error")];
 }
 
-/** @lang zh-CN 对预检后的记录执行既有schema字段及局部语义检查。 @lang en Applies existing schema field and local semantic checks to a preflighted record. */
+/**
+ * @lang zh-CN 对预检后的记录执行既有schema字段及局部语义检查。
+ * @lang en Applies existing schema field and local semantic checks to a preflighted record.
+ */
 function validateProfileFields(value: Record<string, unknown>, options: HiaProfileLoadOptions): HiaDiagnostic[] {
   // <lang><zh-CN>诊断仅在本次调用内累积；路径前缀属于调用者可信上下文。</zh-CN><en>Accumulate diagnostics for this call only; the path prefix is trusted caller context.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
@@ -534,17 +807,26 @@ export function createHiaProfileSet(input: HiaProfileSetInput): HiaProfileSet {
   };
 }
 
-/** @lang zh-CN 判断是否存在error严重度；warning/info不会单独阻止消费。 @lang en Checks for error severity; warning/info alone do not block consumption. */
+/**
+ * @lang zh-CN 判断是否存在error严重度；warning/info不会单独阻止消费。
+ * @lang en Checks for error severity; warning/info alone do not block consumption.
+ */
 export function hasProfileErrors(diagnostics: readonly HiaDiagnostic[]): boolean {
   return diagnostics.some((diagnostic) => diagnostic.severity === "error");
 }
 
-/** @lang zh-CN 读取注册表元数据原引用，即使有语义错误也可检查；未知身份返回undefined，不代表配置已通过语义验收。 @lang en Reads registry metadata by original reference, including entries with semantic errors; unknown identities return undefined, and retrieval does not prove semantic acceptance. */
+/**
+ * @lang zh-CN 读取注册表元数据原引用，即使有语义错误也可检查；未知身份返回undefined，不代表配置已通过语义验收。
+ * @lang en Reads registry metadata by original reference, including entries with semantic errors; unknown identities return undefined, and retrieval does not prove semantic acceptance.
+ */
 export function getHiaProfile(profileSet: HiaProfileSet, profileId: string): HiaDocumentationProfile | undefined {
   return profileSet.profiles.get(profileId);
 }
 
-/** @lang zh-CN 返回排序后的身份新数组，不改变Map顺序或根据layer筛选。 @lang en Returns a new sorted identity array without changing Map order or filtering by layer. */
+/**
+ * @lang zh-CN 返回排序后的身份新数组，不改变Map顺序或根据layer筛选。
+ * @lang en Returns a new sorted identity array without changing Map order or filtering by layer.
+ */
 export function listHiaProfileIds(profileSet: HiaProfileSet): string[] {
   return [...profileSet.profiles.keys()].sort();
 }
@@ -606,7 +888,10 @@ export function resolveHiaProfileTag(profileSet: HiaProfileSet, query: HiaProfil
   };
 }
 
-/** @lang zh-CN 返回继承规则原引用；未知配置/规则或可达继承环返回undefined，不执行规则。 @lang en Returns an inherited rule by original reference; unknown profiles/rules or reachable inheritance cycles return undefined without executing rules. */
+/**
+ * @lang zh-CN 返回继承规则原引用；未知配置/规则或可达继承环返回undefined，不执行规则。
+ * @lang en Returns an inherited rule by original reference; unknown profiles/rules or reachable inheritance cycles return undefined without executing rules.
+ */
 export function getHiaProfileRule(profileSet: HiaProfileSet, profileId: string, ruleId: string): HiaProfileRuleDefinition | undefined {
   const profile = getHiaProfile(profileSet, profileId);
   if (!profile) {
@@ -615,7 +900,10 @@ export function getHiaProfileRule(profileSet: HiaProfileSet, profileId: string, 
   return collectInheritedRules(profile, profileSet.profiles).find((rule) => rule.ruleId === ruleId);
 }
 
-/** @lang zh-CN 返回继承诊断声明原引用；未知配置/代码或可达继承环返回undefined，不生成用户诊断。 @lang en Returns an inherited diagnostic declaration by original reference; unknown profiles/codes or reachable inheritance cycles return undefined without generating user diagnostics. */
+/**
+ * @lang zh-CN 返回继承诊断声明原引用；未知配置/代码或可达继承环返回undefined，不生成用户诊断。
+ * @lang en Returns an inherited diagnostic declaration by original reference; unknown profiles/codes or reachable inheritance cycles return undefined without generating user diagnostics.
+ */
 export function getHiaProfileDiagnostic(profileSet: HiaProfileSet, profileId: string, code: string): HiaProfileDiagnosticDefinition | undefined {
   const profile = getHiaProfile(profileSet, profileId);
   if (!profile) {
@@ -624,7 +912,10 @@ export function getHiaProfileDiagnostic(profileSet: HiaProfileSet, profileId: st
   return collectInheritedDiagnostics(profile, profileSet.profiles).find((diagnostic) => diagnostic.code === code);
 }
 
-/** @lang zh-CN 校验标签声明及可选字段，保持原重复/alias缺失诊断。 @lang en Checks tag declarations and optional fields, retaining duplicate and missing-alias diagnostics. */
+/**
+ * @lang zh-CN 校验标签声明及可选字段，保持原重复/alias缺失诊断。
+ * @lang en Checks tag declarations and optional fields, retaining duplicate and missing-alias diagnostics.
+ */
 function validateProfileTags(value: unknown, diagnostics: HiaDiagnostic[], targetPrefix?: string): void {
   if (!Array.isArray(value)) {
     return;
@@ -664,7 +955,10 @@ function validateProfileTags(value: unknown, diagnostics: HiaDiagnostic[], targe
   });
 }
 
-/** @lang zh-CN 校验规则外壳和消息字典，不执行规则或解析optionsSchema正文。 @lang en Checks rule envelopes and message dictionaries without executing rules or interpreting optionsSchema. */
+/**
+ * @lang zh-CN 校验规则外壳和消息字典，不执行规则或解析optionsSchema正文。
+ * @lang en Checks rule envelopes and message dictionaries without executing rules or interpreting optionsSchema.
+ */
 function validateProfileRules(value: unknown, diagnostics: HiaDiagnostic[], targetPrefix?: string): void {
   if (!Array.isArray(value)) {
     return;
@@ -705,7 +999,10 @@ function validateProfileRules(value: unknown, diagnostics: HiaDiagnostic[], targ
   });
 }
 
-/** @lang zh-CN 校验映射字段形状，不将映射正文当成可执行策略。 @lang en Checks mapping field shapes without treating mapping content as executable policy. */
+/**
+ * @lang zh-CN 校验映射字段形状，不将映射正文当成可执行策略。
+ * @lang en Checks mapping field shapes without treating mapping content as executable policy.
+ */
 function validateProfileMappings(value: unknown, diagnostics: HiaDiagnostic[], targetPrefix?: string): void {
   if (!Array.isArray(value)) {
     return;
@@ -726,7 +1023,10 @@ function validateProfileMappings(value: unknown, diagnostics: HiaDiagnostic[], t
   });
 }
 
-/** @lang zh-CN 校验声明诊断的字段及唯一身份；relatedLocations只要求JSON数组。 @lang en Checks declared diagnostic fields and unique identities; relatedLocations only requires a JSON array. */
+/**
+ * @lang zh-CN 校验声明诊断的字段及唯一身份；relatedLocations只要求JSON数组。
+ * @lang en Checks declared diagnostic fields and unique identities; relatedLocations only requires a JSON array.
+ */
 function validateProfileDiagnostics(value: unknown, diagnostics: HiaDiagnostic[], targetPrefix?: string): void {
   if (!Array.isArray(value)) {
     return;
@@ -757,7 +1057,10 @@ function validateProfileDiagnostics(value: unknown, diagnostics: HiaDiagnostic[]
   });
 }
 
-/** @lang zh-CN 校验合同引用外壳，保留开放扩展与版本文本的领域独立性。 @lang en Checks contract-reference envelopes while preserving open extensions and independent domain version text. */
+/**
+ * @lang zh-CN 校验合同引用外壳，保留开放扩展与版本文本的领域独立性。
+ * @lang en Checks contract-reference envelopes while preserving open extensions and independent domain version text.
+ */
 function validateProfileContracts(value: unknown, diagnostics: HiaDiagnostic[], prefix?: string): void {
   if (!Array.isArray(value)) return;
   value.forEach((item, index) => {
@@ -772,7 +1075,10 @@ function validateProfileContracts(value: unknown, diagnostics: HiaDiagnostic[], 
   });
 }
 
-/** @lang zh-CN 检查schema既有文本数组；空数组有效，scope等字段可附带闭集。 @lang en Checks existing schema string lists; empty arrays are valid, with optional closed sets for fields such as scope. */
+/**
+ * @lang zh-CN 检查schema既有文本数组；空数组有效，scope等字段可附带闭集。
+ * @lang en Checks existing schema string lists; empty arrays are valid, with optional closed sets for fields such as scope.
+ */
 function validateStringList(value: unknown, diagnostics: HiaDiagnostic[], target: string, allowed?: readonly string[]): void {
   if (!Array.isArray(value)) {
     diagnostics.push(createProfileDiagnostic("HIA_PROFILE_FIELD_INVALID", "Field must be an array.", "error", target));
@@ -785,7 +1091,10 @@ function validateStringList(value: unknown, diagnostics: HiaDiagnostic[], target
   });
 }
 
-/** @lang zh-CN 批量检查已声明可选字段，缺省不补值；开放扩展由JSON预检覆盖。 @lang en Checks declared optional fields without filling defaults; JSON preflight covers open extensions. */
+/**
+ * @lang zh-CN 批量检查已声明可选字段，缺省不补值；开放扩展由JSON预检覆盖。
+ * @lang en Checks declared optional fields without filling defaults; JSON preflight covers open extensions.
+ */
 function validateOptionalFields(
   record: Record<string, unknown>, diagnostics: HiaDiagnostic[], prefix: string,
   fields: { strings?: readonly string[]; lists?: readonly string[]; objects?: readonly string[]; booleans?: readonly string[]; enums?: Record<string, readonly string[]> }
@@ -801,7 +1110,10 @@ function validateOptionalFields(
   for (const [field, allowed] of Object.entries(fields.enums ?? {})) if (Object.hasOwn(record, field)) validateRequiredEnum(record, field, allowed, diagnostics, prefix);
 }
 
-/** @lang zh-CN 快照集合容器的数据成员，拒绝getter/空洞且不调用自定义迭代方法；不预判成员有效性。 @lang en Snapshots data members of set containers, rejecting getters/holes and avoiding custom iterators without prejudging member validity. */
+/**
+ * @lang zh-CN 快照集合容器的数据成员，拒绝getter/空洞且不调用自定义迭代方法；不预判成员有效性。
+ * @lang en Snapshots data members of set containers, rejecting getters/holes and avoiding custom iterators without prejudging member validity.
+ */
 function readProfileCandidates(input: unknown): unknown[] | undefined {
   try {
     if (!isRecord(input)) return undefined;
@@ -827,7 +1139,10 @@ function readProfileCandidates(input: unknown): unknown[] | undefined {
   }
 }
 
-/** @lang zh-CN 检查查询根有效视图中的别名完整终止链和既有本地映射引用；有继承环时避免派生伪结果/重复下游噪声。 @lang en Checks complete alias termination in the query root's effective view and existing local mapping references, avoiding false results and cascading noise when inheritance cycles exist. */
+/**
+ * @lang zh-CN 检查查询根有效视图中的别名完整终止链和既有本地映射引用；有继承环时避免派生伪结果/重复下游噪声。
+ * @lang en Checks complete alias termination in the query root's effective view and existing local mapping references, avoiding false results and cascading noise when inheritance cycles exist.
+ */
 function validateProfileReferences(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, hasReachableAliases: boolean): HiaDiagnostic[] {
   // <lang><zh-CN>无引用的配置不逐根遍历全图，使深层无别名配置集合仍保持线性接纳。</zh-CN><en>Profiles without references avoid per-root graph traversal, keeping admission linear for deep alias-free sets.</en></lang>
   const diagnostics: HiaDiagnostic[] = [];
@@ -871,25 +1186,37 @@ function validateProfileReferences(profile: HiaDocumentationProfile, profiles: M
   return diagnostics;
 }
 
-/** @lang zh-CN 列表直接复用单标签/别名的有效索引，保持原引用与统一覆盖规则；继承环返回空。 @lang en Listing directly reuses the effective index used by single-tag/alias queries, preserving original references and one override rule; inheritance cycles return empty. */
+/**
+ * @lang zh-CN 列表直接复用单标签/别名的有效索引，保持原引用与统一覆盖规则；继承环返回空。
+ * @lang en Listing directly reuses the effective index used by single-tag/alias queries, preserving original references and one override rule; inheritance cycles return empty.
+ */
 function collectInheritedTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileTagDefinition[] {
   const tags = indexProfileTags(profile, profiles);
   return tags ? [...tags.values()] : [];
 }
 
-/** @lang zh-CN 保持现有后序规则覆盖与原引用，使用显式栈处理深图/拒绝环。 @lang en Preserves existing postorder rule overrides and references, using an explicit stack for deep graphs and cycle rejection. */
+/**
+ * @lang zh-CN 保持现有后序规则覆盖与原引用，使用显式栈处理深图/拒绝环。
+ * @lang en Preserves existing postorder rule overrides and references, using an explicit stack for deep graphs and cycle rejection.
+ */
 function collectInheritedRules(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileRuleDefinition[] {
   const traversal = traverseProfileInheritance(profiles, [profile]);
   return traversal.cycles.length ? [] : dedupeById(traversal.postorder.flatMap((entry) => entry.rules), "ruleId");
 }
 
-/** @lang zh-CN 保持现有后序诊断覆盖与原引用，环不产生可消费的继承声明。 @lang en Preserves existing postorder diagnostic overrides and references, with cycles producing no consumable inherited declarations. */
+/**
+ * @lang zh-CN 保持现有后序诊断覆盖与原引用，环不产生可消费的继承声明。
+ * @lang en Preserves existing postorder diagnostic overrides and references, with cycles producing no consumable inherited declarations.
+ */
 function collectInheritedDiagnostics(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): HiaProfileDiagnosticDefinition[] {
   const traversal = traverseProfileInheritance(profiles, [profile]);
   return traversal.cycles.length ? [] : dedupeById(traversal.postorder.flatMap((entry) => entry.diagnostics), "code");
 }
 
-/** @lang zh-CN 已确认方案A：按父序后序只应用每个身份一次，后实际声明覆盖先声明、本地最后覆盖；所有标签消费者使用此索引。 @lang en Confirmed option A: apply each identity once in parent-ordered postorder, let later actual declarations override earlier ones and locals override last; all tag consumers use this index. */
+/**
+ * @lang zh-CN 已确认方案A：按父序后序只应用每个身份一次，后实际声明覆盖先声明、本地最后覆盖；所有标签消费者使用此索引。
+ * @lang en Confirmed option A: apply each identity once in parent-ordered postorder, let later actual declarations override earlier ones and locals override last; all tag consumers use this index.
+ */
 function indexProfileTags(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>): Map<string, HiaProfileTagDefinition> | undefined {
   const traversal = traverseProfileInheritance(profiles, [profile]);
   if (traversal.cycles.length) return undefined;
@@ -901,12 +1228,18 @@ function indexProfileTags(profile: HiaDocumentationProfile, profiles: Map<string
   return tags;
 }
 
-/** @lang zh-CN 内部别名结果区分完整成功与失效原因，避免可选终点被误当有效解析。 @lang en Internal alias results distinguish complete success from failure reasons so an optional endpoint cannot be mistaken for valid resolution. */
+/**
+ * @lang zh-CN 内部别名结果区分完整成功与失效原因，避免可选终点被误当有效解析。
+ * @lang en Internal alias results distinguish complete success from failure reasons so an optional endpoint cannot be mistaken for valid resolution.
+ */
 type ProfileAliasResolution =
   | { failure?: undefined; aliasChain: string[]; resolvedTag: HiaProfileTagDefinition }
   | { failure: "cycle" | "missing"; aliasChain: string[] };
 
-/** @lang zh-CN 迭代追踪有限别名链；每跳至多访问一次身份，不修改任何标签。 @lang en Iteratively follows finite alias chains, visiting each identity at most once without mutating tags. */
+/**
+ * @lang zh-CN 迭代追踪有限别名链；每跳至多访问一次身份，不修改任何标签。
+ * @lang en Iteratively follows finite alias chains, visiting each identity at most once without mutating tags.
+ */
 function resolveProfileAlias(tags: Map<string, HiaProfileTagDefinition>, start: HiaProfileTagDefinition): ProfileAliasResolution {
   // <lang><zh-CN>seen属于本次起点解析；链保存原始别名名，成功终点不计入aliasChain。</zh-CN><en>seen belongs to this starting-point resolution; the chain retains original alias names and excludes successful endpoints.</en></lang>
   const seen = new Set<string>();
@@ -923,12 +1256,18 @@ function resolveProfileAlias(tags: Map<string, HiaProfileTagDefinition>, start: 
   return { aliasChain, resolvedTag: current };
 }
 
-/** @lang zh-CN 查询有效继承诊断视图，不把继承环当空父项继续合成。 @lang en Queries a valid inherited diagnostic view rather than treating cycles as empty parents and continuing composition. */
+/**
+ * @lang zh-CN 查询有效继承诊断视图，不把继承环当空父项继续合成。
+ * @lang en Queries a valid inherited diagnostic view rather than treating cycles as empty parents and continuing composition.
+ */
 function findDiagnosticInProfileTree(profile: HiaDocumentationProfile, profiles: Map<string, HiaDocumentationProfile>, code: string): HiaProfileDiagnosticDefinition | undefined {
   return collectInheritedDiagnostics(profile, profiles).find((diagnostic) => diagnostic.code === code);
 }
 
-/** @lang zh-CN 检查非空文本，字段名仅来自固定schema而非用户动态键。 @lang en Checks nonempty text using fixed schema field names rather than user-defined keys. */
+/**
+ * @lang zh-CN 检查非空文本，字段名仅来自固定schema而非用户动态键。
+ * @lang en Checks nonempty text using fixed schema field names rather than user-defined keys.
+ */
 function validateRequiredString(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix?: string): void {
   const value = Object.hasOwn(record, field) ? record[field] : undefined;
   if (typeof value !== "string" || value.length === 0) {
@@ -937,7 +1276,10 @@ function validateRequiredString(record: Record<string, unknown>, field: string, 
   }
 }
 
-/** @lang zh-CN 检查数组外壳；元素与最小长度由调用者的既有字段规则决定。 @lang en Checks array envelopes; item and minimum-length rules come from existing caller field rules. */
+/**
+ * @lang zh-CN 检查数组外壳；元素与最小长度由调用者的既有字段规则决定。
+ * @lang en Checks array envelopes; item and minimum-length rules come from existing caller field rules.
+ */
 function validateRequiredArray(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix?: string): void {
   const value = Object.hasOwn(record, field) ? record[field] : undefined;
   if (!Array.isArray(value)) {
@@ -946,7 +1288,10 @@ function validateRequiredArray(record: Record<string, unknown>, field: string, d
   }
 }
 
-/** @lang zh-CN 在JSON预检后区分对象与数组/标量。 @lang en Distinguishes objects from arrays/scalars after JSON preflight. */
+/**
+ * @lang zh-CN 在JSON预检后区分对象与数组/标量。
+ * @lang en Distinguishes objects from arrays/scalars after JSON preflight.
+ */
 function validateRequiredObject(record: Record<string, unknown>, field: string, diagnostics: HiaDiagnostic[], prefix?: string): void {
   const value = Object.hasOwn(record, field) ? record[field] : undefined;
   if (!isRecord(value)) {
@@ -955,7 +1300,10 @@ function validateRequiredObject(record: Record<string, unknown>, field: string, 
   }
 }
 
-/** @lang zh-CN 检查既有闭集，不插值被拒绝的用户值。 @lang en Checks existing closed sets without interpolating rejected user values. */
+/**
+ * @lang zh-CN 检查既有闭集，不插值被拒绝的用户值。
+ * @lang en Checks existing closed sets without interpolating rejected user values.
+ */
 function validateRequiredEnum(
   record: Record<string, unknown>,
   field: string,

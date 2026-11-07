@@ -30,6 +30,45 @@ test("description review uses original locale fields without fallback or invente
   assert.equal(audit.fieldScope,"description");
 });
 
+test("profile and source-linkage bilingual comments retain separate canonical locale lines", () => {
+  // <lang><zh-CN>固定本批公开节点的十一份实际声明源，覆盖重导出背后的物理成员。</zh-CN><en>Fix the eleven actual declaration sources for this batch, including physical members behind re-exports.</en></lang>
+  const files = [
+    "profile/src/index.ts",
+    "source-linkage/src/binding-migration.ts",
+    "source-linkage/src/constants.ts",
+    "source-linkage/src/coordinate-profile-schema.ts",
+    "source-linkage/src/coordinate-profile.ts",
+    "source-linkage/src/generated-documentation-binding-host-projection.ts",
+    "source-linkage/src/generated-documentation-binding-index.ts",
+    "source-linkage/src/generated-documentation-binding.ts",
+    "source-linkage/src/index.ts",
+    "source-linkage/src/manifest-migration.ts",
+    "source-linkage/src/schema.ts"
+  ];
+  for (const relative of files) {
+    // <lang><zh-CN>由语法树读取已附着文档，避免将模板或普通字符串视为注释。</zh-CN><en>Read attached documentation through the syntax tree, excluding templates and ordinary strings.</en></lang>
+    const file = fileURLToPath(new URL(`../packages/${relative}`, import.meta.url));
+    const source = ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    /**
+     * @lang zh-CN 检查已有两语JSDoc的行首标签，正文完整性另由实际生产链验收。
+     * @lang en Checks line-leading tags in existing bilingual JSDoc; actual production separately verifies content completeness.
+     * @param {import("typescript").Node} node <lang><zh-CN>当前物理语法节点。</zh-CN><en>The current physical syntax node.</en></lang>
+     */
+    function check(node) {
+      for (const doc of node.jsDoc ?? []) {
+        // <lang><zh-CN>只将明确声明两种语言的原文纳入此格式门禁。</zh-CN><en>Apply this format gate only to original comments explicitly declaring both locales.</en></lang>
+        const text = doc.getText(source);
+        if (text.includes("@lang zh-CN") && text.includes("@lang en")) {
+          assert.match(text, /^\s*\*\s+@lang zh-CN\s+\S/m, `${relative} Chinese`);
+          assert.match(text, /^\s*\*\s+@lang en\s+\S/m, `${relative} English`);
+        }
+      }
+      ts.forEachChild(node, check);
+    }
+    check(source);
+  }
+});
+
 test("distribution and theme public declarations retain canonical bilingual source comments", () => {
   for(const name of ["profiles","schemas","theme-default"]) {
     // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>

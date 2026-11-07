@@ -9,96 +9,219 @@ import { createBodyFreeOrdinaryTraceMap } from "./ordinary-input.js";
 import { createDocSourceMapIndex, type DocSourceMapIndex } from "./index.js";
 import { ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION } from "./coordinate-profile-schema.js";
 
-/** @lang zh-CN 本版单个 profile 的最大 UTF-8 JSON 字节数。 @lang en Maximum UTF-8 JSON bytes for one profile in this version. */
+/**
+ * @lang zh-CN 本版单个 profile 的最大 UTF-8 JSON 字节数。
+ * @lang en Maximum UTF-8 JSON bytes for one profile in this version.
+ */
 const PROFILE_LIMIT = 2 * 1024 * 1024;
-/** @lang zh-CN 单张地图或单份授权源码的最大原始字节数。 @lang en Maximum raw bytes for one map or one authorized source. */
+/**
+ * @lang zh-CN 单张地图或单份授权源码的最大原始字节数。
+ * @lang en Maximum raw bytes for one map or one authorized source.
+ */
 const ARTIFACT_LIMIT = 16 * 1024 * 1024;
-/** @lang zh-CN 一次核验的授权源码字节总上限，避免多槽位累积耗尽。 @lang en Aggregate authorized-source byte ceiling for one verification, preventing per-slot resource exhaustion. */
+/**
+ * @lang zh-CN 一次核验的授权源码字节总上限，避免多槽位累积耗尽。
+ * @lang en Aggregate authorized-source byte ceiling for one verification, preventing per-slot resource exhaustion.
+ */
 const SOURCE_INPUT_TOTAL_LIMIT = 64 * 1024 * 1024;
-/** @lang zh-CN 限制累计段数，避免严格索引被极大映射耗尽。 @lang en Limit total segments to prevent an oversized strict index. */
+/**
+ * @lang zh-CN 限制累计段数，避免严格索引被极大映射耗尽。
+ * @lang en Limit total segments to prevent an oversized strict index.
+ */
 const SEGMENT_LIMIT = 1_000_000;
-/** @lang zh-CN SHA-256 摘要的规范 Base64 形式；填充与位数都必须规范。 @lang en Canonical padded Base64 form of a SHA-256 digest. */
+/**
+ * @lang zh-CN SHA-256 摘要的规范 Base64 形式；填充与位数都必须规范。
+ * @lang en Canonical padded Base64 form of a SHA-256 digest.
+ */
 const DIGEST_PATTERN = /^[A-Za-z0-9+/]{43}=$/;
-/** @lang zh-CN 不透明公开安全版本标签禁止路径、凭据和 URL 样式字符。 @lang en Public-safe opaque revision labels exclude path, credential and URL-like characters. */
+/**
+ * @lang zh-CN 不透明公开安全版本标签禁止路径、凭据和 URL 样式字符。
+ * @lang en Public-safe opaque revision labels exclude path, credential and URL-like characters.
+ */
 const REVISION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}(?![\s\S])/;
-/** @lang zh-CN 公开身份只准不透明标识字符且必须消耗完整字符串，禁止路径、URL、空白及尾随换行。 @lang en Public identities allow only opaque identifier characters and must consume the entire string, excluding paths, URLs, whitespace and trailing newlines. */
+/**
+ * @lang zh-CN 公开身份只准不透明标识字符且必须消耗完整字符串，禁止路径、URL、空白及尾随换行。
+ * @lang en Public identities allow only opaque identifier characters and must consume the entire string, excluding paths, URLs, whitespace and trailing newlines.
+ */
 const IDENTITY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]*(?![\s\S])/;
 
-/** @lang zh-CN 固定公开诊断，不包含输入路径、摘要、异常或源码。 @lang en Fixed public-safe diagnostic without input paths, hashes, exceptions or source text. */
+/**
+ * @lang zh-CN 固定公开诊断，不包含输入路径、摘要、异常或源码。
+ * @lang en Fixed public-safe diagnostic without input paths, hashes, exceptions or source text.
+ */
 export interface CoordinateProfileDiagnostic {
-  /** @lang zh-CN 固定的机器诊断码；不回显调用方输入。 @lang en Fixed machine diagnostic code; it does not echo caller input. */
+  /**
+   * @lang zh-CN 固定的机器诊断码；不回显调用方输入。
+   * @lang en Fixed machine diagnostic code; it does not echo caller input.
+   */
   code: string;
-  /** @lang zh-CN 可公开的固定说明文字，不包含私有工件细节。 @lang en Fixed public-safe explanation without private artifact details. */
+  /**
+   * @lang zh-CN 可公开的固定说明文字，不包含私有工件细节。
+   * @lang en Fixed public-safe explanation without private artifact details.
+   */
   message: string;
 }
-/** @lang zh-CN 可查询索引的状态；可用不等于每个槽位已授权或每个坐标均有段。 @lang en Index state; available does not imply every slot is authorized or every coordinate has a segment. */
+/**
+ * @lang zh-CN 可查询索引的状态；可用不等于每个槽位已授权或每个坐标均有段。
+ * @lang en Index state; available does not imply every slot is authorized or every coordinate has a segment.
+ */
 export type CoordinateProfileStatus = "available" | "invalid" | "unsupported-version";
-/** @lang zh-CN 严格结果分类；仅 exact-anchor 是已核同点段。 @lang en Strict result categories; only exact-anchor verifies a same-point segment. */
+/**
+ * @lang zh-CN 严格结果分类；仅 exact-anchor 是已核同点段。
+ * @lang en Strict result categories; only exact-anchor verifies a same-point segment.
+ */
 export type CoordinateVerificationKind = "exact-anchor" | "nearest-anchor" | "unverified" | "ambiguous-source" | "unmapped" | "invalid" | "unsupported-version";
-/** @lang zh-CN 一基生成坐标，仅代表段起点，不代表 token 或范围逐字符映射。 @lang en One-based generated segment anchor, not character-by-character mapping of a token or range. */
+/**
+ * @lang zh-CN 一基生成坐标，仅代表段起点，不代表 token 或范围逐字符映射。
+ * @lang en One-based generated segment anchor, not character-by-character mapping of a token or range.
+ */
 export interface CoordinateGeneratedPosition {
-  /** @lang zh-CN 生成工件中映射段起点的一基行号。 @lang en One-based line of the segment start in the generated artifact. */
+  /**
+   * @lang zh-CN 生成工件中映射段起点的一基行号。
+   * @lang en One-based line of the segment start in the generated artifact.
+   */
   line: number;
-  /** @lang zh-CN 生成工件中映射段起点的一基列号；不是原始源码列。 @lang en One-based column of the segment start in the generated artifact, not the original source column. */
+  /**
+   * @lang zh-CN 生成工件中映射段起点的一基列号；不是原始源码列。
+   * @lang en One-based column of the segment start in the generated artifact, not the original source column.
+   */
   column: number;
 }
-/** @lang zh-CN 不含源码正文或工件路径的严格查询结果。 @lang en Strict query result without source text or artifact paths. */
+/**
+ * @lang zh-CN 不含源码正文或工件路径的严格查询结果。
+ * @lang en Strict query result without source text or artifact paths.
+ */
 export interface VerifiedSourceAnchorResult {
-  /** @lang zh-CN 固定且可公开的本次查询诊断，不包含路径、摘要或正文。 @lang en Fixed public-safe diagnostics for this query, without paths, digests or source text. */
+  /**
+   * @lang zh-CN 固定且可公开的本次查询诊断，不包含路径、摘要或正文。
+   * @lang en Fixed public-safe diagnostics for this query, without paths, digests or source text.
+   */
   diagnostics: CoordinateProfileDiagnostic[];
-  /** @lang zh-CN 分类与可选导航锚点；只有 exact-anchor 证明跨图同点。 @lang en Classification and optional navigation anchor; only exact-anchor proves a same point across maps. */
+  /**
+   * @lang zh-CN 分类与可选导航锚点；只有 exact-anchor 证明跨图同点。
+   * @lang en Classification and optional navigation anchor; only exact-anchor proves a same point across maps.
+   */
   verification: {
-    /** @lang zh-CN 严格查询分类；nearest-anchor 仅为导航近邻。 @lang en Strict query classification; nearest-anchor is only a navigation neighbor. */
+    /**
+     * @lang zh-CN 严格查询分类；nearest-anchor 仅为导航近邻。
+     * @lang en Strict query classification; nearest-anchor is only a navigation neighbor.
+     */
     kind: CoordinateVerificationKind;
-    /** @lang zh-CN 仅 exact-anchor 或 nearest-anchor 返回的生成段起点；其它分类缺席，类型不保证此字段存在。 @lang en Generated segment start returned only for exact-anchor or nearest-anchor; absent for other kinds and not guaranteed by the type. */
+    /**
+     * @lang zh-CN 仅 exact-anchor 或 nearest-anchor 返回的生成段起点；其它分类缺席，类型不保证此字段存在。
+     * @lang en Generated segment start returned only for exact-anchor or nearest-anchor; absent for other kinds and not guaranteed by the type.
+     */
     generatedPosition?: CoordinateGeneratedPosition;
   };
 }
-/** @lang zh-CN 对外只暴露状态与固定诊断；槽位、逻辑文本和段存于私有 WeakMap。 @lang en Exposes only status and fixed diagnostics; slots, logical text and segments live in a private WeakMap. */
+/**
+ * @lang zh-CN 对外只暴露状态与固定诊断；槽位、逻辑文本和段存于私有 WeakMap。
+ * @lang en Exposes only status and fixed diagnostics; slots, logical text and segments live in a private WeakMap.
+ */
 export interface OrdinaryCoordinateProfileIndex {
-  /** @lang zh-CN 索引整体状态；available 不保证任一来源槽位已授权或坐标有段。 @lang en Overall index state; available does not guarantee an authorized source slot or a segment at any coordinate. */
+  /**
+   * @lang zh-CN 索引整体状态；available 不保证任一来源槽位已授权或坐标有段。
+   * @lang en Overall index state; available does not guarantee an authorized source slot or a segment at any coordinate.
+   */
   status: CoordinateProfileStatus;
-  /** @lang zh-CN 固定公开诊断；索引内部证据不通过此数组泄漏。 @lang en Fixed public-safe diagnostics; internal index evidence is not exposed through this array. */
+  /**
+   * @lang zh-CN 固定公开诊断；索引内部证据不通过此数组泄漏。
+   * @lang en Fixed public-safe diagnostics; internal index evidence is not exposed through this array.
+   */
   diagnostics: CoordinateProfileDiagnostic[];
 }
-/** @lang zh-CN 宿主已授权提供的实际来源字节，以普通 map 原始槽位定位；不含路径或网络能力。 @lang en Actual source bytes authorized by the host, addressed by the ordinary map's raw slot; carries no path or network capability. */
+/**
+ * @lang zh-CN 宿主已授权提供的实际来源字节，以普通 map 原始槽位定位；不含路径或网络能力。
+ * @lang en Actual source bytes authorized by the host, addressed by the ordinary map's raw slot; carries no path or network capability.
+ */
 export interface CoordinateSourceInput {
-  /** @lang zh-CN 平面图用 null；本地非嵌套内嵌 section 用原始零基序号，0 与 null 不等价。 @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, and zero differs from null. */
+  /**
+   * @lang zh-CN 平面图用 null；本地非嵌套内嵌 section 用原始零基序号，0 与 null 不等价。
+   * @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, and zero differs from null.
+   */
   sectionIndex: number | null;
-  /** @lang zh-CN 对应普通 map 或指定 section 的 sources 数组原始零基槽位，不能按路径合并。 @lang en Raw zero-based sources-array slot in the ordinary map or selected section; paths must not merge slots. */
+  /**
+   * @lang zh-CN 对应普通 map 或指定 section 的 sources 数组原始零基槽位，不能按路径合并。
+   * @lang en Raw zero-based sources-array slot in the ordinary map or selected section; paths must not merge slots.
+   */
   sourceIndex: number;
-  /** @lang zh-CN 宿主获授权读取的来源文件实际原始字节；构建索引时复制核验，不携带读取权限、路径或源码发布许可。 @lang en Actual raw source-file bytes read with host authorization; copied and checked while building the index, without carrying read authority, a path or permission to publish source. */
+  /**
+   * @lang zh-CN 宿主获授权读取的来源文件实际原始字节；构建索引时复制核验，不携带读取权限、路径或源码发布许可。
+   * @lang en Actual raw source-file bytes read with host authorization; copied and checked while building the index, without carrying read authority, a path or permission to publish source.
+   */
   bytes: Uint8Array;
 }
-/** @lang zh-CN 显式输入含两张地图实际字节和按槽位授权的来源字节；读取器不自行 I/O。 @lang en Explicit input contains actual bytes for both maps and per-slot authorized source bytes; the reader performs no I/O. */
+/**
+ * @lang zh-CN 显式输入含两张地图实际字节和按槽位授权的来源字节；读取器不自行 I/O。
+ * @lang en Explicit input contains actual bytes for both maps and per-slot authorized source bytes; the reader performs no I/O.
+ */
 export interface OrdinaryCoordinateProfileInput {
-  /** @lang zh-CN 坐标侧载 JSON 值或原始 JSON 文本；unknown 必须由严格读取器校验。 @lang en Coordinate sidecar JSON value or raw JSON text; the strict reader must validate this unknown input. */
+  /**
+   * @lang zh-CN 坐标侧载 JSON 值或原始 JSON 文本；unknown 必须由严格读取器校验。
+   * @lang en Coordinate sidecar JSON value or raw JSON text; the strict reader must validate this unknown input.
+   */
   profile: unknown;
-  /** @lang zh-CN 本次消费的普通 source map 实际原始字节，不接受仅提供摘要代替。 @lang en Actual raw ordinary source-map bytes consumed this time; a digest alone cannot replace them. */
+  /**
+   * @lang zh-CN 本次消费的普通 source map 实际原始字节，不接受仅提供摘要代替。
+   * @lang en Actual raw ordinary source-map bytes consumed this time; a digest alone cannot replace them.
+   */
   ordinaryMapBytes: Uint8Array;
-  /** @lang zh-CN 本次消费的文档源码映射实际原始字节，需与侧载摘要一致。 @lang en Actual raw documentation source-map bytes consumed this time, checked against the sidecar digest. */
+  /**
+   * @lang zh-CN 本次消费的文档源码映射实际原始字节，需与侧载摘要一致。
+   * @lang en Actual raw documentation source-map bytes consumed this time, checked against the sidecar digest.
+   */
   documentationMapBytes: Uint8Array;
-  /** @lang zh-CN 逐原始槽位提供的获授权来源字节；缺席槽位保留未核状态，读取器不自行访问文件或网络。 @lang en Host-authorized source bytes by raw slot; an absent slot remains unverified, and the reader performs no file or network access. */
+  /**
+   * @lang zh-CN 逐原始槽位提供的获授权来源字节；缺席槽位保留未核状态，读取器不自行访问文件或网络。
+   * @lang en Host-authorized source bytes by raw slot; an absent slot remains unverified, and the reader performs no file or network access.
+   */
   sourceInputs: CoordinateSourceInput[];
 }
-/** @lang zh-CN 查询一条文档引用与明确的普通来源槽位；所有坐标一基且列单位必填。 @lang en Queries one documentation reference and explicit ordinary source slot; all coordinates are one-based and the column unit is required. */
+/**
+ * @lang zh-CN 查询一条文档引用与明确的普通来源槽位；所有坐标一基且列单位必填。
+ * @lang en Queries one documentation reference and explicit ordinary source slot; all coordinates are one-based and the column unit is required.
+ */
 export interface VerifiedSourceAnchorQuery {
-  /** @lang zh-CN 文档源码映射中的条目 ID，按该契约的非空身份规则匹配。 @lang en Entry ID in the documentation map, matched under that contract's nonempty identity rule. */
+  /**
+   * @lang zh-CN 文档源码映射中的条目 ID，按该契约的非空身份规则匹配。
+   * @lang en Entry ID in the documentation map, matched under that contract's nonempty identity rule.
+   */
   entryId: string;
-  /** @lang zh-CN 与侧载槽位及文档来源一致的来源 ID；严格读取器核验身份。 @lang en Source ID shared by the sidecar slot and documentation source; the strict reader verifies the identity. */
+  /**
+   * @lang zh-CN 与侧载槽位及文档来源一致的来源 ID；严格读取器核验身份。
+   * @lang en Source ID shared by the sidecar slot and documentation source; the strict reader verifies the identity.
+   */
   sourceId: string;
-  /** @lang zh-CN 平面图为 null；本地非嵌套 section 为原始零基序号，不能以 0 代替 null。 @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, never zero in place of null. */
+  /**
+   * @lang zh-CN 平面图为 null；本地非嵌套 section 为原始零基序号，不能以 0 代替 null。
+   * @lang en Null for a flat map; a local non-nested section uses its raw zero-based ordinal, never zero in place of null.
+   */
   sectionIndex: number | null;
-  /** @lang zh-CN 平面图或指定 section 内普通图 sources 数组的原始零基槽位。 @lang en Raw zero-based sources-array slot in the flat map or selected ordinary-map section. */
+  /**
+   * @lang zh-CN 平面图或指定 section 内普通图 sources 数组的原始零基槽位。
+   * @lang en Raw zero-based sources-array slot in the flat map or selected ordinary-map section.
+   */
   sourceIndex: number;
-  /** @lang zh-CN 待核原始源码位置；行列均一基，列按 columnUnit 解释。 @lang en Original source point to verify; line and column are one-based, with the column interpreted by columnUnit. */
+  /**
+   * @lang zh-CN 待核原始源码位置；行列均一基，列按 columnUnit 解释。
+   * @lang en Original source point to verify; line and column are one-based, with the column interpreted by columnUnit.
+   */
   position: {
-    /** @lang zh-CN 原始源码的一基行号。 @lang en One-based line in the original source. */
+    /**
+     * @lang zh-CN 原始源码的一基行号。
+     * @lang en One-based line in the original source.
+     */
     line: number;
-    /** @lang zh-CN 原始源码的一基列号，单位由 columnUnit 明确指定。 @lang en One-based column in the original source, with its unit explicitly specified by columnUnit. */
+    /**
+     * @lang zh-CN 原始源码的一基列号，单位由 columnUnit 明确指定。
+     * @lang en One-based column in the original source, with its unit explicitly specified by columnUnit.
+     */
     column: number;
   };
-  /** @lang zh-CN 请求位置的明确列单位，须与来源槽位和文档引用单位一致；不能按扩展名推断。 @lang en Explicit query-column unit, which must match the source slot and documentation reference; it cannot be inferred from an extension. */
+  /**
+   * @lang zh-CN 请求位置的明确列单位，须与来源槽位和文档引用单位一致；不能按扩展名推断。
+   * @lang en Explicit query-column unit, which must match the source slot and documentation reference; it cannot be inferred from an extension.
+   */
   columnUnit: "utf16-code-unit" | "unicode-code-point" | "byte";
 }
 
@@ -132,46 +255,82 @@ interface MapSegments {
 }
 interface VerifiedSlot { evidence: SlotWire; logicalText?: string }
 interface InternalIndex { doc: DocSourceMapIndex; profile: ProfileWire; map: MapSegments; slots: Map<string, VerifiedSlot> }
-/** @lang zh-CN 索引内部证据不通过公共对象属性泄漏。 @lang en Internal evidence is never exposed as a public index property. */
+/**
+ * @lang zh-CN 索引内部证据不通过公共对象属性泄漏。
+ * @lang en Internal evidence is never exposed as a public index property.
+ */
 const internals = new WeakMap<OrdinaryCoordinateProfileIndex, InternalIndex>();
 
-/** @lang zh-CN 构造固定诊断；调用者只传静态 code/message。 @lang en Constructs fixed diagnostics from static code/message only. */
+/**
+ * @lang zh-CN 构造固定诊断；调用者只传静态 code/message。
+ * @lang en Constructs fixed diagnostics from static code/message only.
+ */
 function diagnostic(code: string, message: string): CoordinateProfileDiagnostic { return { code, message }; }
-/** @lang zh-CN 同一 section 的原始槽位键，null 与数字零不可混同。 @lang en Raw-slot key within a section, keeping null distinct from section zero. */
+/**
+ * @lang zh-CN 同一 section 的原始槽位键，null 与数字零不可混同。
+ * @lang en Raw-slot key within a section, keeping null distinct from section zero.
+ */
 function slotKey(sectionIndex: number | null, sourceIndex: number): string { return `${sectionIndex === null ? "flat" : `section:${sectionIndex}`}:${sourceIndex}`; }
-/** @lang zh-CN 有限非负安全整数，适用于 section 偏移和槽位索引。 @lang en Finite nonnegative safe integer for section offsets and slot indices. */
+/**
+ * @lang zh-CN 有限非负安全整数，适用于 section 偏移和槽位索引。
+ * @lang en Finite nonnegative safe integer for section offsets and slot indices.
+ */
 function nonnegative(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0; }
-/** @lang zh-CN 有限正安全整数，适用于一基查询坐标。 @lang en Finite positive safe integer for one-based query coordinates. */
+/**
+ * @lang zh-CN 有限正安全整数，适用于一基查询坐标。
+ * @lang en Finite positive safe integer for one-based query coordinates.
+ */
 function positive(value: unknown): value is number { return nonnegative(value) && value > 0; }
-/** @lang zh-CN 侧载身份使用比文档地图更窄的公开安全 token；查询来源 ID 必须与侧载槽位一致。 @lang en Sidecar identities use a narrower public-safe token than documentation-map IDs; a queried source ID must match its sidecar slot. */
+/**
+ * @lang zh-CN 侧载身份使用比文档地图更窄的公开安全 token；查询来源 ID 必须与侧载槽位一致。
+ * @lang en Sidecar identities use a narrower public-safe token than documentation-map IDs; a queried source ID must match its sidecar slot.
+ */
 function identity(value: unknown): value is string { return typeof value === "string" && value.length <= 512 && IDENTITY_PATTERN.test(value); }
 
-/** @lang zh-CN 文档地图身份仅按当前 1.1.0 schema 的非空字符串边界核验；不把侧载 token 词法施加给条目或未签发的引用。 @lang en Check documentation-map IDs against the current 1.1.0 schema's nonempty-string boundary, without imposing sidecar token syntax on entries or unsigned references. */
+/**
+ * @lang zh-CN 文档地图身份仅按当前 1.1.0 schema 的非空字符串边界核验；不把侧载 token 词法施加给条目或未签发的引用。
+ * @lang en Check documentation-map IDs against the current 1.1.0 schema's nonempty-string boundary, without imposing sidecar token syntax on entries or unsigned references.
+ */
 function documentationIdentity(value: unknown): value is string { return typeof value === "string" && value.length > 0; }
-/** @lang zh-CN 普通/null 原型记录；反射异常由上层固定拒绝。 @lang en Plain/null-prototype record; callers convert reflection errors to fixed rejection. */
+/**
+ * @lang zh-CN 普通/null 原型记录；反射异常由上层固定拒绝。
+ * @lang en Plain/null-prototype record; callers convert reflection errors to fixed rejection.
+ */
 function record(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
-/** @lang zh-CN 仅投影普通记录的自有数据属性，拒绝访问器和继承字段。 @lang en Projects only own data properties of a plain record, rejecting accessors and inherited fields. */
+/**
+ * @lang zh-CN 仅投影普通记录的自有数据属性，拒绝访问器和继承字段。
+ * @lang en Projects only own data properties of a plain record, rejecting accessors and inherited fields.
+ */
 function ownData(value: Record<string, unknown>, key: string): unknown {
   const descriptor = Object.getOwnPropertyDescriptor(value, key);
   if (!descriptor || !Object.hasOwn(descriptor, "value")) throw new Error("invalid input field");
   return descriptor.value;
 }
-/** @lang zh-CN 本版 wire 封闭已知键，避免未知字段偷偷携带源码。 @lang en Closed known wire keys prevent hidden source text in extensions. */
+/**
+ * @lang zh-CN 本版 wire 封闭已知键，避免未知字段偷偷携带源码。
+ * @lang en Closed known wire keys prevent hidden source text in extensions.
+ */
 function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   const actual = Reflect.ownKeys(value);
   return actual.length === keys.length && actual.every((key) => typeof key === "string") && keys.every((key) => Object.hasOwn(value, key));
 }
-/** @lang zh-CN 校验规范 SHA-256 Base64 摘要形状；实际字节比对另行进行。 @lang en Checks canonical SHA-256 Base64 shape; actual-byte comparison happens separately. */
+/**
+ * @lang zh-CN 校验规范 SHA-256 Base64 摘要形状；实际字节比对另行进行。
+ * @lang en Checks canonical SHA-256 Base64 shape; actual-byte comparison happens separately.
+ */
 function validDigest(value: unknown): value is DigestWire {
   return record(value) && exactKeys(value, ["algorithm", "value"]) && value.algorithm === "sha256"
     && typeof value.value === "string" && DIGEST_PATTERN.test(value.value)
     && btoa(atob(value.value)) === value.value;
 }
-/** @lang zh-CN 对新侧载施加独立严格形状检查，不让旧宽读取器决定证据语义。 @lang en Applies an independent strict shape check rather than borrowing permissive legacy admission. */
+/**
+ * @lang zh-CN 对新侧载施加独立严格形状检查，不让旧宽读取器决定证据语义。
+ * @lang en Applies an independent strict shape check rather than borrowing permissive legacy admission.
+ */
 function validProfile(value: unknown): value is ProfileWire {
   if (!record(value) || !exactKeys(value, ["contract", "contractVersion", "id", "ordinaryMap", "documentationMap", "sourceSlots", "privacy"])
     || value.contract !== ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT
@@ -205,7 +364,10 @@ function validProfile(value: unknown): value is ProfileWire {
   }
   return true;
 }
-/** @lang zh-CN SHA-256 的规范 Base64；在浏览器和 Node.js 共用 WebCrypto，不触发文件/网络读取。 @lang en Canonical Base64 SHA-256 via WebCrypto in browsers and Node.js, without file or network reads. */
+/**
+ * @lang zh-CN SHA-256 的规范 Base64；在浏览器和 Node.js 共用 WebCrypto，不触发文件/网络读取。
+ * @lang en Canonical Base64 SHA-256 via WebCrypto in browsers and Node.js, without file or network reads.
+ */
 async function sha256(bytes: Uint8Array): Promise<string> {
   // <lang><zh-CN>摘要只在显式提供的字节快照上计算；Base64 不编码原文。</zh-CN><en>Hash only explicitly supplied byte snapshots; Base64 represents the digest, not source content.</en></lang>
   const digestBytes = new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", Uint8Array.from(bytes)));
@@ -213,7 +375,10 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   for (const byte of digestBytes) binary += String.fromCharCode(byte);
   return btoa(binary);
 }
-/** @lang zh-CN 按实际 UTF-16 code unit 低字节优先编码，不增 BOM、替换代理项或正规化换行。 @lang en Encodes exact UTF-16 code units little-endian without BOM, surrogate replacement or newline normalization. */
+/**
+ * @lang zh-CN 按实际 UTF-16 code unit 低字节优先编码，不增 BOM、替换代理项或正规化换行。
+ * @lang en Encodes exact UTF-16 code units little-endian without BOM, surrogate replacement or newline normalization.
+ */
 function utf16LittleEndian(value: string): Uint8Array {
   // <lang><zh-CN>两个字节保留每个 JS UTF-16 code unit 的原值，包括代理项。</zh-CN><en>Two bytes preserve each JS UTF-16 code unit exactly, including surrogate units.</en></lang>
   const bytes = new Uint8Array(value.length * 2);
@@ -224,9 +389,15 @@ function utf16LittleEndian(value: string): Uint8Array {
   }
   return bytes;
 }
-/** @lang zh-CN 严格 UTF-8 解码保留初始 BOM 与 CRLF；编译器若另作转换，本版返回未核。 @lang en Fatal UTF-8 decoding retains an initial BOM and CRLF; compiler transformations remain unverified in this version. */
+/**
+ * @lang zh-CN 严格 UTF-8 解码保留初始 BOM 与 CRLF；编译器若另作转换，本版返回未核。
+ * @lang en Fatal UTF-8 decoding retains an initial BOM and CRLF; compiler transformations remain unverified in this version.
+ */
 function decodeUtf8(bytes: Uint8Array): string { return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes); }
-/** @lang zh-CN 复制受限实际字节，阻止调用方在异步摘要中途改动它们。 @lang en Clones bounded actual bytes so callers cannot mutate them during asynchronous hashing. */
+/**
+ * @lang zh-CN 复制受限实际字节，阻止调用方在异步摘要中途改动它们。
+ * @lang en Clones bounded actual bytes so callers cannot mutate them during asynchronous hashing.
+ */
 function copyBytes(value: unknown): Uint8Array {
   const byteLengthGetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array.prototype), "byteLength")?.get;
   if (!(value instanceof Uint8Array) || !byteLengthGetter || byteLengthGetter.call(value) > ARTIFACT_LIMIT) throw new Error("invalid bytes");
@@ -301,7 +472,10 @@ function parseUniqueJson(text: string, byteLimit: number): unknown {
   if (cursor !== text.length) throw new Error("trailing content");
   return JSON.parse(text);
 }
-/** @lang zh-CN 解码普通单图，保留 sources 原始槽位及段原始行列；不采用解析路径或 GLB 反查。 @lang en Decodes one ordinary map retaining raw source slots and segment original positions without resolved paths or GLB lookup. */
+/**
+ * @lang zh-CN 解码普通单图，保留 sources 原始槽位及段原始行列；不采用解析路径或 GLB 反查。
+ * @lang en Decodes one ordinary map retaining raw source slots and segment original positions without resolved paths or GLB lookup.
+ */
 function collectFlatMap(value: unknown, sectionIndex: number | null, offset: { line: number; column: number }, output: MapSegments): void {
   if (record(value) && Object.hasOwn(value, "sourcesContent")
     && (!Array.isArray(value.sourcesContent) || value.sourcesContent.some((content) => content !== null))) throw new Error("embedded source content");
@@ -332,7 +506,10 @@ function collectFlatMap(value: unknown, sectionIndex: number | null, offset: { l
     }
   }
 }
-/** @lang zh-CN 只支持本地非嵌套 section；每段保留原 section/slot，不从展平路径倒推。 @lang en Supports local nonnested sections only, retaining original section/slot per segment instead of reversing flattened paths. */
+/**
+ * @lang zh-CN 只支持本地非嵌套 section；每段保留原 section/slot，不从展平路径倒推。
+ * @lang en Supports local nonnested sections only, retaining original section/slot per segment instead of reversing flattened paths.
+ */
 function collectOrdinaryMap(value: unknown): MapSegments {
   if (!record(value) || value.version !== 3 || Object.hasOwn(value, "url")) throw new Error("invalid map");
   if (Object.hasOwn(value, "sourcesContent")
@@ -362,17 +539,29 @@ function collectOrdinaryMap(value: unknown): MapSegments {
   }
   return output;
 }
-/** @lang zh-CN 新证据只接受相对且无回退/URI 的声明路径；实际路径不参与槽位匹配。 @lang en Strict evidence admits safe relative declaration paths; path text is never used as slot identity. */
+/**
+ * @lang zh-CN 新证据只接受相对且无回退/URI 的声明路径；实际路径不参与槽位匹配。
+ * @lang en Strict evidence admits safe relative declaration paths; path text is never used as slot identity.
+ */
 function safeRelativePath(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value !== "." && value !== ".."
     && !/^(?:[A-Za-z]:|[/\\]|[A-Za-z][A-Za-z0-9+.-]*:)/.test(value)
     && !value.split(/[/\\]/).includes("..");
 }
-/** @lang zh-CN 正版文档引用允许的来源类别。 @lang en Provenance categories admitted by the current documentation reference. */
+/**
+ * @lang zh-CN 正版文档引用允许的来源类别。
+ * @lang en Provenance categories admitted by the current documentation reference.
+ */
 const RANGE_SOURCES = new Set(["source-map", "parser", "compiler", "adapter", "manual", "heuristic", "unresolved"]);
-/** @lang zh-CN 文档引用置信度的闭集。 @lang en Closed documentation-reference confidence set. */
+/**
+ * @lang zh-CN 文档引用置信度的闭集。
+ * @lang en Closed documentation-reference confidence set.
+ */
 const CONFIDENCES = new Set(["high", "medium", "low", "none"]);
-/** @lang zh-CN 文档范围列单位的闭集；unknown 可存证但不能给精确锚点。 @lang en Closed documentation-range unit set; unknown can be recorded but not verify an exact anchor. */
+/**
+ * @lang zh-CN 文档范围列单位的闭集；unknown 可存证但不能给精确锚点。
+ * @lang en Closed documentation-range unit set; unknown can be recorded but not verify an exact anchor.
+ */
 const COLUMN_UNITS = new Set(["utf16-code-unit", "unicode-code-point", "byte", "unknown"]);
 /**
  * @lang zh-CN 复核严格同点所消费的当前文档 map 子集。普通 owner 的 available 不是完整 JSON Schema 通过；本检查拒绝会造成同点误报的枚举、范围、身份、隐私和路径缺口。其余非锚点扩展仍由 owner 边界管理。
@@ -433,7 +622,10 @@ function validAnchorDocumentation(value: Record<string, unknown>, profile: Profi
   }
   return true;
 }
-/** @lang zh-CN 创建固定失败索引，不回显异常文本或输入。 @lang en Creates a fixed failure index without reflecting exception text or input. */
+/**
+ * @lang zh-CN 创建固定失败索引，不回显异常文本或输入。
+ * @lang en Creates a fixed failure index without reflecting exception text or input.
+ */
 function failed(status: CoordinateProfileStatus, code: string, message: string): OrdinaryCoordinateProfileIndex {
   return Object.freeze({ status, diagnostics: Object.freeze([diagnostic(code, message)]) as unknown as CoordinateProfileDiagnostic[] });
 }
@@ -535,7 +727,10 @@ export async function createOrdinaryCoordinateProfileIndex(input: OrdinaryCoordi
   }
 }
 
-/** @lang zh-CN 给指定单位的一基列计算行内最大锚位置；仅按已核逻辑文本，不能证明生成范围。 @lang en Computes the last possible one-based line anchor for a unit using verified logical text only, without claiming a generated range. */
+/**
+ * @lang zh-CN 给指定单位的一基列计算行内最大锚位置；仅按已核逻辑文本，不能证明生成范围。
+ * @lang en Computes the last possible one-based line anchor for a unit using verified logical text only, without claiming a generated range.
+ */
 function validSourcePosition(text: string, position: { line: number; column: number }, unit: VerifiedSourceAnchorQuery["columnUnit"]): boolean {
   const lines = text.split("\n");
   const line = lines[position.line - 1];
@@ -543,7 +738,10 @@ function validSourcePosition(text: string, position: { line: number; column: num
   const width = unit === "utf16-code-unit" ? line.length : unit === "unicode-code-point" ? Array.from(line).length : new TextEncoder().encode(line).length;
   return position.column <= width + 1;
 }
-/** @lang zh-CN 逐引用比较一基区间，unknown 端点/单位永远不算命中。 @lang en Compares one-based per-reference ranges; unknown endpoint/unit can never match. */
+/**
+ * @lang zh-CN 逐引用比较一基区间，unknown 端点/单位永远不算命中。
+ * @lang en Compares one-based per-reference ranges; unknown endpoint/unit can never match.
+ */
 function withinReference(link: DocSourceMapIndex["entries"][number]["sourceLinks"][number], position: VerifiedSourceAnchorQuery["position"], unit: VerifiedSourceAnchorQuery["columnUnit"]): boolean {
   const range = link.range;
   const convention = link.rangeConvention;
@@ -556,7 +754,10 @@ function withinReference(link: DocSourceMapIndex["entries"][number]["sourceLinks
     && (convention.endBoundary === "inclusive" ? position.column <= range.end.column : position.column < range.end.column);
   return start && end;
 }
-/** @lang zh-CN 查询固定结果，不回显调用方字段。 @lang en Produces fixed query output without echoing caller fields. */
+/**
+ * @lang zh-CN 查询固定结果，不回显调用方字段。
+ * @lang en Produces fixed query output without echoing caller fields.
+ */
 function result(kind: CoordinateVerificationKind, code: string, message: string, generatedPosition?: CoordinateGeneratedPosition): VerifiedSourceAnchorResult {
   return { diagnostics: [diagnostic(code, message)], verification: { kind, ...(generatedPosition ? { generatedPosition } : {}) } };
 }

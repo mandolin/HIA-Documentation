@@ -17,9 +17,15 @@ import {
   DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION
 } from "@hia-doc/core";
 
-/** @lang zh-CN 当前doc-source-map1.1.0的canonical资源身份/引用基准；不是下载动作或发布证明，历史schema保持独立原字节。 @lang en Canonical resource identity/reference base for current doc-source-map1.1.0, not a download action or publication proof; historical schema bytes remain independently retained. */
+/**
+ * @lang zh-CN 当前doc-source-map1.1.0的canonical资源身份/引用基准；不是下载动作或发布证明，历史schema保持独立原字节。
+ * @lang en Canonical resource identity/reference base for current doc-source-map1.1.0, not a download action or publication proof; historical schema bytes remain independently retained.
+ */
 export const DOC_SOURCE_MAP_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/doc-source-map-1.1.0.schema.json";
-/** @lang zh-CN 与当前文档映射contract根版本相同的schema字面量版本；独立于npm包SemVer，不说明schema引擎或系统版本。 @lang en Literal schema version matching the current documentation-map root contract, independent of npm package SemVer and not a schema-engine or system version. */
+/**
+ * @lang zh-CN 与当前文档映射contract根版本相同的schema字面量版本；独立于npm包SemVer，不说明schema引擎或系统版本。
+ * @lang en Literal schema version matching the current documentation-map root contract, independent of npm package SemVer and not a schema-engine or system version.
+ */
 export const DOC_SOURCE_MAP_SCHEMA_VERSION = DOC_SOURCE_MAP_CONTRACT_VERSION;
 
 /**

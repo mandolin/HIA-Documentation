@@ -4,13 +4,22 @@
  * @lang en Independent Draft 2020-12 structure for the ordinary source-map coordinate evidence sidecar; it does not modify ECMA-426 maps or legacy query contracts.
  */
 
-/** @lang zh-CN 中性坐标证据契约身份；与普通源码映射及文档源码映射的身份分别管理。 @lang en Neutral coordinate evidence contract identity, managed separately from ordinary and documentation source-map identities. */
+/**
+ * @lang zh-CN 中性坐标证据契约身份；与普通源码映射及文档源码映射的身份分别管理。
+ * @lang en Neutral coordinate evidence contract identity, managed separately from ordinary and documentation source-map identities.
+ */
 export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT = "ordinary-source-map-coordinate-profile";
 
-/** @lang zh-CN 开发期精确版本；草案不得被解释为正式 1.0.0 兼容承诺。 @lang en Exact development version; this draft must not be interpreted as a stable 1.0.0 compatibility promise. */
+/**
+ * @lang zh-CN 开发期精确版本；草案不得被解释为正式 1.0.0 兼容承诺。
+ * @lang en Exact development version; this draft must not be interpreted as a stable 1.0.0 compatibility promise.
+ */
 export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION = "0.1.0-draft";
 
-/** @lang zh-CN 当前 schema 的 canonical 资源身份；只供精确查找，不触发网络读取或发行。 @lang en Canonical identity of the current schema for exact lookup only, without network access or publication. */
+/**
+ * @lang zh-CN 当前 schema 的 canonical 资源身份；只供精确查找，不触发网络读取或发行。
+ * @lang en Canonical identity of the current schema for exact lookup only, without network access or publication.
+ */
 export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json";
 
 /**
