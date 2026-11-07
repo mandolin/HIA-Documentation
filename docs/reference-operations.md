@@ -79,6 +79,18 @@ Schedules are best-effort GitHub events and can be delayed. The completion event
 
 This workflow is read-only. It does not deploy, mutate package state, or require the GitHub App private key used by the public reference build workflow.
 
+### Pages deployment timeouts
+
+The deployment action waits for the Pages API to return `succeed`. Intermediate states such as `syncing_files` and `finished_file_sync` require further polling. A completed file sync alone does not satisfy deployment acceptance. Keep the published-site verification step and the successful-deployment condition on the operations workflow.
+
+`actions/deploy-pages@v4` caps its timeout at 600,000 milliseconds. A larger `timeout` input is clamped to that maximum, so increasing the job timeout cannot extend Pages deployment polling. GitHub also documents a ten-minute Pages deployment limit. [Deployment implementation](https://github.com/actions/deploy-pages/blob/v4/src/internal/deployment.js), [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
+
+For a timeout, retain the run ID, source revision, artifact ID and digest, last deployment status, and cancellation result. Inspect the actual archive size, file count and entry types, and compare the artifact with the last successful build. Check Pages configuration and the public service status before selecting a recovery action. A clear status page does not establish the cause of an individual failed deployment. [Artifact requirements](https://github.com/actions/upload-pages-artifact#artifact-validation), [GitHub Status](https://www.githubstatus.com/)
+
+After artifact and configuration checks, use the manual `HIA Reference Pages` entry to rebuild and validate a fresh artifact when recovering a stalled deployment. Record that new run separately from the failed deployment-only retry. Require the deployment, published-site check and subsequent `Reference operations` run to succeed. Repeated failures require a new diagnosis with the retained evidence.
+
+中文摘要。`finished_file_sync`仍须等待API明确返回`succeed`。v4部署Action把等待上限固定为十分钟，填写二十分钟或仅增加作业时限均无法延长部署轮询。超时后保留运行、源码、工件、状态和取消证据，检查实际归档及前次成功版本，再选恢复动作。重新构建新工件的运行单独留证，部署、线上检查和后置运维都成功后才能确认恢复。
+
 ## Rollback
 
 If the deployed reference fails after a Pages deployment:
