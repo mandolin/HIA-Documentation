@@ -13,3 +13,5 @@ Each package produces extraction, full semantic bridge, HIA and direct documenta
 `core-package-api-report.json` records actual output locators, counts, source-file and resource digests, source repository HEAD references and remaining work. A HEAD reference is not an assertion that every worktree file belongs to that commit; the separate digests identify the bytes inspected. JSON resources are parsed and hashed for audit, while command/resource documentation remains a separate acceptance task. No target command is executed. The report proves neither complete source-comment coverage nor human translation correctness.
 
 The build does not clean unknown output files. Use only the successful current result manifest and registered outputs; stale files do not establish a successful current run. It does not deploy a website or publish packages. The old reference build and original profile/default catalog retain their existing behavior.
+
+Independent satellite type declarations have a separate original-member audit. Its strict report retains anonymous union/intersection member gaps. See [Auditing satellite type declarations](satellite-type-api.md).
