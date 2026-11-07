@@ -12,6 +12,10 @@ Each package produces extraction, full semantic bridge, HIA and direct documenta
 
 `core-package-api-report.json` records actual output locators, counts, source-file and resource digests, source repository HEAD references and remaining work. A HEAD reference is not an assertion that every worktree file belongs to that commit; the separate digests identify the bytes inspected. JSON resources are parsed and hashed for audit, while command/resource documentation remains a separate acceptance task. No target command is executed. The report proves neither complete source-comment coverage nor human translation correctness.
 
+Each package row also records `descriptionLocales`. It reads the original `description.localizedText.en` and `description.localizedText["zh-CN"]` fields and lists symbols with missing descriptions, missing language fields, or identical text. Language fallback and `remarks` cannot fill these description fields. `distinctPairs` counts explicit nonempty, different Chinese and English strings. `translationQualityVerified` remains false because string presence and difference require separate semantic review.
+
+中文说明。报告将字段投影保真与原始description语言审阅分别记录。相同文本列为待人工核对，语言无关术语可在语义审阅时单独判定。正文/字段缺失仍需补齐，回退显示不充当双语来源证据。
+
 The build does not clean unknown output files. Use only the successful current result manifest and registered outputs; stale files do not establish a successful current run. It does not deploy a website or publish packages. The old reference build and original profile/default catalog retain their existing behavior.
 
 Independent satellite type declarations have a separate original-member audit using explicit 0.3 selection. See [Auditing satellite type declarations](satellite-type-api.md).

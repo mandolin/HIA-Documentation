@@ -47,7 +47,10 @@ export const HIA_SCHEMA_CATALOG_VERSION = "0.1.0-draft";
  * @lang en Fixed base URL for public canonical schemas, returned as metadata without network access.
  */
 export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Documentation/schemas/";
-/** @lang zh-CN 与生成 catalog 顺序一致的当前 schema key；不包括历史快照。 @lang en Current schema keys in generated-catalog order, excluding historical snapshots. */
+/**
+ * @lang zh-CN 与生成 catalog 顺序一致的当前 schema key；不包括历史快照。
+ * @lang en Current schema keys in generated-catalog order, excluding historical snapshots.
+ */
 export const HIA_SCHEMA_KEYS = [
   "plain-data-initialization",
   "artifact-derivation-evidence",
@@ -81,7 +84,15 @@ export type HiaSchemaKey = typeof HIA_SCHEMA_KEYS[number];
  * @lang en JSON Schema data view with $id/$schema identity, not a validated instance or executable code.
  */
 export type HiaJsonSchema = Record<string, unknown> & {
+  /**
+   * @lang zh-CN 此Schema声明的精确公开身份URI，供定义查询使用。
+   * @lang en Exact public identity URI declared by this schema for definition lookup.
+   */
   $id: string;
+  /**
+   * @lang zh-CN 此定义采用的JSON Schema方言URI，不代表实例已经验证。
+   * @lang en JSON Schema dialect URI used by the definition, without asserting instance validation.
+   */
   $schema: string;
 };
 
@@ -90,13 +101,40 @@ export type HiaJsonSchema = Record<string, unknown> & {
  * @lang en Owner definition path, exact version, public identity and maturity; candidate maturity does not imply publication.
  */
 export interface HiaSchemaCatalogEntry {
+  /**
+   * @lang zh-CN 原owner定义的精确契约版本，独立于目录及npm包版本。
+   * @lang en Exact contract version defined by the original owner, independent of catalog and npm versions.
+   */
   contractVersion: string;
+  /**
+   * @lang zh-CN 当前目录条目的闭集键，供getHiaSchema精确选择。
+   * @lang en Closed current-catalog entry key used for exact getHiaSchema selection.
+   */
   key: HiaSchemaKey;
+  /**
+   * @lang zh-CN 拥有该定义的一方包名，分发快照不转移定义归属。
+   * @lang en First-party package owning the definition; snapshot distribution preserves that ownership.
+   */
   ownerPackage: string;
+  /**
+   * @lang zh-CN 相对于分发目录的Schema文件路径，用于定位随包快照。
+   * @lang en Schema file path relative to the distribution catalog, locating the bundled snapshot.
+   */
   path: string;
+  /**
+   * @lang zh-CN 此快照公开托管的URL，目录读取本身不抓取该地址。
+   * @lang en URL hosting this public snapshot; reading the catalog does not fetch it.
+   */
   publicUrl: string;
+  /**
+   * @lang zh-CN 对应Schema正文中的精确$id，供身份匹配和历史读取。
+   * @lang en Exact $id in the schema body, used for identity matching and historical reads.
+   */
   schemaId: string;
-  /** @lang zh-CN 候选稳定定义与正式发行状态分离，stable-candidate不证明包已发布。 @lang en Candidate contract stability is separate from formal release status; stable-candidate does not prove package publication. */
+  /**
+   * @lang zh-CN 候选稳定定义与正式发行状态分离，stable-candidate不证明包已发布。
+   * @lang en Candidate contract stability is separate from formal release status; stable-candidate does not prove package publication.
+   */
   stability: "active-pre-1.0" | "draft" | "stable-candidate";
 }
 
@@ -105,8 +143,20 @@ export interface HiaSchemaCatalogEntry {
  * @lang en Metadata and entries for the current schema-distribution catalog, without historical artifact bodies.
  */
 export interface HiaSchemaCatalog {
+  /**
+   * @lang zh-CN 目录数据形状版本，不是各定义的契约版本。
+   * @lang en Catalog data-shape version, separate from individual definition contract versions.
+   */
   catalogVersion: string;
+  /**
+   * @lang zh-CN 公开Schema托管基URL，条目仍保留各自精确身份。
+   * @lang en Public schema hosting base URL, with entries retaining their exact identities.
+   */
   publicBaseUrl: string;
+  /**
+   * @lang zh-CN 当前owner定义的有序条目数组，与历史快照目录分别管理。
+   * @lang en Ordered current owner-definition entries, managed separately from historical snapshots.
+   */
   schemas: HiaSchemaCatalogEntry[];
 }
 

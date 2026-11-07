@@ -49,12 +49,21 @@ export type DocumentationPortalThemeColorTokens = Readonly<Record<DocumentationP
  */
 export const PORTAL_THEME_SKIN_IDS = ["portal.classic", "portal.graphite", "portal.lumen"] as const;
 
-/** @lang zh-CN skin 独立支持的颜色 scheme 闭集。 @lang en Closed color-scheme set supported independently by every skin. */
+/**
+ * @lang zh-CN skin 独立支持的颜色 scheme 闭集。
+ * @lang en Closed color-scheme set supported independently by every skin.
+ */
 export const PORTAL_THEME_SCHEMES = ["dark", "light", "system"] as const;
 
-/** @lang zh-CN Portal 内置 skin identity 类型。 @lang en Portal built-in skin identity type. */
+/**
+ * @lang zh-CN Portal 内置 skin identity 类型。
+ * @lang en Portal built-in skin identity type.
+ */
 export type PortalThemeSkinId = typeof PORTAL_THEME_SKIN_IDS[number];
-/** @lang zh-CN Portal 颜色 scheme 类型。 @lang en Portal color-scheme type. */
+/**
+ * @lang zh-CN Portal 颜色 scheme 类型。
+ * @lang en Portal color-scheme type.
+ */
 export type PortalThemeScheme = typeof PORTAL_THEME_SCHEMES[number];
 
 /**
@@ -62,13 +71,25 @@ export type PortalThemeScheme = typeof PORTAL_THEME_SCHEMES[number];
  * @lang en Renderer-neutral Portal skin capability containing no CSS selector, DOM, or token value.
  */
 export interface PortalThemeSkinCapability {
-  /** @lang zh-CN 内置能力名称副本；不包含DOM选择器或颜色值。 @lang en Copied built-in capability names without DOM selectors or color values. */
+  /**
+   * @lang zh-CN 内置能力名称副本；不包含DOM选择器或颜色值。
+   * @lang en Copied built-in capability names without DOM selectors or color values.
+   */
   capabilities: string[];
-  /** @lang zh-CN 三个内置皮肤之一。 @lang en One of the three built-in skin identities. */
+  /**
+   * @lang zh-CN 三个内置皮肤之一。
+   * @lang en One of the three built-in skin identities.
+   */
   skinId: PortalThemeSkinId;
-  /** @lang zh-CN 当前皮肤支持的独立scheme数组副本。 @lang en Independent copied array of schemes supported by this skin. */
+  /**
+   * @lang zh-CN 当前皮肤支持的独立scheme数组副本。
+   * @lang en Independent copied array of schemes supported by this skin.
+   */
   supportedSchemes: PortalThemeScheme[];
-  /** @lang zh-CN 精确名称@版本引用，不声明该草案已经稳定。 @lang en Exact name@version reference, without claiming that the draft is stable. */
+  /**
+   * @lang zh-CN 精确名称@版本引用，不声明该草案已经稳定。
+   * @lang en Exact name@version reference, without claiming that the draft is stable.
+   */
   tokenContract: string;
 }
 
@@ -77,15 +98,30 @@ export interface PortalThemeSkinCapability {
  * @lang en Minimal theme reference projected by renderers and static portals; it contains no color values, user preference, or private state.
  */
 export interface DocumentationPortalThemeReference {
-  /** @lang zh-CN exact contract 名称。 @lang en Exact contract name. */
+  /**
+   * @lang zh-CN exact contract 名称。
+   * @lang en Exact contract name.
+   */
   contract: typeof DOCUMENTATION_PORTAL_THEME_CONTRACT;
-  /** @lang zh-CN exact contract 版本。 @lang en Exact contract version. */
+  /**
+   * @lang zh-CN exact contract 版本。
+   * @lang en Exact contract version.
+   */
   contractVersion: typeof DOCUMENTATION_PORTAL_THEME_CONTRACT_VERSION;
-  /** @lang zh-CN 当前内置主题名称。 @lang en Name of the current built-in theme. */
+  /**
+   * @lang zh-CN 当前内置主题名称。
+   * @lang en Name of the current built-in theme.
+   */
   name: "default";
-  /** @lang zh-CN 颜色模式只跟随系统 preference。 @lang en Color mode follows only the system preference. */
+  /**
+   * @lang zh-CN 颜色模式只跟随系统 preference。
+   * @lang en Color mode follows only the system preference.
+   */
   colorSchemePolicy: "system";
-  /** @lang zh-CN disclosure 由原生 details/summary 与 open attribute 负责。 @lang en Disclosure is owned by native details/summary and the open attribute. */
+  /**
+   * @lang zh-CN disclosure 由原生 details/summary 与 open attribute 负责。
+   * @lang en Disclosure is owned by native details/summary and the open attribute.
+   */
   disclosure: "native-details-summary";
 }
 
@@ -94,45 +130,102 @@ export interface DocumentationPortalThemeReference {
  * @lang en Versioned W-P104 default-theme contract freezing token, disclosure, compatibility, and privacy boundaries.
  */
 export interface DocumentationPortalThemeContract extends DocumentationPortalThemeReference {
-  /** @lang zh-CN 支持的构建时 token sets。 @lang en Supported build-time token sets. */
+  /**
+   * @lang zh-CN 支持的构建时 token sets。
+   * @lang en Supported build-time token sets.
+   */
   colorSchemes: readonly ["light", "dark"];
-  /** @lang zh-CN light/dark 的完整 semantic token 值。 @lang en Complete semantic token values for light and dark schemes. */
+  /**
+   * @lang zh-CN light/dark 的完整 semantic token 值。
+   * @lang en Complete semantic token values for light and dark schemes.
+   */
   tokens: Readonly<Record<"light" | "dark", DocumentationPortalThemeColorTokens>>;
-  /** @lang zh-CN 旧 CSS consumer 可继续使用的 additive alias。 @lang en Additive aliases retained for legacy CSS consumers. */
+  /**
+   * @lang zh-CN 旧 CSS consumer 可继续使用的 additive alias。
+   * @lang en Additive aliases retained for legacy CSS consumers.
+   */
   legacyAliases: readonly string[];
-  /** @lang zh-CN 原生 disclosure 的状态与 fallback policy。 @lang en State and fallback policy for native disclosure. */
+  /**
+   * @lang zh-CN 原生 disclosure 的状态与 fallback policy。
+   * @lang en State and fallback policy for native disclosure.
+   */
   disclosurePolicy: {
-    /** @lang zh-CN DOM 状态唯一来源。 @lang en Sole source of DOM state. */
+    /**
+     * @lang zh-CN DOM 状态唯一来源。
+     * @lang en Sole source of DOM state.
+     */
     stateAuthority: "details-open-attribute";
-    /** @lang zh-CN expanded/collapsed 由 HTML accessibility mapping 提供。 @lang en Expanded/collapsed state comes from the HTML accessibility mapping. */
+    /**
+     * @lang zh-CN expanded/collapsed 由 HTML accessibility mapping 提供。
+     * @lang en Expanded/collapsed state comes from the HTML accessibility mapping.
+     */
     accessibilityState: "native-expanded-state";
-    /** @lang zh-CN 原生 summary 不重复写 authored aria-expanded。 @lang en Native summaries do not duplicate authored aria-expanded. */
+    /**
+     * @lang zh-CN 原生 summary 不重复写 authored aria-expanded。
+     * @lang en Native summaries do not duplicate authored aria-expanded.
+     */
     authoredAriaExpanded: false;
-    /** @lang zh-CN disclosure toggle 不依赖 JavaScript。 @lang en Disclosure toggling does not require JavaScript. */
+    /**
+     * @lang zh-CN disclosure toggle 不依赖 JavaScript。
+     * @lang en Disclosure toggling does not require JavaScript.
+     */
     scriptRequired: false;
-    /** @lang zh-CN 打印介质呈现折叠内容。 @lang en Print media reveals disclosure content. */
+    /**
+     * @lang zh-CN 打印介质呈现折叠内容。
+     * @lang en Print media reveals disclosure content.
+     */
     printBehavior: "expand-content";
   };
-  /** @lang zh-CN draft 演进与旧 CSS alias 规则。 @lang en Draft evolution and legacy CSS-alias rules. */
+  /**
+   * @lang zh-CN draft 演进与旧 CSS alias 规则。
+   * @lang en Draft evolution and legacy CSS-alias rules.
+   */
   compatibility: {
-    /** @lang zh-CN draft consumer 只接受 exact version。 @lang en Draft consumers accept exact versions only. */
+    /**
+     * @lang zh-CN draft consumer 只接受 exact version。
+     * @lang en Draft consumers accept exact versions only.
+     */
     exactDraftRequired: true;
-    /** @lang zh-CN 新增 token 是兼容的 additive change。 @lang en Adding a token is a compatible additive change. */
+    /**
+     * @lang zh-CN 新增 token 是兼容的 additive change。
+     * @lang en Adding a token is a compatible additive change.
+     */
     additiveTokenChange: "compatible";
-    /** @lang zh-CN 删除、重命名或改变语义需要新 contract 版本。 @lang en Removal, rename, or semantic change requires a new contract version. */
+    /**
+     * @lang zh-CN 删除、重命名或改变语义需要新 contract 版本。
+     * @lang en Removal, rename, or semantic change requires a new contract version.
+     */
     semanticTokenChange: "new-contract-version";
   };
-  /** @lang zh-CN theme metadata 固定不携带的敏感类别。 @lang en Sensitive categories permanently excluded from theme metadata. */
+  /**
+   * @lang zh-CN theme metadata 固定不携带的敏感类别。
+   * @lang en Sensitive categories permanently excluded from theme metadata.
+   */
   privacy: {
-    /** @lang zh-CN 不嵌入源码正文。 @lang en Source bodies are not embedded. */
+    /**
+     * @lang zh-CN 不嵌入源码正文。
+     * @lang en Source bodies are not embedded.
+     */
     sourceBodyIncluded: false;
-    /** @lang zh-CN 不嵌入原始注释正文。 @lang en Raw comment bodies are not embedded. */
+    /**
+     * @lang zh-CN 不嵌入原始注释正文。
+     * @lang en Raw comment bodies are not embedded.
+     */
     rawCommentIncluded: false;
-    /** @lang zh-CN 不嵌入主机绝对路径。 @lang en Host absolute paths are not embedded. */
+    /**
+     * @lang zh-CN 不嵌入主机绝对路径。
+     * @lang en Host absolute paths are not embedded.
+     */
     absolutePathIncluded: false;
-    /** @lang zh-CN 不嵌入凭据或 secret。 @lang en Credentials and secrets are not embedded. */
+    /**
+     * @lang zh-CN 不嵌入凭据或 secret。
+     * @lang en Credentials and secrets are not embedded.
+     */
     credentialIncluded: false;
-    /** @lang zh-CN contract metadata 不投射用户主题偏好。 @lang en Contract metadata does not project user theme preferences. */
+    /**
+     * @lang zh-CN contract metadata 不投射用户主题偏好。
+     * @lang en Contract metadata does not project user theme preferences.
+     */
     persistedUserPreferenceIncluded: false;
   };
 }
@@ -322,18 +415,36 @@ export function getPortalThemeSchemeLabel(scheme: PortalThemeScheme): string {
   return ({ dark: "Dark / 深色", light: "Light / 浅色", system: "System / 跟随系统" })[scheme];
 }
 
-/** 默认主题 CSS artifact path。Default theme CSS artifact path. */
+/**
+ * @lang zh-CN 默认主题CSS工件的相对输出路径。
+ * @lang en Relative output path of the default-theme CSS artifact.
+ */
 export const DEFAULT_THEME_CSS_PATH = "assets/hia-default.css";
-/** 默认主题 JavaScript artifact path。Default theme JavaScript artifact path. */
+/**
+ * @lang zh-CN 默认主题JavaScript工件的相对输出路径。
+ * @lang en Relative output path of the default-theme JavaScript artifact.
+ */
 export const DEFAULT_THEME_JS_PATH = "assets/hia-default.js";
 
-/** 单个静态主题资源。One static theme asset. */
+/**
+ * @lang zh-CN 一个静态主题资源的输出内容与类型。
+ * @lang en Output content and media type of one static theme asset.
+ */
 export interface HiaThemeAsset {
-  /** @lang zh-CN renderer 输出中的相对资源路径。 @lang en Relative asset path in renderer output. */
+  /**
+   * @lang zh-CN renderer 输出中的相对资源路径。
+   * @lang en Relative asset path in renderer output.
+   */
   path: string;
-  /** @lang zh-CN UTF-8 静态资源正文。 @lang en UTF-8 static asset body. */
+  /**
+   * @lang zh-CN UTF-8 静态资源正文。
+   * @lang en UTF-8 static asset body.
+   */
   contents: string;
-  /** @lang zh-CN 带字符集的 MIME 类型。 @lang en MIME type including its character set. */
+  /**
+   * @lang zh-CN 带字符集的 MIME 类型。
+   * @lang en MIME type including its character set.
+   */
   contentType: string;
 }
 
@@ -381,9 +492,15 @@ export function getDefaultThemeAssets(options: HiaThemeAssetOptions = {}): HiaTh
   ];
 }
 
-/** @lang zh-CN 默认主题的构建期品牌选项；只改变明确颜色，不声明新皮肤或公开权限。 @lang en Build-time brand options for the default theme, changing only explicit colors without declaring a new skin or disclosure permission. */
+/**
+ * @lang zh-CN 默认主题的构建期品牌选项；只改变明确颜色，不声明新皮肤或公开权限。
+ * @lang en Build-time brand options for the default theme, changing only explicit colors without declaring a new skin or disclosure permission.
+ */
 export interface HiaThemeAssetOptions {
-  /** @lang zh-CN 自有可枚举数据属性；容器是普通或null-prototype对象，所有自有键须为可枚举数据token及#RGB/#RGBA/#RRGGBB/#RRGGBBAA字面量；缺省/undefined/空记录不覆盖，继承colors不消费。调用者须复核对比度。 @lang en Own enumerable data property; the container is a plain or null-prototype object whose own keys must be enumerable data tokens with literal hex values. Omitted/undefined/empty records add no override, inherited colors are ignored, and callers must review contrast. */
+  /**
+   * @lang zh-CN 自有可枚举数据属性；容器是普通或null-prototype对象，所有自有键须为可枚举数据token及#RGB/#RGBA/#RRGGBB/#RRGGBBAA字面量；缺省/undefined/空记录不覆盖，继承colors不消费。调用者须复核对比度。
+   * @lang en Own enumerable data property; the container is a plain or null-prototype object whose own keys must be enumerable data tokens with literal hex values. Omitted/undefined/empty records add no override, inherited colors are ignored, and callers must review contrast.
+   */
   colors?: Partial<Record<DocumentationPortalThemeColorTokenName, string>>;
 }
 
@@ -446,7 +563,10 @@ function renderPortalSkinTokenRule(selector: string, skin: PortalThemeSkinDefini
   return `${selector} {\n${tokenLines}\n  --hia-density: ${skin.density};\n  --hia-radius: ${skin.radius};\n}`;
 }
 
-/** @lang zh-CN 构造三 skin × 三 scheme 的 CSS token 投影。 @lang en Builds the CSS token projection for three skins by three schemes. */
+/**
+ * @lang zh-CN 构造三 skin × 三 scheme 的 CSS token 投影。
+ * @lang en Builds the CSS token projection for three skins by three schemes.
+ */
 function renderPortalSkinCss(): string {
   return PORTAL_THEME_SKINS.map((skin) => [
     renderPortalSkinTokenRule(`:root[data-hia-skin="${skin.skinId}"]`, skin, "light"),
@@ -456,7 +576,10 @@ function renderPortalSkinCss(): string {
   ].join("\n\n")).join("\n\n");
 }
 
-/** 默认主题 CSS；Portal IA 仍依赖 native HTML disclosure，不声明 ARIA tree。Default-theme CSS; Portal IA keeps native HTML disclosure and makes no ARIA-tree claim. */
+/**
+ * @lang zh-CN 默认主题CSS，Portal导航保持原生HTML展开控件的语义。
+ * @lang en Default-theme CSS preserving native HTML disclosure semantics for Portal navigation.
+ */
 export const DEFAULT_THEME_CSS = `
 :root {
   color-scheme: light dark;
@@ -1193,7 +1316,10 @@ details > summary:focus-visible,
 }
 `.trim();
 
-/** 默认主题的最小 locale switch runtime。Minimal locale-switch runtime for the default theme. */
+/**
+ * @lang zh-CN 默认主题的最小语言切换运行脚本。
+ * @lang en Minimal locale-switch runtime script for the default theme.
+ */
 export const DEFAULT_THEME_JS = `
 (() => {
   document.documentElement.dataset.hiaTheme = "default";

@@ -20,11 +20,20 @@ import tsDocWrappedCatalogData from "./tsdoc-wrapped-project-catalog.json" with 
 import { createHiaProfileSet } from "@hia-doc/profile";
 import type { HiaDocumentationProfile, HiaProfileLayer, HiaProfileSet } from "@hia-doc/profile";
 
-/** @lang zh-CN 目录形状的版本，与npm版本和每份规范语义版本独立。 @lang en Catalog-shape version, independent of npm and individual profile semantic versions. */
+/**
+ * @lang zh-CN 目录形状的版本，与npm版本和每份规范语义版本独立。
+ * @lang en Catalog-shape version, independent of npm and individual profile semantic versions.
+ */
 export const HIA_OFFICIAL_PROFILE_CATALOG_VERSION = "0.1.0-draft";
-/** @lang zh-CN 随包七份JSON实际使用的schema身份，不追随runtime未来默认版本。 @lang en Schema identity actually used by the seven bundled JSON files, independent of future runtime defaults. */
+/**
+ * @lang zh-CN 随包七份JSON实际使用的schema身份，不追随runtime未来默认版本。
+ * @lang en Schema identity actually used by the seven bundled JSON files, independent of future runtime defaults.
+ */
 export const HIA_OFFICIAL_PROFILE_SCHEMA_VERSION = "0.1.0-draft";
-/** @lang zh-CN 官方身份的字面类型与固定列出顺序；调用者应只读使用，运行时未冻结数组。 @lang en Literal official identities and fixed listing order; callers must treat this array as read-only, as it is not frozen at runtime. */
+/**
+ * @lang zh-CN 官方身份的字面类型与固定列出顺序；调用者应只读使用，运行时未冻结数组。
+ * @lang en Literal official identities and fixed listing order; callers must treat this array as read-only, as it is not frozen at runtime.
+ */
 export const HIA_OFFICIAL_PROFILE_IDS = [
   "cssdoc",
   "doc-source-map",
@@ -35,28 +44,58 @@ export const HIA_OFFICIAL_PROFILE_IDS = [
   "ts-jsdoc-bridge"
 ] as const;
 
-/** @lang zh-CN 七个官方身份的闭集；访问器另允许string查询未知身份并返回undefined。 @lang en Closed set of seven official identities; accessors separately allow string queries and return undefined for unknown identities. */
+/**
+ * @lang zh-CN 七个官方身份的闭集；访问器另允许string查询未知身份并返回undefined。
+ * @lang en Closed set of seven official identities; accessors separately allow string queries and return undefined for unknown identities.
+ */
 export type HiaOfficialProfileId = typeof HIA_OFFICIAL_PROFILE_IDS[number];
 
-/** @lang zh-CN 目录中的一条元数据引用，不自动加载文件、解析版本范围或授予公开权限。 @lang en One catalog metadata reference, without automatic file loading, version-range resolution or disclosure permission. */
+/**
+ * @lang zh-CN 目录中的一条元数据引用，不自动加载文件、解析版本范围或授予公开权限。
+ * @lang en One catalog metadata reference, without automatic file loading, version-range resolution or disclosure permission.
+ */
 export interface HiaOfficialProfileCatalogEntry {
-  /** @lang zh-CN 声明的语义分层，不自动决定继承优先级。 @lang en Declared semantic layer, without automatic inheritance precedence. */
+  /**
+   * @lang zh-CN 声明的语义分层，不自动决定继承优先级。
+   * @lang en Declared semantic layer, without automatic inheritance precedence.
+   */
   layer: HiaProfileLayer;
-  /** @lang zh-CN 相对于包目录的显式JSON导出位置；不是URL抓取指令。 @lang en Explicit JSON export location relative to the package catalog, not a URL-fetch instruction. */
+  /**
+   * @lang zh-CN 相对于包目录的显式JSON导出位置；不是URL抓取指令。
+   * @lang en Explicit JSON export location relative to the package catalog, not a URL-fetch instruction.
+   */
   path: string;
-  /** @lang zh-CN 精确官方身份。 @lang en Exact official identity. */
+  /**
+   * @lang zh-CN 精确官方身份。
+   * @lang en Exact official identity.
+   */
   profileId: HiaOfficialProfileId;
-  /** @lang zh-CN 单份规范的语义版本，不等于schema/catalog/npm版本。 @lang en Individual profile semantic version, distinct from schema/catalog/npm versions. */
+  /**
+   * @lang zh-CN 单份规范的语义版本，不等于schema/catalog/npm版本。
+   * @lang en Individual profile semantic version, distinct from schema/catalog/npm versions.
+   */
   profileVersion: string;
 }
 
-/** @lang zh-CN 官方目录的静态类型视图，不是已执行校验或注册表发布证明。 @lang en Static type view of the official catalog, not proof of executed validation or registry publication. */
+/**
+ * @lang zh-CN 官方目录的静态类型视图，不是已执行校验或注册表发布证明。
+ * @lang en Static type view of the official catalog, not proof of executed validation or registry publication.
+ */
 export interface HiaOfficialProfileCatalog {
-  /** @lang zh-CN 目录形状版本。 @lang en Catalog-shape version. */
+  /**
+   * @lang zh-CN 目录形状版本。
+   * @lang en Catalog-shape version.
+   */
   catalogVersion: string;
-  /** @lang zh-CN 此目录内配置使用的文档化配置规范schema版本。 @lang en Documentation-profile schema version used by this catalog's profiles. */
+  /**
+   * @lang zh-CN 此目录内配置使用的文档化配置规范schema版本。
+   * @lang en Documentation-profile schema version used by this catalog's profiles.
+   */
   profileSchemaVersion: string;
-  /** @lang zh-CN 按官方顺序列出的引用；目录元数据共享，调用者不应直接修改。 @lang en References in official order; catalog metadata is shared and callers must not mutate it directly. */
+  /**
+   * @lang zh-CN 按官方顺序列出的引用；目录元数据共享，调用者不应直接修改。
+   * @lang en References in official order; catalog metadata is shared and callers must not mutate it directly.
+   */
   profiles: HiaOfficialProfileCatalogEntry[];
 }
 
@@ -76,10 +115,16 @@ const officialProfileById = new Map(
   officialProfiles.map((profile) => [profile.profileId as HiaOfficialProfileId, profile])
 );
 
-/** @lang zh-CN 共享且未冻结的目录对象，与catalog.json导出共享模块数据；调用者须只读使用或自行复制。 @lang en Shared, unfrozen catalog object using the catalog.json module data; callers must treat it as read-only or clone it themselves. */
+/**
+ * @lang zh-CN 共享且未冻结的目录对象，与catalog.json导出共享模块数据；调用者须只读使用或自行复制。
+ * @lang en Shared, unfrozen catalog object using the catalog.json module data; callers must treat it as read-only or clone it themselves.
+ */
 export const HIA_OFFICIAL_PROFILE_CATALOG = catalogData as HiaOfficialProfileCatalog;
 
-/** @lang zh-CN 显式项目规范目录；形状版本不变，schema版本仅描述该目录的一份新规范。共享元数据须只读使用。 @lang en Explicit project profile catalog; its shape version is unchanged and schema version describes its one new profile. Treat shared metadata as read-only. */
+/**
+ * @lang zh-CN 显式项目规范目录；形状版本不变，schema版本仅描述该目录的一份新规范。共享元数据须只读使用。
+ * @lang en Explicit project profile catalog; its shape version is unchanged and schema version describes its one new profile. Treat shared metadata as read-only.
+ */
 export const HIA_TSDOC_PROJECT_PROFILE_CATALOG = tsDocProjectCatalogData as HiaOfficialProfileCatalog;
 
 /**
@@ -148,7 +193,10 @@ export function createOfficialHiaProfileSet(): HiaProfileSet {
   return createHiaProfileSet({ profiles: listOfficialHiaProfiles() });
 }
 
-/** @lang zh-CN 复制包内普通JSON配置，访问器修改不影响下一次访问；直接JSON导入仍须只读使用。 @lang en Clones package JSON profiles so accessor mutations do not affect subsequent calls; direct JSON imports still require read-only use. */
+/**
+ * @lang zh-CN 复制包内普通JSON配置，访问器修改不影响下一次访问；直接JSON导入仍须只读使用。
+ * @lang en Clones package JSON profiles so accessor mutations do not affect subsequent calls; direct JSON imports still require read-only use.
+ */
 function cloneProfile(profile: HiaDocumentationProfile): HiaDocumentationProfile {
   return structuredClone(profile);
 }

@@ -1,10 +1,55 @@
-/** @lang zh-CN 核心包生成链的独立导出/字段/来源查缺回归。 @lang en Regressions for independent export/field/source coverage checks of generated core package APIs. */
+/**
+ * @file
+ * @lang zh-CN 核心包生成链的独立导出、字段、来源与原始语言审阅回归。
+ * @lang en Regressions for independent exports, fields, provenance and original-locale review in generated core APIs.
+ */
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {verifyProjectApiProjection,assertPublicRootOmission,writeCoreApiReport} from "./lib/core-package-api.mjs";
+import {auditApiDescriptionLocales} from "./lib/api-description-locales.mjs";
+import ts from "typescript";
+
+test("description review uses original locale fields without fallback or invented translation", () => {
+  // <lang><zh-CN>夹具分别保留原始双语、仅回退、相同正文、仅备注和空语言，避免统计掩盖来源差别。</zh-CN><en>The fixture distinguishes explicit pairs, fallback-only text, identical prose, remarks-only content and a blank locale.</en></lang>
+  const document={symbols:[
+    {id:"paired",name:"pair",kind:"type",i18n:{fields:{description:{localizedText:{en:"A profile.","zh-CN":"一个规范。"}}}}},
+    {id:"default",name:"fallback",kind:"type",i18n:{fields:{description:{defaultLocale:"en",defaultText:"Default prose.",localizedText:{en:"Default prose."}}}}},
+    {id:"same",name:"shared",kind:"type",i18n:{fields:{description:{localizedText:{en:"Shared prose.","zh-CN":"Shared prose."}}}}},
+    {id:"none",name:"empty",kind:"type",i18n:{fields:{remarks:{localizedText:{en:"Remark.","zh-CN":"备注。"}}}}},
+    {id:"blank",name:"blank",kind:"type",i18n:{fields:{description:{localizedText:{en:"  ","zh-CN":"正文。"}}}}}
+  ]};
+  // <lang><zh-CN>只审阅原始字段，每个待核原因必须和相应物理符号对应。</zh-CN><en>Review original fields only, retaining each reason's association with its physical symbol.</en></lang>
+  const audit=auditApiDescriptionLocales(document);
+  assert.equal(audit.symbols,5);
+  assert.equal(audit.distinctPairs,1);
+  assert.deepEqual(audit.review.map(row=>[row.id,row.reason]),[["default","missing-zh-CN"],["same","identical-text"],["none","missing-description"],["blank","missing-en"]]);
+  assert.equal(audit.translationQualityVerified,false);
+  assert.equal(audit.fieldScope,"description");
+});
+
+test("distribution and theme public declarations retain canonical bilingual source comments", () => {
+  for(const name of ["profiles","schemas","theme-default"]) {
+    // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>
+    const file=fileURLToPath(new URL(`../packages/${name}/src/index.ts`,import.meta.url));
+    const source=ts.createSourceFile(file,fs.readFileSync(file,"utf8"),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
+    /**
+     * @lang zh-CN 仅检查公开声明及其物理类型成员，模板内文本不作为TypeScript声明。
+     * @lang en Checks public declarations and their physical type members, excluding text inside templates.
+     */
+    function check(node) {
+      // <lang><zh-CN>行首语言标签是生成器可识别的源事实，不能由混合正文中的单词替代。</zh-CN><en>Line-leading locale tags are generator-readable source evidence, unlike language words embedded in mixed prose.</en></lang>
+      const comment=node.jsDoc?.at(-1)?.getText(source)??"";
+      assert.match(comment,/^\s*\*\s+@lang zh-CN\s+\S/m,`${name}: ${node.name?.getText(source)??ts.SyntaxKind[node.kind]} Chinese`);
+      assert.match(comment,/^\s*\*\s+@lang en\s+\S/m,`${name}: ${node.name?.getText(source)??ts.SyntaxKind[node.kind]} English`);
+      for(const member of node.members??[]) check(member);
+      if(node.type&&ts.isIntersectionTypeNode(node.type)) for(const part of node.type.types) if(ts.isTypeLiteralNode(part)) for(const member of part.members) check(member);
+    }
+    for(const statement of source.statements) if(statement.modifiers?.some(modifier=>modifier.kind===ts.SyntaxKind.ExportKeyword)) check(statement);
+  }
+});
 
 /**
  * @lang zh-CN 构造两个公开入口的独立期望和富字段投影，不执行实际源码。
