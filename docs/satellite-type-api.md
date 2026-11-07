@@ -28,6 +28,18 @@ The report records `runtimeStateVerified: false`, `coverageComplete: false`, and
 
 ## Maintaining the audit
 
+### Declaration-file value roots
+
+```powershell
+node --max-old-space-size=256 scripts/audit-satellite-type-api.mjs --workspace-root .. --declaration-values
+```
+
+This explicit mode selects the existing `0.4.0-draft` project producer and includes all declaration-file entry modules. Pure-type roots and members retain their separate checks. `declarationValues` additionally verifies each value binding, alias and overload against an independent source AST, including full declared signatures, distinct English/Chinese descriptions, signature parameter and return fields, explicit documentation blocks, and separate declaration/comment map references. Missing evidence makes the strict command fail. `--inspect` retains the same results while permitting partial-result inspection.
+
+The value audit's scope is `declaration-value-roots`. Readonly variable types retain their complete original signatures. This mode preserves the existing structural-node boundary for aliases and properties. Its `nestedTypeMembersVerified` and `runtimeStateVerified` fields remain false. Declaration-file existence and matching JavaScript export names require separate implementation/compatibility evidence.
+
+中文说明。显式模式在已有0.4链上增加声明值根审核，分别保留纯类型成员和公开别名/重载，不重标旧工件。原函数签名对应的参数、返回及显式注释块必须保留中英字段和精确来源。未启用时原0.3默认范围与旧读取保持。
+
 ```powershell
 node --max-old-space-size=192 --test --test-concurrency=1 scripts/type-api-projection.test.mjs
 ```

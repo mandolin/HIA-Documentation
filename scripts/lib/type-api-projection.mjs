@@ -181,7 +181,7 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
         for (const declaration of binding.declarations) {
             const matches = rootNodes.filter(node => node.name === binding.name && node.source.path === declaration.path && isDeepStrictEqual(node.source.range, declaration.range));
             const root = matches.length === 1 ? matches[0] : undefined;
-            roots.push({ ...check(declaration, root), module: binding.module, binding: binding.name });
+            roots.push({ ...verifyDeclarationApiNode(declaration, root, map), module: binding.module, binding: binding.name });
             if (root && (!root.exported || root.parentId || root.metadata?.modulePath !== binding.module))
                 roots.at(-1).gaps.push("root-scope-mismatch");
             // <lang><zh-CN>每个物理成员均进入结果，未生成的匿名分支保留明确缺口。</zh-CN><en>Every physical member enters the result; ungenerated anonymous branches remain explicit gaps.</en></lang>
@@ -201,7 +201,7 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
                 while (["0.3.0-draft","0.4.0-draft"].includes(extraction.contractVersion) && parent?.metadata?.typeExpression && ["ts-type-literal","ts-union-type","ts-intersection-type","ts-type-expression","ts-type-application","ts-array-type","ts-type-operator"].includes(parent.kind)) {
                     parent = descendants.find(candidate => candidate.id === parent.parentId);
                 }
-                const result = check(member, node);
+                const result = verifyDeclarationApiNode(member, node, map);
                 if (node && (parent?.source.path !== member.path || !isDeepStrictEqual(parent?.source.range, member.parentRange)))
                     result.gaps.push("parent-mismatch");
                 members.push({ ...result, module: binding.module, binding: binding.name });
@@ -235,46 +235,7 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
                 roots.at(-1).gaps.push("root-declaration-count");
         }
     }
-    /**
-     * @lang zh-CN 核实际注释、明确两语、原签名及AST/地图范围，缺值不按同名占位接受。
-     * @lang en Checks actual comments, explicit locales, original signatures and AST/map ranges, refusing same-name placeholders.
-     * @param {object} declaration <lang><zh-CN>独立声明期望。</zh-CN><en>Independent declaration expectation.</en></lang>
-     * @param {object} [node] <lang><zh-CN>实际生成节点。</zh-CN><en>Actually generated node.</en></lang>
-     * @returns {object} <lang><zh-CN>节点及缺口。</zh-CN><en>Node result and gaps.</en></lang>
-     */
-    function check(declaration, node) {
-        const gaps = [];
-        if (!node)
-            gaps.push("missing-or-ambiguous-declaration");
-        else {
-            // <lang><zh-CN>声明文件中的类型节点保留type-only，不提升为运行时发射证明。</zh-CN><en>Type nodes remain type-only, without promotion to runtime-emission proof.</en></lang>
-            if (node.classification !== "type-only")
-                gaps.push("classification-mismatch");
-            if (node.signature !== declaration.signature)
-                gaps.push("signature-mismatch");
-            if (!declaration.commentRange || !isDeepStrictEqual(node.comment?.range, declaration.commentRange))
-                gaps.push("source-comment-mismatch");
-            const description = node.comment?.i18n?.fields?.description;
-            const localized = description?.localizedText;
-            if (!localized?.en || !localized?.["zh-CN"] || localized.en === localized["zh-CN"] || !["en", "zh-CN"].every(locale => description.blocks?.some(block => block.locale === locale)))
-                gaps.push("missing-explicit-locales");
-            const entries = map.entries.filter(entry => entry.symbolId === node.id);
-            // <lang><zh-CN>当前项目地图同时保留声明与注释两种来源，分别按角色和独立AST范围核验。</zh-CN><en>The project map retains declaration and comment references; verify each role against its independent AST range.</en></lang>
-            const refs = entries.flatMap(entry => entry.sourceRefs.filter(ref => map.sources.find(source => source.id === ref.sourceId)?.path === declaration.path));
-            for (const [detail, range] of [["declaration", declaration.range], ["documentation-comment", declaration.commentRange]]) {
-                const matches = refs.filter(ref => ref.rangeSourceDetail === `typescript-native-ast:${detail}`);
-                if (entries.length !== 1 || matches.length !== 1 || !range || !isDeepStrictEqual(matches[0].range, range) || !isDeepStrictEqual(matches[0].rangeConvention, { endBoundary: "exclusive", columnUnit: "utf16-code-unit" }))
-                    gaps.push("source-map-mismatch");
-            }
-        }
-        return {
-            name: declaration.name,
-            path: declaration.path,
-            range: declaration.range,
-            ...(node ? { symbolId: node.id } : {}),
-            gaps
-        };
-    }
+
     const rootGaps = roots.filter(row => row.gaps.length);
     const memberGaps = members.filter(row => row.gaps.length);
     const expressionGaps = expressions.filter(row => row.gaps.length);
@@ -294,5 +255,47 @@ export function verifyTypeApiProjection({ expected, extraction, map }) {
         membersResults: members,
         complete: roots.length > 0 && rootGaps.length === 0 && memberGaps.length === 0 && expressionGaps.length === 0,
         runtimeStateVerified: false
+    };
+}
+
+/**
+ * @lang zh-CN 核实际注释、明确两语、原签名及AST/地图范围，缺值不按同名占位接受。
+ * @lang en Checks actual comments, explicit locales, original signatures and AST/map ranges, refusing same-name placeholders.
+ * @param {object} declaration <lang><zh-CN>独立声明期望。</zh-CN><en>Independent declaration expectation.</en></lang>
+ * @param {object} [node] <lang><zh-CN>实际生成节点。</zh-CN><en>Actually generated node.</en></lang>
+ * @param {object} map <lang><zh-CN>同次生产并通过协议校验的源码地图。</zh-CN><en>The source map produced in the same run and protocol-validated.</en></lang>
+ * @returns {object} <lang><zh-CN>节点及缺口。</zh-CN><en>Node result and gaps.</en></lang>
+ */
+export function verifyDeclarationApiNode(declaration, node, map) {
+    const gaps = [];
+    if (!node)
+        gaps.push("missing-or-ambiguous-declaration");
+    else {
+        // <lang><zh-CN>声明文件中的类型节点保留type-only，不提升为运行时发射证明。</zh-CN><en>Type nodes remain type-only, without promotion to runtime-emission proof.</en></lang>
+        if (node.classification !== "type-only")
+            gaps.push("classification-mismatch");
+        if (node.signature !== declaration.signature)
+            gaps.push("signature-mismatch");
+        if (!declaration.commentRange || !isDeepStrictEqual(node.comment?.range, declaration.commentRange))
+            gaps.push("source-comment-mismatch");
+        const description = node.comment?.i18n?.fields?.description;
+        const localized = description?.localizedText;
+        if (!localized?.en || !localized?.["zh-CN"] || localized.en === localized["zh-CN"] || !["en", "zh-CN"].every(locale => description.blocks?.some(block => block.locale === locale)))
+            gaps.push("missing-explicit-locales");
+        const entries = map.entries.filter(entry => entry.symbolId === node.id);
+        // <lang><zh-CN>当前项目地图同时保留声明与注释两种来源，分别按角色和独立AST范围核验。</zh-CN><en>The project map retains declaration and comment references; verify each role against its independent AST range.</en></lang>
+        const refs = entries.flatMap(entry => entry.sourceRefs.filter(ref => map.sources.find(source => source.id === ref.sourceId)?.path === declaration.path));
+        for (const [detail, range] of [["declaration", declaration.range], ["documentation-comment", declaration.commentRange]]) {
+            const matches = refs.filter(ref => ref.rangeSourceDetail === `typescript-native-ast:${detail}`);
+            if (entries.length !== 1 || matches.length !== 1 || !range || !isDeepStrictEqual(matches[0].range, range) || !isDeepStrictEqual(matches[0].rangeConvention, { endBoundary: "exclusive", columnUnit: "utf16-code-unit" }))
+                gaps.push("source-map-mismatch");
+        }
+    }
+    return {
+        name: declaration.name,
+        path: declaration.path,
+        range: declaration.range,
+        ...(node ? { symbolId: node.id } : {}),
+        gaps
     };
 }
