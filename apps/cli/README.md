@@ -23,7 +23,11 @@ Command line entry for the HIA documentation system.
 
 Current scope:
 
+中文。随包参考按命令列出输入、路径、输出与退出码，包含静态浏览器面板。
+See the bundled [command reference](USAGE.md#command-reference) and [installation routes](USAGE.md#installation-routes).
+
 - `hia --help`
+- `hia browser panel --project-manifest <file> [--config <file>] [--project-index <file>] [--out <dir>]`
 - `hia docs theme-assets --out <site-root> [--config <file>]` — see [shared assets and brand colors](USAGE.md#shared-theme-assets).
 - `hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>] [--manifest <file>]`
 - `hia docs evidence [--docs-dir <dir>] [--out <file>]`

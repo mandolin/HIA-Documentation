@@ -1,5 +1,8 @@
 # DotNetDoc Quickstart
 
+中文。本指南面向下面明确指定的历史 0.1.x 包与配置。采用当前 1.0.0 源码候选时，先按安装版本选择运行器使用参考与配套归档。
+For the coordinated source candidate, use the [runner reference and installation routes](https://github.com/mandolin/hia-dotnetdoc/tree/main/packages/dotnetdoc-runner#command-reference) and verify registry versions before installation. This guide retains the historical package/config scope shown below.
+
 This guide shows the minimum public path for using `@hia-doc/dotnetdoc-runner` with compiler-generated .NET XML documentation. XML documentation is the stable baseline; source relation and ASP.NET surface inputs can be added progressively.
 
 ## Install

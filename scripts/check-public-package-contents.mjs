@@ -68,9 +68,13 @@ for (const packagePath of packagePaths) {
     const usage = (await readFile(path.join(packageDir, "USAGE.md"), "utf8")).replaceAll("\r\n", "\n");
     // <lang><zh-CN>README 引用须与指南标题成对，打包清单已经证明两文件可供消费者读取。</zh-CN><en>README references must pair with guide headings, with both files present in the pack list.</en></lang>
     const readme = await readFile(path.join(packageDir, "README.md"), "utf8");
-    for (const [heading, anchor] of [["Candidate versions", "candidate-versions"], ["Large project builds", "large-project-builds"], ["Shared theme assets", "shared-theme-assets"]]) {
+    for (const [heading, anchor] of [["Candidate versions", "candidate-versions"], ["Large project builds", "large-project-builds"], ["Shared theme assets", "shared-theme-assets"], ["Installation routes", "installation-routes"], ["Command reference", "command-reference"]]) {
       assert.ok(usage.includes(`## ${heading}\n`), `Missing usage heading ${heading}.`);
       assert.ok(readme.includes(`(USAGE.md#${anchor})`), `Missing bundled guide link ${anchor}.`);
+    }
+    // <lang><zh-CN>逐命令标题保持十一条执行路径可查，输出格式的设计仍独立管理。</zh-CN><en>Per-command headings keep all eleven execution paths discoverable, independently of terminal presentation design.</en></lang>
+    for (const command of ["docs build", "docs theme-assets", "docs evidence", "docs acceptance", "docs continuity", "docs adoption-kit", "docs business-flow-handoff", "docs enterprise-workflow", "docs html-authoring-verify", "docs coordinate-verify", "browser panel"]) {
+      assert.ok(usage.includes(`### ${command}\n`), `Missing command reference ${command}.`);
     }
   }
 }

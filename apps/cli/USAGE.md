@@ -81,3 +81,129 @@ English. The first command writes `site/assets/hia-default.css` and `.js`. The s
 中文。颜色、共享资产与源码公开许可分别配置。主题命令的成功不能证明源码已获准公开。
 
 English. Configure colors, shared assets, and source-publication permission independently. Verify source-publication permission separately from successful theme generation.
+
+## Installation routes
+
+中文。先按实际安装版本选择资料。此源码树为协调 1.0.0 候选，使用候选归档时须将完整配套内部依赖的归档逐一作为 `npm install` 参数安装；离线安装还需已准备第三方依赖缓存。使用注册表前先检查每个目标版本及配套依赖可用，再执行安装。`npm list @hia-doc/cli --depth=0` 可核本地安装版本，`npm view @hia-doc/cli@1.0.0 version` 可核该注册表目标。版本查询访问注册表。
+
+English. Select documentation for the actual installed version. This source tree is a coordinated 1.0.0 candidate. For archives, pass every matching internal dependency archive explicitly to `npm install`; offline installs also require a prepared third-party dependency cache. Before registry installation, check every target version and matching dependency. Use `npm list @hia-doc/cli --depth=0` for the local version and `npm view @hia-doc/cli@1.0.0 version` for the registry target. The latter contacts the registry.
+
+中文。在安装项目的 npm 脚本中调用 `hia`，或用 `npm exec --offline -- hia --help` 选择本地命令。主命令通过包清单核版本；卫星生产命令提供 `--version/-v`。旧 0.1.x 教程及其 draft 配置按旧包版本阅读，升级候选时使用本指南和精确工件迁移说明。
+
+English. Invoke `hia` from an installed project's npm script or use `npm exec --offline -- hia --help` to select the local binary. Check the main CLI version through package metadata; satellite producers provide `--version/-v`. Read historical 0.1.x tutorials and draft configs against their package versions. Use this guide and exact artifact migrations for the candidate.
+
+## Command reference
+
+中文。下列 11 条路径使用 `--name value` 格式，文件名为调用者已准备的输入。`--help/-h` 当前显示同一根帮助；这里提供逐命令使用层次。各命令的输出权限、错误码和元数据状态须分别核对。
+
+English. These eleven paths use `--name value` arguments and caller-prepared input files. `--help/-h` currently displays the same root help. This reference provides per-command usage. Check each command's output authority, exit codes, and metadata states independently.
+
+### docs build
+
+```sh
+hia docs build --input input.hia.json --out site --locale zh-CN
+```
+
+中文。`--input`、`--jsdoc-integration`、`--project-manifest` 三选一；省略时使用配置输入或内置 basic 夹具。可选 `--config`、`--adoption-kit`、`--business-flow-handoff`、`--out`、`--locale`、`--manifest`。CLI 路径相对调用目录，配置路径相对配置文件目录，CLI 值覆盖配置值。默认输出 dist/docs，manifest 默认 hia-manifest.json 且须位于输出内。写页面、资产与清单，成功0、错误1。未知选项行为见上文。
+
+English. Select one of `--input`, `--jsdoc-integration`, or `--project-manifest`. Omission uses configured input or the built-in basic fixture. Optional flags are `--config`, `--adoption-kit`, `--business-flow-handoff`, `--out`, `--locale`, and `--manifest`. CLI paths use cwd, config paths use the config directory, and CLI values override config. Output defaults to dist/docs, with hia-manifest.json inside the output. Writes pages, assets, and a manifest. Success exits 0 and errors exit 1. See unknown-option behavior above.
+
+### docs theme-assets
+
+```sh
+hia docs theme-assets --config hia.config.json --out site
+```
+
+中文。`--out` 必填，`--config` 可选，只接受这两个带值选项。输出路径相对调用目录，写 assets/hia-default.css 与 .js。成功0、参数/配置错误1。各页面的共享 URL 深度见前文。
+
+English. Requires `--out` and optionally accepts `--config`. These are the only supported value options. Resolve output from cwd and write assets/hia-default.css and .js. Success exits 0, argument/config errors exit 1. Shared URL depth is described above.
+
+### docs evidence
+
+```sh
+hia docs evidence --docs-dir site --out reports/evidence.json
+```
+
+中文。`--docs-dir` 默认 dist/docs，`--out` 默认该目录内 documentation-evidence.json。路径相对调用目录，读取已有项目输出并写公开安全摘要，成功0、错误1。
+
+English. `--docs-dir` defaults to dist/docs and `--out` to documentation-evidence.json within that directory. Resolve paths from cwd. Read existing project output and write a public-safe summary. Success exits 0, errors exit 1.
+
+### docs acceptance
+
+```sh
+hia docs acceptance --evidence evidence.json --target-id sample --target-family unicode-compatible --out reports/acceptance.json
+```
+
+中文。四个选项中 `--out` 可省略，省略则输出 JSON 到 stdout。family 为 unicode-compatible、html-authoring、enterprise-business 或 workspace-container。输入和可选输出相对调用目录且须安全相对路径。accepted0，其它结果或错误1。
+
+English. All shown options except `--out` are required. Omit it for JSON on stdout. Families are unicode-compatible, html-authoring, enterprise-business, and workspace-container. Input and optional output must be safe-relative under cwd. Accepted exits 0; other results or errors exit 1.
+
+### docs continuity
+
+```sh
+hia docs continuity --baseline baseline.json --current current.json --target-id sample --target-family enterprise-business --out reports/continuity.json
+```
+
+中文。必填 baseline/current/target-id/target-family，仅支持 enterprise-business。输入与可选 `--out` 是互异安全相对路径。省略输出则向 stdout 写 JSON，accepted0、其它结果或错误1。
+
+English. Requires baseline/current/target-id/target-family, supporting enterprise-business. Inputs and optional `--out` must be distinct safe-relative paths. Omit output for JSON on stdout. Accepted exits 0; other results or errors exit 1.
+
+### docs adoption-kit
+
+```sh
+hia docs adoption-kit --request adoption-request.json --out reports/adoption-kit.json
+```
+
+中文。必填 `--request`，可选 `--out`，均为调用目录内安全相对路径。省略输出则 stdout JSON，refused/错误1，其它状态0，包括 deferred-owner-input-missing。0不表示负责人已同意或实际采用。
+
+English. Requires `--request`, optionally `--out`, as safe-relative paths under cwd. Omit output for JSON on stdout. Refused/errors exit 1; other states exit 0, including deferred-owner-input-missing. Exit 0 does not establish consent or actual adoption.
+
+### docs business-flow-handoff
+
+```sh
+hia docs business-flow-handoff --projection flow-projection.json --out reports/flow-handoff.json
+```
+
+中文。必填 `--projection`，可选 `--out`，采用安全相对路径。读取精确流程投影，ready-for-owner-review0，其它结果或错误1。省略输出则 stdout JSON，负责人同意与采用状态另有记录。
+
+English. Requires `--projection` and optionally `--out`, using safe-relative paths. Reads an exact flow projection. Ready-for-owner-review exits 0; other results/errors exit 1. Omit output for JSON on stdout. Consent and adoption retain independent records.
+
+### docs enterprise-workflow
+
+```sh
+hia docs enterprise-workflow --adoption-request adoption-request.json --baseline baseline.json --current current.json --out reports/workflow.json
+```
+
+中文。必填 `--adoption-request`；`--baseline/--current` 须成对，负责人已提交时必需。`--out` 可省略以用 stdout。路径为安全相对路径。refused/错误1，其它状态0，缺负责人输入可为 deferred。
+
+English. Requires `--adoption-request`. `--baseline/--current` must be paired and are required for submitted owner input. Omit `--out` for stdout. Paths must be safe-relative. Refused/errors exit 1; other states exit 0, including deferred missing-owner input.
+
+### docs html-authoring-verify
+
+```sh
+hia docs html-authoring-verify --request html-authoring-request.json --out reports/html-authoring.json
+```
+
+中文。必填 `--request`，可选 `--out`，安全相对路径。请求须含精确交接、源码注释投影和显式绑定，不按字符串形式猜关联。accepted0、其它结果或错误1，省略输出则 stdout JSON。
+
+English. Requires `--request`, optionally `--out`, using safe-relative paths. Requests contain an exact handoff, source-comment projection, and explicit binding. Associations require explicit evidence. Accepted exits 0; other results/errors exit 1. Omit output for JSON on stdout.
+
+### docs coordinate-verify
+
+```sh
+hia docs coordinate-verify --coordinate-profile coordinate.json --ordinary-map generated.js.map --doc-source-map documentation-map.json --source source.ts --source-id source:sample --source-index 0 --entry-id entry:sample --line 1 --column 1 --column-unit utf16-code-unit
+```
+
+中文。`--source` 仅在获准读取时提供，可省略得到安全未核结果；非嵌套 section 地图另须 `--section-index`。其余示例选项必填。line/column 从1开始，source-index/section-index 从0开始。column-unit 为 utf16-code-unit、unicode-code-point 或 byte。所有文件须安全相对且实际路径在调用目录内。始终 stdout JSON，无输出文件选项；exact-anchor0、安全未核/最近锚点2、无效输入1。
+
+English. Supply optional `--source` only with read authorization; omission yields safe unverified output. Non-nested section maps additionally require `--section-index`. Other shown options are required. Lines/columns are one-based, source/section indexes zero-based. Column units are utf16-code-unit, unicode-code-point, or byte. Files must be safe-relative and resolve within cwd. Always emits JSON to stdout. Exact-anchor exits 0, safe unverified/nearest-anchor exits 2, invalid input exits 1.
+
+### browser panel
+
+```sh
+hia browser panel --project-manifest hia-project.json --project-index site/project-index.json --out panel
+```
+
+中文。`--project-manifest` 或配置 docs.projectManifest 必须选定项目，并含至少一个有效 doc-source-map 输入。可选 `--config`、`--project-index`、`--out`，project-index 用于关系图数据，省略该参数仍可生成基本面板。CLI 路径相对调用目录，配置路径相对配置目录，默认输出 dist/browser-panel。写静态 HTML/JS/JSON，成功0、无地图或其它错误1。
+
+English. Select a project with `--project-manifest` or config docs.projectManifest, including at least one valid doc-source-map input. Optional flags are `--config`, `--project-index`, and `--out`. project-index adds relation-graph data and is optional for a basic panel. CLI paths use cwd and configured paths the config directory. Output defaults to dist/browser-panel. Writes static HTML/JS/JSON. Success exits 0, missing maps or other errors exit 1.
