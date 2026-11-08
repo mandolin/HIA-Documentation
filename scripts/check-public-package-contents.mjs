@@ -64,7 +64,7 @@ for (const packagePath of packagePaths) {
   if (packagePath === "apps/cli") {
     // <lang><zh-CN>随包指南及固定主题锚点必须离线可达，README 的仓库外链不能替代该检查。</zh-CN><en>The bundled guide and fixed topic anchors must resolve offline, independently of repository links.</en></lang>
     assert.ok(packedPaths.has("USAGE.md"), "@hia-doc/cli: missing bundled USAGE.md.");
-    // <lang><zh-CN>仅核本包维护的三个固定标题，避免把本门禁扩展成通用 Markdown 解析器。</zh-CN><en>Check the three maintained headings only, keeping this gate scoped to this package.</en></lang>
+    // <lang><zh-CN>仅核本包维护的固定主题标题，避免把本门禁扩展成通用 Markdown 解析器。</zh-CN><en>Check only the maintained topic headings, keeping this gate scoped to this package.</en></lang>
     const usage = (await readFile(path.join(packageDir, "USAGE.md"), "utf8")).replaceAll("\r\n", "\n");
     // <lang><zh-CN>README 引用须与指南标题成对，打包清单已经证明两文件可供消费者读取。</zh-CN><en>README references must pair with guide headings, with both files present in the pack list.</en></lang>
     const readme = await readFile(path.join(packageDir, "README.md"), "utf8");
