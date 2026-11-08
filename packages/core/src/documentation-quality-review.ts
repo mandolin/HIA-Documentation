@@ -63,10 +63,30 @@ export const DOCUMENTATION_QUALITY_REVIEW_DIAGNOSTIC_CODE_REGISTRY = [
  * @lang en Logical scope for a portable finding.
  */
 export interface DocumentationQualityReviewScope {
+  /**
+   * @lang zh-CN 可选被审查字段的逻辑路径。
+   * @lang en Optional logical path of the reviewed field.
+   */
   fieldPath?: string;
+  /**
+   * @lang zh-CN 可选同范围出现序号，生成finding身份时省略按0处理。
+   * @lang en Optional occurrence index within the scope, treated as 0 when omitted for finding identity.
+   */
   occurrence?: number;
+  /**
+   * @lang zh-CN 产生该观察的可选文档规范名称。
+   * @lang en Optional documentation-profile name producing the observation.
+   */
   profile?: string;
+  /**
+   * @lang zh-CN 被审查源文档的逻辑身份。
+   * @lang en Logical identity of the reviewed source document.
+   */
   sourceDocumentId: string;
+  /**
+   * @lang zh-CN 被审查符号的可选逻辑身份。
+   * @lang en Optional logical identity of the reviewed symbol.
+   */
   symbolId?: string;
 }
 
@@ -76,7 +96,15 @@ export interface DocumentationQualityReviewScope {
  * @lang en Privacy-safe provenance for an input observation.
  */
 export interface DocumentationQualityReviewProvenance {
+  /**
+   * @lang zh-CN 观察来源类别，表达结构观察、规范诊断、语言解析关联或生成源码关联。
+   * @lang en Observation-origin kind identifying structural observations, profile diagnostics, locale-resolution linkage or generated-source linkage.
+   */
   kind: "rop-observation" | "profile-diagnostic" | "locale-resolution-sidecar" | "generated-source-linkage";
+  /**
+   * @lang zh-CN 提供该观察的可选关联工件身份。
+   * @lang en Optional identity of the sidecar artifact supplying this observation.
+   */
   sidecarId?: string;
 }
 
@@ -86,12 +114,40 @@ export interface DocumentationQualityReviewProvenance {
  * @lang en A review observation supplied by a profile or existing metadata producer; bodies and locators are prohibited.
  */
 export interface DocumentationQualityReviewObservation {
+  /**
+   * @lang zh-CN 观察所属评审类别，采用rop、terminology或locale-resource。
+   * @lang en Review category of the observation using rop, terminology or locale-resource.
+   */
   category: typeof DOCUMENTATION_QUALITY_REVIEW_CATEGORIES[number];
+  /**
+   * @lang zh-CN 生产者声明的观察可信度。
+   * @lang en Observation confidence declared by the producer.
+   */
   confidence: "high" | "medium" | "low" | "none";
+  /**
+   * @lang zh-CN 与该观察相关的可选上游诊断代码。
+   * @lang en Optional upstream diagnostic codes associated with the observation.
+   */
   diagnosticCodes?: string[];
+  /**
+   * @lang zh-CN 观察的逻辑来源元数据。
+   * @lang en Logical provenance metadata of the observation.
+   */
   provenance: DocumentationQualityReviewProvenance;
+  /**
+   * @lang zh-CN 该观察所针对的稳定评审规则名称。
+   * @lang en Stable review-rule name addressed by the observation.
+   */
   rule: string;
+  /**
+   * @lang zh-CN 该观察适用的文档、符号及字段逻辑范围。
+   * @lang en Logical document, symbol and field scope of the observation.
+   */
   scope: DocumentationQualityReviewScope;
+  /**
+   * @lang zh-CN 结构观察状态，采用observed、missing或unavailable。
+   * @lang en Structural observation state using observed, missing or unavailable.
+   */
   state: typeof DOCUMENTATION_QUALITY_REVIEW_OBSERVATION_STATES[number];
 }
 
@@ -101,14 +157,50 @@ export interface DocumentationQualityReviewObservation {
  * @lang en Metadata-only quality-review input. It contains no source/resource text, raw locator, or fix payload.
  */
 export interface DocumentationQualityReviewInput {
+  /**
+   * @lang zh-CN 文档质量评审输入的固定契约名称。
+   * @lang en Fixed contract name of the documentation-quality-review input.
+   */
   contract: typeof DOCUMENTATION_QUALITY_REVIEW_CONTRACT;
+  /**
+   * @lang zh-CN 质量评审输入的精确契约版本。
+   * @lang en Exact contract version of the quality-review input.
+   */
   contractVersion: typeof DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 该质量评审工件的稳定身份。
+   * @lang en Stable identity of this quality-review artifact.
+   */
   id: string;
+  /**
+   * @lang zh-CN 供聚合为人工审查finding的结构观察列表。
+   * @lang en Structural observations to aggregate into human-review findings.
+   */
   observations: DocumentationQualityReviewObservation[];
+  /**
+   * @lang zh-CN 该输入的固定元数据公开约束。
+   * @lang en Fixed metadata-disclosure constraints for this input.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 原始定位器公开开关，固定为false。
+     * @lang en Raw-locator disclosure switch, fixed to false.
+     */
     allowRawLocator: false;
+    /**
+     * @lang zh-CN 资源正文公开开关，固定为false。
+     * @lang en Resource-body disclosure switch, fixed to false.
+     */
     allowResourceBody: false;
+    /**
+     * @lang zh-CN 源码正文公开开关，固定为false。
+     * @lang en Source-body disclosure switch, fixed to false.
+     */
     allowSourceBody: false;
+    /**
+     * @lang zh-CN 术语短语正文公开开关，固定为false。
+     * @lang en Terminology-phrase disclosure switch, fixed to false.
+     */
     allowTermPhrase: false;
   };
 }
@@ -119,15 +211,55 @@ export interface DocumentationQualityReviewInput {
  * @lang en One aggregated finding projectable to any host.
  */
 export interface DocumentationQualityReviewFinding {
+  /**
+   * @lang zh-CN 该审查项所属的观察类别。
+   * @lang en Observation category to which this finding belongs.
+   */
   category: DocumentationQualityReviewObservation["category"];
+  /**
+   * @lang zh-CN 从观察保留的可信度维度。
+   * @lang en Confidence dimension retained from the observation.
+   */
   confidence: DocumentationQualityReviewObservation["confidence"];
+  /**
+   * @lang zh-CN 去重并排序的相关诊断代码。
+   * @lang en Deduplicated and sorted associated diagnostic codes.
+   */
   diagnosticCodes: string[];
+  /**
+   * @lang zh-CN 由规则和逻辑范围生成的稳定审查项身份。
+   * @lang en Stable finding identity derived from its rule and logical scope.
+   */
   id: string;
+  /**
+   * @lang zh-CN 从观察复制的逻辑来源。
+   * @lang en Logical provenance copied from the observation.
+   */
   provenance: DocumentationQualityReviewProvenance;
+  /**
+   * @lang zh-CN 人工审查要求标记，固定为true。
+   * @lang en Human-review requirement flag, fixed to true.
+   */
   requiresHumanReview: true;
+  /**
+   * @lang zh-CN 需要人工审查或输入不可用的状态。
+   * @lang en State indicating required human review or unavailable input.
+   */
   reviewStatus: typeof DOCUMENTATION_QUALITY_REVIEW_STATUSES[number];
+  /**
+   * @lang zh-CN 从观察保留的评审规则名称。
+   * @lang en Review-rule name retained from the observation.
+   */
   rule: string;
+  /**
+   * @lang zh-CN 从观察复制的逻辑审查范围。
+   * @lang en Logical review scope copied from the observation.
+   */
   scope: DocumentationQualityReviewScope;
+  /**
+   * @lang zh-CN 供宿主显示的诊断级别，不可用项为info，其余评审项为warning。
+   * @lang en Diagnostic severity for host display, using info for unavailable findings and warning for other review findings.
+   */
   severity: HiaDiagnosticSeverity;
 }
 
@@ -137,11 +269,35 @@ export interface DocumentationQualityReviewFinding {
  * @lang en Stable P1 review summary.
  */
 export interface DocumentationQualityReviewSummary {
+  /**
+   * @lang zh-CN 聚合报告中的审查项总数。
+   * @lang en Total finding count in the aggregated report.
+   */
   findingCount: number;
+  /**
+   * @lang zh-CN 语言资源类别审查项数量。
+   * @lang en Count of locale-resource findings.
+   */
   localeResourceFindingCount: number;
+  /**
+   * @lang zh-CN 汇总的人工审查要求，固定为true。
+   * @lang en Summary human-review requirement, fixed to true.
+   */
   requiresHumanReview: true;
+  /**
+   * @lang zh-CN 面向阅读编程结构类别审查项数量。
+   * @lang en Count of reading-oriented-programming structural findings.
+   */
   ropFindingCount: number;
+  /**
+   * @lang zh-CN 术语类别审查项数量。
+   * @lang en Count of terminology findings.
+   */
   terminologyFindingCount: number;
+  /**
+   * @lang zh-CN 输入不可用状态的审查项数量。
+   * @lang en Count of findings whose input is unavailable.
+   */
   unavailableFindingCount: number;
 }
 
@@ -151,12 +307,40 @@ export interface DocumentationQualityReviewSummary {
  * @lang en Aggregated artifact; actionPolicy is always review-only and cannot be treated as an edit proposal.
  */
 export interface DocumentationQualityReviewReport {
+  /**
+   * @lang zh-CN 报告的消费策略，固定为review-only。
+   * @lang en Report-consumption policy, fixed to review-only.
+   */
   actionPolicy: "review-only";
+  /**
+   * @lang zh-CN 质量评审报告的固定契约名称。
+   * @lang en Fixed contract name of the quality-review report.
+   */
   contract: typeof DOCUMENTATION_QUALITY_REVIEW_CONTRACT;
+  /**
+   * @lang zh-CN 质量评审报告的精确契约版本。
+   * @lang en Exact contract version of the quality-review report.
+   */
   contractVersion: typeof DOCUMENTATION_QUALITY_REVIEW_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 由有效观察生成并按身份排序的审查项，输入校验失败时生成不可用项。
+   * @lang en Findings generated from valid observations and sorted by identity, with an unavailable finding produced when input validation fails.
+   */
   findings: DocumentationQualityReviewFinding[];
+  /**
+   * @lang zh-CN 从评审输入保留的工件身份。
+   * @lang en Artifact identity retained from the review input.
+   */
   id: string;
+  /**
+   * @lang zh-CN 从输入保留的固定公开策略。
+   * @lang en Fixed disclosure policy retained from the input.
+   */
   privacy: DocumentationQualityReviewInput["privacy"];
+  /**
+   * @lang zh-CN 该报告的分类计数及人工审查要求。
+   * @lang en Category counts and human-review requirement for this report.
+   */
   summary: DocumentationQualityReviewSummary;
 }
 

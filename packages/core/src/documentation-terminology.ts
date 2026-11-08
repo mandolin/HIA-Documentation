@@ -68,10 +68,30 @@ export const DOCUMENTATION_TERMINOLOGY_DIAGNOSTIC_CODE_REGISTRY = [
  * @lang en Stable logical scope of a portable candidate.
  */
 export interface DocumentationTerminologyScope {
+  /**
+   * @lang zh-CN 所属文档注解的类别名称。
+   * @lang en Kind name of the owning documentation annotation.
+   */
   annotationKind: string;
+  /**
+   * @lang zh-CN 候选术语所属字段的逻辑路径。
+   * @lang en Logical field path owning the terminology candidate.
+   */
   fieldPath: string;
+  /**
+   * @lang zh-CN 候选在该范围内的非负整数出现序号。
+   * @lang en Nonnegative integer occurrence index of the candidate within its scope.
+   */
   occurrence: number;
+  /**
+   * @lang zh-CN 候选所属源文档的逻辑身份。
+   * @lang en Logical identity of the source document owning the candidate.
+   */
   sourceDocumentId: string;
+  /**
+   * @lang zh-CN 候选所属符号的可选逻辑身份。
+   * @lang en Optional logical identity of the symbol owning the candidate.
+   */
   symbolId?: string;
 }
 
@@ -80,8 +100,20 @@ export interface DocumentationTerminologyScope {
  * @lang en Profile or generation-chain provenance for a candidate.
  */
 export interface DocumentationTerminologyCandidateProvenance {
+  /**
+   * @lang zh-CN 文档规范候选或生成源码关联的来源类别。
+   * @lang en Provenance kind identifying a profile candidate or generated-source linkage.
+   */
   kind: "profile-candidate" | "generated-source-linkage";
+  /**
+   * @lang zh-CN 识别候选的文档规范名称。
+   * @lang en Documentation-profile name that identified the candidate.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 可选生成关联关系的逻辑身份。
+   * @lang en Optional logical identity of the generation-linkage relation.
+   */
   relationId?: string;
 }
 
@@ -90,7 +122,15 @@ export interface DocumentationTerminologyCandidateProvenance {
  * @lang en Human-review record for a candidate, without personal names, paths, or bodies.
  */
 export interface DocumentationTerminologyHumanReview {
+  /**
+   * @lang zh-CN 人工记录的reviewed、linked或ignored决定。
+   * @lang en Human-recorded reviewed, linked or ignored decision.
+   */
   decision: "reviewed" | "linked" | "ignored";
+  /**
+   * @lang zh-CN 该人工评审记录的逻辑身份。
+   * @lang en Logical identity of the human-review record.
+   */
   reviewId: string;
 }
 
@@ -99,13 +139,45 @@ export interface DocumentationTerminologyHumanReview {
  * @lang en Portable shape of one body-free candidate.
  */
 export interface DocumentationTerminologyCandidate {
+  /**
+   * @lang zh-CN 候选身份，同一候选集合中须唯一。
+   * @lang en Candidate identity, required to be unique within its candidate set.
+   */
   candidateId: string;
+  /**
+   * @lang zh-CN 文档规范报告的候选提取或语法未知状态。
+   * @lang en Candidate-extraction or grammar-unknown state reported by the documentation profile.
+   */
   extractionKind: typeof DOCUMENTATION_TERMINOLOGY_EXTRACTION_KINDS[number];
+  /**
+   * @lang zh-CN 候选所属的规范BCP 47语言标签。
+   * @lang en Canonical BCP 47 locale tag of the candidate.
+   */
   locale: string;
+  /**
+   * @lang zh-CN 候选的文档规范或生成链逻辑来源。
+   * @lang en Logical profile or generation-chain provenance of the candidate.
+   */
   provenance: DocumentationTerminologyCandidateProvenance;
+  /**
+   * @lang zh-CN 可选人工评审记录，进入reviewed、linked或ignored状态时须匹配。
+   * @lang en Optional human-review record, required to match a reviewed, linked or ignored state.
+   */
   review?: DocumentationTerminologyHumanReview;
+  /**
+   * @lang zh-CN 候选的文档、字段和出现序号范围。
+   * @lang en Document, field and occurrence scope of the candidate.
+   */
   scope: DocumentationTerminologyScope;
+  /**
+   * @lang zh-CN 候选治理状态，采用detected、reviewed、linked或ignored。
+   * @lang en Candidate-governance state using detected, reviewed, linked or ignored.
+   */
   status: typeof DOCUMENTATION_TERMINOLOGY_CANDIDATE_STATUSES[number];
+  /**
+   * @lang zh-CN linked状态关联的可选term.*身份，校验时须指向已批准的受控条目。
+   * @lang en Optional term.* identity linked in the linked state, required during validation to refer to an approved controlled entry.
+   */
   termId?: string;
 }
 
@@ -114,10 +186,30 @@ export interface DocumentationTerminologyCandidate {
  * @lang en Observation input delivered to core after a profile has completed grammar handling.
  */
 export interface DocumentationTerminologyProfileObservation {
+  /**
+   * @lang zh-CN 文档规范分配的候选逻辑身份。
+   * @lang en Logical candidate identity assigned by the documentation profile.
+   */
   candidateId: string;
+  /**
+   * @lang zh-CN 文档规范声明的提取或语法未知类别。
+   * @lang en Extraction or grammar-unknown kind declared by the documentation profile.
+   */
   extractionKind: DocumentationTerminologyCandidate["extractionKind"];
+  /**
+   * @lang zh-CN 输入观察语言，转换器会将有效标签规范化。
+   * @lang en Observation-input locale, canonicalized by the converter when valid.
+   */
   locale: string;
+  /**
+   * @lang zh-CN 文档规范提供的候选逻辑来源。
+   * @lang en Logical candidate provenance supplied by the documentation profile.
+   */
   provenance: DocumentationTerminologyCandidateProvenance;
+  /**
+   * @lang zh-CN 文档规范提供的逻辑候选范围。
+   * @lang en Logical candidate scope supplied by the documentation profile.
+   */
   scope: DocumentationTerminologyScope;
 }
 
@@ -126,7 +218,15 @@ export interface DocumentationTerminologyProfileObservation {
  * @lang en Profile-observation conversion result; diagnostics never echo raw locales or candidate phrases.
  */
 export interface DocumentationTerminologyProfileObservationResult {
+  /**
+   * @lang zh-CN 语言有效时构造的可选detected候选。
+   * @lang en Optional detected candidate constructed when the locale is valid.
+   */
   candidate?: DocumentationTerminologyCandidate;
+  /**
+   * @lang zh-CN 语言规范化或语法边界产生的诊断。
+   * @lang en Diagnostics from locale canonicalization or grammar boundaries.
+   */
   diagnostics: HiaDiagnostic[];
 }
 
@@ -135,14 +235,50 @@ export interface DocumentationTerminologyProfileObservationResult {
  * @lang en Candidate-set artifact.
  */
 export interface DocumentationTerminologyCandidateSet {
+  /**
+   * @lang zh-CN 该集合的无正文候选列表。
+   * @lang en Body-free candidate list in this set.
+   */
   candidates: DocumentationTerminologyCandidate[];
+  /**
+   * @lang zh-CN 术语工件的固定中性契约名称。
+   * @lang en Fixed neutral contract name of the terminology artifact.
+   */
   contract: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT;
+  /**
+   * @lang zh-CN 术语候选集合的精确契约版本。
+   * @lang en Exact contract version of the terminology candidate set.
+   */
   contractVersion: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 候选集合的稳定工件身份。
+   * @lang en Stable artifact identity of the candidate set.
+   */
   id: string;
+  /**
+   * @lang zh-CN 候选集合的固定判别值documentation-terminology-candidate-set。
+   * @lang en Fixed documentation-terminology-candidate-set discriminator.
+   */
   kind: "documentation-terminology-candidate-set";
+  /**
+   * @lang zh-CN 候选集合的固定公开约束。
+   * @lang en Fixed disclosure constraints for the candidate set.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 原观察正文公开开关，固定为false。
+     * @lang en Observed-text disclosure switch, fixed to false.
+     */
     allowObservedText: false;
+    /**
+     * @lang zh-CN 原始定位器公开开关，固定为false。
+     * @lang en Raw-locator disclosure switch, fixed to false.
+     */
     allowRawLocator: false;
+    /**
+     * @lang zh-CN 源码正文公开开关，固定为false。
+     * @lang en Source-body disclosure switch, fixed to false.
+     */
     allowSourceBody: false;
   };
 }
@@ -152,7 +288,15 @@ export interface DocumentationTerminologyCandidateSet {
  * @lang en Controlled terminology form for one locale; it is not a source phrase.
  */
 export interface DocumentationTerminologyForm {
+  /**
+   * @lang zh-CN 该语言下人工维护的规范术语正文。
+   * @lang en Human-maintained canonical term text for this locale.
+   */
   canonical: string;
+  /**
+   * @lang zh-CN 该语言下可选同义术语正文，参与规范化冲突检查。
+   * @lang en Optional synonym text for this locale, participating in normalized conflict checks.
+   */
   synonyms?: string[];
 }
 
@@ -161,15 +305,51 @@ export interface DocumentationTerminologyForm {
  * @lang en Human-maintained registry entry.
  */
 export interface DocumentationTerminologyRegistryEntry {
+  /**
+   * @lang zh-CN 按语言索引的可选受控术语定义。
+   * @lang en Optional controlled term definitions indexed by locale.
+   */
   definition?: Record<string, string>;
+  /**
+   * @lang zh-CN 按规范语言标签索引的规范写法与同义词。
+   * @lang en Canonical forms and synonyms indexed by canonical locale tag.
+   */
   forms: Record<string, DocumentationTerminologyForm>;
+  /**
+   * @lang zh-CN 术语条目的proposed、approved、deprecated或rejected生命周期。
+   * @lang en Proposed, approved, deprecated or rejected lifecycle of the term entry.
+   */
   lifecycle: typeof DOCUMENTATION_TERMINOLOGY_LIFECYCLES[number];
+  /**
+   * @lang zh-CN 声明的人工确认来源及其逻辑记录。
+   * @lang en Declared human-confirmation provenance and its logical record.
+   */
   provenance: {
+    /**
+     * @lang zh-CN 人工确认来源的固定判别值human-confirmed。
+     * @lang en Fixed human-confirmed provenance discriminator.
+     */
     kind: "human-confirmed";
+    /**
+     * @lang zh-CN 关联的人工确认逻辑记录身份。
+     * @lang en Logical identity of the associated human-confirmation record.
+     */
     recordId: string;
   };
+  /**
+   * @lang zh-CN 该条目声明取代的可选术语身份列表。
+   * @lang en Optional term identities this entry declares it replaces.
+   */
   replaces?: string[];
+  /**
+   * @lang zh-CN 注册表内唯一且符合term.*规则的术语身份。
+   * @lang en Term identity unique within the registry and conforming to the term.* rules.
+   */
   termId: string;
+  /**
+   * @lang zh-CN 受控术语正文的private、workspace或public可见范围。
+   * @lang en Private, workspace or public visibility of the controlled term text.
+   */
   visibility: typeof DOCUMENTATION_TERMINOLOGY_VISIBILITIES[number];
 }
 
@@ -178,15 +358,51 @@ export interface DocumentationTerminologyRegistryEntry {
  * @lang en Controlled registry artifact; form text is allowed only in this controlled input.
  */
 export interface DocumentationTerminologyRegistry {
+  /**
+   * @lang zh-CN 术语注册表的固定中性契约名称。
+   * @lang en Fixed neutral contract name of the terminology registry.
+   */
   contract: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT;
+  /**
+   * @lang zh-CN 术语注册表的精确契约版本。
+   * @lang en Exact contract version of the terminology registry.
+   */
   contractVersion: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 该受控注册表的工件身份。
+   * @lang en Artifact identity of this controlled registry.
+   */
   id: string;
+  /**
+   * @lang zh-CN 受控注册表的固定判别值documentation-terminology-registry。
+   * @lang en Fixed documentation-terminology-registry discriminator.
+   */
   kind: "documentation-terminology-registry";
+  /**
+   * @lang zh-CN 受控注册表的固定来源信息约束。
+   * @lang en Fixed source-information constraints for the controlled registry.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 原观察正文公开开关，固定为false。
+     * @lang en Observed-text disclosure switch, fixed to false.
+     */
     allowObservedText: false;
+    /**
+     * @lang zh-CN 原始定位器公开开关，固定为false。
+     * @lang en Raw-locator disclosure switch, fixed to false.
+     */
     allowRawLocator: false;
+    /**
+     * @lang zh-CN 源码正文公开开关，固定为false。
+     * @lang en Source-body disclosure switch, fixed to false.
+     */
     allowSourceBody: false;
   };
+  /**
+   * @lang zh-CN 人工维护的受控术语条目。
+   * @lang en Human-maintained controlled terminology entries.
+   */
   terms: DocumentationTerminologyRegistryEntry[];
 }
 

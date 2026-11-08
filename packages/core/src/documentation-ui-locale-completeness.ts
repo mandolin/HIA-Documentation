@@ -97,8 +97,20 @@ export type DocumentationUiLocaleChannel = typeof DOCUMENTATION_UI_LOCALE_CHANNE
  * @lang en Stable message identity and placeholder definition.
  */
 export interface DocumentationUiLocaleMessageDefinition {
+  /**
+   * @lang zh-CN 界面消息的稳定身份。
+   * @lang en Stable identity of the UI message.
+   */
   messageId: string;
+  /**
+   * @lang zh-CN 声明的占位符名称集合，评估时与实际正文中的集合核对。
+   * @lang en Declared placeholder-name set, checked against the set in actual text during evaluation.
+   */
   placeholderNames: string[];
+  /**
+   * @lang zh-CN 界面消息可见范围的固定值public。
+   * @lang en Fixed public visibility of the UI message.
+   */
   visibility: "public";
 }
 
@@ -108,7 +120,15 @@ export interface DocumentationUiLocaleMessageDefinition {
  * @lang en In-memory locale-bundle entry; `text` is gate input only and is never projected into the public report.
  */
 export interface DocumentationUiLocaleBundleEntry {
+  /**
+   * @lang zh-CN 该译文对应的界面消息身份。
+   * @lang en UI-message identity associated with this translation.
+   */
   messageId: string;
+  /**
+   * @lang zh-CN 供完整性与占位符检查的内存纯文本译文。
+   * @lang en In-memory plain-text translation used for completeness and placeholder checks.
+   */
   text: string;
 }
 
@@ -117,8 +137,20 @@ export interface DocumentationUiLocaleBundleEntry {
  * @lang en Public plain-text bundle for one explicit locale.
  */
 export interface DocumentationUiLocaleBundle {
+  /**
+   * @lang zh-CN 该语言包的稳定身份。
+   * @lang en Stable identity of this locale bundle.
+   */
   bundleId: string;
+  /**
+   * @lang zh-CN 该语言包提供的界面消息译文列表。
+   * @lang en UI-message translations supplied by this locale bundle.
+   */
   entries: DocumentationUiLocaleBundleEntry[];
+  /**
+   * @lang zh-CN 该语言包显式声明的语言标签。
+   * @lang en Locale tag explicitly declared by this bundle.
+   */
   locale: string;
 }
 
@@ -127,7 +159,15 @@ export interface DocumentationUiLocaleBundle {
  * @lang en Explicit ordered fallback chain for one UI locale.
  */
 export interface DocumentationUiLocaleFallbackChain {
+  /**
+   * @lang zh-CN 该界面语言显式声明的有序回退语言。
+   * @lang en Ordered fallback locales explicitly declared for this UI locale.
+   */
   fallbackLocales: string[];
+  /**
+   * @lang zh-CN 该回退链服务的界面语言。
+   * @lang en UI locale served by this fallback chain.
+   */
   uiLocale: string;
 }
 
@@ -136,7 +176,15 @@ export interface DocumentationUiLocaleFallbackChain {
  * @lang en UI-message channels declared for one execution mode.
  */
 export interface DocumentationUiLocaleSurfaceMode {
+  /**
+   * @lang zh-CN 该执行模式声明需要覆盖的界面消息通道。
+   * @lang en UI-message channels declared for coverage in this execution mode.
+   */
   channels: DocumentationUiLocaleChannel[];
+  /**
+   * @lang zh-CN 交互或无脚本执行模式名称。
+   * @lang en Interactive or no-script execution-mode name.
+   */
   mode: DocumentationUiLocaleMode;
 }
 
@@ -146,8 +194,20 @@ export interface DocumentationUiLocaleSurfaceMode {
  * @lang en Page-default and language-of-parts declaration; W-P125 must still map it to the real DOM/accessibility tree.
  */
 export interface DocumentationUiLocaleLanguageMetadata {
+  /**
+   * @lang zh-CN 页面默认语言声明，须与局部语言声明共同覆盖正文及界面语言。
+   * @lang en Page-default language declaration, required together with part-language declarations to cover content and UI locales.
+   */
   documentLanguage: string;
+  /**
+   * @lang zh-CN 页面局部语言声明，界面语言不同于页面默认语言时须包含相应界面语言。
+   * @lang en Page-part language declarations, required to include the UI locale when it differs from the page-default language.
+   */
   partLanguages: string[];
+  /**
+   * @lang zh-CN 该语言元数据声明对应的界面语言。
+   * @lang en UI locale associated with this language-metadata declaration.
+   */
   uiLocale: string;
 }
 
@@ -156,9 +216,25 @@ export interface DocumentationUiLocaleLanguageMetadata {
  * @lang en One renderer-neutral documentation UI surface.
  */
 export interface DocumentationUiLocaleSurface {
+  /**
+   * @lang zh-CN 该文档界面面的正文语言。
+   * @lang en Content locale of this documentation UI surface.
+   */
   contentLocale: string;
+  /**
+   * @lang zh-CN 逐界面语言显式提供的页面和局部语言元数据。
+   * @lang en Page and part-language metadata supplied explicitly for each UI locale.
+   */
   languageMetadata: DocumentationUiLocaleLanguageMetadata[];
+  /**
+   * @lang zh-CN 该界面面的执行模式与消息通道声明。
+   * @lang en Execution-mode and message-channel declarations for this surface.
+   */
   modes: DocumentationUiLocaleSurfaceMode[];
+  /**
+   * @lang zh-CN 该文档界面面的稳定身份。
+   * @lang en Stable identity of this documentation UI surface.
+   */
   surfaceId: string;
 }
 
@@ -167,11 +243,35 @@ export interface DocumentationUiLocaleSurface {
  * @lang en Stable message required in one state.
  */
 export interface DocumentationUiLocaleRequirement {
+  /**
+   * @lang zh-CN 该消息要求所属的界面通道。
+   * @lang en UI channel to which this message requirement belongs.
+   */
   channel: DocumentationUiLocaleChannel;
+  /**
+   * @lang zh-CN 该要求必须覆盖的消息身份。
+   * @lang en Message identity that this requirement must cover.
+   */
   messageId: string;
+  /**
+   * @lang zh-CN 该要求适用的执行模式。
+   * @lang en Execution mode to which this requirement applies.
+   */
   mode: DocumentationUiLocaleMode;
+  /**
+   * @lang zh-CN 该消息覆盖要求的稳定身份。
+   * @lang en Stable identity of this message-coverage requirement.
+   */
   requirementId: string;
+  /**
+   * @lang zh-CN 该消息要求对应的界面状态身份。
+   * @lang en UI-state identity associated with this message requirement.
+   */
   stateId: string;
+  /**
+   * @lang zh-CN 该消息要求所属的界面面身份。
+   * @lang en Surface identity owning this message requirement.
+   */
   surfaceId: string;
 }
 
@@ -181,14 +281,50 @@ export interface DocumentationUiLocaleRequirement {
  * @lang en Complete input for the pure evaluator; callers must explicitly provide every locale, bundle, surface, and requirement.
  */
 export interface DocumentationUiLocaleCompletenessInput {
+  /**
+   * @lang zh-CN 调用方显式提供的语言包及实际消息正文。
+   * @lang en Locale bundles and actual message text explicitly supplied by the caller.
+   */
   bundles: DocumentationUiLocaleBundle[];
+  /**
+   * @lang zh-CN 调用方声明的正文语言列表。
+   * @lang en Content locales declared by the caller.
+   */
   contentLocales: string[];
+  /**
+   * @lang zh-CN 调用方显式选择的默认界面语言。
+   * @lang en Default UI locale explicitly selected by the caller.
+   */
   defaultUiLocale: string;
+  /**
+   * @lang zh-CN 逐界面语言声明的显式回退链。
+   * @lang en Explicit fallback chains declared per UI locale.
+   */
   fallbackChains: DocumentationUiLocaleFallbackChain[];
+  /**
+   * @lang zh-CN 稳定消息身份、占位符和公开范围定义。
+   * @lang en Definitions of stable message identities, placeholders and disclosure scope.
+   */
   messages: DocumentationUiLocaleMessageDefinition[];
+  /**
+   * @lang zh-CN 本次界面语言完整性检查的规范身份。
+   * @lang en Profile identity for this UI-locale completeness check.
+   */
   profileId: string;
+  /**
+   * @lang zh-CN 覆盖各界面面、执行模式与状态的消息要求列表。
+   * @lang en Message requirements covering surfaces, execution modes and states.
+   */
   requirements: DocumentationUiLocaleRequirement[];
+  /**
+   * @lang zh-CN 待评估的文档界面面声明。
+   * @lang en Documentation UI surfaces declared for evaluation.
+   */
   surfaces: DocumentationUiLocaleSurface[];
+  /**
+   * @lang zh-CN 调用方显式提供的界面语言列表。
+   * @lang en UI locales explicitly supplied by the caller.
+   */
   uiLocales: string[];
 }
 
@@ -197,8 +333,20 @@ export interface DocumentationUiLocaleCompletenessInput {
  * @lang en Translation-free bundle inventory in the report.
  */
 export interface DocumentationUiLocaleBundleInventory {
+  /**
+   * @lang zh-CN 报告所记录的语言包身份。
+   * @lang en Locale-bundle identity recorded by the report.
+   */
   bundleId: string;
+  /**
+   * @lang zh-CN 该语言包声明的语言标签。
+   * @lang en Locale tag declared by this bundle.
+   */
   locale: string;
+  /**
+   * @lang zh-CN 该语言包提供并按身份排序的消息列表。
+   * @lang en Message identities supplied by the bundle and sorted by identity.
+   */
   messageIds: string[];
 }
 
@@ -207,13 +355,45 @@ export interface DocumentationUiLocaleBundleInventory {
  * @lang en Frozen locale-separation policy in the report.
  */
 export interface DocumentationUiLocaleScope {
+  /**
+   * @lang zh-CN 正文语言与界面语言独立的固定策略，值为true。
+   * @lang en Fixed policy separating content and UI locales, set to true.
+   */
   contentAndUiIndependent: true;
+  /**
+   * @lang zh-CN 报告记录的正文语言列表。
+   * @lang en Content locales recorded by the report.
+   */
   contentLocales: string[];
+  /**
+   * @lang zh-CN 报告记录的显式默认界面语言。
+   * @lang en Explicit default UI locale recorded by the report.
+   */
   defaultUiLocale: string;
+  /**
+   * @lang zh-CN 从正文推断界面语言的开关，固定为false。
+   * @lang en Switch for inferring the UI locale from content, fixed to false.
+   */
   inferFromContentLocale: false;
+  /**
+   * @lang zh-CN 从系统环境推断界面语言的开关，固定为false。
+   * @lang en Switch for inferring the UI locale from the system environment, fixed to false.
+   */
   inferFromSystemLocale: false;
+  /**
+   * @lang zh-CN 语言标签形态子集的固定标识bcp47-well-formed-subset。
+   * @lang en Fixed bcp47-well-formed-subset identifier for the language-tag shape subset.
+   */
   languageTagProfile: "bcp47-well-formed-subset";
+  /**
+   * @lang zh-CN 报告记录的显式界面语言列表。
+   * @lang en Explicit UI locales recorded by the report.
+   */
   uiLocales: string[];
+  /**
+   * @lang zh-CN 界面语言选择方式的固定值caller-explicit。
+   * @lang en Fixed caller-explicit UI-locale selection policy.
+   */
   uiSelection: "caller-explicit";
 }
 
@@ -222,9 +402,25 @@ export interface DocumentationUiLocaleScope {
  * @lang en Frozen explicit-fallback policy in the report.
  */
 export interface DocumentationUiLocaleFallbackPolicy {
+  /**
+   * @lang zh-CN 报告记录的显式有序语言回退链。
+   * @lang en Explicit ordered locale-fallback chains recorded by the report.
+   */
   chains: DocumentationUiLocaleFallbackChain[];
+  /**
+   * @lang zh-CN 固定回退方式explicit-chain-only。
+   * @lang en Fixed explicit-chain-only fallback mode.
+   */
   mode: "explicit-chain-only";
+  /**
+   * @lang zh-CN 必需消息的覆盖标准，固定要求exact。
+   * @lang en Coverage standard for required messages, fixed to exact.
+   */
   requiredMessageResolution: "exact";
+  /**
+   * @lang zh-CN 先精确语言后显式回退链的固定解析顺序。
+   * @lang en Fixed resolution order of exact locale followed by the declared fallback chain.
+   */
   resolutionOrder: "exact-then-declared-chain";
 }
 
@@ -245,13 +441,45 @@ export type DocumentationUiLocalePlaceholderStatus = "match" | "mismatch" | "una
  * @lang en Auditable gate result for one required message.
  */
 export interface DocumentationUiLocaleRequirementResult {
+  /**
+   * @lang zh-CN 该评估结果对应的消息通道。
+   * @lang en Message channel associated with this evaluation result.
+   */
   channel: DocumentationUiLocaleChannel;
+  /**
+   * @lang zh-CN 该评估结果对应的稳定消息身份。
+   * @lang en Stable message identity associated with this evaluation result.
+   */
   messageId: string;
+  /**
+   * @lang zh-CN 实际消息占位符与声明集合的核对状态。
+   * @lang en Comparison state of actual message placeholders against the declared set.
+   */
   placeholderStatus: DocumentationUiLocalePlaceholderStatus;
+  /**
+   * @lang zh-CN 该评估结果关联的覆盖要求身份。
+   * @lang en Coverage-requirement identity associated with this result.
+   */
   requirementId: string;
+  /**
+   * @lang zh-CN 精确命中、声明回退或缺失的语言解析状态。
+   * @lang en Locale-resolution state identifying exact matches, declared fallbacks or missing text.
+   */
   resolution: DocumentationUiLocaleResolution;
+  /**
+   * @lang zh-CN 精确或回退命中时记录的实际消息语言。
+   * @lang en Actual message locale recorded after an exact or fallback match.
+   */
   resolvedLocale?: string;
+  /**
+   * @lang zh-CN 该覆盖要求适用的界面状态身份。
+   * @lang en UI-state identity to which this requirement applies.
+   */
   stateId: string;
+  /**
+   * @lang zh-CN 仅精确语言命中且占位符匹配时为covered，其余为incomplete。
+   * @lang en Covered only for exact locale matches with matching placeholders, otherwise incomplete.
+   */
   status: "covered" | "incomplete";
 }
 
@@ -260,10 +488,30 @@ export interface DocumentationUiLocaleRequirementResult {
  * @lang en Count-only summary for one surface/mode/UI-locale combination.
  */
 export interface DocumentationUiLocaleEvaluationSummary {
+  /**
+   * @lang zh-CN 本次组合中精确语言命中的消息要求数量。
+   * @lang en Count of exact-locale requirement matches in this combination.
+   */
   exact: number;
+  /**
+   * @lang zh-CN 本次组合中使用声明回退的消息要求数量。
+   * @lang en Count of requirements using declared fallback in this combination.
+   */
   fallback: number;
+  /**
+   * @lang zh-CN 本次组合中缺少可用消息的要求数量。
+   * @lang en Count of requirements lacking an available message in this combination.
+   */
   missing: number;
+  /**
+   * @lang zh-CN 本次组合中占位符不匹配的要求数量。
+   * @lang en Count of requirements with placeholder mismatch in this combination.
+   */
   placeholderMismatch: number;
+  /**
+   * @lang zh-CN 本次界面面、模式和语言组合检查的要求结果总数。
+   * @lang en Total requirement results checked for this surface, mode and locale combination.
+   */
   requirements: number;
 }
 
@@ -272,14 +520,50 @@ export interface DocumentationUiLocaleEvaluationSummary {
  * @lang en One automatically expanded completeness evaluation.
  */
 export interface DocumentationUiLocaleEvaluation {
+  /**
+   * @lang zh-CN 本次评估所属界面面的正文语言。
+   * @lang en Content locale of the surface owning this evaluation.
+   */
   contentLocale: string;
+  /**
+   * @lang zh-CN 评估采用的页面默认语言，缺少语言元数据时记录该界面面的正文语言，评估仍为incomplete。
+   * @lang en Page-default language used by evaluation, recording the surface content locale when language metadata is absent while evaluation remains incomplete.
+   */
   documentLanguage: string;
+  /**
+   * @lang zh-CN 本次评估的交互或无脚本执行模式。
+   * @lang en Interactive or no-script execution mode evaluated here.
+   */
   mode: DocumentationUiLocaleMode;
+  /**
+   * @lang zh-CN 本次采用的页面局部语言列表。
+   * @lang en Page-part language declarations used for this evaluation.
+   */
   partLanguages: string[];
+  /**
+   * @lang zh-CN 该组合下各消息要求的语言与占位符检查结果。
+   * @lang en Locale and placeholder results for message requirements in this combination.
+   */
   results: DocumentationUiLocaleRequirementResult[];
+  /**
+   * @lang zh-CN 消息、通道和语言元数据均满足要求时为complete。
+   * @lang en Complete when messages, channels and language metadata all satisfy requirements.
+   */
   status: "complete" | "incomplete";
+  /**
+   * @lang zh-CN 该组合的消息命中、缺失和占位符计数。
+   * @lang en Counts of message matches, missing messages and placeholders for this combination.
+   */
   summary: DocumentationUiLocaleEvaluationSummary;
+  /**
+   * @lang zh-CN 本次评估的文档界面面身份。
+   * @lang en Documentation UI surface identity for this evaluation.
+   */
   surfaceId: string;
+  /**
+   * @lang zh-CN 本次评估的显式界面语言。
+   * @lang en Explicit UI locale evaluated here.
+   */
   uiLocale: string;
 }
 
@@ -288,13 +572,45 @@ export interface DocumentationUiLocaleEvaluation {
  * @lang en All-false privacy boundary for the metadata-only report.
  */
 export interface DocumentationUiLocaleCompletenessPrivacy {
+  /**
+   * @lang zh-CN 绝对路径包含标记，固定为false。
+   * @lang en Absolute-path inclusion flag, fixed to false.
+   */
   absolutePathIncluded: false;
+  /**
+   * @lang zh-CN 正文内容包含标记，固定为false。
+   * @lang en Content-body inclusion flag, fixed to false.
+   */
   contentBodyIncluded: false;
+  /**
+   * @lang zh-CN 凭据包含标记，固定为false。
+   * @lang en Credential inclusion flag, fixed to false.
+   */
   credentialIncluded: false;
+  /**
+   * @lang zh-CN 界面消息正文包含标记，固定为false。
+   * @lang en UI-message-text inclusion flag, fixed to false.
+   */
   messageTextIncluded: false;
+  /**
+   * @lang zh-CN 个人身份信息包含标记，固定为false。
+   * @lang en Personal-identity inclusion flag, fixed to false.
+   */
   personalIdentityIncluded: false;
+  /**
+   * @lang zh-CN 私有消息包含标记，固定为false。
+   * @lang en Private-message inclusion flag, fixed to false.
+   */
   privateMessageIncluded: false;
+  /**
+   * @lang zh-CN 运行环境信息包含标记，固定为false。
+   * @lang en Runtime-environment inclusion flag, fixed to false.
+   */
   runtimeEnvironmentIncluded: false;
+  /**
+   * @lang zh-CN 源码正文包含标记，固定为false。
+   * @lang en Source-body inclusion flag, fixed to false.
+   */
   sourceBodyIncluded: false;
 }
 
@@ -303,9 +619,25 @@ export interface DocumentationUiLocaleCompletenessPrivacy {
  * @lang en Exact-draft and closed-world compatibility.
  */
 export interface DocumentationUiLocaleCompletenessCompatibility {
+  /**
+   * @lang zh-CN 显式纯迁移方式的固定值explicit-pure。
+   * @lang en Fixed explicit-pure policy for explicit pure migration.
+   */
   migrationPolicy: "explicit-pure";
+  /**
+   * @lang zh-CN 未知通道处理策略，固定为reject。
+   * @lang en Unknown-channel policy, fixed to reject.
+   */
   unknownChannelPolicy: "reject";
+  /**
+   * @lang zh-CN 未知属性处理策略，固定为reject。
+   * @lang en Unknown-property policy, fixed to reject.
+   */
   unknownProperties: "reject";
+  /**
+   * @lang zh-CN 契约版本匹配规则，固定为exact。
+   * @lang en Contract-version matching rule, fixed to exact.
+   */
   versionMatch: "exact";
 }
 
@@ -365,13 +697,45 @@ export type DocumentationUiLocaleCompletenessReport = CurrentDocumentationUiLoca
  * @lang en Count-only summary for the whole completeness gate.
  */
 export interface DocumentationUiLocaleCompletenessSummary {
+  /**
+   * @lang zh-CN 展开后的界面面、执行模式与语言评估数量。
+   * @lang en Count of expanded surface, execution-mode and locale evaluations.
+   */
   evaluations: number;
+  /**
+   * @lang zh-CN 全部评估中精确语言命中的要求结果数量。
+   * @lang en Count of exact-locale requirement matches across evaluations.
+   */
   exact: number;
+  /**
+   * @lang zh-CN 全部评估中使用声明回退的要求结果数量。
+   * @lang en Count of requirement results using declared fallback across evaluations.
+   */
   fallback: number;
+  /**
+   * @lang zh-CN 全部评估中缺少可用消息的要求结果数量。
+   * @lang en Count of requirement results lacking an available message across evaluations.
+   */
   missing: number;
+  /**
+   * @lang zh-CN 全部评估中占位符不匹配的要求结果数量。
+   * @lang en Count of requirement results with placeholder mismatch across evaluations.
+   */
   placeholderMismatch: number;
+  /**
+   * @lang zh-CN 全部评估检查的要求结果总数。
+   * @lang en Total requirement results checked across evaluations.
+   */
   requirements: number;
+  /**
+   * @lang zh-CN 报告所覆盖的文档界面面数量。
+   * @lang en Count of documentation UI surfaces covered by the report.
+   */
   surfaces: number;
+  /**
+   * @lang zh-CN 报告所覆盖的显式界面语言数量。
+   * @lang en Count of explicit UI locales covered by the report.
+   */
   uiLocales: number;
 }
 
@@ -381,10 +745,30 @@ export interface DocumentationUiLocaleCompletenessSummary {
  * @lang en Pure evaluator result; malformed, private, or unrepresentably large input returns no report, while representable under-coverage returns an incomplete report.
  */
 export interface DocumentationUiLocaleCompletenessResult {
+  /**
+   * @lang zh-CN 输入校验或完整性评估产生的诊断。
+   * @lang en Diagnostics from input validation or completeness evaluation.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 可选当前1.0.0报告，complete或可表示的incomplete结果可携带。
+   * @lang en Optional current 1.0.0 report carried by complete or representable incomplete results.
+   */
   report?: CurrentDocumentationUiLocaleCompletenessReport;
+  /**
+   * @lang zh-CN 可选属性排序后的可重复报告JSON字符串。
+   * @lang en Optional repeatable report JSON string with sorted properties.
+   */
   reportJson?: string;
+  /**
+   * @lang zh-CN 本次检查的complete、incomplete或refused结果状态。
+   * @lang en Complete, incomplete or refused result state of this check.
+   */
   status: "complete" | "incomplete" | "refused";
+  /**
+   * @lang zh-CN 有报告时可用的整体计数摘要。
+   * @lang en Overall count summary available when a report is present.
+   */
   summary?: DocumentationUiLocaleCompletenessSummary;
 }
 
