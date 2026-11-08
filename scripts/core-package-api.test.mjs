@@ -261,6 +261,229 @@ test("renderer and CLI selected mixed descriptions have explicit locale heads", 
   }
 });
 
+test("browser-panel and JSDoc parser selected mixed descriptions have explicit locale heads", () => {
+  // <lang><zh-CN>固定两份真实源中的176个混合描述节点，防止回退正文掩盖中文缺口。</zh-CN><en>Fix the 176 mixed-description nodes in two actual sources so fallback prose cannot hide Chinese gaps.</en></lang>
+  const fixtures = [
+    {
+      "path": "packages/browser-panel/src/index.ts",
+      "qualified": [
+        "HIA_BROWSER_PANEL_PAYLOAD_SCHEMA_VERSION",
+        "HIA_BROWSER_PANEL_MANIFEST_SCHEMA_VERSION",
+        "BrowserPanelDomain",
+        "BrowserPanelProjectInfo",
+        "BrowserPanelProjectInfo.id",
+        "BrowserPanelProjectInfo.name",
+        "BrowserPanelProjectInfo.title",
+        "BrowserPanelPosition",
+        "BrowserPanelPosition.column",
+        "BrowserPanelPosition.line",
+        "BrowserPanelRange",
+        "BrowserPanelRange.end",
+        "BrowserPanelRange.start",
+        "CreateBrowserPanelPayloadInput",
+        "CreateBrowserPanelPayloadInput.docSourceMaps",
+        "CreateBrowserPanelPayloadInput.project",
+        "CreateBrowserPanelPayloadInput.relationGraph",
+        "BrowserPanelDocSourceMapInput",
+        "BrowserPanelDocSourceMapInput.index",
+        "BrowserPanelDocSourceMapInput.ordinarySourceMaps",
+        "BrowserPanelDocSourceMapInput.path",
+        "BrowserPanelOrdinarySourceMapInput",
+        "BrowserPanelOrdinarySourceMapInput.index",
+        "BrowserPanelOrdinarySourceMapInput.path",
+        "BrowserPanelPayload",
+        "BrowserPanelPayload.diagnostics",
+        "BrowserPanelPayload.docSourceMaps",
+        "BrowserPanelPayload.entries",
+        "BrowserPanelPayload.generator",
+        "BrowserPanelPayload.project",
+        "BrowserPanelPayload.relationGraph",
+        "BrowserPanelPayload.schemaVersion",
+        "BrowserPanelPayload.summary",
+        "BrowserPanelSummary",
+        "BrowserPanelSummary.docSourceMapCount",
+        "BrowserPanelSummary.domainCounts",
+        "BrowserPanelSummary.entryCount",
+        "BrowserPanelSummary.linkedEntryCount",
+        "BrowserPanelSummary.relationNodeCount",
+        "BrowserPanelSummary.relationCount",
+        "BrowserPanelSummary.sourceMapCount",
+        "BrowserPanelRelationGraphInput",
+        "BrowserPanelRelationNodeInput",
+        "BrowserPanelRelationInput",
+        "BrowserPanelRelationGraph",
+        "BrowserPanelRelationNode",
+        "BrowserPanelRelation",
+        "BrowserPanelDiagnostic",
+        "BrowserPanelDiagnostic.code",
+        "BrowserPanelDiagnostic.message",
+        "BrowserPanelDiagnostic.severity",
+        "BrowserPanelDiagnostic.targetPath",
+        "BrowserPanelDocSourceMap",
+        "BrowserPanelDocSourceMap.contractVersion",
+        "BrowserPanelDocSourceMap.entryCount",
+        "BrowserPanelDocSourceMap.linkedEntryCount",
+        "BrowserPanelDocSourceMap.path",
+        "BrowserPanelDocSourceMap.sourceMapCount",
+        "BrowserPanelDocSourceMap.sourceMaps",
+        "BrowserPanelDocSourceMap.sourcesContentPolicy",
+        "BrowserPanelDocSourceMap.status",
+        "BrowserPanelSourceMapRef",
+        "BrowserPanelSourceMapRef.id",
+        "BrowserPanelSourceMapRef.kind",
+        "BrowserPanelSourceMapRef.language",
+        "BrowserPanelSourceMapRef.path",
+        "BrowserPanelSourceMapRef.loaded",
+        "BrowserPanelEntry",
+        "BrowserPanelEntry.artifactLinks",
+        "BrowserPanelEntry.docSourceMapPath",
+        "BrowserPanelEntry.domain",
+        "BrowserPanelEntry.id",
+        "BrowserPanelEntry.kind",
+        "BrowserPanelEntry.label",
+        "BrowserPanelEntry.lookup",
+        "BrowserPanelEntry.openRequests",
+        "BrowserPanelEntry.sourceLinks",
+        "BrowserPanelEntry.symbolId",
+        "BrowserPanelEntry.symbolKind",
+        "BrowserPanelSourceRef",
+        "BrowserPanelSourceRef.confidence",
+        "BrowserPanelSourceRef.language",
+        "BrowserPanelSourceRef.path",
+        "BrowserPanelSourceRef.range",
+        "BrowserPanelSourceRef.rangeSource",
+        "BrowserPanelSourceRef.sourceId",
+        "BrowserPanelArtifactRef",
+        "BrowserPanelArtifactRef.artifactId",
+        "BrowserPanelArtifactRef.confidence",
+        "BrowserPanelArtifactRef.language",
+        "BrowserPanelArtifactRef.path",
+        "BrowserPanelArtifactRef.rangeSource",
+        "BrowserPanelArtifactRef.selector",
+        "BrowserPanelEntryLookup",
+        "BrowserPanelEntryLookup.generated",
+        "BrowserPanelEntryLookup.matchedEntryIds",
+        "BrowserPanelEntryLookup.original",
+        "BrowserPanelEntryLookup.sourceMapPath",
+        "BrowserPanelEntryLookup.status",
+        "BrowserPanelOpenRequest",
+        "BrowserPanelOpenRequest.id",
+        "BrowserPanelOpenRequest.kind",
+        "BrowserPanelOpenRequest.label",
+        "BrowserPanelOpenRequest.target",
+        "BrowserPanelOpenRequest.target.entryId",
+        "BrowserPanelOpenRequest.target.path",
+        "BrowserPanelOpenRequest.target.relationId",
+        "BrowserPanelOpenRequest.target.position",
+        "BrowserPanelOpenRequest.target.selector",
+        "BrowserPanelOpenRequest.type",
+        "RenderedBrowserPanelFile",
+        "RenderedBrowserPanelFile.contentType",
+        "RenderedBrowserPanelFile.contents",
+        "RenderedBrowserPanelFile.path",
+        "RenderedBrowserPanelFile.role",
+        "BrowserPanelManifest",
+        "BrowserPanelManifest.entrypoint",
+        "BrowserPanelManifest.files",
+        "BrowserPanelManifest.generator",
+        "BrowserPanelManifest.payload",
+        "BrowserPanelManifest.project",
+        "BrowserPanelManifest.schemaVersion",
+        "RenderBrowserPanelResult",
+        "RenderBrowserPanelResult.files",
+        "RenderBrowserPanelResult.manifest",
+        "createBrowserPanelPayload",
+        "renderBrowserPanel"
+      ]
+    },
+    {
+      "path": "packages/parser-jsdoc/src/index.ts",
+      "qualified": [
+        "JSDOC_ADAPTER_NAME",
+        "JSDOC_ADAPTER_CORE_BRIDGE_VERSION",
+        "JSDOC_ADAPTER_METADATA_SCHEMA_VERSION",
+        "JSDOC_HIA_INTEGRATION_CONTRACT",
+        "JSDOC_HIA_INTEGRATION_CONTRACT_VERSION",
+        "JSDocAdapterIntegrationMetadata",
+        "JSDocAdapterIntegrationMetadata.contract",
+        "JSDocAdapterIntegrationMetadata.contractVersion",
+        "JSDocAdapterIntegrationMetadata.pluginVersion",
+        "JSDocAdapterIntegrationMetadata.mode",
+        "JSDocAdapterIntegrationMetadata.irVersion",
+        "JSDocAdapterIntegrationMetadata.parserBoundary",
+        "JSDocAdapterIntegrationMetadata.docletNodeMap",
+        "JSDocAdapterIntegrationMetadata.sourceFragments",
+        "JSDocAdapterIntegrationMetadata.localizationResources",
+        "JSDocAdapterIntegrationMetadata.diagnosticCounts",
+        "JSDocAdapterDocumentMetadata",
+        "JSDocAdapterDocumentMetadata.adapter",
+        "JSDocAdapterDocumentMetadata.adapterBridgeVersion",
+        "JSDocAdapterDocumentMetadata.metadataSchemaVersion",
+        "JSDocAdapterDocumentMetadata.source",
+        "JSDocAdapterDocumentMetadata.integration",
+        "JSDocIntegrationInput",
+        "JSDocIntegrationInput.contract",
+        "JSDocIntegrationInput.contractVersion",
+        "JSDocIntegrationInput.pluginVersion",
+        "JSDocIntegrationInput.mode",
+        "JSDocIntegrationInput.parserBoundary",
+        "JSDocIntegrationInput.ir",
+        "JSDocIntegrationInput.ir.version",
+        "JSDocIntegrationInput.ir.source",
+        "JSDocIntegrationInput.ir.nodes",
+        "JSDocIntegrationInput.sourceFragments",
+        "JSDocIntegrationInput.localizationResources",
+        "JSDocIntegrationInput.diagnostics",
+        "JSDocIntegrationInput.diagnosticCounts",
+        "JSDocIntegrationInput.docletNodeMap",
+        "ConvertJSDocIntegrationOptions",
+        "ConvertJSDocIntegrationOptions.documentId",
+        "ConvertJSDocIntegrationOptions.title",
+        "ConvertJSDocIntegrationOptions.defaultLocale",
+        "ConvertJSDocIntegrationOptions.fallbackLocale",
+        "ConvertJSDocIntegrationOptions.locales",
+        "ConvertJSDocIntegrationOptions.includeEmptySymbols",
+        "ConvertJSDocIntegrationResult",
+        "ConvertJSDocIntegrationResult.document",
+        "ConvertJSDocIntegrationResult.diagnostics",
+        "convertJSDocIntegrationToHiaDocument",
+        "fromJSDocIntegration"
+      ]
+    }
+  ];
+  for (const fixture of fixtures) {
+    // <lang><zh-CN>逐声明构造物理限定名，变量的文档归属最近的语句。</zh-CN><en>Build physical declaration paths, resolving variable documentation to its nearest owning statement.</en></lang>
+    const file = fileURLToPath(new URL('../' + fixture.path, import.meta.url));
+    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+    const pending = new Set(fixture.qualified);
+    /**
+     * @lang zh-CN 按声明路径检查完整描述头，尾部参数和返回标签另行保持。
+     * @lang en Checks complete description heads by declaration path, preserving parameter and return tags separately.
+     * @param {import("typescript").Node} node <lang><zh-CN>当前语法节点。</zh-CN><en>The current syntax node.</en></lang>
+     * @param {string[]} parents <lang><zh-CN>外层声明名称。</zh-CN><en>Enclosing declaration names.</en></lang>
+     */
+    function visit(node, parents) {
+      // <lang><zh-CN>仅命名声明扩展路径，类型字面量不插入人为层级。</zh-CN><en>Only named declarations extend the path, without synthetic levels for type literals.</en></lang>
+      const named = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node) || ts.isPropertySignature(node) || ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node);
+      const names = named && node.name ? [...parents, node.name.getText(source)] : parents;
+      const qualified = names.join('.');
+      if (named && pending.has(qualified)) {
+        let owner = node;
+        while (!owner.jsDoc?.length && owner.parent && !ts.isSourceFile(owner.parent)) owner = owner.parent;
+        const comment = owner.jsDoc?.at(-1)?.getText(source) ?? '';
+        assert.match(comment, /^\s*\*\s+@lang zh-CN[ \t]+\S/m, qualified + ' Chinese');
+        assert.match(comment, /^\s*\*\s+@lang en[ \t]+\S/m, qualified + ' English');
+        assert.match(comment, /^\/\*\*\s*\n\s*\*\s+@lang /, qualified + ' explicit head');
+        assert.doesNotMatch(comment.split(/\n\s*\*\s+@(?:param|returns)\b/)[0], /(?:English:|中文：)/, qualified + ' mixed markers');
+        pending.delete(qualified);
+      }
+      ts.forEachChild(node, child => visit(child, names));
+    }
+    visit(source, []);
+    assert.deepEqual([...pending], [], fixture.path + ' all selected declarations found');
+  }
+});
+
 test("distribution and theme public declarations retain canonical bilingual source comments", () => {
   for(const name of ["profiles","schemas","theme-default"]) {
     // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>
