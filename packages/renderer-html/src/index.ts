@@ -103,9 +103,25 @@ export const HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION = "0.1.0-draft";
  * @lang en In-memory file record for host-owned writing: output-relative path, contents, MIME and role; the renderer performs no file writes.
  */
 export interface RenderedHtmlFile {
+  /**
+   * @lang zh-CN 相对于本次输出根目录的文件路径，由宿主写入者解释。
+   * @lang en File path relative to this render's output root, interpreted by the host writer.
+   */
   path: string;
+  /**
+   * @lang zh-CN 待写出的文本正文，惰性源码查看页可在读取属性时生成。
+   * @lang en Text contents to be written, with lazy source-view pages generated when the property is read.
+   */
   contents: string;
+  /**
+   * @lang zh-CN 文件的媒体类型及适用字符集。
+   * @lang en Media type and applicable character encoding of the file.
+   */
   contentType: string;
+  /**
+   * @lang zh-CN 文件角色，entry为页面入口，asset为静态资源，index为结构化索引。
+   * @lang en File role, using entry for page entrypoints, asset for static resources and index for structured indexes.
+   */
   role: "entry" | "asset" | "index";
 }
 
@@ -114,8 +130,20 @@ export interface RenderedHtmlFile {
  * @lang en Document/project rendering options; documents stay single-page and project options apply only to project paths. Theme assets default on and omitted locale follows document/project metadata.
  */
 export interface RenderHtmlOptions {
+  /**
+   * @lang zh-CN 可选的初始正文语言，省略时使用文档或项目解析出的默认语言。
+   * @lang en Optional initial content locale, using the document or resolved project default when omitted.
+   */
   locale?: string;
+  /**
+   * @lang zh-CN 可选的页面标题覆盖，优先于文档标题或项目标题与名称。
+   * @lang en Optional page-title override taking precedence over document title or project title and name.
+   */
   title?: string;
+  /**
+   * @lang zh-CN 是否在本次输出中包含默认主题资源，缺省为true。
+   * @lang en Whether to include default-theme assets in this render's output, defaulting to true.
+   */
   includeThemeAssets?: boolean;
   /**
    * @lang zh-CN 默认本地资源；external只引用同站共享资源，不越过输出根写文件。
@@ -160,7 +188,15 @@ export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
  * @lang en Build-time Portal skin/scheme defaults; runtime selection does not change content identity.
  */
 export interface RenderProjectThemeOptions {
+  /**
+   * @lang zh-CN 可选的构建期配色方案，共享theme逐项优先，缺省回退system。
+   * @lang en Optional build-time color scheme, with shared theme taking per-field precedence and the default falling back to system.
+   */
   scheme?: PortalThemeScheme;
+  /**
+   * @lang zh-CN 可选的构建期皮肤标识，共享theme逐项优先，缺省回退portal.classic。
+   * @lang en Optional build-time skin identifier, with shared theme taking per-field precedence and the default falling back to portal.classic.
+   */
   skinId?: PortalThemeSkinId;
 }
 
@@ -207,6 +243,10 @@ export interface RenderProjectSiteOptions {
    * @lang en Portal-owned skin and independent scheme selection.
    */
   theme?: RenderProjectThemeOptions;
+  /**
+   * @lang zh-CN 项目源码正文、链接及加载策略，呈现方式缺省为fetch，资源来自调用方授权的内存预览。
+   * @lang en Project source-body, link and loading policies, defaulting presentation to fetch and taking assets from caller-authorized in-memory previews.
+   */
   source?: {
     /**
      * @lang zh-CN 控制源码正文与链接是否进入输出。
@@ -236,7 +276,15 @@ export interface RenderProjectSiteOptions {
  * @lang en Overridable identities for the Portal UI-locale report.
  */
 export interface RenderProjectUiLocaleCompletenessOptions {
+  /**
+   * @lang zh-CN 可选的已登记界面完整性profile身份，默认portal.default。
+   * @lang en Optional registered UI-completeness profile identity, defaulting to portal.default.
+   */
   profileId?: string;
+  /**
+   * @lang zh-CN 可选的已登记界面面身份，默认portal.split-site，须与profileId精确配对。
+   * @lang en Optional registered surface identity, defaulting to portal.split-site and required to pair exactly with profileId.
+   */
   surfaceId?: string;
 }
 
@@ -246,7 +294,15 @@ export interface RenderProjectUiLocaleCompletenessOptions {
  * @lang en Runtime options for the bounded Portal P5 slice; P1 supports neither rich text nor source fetch.
  */
 export interface RenderProjectSourceCommentProjectionOptions {
+  /**
+   * @lang zh-CN 源码注释投影正文的消费策略，默认none；纯文本正文还须生产方投影同时授权。
+   * @lang en Consumption policy for projected source-comment text, defaulting to none, with plain text also requiring authorization in the producer projection.
+   */
   contentPolicy?: DocumentationSourceCommentContentPolicy;
+  /**
+   * @lang zh-CN 调用方显式指定的规范BCP 47注释语言，须与条目投影requestedLocale一致。
+   * @lang en Canonical BCP 47 comment locale explicitly supplied by the caller, required to match each entry projection's requestedLocale.
+   */
   locale: string;
 }
 
@@ -255,15 +311,35 @@ export interface RenderProjectSourceCommentProjectionOptions {
  * @lang en Caller-aggregated project, entries and optional relations/projections; the renderer neither discovers files nor attests owner-input facts.
  */
 export interface RenderProjectHtmlInput {
+  /**
+   * @lang zh-CN 调用方提供的项目身份、标题和语言元数据。
+   * @lang en Caller-supplied project identity, title and locale metadata.
+   */
   project: RenderProjectInfo;
+  /**
+   * @lang zh-CN 已聚合的项目文档条目，稳定标识及文件名投影须唯一。
+   * @lang en Aggregated project documentation entries whose stable identifiers and filename projections must be unique.
+   */
   entries: RenderProjectEntry[];
+  /**
+   * @lang zh-CN 可选的已使用文档化配置规范引用集合。
+   * @lang en Optional collection of references to documentation profiles used by the project.
+   */
   profiles?: RenderProjectProfileRef[];
+  /**
+   * @lang zh-CN 可选的文档源码映射工件引用与计数摘要。
+   * @lang en Optional documentation source-map artifact references and count summaries.
+   */
   docSourceMaps?: RenderProjectDocSourceMapRef[];
   /**
    * @lang zh-CN 由 @hia-doc/source-linkage 的 W-P52.5 index 产生的安全 binding relation 投影。
    * @lang en Safe binding-relation projection produced by the W-P52.5 @hia-doc/source-linkage index.
    */
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
+  /**
+   * @lang zh-CN 可选的显式关系图，提供时规范排序并重算计数，缺省时从现有条目关联构造。
+   * @lang en Optional explicit relation graph, sorted and recounted when provided and otherwise constructed from existing entry associations.
+   */
   relationGraph?: RenderProjectRelationGraph;
   /**
    * @lang zh-CN optional、body-free 的 W-P84 continuity 摘要；renderer 不读取 report 文件或 target state。
@@ -281,6 +357,10 @@ export interface RenderProjectHtmlInput {
    * @lang en Optional W-P122 public dual projection; W-P124 projects it only to the Portal structured data plane and does not finalize a visible flow UI from it.
    */
   businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
+  /**
+   * @lang zh-CN 调用方提供的项目级诊断集合。
+   * @lang en Collection of project-level diagnostics supplied by the caller.
+   */
   diagnostics?: HiaDiagnostic[];
 }
 
@@ -289,8 +369,20 @@ export interface RenderProjectHtmlInput {
  * @lang en Public project identity, title, locales and product version; product version is metadata only and never participates in routing.
  */
 export interface RenderProjectInfo {
+  /**
+   * @lang zh-CN 可选的项目稳定标识，缺省按project:前缀与项目名称构造。
+   * @lang en Optional stable project identifier, defaulting to the project: prefix followed by the project name.
+   */
   id?: string;
+  /**
+   * @lang zh-CN 必需的公开项目名称，也是缺省项目身份和标题的输入。
+   * @lang en Required public project name, also used to derive the default project identity and title.
+   */
   name: string;
+  /**
+   * @lang zh-CN 可选的项目显示标题，缺省使用name，可由渲染选项title覆盖。
+   * @lang en Optional project display title, defaulting to name and overridable by the render option title.
+   */
   title?: string;
   /**
    * @lang zh-CN 项目页面的默认语言；若未提供则从已声明语言或 `und` 推断。
@@ -314,20 +406,76 @@ export interface RenderProjectInfo {
  * @lang en Minimal Portal continuity summary without target identity, paths, entry ids, or bodies.
  */
 export interface RenderProjectDocumentationContinuitySummary {
+  /**
+   * @lang zh-CN 固定的target-documentation-continuity契约名称。
+   * @lang en Fixed target-documentation-continuity contract name.
+   */
   contract: "target-documentation-continuity";
+  /**
+   * @lang zh-CN 固定的0.1.0-draft精确连续性摘要版本。
+   * @lang en Fixed exact 0.1.0-draft continuity-summary version.
+   */
   contractVersion: "0.1.0-draft";
+  /**
+   * @lang zh-CN 调用方提供的accepted或refused连续性结果。
+   * @lang en Caller-supplied accepted or refused continuity result.
+   */
   status: "accepted" | "refused";
+  /**
+   * @lang zh-CN 基线、当前、增加、移除和未变条目数量，必须满足集合计数等式。
+   * @lang en Counts of baseline, current, added, removed and unchanged entries, required to satisfy collection-count equations.
+   */
   entries: {
+    /**
+     * @lang zh-CN 相对基线新增的条目数量，与unchangedCount相加须等于currentCount。
+     * @lang en Number of entries added since the baseline, whose sum with unchangedCount must equal currentCount.
+     */
     addedCount: number;
+    /**
+     * @lang zh-CN 基线条目数量，须等于unchangedCount加removedCount。
+     * @lang en Baseline entry count, required to equal unchangedCount plus removedCount.
+     */
     baselineCount: number;
+    /**
+     * @lang zh-CN 当前条目数量，须等于unchangedCount加addedCount。
+     * @lang en Current entry count, required to equal unchangedCount plus addedCount.
+     */
     currentCount: number;
+    /**
+     * @lang zh-CN 相对基线移除的条目数量。
+     * @lang en Number of entries removed since the baseline.
+     */
     removedCount: number;
+    /**
+     * @lang zh-CN 基线与当前集合中保留未变的条目数量。
+     * @lang en Number of unchanged entries retained between the baseline and current collections.
+     */
     unchangedCount: number;
   };
+  /**
+   * @lang zh-CN 调用方声明必需输出是否保留，渲染器仅消费摘要。
+   * @lang en Caller declaration of whether required outputs were preserved, consumed by the renderer as a summary only.
+   */
   requiredOutputsPreserved: boolean;
+  /**
+   * @lang zh-CN 分别记录解析状态、调用方未核置信度及元数据比较来源。
+   * @lang en Separate records of resolution state, caller-provided unverified confidence and metadata-comparison provenance.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 调用方记录的证据与摘要配对已校验状态或unresolved。
+     * @lang en Caller-recorded evidence/summary-pair validation state or unresolved.
+     */
     resolution: "evidence-summary-pair-validated" | "unresolved";
+    /**
+     * @lang zh-CN 固定为caller-provided-unverified，保留调用方提供但未由渲染器认证的置信边界。
+     * @lang en Fixed to caller-provided-unverified, preserving the boundary of caller data not attested by the renderer.
+     */
     confidence: "caller-provided-unverified";
+    /**
+     * @lang zh-CN 固定为metadata-only-comparison，来源仅为元数据比较。
+     * @lang en Fixed to metadata-only-comparison, limiting provenance to metadata comparison.
+     */
     provenance: "metadata-only-comparison";
   };
 }
@@ -337,28 +485,108 @@ export interface RenderProjectDocumentationContinuitySummary {
  * @lang en Minimal Portal-consumable owner-adoption projection without target/trial/owner identity, paths, bodies, or adoption claims.
  */
 export interface RenderProjectOwnerAdoptionSummary {
+  /**
+   * @lang zh-CN 固定的target-owner-adoption-kit契约名称。
+   * @lang en Fixed target-owner-adoption-kit contract name.
+   */
   contract: "target-owner-adoption-kit";
+  /**
+   * @lang zh-CN 固定的0.1.0-draft精确负责人审阅摘要版本。
+   * @lang en Fixed exact 0.1.0-draft owner-review summary version.
+   */
   contractVersion: "0.1.0-draft";
+  /**
+   * @lang zh-CN 固定为portal-metadata-only，仅向Portal提供元数据投影。
+   * @lang en Fixed to portal-metadata-only, providing only a metadata projection to the Portal.
+   */
   projection: "portal-metadata-only";
+  /**
+   * @lang zh-CN 负责人审阅准备状态，记录待审阅、缺输入延期或拒绝。
+   * @lang en Owner-review readiness state recording readiness, deferral for missing input or refusal.
+   */
   status: "ready-for-owner-review" | "deferred-owner-input-missing" | "refused";
+  /**
+   * @lang zh-CN 调用方声明的enterprise-business或workspace-container目标族。
+   * @lang en Caller-declared enterprise-business or workspace-container target family.
+   */
   targetFamily: "enterprise-business" | "workspace-container";
+  /**
+   * @lang zh-CN 负责人输入是否提交及审阅同意记录状态。
+   * @lang en Submission state of owner input and the recorded review-consent state.
+   */
   ownerInput: {
+    /**
+     * @lang zh-CN 负责人材料是否已提交，ready-for-owner-review要求为true。
+     * @lang en Whether owner materials were submitted, required to be true for ready-for-owner-review.
+     */
     submitted: boolean;
+    /**
+     * @lang zh-CN 仅记录未登记或已登记审阅同意的状态。
+     * @lang en Records only whether review consent is unrecorded or recorded.
+     */
     consent: "not-recorded" | "recorded-for-review";
   };
+  /**
+   * @lang zh-CN 必需、已提供与缺失契约的非负整数计数。
+   * @lang en Non-negative integer counts of required, provided and missing contracts.
+   */
   contracts: {
+    /**
+     * @lang zh-CN 必需契约数量，须等于providedCount加missingCount。
+     * @lang en Required contract count, required to equal providedCount plus missingCount.
+     */
     requiredCount: number;
+    /**
+     * @lang zh-CN 调用方已提供的契约数量。
+     * @lang en Number of contracts supplied by the caller.
+     */
     providedCount: number;
+    /**
+     * @lang zh-CN 仍缺失的契约数量，ready-for-owner-review要求为0。
+     * @lang en Number of contracts still missing, required to be zero for ready-for-owner-review.
+     */
     missingCount: number;
   };
+  /**
+   * @lang zh-CN 工作区容器目标可用的交接计数与待负责人审阅状态，ready时必须提供。
+   * @lang en Handoff counts and pending-owner-review state for workspace-container targets, required when ready.
+   */
   workspaceHandoff?: {
+    /**
+     * @lang zh-CN 参与工作区交接的仓库负责人数量，提供交接记录时至少为2。
+     * @lang en Number of repository owners participating in workspace handoff, at least two when a handoff record is supplied.
+     */
     repositoryOwnerCount: number;
+    /**
+     * @lang zh-CN 工作区交接关系数量，提供交接记录时至少为1。
+     * @lang en Number of workspace handoff edges, at least one when a handoff record is supplied.
+     */
     handoffEdgeCount: number;
+    /**
+     * @lang zh-CN 固定为owner-review-required，表示交接仍待负责人审阅。
+     * @lang en Fixed to owner-review-required, indicating that handoff still requires owner review.
+     */
     state: "owner-review-required";
   };
+  /**
+   * @lang zh-CN 分别记录输入解析状态、未核置信度及负责人材料元数据来源。
+   * @lang en Separate records of input-resolution state, unverified confidence and owner-kit metadata provenance.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 负责人输入已校验、尚未收到或unresolved的独立解析状态。
+     * @lang en Independent resolution state for validated owner input, input not received or unresolved.
+     */
     resolution: "owner-input-validated" | "owner-input-not-received" | "unresolved";
+    /**
+     * @lang zh-CN 固定为caller-provided-unverified，渲染器不认证调用方材料真实性。
+     * @lang en Fixed to caller-provided-unverified, with the renderer performing no attestation of caller-material authenticity.
+     */
     confidence: "caller-provided-unverified";
+    /**
+     * @lang zh-CN 固定为metadata-only-owner-kit，来源仅为负责人材料元数据。
+     * @lang en Fixed to metadata-only-owner-kit, limiting provenance to owner-kit metadata.
+     */
     provenance: "metadata-only-owner-kit";
   };
 }
@@ -368,9 +596,25 @@ export interface RenderProjectOwnerAdoptionSummary {
  * @lang en Lightweight reference to a used documentation profile; profileVersion is independent of package/root versions and path is provenance metadata only.
  */
 export interface RenderProjectProfileRef {
+  /**
+   * @lang zh-CN 已使用文档化配置规范的稳定标识。
+   * @lang en Stable identifier of a documentation profile used by the project.
+   */
   profileId: string;
+  /**
+   * @lang zh-CN 可选的文档化配置规范版本，独立于包版本及规范根版本。
+   * @lang en Optional documentation-profile version, independent of package and specification-root versions.
+   */
   profileVersion?: string;
+  /**
+   * @lang zh-CN 可选的配置规范层标识，用于分组与来源显示。
+   * @lang en Optional profile-layer identifier used for grouping and provenance display.
+   */
   layer?: string;
+  /**
+   * @lang zh-CN 可选的配置规范来源路径，仅作元数据引用。
+   * @lang en Optional profile-origin path used solely as a metadata reference.
+   */
   path?: string;
 }
 
@@ -379,17 +623,65 @@ export interface RenderProjectProfileRef {
  * @lang en Version, counts and linkage summary for a documentation source-map file without source bodies; upstream counts prove neither authority nor coordinate precision.
  */
 export interface RenderProjectDocSourceMapRef {
+  /**
+   * @lang zh-CN 上游提供的生成工件数量摘要。
+   * @lang en Upstream-provided count summary of generated artifacts.
+   */
   artifactCount?: number;
+  /**
+   * @lang zh-CN 被引用文档源码映射工件的路径，仅作元数据。
+   * @lang en Path of the referenced documentation source-map artifact, used only as metadata.
+   */
   path: string;
+  /**
+   * @lang zh-CN 上游文档源码映射工件的可选精确版本标签。
+   * @lang en Optional exact version label of the upstream documentation source-map artifact.
+   */
   contractVersion?: string;
+  /**
+   * @lang zh-CN 可选的入口生成工件标识或路径摘要。
+   * @lang en Optional identifier or path summary of the entry generated artifact.
+   */
   entryArtifact?: string;
+  /**
+   * @lang zh-CN 上游提供的映射条目总数。
+   * @lang en Total mapping-entry count supplied upstream.
+   */
   entryCount?: number;
+  /**
+   * @lang zh-CN 上游报告已关联的映射条目数量。
+   * @lang en Number of linked mapping entries reported upstream.
+   */
   linkedEntryCount?: number;
+  /**
+   * @lang zh-CN 上游提供的源码记录数量。
+   * @lang en Number of source records supplied upstream.
+   */
   sourceCount?: number;
+  /**
+   * @lang zh-CN 可选的普通位置映射引用集合，不内嵌映射内容。
+   * @lang en Optional ordinary position-map references, without embedding map contents.
+   */
   sourceMaps?: RenderProjectSourceMapRef[];
+  /**
+   * @lang zh-CN 上游提供的普通位置映射数量摘要。
+   * @lang en Upstream-provided count summary of ordinary position maps.
+   */
   sourceMapCount?: number;
+  /**
+   * @lang zh-CN 上游记录的源码正文策略标签，摘要本身不授予读取权限。
+   * @lang en Upstream-recorded source-body policy label, with the summary itself granting no read permission.
+   */
   sourcesContentPolicy?: string;
+  /**
+   * @lang zh-CN 上游提供的映射关联状态摘要。
+   * @lang en Upstream-provided summary of mapping-linkage status.
+   */
   status?: string;
+  /**
+   * @lang zh-CN 上游报告尚未解析的映射条目数量。
+   * @lang en Number of unresolved mapping entries reported upstream.
+   */
   unresolvedEntryCount?: number;
 }
 
@@ -398,9 +690,25 @@ export interface RenderProjectDocSourceMapRef {
  * @lang en Lightweight identity/path/language reference to an ordinary position map, without embedded mappings or file-read authority.
  */
 export interface RenderProjectSourceMapRef {
+  /**
+   * @lang zh-CN 普通位置映射的稳定引用标识。
+   * @lang en Stable reference identifier of an ordinary position map.
+   */
   id: string;
+  /**
+   * @lang zh-CN 可选的位置映射类别标签。
+   * @lang en Optional position-map kind label.
+   */
   kind?: string;
+  /**
+   * @lang zh-CN 可选的位置映射所属语言标签。
+   * @lang en Optional language label associated with the position map.
+   */
   language?: string;
+  /**
+   * @lang zh-CN 可选的位置映射文件路径，仅作引用。
+   * @lang en Optional position-map file path used only as a reference.
+   */
   path?: string;
 }
 
@@ -426,11 +734,35 @@ export type RenderProjectRelationKind =
  * @lang en Lightweight relation graph shared by the unified project page and external hosts.
  */
 export interface RenderProjectRelationGraph {
+  /**
+   * @lang zh-CN 项目关系图契约身份，规范化时写入hia-project-relation-graph。
+   * @lang en Project relation-graph contract identity, written as hia-project-relation-graph during normalization.
+   */
   contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
+  /**
+   * @lang zh-CN 项目关系图版本，规范化时写入0.1.0-draft。
+   * @lang en Project relation-graph version, written as 0.1.0-draft during normalization.
+   */
   contractVersion: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 节点数量，规范化时按nodes长度重新计算。
+   * @lang en Node count, recomputed from the length of nodes during normalization.
+   */
   nodeCount: number;
+  /**
+   * @lang zh-CN 关系数量，规范化时按relations长度重新计算。
+   * @lang en Relation count, recomputed from the length of relations during normalization.
+   */
   relationCount: number;
+  /**
+   * @lang zh-CN 项目关系节点集合，规范化时复制并稳定排序。
+   * @lang en Project relation-node collection, copied and stably sorted during normalization.
+   */
   nodes: RenderProjectRelationNode[];
+  /**
+   * @lang zh-CN 有方向的项目关系集合，规范化时复制并稳定排序。
+   * @lang en Directed project-relation collection, copied and stably sorted during normalization.
+   */
   relations: RenderProjectRelation[];
 }
 
@@ -439,11 +771,35 @@ export interface RenderProjectRelationGraph {
  * @lang en Stable node in the relation graph; it can represent a documentation entry, source, generated artifact, or runtime endpoint.
  */
 export interface RenderProjectRelationNode {
+  /**
+   * @lang zh-CN 图中此节点的稳定标识，供关系端点引用。
+   * @lang en Stable identifier of this graph node, referenced by relation endpoints.
+   */
   id: string;
+  /**
+   * @lang zh-CN 节点表示的文档条目、源码、生成物或端点类别。
+   * @lang en Kind of entity represented by the node, covering documentation entry, source, artifact or endpoint.
+   */
   kind: RenderProjectRelationNodeKind;
+  /**
+   * @lang zh-CN 节点的可公开显示标签。
+   * @lang en Public display label of the node.
+   */
   label: string;
+  /**
+   * @lang zh-CN 可选的关联文档条目标识。
+   * @lang en Optional associated documentation-entry identifier.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 可选的源码或生成物路径元数据。
+   * @lang en Optional source or generated-artifact path metadata.
+   */
   path?: string;
+  /**
+   * @lang zh-CN 可选的领域视图分组。
+   * @lang en Optional domain-view grouping.
+   */
   view?: RenderProjectView;
 }
 
@@ -452,13 +808,45 @@ export interface RenderProjectRelationNode {
  * @lang en Directed relation in the graph; the first slice covers the minimal relationships needed by unified pages and host navigation.
  */
 export interface RenderProjectRelation {
+  /**
+   * @lang zh-CN 有向关系的稳定标识。
+   * @lang en Stable identifier of the directed relation.
+   */
   id: string;
+  /**
+   * @lang zh-CN 文档与源码、生成物、端点或成员之间的闭集关系语义。
+   * @lang en Closed-set relation semantics linking documentation with source, generated artifacts, endpoints or members.
+   */
   kind: RenderProjectRelationKind;
+  /**
+   * @lang zh-CN 关系来源图节点的标识。
+   * @lang en Identifier of the relation's source graph node.
+   */
   from: string;
+  /**
+   * @lang zh-CN 关系目标图节点的标识。
+   * @lang en Identifier of the relation's target graph node.
+   */
   to: string;
+  /**
+   * @lang zh-CN 关系的可公开显示标签。
+   * @lang en Public display label of the relation.
+   */
   label: string;
+  /**
+   * @lang zh-CN 可选的上游关系置信度标签，独立于引用解析。
+   * @lang en Optional upstream relation-confidence label, independent of reference resolution.
+   */
   confidence?: string;
+  /**
+   * @lang zh-CN 可选的关联文档条目标识。
+   * @lang en Optional associated documentation-entry identifier.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 可选的公开标量元数据，仅允许字符串、数字、布尔值或null。
+   * @lang en Optional public scalar metadata restricted by type to strings, numbers, booleans or null.
+   */
   metadata?: Record<string, string | number | boolean | null>;
 }
 
@@ -467,19 +855,55 @@ export interface RenderProjectRelation {
  * @lang en Structured project entry with optional localization, source and relation summaries; inputs own identities and body/source disclosure requires owner and presentation-policy validation.
  */
 export interface RenderProjectEntry {
+  /**
+   * @lang zh-CN 调用方提供的稳定条目标识，用于规范片段路由及主题身份。
+   * @lang en Caller-supplied stable entry identifier used for canonical fragment routes and topic identity.
+   */
   id: string;
+  /**
+   * @lang zh-CN 条目的公开显示名称与搜索输入。
+   * @lang en Public display name and search input of the entry.
+   */
   name: string;
+  /**
+   * @lang zh-CN 领域生产方提供的条目语义类别。
+   * @lang en Semantic entry kind supplied by the domain producer.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 条目所属的领域视图分组。
+   * @lang en Domain-view grouping containing the entry.
+   */
   view: RenderProjectView;
+  /**
+   * @lang zh-CN 缺少主i18n字段时使用的可选摘要正文。
+   * @lang en Optional summary text used when the primary i18n field is absent.
+   */
   summary?: string;
+  /**
+   * @lang zh-CN 可选的声明签名，按转义代码文本呈现。
+   * @lang en Optional declaration signature rendered as escaped code text.
+   */
   signature?: string;
   /**
    * @lang zh-CN 从领域 adapter/core symbol 透传的字段级 i18n；description 会驱动项目页的语言切换。
    * @lang en Field-level i18n forwarded from a domain adapter/core symbol; description drives project-page locale switching.
    */
   i18n?: HiaI18nModel;
+  /**
+   * @lang zh-CN 可选的条目文档化配置规范引用。
+   * @lang en Optional documentation-profile reference for the entry.
+   */
   profile?: RenderProjectProfileRef;
+  /**
+   * @lang zh-CN 可选的来源输入工件元数据。
+   * @lang en Optional metadata of the originating input artifact.
+   */
   input?: RenderProjectInputRef;
+  /**
+   * @lang zh-CN 可选的源码定位及已授权预览输入，受项目源码策略处理。
+   * @lang en Optional source-location and authorized-preview input, processed under project source policy.
+   */
   source?: RenderProjectSourceRef;
   /**
    * @lang zh-CN source relation 到 canonical entry 的 metadata-only 可用性投影；不授予源码读取能力。
@@ -492,9 +916,25 @@ export interface RenderProjectEntry {
    * @lang en Source-comment projection already produced by an owner producer and validated against the neutral contract.
    */
   sourceCommentProjection?: DocumentationSourceCommentProjection;
+  /**
+   * @lang zh-CN 可选的上游规范符号标识，用于层级关联。
+   * @lang en Optional upstream canonical symbol identifier used for hierarchy linkage.
+   */
   symbolId?: string;
+  /**
+   * @lang zh-CN 可选的领域语义层级，由上游显式提供。
+   * @lang en Optional domain-semantic hierarchy explicitly supplied upstream.
+   */
   hierarchy?: RenderProjectEntryHierarchyRef;
+  /**
+   * @lang zh-CN 可选的条目到文档源码映射关联摘要。
+   * @lang en Optional summary linking the entry to a documentation source map.
+   */
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
+  /**
+   * @lang zh-CN 可选的条目级诊断集合。
+   * @lang en Optional collection of entry-level diagnostics.
+   */
   diagnostics?: HiaDiagnostic[];
   /**
    * @lang zh-CN manifest input 显式提供的 owner-reviewed semantic prefix。
@@ -508,13 +948,45 @@ export interface RenderProjectEntry {
  * @lang en Stable semantic hierarchy supplied by a domain adapter or source relation; the renderer only projects it.
  */
 export interface RenderProjectEntryHierarchyRef {
+  /**
+   * @lang zh-CN 可选的所属程序集名称。
+   * @lang en Optional containing assembly name.
+   */
   assembly?: string;
+  /**
+   * @lang zh-CN 可选的所属命名空间。
+   * @lang en Optional containing namespace.
+   */
   namespace?: string;
+  /**
+   * @lang zh-CN 可选的所属类型名称或上游类型标识。
+   * @lang en Optional containing type name or upstream type identifier.
+   */
   containingType?: string;
+  /**
+   * @lang zh-CN 可选的领域文档符号标识，例如.NET文档ID。
+   * @lang en Optional domain documentation-symbol identifier, such as a .NET documentation ID.
+   */
   symbolDocumentationId?: string;
+  /**
+   * @lang zh-CN 可选的层级显示名称。
+   * @lang en Optional hierarchy display name.
+   */
   displayName?: string;
+  /**
+   * @lang zh-CN 可选的显式父符号标识，按条目symbolId解析父项。
+   * @lang en Optional explicit parent-symbol identifier resolved against entry symbolId values.
+   */
   parentSymbolId?: string;
+  /**
+   * @lang zh-CN 可选的基类型标识集合。
+   * @lang en Optional collection of base-type identifiers.
+   */
   baseTypeIds?: string[];
+  /**
+   * @lang zh-CN 可选的实现接口标识集合。
+   * @lang en Optional collection of implemented-interface identifiers.
+   */
   interfaceIds?: string[];
 }
 
@@ -523,18 +995,88 @@ export interface RenderProjectEntryHierarchyRef {
  * @lang en Lightweight entry-to-documentation-map linkage and source/artifact summary, without replacing precise range/column-unit queries in the shared reader.
  */
 export interface RenderProjectEntryDocSourceMapRef {
+  /**
+   * @lang zh-CN 可选的上游生成物匹配置信度标签。
+   * @lang en Optional upstream generated-artifact match-confidence label.
+   */
   artifactConfidence?: string;
+  /**
+   * @lang zh-CN 可选的关联生成物路径摘要。
+   * @lang en Optional path summary of the associated generated artifact.
+   */
   artifactPath?: string;
+  /**
+   * @lang zh-CN 可选的生成物节点选择器，仅作为定位元数据。
+   * @lang en Optional generated-artifact node selector used only as location metadata.
+   */
   artifactSelector?: string;
+  /**
+   * @lang zh-CN 可选的上游映射诊断码集合。
+   * @lang en Optional collection of upstream mapping diagnostic codes.
+   */
   diagnostics?: string[];
+  /**
+   * @lang zh-CN 被关联文档源码映射中的条目标识。
+   * @lang en Entry identifier within the associated documentation source map.
+   */
   entryId: string;
+  /**
+   * @lang zh-CN 文档源码映射工件的引用路径。
+   * @lang en Reference path of the documentation source-map artifact.
+   */
   path: string;
+  /**
+   * @lang zh-CN 可选的上游源码定位置信度标签。
+   * @lang en Optional upstream source-location confidence label.
+   */
   sourceConfidence?: string;
+  /**
+   * @lang zh-CN 可选的原始源码路径摘要。
+   * @lang en Optional original-source path summary.
+   */
   sourcePath?: string;
+  /**
+   * @lang zh-CN 可选的上游源码范围摘要，终点约定与列单位按对应映射契约解释。
+   * @lang en Optional upstream source-range summary, with endpoint conventions and column units interpreted under the corresponding map contract.
+   */
   sourceRange?: {
-    start: { line: number; column?: number };
-    end?: { line: number; column?: number };
+    /**
+     * @lang zh-CN 范围的一基起始位置，由上游定位信息提供。
+     * @lang en One-based start position of the range, supplied by upstream location metadata.
+     */
+    start: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
+    /**
+     * @lang zh-CN 可选的范围结束位置，其终点语义由对应上游契约规定。
+     * @lang en Optional range end position, whose endpoint semantics are defined by the corresponding upstream contract.
+     */
+    end?: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
   };
+  /**
+   * @lang zh-CN 可选的源码范围来源标签，保留上游来源语义。
+   * @lang en Optional source-range origin label preserving upstream provenance semantics.
+   */
   sourceRangeSource?: string;
 }
 
@@ -543,10 +1085,30 @@ export interface RenderProjectEntryDocSourceMapRef {
  * @lang en Input-artifact kind/path and optional exact contract reference for provenance only, without reading or automatically migrating the referenced file.
  */
 export interface RenderProjectInputRef {
+  /**
+   * @lang zh-CN 输入工件类别标签。
+   * @lang en Input-artifact kind label.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 来源输入工件的路径元数据。
+   * @lang en Path metadata of the originating input artifact.
+   */
   path: string;
+  /**
+   * @lang zh-CN 可选的稳定输入工件标识。
+   * @lang en Optional stable input-artifact identifier.
+   */
   artifactId?: string;
+  /**
+   * @lang zh-CN 可选的输入工件契约名称。
+   * @lang en Optional input-artifact contract name.
+   */
   contract?: string;
+  /**
+   * @lang zh-CN 可选的输入工件精确版本标签。
+   * @lang en Optional exact version label of the input artifact.
+   */
   contractVersion?: string;
 }
 
@@ -555,23 +1117,93 @@ export interface RenderProjectInputRef {
  * @lang en Source-location reference and authorized public asset/preview inputs; a local path never automatically discloses bodies, and fetch/link use build-generated same-origin assets.
  */
 export interface RenderProjectSourceRef {
+  /**
+   * @lang zh-CN 可选的上游源码引用置信度标签。
+   * @lang en Optional upstream source-reference confidence label.
+   */
   confidence?: string;
+  /**
+   * @lang zh-CN 构建期生成的同源纯文本资源URL；调用方旧URL在源码策略阶段被剥离。
+   * @lang en Build-generated same-origin plain-text asset URL, with legacy caller URLs stripped during source-policy processing.
+   */
   fetchUrl?: string;
+  /**
+   * @lang zh-CN 可选的fetch触发方式，项目级配置优先，缺省为on-expand。
+   * @lang en Optional fetch trigger, overridden by project-level configuration and defaulting to on-expand.
+   */
   fetchTrigger?: RenderProjectSourceFetchTrigger;
+  /**
+   * @lang zh-CN 可选的fetch显示行数上限，项目级配置优先，缺省为400。
+   * @lang en Optional fetched-source display line limit, overridden by project-level configuration and defaulting to 400.
+   */
   fetchMaxLines?: number;
+  /**
+   * @lang zh-CN 可选的源码语言标签。
+   * @lang en Optional source-language label.
+   */
   language?: string;
+  /**
+   * @lang zh-CN 构建期生成的同源源码查看链接；调用方旧外链在源码策略阶段被剥离。
+   * @lang en Build-generated same-origin source-view link, with legacy caller external links stripped during source-policy processing.
+   */
   linkUrl?: string;
+  /**
+   * @lang zh-CN 用于公开位置显示及稳定源码身份构造的路径元数据。
+   * @lang en Path metadata used for public location display and stable source-identity construction.
+   */
   path: string;
   /**
    * @lang zh-CN renderer 构造的 body-free public asset metadata；正文只存在于单独静态文件。
    * @lang en Body-free public-asset metadata built by the renderer; the body exists only in a separate static file.
    */
   publicAsset?: PortalPreparedSourceAsset;
+  /**
+   * @lang zh-CN 可选的调用方源码预览正文及范围，须遵守公开授权与呈现策略。
+   * @lang en Optional caller-supplied source-preview body and range, subject to disclosure authorization and presentation policy.
+   */
   preview?: RenderProjectSourcePreviewRef;
+  /**
+   * @lang zh-CN 可选的上游源码位置范围摘要，独立于预览正文范围。
+   * @lang en Optional upstream source-location range summary, independent of the preview body's range.
+   */
   range?: {
-    start: { line: number; column?: number };
-    end?: { line: number; column?: number };
+    /**
+     * @lang zh-CN 范围的一基起始位置，由上游定位信息提供。
+     * @lang en One-based start position of the range, supplied by upstream location metadata.
+     */
+    start: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
+    /**
+     * @lang zh-CN 可选的范围结束位置，其终点语义由对应上游契约规定。
+     * @lang en Optional range end position, whose endpoint semantics are defined by the corresponding upstream contract.
+     */
+    end?: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
   };
+  /**
+   * @lang zh-CN 可选的源码位置范围来源标签。
+   * @lang en Optional provenance label for the source-location range.
+   */
   rangeSource?: string;
 }
 
@@ -622,9 +1254,25 @@ export interface RenderProjectSourceUsabilityRef {
    * @lang en Producer, activity, and contract identity that created the relation.
    */
   provenance: {
+    /**
+     * @lang zh-CN 生成上游源码关系的生产器标识。
+     * @lang en Identifier of the producer that generated the upstream source relation.
+     */
     producer: string;
+    /**
+     * @lang zh-CN 生成上游源码关系的活动标识。
+     * @lang en Identifier of the activity that generated the upstream source relation.
+     */
     activity: string;
+    /**
+     * @lang zh-CN 上游源码关系来源契约名称。
+     * @lang en Contract name of the upstream source-relation provenance.
+     */
     contract: string;
+    /**
+     * @lang zh-CN 上游源码关系来源契约的版本标签。
+     * @lang en Version label of the upstream source-relation provenance contract.
+     */
     contractVersion: string;
   };
   /**
@@ -637,8 +1285,20 @@ export interface RenderProjectSourceUsabilityRef {
    * @lang en Fixed metadata-only privacy boundary of the Portal projection.
    */
   privacy: {
+    /**
+     * @lang zh-CN 固定为none，此可用性投影不携带sourcesContent。
+     * @lang en Fixed to none, excluding sourcesContent from this usability projection.
+     */
     sourcesContentPolicy: "none";
+    /**
+     * @lang zh-CN 固定为none，此可用性投影不提供源码预览正文。
+     * @lang en Fixed to none, excluding source-preview bodies from this usability projection.
+     */
     sourcePreviewPolicy: "none";
+    /**
+     * @lang zh-CN 固定为false，此可用性投影不嵌入源码正文。
+     * @lang en Fixed to false, preventing this usability projection from embedding source bodies.
+     */
     embedsSourcesContent: false;
   };
 }
@@ -648,12 +1308,58 @@ export interface RenderProjectSourceUsabilityRef {
  * @lang en Caller-provided source-preview body, language and one-based range; its presence is not disclosure authorization.
  */
 export interface RenderProjectSourcePreviewRef {
+  /**
+   * @lang zh-CN 调用方在内存中提供的预览正文，仅按显式源码策略消费并转义呈现。
+   * @lang en Preview body supplied in memory by the caller, consumed only under explicit source policy and rendered with escaping.
+   */
   content: string;
+  /**
+   * @lang zh-CN 可选的内嵌预览默认展开状态，项目级defaultExpanded优先。
+   * @lang en Optional default expansion state of an embedded preview, overridden by project-level defaultExpanded.
+   */
   defaultExpanded?: boolean;
+  /**
+   * @lang zh-CN 可选的预览代码语言标签。
+   * @lang en Optional language label for the preview code.
+   */
   language?: string;
+  /**
+   * @lang zh-CN 可选的预览原始位置范围，用于内嵌预览标题与行号，同源查看页定位另取source.range。
+   * @lang en Optional original-location range of the preview, used for embedded-preview captions and line numbers, while same-origin viewer positioning uses source.range.
+   */
   range?: {
-    start: { line: number; column?: number };
-    end?: { line: number; column?: number };
+    /**
+     * @lang zh-CN 范围的一基起始位置，由上游定位信息提供。
+     * @lang en One-based start position of the range, supplied by upstream location metadata.
+     */
+    start: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
+    /**
+     * @lang zh-CN 可选的范围结束位置，其终点语义由对应上游契约规定。
+     * @lang en Optional range end position, whose endpoint semantics are defined by the corresponding upstream contract.
+     */
+    end?: {
+      /**
+       * @lang zh-CN 上游提供的一基源码行号。
+       * @lang en One-based source-line number supplied upstream.
+       */
+      line: number;
+      /**
+       * @lang zh-CN 上游提供的可选一基列号，列单位按对应来源契约解释。
+       * @lang en Optional one-based column supplied upstream, with column units interpreted under the corresponding source contract.
+       */
+      column?: number
+    };
   };
 }
 
