@@ -35,7 +35,15 @@ import type {
  * @lang en Independent validation result; valid is true only without error diagnostics, not proof of file existence or text redaction.
  */
 export interface HiaValidationResult {
+  /**
+   * @lang zh-CN 本次校验是否没有error级诊断。
+   * @lang en Whether this validation produced no error-severity diagnostics.
+   */
   valid: boolean;
+  /**
+   * @lang zh-CN 本次校验新建的诊断数组，记录结构与边界检查结果。
+   * @lang en Diagnostic array created for this validation, recording shape and boundary-check results.
+   */
   diagnostics: HiaDiagnostic[];
 }
 

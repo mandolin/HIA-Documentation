@@ -20,7 +20,15 @@ export const HIA_I18N_TEXT_SOURCE_PRIORITY = [
  * @lang en Default-language and explicit-fallback options, empty by default; performs no BCP47 normalization.
  */
 export interface ResolveI18nTextOptions {
+  /**
+   * @lang zh-CN 字段自身默认语言缺省时的可选默认语言，再缺省则采用请求语言。
+   * @lang en Optional default locale when the field has none, falling back further to the requested locale when omitted.
+   */
   defaultLocale?: string;
+  /**
+   * @lang zh-CN 插入请求语言及主语言之后、默认语言之前的可选显式回退语言或有序链。
+   * @lang en Optional explicit fallback locale or ordered chain placed after requested and primary locales and before the default locale.
+   */
   fallbackLocale?: HiaFallbackLocale;
 }
 

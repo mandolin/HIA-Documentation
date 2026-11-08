@@ -34,11 +34,35 @@ export type HiaProtocolEnvelopeKind =
  * @typeParam TPayload <lang><zh-CN>任意调用者载荷类型，默认unknown；不保证可JSON序列化。</zh-CN><en>Caller payload type, unknown by default; JSON serializability is not guaranteed.</en></lang>
  */
 export interface HiaProtocolEnvelope<TPayload = unknown> {
+  /**
+   * @lang zh-CN 封装自身的精确版本身份，独立于payload内的契约版本。
+   * @lang en Exact version identity of the envelope itself, independent of contract versions inside its payload.
+   */
   schemaVersion: HiaProtocolEnvelopeVersion;
+  /**
+   * @lang zh-CN 载荷角色名称，决定消费者按何种用途解释该封装。
+   * @lang en Payload-role name guiding how consumers interpret the envelope.
+   */
   kind: HiaProtocolEnvelopeKind;
+  /**
+   * @lang zh-CN 调用方的原始载荷值，对象载荷保留原引用。
+   * @lang en Original caller payload value, retaining the original reference for object payloads.
+   */
   payload: TPayload;
+  /**
+   * @lang zh-CN 封装携带的可选诊断列表，构造器保留原数组引用。
+   * @lang en Optional diagnostics carried by the envelope, with the constructor retaining the original array reference.
+   */
   diagnostics?: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 可选生产者名称，构造器在非空时写入。
+   * @lang en Optional producer name, included by the constructor when nonempty.
+   */
   producer?: string;
+  /**
+   * @lang zh-CN 可选请求关联身份，构造器在非空时写入。
+   * @lang en Optional request-correlation identity, included by the constructor when nonempty.
+   */
   requestId?: string;
 }
 

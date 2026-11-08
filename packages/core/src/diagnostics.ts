@@ -18,9 +18,25 @@ export type HiaDiagnosticLayer = "core" | "i18n" | "source" | "config" | "cli" |
  * @lang en Registered code defaults, responsibility layer and public description; builders do not automatically apply default severity.
  */
 export interface HiaDiagnosticCodeDefinition {
+  /**
+   * @lang zh-CN 该目录条目注册的诊断代码。
+   * @lang en Diagnostic code registered by this catalog entry.
+   */
   code: string;
+  /**
+   * @lang zh-CN 目录声明的默认严重级别，构造诊断时由调用方选择是否采用。
+   * @lang en Default severity declared by the catalog, applied during diagnostic construction at the caller's choice.
+   */
   defaultSeverity: HiaDiagnosticSeverity;
+  /**
+   * @lang zh-CN 该诊断负责的工程层级，供消费者分类。
+   * @lang en Engineering responsibility layer of the diagnostic for consumer classification.
+   */
   layer: HiaDiagnosticLayer;
+  /**
+   * @lang zh-CN 目录中公开说明该诊断用途的正文。
+   * @lang en Public catalog text explaining the purpose of this diagnostic.
+   */
   description: string;
 }
 
