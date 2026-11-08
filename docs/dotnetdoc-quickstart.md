@@ -53,7 +53,9 @@ Run the published CLI:
 npx hia-dotnetdoc --config dotnetdoc.config.json
 ```
 
-For a quick read-only probe without a config file, pass XML files directly:
+For static XML extraction without a config file, pass XML files directly. This command reads the selected XML and writes artifacts and a producer manifest into the output directory. Existing output files may be replaced, and a partial or failed run may leave written files. Use a dedicated staging directory when reviewing a new input.
+
+中文。以下命令读取 XML 并写出提取产物与生产结果清单，可能覆盖同名输出，失败或部分成功时也可能留有文件。首次验证请使用独立暂存输出目录。本指南采用上面的已发布 0.1.x 安装范围及其旧版配置身份。
 
 ```bash
 npx hia-dotnetdoc --workspace-root . --out-dir dist/dotnetdoc --title "Portal Components API" xml-doc/Portal.Components.xml

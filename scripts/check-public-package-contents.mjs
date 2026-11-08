@@ -60,6 +60,19 @@ for (const packagePath of packagePaths) {
     assert.ok(!packedPath.endsWith(".tgz"), `${packageJson.name}: pack output includes nested tarball ${packedPath}.`);
     assert.ok(!packedPath.endsWith(".tsbuildinfo"), `${packageJson.name}: pack output includes TypeScript build metadata ${packedPath}.`);
   }
+
+  if (packagePath === "apps/cli") {
+    // <lang><zh-CN>随包指南及固定主题锚点必须离线可达，README 的仓库外链不能替代该检查。</zh-CN><en>The bundled guide and fixed topic anchors must resolve offline, independently of repository links.</en></lang>
+    assert.ok(packedPaths.has("USAGE.md"), "@hia-doc/cli: missing bundled USAGE.md.");
+    // <lang><zh-CN>仅核本包维护的三个固定标题，避免把本门禁扩展成通用 Markdown 解析器。</zh-CN><en>Check the three maintained headings only, keeping this gate scoped to this package.</en></lang>
+    const usage = (await readFile(path.join(packageDir, "USAGE.md"), "utf8")).replaceAll("\r\n", "\n");
+    // <lang><zh-CN>README 引用须与指南标题成对，打包清单已经证明两文件可供消费者读取。</zh-CN><en>README references must pair with guide headings, with both files present in the pack list.</en></lang>
+    const readme = await readFile(path.join(packageDir, "README.md"), "utf8");
+    for (const [heading, anchor] of [["Candidate versions", "candidate-versions"], ["Large project builds", "large-project-builds"], ["Shared theme assets", "shared-theme-assets"]]) {
+      assert.ok(usage.includes(`## ${heading}\n`), `Missing usage heading ${heading}.`);
+      assert.ok(readme.includes(`(USAGE.md#${anchor})`), `Missing bundled guide link ${anchor}.`);
+    }
+  }
 }
 
 console.log(`Public package content check passed: ${packagePaths.length} @hia-doc packages have consumer-safe dry-run tarballs.`);
