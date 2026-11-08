@@ -244,11 +244,35 @@ export interface BrowserPanelSummary {
  * @lang en Relation graph input accepted by the browser panel.
  */
 export interface BrowserPanelRelationGraphInput {
+  /**
+   * @lang zh-CN 可选关系图契约名称，存在时按输入透传。
+   * @lang en Optional relation-graph contract name, forwarded when supplied.
+   */
   contract?: string;
+  /**
+   * @lang zh-CN 可选关系图契约版本，存在时按输入透传。
+   * @lang en Optional relation-graph contract version, forwarded when supplied.
+   */
   contractVersion?: string;
+  /**
+   * @lang zh-CN 调用方提供的节点计数，省略时使用整理后节点数组的长度。
+   * @lang en Caller-supplied node count, defaulting to the normalized node-array length when omitted.
+   */
   nodeCount?: number;
+  /**
+   * @lang zh-CN 待整理的关系图节点，省略时使用空数组。
+   * @lang en Relation-graph nodes to normalize, defaulting to an empty array when omitted.
+   */
   nodes?: BrowserPanelRelationNodeInput[];
+  /**
+   * @lang zh-CN 调用方提供的关系计数，省略时使用整理后关系数组的长度。
+   * @lang en Caller-supplied relation count, defaulting to the normalized relation-array length when omitted.
+   */
   relationCount?: number;
+  /**
+   * @lang zh-CN 待整理的有向关系，省略时使用空数组，整理后为空则省略整个关系图。
+   * @lang en Directed relations to normalize, defaulting to an empty array when omitted; an empty normalized result omits the entire graph.
+   */
   relations?: BrowserPanelRelationInput[];
 }
 
@@ -257,11 +281,35 @@ export interface BrowserPanelRelationGraphInput {
  * @lang en Relation graph node input.
  */
 export interface BrowserPanelRelationNodeInput {
+  /**
+   * @lang zh-CN 节点关联的可选文档条目标识，可供关系生成文档打开请求。
+   * @lang en Optional documentation-entry identifier associated with the node, usable when constructing relation open requests.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 节点标识，缺失或为空字符串时跳过该节点。
+   * @lang en Node identifier; a missing value or empty string causes the node to be skipped.
+   */
   id?: string;
+  /**
+   * @lang zh-CN 节点类别，缺失或为空字符串时跳过节点，source与artifact类别可参与打开请求构造。
+   * @lang en Node kind; a missing value or empty string skips the node, while source and artifact kinds can participate in open-request construction.
+   */
   kind?: string;
+  /**
+   * @lang zh-CN 节点显示标签，缺失或为空字符串时跳过该节点。
+   * @lang en Node display label; a missing value or empty string causes the node to be skipped.
+   */
   label?: string;
+  /**
+   * @lang zh-CN 可选节点目标路径，存在时统一为正斜杠形式并供打开请求使用。
+   * @lang en Optional node target path, normalized to forward slashes when present and used by open requests.
+   */
   path?: string;
+  /**
+   * @lang zh-CN 可选宿主视图提示，存在时随节点透传。
+   * @lang en Optional host-view hint, forwarded with the node when present.
+   */
   view?: string;
 }
 
@@ -270,13 +318,45 @@ export interface BrowserPanelRelationNodeInput {
  * @lang en Relation graph relation input.
  */
 export interface BrowserPanelRelationInput {
+  /**
+   * @lang zh-CN 可选关系置信度说明，存在时按原值透传。
+   * @lang en Optional relation-confidence description, forwarded as supplied when present.
+   */
   confidence?: string;
+  /**
+   * @lang zh-CN 关系关联的可选文档条目标识，构造文档打开请求时优先于端点节点的条目标识。
+   * @lang en Optional documentation-entry identifier for the relation, taking precedence over endpoint-node entry identifiers when constructing a documentation open request.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 关系起点的节点标识，缺失或为空字符串时跳过该关系。
+   * @lang en Identifier of the relation source node; a missing value or empty string causes the relation to be skipped.
+   */
   from?: string;
+  /**
+   * @lang zh-CN 关系标识，缺失或为空字符串时跳过该关系。
+   * @lang en Relation identifier; a missing value or empty string causes the relation to be skipped.
+   */
   id?: string;
+  /**
+   * @lang zh-CN 有向关系的类别，缺失或为空字符串时跳过该关系。
+   * @lang en Directed-relation kind; a missing value or empty string causes the relation to be skipped.
+   */
   kind?: string;
+  /**
+   * @lang zh-CN 可选关系显示标签，省略时回退到关系标识。
+   * @lang en Optional relation display label, falling back to the relation identifier when omitted.
+   */
   label?: string;
+  /**
+   * @lang zh-CN 可选关系元数据，可携带rangeStartLine、rangeStartColumn和selector供打开请求读取，调用方负责可公开范围。
+   * @lang en Optional relation metadata, which may carry rangeStartLine, rangeStartColumn and selector for open-request construction; callers own disclosure scope.
+   */
   metadata?: Record<string, string | number | boolean | null>;
+  /**
+   * @lang zh-CN 关系终点的节点标识，缺失或为空字符串时跳过该关系。
+   * @lang en Identifier of the relation target node; a missing value or empty string causes the relation to be skipped.
+   */
   to?: string;
 }
 
@@ -285,11 +365,35 @@ export interface BrowserPanelRelationInput {
  * @lang en Relation graph carried by the browser panel payload.
  */
 export interface BrowserPanelRelationGraph {
+  /**
+   * @lang zh-CN 从输入关系图透传的可选契约名称。
+   * @lang en Optional contract name forwarded from the input relation graph.
+   */
   contract?: string;
+  /**
+   * @lang zh-CN 从输入关系图透传的可选契约版本。
+   * @lang en Optional contract version forwarded from the input relation graph.
+   */
   contractVersion?: string;
+  /**
+   * @lang zh-CN 输入中声明的节点计数，未提供时为整理后节点数量，显式值可能不同于nodes.length。
+   * @lang en Node count declared by the input, or the normalized node count when omitted; an explicit value may differ from nodes.length.
+   */
   nodeCount: number;
+  /**
+   * @lang zh-CN 通过必需标识、类别和标签筛选的节点数组。
+   * @lang en Node array filtered for required identifiers, kinds and labels.
+   */
   nodes: BrowserPanelRelationNode[];
+  /**
+   * @lang zh-CN 输入中声明的关系计数，未提供时为整理后关系数量，显式值可能不同于relations.length。
+   * @lang en Relation count declared by the input, or the normalized relation count when omitted; an explicit value may differ from relations.length.
+   */
   relationCount: number;
+  /**
+   * @lang zh-CN 通过必需标识筛选并附带宿主打开请求的有向关系数组。
+   * @lang en Directed-relation array filtered for required identifiers and enriched with host open requests.
+   */
   relations: BrowserPanelRelation[];
 }
 
@@ -298,11 +402,35 @@ export interface BrowserPanelRelationGraph {
  * @lang en Relation graph node carried by the browser panel payload.
  */
 export interface BrowserPanelRelationNode {
+  /**
+   * @lang zh-CN 节点携带的可选文档条目标识，供所属关系构造文档打开请求。
+   * @lang en Optional documentation-entry identifier carried by the node for constructing documentation open requests on its relations.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 从输入保留的节点标识，供关系端点查找。
+   * @lang en Node identifier retained from the input for relation-endpoint lookup.
+   */
   id: string;
+  /**
+   * @lang zh-CN 从输入保留的节点类别，source和artifact分别可生成源码及产物打开请求。
+   * @lang en Node kind retained from the input; source and artifact can produce source and generated-artifact open requests respectively.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 从输入保留的节点显示标签。
+   * @lang en Node display label retained from the input.
+   */
   label: string;
+  /**
+   * @lang zh-CN 采用正斜杠形式的可选目标路径，供源码或产物打开请求使用。
+   * @lang en Optional target path using forward slashes, used by source or generated-artifact open requests.
+   */
   path?: string;
+  /**
+   * @lang zh-CN 从输入透传的可选宿主视图提示。
+   * @lang en Optional host-view hint forwarded from the input.
+   */
   view?: string;
 }
 
@@ -311,14 +439,50 @@ export interface BrowserPanelRelationNode {
  * @lang en Relation graph relation carried by the browser panel payload.
  */
 export interface BrowserPanelRelation {
+  /**
+   * @lang zh-CN 从输入透传的可选关系置信度说明。
+   * @lang en Optional relation-confidence description forwarded from the input.
+   */
   confidence?: string;
+  /**
+   * @lang zh-CN 关系自身携带的可选文档条目标识，优先用于文档打开请求。
+   * @lang en Optional documentation-entry identifier carried by the relation itself and preferred for documentation open requests.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 从输入保留的起点节点标识，供端点查找。
+   * @lang en Source-node identifier retained from the input for endpoint lookup.
+   */
   from: string;
+  /**
+   * @lang zh-CN 从输入保留的关系标识，用于关联和生成打开请求标识。
+   * @lang en Relation identifier retained from the input for association and open-request identifiers.
+   */
   id: string;
+  /**
+   * @lang zh-CN 从输入保留的有向关系类别。
+   * @lang en Directed-relation kind retained from the input.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 关系显示标签，输入未提供时采用关系标识。
+   * @lang en Relation display label, using the relation identifier when the input omits a label.
+   */
   label: string;
+  /**
+   * @lang zh-CN 与输入共用引用的可选元数据，可为打开请求提供范围起点和选择器。
+   * @lang en Optional metadata sharing the input reference, capable of supplying range-start positions and selectors for open requests.
+   */
   metadata?: Record<string, string | number | boolean | null>;
+  /**
+   * @lang zh-CN 根据关系与可查到的端点节点生成并按请求标识去重的宿主打开请求。
+   * @lang en Host open requests derived from the relation and available endpoint nodes, deduplicated by request identifier.
+   */
   openRequests: BrowserPanelOpenRequest[];
+  /**
+   * @lang zh-CN 从输入保留的终点节点标识，供端点查找。
+   * @lang en Target-node identifier retained from the input for endpoint lookup.
+   */
   to: string;
 }
 
