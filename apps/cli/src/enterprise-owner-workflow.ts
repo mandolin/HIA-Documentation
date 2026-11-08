@@ -59,8 +59,20 @@ export type EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode = typeof ENTERP
  * @lang en Pure workflow request; baseline and current must either both be present or both be absent.
  */
 export interface EnterpriseBaselineCurrentOwnerWorkflowRequest {
+  /**
+   * @lang zh-CN 企业目标族的负责人采用套件请求，由套件生产器独立校验。
+   * @lang en Enterprise-family owner adoption-kit request independently validated by the kit producer.
+   */
   adoptionRequest: TargetOwnerAdoptionKitRequest;
+  /**
+   * @lang zh-CN 可选基线证据摘要，与current成对提供；仅套件就绪且两侧存在时参与连续性计算。
+   * @lang en Optional baseline evidence summary supplied with current and compared only when the kit is ready and both sides are present.
+   */
   baseline?: unknown;
+  /**
+   * @lang zh-CN 可选当前证据摘要，与baseline成对提供；未提交材料的诚实延后状态须两者均缺省。
+   * @lang en Optional current evidence summary supplied with baseline, with both omitted for an honest unsubmitted-input deferral.
+   */
   current?: unknown;
 }
 
@@ -69,8 +81,20 @@ export interface EnterpriseBaselineCurrentOwnerWorkflowRequest {
  * @lang en Fixed workflow diagnostic without caller payload.
  */
 export interface EnterpriseBaselineCurrentOwnerWorkflowDiagnostic {
+  /**
+   * @lang zh-CN 所属报告闭集中的稳定诊断码。
+   * @lang en Stable diagnostic code from the enclosing report's closed vocabulary.
+   */
   code: EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode;
+  /**
+   * @lang zh-CN 固定的公开诊断说明，避免反射调用方正文或私有路径。
+   * @lang en Fixed public diagnostic explanation avoiding reflection of caller bodies or private paths.
+   */
   message: string;
+  /**
+   * @lang zh-CN error表示拒绝条件，warning记录材料未提交等非错误状态。
+   * @lang en Error marks a refusal condition, while warning records non-error states such as missing owner input.
+   */
   severity: "error" | "warning";
 }
 
@@ -79,14 +103,46 @@ export interface EnterpriseBaselineCurrentOwnerWorkflowDiagnostic {
  * @lang en Body-free component projection of the adoption kit.
  */
 export interface EnterpriseOwnerWorkflowAdoptionProjection {
+  /**
+   * @lang zh-CN 从负责人套件复制的target-owner-adoption-kit来源身份。
+   * @lang en Target-owner-adoption-kit source identity copied from the owner kit.
+   */
   contract: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT;
+  /**
+   * @lang zh-CN 从负责人套件复制的精确0.1.0-draft来源版本。
+   * @lang en Exact 0.1.0-draft source version copied from the owner kit.
+   */
   contractVersion: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 负责人套件组件的独立状态，可能与组合流程总状态不同。
+   * @lang en Independent owner-kit component status, which may differ from the overall composed-workflow status.
+   */
   status: TargetOwnerAdoptionKitReport["status"];
+  /**
+   * @lang zh-CN 从套件复制或按必需引用列表计算的计数投影。
+   * @lang en Count projection copied from the kit or computed from its required-reference list.
+   */
   contracts: {
+    /**
+     * @lang zh-CN 所选目标族必需契约引用列表的长度，当前固定为5。
+     * @lang en Length of the selected family's required-reference list, currently fixed to 5.
+     */
     requiredCount: number;
+    /**
+     * @lang zh-CN 规范化全字符串提供引用数组的项数，保留随后被拒绝的重复或未知引用计数。
+     * @lang en Item count of the normalized all-string provided-reference array, retaining counts for duplicate or unknown references later refused.
+     */
     providedCount: number;
+    /**
+     * @lang zh-CN 所选目标族必需引用中尚未提供的数量。
+     * @lang en Number of required references still missing for the selected target family.
+     */
     missingCount: number;
   };
+  /**
+   * @lang zh-CN 从套件门户投影复制的解析、未核置信度和元数据来源。
+   * @lang en Resolution, unverified confidence and metadata provenance copied from the kit's Portal projection.
+   */
   semantics: TargetOwnerAdoptionKitReport["portalSummary"]["semantics"];
 }
 
@@ -118,54 +174,226 @@ export type EnterpriseOwnerWorkflowContinuityProjection = {
  * @lang en Enterprise owner workflow report; ready means owner input and the evidence pair may enter review, never adoption.
  */
 export interface EnterpriseBaselineCurrentOwnerWorkflowReport {
+  /**
+   * @lang zh-CN 固定的enterprise-baseline-current-owner-workflow报告契约名称。
+   * @lang en Fixed enterprise-baseline-current-owner-workflow report contract name.
+   */
   contract: typeof ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft组合流程报告精确版本。
+   * @lang en Fixed exact 0.1.0-draft composed-workflow report version.
+   */
   contractVersion: typeof ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 错误时拒绝，无材料且无证据对时延后；套件就绪并且连续性接受时就绪。
+   * @lang en Refused on errors, deferred for missing input without an evidence pair, or ready when the kit is ready and continuity is accepted.
+   */
   status: "ready-for-owner-review" | "deferred-owner-input-missing" | "refused";
+  /**
+   * @lang zh-CN 固定企业目标族及从负责人套件复制的公开目标标识。
+   * @lang en Fixed enterprise target family and public target identifier copied from the owner kit.
+   */
   target: {
+    /**
+     * @lang zh-CN 固定为enterprise-business的企业业务目标族。
+     * @lang en Enterprise business target family fixed to enterprise-business.
+     */
     family: "enterprise-business";
+    /**
+     * @lang zh-CN 从负责人套件复制的公开目标标识，无效原值已替换为invalid-target。
+     * @lang en Public target identifier copied from the owner kit, with invalid original values already replaced by invalid-target.
+     */
     id: string;
   };
+  /**
+   * @lang zh-CN 从负责人套件复制的提交、审阅同意及负责人和脱敏声明。
+   * @lang en Submission, review consent, owner attestation and redaction attestation copied from the owner kit.
+   */
   ownerInput: {
+    /**
+     * @lang zh-CN 从套件规范化材料状态复制的提交标记。
+     * @lang en Submission flag copied from the kit's normalized input state.
+     */
     submitted: boolean;
+    /**
+     * @lang zh-CN 从套件复制的审阅同意记录，保持调用方提供语义。
+     * @lang en Recorded review consent copied from the kit with caller-provided semantics retained.
+     */
     consent: "not-recorded" | "recorded-for-review";
+    /**
+     * @lang zh-CN 从套件复制的负责人身份声明，保持未经独立核实的语义。
+     * @lang en Owner attestation copied from the kit with its independently unverified semantics retained.
+     */
     attestation: "not-provided" | "target-owner-attested";
+    /**
+     * @lang zh-CN 从套件复制的公开安全脱敏声明。
+     * @lang en Public-safe redaction attestation copied from the kit.
+     */
     redactionAttested: boolean;
   };
+  /**
+   * @lang zh-CN 负责人套件与连续性的独立元数据投影。
+   * @lang en Independent metadata projections of the owner kit and continuity components.
+   */
   components: {
+    /**
+     * @lang zh-CN 负责人套件状态、引用计数与独立语义的无正文投影。
+     * @lang en Body-free projection of owner-kit status, reference counts and independent semantics.
+     */
     adoptionKit: EnterpriseOwnerWorkflowAdoptionProjection;
+    /**
+     * @lang zh-CN 实际连续性报告的计数投影，未执行比较时仅为availability:not-provided。
+     * @lang en Count projection of an actual continuity report, reduced to availability:not-provided when no comparison ran.
+     */
     continuity: EnterpriseOwnerWorkflowContinuityProjection;
   };
+  /**
+   * @lang zh-CN 组合报告的解析状态、未核置信度、来源、同意及未声明采用状态。
+   * @lang en Composed-report resolution, unverified confidence, provenance, consent and unasserted adoption state.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 依总状态映射为owner-input-and-evidence-validated、owner-input-not-received或unresolved。
+     * @lang en Maps overall status to owner-input-and-evidence-validated, owner-input-not-received or unresolved.
+     */
     resolution: "owner-input-and-evidence-validated" | "owner-input-not-received" | "unresolved";
+    /**
+     * @lang zh-CN 固定为caller-provided-unverified，输入事实保持调用方声明的置信边界。
+     * @lang en Fixed to caller-provided-unverified, retaining the confidence boundary of caller-declared input facts.
+     */
     confidence: "caller-provided-unverified";
+    /**
+     * @lang zh-CN 固定为composed-owner-metadata-workflow的报告组合来源。
+     * @lang en Report-composition provenance fixed to composed-owner-metadata-workflow.
+     */
     provenance: "composed-owner-metadata-workflow";
+    /**
+     * @lang zh-CN 从负责人套件复制的审阅同意记录。
+     * @lang en Recorded review consent copied from the owner kit.
+     */
     consent: "not-recorded" | "recorded-for-review";
+    /**
+     * @lang zh-CN 固定为not-asserted的目标采用声明状态。
+     * @lang en Target-adoption assertion state fixed to not-asserted.
+     */
     adoption: "not-asserted";
   };
+  /**
+   * @lang zh-CN 固定排除请求及证据正文、标识列表、路径、凭据和工作状态的序列化声明。
+   * @lang en Fixed serialization declaration excluding request/evidence bodies, identifier lists, paths, credentials and working state.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，报告排除负责人采用请求正文。
+     * @lang en Fixed to false, excluding the owner adoption-request body from the report.
+     */
     adoptionRequestBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除基线证据正文。
+     * @lang en Fixed to false, excluding the baseline evidence body from the report.
+     */
     baselineEvidenceSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除当前证据正文。
+     * @lang en Fixed to false, excluding the current evidence body from the report.
+     */
     currentEvidenceSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，条目标识列表仅用于内存比较，报告保留计数。
+     * @lang en Fixed to false, keeping entry-identifier lists in memory for comparison and retaining counts in the report.
+     */
     entryIdsSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，生产器标识列表仅用于内存比较，报告保留计数。
+     * @lang en Fixed to false, keeping producer-identifier lists in memory for comparison and retaining counts in the report.
+     */
     producerIdsSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除源码正文。
+     * @lang en Fixed to false, excluding source bodies from the report.
+     */
     sourceBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除工件正文。
+     * @lang en Fixed to false, excluding artifact bodies from the report.
+     */
     artifactBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除路径。
+     * @lang en Fixed to false, excluding paths from the report.
+     */
     pathSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除凭据。
+     * @lang en Fixed to false, excluding credentials from the report.
+     */
     credentialSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除工作状态。
+     * @lang en Fixed to false, excluding working state from the report.
+     */
     workingStateSerialized: false;
+    /**
+     * @lang zh-CN 固定为none，报告不嵌入sourcesContent源码正文。
+     * @lang en Fixed to none, excluding embedded sourcesContent source bodies from the report.
+     */
     sourcesContentPolicy: "none";
   };
+  /**
+   * @lang zh-CN 固定全部为false的负责人联系、目标操作、网络、发布和采用声明边界。
+   * @lang en Owner-contact, target-operation, network, publication and adoption-claim boundary fixed entirely to false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，组合评估不联系负责人。
+     * @lang en Fixed to false, declaring that composition evaluation does not contact an owner.
+     */
     ownerContacted: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库读取排除边界。
+     * @lang en Fixed to false, recording the target-repository-read exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryRead: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库写入排除边界。
+     * @lang en Fixed to false, recording the target-repository-write exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryWrite: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标命令执行排除边界。
+     * @lang en Fixed to false, recording the target-command-execution exclusion boundary of pure metadata evaluation.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标运行时开启排除边界。
+     * @lang en Fixed to false, recording the target-runtime-opening exclusion boundary of pure metadata evaluation.
+     */
     targetRuntimeOpened: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标分支及拉取请求创建排除边界。
+     * @lang en Fixed to false, recording the target-branch and pull-request creation exclusion boundary of pure metadata evaluation.
+     */
     targetBranchOrPrCreated: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的网络访问排除边界。
+     * @lang en Fixed to false, recording the network-access exclusion boundary of pure metadata evaluation.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的包发布排除边界。
+     * @lang en Fixed to false, recording the package-publication exclusion boundary of pure metadata evaluation.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标采用声明排除边界。
+     * @lang en Fixed to false, recording the target-adoption-claim exclusion boundary of pure metadata evaluation.
+     */
     targetAdoptionClaimed: false;
   };
+  /**
+   * @lang zh-CN 按码去重的固定公开诊断，记录组合错误或缺材料延后警告。
+   * @lang en Fixed public diagnostics deduplicated by code, recording composition errors or a missing-input deferral warning.
+   */
   diagnostics: EnterpriseBaselineCurrentOwnerWorkflowDiagnostic[];
 }
 

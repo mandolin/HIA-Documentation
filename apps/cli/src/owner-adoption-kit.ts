@@ -75,44 +75,188 @@ export type TargetOwnerAdoptionKitDiagnosticCode = typeof TARGET_OWNER_ADOPTION_
  * @lang en Closed request for an owner-operated kit; every field is public-safe metadata or an existing contract reference.
  */
 export interface TargetOwnerAdoptionKitRequest {
+  /**
+   * @lang zh-CN 必须精确为target-owner-adoption-kit的请求契约名称。
+   * @lang en Request contract name required to match target-owner-adoption-kit exactly.
+   */
   contract: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT;
+  /**
+   * @lang zh-CN 必须精确为0.1.0-draft的请求版本。
+   * @lang en Request version required to match 0.1.0-draft exactly.
+   */
   contractVersion: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 调用方指定的公开试用标识，必须满足受限稳定标识语法。
+   * @lang en Caller-selected public trial identifier required to satisfy the restricted stable-identifier grammar.
+   */
   trialId: string;
+  /**
+   * @lang zh-CN 调用方指定的公开目标标识，必须满足受限稳定标识语法。
+   * @lang en Caller-selected public target identifier required to satisfy the restricted stable-identifier grammar.
+   */
   targetId: string;
+  /**
+   * @lang zh-CN 选择enterprise-business或workspace-container及其固定必需契约集合。
+   * @lang en Selects enterprise-business or workspace-container and its fixed required-contract set.
+   */
   targetFamily: TargetOwnerAdoptionKitFamily;
+  /**
+   * @lang zh-CN 调用方提交的负责人材料状态、审阅同意、声明及反馈。
+   * @lang en Caller-submitted owner-input state, review consent, attestations and feedback.
+   */
   ownerInput: {
+    /**
+     * @lang zh-CN 调用方声明负责人材料是否已提交，未提交时允许诚实延后。
+     * @lang en Caller declaration of whether owner input has been submitted, allowing an honest deferral when false.
+     */
     submitted: boolean;
+    /**
+     * @lang zh-CN 负责人审阅同意的记录状态，已提交材料必须为recorded-for-review。
+     * @lang en Recorded owner-review consent state, required to be recorded-for-review for submitted input.
+     */
     consent: "not-recorded" | "recorded-for-review";
+    /**
+     * @lang zh-CN 目标负责人身份声明状态，已提交材料必须为target-owner-attested。
+     * @lang en Target-owner attestation state, required to be target-owner-attested for submitted input.
+     */
     attestation: "not-provided" | "target-owner-attested";
+    /**
+     * @lang zh-CN 负责人记录的反馈决策，已提交材料须非not-recorded；各值均为反馈元数据。
+     * @lang en Recorded owner feedback decision, required to differ from not-recorded for submitted input and retained as feedback metadata.
+     */
     decision: TargetOwnerAdoptionKitDecision;
+    /**
+     * @lang zh-CN 调用方声明已完成公开安全脱敏，已提交材料必须为true。
+     * @lang en Caller attestation that public-safe redaction is complete, required to be true for submitted input.
+     */
     redactionAttested: boolean;
   };
+  /**
+   * @lang zh-CN 目标族允许的精确契约及版本引用，必须唯一；已提交材料须覆盖全部必需引用。
+   * @lang en Exact contract/version references allowed for the target family, required to be unique and complete for submitted input.
+   */
   providedContractRefs: string[];
+  /**
+   * @lang zh-CN 工作区目标族的可选计数交接摘要，该族已提交材料时必需，企业目标族禁止提供。
+   * @lang en Optional count-only handoff summary required for submitted workspace-family input and forbidden for the enterprise family.
+   */
   workspaceHandoff?: {
+    /**
+     * @lang zh-CN 固定为owner-review-required的交接审阅状态。
+     * @lang en Handoff review state fixed to owner-review-required.
+     */
     state: "owner-review-required";
+    /**
+     * @lang zh-CN 调用方声明的仓库负责人数量，有效交接摘要要求为至少2的整数。
+     * @lang en Caller-declared repository-owner count, required to be an integer of at least 2 for a valid handoff summary.
+     */
     repositoryOwnerCount: number;
+    /**
+     * @lang zh-CN 调用方声明的交接边数量，有效交接摘要要求为至少1的整数。
+     * @lang en Caller-declared handoff-edge count, required to be an integer of at least 1 for a valid handoff summary.
+     */
     handoffEdgeCount: number;
+    /**
+     * @lang zh-CN 固定为false，交接摘要不转移运行时依赖。
+     * @lang en Fixed to false, declaring no runtime-dependency transfer in the handoff summary.
+     */
     runtimeDependencyTransfer: false;
+    /**
+     * @lang zh-CN 固定为false，交接摘要声明无需目标写入。
+     * @lang en Fixed to false, declaring that the handoff summary requires no target writes.
+     */
     targetWriteRequired: false;
   };
+  /**
+   * @lang zh-CN 必须关闭正文、凭据、私有路径和工作状态输入的封闭隐私声明。
+   * @lang en Closed privacy declaration required to exclude bodies, credentials, private paths and working state from input.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含源码正文。
+     * @lang en Fixed to false, declaring that input excludes source bodies.
+     */
     sourceBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含工件正文。
+     * @lang en Fixed to false, declaring that input excludes artifact bodies.
+     */
     artifactBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含证据正文。
+     * @lang en Fixed to false, declaring that input excludes evidence bodies.
+     */
     evidenceBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含命令输出正文。
+     * @lang en Fixed to false, declaring that input excludes command-output bodies.
+     */
     commandOutputBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含绝对路径或私有路径。
+     * @lang en Fixed to false, declaring that input excludes absolute or private paths.
+     */
     absoluteOrPrivatePathIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含凭据。
+     * @lang en Fixed to false, declaring that input excludes credentials.
+     */
     credentialIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，声明输入不包含工作状态。
+     * @lang en Fixed to false, declaring that input excludes working state.
+     */
     workingStateIncluded: false;
+    /**
+     * @lang zh-CN 固定为none，声明不嵌入sourcesContent源码正文。
+     * @lang en Fixed to none, declaring that sourcesContent source bodies are not embedded.
+     */
     sourcesContentPolicy: "none";
   };
+  /**
+   * @lang zh-CN 必须全部为false的目标操作、网络、发布与采用声明边界。
+   * @lang en Target-operation, network, publication and adoption-claim boundary required to be entirely false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库读取排除边界。
+     * @lang en Fixed to false, recording the target-repository-read exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryRead: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库写入排除边界。
+     * @lang en Fixed to false, recording the target-repository-write exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryWrite: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标命令执行排除边界。
+     * @lang en Fixed to false, recording the target-command-execution exclusion boundary of pure metadata evaluation.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标运行时开启排除边界。
+     * @lang en Fixed to false, recording the target-runtime-opening exclusion boundary of pure metadata evaluation.
+     */
     targetRuntimeOpened: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标分支及拉取请求创建排除边界。
+     * @lang en Fixed to false, recording the target-branch and pull-request creation exclusion boundary of pure metadata evaluation.
+     */
     targetBranchOrPrCreated: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的网络访问排除边界。
+     * @lang en Fixed to false, recording the network-access exclusion boundary of pure metadata evaluation.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的包发布排除边界。
+     * @lang en Fixed to false, recording the package-publication exclusion boundary of pure metadata evaluation.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标采用声明排除边界。
+     * @lang en Fixed to false, recording the target-adoption-claim exclusion boundary of pure metadata evaluation.
+     */
     targetAdoptionClaimed: false;
   };
 }
@@ -122,8 +266,20 @@ export interface TargetOwnerAdoptionKitRequest {
  * @lang en Fixed report diagnostic that does not reflect caller data.
  */
 export interface TargetOwnerAdoptionKitDiagnostic {
+  /**
+   * @lang zh-CN 所属报告闭集中的稳定诊断码。
+   * @lang en Stable diagnostic code from the enclosing report's closed vocabulary.
+   */
   code: TargetOwnerAdoptionKitDiagnosticCode;
+  /**
+   * @lang zh-CN 固定的公开诊断说明，避免反射调用方正文或私有路径。
+   * @lang en Fixed public diagnostic explanation avoiding reflection of caller bodies or private paths.
+   */
   message: string;
+  /**
+   * @lang zh-CN error表示拒绝条件，warning记录材料未提交等非错误状态。
+   * @lang en Error marks a refusal condition, while warning records non-error states such as missing owner input.
+   */
   severity: "error" | "warning";
 }
 
@@ -132,28 +288,108 @@ export interface TargetOwnerAdoptionKitDiagnostic {
  * @lang en Minimal Portal projection without target/trial identity, paths, bodies, owner identity, or working state.
  */
 export interface TargetOwnerAdoptionPortalSummary {
+  /**
+   * @lang zh-CN 固定的target-owner-adoption-kit投影来源契约。
+   * @lang en Fixed target-owner-adoption-kit contract identifying the projection source.
+   */
   contract: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft来源契约版本。
+   * @lang en Fixed 0.1.0-draft source-contract version.
+   */
   contractVersion: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 固定为portal-metadata-only的投影用途标记。
+   * @lang en Projection-purpose marker fixed to portal-metadata-only.
+   */
   projection: "portal-metadata-only";
+  /**
+   * @lang zh-CN 复制完整负责人套件报告的审阅就绪、缺材料延后或拒绝状态。
+   * @lang en Copies the full owner-kit report's review-ready, missing-input deferred or refused status.
+   */
   status: TargetOwnerAdoptionKitReport["status"];
+  /**
+   * @lang zh-CN 从完整报告复制的规范化目标族。
+   * @lang en Normalized target family copied from the full report.
+   */
   targetFamily: TargetOwnerAdoptionKitFamily;
+  /**
+   * @lang zh-CN 仅保留材料提交标记及审阅同意的负责人输入投影。
+   * @lang en Owner-input projection retaining only the submission flag and review consent.
+   */
   ownerInput: {
+    /**
+     * @lang zh-CN 从规范化负责人材料复制的提交标记。
+     * @lang en Submission flag copied from normalized owner input.
+     */
     submitted: boolean;
+    /**
+     * @lang zh-CN 从规范化负责人材料复制的审阅同意记录状态。
+     * @lang en Recorded review-consent state copied from normalized owner input.
+     */
     consent: "not-recorded" | "recorded-for-review";
   };
+  /**
+   * @lang zh-CN 投影中的必需、提供和缺失引用数量，省略引用列表。
+   * @lang en Required, provided and missing reference counts in the projection, omitting reference lists.
+   */
   contracts: {
+    /**
+     * @lang zh-CN 所选目标族必需契约引用列表的长度，当前固定为5。
+     * @lang en Length of the selected family's required-reference list, currently fixed to 5.
+     */
     requiredCount: number;
+    /**
+     * @lang zh-CN 规范化全字符串提供引用数组的项数，保留随后被拒绝的重复或未知引用计数。
+     * @lang en Item count of the normalized all-string provided-reference array, retaining counts for duplicate or unknown references later refused.
+     */
     providedCount: number;
+    /**
+     * @lang zh-CN 所选目标族必需引用中尚未提供的数量。
+     * @lang en Number of required references still missing for the selected target family.
+     */
     missingCount: number;
   };
+  /**
+   * @lang zh-CN 有效工作区交接摘要的负责人、边数量和审阅状态投影。
+   * @lang en Projection of owner/edge counts and review state from a valid workspace-handoff summary.
+   */
   workspaceHandoff?: {
+    /**
+     * @lang zh-CN 调用方声明的仓库负责人数量，有效交接摘要要求为至少2的整数。
+     * @lang en Caller-declared repository-owner count, required to be an integer of at least 2 for a valid handoff summary.
+     */
     repositoryOwnerCount: number;
+    /**
+     * @lang zh-CN 调用方声明的交接边数量，有效交接摘要要求为至少1的整数。
+     * @lang en Caller-declared handoff-edge count, required to be an integer of at least 1 for a valid handoff summary.
+     */
     handoffEdgeCount: number;
+    /**
+     * @lang zh-CN 固定为owner-review-required的交接审阅状态。
+     * @lang en Handoff review state fixed to owner-review-required.
+     */
     state: "owner-review-required";
   };
+  /**
+   * @lang zh-CN 与完整报告一致的材料解析、未核置信度和元数据来源。
+   * @lang en Input resolution, unverified confidence and metadata provenance shared with the full report.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 由报告状态映射为owner-input-validated、owner-input-not-received或unresolved。
+     * @lang en Maps report status to owner-input-validated, owner-input-not-received or unresolved.
+     */
     resolution: "owner-input-validated" | "owner-input-not-received" | "unresolved";
+    /**
+     * @lang zh-CN 固定为caller-provided-unverified，负责人声明保持调用方提供且未经独立核实。
+     * @lang en Fixed to caller-provided-unverified, retaining owner attestations as caller-provided and independently unverified.
+     */
     confidence: "caller-provided-unverified";
+    /**
+     * @lang zh-CN 固定为metadata-only-owner-kit的纯元数据评估来源。
+     * @lang en Metadata-only evaluation provenance fixed to metadata-only-owner-kit.
+     */
     provenance: "metadata-only-owner-kit";
   };
 }
@@ -163,59 +399,239 @@ export interface TargetOwnerAdoptionPortalSummary {
  * @lang en Reusable adoption-kit report; `ready` means ready for owner review, never that a target adopted it.
  */
 export interface TargetOwnerAdoptionKitReport {
+  /**
+   * @lang zh-CN 固定的target-owner-adoption-kit报告契约名称。
+   * @lang en Fixed target-owner-adoption-kit report contract name.
+   */
   contract: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft报告精确版本。
+   * @lang en Fixed exact 0.1.0-draft report version.
+   */
   contractVersion: typeof TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 错误导致refused，否则依材料提交状态为ready-for-owner-review或deferred-owner-input-missing。
+   * @lang en Errors produce refused, otherwise submission state selects ready-for-owner-review or deferred-owner-input-missing.
+   */
   status: "ready-for-owner-review" | "deferred-owner-input-missing" | "refused";
+  /**
+   * @lang zh-CN 公开试用和目标标识、规范化目标族及其审阅流程。
+   * @lang en Public trial and target identifiers, normalized target family and its review workflow.
+   */
   trial: {
+    /**
+     * @lang zh-CN 语法有效的公开试用标识，非法输入替换为invalid-trial。
+     * @lang en Grammar-valid public trial identifier, with invalid input replaced by invalid-trial.
+     */
     id: string;
+    /**
+     * @lang zh-CN 语法有效的公开目标标识，非法输入替换为invalid-target。
+     * @lang en Grammar-valid public target identifier, with invalid input replaced by invalid-target.
+     */
     targetId: string;
+    /**
+     * @lang zh-CN 已识别的目标族，未知输入在拒绝诊断之外规范为enterprise-business。
+     * @lang en Recognized target family, with unknown input normalized to enterprise-business alongside a refusal diagnostic.
+     */
     targetFamily: TargetOwnerAdoptionKitFamily;
+    /**
+     * @lang zh-CN 由目标族确定的enterprise-continuity或workspace-handoff-review审阅流程。
+     * @lang en Enterprise-continuity or workspace-handoff-review workflow selected by the target family.
+     */
     workflow: "enterprise-continuity" | "workspace-handoff-review";
   };
+  /**
+   * @lang zh-CN 有效负责人材料状态的副本，无效形状规范为未提交的默认状态。
+   * @lang en Copy of valid owner-input state, with invalid shapes normalized to unsubmitted defaults.
+   */
   ownerInput: {
+    /**
+     * @lang zh-CN 调用方声明负责人材料是否已提交，未提交时允许诚实延后。
+     * @lang en Caller declaration of whether owner input has been submitted, allowing an honest deferral when false.
+     */
     submitted: boolean;
+    /**
+     * @lang zh-CN 负责人审阅同意的记录状态，已提交材料必须为recorded-for-review。
+     * @lang en Recorded owner-review consent state, required to be recorded-for-review for submitted input.
+     */
     consent: "not-recorded" | "recorded-for-review";
+    /**
+     * @lang zh-CN 目标负责人身份声明状态，已提交材料必须为target-owner-attested。
+     * @lang en Target-owner attestation state, required to be target-owner-attested for submitted input.
+     */
     attestation: "not-provided" | "target-owner-attested";
+    /**
+     * @lang zh-CN 负责人记录的反馈决策，已提交材料须非not-recorded；各值均为反馈元数据。
+     * @lang en Recorded owner feedback decision, required to differ from not-recorded for submitted input and retained as feedback metadata.
+     */
     decision: TargetOwnerAdoptionKitDecision;
+    /**
+     * @lang zh-CN 调用方声明已完成公开安全脱敏，已提交材料必须为true。
+     * @lang en Caller attestation that public-safe redaction is complete, required to be true for submitted input.
+     */
     redactionAttested: boolean;
   };
+  /**
+   * @lang zh-CN 所选目标族的必需引用列表、提供引用数量和缺失数量。
+   * @lang en Required-reference list for the selected family, provided-reference count and missing count.
+   */
   contracts: {
+    /**
+     * @lang zh-CN 所选目标族的五条固定有序契约及版本引用。
+     * @lang en Five fixed ordered contract/version references for the selected target family.
+     */
     required: string[];
+    /**
+     * @lang zh-CN 输入引用数组为全字符串时保留的原始项数，包括随后被拒绝的重复或未知引用。
+     * @lang en Original item count retained for an all-string input-reference array, including duplicate or unknown references later refused.
+     */
     providedCount: number;
+    /**
+     * @lang zh-CN 必需引用中未出现在规范化提供引用列表的项数。
+     * @lang en Number of required references absent from the normalized provided-reference list.
+     */
     missingCount: number;
   };
+  /**
+   * @lang zh-CN 仅工作区目标族且摘要有效时复制的计数交接信息，拒绝报告也可保留该有效摘要。
+   * @lang en Count-only handoff copied for a workspace-family target with a valid summary, including valid summaries in refused reports.
+   */
   workspaceHandoff?: {
+    /**
+     * @lang zh-CN 调用方声明的仓库负责人数量，有效交接摘要要求为至少2的整数。
+     * @lang en Caller-declared repository-owner count, required to be an integer of at least 2 for a valid handoff summary.
+     */
     repositoryOwnerCount: number;
+    /**
+     * @lang zh-CN 调用方声明的交接边数量，有效交接摘要要求为至少1的整数。
+     * @lang en Caller-declared handoff-edge count, required to be an integer of at least 1 for a valid handoff summary.
+     */
     handoffEdgeCount: number;
+    /**
+     * @lang zh-CN 固定为owner-review-required的交接审阅状态。
+     * @lang en Handoff review state fixed to owner-review-required.
+     */
     state: "owner-review-required";
+    /**
+     * @lang zh-CN 固定为false，交接摘要不转移运行时依赖。
+     * @lang en Fixed to false, declaring no runtime-dependency transfer in the handoff summary.
+     */
     runtimeDependencyTransfer: false;
+    /**
+     * @lang zh-CN 固定为false，交接摘要声明无需目标写入。
+     * @lang en Fixed to false, declaring that the handoff summary requires no target writes.
+     */
     targetWriteRequired: false;
   };
+  /**
+   * @lang zh-CN 移除试用及目标标识的门户元数据投影，保留审阅状态与计数。
+   * @lang en Portal metadata projection omitting trial and target identifiers while retaining review state and counts.
+   */
   portalSummary: TargetOwnerAdoptionPortalSummary;
+  /**
+   * @lang zh-CN 解析状态、调用方未核置信度、元数据来源、审阅同意及未声明采用状态。
+   * @lang en Resolution, caller-unverified confidence, metadata provenance, review consent and unasserted adoption state.
+   */
   semantics: TargetOwnerAdoptionPortalSummary["semantics"] & {
     consent: "not-recorded" | "recorded-for-review";
     adoption: "not-asserted";
   };
+  /**
+   * @lang zh-CN 固定的报告正文、路径、凭据及工作状态序列化排除标记。
+   * @lang en Fixed report-serialization exclusion flags for bodies, paths, credentials and working state.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化源码正文。
+     * @lang en Fixed to false, declaring that the report excludes from serialization source bodies.
+     */
     sourceBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化工件正文。
+     * @lang en Fixed to false, declaring that the report excludes from serialization artifact bodies.
+     */
     artifactBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化证据正文。
+     * @lang en Fixed to false, declaring that the report excludes from serialization evidence bodies.
+     */
     evidenceBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化命令输出正文。
+     * @lang en Fixed to false, declaring that the report excludes from serialization command-output bodies.
+     */
     commandOutputBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化路径。
+     * @lang en Fixed to false, declaring that the report excludes paths from serialization.
+     */
     pathSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化凭据。
+     * @lang en Fixed to false, declaring that the report excludes from serialization credentials.
+     */
     credentialSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，声明报告不序列化工作状态。
+     * @lang en Fixed to false, declaring that the report excludes from serialization working state.
+     */
     workingStateSerialized: false;
+    /**
+     * @lang zh-CN 固定为none，声明不嵌入sourcesContent源码正文。
+     * @lang en Fixed to none, declaring that sourcesContent source bodies are not embedded.
+     */
     sourcesContentPolicy: "none";
   };
+  /**
+   * @lang zh-CN 固定全部为false的纯材料评估操作边界。
+   * @lang en Pure input-evaluation operation boundary fixed entirely to false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库读取排除边界。
+     * @lang en Fixed to false, recording the target-repository-read exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryRead: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标仓库写入排除边界。
+     * @lang en Fixed to false, recording the target-repository-write exclusion boundary of pure metadata evaluation.
+     */
     targetRepositoryWrite: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标命令执行排除边界。
+     * @lang en Fixed to false, recording the target-command-execution exclusion boundary of pure metadata evaluation.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标运行时开启排除边界。
+     * @lang en Fixed to false, recording the target-runtime-opening exclusion boundary of pure metadata evaluation.
+     */
     targetRuntimeOpened: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标分支及拉取请求创建排除边界。
+     * @lang en Fixed to false, recording the target-branch and pull-request creation exclusion boundary of pure metadata evaluation.
+     */
     targetBranchOrPrCreated: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的网络访问排除边界。
+     * @lang en Fixed to false, recording the network-access exclusion boundary of pure metadata evaluation.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的包发布排除边界。
+     * @lang en Fixed to false, recording the package-publication exclusion boundary of pure metadata evaluation.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，记录纯元数据评估的目标采用声明排除边界。
+     * @lang en Fixed to false, recording the target-adoption-claim exclusion boundary of pure metadata evaluation.
+     */
     targetAdoptionClaimed: false;
   };
+  /**
+   * @lang zh-CN 按稳定追加顺序按码去重的固定诊断，包含拒绝错误或未提交警告。
+   * @lang en Fixed diagnostics deduplicated by code in stable append order, including refusal errors or a missing-input warning.
+   */
   diagnostics: TargetOwnerAdoptionKitDiagnostic[];
 }
 
