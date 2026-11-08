@@ -60,11 +60,35 @@ export type HtmlAuthoringSourceCommentIntegrationDiagnosticCode =
  * @lang en Explicit binding between a W-P80 stable entry and a W-P96 logical source identity.
  */
 export interface HtmlAuthoringSourceCommentIntegrationBinding {
+  /**
+   * @lang zh-CN 显式指定的文档源码映射条目标识，须与投影source中的对应身份相等。
+   * @lang en Explicit documentation-source-map entry identifier required to equal the corresponding identity in projection source metadata.
+   */
   docSourceMapEntryId: string;
+  /**
+   * @lang zh-CN 显式指定的文档标识，须与投影source.documentId相等。
+   * @lang en Explicit document identifier required to equal projection source.documentId.
+   */
   documentId: string;
+  /**
+   * @lang zh-CN 显式指定且必须存在于已接受交接stableEntryIds中的条目标识，独立于映射条目标识校验。
+   * @lang en Explicit entry identifier required to occur in the accepted handoff's stableEntryIds and checked independently of the map-entry identifier.
+   */
   handoffEntryId: string;
+  /**
+   * @lang zh-CN 显式指定的注释投影标识，须与输入projectionId相等。
+   * @lang en Explicit comment-projection identifier required to equal the input projectionId.
+   */
   projectionId: string;
+  /**
+   * @lang zh-CN 显式指定的逻辑源码标识，须与投影source.sourceId相等。
+   * @lang en Explicit logical source identifier required to equal projection source.sourceId.
+   */
   sourceId: string;
+  /**
+   * @lang zh-CN 显式指定的符号标识，须与投影source.symbolId相等。
+   * @lang en Explicit symbol identifier required to equal projection source.symbolId.
+   */
   symbolId: string;
 }
 
@@ -73,10 +97,30 @@ export interface HtmlAuthoringSourceCommentIntegrationBinding {
  * @lang en Closed-world verification request; handoff/projection remain unknown and require runtime validation to establish trust.
  */
 export interface HtmlAuthoringSourceCommentIntegrationRequest {
+  /**
+   * @lang zh-CN 调用方显式提供的六项稳定身份绑定，各身份独立核验。
+   * @lang en Six stable identities explicitly bound by the caller and independently verified.
+   */
   binding: HtmlAuthoringSourceCommentIntegrationBinding;
+  /**
+   * @lang zh-CN 必须精确为html-authoring-source-comment-integration-verification-request的请求契约名称。
+   * @lang en Request contract name required to match html-authoring-source-comment-integration-verification-request exactly.
+   */
   contract: typeof HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_REQUEST_CONTRACT;
+  /**
+   * @lang zh-CN 必须精确为0.1.0-draft的集成请求版本。
+   * @lang en Integration-request version required to match 0.1.0-draft exactly.
+   */
   contractVersion: typeof HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 未经信任的HTML编写文档交接报告，必须通过已接受状态及封闭形状校验。
+   * @lang en Untrusted HTML-authoring documentation handoff report required to pass accepted-state and closed-shape validation.
+   */
   handoff: unknown;
+  /**
+   * @lang zh-CN 未经信任的结构化源码注释投影，必须通过精确版本、就绪状态及隐私校验。
+   * @lang en Untrusted structured source-comment projection required to pass exact-version, ready-state and privacy validation.
+   */
   projection: unknown;
 }
 
@@ -85,8 +129,20 @@ export interface HtmlAuthoringSourceCommentIntegrationRequest {
  * @lang en Fixed, public-safe refusal diagnostic.
  */
 export interface HtmlAuthoringSourceCommentIntegrationDiagnostic {
+  /**
+   * @lang zh-CN 所属报告闭集中的稳定拒绝诊断码。
+   * @lang en Stable refusal diagnostic code from the enclosing report's closed vocabulary.
+   */
   code: HtmlAuthoringSourceCommentIntegrationDiagnosticCode;
+  /**
+   * @lang zh-CN 固定的公开诊断说明，避免反射输入正文、路径或私有标识。
+   * @lang en Fixed public diagnostic explanation avoiding reflection of input bodies, paths or private identifiers.
+   */
   message: string;
+  /**
+   * @lang zh-CN 固定为error的拒绝诊断严重程度。
+   * @lang en Refusal diagnostic severity fixed to error.
+   */
   severity: "error";
 }
 
@@ -95,59 +151,247 @@ export interface HtmlAuthoringSourceCommentIntegrationDiagnostic {
  * @lang en HIA owner-local metadata-only verification report.
  */
 export interface HtmlAuthoringSourceCommentIntegrationReport {
+  /**
+   * @lang zh-CN 接受时复制六项显式身份并置verified为true；拒绝时所有身份为invalid且verified为false。
+   * @lang en Copies six explicit identities with verified true when accepted, replacing every identity with invalid and verified with false when refused.
+   */
   binding: HtmlAuthoringSourceCommentIntegrationBinding & { verified: boolean };
+  /**
+   * @lang zh-CN 固定的html-authoring-source-comment-integration-verification报告契约名称。
+   * @lang en Fixed html-authoring-source-comment-integration-verification report contract name.
+   */
   contract: typeof HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT;
+  /**
+   * @lang zh-CN 固定为0.1.0-draft的集成报告精确版本。
+   * @lang en Exact integration-report version fixed to 0.1.0-draft.
+   */
   contractVersion: typeof HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 接受时为空，拒绝时按码去重保存固定公开错误说明。
+   * @lang en Empty when accepted and storing fixed public error explanations deduplicated by code when refused.
+   */
   diagnostics: HtmlAuthoringSourceCommentIntegrationDiagnostic[];
+  /**
+   * @lang zh-CN 仅保留交接与投影的契约、版本和状态引用，未知值分别置invalid。
+   * @lang en Retains only handoff/projection contract, version and status references, individually replacing unknown values with invalid.
+   */
   input: {
+    /**
+     * @lang zh-CN HTML编写交接的精确身份与已知状态引用。
+     * @lang en Exact identity and known-status reference for the HTML-authoring handoff.
+     */
     handoff: {
+      /**
+       * @lang zh-CN 识别html-authoring-documentation-handoff，其余名称记为invalid。
+       * @lang en Recognizes html-authoring-documentation-handoff and records other names as invalid.
+       */
       contract: "html-authoring-documentation-handoff" | "invalid";
+      /**
+       * @lang zh-CN 识别0.1.0-draft，其余版本记为invalid。
+       * @lang en Recognizes 0.1.0-draft and records other versions as invalid.
+       */
       contractVersion: "0.1.0-draft" | "invalid";
+      /**
+       * @lang zh-CN 识别accepted或refused，其余状态记为invalid；单项引用不代表完整报告通过。
+       * @lang en Recognizes accepted or refused and records other states as invalid, with an individual reference conveying no full-report acceptance.
+       */
       status: "accepted" | "refused" | "invalid";
     };
+    /**
+     * @lang zh-CN 结构化源码注释投影的精确身份与已知状态引用。
+     * @lang en Exact identity and known-status reference for the structured source-comment projection.
+     */
     projection: {
+      /**
+       * @lang zh-CN 匹配源码注释投影契约常量时保留名称，其余记为invalid。
+       * @lang en Retains the name when it matches the source-comment projection contract constant and records other names as invalid.
+       */
       contract: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT | "invalid";
+      /**
+       * @lang zh-CN 匹配源码注释投影版本常量时保留版本，其余记为invalid。
+       * @lang en Retains the version when it matches the source-comment projection version constant and records other versions as invalid.
+       */
       contractVersion: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION | "invalid";
+      /**
+       * @lang zh-CN 识别ready或refused，其余状态记为invalid；单项引用不代表完整投影通过。
+       * @lang en Recognizes ready or refused and records other states as invalid, with an individual reference conveying no full-projection acceptance.
+       */
       status: "ready" | "refused" | "invalid";
     };
   };
+  /**
+   * @lang zh-CN 接受时保存交接语言、请求语言、解析语言集合及规范身份稳定标记；拒绝时采用固定默认值。
+   * @lang en Stores handoff/requested locales, resolved-locale set and canonical-identity stability when accepted, using fixed defaults when refused.
+   */
   locale: {
+    /**
+     * @lang zh-CN 接受时由交接changesCanonicalIdentity为false得到true，拒绝时固定false。
+     * @lang en True on acceptance when the handoff's changesCanonicalIdentity is false, and fixed to false on refusal.
+     */
     canonicalIdentityStable: boolean;
+    /**
+     * @lang zh-CN 接受时复制交接输出语言，拒绝时固定为und。
+     * @lang en Copies the handoff output locale on acceptance and is fixed to und on refusal.
+     */
     handoffLocale: string;
+    /**
+     * @lang zh-CN 接受时复制注释投影请求语言，拒绝时固定为und。
+     * @lang en Copies the comment projection's requested locale on acceptance and is fixed to und on refusal.
+     */
     requestedLocale: string;
+    /**
+     * @lang zh-CN 接受时取投影条目中字符串解析语言并去重、按英文排序规则排序，拒绝时为空。
+     * @lang en On acceptance, collects string-valued resolved locales from projection entries, deduplicates and sorts with English collation, and is empty on refusal.
+     */
     resolvedLocales: string[];
   };
+  /**
+   * @lang zh-CN 固定全部为false的目标、宿主、源码读取、网络、发布和采用操作边界。
+   * @lang en Target, host, source-reading, network, publication and adoption-operation boundary fixed entirely to false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估无需网络访问。
+     * @lang en Fixed to false, declaring no network access for pure metadata evaluation.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，本报告不建立Obsidian知识库集成。
+     * @lang en Fixed to false, declaring that this report establishes no Obsidian vault integration.
+     */
     obsidianVaultIntegration: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不执行包发布。
+     * @lang en Fixed to false, declaring no package publication during pure metadata evaluation.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，本报告不建立源码读取器实现。
+     * @lang en Fixed to false, declaring that this report establishes no source-reader implementation.
+     */
     sourceReaderImplemented: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不声明目标采用。
+     * @lang en Fixed to false, declaring no target-adoption claim during pure metadata evaluation.
+     */
     targetAdoptionClaimed: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不执行目标命令。
+     * @lang en Fixed to false, declaring no target-command execution during pure metadata evaluation.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不读取目标仓库。
+     * @lang en Fixed to false, declaring no target-repository reads during pure metadata evaluation.
+     */
     targetRepositoryRead: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不写入目标仓库。
+     * @lang en Fixed to false, declaring no target-repository writes during pure metadata evaluation.
+     */
     targetRepositoryWrite: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据验证不打开目标运行时。
+     * @lang en Fixed to false, declaring that pure metadata verification opens no target runtime.
+     */
     targetRuntimeOpened: false;
+    /**
+     * @lang zh-CN 固定为false，本报告不建立Tauri进程间通信集成。
+     * @lang en Fixed to false, declaring that this report establishes no Tauri inter-process communication integration.
+     */
     tauriIpcIntegration: false;
   };
+  /**
+   * @lang zh-CN 正文、地图及路径排除策略和输入投影文本存在标记，报告仅保存验证元数据。
+   * @lang en Body, map and path exclusion policies plus the input projection's text-presence flag, with the report retaining verification metadata only.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，验证报告排除地图正文。
+     * @lang en Fixed to false, excluding map bodies from the verification report.
+     */
     mapBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，验证报告排除路径。
+     * @lang en Fixed to false, excluding paths from the verification report.
+     */
     pathIncluded: false;
+    /**
+     * @lang zh-CN 接受时标记输入投影是否有字符串projectedText，拒绝时false；验证报告始终仅保存元数据。
+     * @lang en Marks whether an accepted input projection has any string-valued projectedText, false on refusal, while the verification report always retains metadata only.
+     */
     projectedCommentTextIncluded: boolean;
+    /**
+     * @lang zh-CN 固定为false，验证报告排除原始注释。
+     * @lang en Fixed to false, excluding raw comments from the verification report.
+     */
     rawCommentIncluded: false;
+    /**
+     * @lang zh-CN 固定为plain-text-only的输入投影内容边界。
+     * @lang en Input-projection content boundary fixed to plain-text-only.
+     */
     richTextPolicy: "plain-text-only";
+    /**
+     * @lang zh-CN 固定为false，验证报告排除侧车工件正文。
+     * @lang en Fixed to false, excluding sidecar-artifact bodies from the verification report.
+     */
     sidecarBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，验证报告排除源码正文。
+     * @lang en Fixed to false, excluding source bodies from the verification report.
+     */
     sourceBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为none，验证报告排除嵌入sourcesContent源码正文。
+     * @lang en Fixed to none, excluding embedded sourcesContent source bodies from the verification report.
+     */
     sourcesContentPolicy: "none";
   };
+  /**
+   * @lang zh-CN 独立记录显式绑定验证、契约校验置信度及组合来源。
+   * @lang en Separately records explicit-binding verification, contract-validation confidence and composition provenance.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 接受时owner-contract-verified表示本次契约与绑定校验通过，拒绝时none。
+     * @lang en Owner-contract-verified on acceptance denotes successful contract and binding validation, and none is used on refusal.
+     */
     confidence: "owner-contract-verified" | "none";
+    /**
+     * @lang zh-CN 接受时为handoff-plus-structured-comment-projection，拒绝时为unresolved。
+     * @lang en Handoff-plus-structured-comment-projection on acceptance and unresolved on refusal.
+     */
     provenance: "handoff-plus-structured-comment-projection" | "unresolved";
+    /**
+     * @lang zh-CN 接受时为explicit-binding-validated，拒绝时为unresolved。
+     * @lang en Explicit-binding-validated on acceptance and unresolved on refusal.
+     */
     resolution: "explicit-binding-validated" | "unresolved";
   };
+  /**
+   * @lang zh-CN 全部请求、交接、投影、绑定及隐私权限检查通过时accepted，其余refused。
+   * @lang en Accepted when request, handoff, projection, binding, privacy and permission checks all pass, otherwise refused.
+   */
   status: "accepted" | "refused";
+  /**
+   * @lang zh-CN 接受时记录交接条目、投影条目及非missing条目计数；拒绝时全部为0。
+   * @lang en Records handoff, projection and non-missing entry counts when accepted, setting every count to 0 when refused.
+   */
   summary: {
+    /**
+     * @lang zh-CN 接受时复制已校验交接的output.entryCount，拒绝时为0。
+     * @lang en Copies the validated handoff's output.entryCount on acceptance and is 0 on refusal.
+     */
     handoffEntryCount: number;
+    /**
+     * @lang zh-CN 接受时取已校验投影entries长度，拒绝时为0。
+     * @lang en Uses the validated projection entries length on acceptance and is 0 on refusal.
+     */
     projectionEntryCount: number;
+    /**
+     * @lang zh-CN 接受时统计resolution不为missing的投影条目数，拒绝时为0。
+     * @lang en Counts projection entries whose resolution differs from missing on acceptance and is 0 on refusal.
+     */
     resolvedEntryCount: number;
   };
 }

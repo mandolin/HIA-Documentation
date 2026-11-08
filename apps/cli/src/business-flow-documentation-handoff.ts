@@ -54,8 +54,20 @@ export type BusinessFlowDocumentationHandoffDiagnosticCode =
  * @lang en Public-safe handoff diagnostic with a fixed message.
  */
 export interface BusinessFlowDocumentationHandoffDiagnostic {
+  /**
+   * @lang zh-CN 所属报告闭集中的稳定拒绝诊断码。
+   * @lang en Stable refusal diagnostic code from the enclosing report's closed vocabulary.
+   */
   code: BusinessFlowDocumentationHandoffDiagnosticCode;
+  /**
+   * @lang zh-CN 固定的公开诊断说明，避免反射输入正文、路径或私有标识。
+   * @lang en Fixed public diagnostic explanation avoiding reflection of input bodies, paths or private identifiers.
+   */
   message: string;
+  /**
+   * @lang zh-CN 固定为error的拒绝诊断严重程度。
+   * @lang en Refusal diagnostic severity fixed to error.
+   */
   severity: "error";
 }
 
@@ -64,14 +76,46 @@ export interface BusinessFlowDocumentationHandoffDiagnostic {
  * @lang en Recomputable integrity descriptor for the embedded projection artifact.
  */
 export interface BusinessFlowDocumentationHandoffArtifact {
+  /**
+   * @lang zh-CN 嵌入投影按固定稳定JSON规则序列化后的UTF-8字节数。
+   * @lang en UTF-8 byte count of the embedded projection serialized under the fixed stable-JSON rules.
+   */
   byteLength: number;
+  /**
+   * @lang zh-CN 固定的business-flow-documentation-projection嵌入投影契约名称。
+   * @lang en Fixed business-flow-documentation-projection contract name for the embedded projection.
+   */
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT;
+  /**
+   * @lang zh-CN 嵌入投影契约的精确版本常量。
+   * @lang en Exact contract-version constant of the embedded projection.
+   */
   contractVersion: typeof BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 对与byteLength相同的稳定UTF-8字节计算的摘要描述符。
+   * @lang en Digest descriptor computed over the same stable UTF-8 bytes measured by byteLength.
+   */
   digest: {
+    /**
+     * @lang zh-CN 固定为sha256的摘要算法标记。
+     * @lang en Digest-algorithm marker fixed to sha256.
+     */
     algorithm: "sha256";
+    /**
+     * @lang zh-CN 稳定JSON的UTF-8字节对应的小写十六进制SHA-256值，消费时必须重算核对。
+     * @lang en Lowercase hexadecimal SHA-256 of the stable JSON's UTF-8 bytes, required to be recomputed and checked during consumption.
+     */
     value: string;
   };
+  /**
+   * @lang zh-CN 固定为application/json的嵌入投影媒体类型。
+   * @lang en Embedded-projection media type fixed to application/json.
+   */
   mediaType: "application/json";
+  /**
+   * @lang zh-CN 固定为business-flow-projection-stable-json-v1，递归排序对象键并保留数组顺序。
+   * @lang en Fixed to business-flow-projection-stable-json-v1, recursively sorting object keys while retaining array order.
+   */
   serialization: "business-flow-projection-stable-json-v1";
 }
 
@@ -81,47 +125,195 @@ export interface BusinessFlowDocumentationHandoffArtifact {
  * @lang en Deliverable and verifiable business-flow projection envelope; ready means ready for owner review, never that an owner supplied input, consented, or adopted it.
  */
 export interface BusinessFlowDocumentationHandoffReport {
+  /**
+   * @lang zh-CN 仅就绪报告包含的投影完整性描述符，拒绝报告省略。
+   * @lang en Projection integrity descriptor included only in ready reports and omitted from refused reports.
+   */
   artifact?: BusinessFlowDocumentationHandoffArtifact;
+  /**
+   * @lang zh-CN 精确版本、未知字段拒绝、摘要复核及显式迁移策略声明。
+   * @lang en Declaration of exact versions, unknown-field rejection, digest verification and explicit migration policy.
+   */
   compatibility: {
+    /**
+     * @lang zh-CN 固定为required，消费时重算投影摘要和字节数。
+     * @lang en Fixed to required, requiring projection digest and byte-count recomputation during consumption.
+     */
     digestVerification: "required";
+    /**
+     * @lang zh-CN 固定为explicit-pure-identity-preserving的显式纯迁移政策标记。
+     * @lang en Explicit pure-migration policy marker fixed to explicit-pure-identity-preserving.
+     */
     migrationPolicy: "explicit-pure-identity-preserving";
+    /**
+     * @lang zh-CN 固定为reject的未知字段处理策略。
+     * @lang en Unknown-property handling policy fixed to reject.
+     */
     unknownProperties: "reject";
+    /**
+     * @lang zh-CN 固定为exact的契约版本匹配策略。
+     * @lang en Contract-version matching policy fixed to exact.
+     */
     versionMatch: "exact";
   };
+  /**
+   * @lang zh-CN 固定的business-flow-documentation-handoff交接契约名称。
+   * @lang en Fixed business-flow-documentation-handoff contract name.
+   */
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft交接报告精确版本。
+   * @lang en Exact handoff-report version fixed to 0.1.0-draft.
+   */
   contractVersion: typeof BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 就绪时为空，拒绝时包含固定错误；校验结果按目录去重排序。
+   * @lang en Empty when ready and containing fixed errors when refused, with validation diagnostics deduplicated and catalog-ordered.
+   */
   diagnostics: BusinessFlowDocumentationHandoffDiagnostic[];
+  /**
+   * @lang zh-CN 固定全部为false的纯投影封装操作边界。
+   * @lang en Pure projection-packaging operation boundary fixed entirely to false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估无需网络访问。
+     * @lang en Fixed to false, declaring no network access for pure metadata evaluation.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不执行包发布。
+     * @lang en Fixed to false, declaring no package publication during pure metadata evaluation.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不声明目标采用。
+     * @lang en Fixed to false, declaring no target-adoption claim during pure metadata evaluation.
+     */
     targetAdoptionClaimed: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不执行目标命令。
+     * @lang en Fixed to false, declaring no target-command execution during pure metadata evaluation.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不读取目标仓库。
+     * @lang en Fixed to false, declaring no target-repository reads during pure metadata evaluation.
+     */
     targetRepositoryRead: false;
+    /**
+     * @lang zh-CN 固定为false，纯元数据评估不写入目标仓库。
+     * @lang en Fixed to false, declaring no target-repository writes during pure metadata evaluation.
+     */
     targetRepositoryWrite: false;
   };
+  /**
+   * @lang zh-CN 固定排除私有路径、身份、拓扑、运行载荷和源码信息的序列化声明。
+   * @lang en Fixed serialization declaration excluding private paths, identities, topology, runtime payloads and source information.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，报告排除绝对路径和私有路径。
+     * @lang en Fixed to false, excluding absolute and private paths from the report.
+     */
     absoluteOrPrivatePathSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除凭据。
+     * @lang en Fixed to false, excluding credentials from the report.
+     */
     credentialSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除非公开拓扑。
+     * @lang en Fixed to false, excluding non-public topology from the report.
+     */
     nonPublicTopologySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除负责人身份。
+     * @lang en Fixed to false, excluding owner identities from the report.
+     */
     ownerIdentitySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除运行时载荷。
+     * @lang en Fixed to false, excluding runtime payloads from the report.
+     */
     runtimePayloadSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除源码正文。
+     * @lang en Fixed to false, excluding source bodies from the report.
+     */
     sourceBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除源码位置范围。
+     * @lang en Fixed to false, excluding source ranges from the report.
+     */
     sourceRangeSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告排除目标项目身份。
+     * @lang en Fixed to false, excluding target-project identities from the report.
+     */
     targetIdentitySerialized: false;
   };
+  /**
+   * @lang zh-CN 仅就绪时嵌入的独立复制公开投影，生产报告对该副本递归冻结。
+   * @lang en Detached public projection embedded only when ready, with the produced report deeply freezing that copy.
+   */
   projection?: BusinessFlowDocumentationProjection;
+  /**
+   * @lang zh-CN 固定的待负责人审阅状态，材料、同意及采用分别保持未记录或未声明。
+   * @lang en Fixed pending-owner-review state, with input, consent and adoption separately unrecorded or unasserted.
+   */
   review: {
+    /**
+     * @lang zh-CN 固定为not-asserted的目标采用声明状态。
+     * @lang en Target-adoption assertion state fixed to not-asserted.
+     */
     adoption: "not-asserted";
+    /**
+     * @lang zh-CN 固定为not-recorded的负责人同意记录状态。
+     * @lang en Owner-consent record state fixed to not-recorded.
+     */
     consent: "not-recorded";
+    /**
+     * @lang zh-CN 固定为not-recorded的负责人材料记录状态。
+     * @lang en Owner-input record state fixed to not-recorded.
+     */
     ownerInput: "not-recorded";
+    /**
+     * @lang zh-CN 固定为owner-review-required的负责人审阅要求。
+     * @lang en Owner-review requirement fixed to owner-review-required.
+     */
     state: "owner-review-required";
   };
+  /**
+   * @lang zh-CN 区分精确投影校验、置信度聚合边界及嵌入投影来源的状态。
+   * @lang en Separate states for exact projection validation, confidence aggregation boundaries and embedded-projection provenance.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 就绪时为not-aggregated，保留投影事实各自置信度；拒绝时为unresolved。
+     * @lang en Not-aggregated when ready, retaining individual projection-fact confidence, and unresolved when refused.
+     */
     confidence: "not-aggregated" | "unresolved";
+    /**
+     * @lang zh-CN 就绪时为embedded-public-projection，拒绝时为unresolved。
+     * @lang en Embedded-public-projection when ready and unresolved when refused.
+     */
     provenance: "embedded-public-projection" | "unresolved";
+    /**
+     * @lang zh-CN 就绪时为exact-projection-validated，拒绝时为unresolved。
+     * @lang en Exact-projection-validated when ready and unresolved when refused.
+     */
     resolution: "exact-projection-validated" | "unresolved";
   };
+  /**
+   * @lang zh-CN 合法公开投影生成ready-for-owner-review，无效输入生成refused且省略载荷及其摘要。
+   * @lang en A valid public projection produces ready-for-owner-review, while invalid input produces refused with payload and integrity metadata omitted.
+   */
   status: "ready-for-owner-review" | "refused";
+  /**
+   * @lang zh-CN 仅就绪时从投影共享事实及人类线性视图重建的计数。
+   * @lang en Counts rebuilt from projection shared facts and the human-linear view, included only when ready.
+   */
   summary?: BusinessFlowDocumentationProjectionSummary;
 }
 
