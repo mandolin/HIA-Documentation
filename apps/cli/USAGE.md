@@ -16,6 +16,20 @@ English. Package and artifact versions are independent. Config retains `schemaVe
 
 ## Large project builds
 
+### Unknown build options
+
+中文。当前 `hia docs build` 只读取已知参数，未知选项及其附带文本可能被忽略，构建仍可成功并写出文件。拼错 `--out` 时可能使用配置输出目录或默认 `dist/docs`。退出 0 只表示本次构建成功，不能证明每个传入选项均被识别。自动化脚本请逐项核对本指南的参数名称，并在独立暂存目录检查实际输出位置。
+
+English. Current `hia docs build` reads known options and may ignore unknown options and their accompanying text while still succeeding and writing files. A misspelled `--out` may leave the configured output or default `dist/docs` in effect. Exit 0 confirms build success but does not prove recognition of every supplied option. Check option names against this guide and review the actual output location in a dedicated staging directory.
+
+```sh
+hia docs build --input input.hia.json --out review-output --unrecognized-example ignored
+```
+
+中文。上例仍可生成 `review-output/index.html`，未知开关没有校验效果。这是现有构建入口的行为说明。`hia docs theme-assets` 和卫星命令各有自己的参数校验，须分别核对。
+
+English. The example can still generate `review-output/index.html`; the unknown switch has no validation effect. This documents the existing build entry. Check the independent option validation rules of `hia docs theme-assets` and satellite commands separately.
+
 中文。项目构建默认使用多页输出。准备一个有效的项目清单后执行以下命令。构建会写入输出目录，建议先在独立暂存目录验收，再部署完整目录。
 
 English. Project builds default to split-site output. Prepare a valid project manifest and run the command below. Builds write to the output directory. Review a dedicated staging output before deploying the complete directory.

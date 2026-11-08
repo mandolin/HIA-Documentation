@@ -6,6 +6,29 @@ import { describe, expect, it } from "vitest";
 import { isCliEntrypoint, runCli, type CliIo } from "./index.js";
 
 describe("@hia-doc/cli", () => {
+  /**
+   * @lang zh-CN 固定当前构建入口忽略未知选项的事实，拼错输出开关仍写默认目录；将来更改策略须同步文档与此反例。
+   * @lang en Records current unknown-option behavior, including a misspelled output option writing to the default directory; policy changes must update this counterexample and documentation.
+   */
+  it.each(["--unrecognized-example", "--ouut"])("documents build write effects for %s", async (option) => {
+    // <lang><zh-CN>临时调用根隔离默认输出，避免反例写入仓库或真实项目。</zh-CN><en>Isolate default output in a temporary invocation root, away from repositories and real projects.</en></lang>
+    const root = await mkdtemp(path.join(os.tmpdir(), "hia-cli-unknown-"));
+    // <lang><zh-CN>合成文档的明确绝对路径不受临时调用目录变化影响。</zh-CN><en>The explicit absolute synthetic-document path is independent of the temporary invocation directory.</en></lang>
+    const input = path.resolve("fixtures/basic.hia.json");
+    // <lang><zh-CN>收集受控消息，仅用于核对结果，不建立目标文件或网络权限。</zh-CN><en>Collect controlled messages for result checks without granting target-file or network authority.</en></lang>
+    const messages: string[] = [];
+    try {
+      // <lang><zh-CN>未知开关不能设置输出目录，当前实现保留默认 dist/docs。</zh-CN><en>The unknown switch cannot set the output directory, so current behavior retains dist/docs.</en></lang>
+      const exitCode = await runCli(["docs", "build", "--input", input, option, "intended-output"], { ...createTestIo(messages), cwd: root });
+      expect(exitCode).toBe(0);
+      expect(await readFile(path.join(root, "dist/docs/index.html"), "utf8")).toContain("HIA Basic Fixture");
+      await expect(readFile(path.join(root, "intended-output/index.html"))).rejects.toMatchObject({ code: "ENOENT" });
+    } finally {
+      // <lang><zh-CN>仅清理由本用例创建的临时根，输出副作用不留入后续用例。</zh-CN><en>Remove only this case's owned temporary root so write effects cannot leak into later cases.</en></lang>
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("prints help", async () => {
     const messages: string[] = [];
     const exitCode = await runCli(["--help"], createTestIo(messages));

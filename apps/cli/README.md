@@ -12,6 +12,9 @@ for matching dependencies, artifact versions and source compatibility.
 项目构建使用有背压的逐文件输出和有界源码片段读取，避免同文件并发读取及整站HTML积压。
 See [large project builds](USAGE.md#large-project-builds) for source authority, line/byte limits, diagnostics and memory boundaries.
 
+中文。`docs build` 当前可能忽略未知选项并继续写出产物，自动化调用须核对参数与实际输出目录。
+Review [unknown build options](USAGE.md#unknown-build-options) before scripting builds, since an unrecognized option may leave the configured or default output active.
+
 授权的fetch/link同时生成带行号与#L锚点的同源源码HTML页；fetch仍读取独立纯文本并验证摘要，不把HTML当源码执行。
 Authorized fetch/link modes also emit script-free source-view pages with line anchors; fetch retains its separate integrity-checked plain-text endpoint.
 
