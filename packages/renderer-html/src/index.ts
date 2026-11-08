@@ -1368,8 +1368,20 @@ export interface RenderProjectSourcePreviewRef {
  * @lang en Rendered in-memory files, diagnostics and manifest; hosts own authorized writing/deployment and gain no new execution authority.
  */
 export interface RenderHtmlResult {
+  /**
+   * @lang zh-CN 本次渲染返回的有序内存文件集合，宿主负责实际写入。
+   * @lang en Ordered in-memory files returned by this render, with actual writes owned by the host.
+   */
   files: RenderedHtmlFile[];
+  /**
+   * @lang zh-CN 对应渲染入口返回的文档诊断，或合并后的项目输入与呈现资源诊断。
+   * @lang en Document diagnostics returned by the document-rendering entry point, or combined project-input and presentation-asset diagnostics for project rendering.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 登记本次输出文件元数据及可选项目引用的清单。
+   * @lang en Manifest recording this render's output-file metadata and optional project references.
+   */
   manifest: RenderHtmlManifest;
 }
 
@@ -1408,30 +1420,110 @@ export interface RenderHtmlWriteResult {
  * @lang en Body-free inventory of output files and project references, listing only files owned by this build rather than external shared assets or actual publication status.
  */
 export interface RenderHtmlManifest {
+  /**
+   * @lang zh-CN 固定的HTML渲染输出清单版本0.1.0。
+   * @lang en Fixed HTML render-output manifest version 0.1.0.
+   */
   schemaVersion: typeof HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION;
+  /**
+   * @lang zh-CN 固定的渲染器包标识@hia-doc/renderer-html。
+   * @lang en Fixed renderer-package identifier @hia-doc/renderer-html.
+   */
   renderer: "@hia-doc/renderer-html";
+  /**
+   * @lang zh-CN 单文档身份或项目输出解析后的项目身份。
+   * @lang en Document identity for a document render or resolved project identity for project output.
+   */
   documentId: string;
+  /**
+   * @lang zh-CN 本次渲染解析后的页面标题。
+   * @lang en Resolved page title for this render.
+   */
   title: string;
+  /**
+   * @lang zh-CN 本次输出固定的index.html入口路径。
+   * @lang en Fixed index.html entrypoint path for this output.
+   */
   entrypoint: string;
+  /**
+   * @lang zh-CN 本次选定的初始正文语言，独立于Portal界面语言。
+   * @lang en Initial content locale selected for this render, independent of Portal UI locale.
+   */
   initialLocale: string;
+  /**
+   * @lang zh-CN 本次输出可切换的正文语言清单。
+   * @lang en List of content locales available for switching in this output.
+   */
   locales: string[];
+  /**
+   * @lang zh-CN 本次拥有的文件路径、角色与媒体类型，不包含文件正文。
+   * @lang en Paths, roles and media types of files owned by this render, without file contents.
+   */
   files: RenderHtmlManifestFile[];
+  /**
+   * @lang zh-CN 项目输出附加的项目元数据及导航、映射和投影引用。
+   * @lang en Project metadata and navigation, mapping and projection references attached to project output.
+   */
   project?: {
+    /**
+     * @lang zh-CN 项目解析后的稳定标识，与清单documentId一致。
+     * @lang en Resolved stable project identifier, matching the manifest documentId.
+     */
     id: string;
+    /**
+     * @lang zh-CN 调用方提供的公开项目名称。
+     * @lang en Public project name supplied by the caller.
+     */
     name: string;
+    /**
+     * @lang zh-CN 本项目条目实际涉及的领域视图清单，包含汇总all视图。
+     * @lang en Domain views represented by project entries, including the aggregate all view.
+     */
     views: RenderProjectView[];
+    /**
+     * @lang zh-CN 按领域视图累计的条目计数记录，all以条目总数初始化。
+     * @lang en Entry-count records accumulated by domain view, with all initialized to the total entry count.
+     */
     entryCounts: Record<string, number>;
+    /**
+     * @lang zh-CN 可选的产品版本元数据，保持与文档路由独立。
+     * @lang en Optional product-version metadata, independent of documentation routing.
+     */
     productVersion?: string;
+    /**
+     * @lang zh-CN 指向project-index.json的导航契约身份及条目计数引用。
+     * @lang en Navigation contract identity and entry-count reference pointing to project-index.json.
+     */
     navigationIndex?: RenderProjectNavigationIndexRef;
+    /**
+     * @lang zh-CN 可选的项目级文档化配置规范引用集合。
+     * @lang en Optional collection of project-level documentation-profile references.
+     */
     profiles?: RenderProjectProfileRef[];
+    /**
+     * @lang zh-CN 可选的项目文档源码映射引用及摘要集合。
+     * @lang en Optional project documentation source-map references and summaries.
+     */
     docSourceMaps?: RenderProjectDocSourceMapRef[];
+    /**
+     * @lang zh-CN 可选的生成式文档绑定投影最小引用，完整投影位于项目索引。
+     * @lang en Optional minimal reference to the generated-documentation-binding projection, whose full projection resides in the project index.
+     */
     generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
     /**
      * @lang zh-CN `project-index.json` 内业务流程双投影的 body-free 引用。
      * @lang en Body-free reference to the business-flow dual projection in `project-index.json`.
      */
     businessFlowDocumentationProjection?: RenderProjectBusinessFlowDocumentationProjectionRef;
+    /**
+     * @lang zh-CN 可选的非空项目关系图计数引用，完整图位于项目索引。
+     * @lang en Optional count reference to a non-empty project relation graph, whose full graph resides in the project index.
+     */
     relationGraph?: RenderProjectRelationGraphRef;
+    /**
+     * @lang zh-CN 显式启用时附加的已解析Portal信息架构契约。
+     * @lang en Resolved Portal information-architecture contract attached when explicitly enabled.
+     */
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
     /**
      * @lang zh-CN W-P123 metadata-only report 的 body-free 引用。
@@ -1456,14 +1548,50 @@ export interface RenderHtmlManifest {
  * @lang en UI-locale-completeness body-free reference shared by the manifest and project index.
  */
 export interface RenderProjectUiLocaleCompletenessRef {
+  /**
+   * @lang zh-CN 被引用界面语言完整性报告的契约名称。
+   * @lang en Contract name of the referenced UI-locale completeness report.
+   */
   contract: DocumentationUiLocaleCompletenessReport["contract"];
+  /**
+   * @lang zh-CN 被引用报告的精确版本，当前Portal写者生成1.0.0。
+   * @lang en Exact version of the referenced report, with the current Portal writer generating 1.0.0.
+   */
   contractVersion: DocumentationUiLocaleCompletenessReport["contractVersion"];
+  /**
+   * @lang zh-CN 报告展开后的界面面、执行模式与语言评估数量。
+   * @lang en Number of expanded surface, execution-mode and locale evaluations in the report.
+   */
   evaluationCount: number;
+  /**
+   * @lang zh-CN 报告全部评估中精确语言命中的要求结果总数。
+   * @lang en Total exact-locale requirement matches across all report evaluations.
+   */
   exactCount: number;
+  /**
+   * @lang zh-CN 固定的documentation-ui-locale-completeness.json报告路径。
+   * @lang en Fixed documentation-ui-locale-completeness.json report path.
+   */
   path: typeof DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH;
+  /**
+   * @lang zh-CN 被评估Portal profile的稳定标识。
+   * @lang en Stable identifier of the evaluated Portal profile.
+   */
   profileId: string;
+  /**
+   * @lang zh-CN 被引用报告的完整性状态，当前Portal写者要求complete。
+   * @lang en Completeness state of the referenced report, required to be complete by the current Portal writer.
+   */
   status: DocumentationUiLocaleCompletenessReport["status"];
+  /**
+   * @lang zh-CN 本次Portal评估的界面面标识。
+   * @lang en Surface identifier evaluated for this Portal render.
+   */
   surfaceId: string;
+  /**
+   * @lang zh-CN 报告覆盖的显式界面语言数量。
+   * @lang en Number of explicit UI locales covered by the report.
+   */
   uiLocaleCount: number;
 }
 
@@ -1472,8 +1600,20 @@ export interface RenderProjectUiLocaleCompletenessRef {
  * @lang en Relative path, file role and MIME in an output inventory, without contents or filesystem-write authority.
  */
 export interface RenderHtmlManifestFile {
+  /**
+   * @lang zh-CN 相对于本次输出根目录的文件路径。
+   * @lang en File path relative to this render's output root.
+   */
   path: string;
+  /**
+   * @lang zh-CN 被登记文件的entry、asset或index角色。
+   * @lang en Entry, asset or index role of the recorded file.
+   */
   role: RenderedHtmlFile["role"];
+  /**
+   * @lang zh-CN 被登记文件的媒体类型及适用字符集。
+   * @lang en Media type and applicable character encoding of the recorded file.
+   */
   contentType: string;
 }
 
@@ -1482,9 +1622,25 @@ export interface RenderHtmlManifestFile {
  * @lang en Location and compatibility identity for the project navigation index emitted by the renderer.
  */
 export interface RenderProjectNavigationIndexRef {
+  /**
+   * @lang zh-CN 固定的hia-project-navigation-index契约名称。
+   * @lang en Fixed hia-project-navigation-index contract name.
+   */
   contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft导航索引版本。
+   * @lang en Fixed 0.1.0-draft navigation-index version.
+   */
   contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 被引用导航索引中条目记录的数量。
+   * @lang en Number of entry records in the referenced navigation index.
+   */
   entryCount: number;
+  /**
+   * @lang zh-CN 被引用项目导航索引的输出相对路径，当前写入project-index.json。
+   * @lang en Output-relative path of the referenced project navigation index, currently written as project-index.json.
+   */
   path: string;
 }
 
@@ -1493,10 +1649,30 @@ export interface RenderProjectNavigationIndexRef {
  * @lang en Body-free manifest/index reference to the neutral presentation profile.
  */
 export interface RenderProjectPresentationProfileRef {
+  /**
+   * @lang zh-CN 被引用中性呈现profile的契约名称。
+   * @lang en Contract name of the referenced neutral presentation profile.
+   */
   contract: string;
+  /**
+   * @lang zh-CN 被引用呈现profile的精确版本标签。
+   * @lang en Exact version label of the referenced presentation profile.
+   */
   contractVersion: string;
+  /**
+   * @lang zh-CN 固定的documentation-presentation-profile.json路径。
+   * @lang en Fixed documentation-presentation-profile.json path.
+   */
   path: typeof PORTAL_PRESENTATION_PROFILE_PATH;
+  /**
+   * @lang zh-CN 被引用呈现profile的稳定标识。
+   * @lang en Stable identifier of the referenced presentation profile.
+   */
   profileId: string;
+  /**
+   * @lang zh-CN 被引用profile的ready或refused状态，按资源级策略消费。
+   * @lang en Ready or refused state of the referenced profile, consumed under per-asset policies.
+   */
   status: "ready" | "refused";
 }
 
@@ -1505,10 +1681,30 @@ export interface RenderProjectPresentationProfileRef {
  * @lang en Summary reference to the relation graph in the renderer manifest, avoiding full graph embedding in the main manifest.
  */
 export interface RenderProjectRelationGraphRef {
+  /**
+   * @lang zh-CN 被引用项目关系图的hia-project-relation-graph契约名称。
+   * @lang en Hia-project-relation-graph contract name of the referenced project relation graph.
+   */
   contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
+  /**
+   * @lang zh-CN 被引用项目关系图的0.1.0-draft版本。
+   * @lang en 0.1.0-draft version of the referenced project relation graph.
+   */
   contractVersion: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 规范关系图中节点的数量。
+   * @lang en Number of nodes in the normalized relation graph.
+   */
   nodeCount: number;
+  /**
+   * @lang zh-CN 规范关系图中有向关系的数量。
+   * @lang en Number of directed relations in the normalized relation graph.
+   */
   relationCount: number;
+  /**
+   * @lang zh-CN 完整关系图所在的项目索引引用路径。
+   * @lang en Project-index reference path containing the full relation graph.
+   */
   path: string;
 }
 
@@ -1517,11 +1713,35 @@ export interface RenderProjectRelationGraphRef {
  * @lang en Minimal generated-binding relation projection reference in the renderer manifest.
  */
 export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
+  /**
+   * @lang zh-CN 被引用生成式文档绑定投影摘要中的绑定数量。
+   * @lang en Binding count from the referenced generated-documentation-binding projection summary.
+   */
   bindingCount: number;
+  /**
+   * @lang zh-CN 被引用绑定投影的契约名称。
+   * @lang en Contract name of the referenced binding projection.
+   */
   contract: string;
+  /**
+   * @lang zh-CN 被引用绑定投影的精确版本标签。
+   * @lang en Exact version label of the referenced binding projection.
+   */
   contractVersion: string;
+  /**
+   * @lang zh-CN 完整绑定投影所在的项目索引引用路径。
+   * @lang en Project-index reference path containing the full binding projection.
+   */
   path: string;
+  /**
+   * @lang zh-CN 上游绑定投影提供的状态标签。
+   * @lang en Status label supplied by the upstream binding projection.
+   */
   status: string;
+  /**
+   * @lang zh-CN 被引用绑定投影摘要中的目标数量。
+   * @lang en Target count from the referenced binding projection summary.
+   */
   targetCount: number;
 }
 
@@ -1531,12 +1751,40 @@ export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
  * @lang en Body-free renderer-manifest reference and auditable counts for a public business-flow projection; the full payload exists only in the project index.
  */
 export interface RenderProjectBusinessFlowDocumentationProjectionRef {
+  /**
+   * @lang zh-CN 固定的business-flow-documentation-projection契约名称。
+   * @lang en Fixed business-flow-documentation-projection contract name.
+   */
   contract: "business-flow-documentation-projection";
+  /**
+   * @lang zh-CN 固定的0.1.0-draft业务流程投影版本。
+   * @lang en Fixed 0.1.0-draft business-flow projection version.
+   */
   contractVersion: "0.1.0-draft";
+  /**
+   * @lang zh-CN 共享事实中的已选公开流程数量。
+   * @lang en Number of selected public flows in shared facts.
+   */
   flowCount: number;
+  /**
+   * @lang zh-CN 全部人读线性视图的控制节点项总数。
+   * @lang en Total control-node items across all human-linear views.
+   */
   humanItemCount: number;
+  /**
+   * @lang zh-CN 共享事实中控制、角色与工件节点的总数。
+   * @lang en Total control, role and artifact nodes in shared facts.
+   */
   nodeCount: number;
+  /**
+   * @lang zh-CN 固定为project-index.json，完整业务流程投影位于该索引。
+   * @lang en Fixed to project-index.json, where the full business-flow projection resides.
+   */
   path: "project-index.json";
+  /**
+   * @lang zh-CN 共享事实中控制、责任与数据关系的总数。
+   * @lang en Total control, responsibility and data relations in shared facts.
+   */
   relationCount: number;
 }
 
@@ -1545,39 +1793,151 @@ export interface RenderProjectBusinessFlowDocumentationProjectionRef {
  * @lang en Project entry index without HTML presentation details, intended for portal consumption.
  */
 export interface RenderProjectNavigationIndex {
+  /**
+   * @lang zh-CN 固定的hia-project-navigation-index契约名称。
+   * @lang en Fixed hia-project-navigation-index contract name.
+   */
   contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft导航索引版本。
+   * @lang en Fixed 0.1.0-draft navigation-index version.
+   */
   contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 本次输出解析后的项目身份、标题、正文语言及领域统计。
+   * @lang en Project identity, title, content locales and domain counts resolved for this output.
+   */
   project: {
+    /**
+     * @lang zh-CN 写入索引的本次初始正文语言，采用渲染选定语言。
+     * @lang en Initial content locale recorded in the index, using the locale selected for this render.
+     */
     defaultLocale: string;
+    /**
+     * @lang zh-CN 按领域视图累计的条目计数记录，all以条目总数初始化。
+     * @lang en Entry-count records accumulated by domain view, with all initialized to the total entry count.
+     */
     entryCounts: Record<string, number>;
+    /**
+     * @lang zh-CN 本次输出解析后的稳定项目标识。
+     * @lang en Stable project identifier resolved for this output.
+     */
     id: string;
+    /**
+     * @lang zh-CN 初始选定、项目声明及条目字段推导语言合并去重后的正文语言清单。
+     * @lang en Deduplicated content-locale list combining the initially selected locale, project declarations and locales inferred from entry fields.
+     */
     locales: string[];
+    /**
+     * @lang zh-CN 调用方提供的公开项目名称。
+     * @lang en Public project name supplied by the caller.
+     */
     name: string;
+    /**
+     * @lang zh-CN 本次渲染解析后的项目页面标题。
+     * @lang en Project-page title resolved for this render.
+     */
     title: string;
+    /**
+     * @lang zh-CN 实际条目涉及的领域视图清单，包含all汇总视图。
+     * @lang en Domain views represented by actual entries, including the aggregate all view.
+     */
     views: RenderProjectView[];
+    /**
+     * @lang zh-CN 可选的产品版本元数据，保持与路由身份独立。
+     * @lang en Optional product-version metadata, independent of routing identity.
+     */
     productVersion?: string;
   };
+  /**
+   * @lang zh-CN 按稳定显示顺序排列的可导航文档条目元数据。
+   * @lang en Navigable documentation-entry metadata arranged in stable display order.
+   */
   entries: RenderProjectNavigationEntry[];
+  /**
+   * @lang zh-CN 按条目类别、配置层和源码根生成的分组统计。
+   * @lang en Group statistics generated by entry kind, profile layer and source root.
+   */
   groups: RenderProjectNavigationGroup[];
+  /**
+   * @lang zh-CN 按领域及已声明语义层级生成的完整导航树。
+   * @lang en Complete navigation tree generated from domains and declared semantic hierarchy.
+   */
   navigationTree: RenderProjectNavigationTreeNode[];
+  /**
+   * @lang zh-CN 调用方项目级配置规范引用的排序副本，缺省为空数组。
+   * @lang en Sorted copy of caller-supplied project-level profile references, defaulting to an empty array.
+   */
   profiles: RenderProjectProfileRef[];
+  /**
+   * @lang zh-CN 调用方项目级文档源码映射引用的排序副本，缺省为空数组。
+   * @lang en Sorted copy of caller-supplied project-level documentation-map references, defaulting to an empty array.
+   */
   docSourceMaps: RenderProjectDocSourceMapRef[];
+  /**
+   * @lang zh-CN 可选的完整生成式文档绑定宿主投影。
+   * @lang en Optional full generated-documentation-binding host projection.
+   */
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
+  /**
+   * @lang zh-CN 可选的已通过摘要结构与计数校验的连续性元数据。
+   * @lang en Optional continuity metadata that passed summary-shape and count validation.
+   */
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
+  /**
+   * @lang zh-CN 可选的负责人审阅准备度元数据，仅显式Portal信息架构消费。
+   * @lang en Optional owner-review readiness metadata consumed only under explicit Portal information architecture.
+   */
   ownerAdoption?: RenderProjectOwnerAdoptionSummary;
   /**
    * @lang zh-CN exact-valid public human/AI 双投影；可见表示等待独立设计基线。
    * @lang en Exact-valid public human/AI dual projection whose visible representation awaits an independent design baseline.
    */
   businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
+  /**
+   * @lang zh-CN 可选的完整非空规范项目关系图。
+   * @lang en Optional full non-empty normalized project relation graph.
+   */
   relationGraph?: RenderProjectRelationGraph;
+  /**
+   * @lang zh-CN 本次站点布局、源码策略及呈现/主题引用，含可选分片路径。
+   * @lang en Site layout, source policy and presentation/theme references for this render, including optional shard paths.
+   */
   site?: {
+    /**
+     * @lang zh-CN 本次项目输出采用的split-site或single-page布局。
+     * @lang en Split-site or single-page layout used for this project output.
+     */
     layout: RenderProjectSiteLayout;
+    /**
+     * @lang zh-CN split-site导航根分片的可选输出路径。
+     * @lang en Optional output path of the split-site navigation root shard.
+     */
     navigationRootPath?: string;
+    /**
+     * @lang zh-CN split-site搜索索引的可选输出路径。
+     * @lang en Optional output path of the split-site search index.
+     */
     searchIndexPath?: string;
+    /**
+     * @lang zh-CN split-site关系索引的可选输出路径。
+     * @lang en Optional output path of the split-site relation index.
+     */
     relationIndexPath?: string;
+    /**
+     * @lang zh-CN 本次输出解析后的源码呈现策略，缺省为fetch。
+     * @lang en Resolved source-presentation policy for this output, defaulting to fetch.
+     */
     sourcePresentation: RenderProjectSourcePresentation;
+    /**
+     * @lang zh-CN 当前中性呈现profile的最小契约引用。
+     * @lang en Minimal contract reference to the current neutral presentation profile.
+     */
     presentationProfile: RenderProjectPresentationProfileRef;
+    /**
+     * @lang zh-CN 显式启用时记录的已解析Portal信息架构契约。
+     * @lang en Resolved Portal information-architecture contract recorded when explicitly enabled.
+     */
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
     /**
      * @lang zh-CN 当前 Portal surface 的 W-P123 report 引用。
@@ -1603,10 +1963,30 @@ export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "sourc
  * @lang en Lightweight group statistics in the large-project navigation index for portals, sidebars, and future navigation strategies.
  */
 export interface RenderProjectNavigationGroup {
+  /**
+   * @lang zh-CN 导航分组的稳定标识。
+   * @lang en Stable identifier of the navigation group.
+   */
   id: string;
+  /**
+   * @lang zh-CN 按条目类别、配置层或源码根划分的分组类别。
+   * @lang en Grouping kind based on entry kind, profile layer or source root.
+   */
   kind: RenderProjectNavigationGroupKind;
+  /**
+   * @lang zh-CN 导航分组的可公开显示标签。
+   * @lang en Public display label of the navigation group.
+   */
   label: string;
+  /**
+   * @lang zh-CN 该分组关联的文档条目数量。
+   * @lang en Number of documentation entries associated with the group.
+   */
   entryCount: number;
+  /**
+   * @lang zh-CN 该分组条目实际涉及的领域视图。
+   * @lang en Domain views represented by entries in the group.
+   */
   views: RenderProjectView[];
 }
 
@@ -1632,18 +2012,70 @@ export type RenderProjectNavigationTreeNodeKind =
  * @lang en Project-level hierarchy node; it lifts large projects from a flat list into domain-aware API and file navigation.
  */
 export interface RenderProjectNavigationTreeNode {
+  /**
+   * @lang zh-CN 层级导航节点的稳定引用标识。
+   * @lang en Stable reference identifier of the hierarchy-navigation node.
+   */
   id: string;
+  /**
+   * @lang zh-CN 节点在领域、语义层级、源码或条目结构中的类别。
+   * @lang en Node kind within the domain, semantic hierarchy, source or entry structure.
+   */
   kind: RenderProjectNavigationTreeNodeKind;
+  /**
+   * @lang zh-CN 节点的可公开显示标签。
+   * @lang en Public display label of the node.
+   */
   label: string;
+  /**
+   * @lang zh-CN 节点关联的文档条目数量。
+   * @lang en Number of documentation entries associated with the node.
+   */
   entryCount: number;
+  /**
+   * @lang zh-CN 节点覆盖的领域视图清单。
+   * @lang en Domain views covered by the node.
+   */
   views: RenderProjectView[];
+  /**
+   * @lang zh-CN 完整树中可内嵌的子节点集合。
+   * @lang en Child-node collection that may be embedded in the complete tree.
+   */
   children?: RenderProjectNavigationTreeNode[];
+  /**
+   * @lang zh-CN 延迟导航分片中指向子节点JSON的可选路径。
+   * @lang en Optional path to child-node JSON in lazy navigation shards.
+   */
   childrenPath?: string;
+  /**
+   * @lang zh-CN 可选的规范条目片段路径，由条目标识派生。
+   * @lang en Optional canonical entry-fragment path derived from the entry identifier.
+   */
   contentPath?: string;
+  /**
+   * @lang zh-CN 显式信息架构下的可选附加呈现路径，供实际加载使用。
+   * @lang en Optional additive presentation path under explicit information architecture, used for actual loading.
+   */
   presentationPath?: string;
+  /**
+   * @lang zh-CN 可选的成员定位锚点，采用稳定条目标识。
+   * @lang en Optional member-positioning anchor using the stable entry identifier.
+   */
   memberAnchor?: string;
+  /**
+   * @lang zh-CN 叶节点关联的可选稳定文档条目标识。
+   * @lang en Optional stable documentation-entry identifier associated with a leaf node.
+   */
   entryId?: string;
+  /**
+   * @lang zh-CN 节点关联的可选源码路径元数据。
+   * @lang en Optional source-path metadata associated with the node.
+   */
   sourcePath?: string;
+  /**
+   * @lang zh-CN 节点关联的可选上游规范符号标识。
+   * @lang en Optional upstream canonical symbol identifier associated with the node.
+   */
   symbolId?: string;
 }
 
@@ -1652,15 +2084,55 @@ export interface RenderProjectNavigationTreeNode {
  * @lang en Stable identity and public metadata for one navigable entry; the unified project page still renders full detail.
  */
 export interface RenderProjectNavigationEntry {
+  /**
+   * @lang zh-CN 导航条目沿用的稳定文档条目标识。
+   * @lang en Stable documentation-entry identifier preserved by the navigation entry.
+   */
   id: string;
+  /**
+   * @lang zh-CN 导航条目的公开显示名称。
+   * @lang en Public display name of the navigation entry.
+   */
   name: string;
+  /**
+   * @lang zh-CN 上游领域生产方提供的条目语义类别。
+   * @lang en Semantic entry kind supplied by the upstream domain producer.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 导航条目所属的领域视图分组。
+   * @lang en Domain-view grouping containing the navigation entry.
+   */
   view: RenderProjectView;
+  /**
+   * @lang zh-CN 可选的条目摘要文本。
+   * @lang en Optional entry-summary text.
+   */
   summary?: string;
+  /**
+   * @lang zh-CN 可选的声明签名文本。
+   * @lang en Optional declaration-signature text.
+   */
   signature?: string;
+  /**
+   * @lang zh-CN 可选的字段级中性多语言正文模型。
+   * @lang en Optional neutral field-level multilingual content model.
+   */
   i18n?: HiaI18nModel;
+  /**
+   * @lang zh-CN 可选的条目文档化配置规范引用。
+   * @lang en Optional documentation-profile reference for the entry.
+   */
   profile?: RenderProjectProfileRef;
+  /**
+   * @lang zh-CN 可选的来源输入工件元数据。
+   * @lang en Optional metadata of the originating input artifact.
+   */
   input?: RenderProjectInputRef;
+  /**
+   * @lang zh-CN 可选的已应用源码策略的位置及资源元数据，预览正文从索引移除。
+   * @lang en Optional source-policy-processed location and asset metadata, with preview bodies removed from the index.
+   */
   source?: Omit<RenderProjectSourceRef, "preview">;
   /**
    * @lang zh-CN canonical navigation entry 上的 metadata-only source usability。
@@ -1672,8 +2144,20 @@ export interface RenderProjectNavigationEntry {
    * @lang en Body-free allowlisted source-comment summary.
    */
   sourceCommentProjection?: RenderProjectSourceCommentProjectionSummary;
+  /**
+   * @lang zh-CN 可选的上游规范符号标识。
+   * @lang en Optional upstream canonical symbol identifier.
+   */
   symbolId?: string;
+  /**
+   * @lang zh-CN 可选的领域语义层级摘要。
+   * @lang en Optional domain-semantic hierarchy summary.
+   */
   hierarchy?: RenderProjectEntryHierarchyRef;
+  /**
+   * @lang zh-CN 由条目ID派生的规范片段路径，split-site生成相应独立片段文件。
+   * @lang en Canonical fragment path derived from the entry ID, with split-site generating the corresponding standalone fragment file.
+   */
   contentPath?: string;
   /**
    * @lang zh-CN 实际 router fetch 位置；省略时与 canonical contentPath 相同。
@@ -1710,7 +2194,15 @@ export interface RenderProjectNavigationEntry {
    * @lang en Fragment identity in the neutral presentation profile.
    */
   presentationFragmentId?: string;
+  /**
+   * @lang zh-CN 显式信息架构下的可选语义路径前缀，来自负责人审阅的清单输入。
+   * @lang en Optional semantic-path prefix under explicit information architecture, taken from owner-reviewed manifest input.
+   */
   semanticPath?: DocumentationPortalSemanticPathSegment[];
+  /**
+   * @lang zh-CN 可选的条目与文档源码映射的轻量关联。
+   * @lang en Optional lightweight linkage between the entry and its documentation source map.
+   */
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
 
@@ -1720,18 +2212,70 @@ export interface RenderProjectNavigationEntry {
  * @lang en Metadata-only summary for navigation consumers; it includes no projected text, source body, or raw comment.
  */
 export interface RenderProjectSourceCommentProjectionSummary {
+  /**
+   * @lang zh-CN 上游源码注释投影的契约名称。
+   * @lang en Contract name of the upstream source-comment projection.
+   */
   contract: string;
+  /**
+   * @lang zh-CN 上游源码注释投影的精确版本标签。
+   * @lang en Exact version label of the upstream source-comment projection.
+   */
   contractVersion: string;
+  /**
+   * @lang zh-CN 上游源码注释投影声明的默认语言。
+   * @lang en Default locale declared by the upstream source-comment projection.
+   */
   defaultLocale: string;
+  /**
+   * @lang zh-CN 上游源码注释投影的条目总数。
+   * @lang en Total number of entries in the upstream source-comment projection.
+   */
   entryCount: number;
+  /**
+   * @lang zh-CN 上游源码注释投影的稳定标识。
+   * @lang en Stable identifier of the upstream source-comment projection.
+   */
   projectionId: string;
+  /**
+   * @lang zh-CN 调用方显式请求并与渲染选项匹配的注释语言。
+   * @lang en Comment locale explicitly requested by the caller and matched against render options.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 投影中resolution非missing的条目数量，包含回退解析结果。
+   * @lang en Number of projection entries whose resolution is not missing, including fallback resolutions.
+   */
   resolvedCount: number;
+  /**
+   * @lang zh-CN 上游源码注释投影的ready或refused状态。
+   * @lang en Ready or refused state of the upstream source-comment projection.
+   */
   status: "ready" | "refused";
+  /**
+   * @lang zh-CN 索引摘要关闭投影正文、原注释及源码正文的固定隐私标记。
+   * @lang en Fixed privacy flags excluding projected text, raw comments and source bodies from the index summary.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，索引摘要不包含已投影注释正文。
+     * @lang en Fixed to false, excluding projected comment text from the index summary.
+     */
     projectedCommentTextIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，索引摘要不包含原始注释。
+     * @lang en Fixed to false, excluding raw comments from the index summary.
+     */
     rawCommentIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，索引摘要不包含源码正文。
+     * @lang en Fixed to false, excluding source bodies from the index summary.
+     */
     sourceBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为none，索引摘要不携带sourcesContent。
+     * @lang en Fixed to none, excluding sourcesContent from the index summary.
+     */
     sourcesContentPolicy: "none";
   };
 }
