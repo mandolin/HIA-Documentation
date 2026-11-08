@@ -117,9 +117,15 @@ export interface RenderHtmlOptions {
   locale?: string;
   title?: string;
   includeThemeAssets?: boolean;
-  /** @lang zh-CN 默认本地资源；external只引用同站共享资源，不越过输出根写文件。 @lang en Defaults to local assets; external references same-site shared assets without writing outside the output root. */
+  /**
+   * @lang zh-CN 默认本地资源；external只引用同站共享资源，不越过输出根写文件。
+   * @lang en Defaults to local assets; external references same-site shared assets without writing outside the output root.
+   */
   themeAssets?: ThemeAssetRouting;
-  /** @lang zh-CN 普通与项目输出共用的品牌颜色和构建期皮肤/配色，逐项优先于旧projectSite.theme。 @lang en Brand colors and build-time skin/scheme shared by document/project output, taking per-field precedence over legacy projectSite.theme. */
+  /**
+   * @lang zh-CN 普通与项目输出共用的品牌颜色和构建期皮肤/配色，逐项优先于旧projectSite.theme。
+   * @lang en Brand colors and build-time skin/scheme shared by document/project output, taking per-field precedence over legacy projectSite.theme.
+   */
   theme?: RenderHtmlThemeOptions;
   /**
    * @lang zh-CN 项目站输出与源码策略；单文档只读取theme作为兼容回退，其余项目策略不适用。
@@ -149,13 +155,19 @@ export type RenderProjectSourcePresentation = "none" | "link" | "embed" | "fetch
  */
 export type RenderProjectSourceFetchTrigger = "on-expand" | "manual";
 
-/** @lang zh-CN Portal 的构建时默认 skin/scheme；运行时选择不改变内容 identity。 @lang en Build-time Portal skin/scheme defaults; runtime selection does not change content identity. */
+/**
+ * @lang zh-CN Portal 的构建时默认 skin/scheme；运行时选择不改变内容 identity。
+ * @lang en Build-time Portal skin/scheme defaults; runtime selection does not change content identity.
+ */
 export interface RenderProjectThemeOptions {
   scheme?: PortalThemeScheme;
   skinId?: PortalThemeSkinId;
 }
 
-/** @lang zh-CN 主题owner的安全品牌颜色及既有皮肤/配色，不接收自定义CSS或代码。 @lang en Theme-owner safe brand colors plus existing skin/scheme, without custom CSS or code. */
+/**
+ * @lang zh-CN 主题owner的安全品牌颜色及既有皮肤/配色，不接收自定义CSS或代码。
+ * @lang en Theme-owner safe brand colors plus existing skin/scheme, without custom CSS or code.
+ */
 export interface RenderHtmlThemeOptions extends RenderProjectThemeOptions, HiaThemeAssetOptions {}
 
 /**
@@ -173,22 +185,21 @@ export interface RenderProjectSiteOptions {
   /** UI chrome locale，与 project content locale 独立。UI chrome locale, independent from the project content locale. */
   uiLocale?: DocumentationPortalUiLocale;
   /**
-   * @lang zh-CN
-   * W-P123 report 的 owner-neutral profile/surface identity；仅显式 IA 消费，译文与 DOM 结构不进入该 descriptor。
+   * @lang zh-CN W-P123 report 的 owner-neutral profile/surface identity；仅显式 IA 消费，译文与 DOM 结构不进入该 descriptor。
    *
-   * @lang en
-   * Owner-neutral profile/surface identity for the W-P123 report; consumed only by explicit IA and carries no translation or DOM structure.
+   * @lang en Owner-neutral profile/surface identity for the W-P123 report; consumed only by explicit IA and carries no translation or DOM structure.
    */
   uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessOptions;
   /**
-   * @lang zh-CN
-   * source-comment locale 与正文授权；只有显式 IA 下才消费，且不从 UI/content locale 推断。
+   * @lang zh-CN source-comment locale 与正文授权；只有显式 IA 下才消费，且不从 UI/content locale 推断。
    *
-   * @lang en
-   * Source-comment locale and body authorization, consumed only under explicit IA and never inferred from UI or content locale.
+   * @lang en Source-comment locale and body authorization, consumed only under explicit IA and never inferred from UI or content locale.
    */
   sourceCommentProjection?: RenderProjectSourceCommentProjectionOptions;
-  /** @lang zh-CN Portal-owned skin 与独立 scheme 选择。 @lang en Portal-owned skin and independent scheme selection. */
+  /**
+   * @lang zh-CN Portal-owned skin 与独立 scheme 选择。
+   * @lang en Portal-owned skin and independent scheme selection.
+   */
   theme?: RenderProjectThemeOptions;
   source?: {
     /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
@@ -202,18 +213,19 @@ export interface RenderProjectSiteOptions {
   };
 }
 
-/** @lang zh-CN Portal UI locale report 的可覆盖 identity。 @lang en Overridable identities for the Portal UI-locale report. */
+/**
+ * @lang zh-CN Portal UI locale report 的可覆盖 identity。
+ * @lang en Overridable identities for the Portal UI-locale report.
+ */
 export interface RenderProjectUiLocaleCompletenessOptions {
   profileId?: string;
   surfaceId?: string;
 }
 
 /**
- * @lang zh-CN
- * Portal P5 有界 slice 的 runtime 选项；P1 不支持 rich text 或 source fetch。
+ * @lang zh-CN Portal P5 有界 slice 的 runtime 选项；P1 不支持 rich text 或 source fetch。
  *
- * @lang en
- * Runtime options for the bounded Portal P5 slice; P1 supports neither rich text nor source fetch.
+ * @lang en Runtime options for the bounded Portal P5 slice; P1 supports neither rich text nor source fetch.
  */
 export interface RenderProjectSourceCommentProjectionOptions {
   contentPolicy?: DocumentationSourceCommentContentPolicy;
@@ -247,11 +259,9 @@ export interface RenderProjectHtmlInput {
    */
   ownerAdoption?: RenderProjectOwnerAdoptionSummary;
   /**
-   * @lang zh-CN
-   * optional W-P122 public dual projection；W-P124 只将其投影到 Portal structured data plane，不据此定稿可见 flow UI。
+   * @lang zh-CN optional W-P122 public dual projection；W-P124 只将其投影到 Portal structured data plane，不据此定稿可见 flow UI。
    *
-   * @lang en
-   * Optional W-P122 public dual projection; W-P124 projects it only to the Portal structured data plane and does not finalize a visible flow UI from it.
+   * @lang en Optional W-P122 public dual projection; W-P124 projects it only to the Portal structured data plane and does not finalize a visible flow UI from it.
    */
   businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
   diagnostics?: HiaDiagnostic[];
@@ -454,11 +464,9 @@ export interface RenderProjectEntry {
    */
   sourceUsability?: RenderProjectSourceUsabilityRef;
   /**
-   * @lang zh-CN
-   * 已由 owner producer 生成并通过中性 contract 校验的 source-comment projection。
+   * @lang zh-CN 已由 owner producer 生成并通过中性 contract 校验的 source-comment projection。
    *
-   * @lang en
-   * Source-comment projection already produced by an owner producer and validated against the neutral contract.
+   * @lang en Source-comment projection already produced by an owner producer and validated against the neutral contract.
    */
   sourceCommentProjection?: DocumentationSourceCommentProjection;
   symbolId?: string;
@@ -528,7 +536,10 @@ export interface RenderProjectSourceRef {
   language?: string;
   linkUrl?: string;
   path: string;
-  /** @lang zh-CN renderer 构造的 body-free public asset metadata；正文只存在于单独静态文件。 @lang en Body-free public-asset metadata built by the renderer; the body exists only in a separate static file. */
+  /**
+   * @lang zh-CN renderer 构造的 body-free public asset metadata；正文只存在于单独静态文件。
+   * @lang en Body-free public-asset metadata built by the renderer; the body exists only in a separate static file.
+   */
   publicAsset?: PortalPreparedSourceAsset;
   preview?: RenderProjectSourcePreviewRef;
   range?: {
@@ -543,11 +554,20 @@ export interface RenderProjectSourceRef {
  * @lang en Project-relative source identity; both ID and path are owner-producer resolved and must not derive from a display label, locale, or absolute path.
  */
 export interface RenderProjectSourceProjectIdentityRef {
-  /** @lang zh-CN owner producer 生成的稳定 project ID。 @lang en Stable project ID generated by the owner producer. */
+  /**
+   * @lang zh-CN owner producer 生成的稳定 project ID。
+   * @lang en Stable project ID generated by the owner producer.
+   */
   id: string;
-  /** @lang zh-CN 工作区相对 `.csproj` path；不得为绝对路径。 @lang en Workspace-relative `.csproj` path; never an absolute path. */
+  /**
+   * @lang zh-CN 工作区相对 `.csproj` path；不得为绝对路径。
+   * @lang en Workspace-relative `.csproj` path; never an absolute path.
+   */
   path: string;
-  /** @lang zh-CN 生成 ID/path 的 identity policy。 @lang en Identity policy used to produce the ID and path. */
+  /**
+   * @lang zh-CN 生成 ID/path 的 identity policy。
+   * @lang en Identity policy used to produce the ID and path.
+   */
   policy: string;
 }
 
@@ -556,22 +576,40 @@ export interface RenderProjectSourceProjectIdentityRef {
  * @lang en Bounded Portal projection of a source relation; resolution, confidence, and provenance remain independent while privacy stays metadata-only.
  */
 export interface RenderProjectSourceUsabilityRef {
-  /** @lang zh-CN 上游 relation artifact 中的稳定 relation ID。 @lang en Stable relation ID from the upstream relation artifact. */
+  /**
+   * @lang zh-CN 上游 relation artifact 中的稳定 relation ID。
+   * @lang en Stable relation ID from the upstream relation artifact.
+   */
   relationId: string;
-  /** @lang zh-CN 引用是否已解析；与 confidence、provenance 独立。 @lang en Whether the reference resolved; independent from confidence and provenance. */
+  /**
+   * @lang zh-CN 引用是否已解析；与 confidence、provenance 独立。
+   * @lang en Whether the reference resolved; independent from confidence and provenance.
+   */
   resolution: string;
-  /** @lang zh-CN relation 可信度；不替代 resolution。 @lang en Relation confidence; it does not replace resolution. */
+  /**
+   * @lang zh-CN relation 可信度；不替代 resolution。
+   * @lang en Relation confidence; it does not replace resolution.
+   */
   confidence: string;
-  /** @lang zh-CN 产生 relation 的 producer、activity 与 contract identity。 @lang en Producer, activity, and contract identity that created the relation. */
+  /**
+   * @lang zh-CN 产生 relation 的 producer、activity 与 contract identity。
+   * @lang en Producer, activity, and contract identity that created the relation.
+   */
   provenance: {
     producer: string;
     activity: string;
     contract: string;
     contractVersion: string;
   };
-  /** @lang zh-CN projectPath 驱动时存在的稳定项目身份。 @lang en Stable project identity present when projectPath drove extraction. */
+  /**
+   * @lang zh-CN projectPath 驱动时存在的稳定项目身份。
+   * @lang en Stable project identity present when projectPath drove extraction.
+   */
   projectIdentity?: RenderProjectSourceProjectIdentityRef;
-  /** @lang zh-CN Portal 投影的固定 metadata-only privacy boundary。 @lang en Fixed metadata-only privacy boundary of the Portal projection. */
+  /**
+   * @lang zh-CN Portal 投影的固定 metadata-only privacy boundary。
+   * @lang en Fixed metadata-only privacy boundary of the Portal projection.
+   */
   privacy: {
     sourcesContentPolicy: "none";
     sourcePreviewPolicy: "none";
@@ -611,13 +649,25 @@ export interface RenderHtmlResult {
  */
 export type RenderHtmlFileWriter = (file: RenderedHtmlFile) => void | Promise<void>;
 
-/** @lang zh-CN 逐文件渲染的无正文结果；索引/输入metadata仍随条目数增长。 @lang en Body-free result of per-file rendering; index/input metadata still grows with entry count. */
+/**
+ * @lang zh-CN 逐文件渲染的无正文结果；索引/输入metadata仍随条目数增长。
+ * @lang en Body-free result of per-file rendering; index/input metadata still grows with entry count.
+ */
 export interface RenderHtmlWriteResult {
-  /** @lang zh-CN 已成功交给写入者的文件数，error诊断时为零。 @lang en Files successfully handed to the writer; zero for error diagnostics. */
+  /**
+   * @lang zh-CN 已成功交给写入者的文件数，error诊断时为零。
+   * @lang en Files successfully handed to the writer; zero for error diagnostics.
+   */
   fileCount: number;
-  /** @lang zh-CN 与普通API相同的诊断，不改变失败严重度。 @lang en Same diagnostics as the ordinary API, without changing failure severity. */
+  /**
+   * @lang zh-CN 与普通API相同的诊断，不改变失败严重度。
+   * @lang en Same diagnostics as the ordinary API, without changing failure severity.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 仅文件清单/项目metadata，不含文件正文。 @lang en File inventory/project metadata only, without file bodies. */
+  /**
+   * @lang zh-CN 仅文件清单/项目metadata，不含文件正文。
+   * @lang en File inventory/project metadata only, without file bodies.
+   */
   manifest: RenderHtmlManifest;
 }
 
@@ -644,20 +694,35 @@ export interface RenderHtmlManifest {
     profiles?: RenderProjectProfileRef[];
     docSourceMaps?: RenderProjectDocSourceMapRef[];
     generatedDocumentationBindingProjection?: RenderProjectGeneratedDocumentationBindingProjectionRef;
-    /** @lang zh-CN `project-index.json` 内业务流程双投影的 body-free 引用。 @lang en Body-free reference to the business-flow dual projection in `project-index.json`. */
+    /**
+     * @lang zh-CN `project-index.json` 内业务流程双投影的 body-free 引用。
+     * @lang en Body-free reference to the business-flow dual projection in `project-index.json`.
+     */
     businessFlowDocumentationProjection?: RenderProjectBusinessFlowDocumentationProjectionRef;
     relationGraph?: RenderProjectRelationGraphRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
-    /** @lang zh-CN W-P123 metadata-only report 的 body-free 引用。 @lang en Body-free reference to the W-P123 metadata-only report. */
+    /**
+     * @lang zh-CN W-P123 metadata-only report 的 body-free 引用。
+     * @lang en Body-free reference to the W-P123 metadata-only report.
+     */
     uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessRef;
-    /** @lang zh-CN 当前静态资源采用的 metadata-only theme reference。 @lang en Metadata-only theme reference used by the current static assets. */
+    /**
+     * @lang zh-CN 当前静态资源采用的 metadata-only theme reference。
+     * @lang en Metadata-only theme reference used by the current static assets.
+     */
     theme?: DocumentationPortalThemeReference;
-    /** @lang zh-CN neutral presentation profile 的最小引用。 @lang en Minimal reference to the neutral presentation profile. */
+    /**
+     * @lang zh-CN neutral presentation profile 的最小引用。
+     * @lang en Minimal reference to the neutral presentation profile.
+     */
     presentationProfile?: RenderProjectPresentationProfileRef;
   };
 }
 
-/** @lang zh-CN manifest/index 共享的 UI locale completeness body-free 引用。 @lang en UI-locale-completeness body-free reference shared by the manifest and project index. */
+/**
+ * @lang zh-CN manifest/index 共享的 UI locale completeness body-free 引用。
+ * @lang en UI-locale-completeness body-free reference shared by the manifest and project index.
+ */
 export interface RenderProjectUiLocaleCompletenessRef {
   contract: DocumentationUiLocaleCompletenessReport["contract"];
   contractVersion: DocumentationUiLocaleCompletenessReport["contractVersion"];
@@ -691,7 +756,10 @@ export interface RenderProjectNavigationIndexRef {
   path: string;
 }
 
-/** @lang zh-CN manifest/index 指向 neutral presentation profile 的 body-free 引用。 @lang en Body-free manifest/index reference to the neutral presentation profile. */
+/**
+ * @lang zh-CN manifest/index 指向 neutral presentation profile 的 body-free 引用。
+ * @lang en Body-free manifest/index reference to the neutral presentation profile.
+ */
 export interface RenderProjectPresentationProfileRef {
   contract: string;
   contractVersion: string;
@@ -727,11 +795,9 @@ export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
 }
 
 /**
- * @lang zh-CN
- * renderer manifest 对 public business-flow projection 的 body-free 引用与可审计计数；完整 payload 只存在于 project index。
+ * @lang zh-CN renderer manifest 对 public business-flow projection 的 body-free 引用与可审计计数；完整 payload 只存在于 project index。
  *
- * @lang en
- * Body-free renderer-manifest reference and auditable counts for a public business-flow projection; the full payload exists only in the project index.
+ * @lang en Body-free renderer-manifest reference and auditable counts for a public business-flow projection; the full payload exists only in the project index.
  */
 export interface RenderProjectBusinessFlowDocumentationProjectionRef {
   contract: "business-flow-documentation-projection";
@@ -768,7 +834,10 @@ export interface RenderProjectNavigationIndex {
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
   ownerAdoption?: RenderProjectOwnerAdoptionSummary;
-  /** @lang zh-CN exact-valid public human/AI 双投影；可见表示等待独立设计基线。 @lang en Exact-valid public human/AI dual projection whose visible representation awaits an independent design baseline. */
+  /**
+   * @lang zh-CN exact-valid public human/AI 双投影；可见表示等待独立设计基线。
+   * @lang en Exact-valid public human/AI dual projection whose visible representation awaits an independent design baseline.
+   */
   businessFlowDocumentationProjection?: BusinessFlowDocumentationProjection;
   relationGraph?: RenderProjectRelationGraph;
   site?: {
@@ -779,9 +848,15 @@ export interface RenderProjectNavigationIndex {
     sourcePresentation: RenderProjectSourcePresentation;
     presentationProfile: RenderProjectPresentationProfileRef;
     informationArchitecture?: DocumentationPortalInformationArchitectureContract;
-    /** @lang zh-CN 当前 Portal surface 的 W-P123 report 引用。 @lang en W-P123 report reference for the current Portal surface. */
+    /**
+     * @lang zh-CN 当前 Portal surface 的 W-P123 report 引用。
+     * @lang en W-P123 report reference for the current Portal surface.
+     */
     uiLocaleCompleteness?: RenderProjectUiLocaleCompletenessRef;
-    /** @lang zh-CN Portal consumer 的 exact theme identity 与 system preference policy。 @lang en Exact theme identity and system-preference policy for portal consumers. */
+    /**
+     * @lang zh-CN Portal consumer 的 exact theme identity 与 system preference policy。
+     * @lang en Exact theme identity and system-preference policy for portal consumers.
+     */
     theme: DocumentationPortalThemeReference;
   };
 }
@@ -856,9 +931,15 @@ export interface RenderProjectNavigationEntry {
   profile?: RenderProjectProfileRef;
   input?: RenderProjectInputRef;
   source?: Omit<RenderProjectSourceRef, "preview">;
-  /** @lang zh-CN canonical navigation entry 上的 metadata-only source usability。 @lang en Metadata-only source usability on the canonical navigation entry. */
+  /**
+   * @lang zh-CN canonical navigation entry 上的 metadata-only source usability。
+   * @lang en Metadata-only source usability on the canonical navigation entry.
+   */
   sourceUsability?: RenderProjectSourceUsabilityRef;
-  /** @lang zh-CN 不含正文的 source-comment allowlist 摘要。 @lang en Body-free allowlisted source-comment summary. */
+  /**
+   * @lang zh-CN 不含正文的 source-comment allowlist 摘要。
+   * @lang en Body-free allowlisted source-comment summary.
+   */
   sourceCommentProjection?: RenderProjectSourceCommentProjectionSummary;
   symbolId?: string;
   hierarchy?: RenderProjectEntryHierarchyRef;
@@ -867,26 +948,39 @@ export interface RenderProjectNavigationEntry {
   presentationPath?: string;
   /** stable member/entry anchor。稳定 member/entry anchor。 */
   memberAnchor?: string;
-  /** @lang zh-CN 不依赖 JavaScript 的独立多页阅读路径。 @lang en Standalone multi-page reading path that does not require JavaScript. */
+  /**
+   * @lang zh-CN 不依赖 JavaScript 的独立多页阅读路径。
+   * @lang en Standalone multi-page reading path that does not require JavaScript.
+   */
   noScriptPagePath?: string;
-  /** @lang zh-CN 按 UI locale 直接寻址的无脚本页面；与正文 locale 保持分层。 @lang en Direct no-script pages by UI locale, separate from content locale. */
+  /**
+   * @lang zh-CN 按 UI locale 直接寻址的无脚本页面；与正文 locale 保持分层。
+   * @lang en Direct no-script pages by UI locale, separate from content locale.
+   */
   noScriptLocalePages?: Array<{ uiLocale: DocumentationPortalUiLocale; path: string }>;
-  /** @lang zh-CN neutral presentation profile 中的 topic identity。 @lang en Topic identity in the neutral presentation profile. */
+  /**
+   * @lang zh-CN neutral presentation profile 中的 topic identity。
+   * @lang en Topic identity in the neutral presentation profile.
+   */
   presentationTopicId?: string;
-  /** @lang zh-CN neutral presentation profile 中的 page identity。 @lang en Page identity in the neutral presentation profile. */
+  /**
+   * @lang zh-CN neutral presentation profile 中的 page identity。
+   * @lang en Page identity in the neutral presentation profile.
+   */
   presentationPageId?: string;
-  /** @lang zh-CN neutral presentation profile 中的 fragment identity。 @lang en Fragment identity in the neutral presentation profile. */
+  /**
+   * @lang zh-CN neutral presentation profile 中的 fragment identity。
+   * @lang en Fragment identity in the neutral presentation profile.
+   */
   presentationFragmentId?: string;
   semanticPath?: DocumentationPortalSemanticPathSegment[];
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
 }
 
 /**
- * @lang zh-CN
- * navigation/search consumer 可用的 metadata-only 摘要；不包含 projected text、source body 或 raw comment。
+ * @lang zh-CN navigation/search consumer 可用的 metadata-only 摘要；不包含 projected text、source body 或 raw comment。
  *
- * @lang en
- * Metadata-only summary for navigation consumers; it includes no projected text, source body, or raw comment.
+ * @lang en Metadata-only summary for navigation consumers; it includes no projected text, source body, or raw comment.
  */
 export interface RenderProjectSourceCommentProjectionSummary {
   contract: string;
@@ -948,11 +1042,9 @@ export function renderHtmlDocument(document: HiaDocument, options: RenderHtmlOpt
 }
 
 /**
- * @lang zh-CN
- * 把统一项目输入渲染为默认 split-site 或显式 single-page，并生成 exact presentation profile、内容寻址源码资源和 manifest linkage。
+ * @lang zh-CN 把统一项目输入渲染为默认 split-site 或显式 single-page，并生成 exact presentation profile、内容寻址源码资源和 manifest linkage。
  *
- * @lang en
- * Renders unified project input as the default split site or explicit single page, including an exact presentation profile, content-addressed source assets, and manifest linkage.
+ * @lang en Renders unified project input as the default split site or explicit single page, including an exact presentation profile, content-addressed source assets, and manifest linkage.
  *
  * @param projectInput - 已结构化的项目、entry 与关系输入；renderer 不自行读取路径。Structured project, entry, and relation input; the renderer performs no path read.
  * @param options - locale、IA、源码模式和 Portal theme 选择。Locale, IA, source-mode, and Portal-theme selections.
@@ -992,14 +1084,20 @@ export async function renderProjectHtmlDocumentToWriter(projectInput: RenderProj
   return { fileCount: files.length, diagnostics: plan.diagnostics, manifest: plan.manifest(files) };
 }
 
-/** @lang zh-CN 内部惰性计划的清单闭包只接收文件metadata。 @lang en The internal lazy plan's inventory closure accepts file metadata only. */
+/**
+ * @lang zh-CN 内部惰性计划的清单闭包只接收文件metadata。
+ * @lang en The internal lazy plan's inventory closure accepts file metadata only.
+ */
 interface ProjectHtmlRenderPlan {
   files: Iterable<RenderedHtmlFile>;
   diagnostics: HiaDiagnostic[];
   manifest: (files: RenderHtmlManifestFile[]) => RenderHtmlManifest;
 }
 
-/** @lang zh-CN 在任何输出前构造/验证共用事实，保持普通与流式API的契约、顺序和正文一致。 @lang en Builds/validates shared facts before output, preserving contracts, ordering and prose across ordinary and streaming APIs. */
+/**
+ * @lang zh-CN 在任何输出前构造/验证共用事实，保持普通与流式API的契约、顺序和正文一致。
+ * @lang en Builds/validates shared facts before output, preserving contracts, ordering and prose across ordinary and streaming APIs.
+ */
 function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions): ProjectHtmlRenderPlan {
   // <lang><zh-CN>资源路由非法时必须在第一次writer调用前拒绝。</zh-CN><en>Reject invalid asset routing before the first writer invocation.</en></lang>
   relocateDefaultThemeAssets([], options.themeAssets);
@@ -1043,7 +1141,10 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     diagnostics: [...(sourcePreparedProjectInput.diagnostics ?? []), ...presentationBundle.diagnostics]
   };
   const navigationIndex = createProjectNavigationIndex(renderedProjectInput, pageTitle, options, portalContext, presentationBundle);
-  /** @lang zh-CN 按既有顺序惰性发出单文件；只在消费者继续迭代时渲染下一页。 @lang en Lazily emits individual files in legacy order, rendering the next page only when the consumer resumes. */
+  /**
+   * @lang zh-CN 按既有顺序惰性发出单文件；只在消费者继续迭代时渲染下一页。
+   * @lang en Lazily emits individual files in legacy order, rendering the next page only when the consumer resumes.
+   */
   function* produceFiles(): Generator<RenderedHtmlFile> {
     if (siteLayout === "single-page") {
       yield { path: "index.html", contents: renderProjectIndexHtml(pageTitle, renderedProjectInput, options, portalContext), contentType: "text/html; charset=utf-8", role: "entry" };
@@ -1065,7 +1166,10 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     manifest: (files) => createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle, portalContext)
   };
 }
-/** @lang zh-CN 当前 render 调用的 IA、locale、labels 与 theme resolved context。 @lang en Resolved IA, locale, labels, and theme context for one render call. */
+/**
+ * @lang zh-CN 当前 render 调用的 IA、locale、labels 与 theme resolved context。
+ * @lang en Resolved IA, locale, labels, and theme context for one render call.
+ */
 interface RenderProjectPortalContext {
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   labels: DocumentationPortalLabels;
@@ -1389,7 +1493,10 @@ function createManifest(document: HiaDocument, files: RenderedHtmlFile[], option
   };
 }
 
-/** @lang zh-CN 从已验证 bundle 构造 manifest/index 共用的最小 profile 引用。 @lang en Builds the minimal manifest/index profile reference from a validated bundle. */
+/**
+ * @lang zh-CN 从已验证 bundle 构造 manifest/index 共用的最小 profile 引用。
+ * @lang en Builds the minimal manifest/index profile reference from a validated bundle.
+ */
 function createProjectPresentationProfileRef(
   presentationBundle: PortalPresentationBundle
 ): RenderProjectPresentationProfileRef {
@@ -1403,11 +1510,9 @@ function createProjectPresentationProfileRef(
 }
 
 /**
- * @lang zh-CN
- * 从已通过 W-P123 gate 的 adoption 构造 manifest/index 共用的 body-free 引用和计数。
+ * @lang zh-CN 从已通过 W-P123 gate 的 adoption 构造 manifest/index 共用的 body-free 引用和计数。
  *
- * @lang en
- * Builds the body-free manifest/index reference and counts from a W-P123 gate-complete adoption.
+ * @lang en Builds the body-free manifest/index reference and counts from a W-P123 gate-complete adoption.
  *
  * @param adoption <lang><zh-CN>当前 Portal surface 的完整性结果。</lang><en>Completeness result for the current Portal surface.</en></lang>
  * @returns <lang><zh-CN>不含 message text 或内容正文的引用。</lang><en>Reference containing no message text or content body.</en></lang>
@@ -1467,7 +1572,10 @@ function collectProjectPresentationRelationIds(
     .sort(compareStableText);
 }
 
-/** @lang zh-CN 构造含 profile linkage 的 body-free renderer manifest。 @lang en Builds a body-free renderer manifest with presentation-profile linkage. */
+/**
+ * @lang zh-CN 构造含 profile linkage 的 body-free renderer manifest。
+ * @lang en Builds a body-free renderer manifest with presentation-profile linkage.
+ */
 function createProjectManifest(
   projectInput: RenderProjectHtmlInput,
   files: RenderHtmlManifestFile[],
@@ -1550,7 +1658,10 @@ function createProjectManifest(
   };
 }
 
-/** @lang zh-CN 构造 owner route index，并附加 neutral topic/page/fragment identity 和 profile 引用。 @lang en Builds the owner route index with neutral topic/page/fragment identities and a profile reference. */
+/**
+ * @lang zh-CN 构造 owner route index，并附加 neutral topic/page/fragment identity 和 profile 引用。
+ * @lang en Builds the owner route index with neutral topic/page/fragment identities and a profile reference.
+ */
 function createProjectNavigationIndex(
   projectInput: RenderProjectHtmlInput,
   pageTitle: string,
@@ -1926,7 +2037,10 @@ function assertUniqueProjectEntryArtifactNames(entries: RenderProjectEntry[]): v
   }
 }
 
-/** @lang zh-CN 为每个 neutral topic 生成稳定的 no-script owner page route。 @lang en Generates a stable no-script owner page route for every neutral topic. */
+/**
+ * @lang zh-CN 为每个 neutral topic 生成稳定的 no-script owner page route。
+ * @lang en Generates a stable no-script owner page route for every neutral topic.
+ */
 function createProjectNoScriptPagePath(entryId: string): string {
   return `pages/${stableProjectArtifactName(entryId)}.html`;
 }
@@ -2111,7 +2225,10 @@ function renderDefaultThemeRootAttributes(themeSelection?: Required<RenderProjec
   ].join(" ");
 }
 
-/** @lang zh-CN 优先共用theme，逐项回退旧项目theme与默认值；未知选择在产生HTML前拒绝。 @lang en Prefers shared theme, falls back per field to legacy project theme and defaults, and rejects unknown selections before HTML generation. */
+/**
+ * @lang zh-CN 优先共用theme，逐项回退旧项目theme与默认值；未知选择在产生HTML前拒绝。
+ * @lang en Prefers shared theme, falls back per field to legacy project theme and defaults, and rejects unknown selections before HTML generation.
+ */
 function resolveThemeSelection(options: RenderHtmlOptions): Required<RenderProjectThemeOptions> {
   // <lang><zh-CN>皮肤与配色独立解析，不从品牌颜色推断另一种主题。</zh-CN><en>Resolve skin and scheme independently without inferring another theme from brand colors.</en></lang>
   const skinId = options.theme?.skinId ?? options.projectSite?.theme?.skinId ?? "portal.classic";
@@ -2155,15 +2272,16 @@ function renderIndexHtml(pageTitle: string, document: HiaDocument, options: Rend
   ].join("");
 }
 
-/** @lang zh-CN UI message 的非执行占位符值。 @lang en Non-executable placeholder values for a UI message. */
+/**
+ * @lang zh-CN UI message 的非执行占位符值。
+ * @lang en Non-executable placeholder values for a UI message.
+ */
 type RenderProjectUiMessageValues = Readonly<Record<string, string | number>>;
 
 /**
- * @lang zh-CN
- * 渲染一个带稳定 identity 的 UI 文本节点；译文先按纯文本解析，再进行 HTML 转义。
+ * @lang zh-CN 渲染一个带稳定 identity 的 UI 文本节点；译文先按纯文本解析，再进行 HTML 转义。
  *
- * @lang en
- * Renders a UI text node with a stable identity; translation is resolved as plain text before HTML escaping.
+ * @lang en Renders a UI text node with a stable identity; translation is resolved as plain text before HTML escaping.
  */
 function renderProjectUiMessage(
   portalContext: RenderProjectPortalContext,
@@ -2186,7 +2304,10 @@ function renderProjectUiMessage(
   return `<span data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}>${escapeHtml(text)}</span>`;
 }
 
-/** @lang zh-CN 解析 attribute/dynamic state 使用的 UI 纯文本，并为 legacy surface 保留既有 fallback。 @lang en Resolves UI plain text for attributes/dynamic state while retaining the existing fallback for legacy surfaces. */
+/**
+ * @lang zh-CN 解析 attribute/dynamic state 使用的 UI 纯文本，并为 legacy surface 保留既有 fallback。
+ * @lang en Resolves UI plain text for attributes/dynamic state while retaining the existing fallback for legacy surfaces.
+ */
 function resolveProjectUiPlainText(
   portalContext: RenderProjectPortalContext,
   messageId: string,
@@ -2198,7 +2319,10 @@ function resolveProjectUiPlainText(
     : fallback;
 }
 
-/** @lang zh-CN 为共享 legacy/adopted renderer helper 选择带 marker 的消息或原有文本。 @lang en Selects a marked message or original text for renderer helpers shared by legacy and adopted surfaces. */
+/**
+ * @lang zh-CN 为共享 legacy/adopted renderer helper 选择带 marker 的消息或原有文本。
+ * @lang en Selects a marked message or original text for renderer helpers shared by legacy and adopted surfaces.
+ */
 function renderOptionalProjectUiMessage(
   portalContext: RenderProjectPortalContext | undefined,
   messageId: string,
@@ -2211,11 +2335,9 @@ function renderOptionalProjectUiMessage(
 }
 
 /**
- * @lang zh-CN
- * 为不能包裹 span 的元素生成稳定 message marker，并返回已转义文本。
+ * @lang zh-CN 为不能包裹 span 的元素生成稳定 message marker，并返回已转义文本。
  *
- * @lang en
- * Creates a stable message marker for elements that cannot wrap a span and returns escaped text.
+ * @lang en Creates a stable message marker for elements that cannot wrap a span and returns escaped text.
  */
 function renderProjectUiMarkedText(
   portalContext: RenderProjectPortalContext,
@@ -2254,7 +2376,10 @@ function withProjectUiLocale(
   };
 }
 
-/** @lang zh-CN 渲染彼此独立的 UI/content locale 原生控件。 @lang en Renders independent native UI/content-locale controls. */
+/**
+ * @lang zh-CN 渲染彼此独立的 UI/content locale 原生控件。
+ * @lang en Renders independent native UI/content-locale controls.
+ */
 function renderProjectLocaleControls(
   contentLocales: string[],
   selectedContentLocale: string,
@@ -2279,7 +2404,10 @@ function renderProjectLocaleControls(
   ].join("");
 }
 
-/** @lang zh-CN 渲染带 no-script theme 默认和可见选择器的 split-site 应用壳。 @lang en Renders the split-site shell with a no-script theme default and visible selectors. */
+/**
+ * @lang zh-CN 渲染带 no-script theme 默认和可见选择器的 split-site 应用壳。
+ * @lang en Renders the split-site shell with a no-script theme default and visible selectors.
+ */
 function renderProjectSplitSiteHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
@@ -3060,7 +3188,10 @@ function renderProjectNavItem(entry: RenderProjectEntry): string {
   ].join("");
 }
 
-/** @lang zh-CN 将项目条目作为完整API参考渲染；本地化正文与单文档复用同一formatter，不将导航摘要当完整正文。 @lang en Renders a project entry as a complete API reference, sharing the document field formatter rather than treating a navigation summary as full prose. */
+/**
+ * @lang zh-CN 将项目条目作为完整API参考渲染；本地化正文与单文档复用同一formatter，不将导航摘要当完整正文。
+ * @lang en Renders a project entry as a complete API reference, sharing the document field formatter rather than treating a navigation summary as full prose.
+ */
 function renderProjectEntry(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
   const signature = entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "";
   const summary = renderProjectEntrySummary(entry, locales, selectedLocale);
@@ -3363,11 +3494,9 @@ function renderProjectTopicSource(
 }
 
 /**
- * @lang zh-CN
- * 将 source-comment projection 缩减为 navigation allowlist；正文与 producer 的正文授权事实都不进入 index。
+ * @lang zh-CN 将 source-comment projection 缩减为 navigation allowlist；正文与 producer 的正文授权事实都不进入 index。
  *
- * @lang en
- * Reduces a source-comment projection to a navigation allowlist; neither bodies nor the producer body-authorization fact enters the index.
+ * @lang en Reduces a source-comment projection to a navigation allowlist; neither bodies nor the producer body-authorization fact enters the index.
  */
 function selectProjectSourceCommentProjection(
   projection: DocumentationSourceCommentProjection
@@ -3391,11 +3520,9 @@ function selectProjectSourceCommentProjection(
 }
 
 /**
- * @lang zh-CN
- * 渲染 metadata 与可选纯文本正文。正文必须同时得到 producer projection 与 renderer config 授权。
+ * @lang zh-CN 渲染 metadata 与可选纯文本正文。正文必须同时得到 producer projection 与 renderer config 授权。
  *
- * @lang en
- * Renders metadata and optional plain-text bodies. Bodies require authorization from both the producer projection and renderer config.
+ * @lang en Renders metadata and optional plain-text bodies. Bodies require authorization from both the producer projection and renderer config.
  */
 function renderProjectSourceCommentProjection(
   projection: DocumentationSourceCommentProjection,
@@ -3458,7 +3585,10 @@ function renderProjectEntryHierarchy(hierarchy: RenderProjectEntryHierarchyRef):
   return details ? `<dl class="hia-project-meta hia-project-hierarchy-meta">${details}</dl>` : "";
 }
 
-/** @lang zh-CN 仅选择主描述字段，使用原字段身份及共用的locale/fallback规则；不改写i18n模型。 @lang en Selects only the primary prose field with its original identity and shared locale/fallback rules, without rewriting the i18n model. */
+/**
+ * @lang zh-CN 仅选择主描述字段，使用原字段身份及共用的locale/fallback规则；不改写i18n模型。
+ * @lang en Selects only the primary prose field with its original identity and shared locale/fallback rules, without rewriting the i18n model.
+ */
 function renderProjectEntrySummary(entry: RenderProjectEntry, locales: string[], selectedLocale: string): string {
   return renderI18nField(entry, getPrimaryI18nFieldPath(entry), locales, selectedLocale, entry.summary ?? "");
 }
@@ -4922,15 +5052,24 @@ function renderSymbol(symbol: HiaSymbol, document: HiaDocument, locales: string[
   ].join("");
 }
 
-/** @lang zh-CN 正文formatter只依赖i18n；项目entry和core symbol不需要伪造彼此的字段。 @lang en Prose formatting depends only on i18n, so project entries and core symbols never fabricate each other's fields. */
+/**
+ * @lang zh-CN 正文formatter只依赖i18n；项目entry和core symbol不需要伪造彼此的字段。
+ * @lang en Prose formatting depends only on i18n, so project entries and core symbols never fabricate each other's fields.
+ */
 type I18nFieldOwner = Pick<HiaSymbol, "i18n">;
 
-/** @lang zh-CN description优先，其次summary，无模型时仍用description承载普通摘要回退。 @lang en Prefers description, then summary, retaining description for plain-summary fallback without a model. */
+/**
+ * @lang zh-CN description优先，其次summary，无模型时仍用description承载普通摘要回退。
+ * @lang en Prefers description, then summary, retaining description for plain-summary fallback without a model.
+ */
 function getPrimaryI18nFieldPath(owner: I18nFieldOwner): string {
   return owner.i18n?.fields.description ? "description" : owner.i18n?.fields.summary ? "summary" : "description";
 }
 
-/** @lang zh-CN 按原顺序遍历所有附加字段；不按.NET字段清单过滤，不修改输入或把字段文本当HTML。 @lang en Iterates all additional fields in input order without a .NET whitelist, input mutation, or interpreting field text as HTML. */
+/**
+ * @lang zh-CN 按原顺序遍历所有附加字段；不按.NET字段清单过滤，不修改输入或把字段文本当HTML。
+ * @lang en Iterates all additional fields in input order without a .NET whitelist, input mutation, or interpreting field text as HTML.
+ */
 function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description"): string {
   const fields = symbol.i18n?.fields || {};
   // <lang><zh-CN>只移除已显示的主字段，允许summary与description同时完整显示。</zh-CN><en>Remove only the already-rendered primary field, allowing summary and description to coexist completely.</en></lang>
@@ -4952,7 +5091,10 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
   return items ? `<section class="hia-i18n-fields"><h3>Localized Fields</h3><dl>${items}</dl></section>` : "";
 }
 
-/** @lang zh-CN 渲染每个locale的纯文本与明确fallback；所有locale均无正文时省略空字段。 @lang en Renders plain text and explicit fallback per locale, omitting fields with no prose in any locale. */
+/**
+ * @lang zh-CN 渲染每个locale的纯文本与明确fallback；所有locale均无正文时省略空字段。
+ * @lang en Renders plain text and explicit fallback per locale, omitting fields with no prose in any locale.
+ */
 function renderI18nField(
   symbol: I18nFieldOwner,
   fieldPath: string,
@@ -5166,7 +5308,10 @@ function resolveProjectLocaleModel(
   return { selectedLocale, locales };
 }
 
-/** @lang zh-CN 从不修改的i18n owner读取默认/fallback语言，保持各渲染路径一致。 @lang en Reads default/fallback locales from an unmodified i18n owner consistently across rendering routes. */
+/**
+ * @lang zh-CN 从不修改的i18n owner读取默认/fallback语言，保持各渲染路径一致。
+ * @lang en Reads default/fallback locales from an unmodified i18n owner consistently across rendering routes.
+ */
 function createI18nResolveOptions(symbol: I18nFieldOwner) {
   return createI18nResolveOptionsFromModel(symbol.i18n);
 }

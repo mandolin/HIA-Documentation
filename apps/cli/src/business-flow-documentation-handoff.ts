@@ -16,7 +16,10 @@ import {
  */
 export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT = "business-flow-documentation-handoff" as const;
 
-/** @lang zh-CN handoff 的首个 exact-match 草案版本。 @lang en First exact-match draft version of the handoff. */
+/**
+ * @lang zh-CN handoff 的首个 exact-match 草案版本。
+ * @lang en First exact-match draft version of the handoff.
+ */
 export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
@@ -26,7 +29,10 @@ export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_CONTRACT_VERSION = "0.1.0-draft
 export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-handoff-0.1.0-draft.schema.json" as const;
 
-/** @lang zh-CN handoff 固定 diagnostic code；消息不回显输入正文或路径。 @lang en Fixed handoff diagnostic codes whose messages reflect neither input bodies nor paths. */
+/**
+ * @lang zh-CN handoff 固定 diagnostic code；消息不回显输入正文或路径。
+ * @lang en Fixed handoff diagnostic codes whose messages reflect neither input bodies nor paths.
+ */
 export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_DIAGNOSTIC_CODES = [
   "HIA_BUSINESS_FLOW_HANDOFF_INVALID_CONTRACT",
   "HIA_BUSINESS_FLOW_HANDOFF_PROJECTION_INVALID",
@@ -36,18 +42,27 @@ export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_DIAGNOSTIC_CODES = [
   "HIA_BUSINESS_FLOW_HANDOFF_COMPATIBILITY_UNSUPPORTED"
 ] as const;
 
-/** @lang zh-CN handoff diagnostic code 类型。 @lang en Handoff diagnostic-code type. */
+/**
+ * @lang zh-CN handoff diagnostic code 类型。
+ * @lang en Handoff diagnostic-code type.
+ */
 export type BusinessFlowDocumentationHandoffDiagnosticCode =
   typeof BUSINESS_FLOW_DOCUMENTATION_HANDOFF_DIAGNOSTIC_CODES[number];
 
-/** @lang zh-CN public-safe、固定消息的 handoff diagnostic。 @lang en Public-safe handoff diagnostic with a fixed message. */
+/**
+ * @lang zh-CN public-safe、固定消息的 handoff diagnostic。
+ * @lang en Public-safe handoff diagnostic with a fixed message.
+ */
 export interface BusinessFlowDocumentationHandoffDiagnostic {
   code: BusinessFlowDocumentationHandoffDiagnosticCode;
   message: string;
   severity: "error";
 }
 
-/** @lang zh-CN 嵌入式 projection artifact 的可重算完整性 descriptor。 @lang en Recomputable integrity descriptor for the embedded projection artifact. */
+/**
+ * @lang zh-CN 嵌入式 projection artifact 的可重算完整性 descriptor。
+ * @lang en Recomputable integrity descriptor for the embedded projection artifact.
+ */
 export interface BusinessFlowDocumentationHandoffArtifact {
   byteLength: number;
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT;
@@ -61,11 +76,9 @@ export interface BusinessFlowDocumentationHandoffArtifact {
 }
 
 /**
- * @lang zh-CN
- * 可交付、可核验的业务流程 projection envelope；ready 只表示可供 owner review，绝不表示 owner 已输入、同意或采用。
+ * @lang zh-CN 可交付、可核验的业务流程 projection envelope；ready 只表示可供 owner review，绝不表示 owner 已输入、同意或采用。
  *
- * @lang en
- * Deliverable and verifiable business-flow projection envelope; ready means ready for owner review, never that an owner supplied input, consented, or adopted it.
+ * @lang en Deliverable and verifiable business-flow projection envelope; ready means ready for owner review, never that an owner supplied input, consented, or adopted it.
  */
 export interface BusinessFlowDocumentationHandoffReport {
   artifact?: BusinessFlowDocumentationHandoffArtifact;
@@ -113,11 +126,9 @@ export interface BusinessFlowDocumentationHandoffReport {
 }
 
 /**
- * @lang zh-CN
- * `business-flow-documentation-handoff@0.1.0-draft` 的 CLI owner-local Draft 2020-12 JSON Schema。
+ * @lang zh-CN `business-flow-documentation-handoff@0.1.0-draft` 的 CLI owner-local Draft 2020-12 JSON Schema。
  *
- * @lang en
- * CLI owner-local Draft 2020-12 JSON Schema for `business-flow-documentation-handoff@0.1.0-draft`.
+ * @lang en CLI owner-local Draft 2020-12 JSON Schema for `business-flow-documentation-handoff@0.1.0-draft`.
  */
 export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -243,7 +254,10 @@ export const BUSINESS_FLOW_DOCUMENTATION_HANDOFF_JSON_SCHEMA = {
   }
 } as const;
 
-/** @lang zh-CN 固定 diagnostic message catalog，避免将不可信值反射到输出。 @lang en Fixed diagnostic message catalog that prevents reflecting untrusted values into output. */
+/**
+ * @lang zh-CN 固定 diagnostic message catalog，避免将不可信值反射到输出。
+ * @lang en Fixed diagnostic message catalog that prevents reflecting untrusted values into output.
+ */
 const DIAGNOSTIC_MESSAGES: Record<BusinessFlowDocumentationHandoffDiagnosticCode, string> = {
   HIA_BUSINESS_FLOW_HANDOFF_INVALID_CONTRACT: "Business-flow documentation handoff must be a complete closed-world object.",
   HIA_BUSINESS_FLOW_HANDOFF_PROJECTION_INVALID: "Business-flow documentation handoff requires an exact public projection.",
@@ -253,7 +267,10 @@ const DIAGNOSTIC_MESSAGES: Record<BusinessFlowDocumentationHandoffDiagnosticCode
   HIA_BUSINESS_FLOW_HANDOFF_COMPATIBILITY_UNSUPPORTED: "Business-flow documentation handoff draft and compatibility policy must match exactly."
 };
 
-/** @lang zh-CN privacy 字段闭集。 @lang en Closed privacy-field set. */
+/**
+ * @lang zh-CN privacy 字段闭集。
+ * @lang en Closed privacy-field set.
+ */
 const PRIVACY_FIELDS = [
   "absoluteOrPrivatePathSerialized",
   "credentialSerialized",
@@ -265,7 +282,10 @@ const PRIVACY_FIELDS = [
   "targetIdentitySerialized"
 ] as const;
 
-/** @lang zh-CN permission 字段闭集。 @lang en Closed permission-field set. */
+/**
+ * @lang zh-CN permission 字段闭集。
+ * @lang en Closed permission-field set.
+ */
 const PERMISSION_FIELDS = [
   "networkAccessed",
   "packagePublished",
@@ -400,7 +420,10 @@ export function isBusinessFlowDocumentationHandoffReport(value: unknown): value 
   return validateBusinessFlowDocumentationHandoff(value).length === 0;
 }
 
-/** @lang zh-CN handoff command 所需最小 IO surface。 @lang en Minimal IO surface required by the handoff command. */
+/**
+ * @lang zh-CN handoff command 所需最小 IO surface。
+ * @lang en Minimal IO surface required by the handoff command.
+ */
 export interface BusinessFlowDocumentationHandoffCliIo {
   cwd: string;
   stdout: (message: string) => void;
@@ -464,7 +487,10 @@ export async function runBusinessFlowDocumentationHandoffCommand(
   return report.status === "ready-for-owner-review" ? 0 : 1;
 }
 
-/** @lang zh-CN 创建不含 partial payload 的规范 refused report。 @lang en Creates a canonical refused report without a partial payload. */
+/**
+ * @lang zh-CN 创建不含 partial payload 的规范 refused report。
+ * @lang en Creates a canonical refused report without a partial payload.
+ */
 function createRefusedReport(code: BusinessFlowDocumentationHandoffDiagnosticCode): BusinessFlowDocumentationHandoffReport {
   return {
     compatibility: createCompatibility(),
@@ -479,7 +505,10 @@ function createRefusedReport(code: BusinessFlowDocumentationHandoffDiagnosticCod
   };
 }
 
-/** @lang zh-CN 从 projection 的两个视图与共享事实构造 count parity。 @lang en Builds count parity from both projection views and shared facts. */
+/**
+ * @lang zh-CN 从 projection 的两个视图与共享事实构造 count parity。
+ * @lang en Builds count parity from both projection views and shared facts.
+ */
 function createProjectionSummary(projection: BusinessFlowDocumentationProjection): BusinessFlowDocumentationProjectionSummary {
   return {
     aiEdges: projection.sharedFacts.relations.length,
@@ -491,12 +520,18 @@ function createProjectionSummary(projection: BusinessFlowDocumentationProjection
   };
 }
 
-/** @lang zh-CN 创建固定 owner-review 未决事实。 @lang en Creates fixed pending owner-review facts. */
+/**
+ * @lang zh-CN 创建固定 owner-review 未决事实。
+ * @lang en Creates fixed pending owner-review facts.
+ */
 function createReview(): BusinessFlowDocumentationHandoffReport["review"] {
   return { adoption: "not-asserted", consent: "not-recorded", ownerInput: "not-recorded", state: "owner-review-required" };
 }
 
-/** @lang zh-CN 创建 fail-closed privacy 声明。 @lang en Creates a fail-closed privacy declaration. */
+/**
+ * @lang zh-CN 创建 fail-closed privacy 声明。
+ * @lang en Creates a fail-closed privacy declaration.
+ */
 function createPrivacy(): BusinessFlowDocumentationHandoffReport["privacy"] {
   return {
     absoluteOrPrivatePathSerialized: false,
@@ -510,7 +545,10 @@ function createPrivacy(): BusinessFlowDocumentationHandoffReport["privacy"] {
   };
 }
 
-/** @lang zh-CN 创建 deny-all target/network/publish 权限事实。 @lang en Creates deny-all target, network, and publish permission facts. */
+/**
+ * @lang zh-CN 创建 deny-all target/network/publish 权限事实。
+ * @lang en Creates deny-all target, network, and publish permission facts.
+ */
 function createPermissions(): BusinessFlowDocumentationHandoffReport["permissions"] {
   return {
     networkAccessed: false,
@@ -522,7 +560,10 @@ function createPermissions(): BusinessFlowDocumentationHandoffReport["permission
   };
 }
 
-/** @lang zh-CN 创建 exact draft compatibility policy。 @lang en Creates the exact-draft compatibility policy. */
+/**
+ * @lang zh-CN 创建 exact draft compatibility policy。
+ * @lang en Creates the exact-draft compatibility policy.
+ */
 function createCompatibility(): BusinessFlowDocumentationHandoffReport["compatibility"] {
   return {
     digestVerification: "required",
@@ -532,29 +573,44 @@ function createCompatibility(): BusinessFlowDocumentationHandoffReport["compatib
   };
 }
 
-/** @lang zh-CN 对 W-P122 stable JSON bytes 计算 SHA-256。 @lang en Computes SHA-256 over W-P122 stable JSON bytes. */
+/**
+ * @lang zh-CN 对 W-P122 stable JSON bytes 计算 SHA-256。
+ * @lang en Computes SHA-256 over W-P122 stable JSON bytes.
+ */
 function digestProjection(serializedProjection: string): string {
   return createHash("sha256").update(serializedProjection, "utf8").digest("hex");
 }
 
-/** @lang zh-CN 生成 key-sorted JSON；本函数不宣称 RFC 8785/JCS conformance。 @lang en Produces key-sorted JSON; this function does not claim RFC 8785/JCS conformance. */
+/**
+ * @lang zh-CN 生成 key-sorted JSON；本函数不宣称 RFC 8785/JCS conformance。
+ * @lang en Produces key-sorted JSON; this function does not claim RFC 8785/JCS conformance.
+ */
 function stableJson(value: unknown): string {
   return JSON.stringify(toStableJsonValue(value));
 }
 
-/** @lang zh-CN 递归排序 object key，同时保留 array 的语义顺序。 @lang en Recursively sorts object keys while preserving semantic array order. */
+/**
+ * @lang zh-CN 递归排序 object key，同时保留 array 的语义顺序。
+ * @lang en Recursively sorts object keys while preserving semantic array order.
+ */
 function toStableJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(toStableJsonValue);
   if (!isRecord(value)) return value;
   return Object.fromEntries(Object.keys(value).sort().map((key) => [key, toStableJsonValue(value[key])]));
 }
 
-/** @lang zh-CN 创建不反射 caller data 的 fixed diagnostic。 @lang en Creates a fixed diagnostic that reflects no caller data. */
+/**
+ * @lang zh-CN 创建不反射 caller data 的 fixed diagnostic。
+ * @lang en Creates a fixed diagnostic that reflects no caller data.
+ */
 function handoffDiagnostic(code: BusinessFlowDocumentationHandoffDiagnosticCode): BusinessFlowDocumentationHandoffDiagnostic {
   return { code, message: DIAGNOSTIC_MESSAGES[code], severity: "error" };
 }
 
-/** @lang zh-CN 验证 report 顶层 required/optional closed set。 @lang en Validates the report top-level required and optional closed set. */
+/**
+ * @lang zh-CN 验证 report 顶层 required/optional closed set。
+ * @lang en Validates the report top-level required and optional closed set.
+ */
 function isTopLevelShape(value: Record<string, unknown>): boolean {
   // <lang><zh-CN>required/optional 两组共同定义顶层 closed world。</zh-CN><en>The required and optional groups jointly define the top-level closed world.</en></lang>
   const required = ["contract", "contractVersion", "status", "review", "semantics", "privacy", "permissions", "compatibility", "diagnostics"];
@@ -563,7 +619,10 @@ function isTopLevelShape(value: Record<string, unknown>): boolean {
     && Object.keys(value).every((key) => required.includes(key) || optional.includes(key));
 }
 
-/** @lang zh-CN 验证 artifact 的 exact identity、media type、serialization 与 digest shape。 @lang en Validates exact artifact identity, media type, serialization, and digest shape. */
+/**
+ * @lang zh-CN 验证 artifact 的 exact identity、media type、serialization 与 digest shape。
+ * @lang en Validates exact artifact identity, media type, serialization, and digest shape.
+ */
 function isArtifact(value: unknown): value is BusinessFlowDocumentationHandoffArtifact {
   return isExactRecord(value, ["byteLength", "contract", "contractVersion", "digest", "mediaType", "serialization"])
     && Number.isSafeInteger(value.byteLength) && Number(value.byteLength) > 0
@@ -576,21 +635,30 @@ function isArtifact(value: unknown): value is BusinessFlowDocumentationHandoffAr
     && typeof value.digest.value === "string" && /^[a-f0-9]{64}$/u.test(value.digest.value);
 }
 
-/** @lang zh-CN 验证 summary closed shape 与非负安全整数。 @lang en Validates the closed summary shape and non-negative safe integers. */
+/**
+ * @lang zh-CN 验证 summary closed shape 与非负安全整数。
+ * @lang en Validates the closed summary shape and non-negative safe integers.
+ */
 function isSummary(value: unknown): value is BusinessFlowDocumentationProjectionSummary {
   // <lang><zh-CN>summary field order 与 schema/producer 固定词表一致。</zh-CN><en>The summary-field order matches the schema/producer frozen vocabulary.</en></lang>
   const fields = ["aiEdges", "aiNodes", "codeBindings", "evidence", "flows", "humanItems"];
   return isExactRecord(value, fields) && fields.every((field) => Number.isSafeInteger(value[field]) && Number(value[field]) >= 0);
 }
 
-/** @lang zh-CN 验证固定 owner-review 未决状态。 @lang en Validates the fixed pending owner-review state. */
+/**
+ * @lang zh-CN 验证固定 owner-review 未决状态。
+ * @lang en Validates the fixed pending owner-review state.
+ */
 function isReview(value: unknown): value is BusinessFlowDocumentationHandoffReport["review"] {
   return isExactRecord(value, ["adoption", "consent", "ownerInput", "state"])
     && value.adoption === "not-asserted" && value.consent === "not-recorded"
     && value.ownerInput === "not-recorded" && value.state === "owner-review-required";
 }
 
-/** @lang zh-CN 验证三维语义基础 closed shape。 @lang en Validates the base closed shape of the three semantic dimensions. */
+/**
+ * @lang zh-CN 验证三维语义基础 closed shape。
+ * @lang en Validates the base closed shape of the three semantic dimensions.
+ */
 function isSemantics(value: unknown): value is BusinessFlowDocumentationHandoffReport["semantics"] {
   return isExactRecord(value, ["confidence", "provenance", "resolution"])
     && ["not-aggregated", "unresolved"].includes(String(value.confidence))
@@ -598,19 +666,28 @@ function isSemantics(value: unknown): value is BusinessFlowDocumentationHandoffR
     && ["exact-projection-validated", "unresolved"].includes(String(value.resolution));
 }
 
-/** @lang zh-CN 验证 ready 状态的三维语义组合。 @lang en Validates the ready-state combination of the three semantic dimensions. */
+/**
+ * @lang zh-CN 验证 ready 状态的三维语义组合。
+ * @lang en Validates the ready-state combination of the three semantic dimensions.
+ */
 function isReadySemantics(value: unknown): boolean {
   return isSemantics(value) && value.confidence === "not-aggregated"
     && value.provenance === "embedded-public-projection" && value.resolution === "exact-projection-validated";
 }
 
-/** @lang zh-CN 验证 refused 状态的三维 unresolved 组合。 @lang en Validates the refused-state unresolved combination of the three semantic dimensions. */
+/**
+ * @lang zh-CN 验证 refused 状态的三维 unresolved 组合。
+ * @lang en Validates the refused-state unresolved combination of the three semantic dimensions.
+ */
 function isRefusedSemantics(value: unknown): boolean {
   return isSemantics(value) && value.confidence === "unresolved"
     && value.provenance === "unresolved" && value.resolution === "unresolved";
 }
 
-/** @lang zh-CN 验证 exact compatibility policy。 @lang en Validates the exact compatibility policy. */
+/**
+ * @lang zh-CN 验证 exact compatibility policy。
+ * @lang en Validates the exact compatibility policy.
+ */
 function isCompatibility(value: unknown): boolean {
   return isExactRecord(value, ["digestVerification", "migrationPolicy", "unknownProperties", "versionMatch"])
     && value.digestVerification === "required"
@@ -619,7 +696,10 @@ function isCompatibility(value: unknown): boolean {
     && value.versionMatch === "exact";
 }
 
-/** @lang zh-CN 验证 diagnostics closed shape、固定 message 与唯一 code。 @lang en Validates closed diagnostics, fixed messages, and unique codes. */
+/**
+ * @lang zh-CN 验证 diagnostics closed shape、固定 message 与唯一 code。
+ * @lang en Validates closed diagnostics, fixed messages, and unique codes.
+ */
 function isDiagnostics(value: unknown): value is BusinessFlowDocumentationHandoffDiagnostic[] {
   if (!Array.isArray(value) || value.length > BUSINESS_FLOW_DOCUMENTATION_HANDOFF_DIAGNOSTIC_CODES.length) return false;
   // <lang><zh-CN>局部 set 强制每个 diagnostic code 最多出现一次。</zh-CN><en>The local set enforces at most one occurrence of each diagnostic code.</en></lang>
@@ -634,23 +714,35 @@ function isDiagnostics(value: unknown): value is BusinessFlowDocumentationHandof
   });
 }
 
-/** @lang zh-CN 验证字段闭集且所有值严格为 false。 @lang en Validates a closed field set whose values are all strictly false. */
+/**
+ * @lang zh-CN 验证字段闭集且所有值严格为 false。
+ * @lang en Validates a closed field set whose values are all strictly false.
+ */
 function isAllFalseRecord(value: unknown, fields: readonly string[]): boolean {
   return isExactRecord(value, fields) && fields.every((field) => value[field] === false);
 }
 
-/** @lang zh-CN exact record helper。 @lang en Exact-record helper. */
+/**
+ * @lang zh-CN exact record helper。
+ * @lang en Exact-record helper.
+ */
 function isExactRecord(value: unknown, fields: readonly string[]): value is Record<string, unknown> {
   return isRecord(value) && fields.every((field) => Object.hasOwn(value, field))
     && Object.keys(value).every((field) => fields.includes(field));
 }
 
-/** @lang zh-CN plain JSON object guard。 @lang en Plain JSON-object guard. */
+/**
+ * @lang zh-CN plain JSON object guard。
+ * @lang en Plain JSON-object guard.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-/** @lang zh-CN 解析无重复、无未知 token 的 CLI options。 @lang en Parses CLI options with no duplicate or unknown tokens. */
+/**
+ * @lang zh-CN 解析无重复、无未知 token 的 CLI options。
+ * @lang en Parses CLI options with no duplicate or unknown tokens.
+ */
 function parseOptions(argv: string[], names: readonly string[]): { valid: boolean; values: Map<string, string> } {
   // <lang><zh-CN>map 同时保存值并检测重复 option；其生命周期只限单次命令。</zh-CN><en>The map stores values and detects duplicate options; its lifetime is limited to one command.</en></lang>
   const values = new Map<string, string>();
@@ -666,7 +758,10 @@ function parseOptions(argv: string[], names: readonly string[]): { valid: boolea
   return { valid: argv.length % 2 === 0, values };
 }
 
-/** @lang zh-CN 限制 caller path 为 cwd 内、非绝对、无 traversal 的相对路径。 @lang en Restricts caller paths to non-absolute, traversal-free paths under cwd. */
+/**
+ * @lang zh-CN 限制 caller path 为 cwd 内、非绝对、无 traversal 的相对路径。
+ * @lang en Restricts caller paths to non-absolute, traversal-free paths under cwd.
+ */
 function isSafeRelativePath(value: string | undefined): value is string {
   if (!value || path.isAbsolute(value)) return false;
   // <lang><zh-CN>统一 separator 后才能在 Windows/portable input 上执行同一 traversal policy。</zh-CN><en>Normalize separators before applying the same traversal policy to Windows and portable inputs.</en></lang>
@@ -674,7 +769,10 @@ function isSafeRelativePath(value: string | undefined): value is string {
   return normalized !== "." && normalized !== ".." && !normalized.startsWith("../") && !normalized.includes("/../");
 }
 
-/** @lang zh-CN 递归冻结 JSON-compatible report，防止 consumer 后续改变已核验事实。 @lang en Recursively freezes a JSON-compatible report so consumers cannot mutate verified facts later. */
+/**
+ * @lang zh-CN 递归冻结 JSON-compatible report，防止 consumer 后续改变已核验事实。
+ * @lang en Recursively freezes a JSON-compatible report so consumers cannot mutate verified facts later.
+ */
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);

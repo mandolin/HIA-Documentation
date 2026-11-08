@@ -19,13 +19,22 @@ export const TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION = "0.1.0-draft" as const
  */
 export const TARGET_OWNER_ADOPTION_KIT_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/target-owner-adoption-kit-0.1.0-draft.schema.json" as const;
 
-/** @lang zh-CN W-P89 首轮允许的两个 owner-mediated family。 @lang en Two owner-mediated families allowed by the first W-P89 slice. */
+/**
+ * @lang zh-CN W-P89 首轮允许的两个 owner-mediated family。
+ * @lang en Two owner-mediated families allowed by the first W-P89 slice.
+ */
 export const TARGET_OWNER_ADOPTION_KIT_FAMILIES = ["enterprise-business", "workspace-container"] as const;
 
-/** @lang zh-CN adoption kit family。 @lang en Adoption-kit family. */
+/**
+ * @lang zh-CN adoption kit family。
+ * @lang en Adoption-kit family.
+ */
 export type TargetOwnerAdoptionKitFamily = typeof TARGET_OWNER_ADOPTION_KIT_FAMILIES[number];
 
-/** @lang zh-CN owner 可记录的反馈决策；任何值都不等价于 adoption。 @lang en Owner feedback decisions; no value is equivalent to adoption. */
+/**
+ * @lang zh-CN owner 可记录的反馈决策；任何值都不等价于 adoption。
+ * @lang en Owner feedback decisions; no value is equivalent to adoption.
+ */
 export const TARGET_OWNER_ADOPTION_KIT_DECISIONS = [
   "not-recorded",
   "owner-submitted-valid",
@@ -35,10 +44,16 @@ export const TARGET_OWNER_ADOPTION_KIT_DECISIONS = [
   "follow-up-required"
 ] as const;
 
-/** @lang zh-CN owner feedback decision。 @lang en Owner feedback decision. */
+/**
+ * @lang zh-CN owner feedback decision。
+ * @lang en Owner feedback decision.
+ */
 export type TargetOwnerAdoptionKitDecision = typeof TARGET_OWNER_ADOPTION_KIT_DECISIONS[number];
 
-/** @lang zh-CN fixed diagnostic catalog；message 不反射 caller value。 @lang en Fixed diagnostic catalog whose messages never reflect caller values. */
+/**
+ * @lang zh-CN fixed diagnostic catalog；message 不反射 caller value。
+ * @lang en Fixed diagnostic catalog whose messages never reflect caller values.
+ */
 export const TARGET_OWNER_ADOPTION_KIT_DIAGNOSTIC_CODES = [
   "HIA_OWNER_ADOPTION_KIT_REQUEST_INVALID",
   "HIA_OWNER_ADOPTION_KIT_CONTRACT_REFERENCE_INVALID",
@@ -49,7 +64,10 @@ export const TARGET_OWNER_ADOPTION_KIT_DIAGNOSTIC_CODES = [
   "HIA_OWNER_ADOPTION_KIT_PERMISSION_OR_ADOPTION_REFUSED"
 ] as const;
 
-/** @lang zh-CN adoption kit diagnostic code。 @lang en Adoption-kit diagnostic code. */
+/**
+ * @lang zh-CN adoption kit diagnostic code。
+ * @lang en Adoption-kit diagnostic code.
+ */
 export type TargetOwnerAdoptionKitDiagnosticCode = typeof TARGET_OWNER_ADOPTION_KIT_DIAGNOSTIC_CODES[number];
 
 /**
@@ -99,7 +117,10 @@ export interface TargetOwnerAdoptionKitRequest {
   };
 }
 
-/** @lang zh-CN 固定且不反射 caller data 的 report diagnostic。 @lang en Fixed report diagnostic that does not reflect caller data. */
+/**
+ * @lang zh-CN 固定且不反射 caller data 的 report diagnostic。
+ * @lang en Fixed report diagnostic that does not reflect caller data.
+ */
 export interface TargetOwnerAdoptionKitDiagnostic {
   code: TargetOwnerAdoptionKitDiagnosticCode;
   message: string;
@@ -600,7 +621,10 @@ export function isTargetOwnerAdoptionKitReport(value: unknown): value is TargetO
         && portal.workspaceHandoff.handoffEdgeCount === value.workspaceHandoff.handoffEdgeCount));
 }
 
-/** @lang zh-CN adoption-kit command 所需的最小 IO surface。 @lang en Minimal IO surface required by the adoption-kit command. */
+/**
+ * @lang zh-CN adoption-kit command 所需的最小 IO surface。
+ * @lang en Minimal IO surface required by the adoption-kit command.
+ */
 export interface TargetOwnerAdoptionKitCliIo {
   cwd: string;
   stdout: (message: string) => void;
@@ -653,12 +677,18 @@ export async function runTargetOwnerAdoptionKitCommand(argv: string[], io: Targe
   return report.status === "refused" ? 1 : 0;
 }
 
-/** @lang zh-CN 根据 family 返回冻结且有序的既有 contract refs。 @lang en Returns frozen ordered existing contract references for a family. */
+/**
+ * @lang zh-CN 根据 family 返回冻结且有序的既有 contract refs。
+ * @lang en Returns frozen ordered existing contract references for a family.
+ */
 function requiredContractRefs(family: TargetOwnerAdoptionKitFamily): readonly string[] {
   return family === "enterprise-business" ? ENTERPRISE_REQUIRED_CONTRACT_REFS : WORKSPACE_REQUIRED_CONTRACT_REFS;
 }
 
-/** @lang zh-CN 将 invalid owner input 替换为不授予任何事实的固定默认值。 @lang en Replaces invalid owner input with fixed defaults that grant no facts. */
+/**
+ * @lang zh-CN 将 invalid owner input 替换为不授予任何事实的固定默认值。
+ * @lang en Replaces invalid owner input with fixed defaults that grant no facts.
+ */
 function normalizeOwnerInput(value: unknown): TargetOwnerAdoptionKitReport["ownerInput"] {
   if (!isOwnerInput(value)) {
     return { submitted: false, consent: "not-recorded", attestation: "not-provided", decision: "not-recorded", redactionAttested: false };
@@ -666,29 +696,44 @@ function normalizeOwnerInput(value: unknown): TargetOwnerAdoptionKitReport["owne
   return { ...value };
 }
 
-/** @lang zh-CN 只保留 stable string contract refs 供 count 比较；invalid shape 归一为空数组。 @lang en Retains only stable string contract refs for count comparison; invalid shapes normalize to an empty array. */
+/**
+ * @lang zh-CN 只保留 stable string contract refs 供 count 比较；invalid shape 归一为空数组。
+ * @lang en Retains only stable string contract refs for count comparison; invalid shapes normalize to an empty array.
+ */
 function normalizeContractRefs(value: unknown): string[] {
   return isStringArray(value) ? [...value] : [];
 }
 
-/** @lang zh-CN 只复制 count-only workspace handoff summary。 @lang en Copies only a count-only workspace-handoff summary. */
+/**
+ * @lang zh-CN 只复制 count-only workspace handoff summary。
+ * @lang en Copies only a count-only workspace-handoff summary.
+ */
 function normalizeWorkspaceHandoff(value: unknown): TargetOwnerAdoptionKitReport["workspaceHandoff"] | undefined {
   return isWorkspaceHandoff(value) ? { ...value } : undefined;
 }
 
-/** @lang zh-CN 按固定顺序去重追加 diagnostic。 @lang en Appends a diagnostic in fixed order without duplicates. */
+/**
+ * @lang zh-CN 按固定顺序去重追加 diagnostic。
+ * @lang en Appends a diagnostic in fixed order without duplicates.
+ */
 function addDiagnostic(diagnostics: TargetOwnerAdoptionKitDiagnostic[], code: TargetOwnerAdoptionKitDiagnosticCode, message: string, severity: "error" | "warning"): void {
   if (!diagnostics.some((diagnostic) => diagnostic.code === code)) {
     diagnostics.push({ code, message, severity });
   }
 }
 
-/** @lang zh-CN 检查首轮冻结的 target family。 @lang en Checks a target family frozen for the first slice. */
+/**
+ * @lang zh-CN 检查首轮冻结的 target family。
+ * @lang en Checks a target family frozen for the first slice.
+ */
 function isTargetFamily(value: unknown): value is TargetOwnerAdoptionKitFamily {
   return TARGET_OWNER_ADOPTION_KIT_FAMILIES.includes(value as TargetOwnerAdoptionKitFamily);
 }
 
-/** @lang zh-CN 验证 closed owner input attestation shape。 @lang en Validates the closed owner-input attestation shape. */
+/**
+ * @lang zh-CN 验证 closed owner input attestation shape。
+ * @lang en Validates the closed owner-input attestation shape.
+ */
 function isOwnerInput(value: unknown): value is TargetOwnerAdoptionKitRequest["ownerInput"] {
   return isRecord(value)
     && hasExactKeys(value, ["submitted", "consent", "attestation", "decision", "redactionAttested"])
@@ -699,7 +744,10 @@ function isOwnerInput(value: unknown): value is TargetOwnerAdoptionKitRequest["o
     && typeof value.redactionAttested === "boolean";
 }
 
-/** @lang zh-CN 验证无 identity 的 workspace handoff count summary。 @lang en Validates an identity-free workspace-handoff count summary. */
+/**
+ * @lang zh-CN 验证无 identity 的 workspace handoff count summary。
+ * @lang en Validates an identity-free workspace-handoff count summary.
+ */
 function isWorkspaceHandoff(value: unknown): value is NonNullable<TargetOwnerAdoptionKitRequest["workspaceHandoff"]> {
   return isRecord(value)
     && hasExactKeys(value, ["state", "repositoryOwnerCount", "handoffEdgeCount", "runtimeDependencyTransfer", "targetWriteRequired"])
@@ -710,7 +758,10 @@ function isWorkspaceHandoff(value: unknown): value is NonNullable<TargetOwnerAdo
     && value.targetWriteRequired === false;
 }
 
-/** @lang zh-CN 验证进一步收窄的 Portal workspace handoff 投影。 @lang en Validates the further-reduced Portal workspace-handoff projection. */
+/**
+ * @lang zh-CN 验证进一步收窄的 Portal workspace handoff 投影。
+ * @lang en Validates the further-reduced Portal workspace-handoff projection.
+ */
 function isPortalWorkspaceHandoff(value: unknown): value is NonNullable<TargetOwnerAdoptionPortalSummary["workspaceHandoff"]> {
   return isRecord(value)
     && hasExactKeys(value, ["repositoryOwnerCount", "handoffEdgeCount", "state"])
@@ -719,7 +770,10 @@ function isPortalWorkspaceHandoff(value: unknown): value is NonNullable<TargetOw
     && isNonNegativeInteger(value.handoffEdgeCount) && value.handoffEdgeCount >= 1;
 }
 
-/** @lang zh-CN 验证 request 的 deny-payload privacy facts。 @lang en Validates deny-payload privacy facts on a request. */
+/**
+ * @lang zh-CN 验证 request 的 deny-payload privacy facts。
+ * @lang en Validates deny-payload privacy facts on a request.
+ */
 function isRequestPrivacy(value: unknown): boolean {
   return isRecord(value)
     && hasExactKeys(value, PRIVACY_FIELDS)
@@ -727,14 +781,20 @@ function isRequestPrivacy(value: unknown): boolean {
     && value.sourcesContentPolicy === "none";
 }
 
-/** @lang zh-CN 验证所有 target/network/publish/adoption permission 均为 false。 @lang en Validates that every target, network, publish, and adoption permission is false. */
+/**
+ * @lang zh-CN 验证所有 target/network/publish/adoption permission 均为 false。
+ * @lang en Validates that every target, network, publish, and adoption permission is false.
+ */
 function isPermissions(value: unknown): boolean {
   return isRecord(value)
     && hasExactKeys(value, PERMISSION_FIELDS)
     && PERMISSION_FIELDS.every((field) => value[field] === false);
 }
 
-/** @lang zh-CN 验证 report 的 stable trial identity 与 family/workflow 对应关系。 @lang en Validates stable trial identity and family/workflow correspondence in a report. */
+/**
+ * @lang zh-CN 验证 report 的 stable trial identity 与 family/workflow 对应关系。
+ * @lang en Validates stable trial identity and family/workflow correspondence in a report.
+ */
 function isReportTrial(value: unknown): value is TargetOwnerAdoptionKitReport["trial"] {
   return isRecord(value)
     && hasExactKeys(value, ["id", "targetId", "targetFamily", "workflow"])
@@ -744,7 +804,10 @@ function isReportTrial(value: unknown): value is TargetOwnerAdoptionKitReport["t
     && value.workflow === (value.targetFamily === "enterprise-business" ? "enterprise-continuity" : "workspace-handoff-review");
 }
 
-/** @lang zh-CN 验证 report contract-ref counts 与有序 required refs shape。 @lang en Validates report contract-reference counts and ordered required-reference shape. */
+/**
+ * @lang zh-CN 验证 report contract-ref counts 与有序 required refs shape。
+ * @lang en Validates report contract-reference counts and ordered required-reference shape.
+ */
 function isReportContracts(value: unknown): value is TargetOwnerAdoptionKitReport["contracts"] {
   return isRecord(value)
     && hasExactKeys(value, ["required", "providedCount", "missingCount"])
@@ -754,7 +817,10 @@ function isReportContracts(value: unknown): value is TargetOwnerAdoptionKitRepor
     && isNonNegativeInteger(value.missingCount);
 }
 
-/** @lang zh-CN 验证 Portal metadata-only projection 的 closed shape 与 count invariant。 @lang en Validates the closed shape and count invariant of a metadata-only Portal projection. */
+/**
+ * @lang zh-CN 验证 Portal metadata-only projection 的 closed shape 与 count invariant。
+ * @lang en Validates the closed shape and count invariant of a metadata-only Portal projection.
+ */
 function isPortalSummary(value: unknown): value is TargetOwnerAdoptionPortalSummary {
   if (!isRecord(value)
     || !hasExactKeys(value, ["contract", "contractVersion", "projection", "status", "targetFamily", "ownerInput", "contracts", "semantics"], ["workspaceHandoff"])
@@ -780,7 +846,10 @@ function isPortalSummary(value: unknown): value is TargetOwnerAdoptionPortalSumm
     : !hasWorkspace;
 }
 
-/** @lang zh-CN 分别验证 resolution、confidence 与 provenance 三维。 @lang en Independently validates resolution, confidence, and provenance. */
+/**
+ * @lang zh-CN 分别验证 resolution、confidence 与 provenance 三维。
+ * @lang en Independently validates resolution, confidence, and provenance.
+ */
 function isPortalSemantics(value: unknown): value is TargetOwnerAdoptionPortalSummary["semantics"] {
   return isRecord(value)
     && hasExactKeys(value, ["resolution", "confidence", "provenance"])
@@ -789,7 +858,10 @@ function isPortalSemantics(value: unknown): value is TargetOwnerAdoptionPortalSu
     && value.provenance === "metadata-only-owner-kit";
 }
 
-/** @lang zh-CN 验证 report semantics，并保持 consent/adoption 独立。 @lang en Validates report semantics while keeping consent and adoption independent. */
+/**
+ * @lang zh-CN 验证 report semantics，并保持 consent/adoption 独立。
+ * @lang en Validates report semantics while keeping consent and adoption independent.
+ */
 function isReportSemantics(value: unknown): value is TargetOwnerAdoptionKitReport["semantics"] {
   return isRecord(value)
     && hasExactKeys(value, ["resolution", "confidence", "provenance", "consent", "adoption"])
@@ -798,7 +870,10 @@ function isReportSemantics(value: unknown): value is TargetOwnerAdoptionKitRepor
     && value.adoption === "not-asserted";
 }
 
-/** @lang zh-CN 验证 report 未序列化受限 payload。 @lang en Validates that the report serializes no restricted payload. */
+/**
+ * @lang zh-CN 验证 report 未序列化受限 payload。
+ * @lang en Validates that the report serializes no restricted payload.
+ */
 function isReportPrivacy(value: unknown): value is TargetOwnerAdoptionKitReport["privacy"] {
   const fields = ["sourceBodySerialized", "artifactBodySerialized", "evidenceBodySerialized", "commandOutputBodySerialized", "pathSerialized", "credentialSerialized", "workingStateSerialized", "sourcesContentPolicy"];
   return isRecord(value)
@@ -807,7 +882,10 @@ function isReportPrivacy(value: unknown): value is TargetOwnerAdoptionKitReport[
     && value.sourcesContentPolicy === "none";
 }
 
-/** @lang zh-CN 验证 diagnostics 只来自 fixed catalog。 @lang en Validates that diagnostics come only from the fixed catalog. */
+/**
+ * @lang zh-CN 验证 diagnostics 只来自 fixed catalog。
+ * @lang en Validates that diagnostics come only from the fixed catalog.
+ */
 function isDiagnostics(value: unknown): value is TargetOwnerAdoptionKitDiagnostic[] {
   return Array.isArray(value) && value.every((diagnostic) => isRecord(diagnostic)
     && hasExactKeys(diagnostic, ["code", "message", "severity"])
@@ -816,44 +894,68 @@ function isDiagnostics(value: unknown): value is TargetOwnerAdoptionKitDiagnosti
     && ["error", "warning"].includes(String(diagnostic.severity)));
 }
 
-/** @lang zh-CN 检查纯 string array。 @lang en Checks a string-only array. */
+/**
+ * @lang zh-CN 检查纯 string array。
+ * @lang en Checks a string-only array.
+ */
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
-/** @lang zh-CN 检查 public stable identifier grammar。 @lang en Checks the public stable-identifier grammar. */
+/**
+ * @lang zh-CN 检查 public stable identifier grammar。
+ * @lang en Checks the public stable-identifier grammar.
+ */
 function isStableIdentifier(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value);
 }
 
-/** @lang zh-CN 检查可安全序列化的非负整数。 @lang en Checks a safely serializable non-negative integer. */
+/**
+ * @lang zh-CN 检查可安全序列化的非负整数。
+ * @lang en Checks a safely serializable non-negative integer.
+ */
 function isNonNegativeInteger(value: unknown): value is number {
   return Number.isSafeInteger(value) && Number(value) >= 0;
 }
 
-/** @lang zh-CN 比较 deterministic ordered ref arrays。 @lang en Compares deterministic ordered reference arrays. */
+/**
+ * @lang zh-CN 比较 deterministic ordered ref arrays。
+ * @lang en Compares deterministic ordered reference arrays.
+ */
 function arraysEqual(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-/** @lang zh-CN 检查非 array object record。 @lang en Checks a non-array object record. */
+/**
+ * @lang zh-CN 检查非 array object record。
+ * @lang en Checks a non-array object record.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 检查 required/optional key 的 closed-world 集合。 @lang en Checks a closed-world set of required and optional keys. */
+/**
+ * @lang zh-CN 检查 required/optional key 的 closed-world 集合。
+ * @lang en Checks a closed-world set of required and optional keys.
+ */
 function hasExactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): boolean {
   const allowed = [...required, ...optional];
   return required.every((field) => Object.hasOwn(value, field))
     && Object.keys(value).every((field) => allowed.includes(field));
 }
 
-/** @lang zh-CN 为 request boundary 提供语义明确的 exact-key alias。 @lang en Provides a semantically explicit exact-key alias for the request boundary. */
+/**
+ * @lang zh-CN 为 request boundary 提供语义明确的 exact-key alias。
+ * @lang en Provides a semantically explicit exact-key alias for the request boundary.
+ */
 function hasOnlyExactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[]): boolean {
   return hasExactKeys(value, required, optional);
 }
 
-/** @lang zh-CN 解析不重复的 option/value pairs，拒绝 unknown 或缺值 option。 @lang en Parses unique option/value pairs and refuses unknown or missing-value options. */
+/**
+ * @lang zh-CN 解析不重复的 option/value pairs，拒绝 unknown 或缺值 option。
+ * @lang en Parses unique option/value pairs and refuses unknown or missing-value options.
+ */
 function parseOptions(argv: string[], allowedOptions: string[]): { valid: boolean; values: Map<string, string> } {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 2) {
@@ -867,7 +969,10 @@ function parseOptions(argv: string[], allowedOptions: string[]): { valid: boolea
   return { valid: argv.length % 2 === 0, values };
 }
 
-/** @lang zh-CN 将 CLI 文件 IO 限定在 caller cwd 的 safe-relative boundary。 @lang en Constrains CLI file IO to the caller cwd safe-relative boundary. */
+/**
+ * @lang zh-CN 将 CLI 文件 IO 限定在 caller cwd 的 safe-relative boundary。
+ * @lang en Constrains CLI file IO to the caller cwd safe-relative boundary.
+ */
 function isSafeRelativePath(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0 || path.isAbsolute(value) || value.includes("\0")) {
     return false;

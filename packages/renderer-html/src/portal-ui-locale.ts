@@ -9,37 +9,53 @@ import {
 import type { DocumentationPortalUiLocale } from "./information-architecture.js";
 
 /**
- * @lang zh-CN
- * Portal owner 输出的 W-P123 metadata-only 报告路径。
+ * @lang zh-CN Portal owner 输出的 W-P123 metadata-only 报告路径。
  *
- * @lang en
- * Path of the W-P123 metadata-only report emitted by the Portal owner.
+ * @lang en Path of the W-P123 metadata-only report emitted by the Portal owner.
  */
 export const DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH =
   "documentation-ui-locale-completeness.json" as const;
 
-/** @lang zh-CN 默认 Portal profile identity。 @lang en Default Portal profile identity. */
+/**
+ * @lang zh-CN 默认 Portal profile identity。
+ * @lang en Default Portal profile identity.
+ */
 export const DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID = "portal.default" as const;
 
-/** @lang zh-CN 默认 split-site surface identity。 @lang en Default split-site surface identity. */
+/**
+ * @lang zh-CN 默认 split-site surface identity。
+ * @lang en Default split-site surface identity.
+ */
 export const DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID = "portal.split-site" as const;
 
-/** @lang zh-CN Portal P1 支持的 UI locale 闭集。 @lang en Closed UI-locale set supported by Portal P1. */
+/**
+ * @lang zh-CN Portal P1 支持的 UI locale 闭集。
+ * @lang en Closed UI-locale set supported by Portal P1.
+ */
 export const DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES = ["zh-CN", "en"] as const;
 
-/** @lang zh-CN Portal owner 已知的 profile/surface 配对闭集。 @lang en Closed set of profile/surface pairs known by the Portal owner. */
+/**
+ * @lang zh-CN Portal owner 已知的 profile/surface 配对闭集。
+ * @lang en Closed set of profile/surface pairs known by the Portal owner.
+ */
 const DOCUMENTATION_PORTAL_UI_LOCALE_SURFACES: Readonly<Record<string, string>> = Object.freeze({
   [DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID]: DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID,
   "hia-jsdoc.portal-bridge": "hia-jsdoc.portal-bridge"
 });
 
-/** @lang zh-CN message 在真实输出中的 mode/channel 使用声明。 @lang en Declared mode/channel use of a message in real output. */
+/**
+ * @lang zh-CN message 在真实输出中的 mode/channel 使用声明。
+ * @lang en Declared mode/channel use of a message in real output.
+ */
 interface PortalUiMessageUse {
   channel: "visible-text" | "accessible-name" | "status-message";
   mode: "interactive" | "no-script";
 }
 
-/** @lang zh-CN 一个 owner message 的稳定 identity、占位符、双语正文与真实使用位置。 @lang en Stable identity, placeholders, bilingual text, and real usages of one owner message. */
+/**
+ * @lang zh-CN 一个 owner message 的稳定 identity、占位符、双语正文与真实使用位置。
+ * @lang en Stable identity, placeholders, bilingual text, and real usages of one owner message.
+ */
 interface PortalUiMessageRecord {
   en: string;
   id: string;
@@ -56,11 +72,9 @@ const interactive = "interactive" as const;
 const noScript = "no-script" as const;
 
 /**
- * @lang zh-CN
- * Portal owner 的完整 public plain-text registry。每个条目都声明真实 surface usage，不能用未使用词条填充完整性报告。
+ * @lang zh-CN Portal owner 的完整 public plain-text registry。每个条目都声明真实 surface usage，不能用未使用词条填充完整性报告。
  *
- * @lang en
- * Complete public plain-text registry owned by Portal. Every entry declares a real surface use, preventing unused strings from padding the completeness report.
+ * @lang en Complete public plain-text registry owned by Portal. Every entry declares a real surface use, preventing unused strings from padding the completeness report.
  */
 const portalUiMessageRecords: readonly PortalUiMessageRecord[] = [
   message("portal.locale.uilabel", "界面语言", "Interface language", [[interactive, visible]]),
@@ -194,12 +208,18 @@ const portalUiMessageRecords: readonly PortalUiMessageRecord[] = [
   message("portal.common.nomatches", "没有入口匹配当前筛选条件。", "No entries match the current filters.", [[interactive, status]])
 ] as const;
 
-/** @lang zh-CN 按 registry 顺序冻结的稳定 message id 清单。 @lang en Stable message-id list frozen in registry order. */
+/**
+ * @lang zh-CN 按 registry 顺序冻结的稳定 message id 清单。
+ * @lang en Stable message-id list frozen in registry order.
+ */
 export const DOCUMENTATION_PORTAL_UI_MESSAGE_IDS = Object.freeze(
   portalUiMessageRecords.map(({ id }) => id)
 );
 
-/** @lang zh-CN Portal locale adoption 的 caller 配置。 @lang en Caller configuration for Portal locale adoption. */
+/**
+ * @lang zh-CN Portal locale adoption 的 caller 配置。
+ * @lang en Caller configuration for Portal locale adoption.
+ */
 export interface DocumentationPortalUiLocaleAdoptionOptions {
   contentLocale: string;
   contentLocales: string[];
@@ -208,21 +228,25 @@ export interface DocumentationPortalUiLocaleAdoptionOptions {
   surfaceId?: string;
 }
 
-/** @lang zh-CN Portal owner 生成的已通过 gate 的 report、summary 与 runtime bundle。 @lang en Gate-complete report, summary, and runtime bundles produced by the Portal owner. */
+/**
+ * @lang zh-CN Portal owner 生成的已通过 gate 的 report、summary 与 runtime bundle。
+ * @lang en Gate-complete report, summary, and runtime bundles produced by the Portal owner.
+ */
 export interface DocumentationPortalUiLocaleAdoption {
   bundles: Readonly<Record<DocumentationPortalUiLocale, Readonly<Record<string, string>>>>;
-  /** @lang zh-CN 由本次实际消息输入评估的当前1.0.0报告，旧档案不会在owner写者中自动换号。 @lang en Current 1.0.0 report evaluated from this build's actual messages; the owner writer never relabels legacy archives automatically. */
+  /**
+   * @lang zh-CN 由本次实际消息输入评估的当前1.0.0报告，旧档案不会在owner写者中自动换号。
+   * @lang en Current 1.0.0 report evaluated from this build's actual messages; the owner writer never relabels legacy archives automatically.
+   */
   report: CurrentDocumentationUiLocaleCompletenessReport;
   reportJson: string;
   summary: DocumentationUiLocaleCompletenessSummary;
 }
 
 /**
- * @lang zh-CN
- * 构造并执行 W-P123 owner gate；任何 malformed 或 incomplete catalog 都在 renderer 生成文件前拒绝。
+ * @lang zh-CN 构造并执行 W-P123 owner gate；任何 malformed 或 incomplete catalog 都在 renderer 生成文件前拒绝。
  *
- * @lang en
- * Builds and executes the W-P123 owner gate; any malformed or incomplete catalog is rejected before the renderer emits files.
+ * @lang en Builds and executes the W-P123 owner gate; any malformed or incomplete catalog is rejected before the renderer emits files.
  *
  * @param options <lang><zh-CN>caller-explicit locale 与 owner-neutral profile/surface identity。</lang><en>Caller-explicit locales and owner-neutral profile/surface identities.</en></lang>
  * @returns <lang><zh-CN>不含私有数据的 report 与仅供页面 runtime 使用的 public bundle。</lang><en>A privacy-safe report and public bundles used only by the page runtime.</en></lang>
@@ -304,11 +328,9 @@ export function createDocumentationPortalUiLocaleAdoption(
 }
 
 /**
- * @lang zh-CN
- * 从已验证 Portal bundle 解析一条纯文本消息并替换非执行占位符。
+ * @lang zh-CN 从已验证 Portal bundle 解析一条纯文本消息并替换非执行占位符。
  *
- * @lang en
- * Resolves one plain-text message from a validated Portal bundle and substitutes non-executable placeholders.
+ * @lang en Resolves one plain-text message from a validated Portal bundle and substitutes non-executable placeholders.
  *
  * @param adoption <lang><zh-CN>当前 renderer 调用的已通过 gate 的 adoption。</lang><en>Gate-complete adoption for the current render call.</en></lang>
  * @param locale <lang><zh-CN>显式 UI locale。</lang><en>Explicit UI locale.</en></lang>

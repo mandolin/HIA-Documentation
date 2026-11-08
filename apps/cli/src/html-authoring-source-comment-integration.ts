@@ -48,7 +48,10 @@ export const HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_DIAGNOSTIC_CODES = [
   "HIA_HTML_AUTHORING_INTEGRATION_PERMISSION_REFUSED"
 ] as const;
 
-/** @lang zh-CN verification diagnostic code。 @lang en Verification diagnostic code. */
+/**
+ * @lang zh-CN verification diagnostic code。
+ * @lang en Verification diagnostic code.
+ */
 export type HtmlAuthoringSourceCommentIntegrationDiagnosticCode =
   typeof HTML_AUTHORING_SOURCE_COMMENT_INTEGRATION_DIAGNOSTIC_CODES[number];
 
@@ -77,7 +80,10 @@ export interface HtmlAuthoringSourceCommentIntegrationRequest {
   projection: unknown;
 }
 
-/** @lang zh-CN 固定、public-safe 的拒绝诊断。 @lang en Fixed, public-safe refusal diagnostic. */
+/**
+ * @lang zh-CN 固定、public-safe 的拒绝诊断。
+ * @lang en Fixed, public-safe refusal diagnostic.
+ */
 export interface HtmlAuthoringSourceCommentIntegrationDiagnostic {
   code: HtmlAuthoringSourceCommentIntegrationDiagnosticCode;
   message: string;
@@ -514,7 +520,10 @@ export function isHtmlAuthoringSourceCommentIntegrationReport(
       && diagnostics.length > 0;
 }
 
-/** @lang zh-CN integration CLI 最小 IO surface。 @lang en Minimal IO surface for the integration CLI. */
+/**
+ * @lang zh-CN integration CLI 最小 IO surface。
+ * @lang en Minimal IO surface for the integration CLI.
+ */
 export interface HtmlAuthoringSourceCommentIntegrationCliIo {
   cwd: string;
   stderr: (message: string) => void;
@@ -573,7 +582,10 @@ export async function runHtmlAuthoringSourceCommentIntegrationCommand(
   return report.status === "accepted" ? 0 : 1;
 }
 
-/** @lang zh-CN verifier 内部接受的 W-P80 report 最小类型。 @lang en Minimal W-P80 report type accepted internally by the verifier. */
+/**
+ * @lang zh-CN verifier 内部接受的 W-P80 report 最小类型。
+ * @lang en Minimal W-P80 report type accepted internally by the verifier.
+ */
 interface AcceptedHandoff {
   output: {
     entryCount: number;
@@ -605,7 +617,10 @@ function isAcceptedHtmlAuthoringHandoff(value: unknown): value is AcceptedHandof
     && Array.isArray(value.diagnostics) && value.diagnostics.length === 0;
 }
 
-/** @lang zh-CN 组合 W-P96 runtime validator 与 W-P98 ready/non-empty 要求。 @lang en Combines the W-P96 runtime validator with W-P98 ready/non-empty requirements. */
+/**
+ * @lang zh-CN 组合 W-P96 runtime validator 与 W-P98 ready/non-empty 要求。
+ * @lang en Combines the W-P96 runtime validator with W-P98 ready/non-empty requirements.
+ */
 function isReadySourceCommentProjection(value: unknown): value is DocumentationSourceCommentProjection {
   return validateDocumentationSourceCommentProjection(value).length === 0
     && isRecord(value)
@@ -614,7 +629,10 @@ function isReadySourceCommentProjection(value: unknown): value is DocumentationS
     && value.entries.length > 0;
 }
 
-/** @lang zh-CN 检查 handoff/source-map privacy frozen facts。 @lang en Checks frozen handoff/source-map privacy facts. */
+/**
+ * @lang zh-CN 检查 handoff/source-map privacy frozen facts。
+ * @lang en Checks frozen handoff/source-map privacy facts.
+ */
 function hasSafeHandoffPrivacy(value: unknown): boolean {
   return isRecord(value) && matchesExactRecord(value.privacy, {
     absolutePathSerialized: false,
@@ -627,7 +645,10 @@ function hasSafeHandoffPrivacy(value: unknown): boolean {
   });
 }
 
-/** @lang zh-CN 检查 W-P96 projection 的 none-only/raw-free privacy facts。 @lang en Checks W-P96 projection none-only/raw-free privacy facts. */
+/**
+ * @lang zh-CN 检查 W-P96 projection 的 none-only/raw-free privacy facts。
+ * @lang en Checks W-P96 projection none-only/raw-free privacy facts.
+ */
 function hasSafeProjectionPrivacy(value: unknown): boolean {
   return isRecord(value) && isRecord(value.privacy)
     && value.privacy.sourcesContentPolicy === "none"
@@ -636,7 +657,10 @@ function hasSafeProjectionPrivacy(value: unknown): boolean {
     && value.privacy.richTextPolicy === "plain-text-only";
 }
 
-/** @lang zh-CN 检查 handoff 的 deny-all target/host permission facts。 @lang en Checks deny-all target/host permission facts on a handoff. */
+/**
+ * @lang zh-CN 检查 handoff 的 deny-all target/host permission facts。
+ * @lang en Checks deny-all target/host permission facts on a handoff.
+ */
 function hasDenyAllHandoffPermissions(value: unknown): boolean {
   return isRecord(value) && matchesExactRecord(value.permissions, {
     fetchEnabled: false,
@@ -652,7 +676,10 @@ function hasDenyAllHandoffPermissions(value: unknown): boolean {
   }) && matchesExactRecord(value.adoption, { targetAdoptionClaimed: false });
 }
 
-/** @lang zh-CN 规范化且不推导 explicit binding。 @lang en Normalizes the explicit binding without deriving any identity. */
+/**
+ * @lang zh-CN 规范化且不推导 explicit binding。
+ * @lang en Normalizes the explicit binding without deriving any identity.
+ */
 function normalizeBinding(value: unknown): HtmlAuthoringSourceCommentIntegrationBinding | undefined {
   if (!isRecord(value) || !hasExactKeys(value, bindingKeys) || !bindingKeys.every((key) => isStableIdentity(value[key]))) return undefined;
   return {
@@ -665,7 +692,10 @@ function normalizeBinding(value: unknown): HtmlAuthoringSourceCommentIntegration
   };
 }
 
-/** @lang zh-CN 构造不反射 untrusted identity/body 的 refused report。 @lang en Builds a refused report that reflects no untrusted identity or body. */
+/**
+ * @lang zh-CN 构造不反射 untrusted identity/body 的 refused report。
+ * @lang en Builds a refused report that reflects no untrusted identity or body.
+ */
 function createRefusedReport(
   handoff: unknown,
   projection: unknown,
@@ -701,7 +731,10 @@ function createRefusedReport(
   };
 }
 
-/** @lang zh-CN 只投影 handoff contract/version/status sentinel。 @lang en Projects only handoff contract/version/status sentinels. */
+/**
+ * @lang zh-CN 只投影 handoff contract/version/status sentinel。
+ * @lang en Projects only handoff contract/version/status sentinels.
+ */
 function createHandoffRef(value: unknown): HtmlAuthoringSourceCommentIntegrationReport["input"]["handoff"] {
   const candidate = isRecord(value) ? value : {};
   return {
@@ -711,7 +744,10 @@ function createHandoffRef(value: unknown): HtmlAuthoringSourceCommentIntegration
   };
 }
 
-/** @lang zh-CN 只投影 projection contract/version/status sentinel。 @lang en Projects only projection contract/version/status sentinels. */
+/**
+ * @lang zh-CN 只投影 projection contract/version/status sentinel。
+ * @lang en Projects only projection contract/version/status sentinels.
+ */
 function createProjectionRef(value: unknown): HtmlAuthoringSourceCommentIntegrationReport["input"]["projection"] {
   const candidate = isRecord(value) ? value : {};
   return {
@@ -721,7 +757,10 @@ function createProjectionRef(value: unknown): HtmlAuthoringSourceCommentIntegrat
   };
 }
 
-/** @lang zh-CN 返回固定 privacy boundary，绝不复制 projection text。 @lang en Returns a fixed privacy boundary without copying projection text. */
+/**
+ * @lang zh-CN 返回固定 privacy boundary，绝不复制 projection text。
+ * @lang en Returns a fixed privacy boundary without copying projection text.
+ */
 function createPrivacyBoundary(projectedCommentTextIncluded: boolean): HtmlAuthoringSourceCommentIntegrationReport["privacy"] {
   return {
     mapBodyIncluded: false,
@@ -735,7 +774,10 @@ function createPrivacyBoundary(projectedCommentTextIncluded: boolean): HtmlAutho
   };
 }
 
-/** @lang zh-CN 返回固定 deny-all permission boundary。 @lang en Returns a fixed deny-all permission boundary. */
+/**
+ * @lang zh-CN 返回固定 deny-all permission boundary。
+ * @lang en Returns a fixed deny-all permission boundary.
+ */
 function createPermissionBoundary(): HtmlAuthoringSourceCommentIntegrationReport["permissions"] {
   return {
     networkAccessed: false,
@@ -751,7 +793,10 @@ function createPermissionBoundary(): HtmlAuthoringSourceCommentIntegrationReport
   };
 }
 
-/** @lang zh-CN 按 code 去重并保持固定调用顺序。 @lang en Deduplicates by code while preserving fixed call order. */
+/**
+ * @lang zh-CN 按 code 去重并保持固定调用顺序。
+ * @lang en Deduplicates by code while preserving fixed call order.
+ */
 function addDiagnostic(
   diagnostics: HtmlAuthoringSourceCommentIntegrationDiagnostic[],
   code: HtmlAuthoringSourceCommentIntegrationDiagnosticCode,
@@ -760,7 +805,10 @@ function addDiagnostic(
   if (!diagnostics.some((diagnostic) => diagnostic.code === code)) diagnostics.push({ code, message, severity: "error" });
 }
 
-/** @lang zh-CN closed option parser；拒绝 positional、unknown、duplicate 或 missing value。 @lang en Closed option parser rejecting positional, unknown, duplicate, or missing values. */
+/**
+ * @lang zh-CN closed option parser；拒绝 positional、unknown、duplicate 或 missing value。
+ * @lang en Closed option parser rejecting positional, unknown, duplicate, or missing values.
+ */
 function parseOptions(argv: string[], allowed: string[]): { valid: boolean; values: Map<string, string> } {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 2) {
@@ -772,7 +820,10 @@ function parseOptions(argv: string[], allowed: string[]): { valid: boolean; valu
   return { valid: argv.length % 2 === 0, values };
 }
 
-/** @lang zh-CN 限定 CLI input/output 到 cwd 下的 safe-relative path。 @lang en Confines CLI input/output to safe-relative paths below cwd. */
+/**
+ * @lang zh-CN 限定 CLI input/output 到 cwd 下的 safe-relative path。
+ * @lang en Confines CLI input/output to safe-relative paths below cwd.
+ */
 function isSafeRelativePath(value: string): boolean {
   const normalized = value.replaceAll("\\", "/");
   return normalized.length > 0
@@ -782,36 +833,54 @@ function isSafeRelativePath(value: string): boolean {
     && !normalized.split("/").includes("..");
 }
 
-/** @lang zh-CN 检查 canonical BCP 47 tag。 @lang en Checks a canonical BCP 47 tag. */
+/**
+ * @lang zh-CN 检查 canonical BCP 47 tag。
+ * @lang en Checks a canonical BCP 47 tag.
+ */
 function isCanonicalLocale(value: unknown): value is string {
   if (typeof value !== "string") return false;
   const result = canonicalizeDocumentationLocale(value);
   return Boolean(result && !result.usedLegacyUnderscore && result.canonical === value);
 }
 
-/** @lang zh-CN 检查 logical stable identity grammar。 @lang en Checks the logical stable identity grammar. */
+/**
+ * @lang zh-CN 检查 logical stable identity grammar。
+ * @lang en Checks the logical stable identity grammar.
+ */
 function isStableIdentity(value: unknown): value is string {
   return typeof value === "string" && value.length <= 256 && stableIdentityPattern.test(value);
 }
 
-/** @lang zh-CN 检查 plain record。 @lang en Checks a plain record. */
+/**
+ * @lang zh-CN 检查 plain record。
+ * @lang en Checks a plain record.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
-/** @lang zh-CN 检查 exact key set。 @lang en Checks an exact key set. */
+/**
+ * @lang zh-CN 检查 exact key set。
+ * @lang en Checks an exact key set.
+ */
 function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   const actual = Object.keys(value).sort();
   const expected = [...keys].sort();
   return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
-/** @lang zh-CN 检查 exact record keys 与指定常量字段。 @lang en Checks exact record keys and specified constant fields. */
+/**
+ * @lang zh-CN 检查 exact record keys 与指定常量字段。
+ * @lang en Checks exact record keys and specified constant fields.
+ */
 function matchesExactRecord(value: unknown, expected: Record<string, unknown>, keys: readonly string[] = Object.keys(expected)): boolean {
   return isRecord(value) && hasExactKeys(value, keys) && Object.entries(expected).every(([key, item]) => value[key] === item);
 }
 
-/** @lang zh-CN runtime-check report input refs。 @lang en Runtime-checks report input references. */
+/**
+ * @lang zh-CN runtime-check report input refs。
+ * @lang en Runtime-checks report input references.
+ */
 function isReportInput(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["handoff", "projection"])
     && isRecord(value.handoff) && hasExactKeys(value.handoff, ["contract", "contractVersion", "status"])
@@ -824,13 +893,19 @@ function isReportInput(value: unknown): boolean {
     && ["ready", "refused", "invalid"].includes(String(value.projection.status));
 }
 
-/** @lang zh-CN runtime-check report binding。 @lang en Runtime-checks report binding. */
+/**
+ * @lang zh-CN runtime-check report binding。
+ * @lang en Runtime-checks report binding.
+ */
 function isReportBinding(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, [...bindingKeys, "verified"])
     && bindingKeys.every((key) => isStableIdentity(value[key])) && typeof value.verified === "boolean";
 }
 
-/** @lang zh-CN runtime-check locale summary。 @lang en Runtime-checks the locale summary. */
+/**
+ * @lang zh-CN runtime-check locale summary。
+ * @lang en Runtime-checks the locale summary.
+ */
 function isReportLocale(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["canonicalIdentityStable", "handoffLocale", "requestedLocale", "resolvedLocales"])
     && typeof value.canonicalIdentityStable === "boolean" && isCanonicalLocale(value.handoffLocale) && isCanonicalLocale(value.requestedLocale)
@@ -838,13 +913,19 @@ function isReportLocale(value: unknown): boolean {
     && new Set(value.resolvedLocales).size === value.resolvedLocales.length;
 }
 
-/** @lang zh-CN runtime-check non-negative summary counts。 @lang en Runtime-checks non-negative summary counts. */
+/**
+ * @lang zh-CN runtime-check non-negative summary counts。
+ * @lang en Runtime-checks non-negative summary counts.
+ */
 function isReportSummary(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["handoffEntryCount", "projectionEntryCount", "resolvedEntryCount"])
     && Object.values(value).every((item) => Number.isInteger(item) && Number(item) >= 0);
 }
 
-/** @lang zh-CN runtime-check 三个独立 semantics 维度。 @lang en Runtime-checks the three independent semantic dimensions. */
+/**
+ * @lang zh-CN runtime-check 三个独立 semantics 维度。
+ * @lang en Runtime-checks the three independent semantic dimensions.
+ */
 function isReportSemantics(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["confidence", "provenance", "resolution"])
     && ["explicit-binding-validated", "unresolved"].includes(String(value.resolution))
@@ -852,7 +933,10 @@ function isReportSemantics(value: unknown): boolean {
     && ["handoff-plus-structured-comment-projection", "unresolved"].includes(String(value.provenance));
 }
 
-/** @lang zh-CN runtime-check body-free report privacy。 @lang en Runtime-checks body-free report privacy. */
+/**
+ * @lang zh-CN runtime-check body-free report privacy。
+ * @lang en Runtime-checks body-free report privacy.
+ */
 function isReportPrivacy(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["mapBodyIncluded", "pathIncluded", "projectedCommentTextIncluded", "rawCommentIncluded", "richTextPolicy", "sidecarBodyIncluded", "sourceBodyIncluded", "sourcesContentPolicy"])
     && value.sourcesContentPolicy === "none" && value.sourceBodyIncluded === false && value.rawCommentIncluded === false
@@ -860,13 +944,19 @@ function isReportPrivacy(value: unknown): boolean {
     && value.richTextPolicy === "plain-text-only" && typeof value.projectedCommentTextIncluded === "boolean";
 }
 
-/** @lang zh-CN runtime-check deny-all report permissions。 @lang en Runtime-checks deny-all report permissions. */
+/**
+ * @lang zh-CN runtime-check deny-all report permissions。
+ * @lang en Runtime-checks deny-all report permissions.
+ */
 function isReportPermissions(value: unknown): boolean {
   const keys = ["networkAccessed", "obsidianVaultIntegration", "packagePublished", "sourceReaderImplemented", "targetAdoptionClaimed", "targetCommandExecuted", "targetRepositoryRead", "targetRepositoryWrite", "targetRuntimeOpened", "tauriIpcIntegration"];
   return isRecord(value) && hasExactKeys(value, keys) && Object.values(value).every((item) => item === false);
 }
 
-/** @lang zh-CN runtime-check 固定 diagnostic。 @lang en Runtime-checks fixed diagnostics. */
+/**
+ * @lang zh-CN runtime-check 固定 diagnostic。
+ * @lang en Runtime-checks fixed diagnostics.
+ */
 function isReportDiagnostics(value: unknown): boolean {
   return Array.isArray(value) && value.every((diagnostic) => isRecord(diagnostic)
     && hasExactKeys(diagnostic, ["code", "message", "severity"])

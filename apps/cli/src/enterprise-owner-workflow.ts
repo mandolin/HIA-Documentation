@@ -33,7 +33,10 @@ export const ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_CONTRACT_VERSION = "0.1.
  */
 export const ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/enterprise-baseline-current-owner-workflow-0.1.0-draft.schema.json" as const;
 
-/** @lang zh-CN 固定 diagnostic catalog；message 不反射 caller data。 @lang en Fixed diagnostic catalog whose messages do not reflect caller data. */
+/**
+ * @lang zh-CN 固定 diagnostic catalog；message 不反射 caller data。
+ * @lang en Fixed diagnostic catalog whose messages do not reflect caller data.
+ */
 export const ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_DIAGNOSTIC_CODES = [
   "HIA_ENTERPRISE_OWNER_WORKFLOW_REQUEST_INVALID",
   "HIA_ENTERPRISE_OWNER_WORKFLOW_TARGET_FAMILY_INVALID",
@@ -45,7 +48,10 @@ export const ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_DIAGNOSTIC_CODES = [
   "HIA_ENTERPRISE_OWNER_WORKFLOW_PERMISSION_OR_ADOPTION_REFUSED"
 ] as const;
 
-/** @lang zh-CN workflow diagnostic code。 @lang en Workflow diagnostic code. */
+/**
+ * @lang zh-CN workflow diagnostic code。
+ * @lang en Workflow diagnostic code.
+ */
 export type EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode = typeof ENTERPRISE_BASELINE_CURRENT_OWNER_WORKFLOW_DIAGNOSTIC_CODES[number];
 
 /**
@@ -58,7 +64,10 @@ export interface EnterpriseBaselineCurrentOwnerWorkflowRequest {
   current?: unknown;
 }
 
-/** @lang zh-CN 固定、无 caller payload 的 workflow diagnostic。 @lang en Fixed workflow diagnostic without caller payload. */
+/**
+ * @lang zh-CN 固定、无 caller payload 的 workflow diagnostic。
+ * @lang en Fixed workflow diagnostic without caller payload.
+ */
 export interface EnterpriseBaselineCurrentOwnerWorkflowDiagnostic {
   code: EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode;
   message: string;
@@ -525,7 +534,10 @@ export function isEnterpriseBaselineCurrentOwnerWorkflowReport(value: unknown): 
   return semantics.resolution === "unresolved" && diagnostics.some((diagnostic) => isRecord(diagnostic) && diagnostic.severity === "error");
 }
 
-/** @lang zh-CN enterprise workflow CLI 的最小 IO surface。 @lang en Minimal IO surface for the enterprise workflow CLI. */
+/**
+ * @lang zh-CN enterprise workflow CLI 的最小 IO surface。
+ * @lang en Minimal IO surface for the enterprise workflow CLI.
+ */
 export interface EnterpriseBaselineCurrentOwnerWorkflowCliIo {
   cwd: string;
   stdout: (message: string) => void;
@@ -600,7 +612,10 @@ export async function runEnterpriseBaselineCurrentOwnerWorkflowCommand(
   return report.status === "refused" ? 1 : 0;
 }
 
-/** @lang zh-CN 把 continuity report 投影为无 identity/body 的 count-only component。 @lang en Projects a continuity report into a count-only component without identities or bodies. */
+/**
+ * @lang zh-CN 把 continuity report 投影为无 identity/body 的 count-only component。
+ * @lang en Projects a continuity report into a count-only component without identities or bodies.
+ */
 function projectContinuityReport(report: TargetDocumentationContinuityReport): EnterpriseOwnerWorkflowContinuityProjection {
   return {
     availability: "provided",
@@ -620,7 +635,10 @@ function projectContinuityReport(report: TargetDocumentationContinuityReport): E
   };
 }
 
-/** @lang zh-CN 按固定顺序添加去重 diagnostic。 @lang en Adds a deduplicated diagnostic in fixed order. */
+/**
+ * @lang zh-CN 按固定顺序添加去重 diagnostic。
+ * @lang en Adds a deduplicated diagnostic in fixed order.
+ */
 function addDiagnostic(
   diagnostics: EnterpriseBaselineCurrentOwnerWorkflowDiagnostic[],
   code: EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode,
@@ -631,19 +649,28 @@ function addDiagnostic(
   }
 }
 
-/** @lang zh-CN 检测 request 内禁止序列化的 payload key。 @lang en Detects payload keys that the request must never serialize. */
+/**
+ * @lang zh-CN 检测 request 内禁止序列化的 payload key。
+ * @lang en Detects payload keys that the request must never serialize.
+ */
 function containsForbiddenPayload(value: unknown): boolean {
   const forbidden = new Set(["sourceBody", "artifactBody", "evidenceBody", "commandOutputBody", "sourceText", "sourcesContent", "absolutePath", "privatePath", "credential", "workingState"]);
   return containsForbiddenKey(value, (key, nested) => forbidden.has(key) && nested !== false && nested !== "none");
 }
 
-/** @lang zh-CN 检测任何越权 true claim；正常 deny-all false 字段保持合法。 @lang en Detects any unauthorized true claim while allowing normal deny-all false fields. */
+/**
+ * @lang zh-CN 检测任何越权 true claim；正常 deny-all false 字段保持合法。
+ * @lang en Detects any unauthorized true claim while allowing normal deny-all false fields.
+ */
 function containsForbiddenActionClaim(value: unknown): boolean {
   const forbidden = new Set(["ownerContacted", "targetRepositoryRead", "targetRepositoryWrite", "targetCommandExecuted", "targetRuntimeOpened", "targetBranchOrPrCreated", "networkAccessed", "packagePublished", "targetAdoptionClaimed"]);
   return containsForbiddenKey(value, (key, nested) => forbidden.has(key) && nested === true);
 }
 
-/** @lang zh-CN 深度扫描 JSON-like value，但不执行 getter 或表达式。 @lang en Scans a JSON-like value deeply without executing getters or expressions. */
+/**
+ * @lang zh-CN 深度扫描 JSON-like value，但不执行 getter 或表达式。
+ * @lang en Scans a JSON-like value deeply without executing getters or expressions.
+ */
 function containsForbiddenKey(value: unknown, matches: (key: string, nested: unknown) => boolean): boolean {
   if (Array.isArray(value)) {
     return value.some((item) => containsForbiddenKey(item, matches));
@@ -654,12 +681,18 @@ function containsForbiddenKey(value: unknown, matches: (key: string, nested: unk
   return Object.entries(value).some(([key, nested]) => matches(key, nested) || containsForbiddenKey(nested, matches));
 }
 
-/** @lang zh-CN 验证 report target identity。 @lang en Validates report target identity. */
+/**
+ * @lang zh-CN 验证 report target identity。
+ * @lang en Validates report target identity.
+ */
 function isReportTarget(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["family", "id"]) && value.family === "enterprise-business" && isStableIdentifier(value.id);
 }
 
-/** @lang zh-CN 验证 owner input 投影。 @lang en Validates the owner-input projection. */
+/**
+ * @lang zh-CN 验证 owner input 投影。
+ * @lang en Validates the owner-input projection.
+ */
 function isReportOwnerInput(value: unknown): boolean {
   return isRecord(value)
     && hasExactKeys(value, ["submitted", "consent", "attestation", "redactionAttested"])
@@ -669,13 +702,19 @@ function isReportOwnerInput(value: unknown): boolean {
     && typeof value.redactionAttested === "boolean";
 }
 
-/** @lang zh-CN 验证两个 body-free component projections。 @lang en Validates the two body-free component projections. */
+/**
+ * @lang zh-CN 验证两个 body-free component projections。
+ * @lang en Validates the two body-free component projections.
+ */
 function isReportComponents(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["adoptionKit", "continuity"])
     && isAdoptionProjection(value.adoptionKit) && isContinuityProjection(value.continuity);
 }
 
-/** @lang zh-CN 验证 adoption component exact shape。 @lang en Validates the exact adoption-component shape. */
+/**
+ * @lang zh-CN 验证 adoption component exact shape。
+ * @lang en Validates the exact adoption-component shape.
+ */
 function isAdoptionProjection(value: unknown): boolean {
   if (!isRecord(value) || !hasExactKeys(value, ["contract", "contractVersion", "status", "contracts", "semantics"])) return false;
   if (value.contract !== TARGET_OWNER_ADOPTION_KIT_CONTRACT || value.contractVersion !== TARGET_OWNER_ADOPTION_KIT_CONTRACT_VERSION) return false;
@@ -689,7 +728,10 @@ function isAdoptionProjection(value: unknown): boolean {
     && semantics.confidence === "caller-provided-unverified" && semantics.provenance === "metadata-only-owner-kit";
 }
 
-/** @lang zh-CN 验证 not-provided 或 provided continuity projection。 @lang en Validates a not-provided or provided continuity projection. */
+/**
+ * @lang zh-CN 验证 not-provided 或 provided continuity projection。
+ * @lang en Validates a not-provided or provided continuity projection.
+ */
 function isContinuityProjection(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (value.availability === "not-provided") return hasExactKeys(value, ["availability"]);
@@ -709,7 +751,10 @@ function isContinuityProjection(value: unknown): boolean {
     && semantics.confidence === "caller-provided-unverified" && semantics.provenance === "metadata-only-comparison";
 }
 
-/** @lang zh-CN 验证 workflow semantics 的三维独立性与 deny-adoption。 @lang en Validates independent workflow semantics and denied adoption. */
+/**
+ * @lang zh-CN 验证 workflow semantics 的三维独立性与 deny-adoption。
+ * @lang en Validates independent workflow semantics and denied adoption.
+ */
 function isReportSemantics(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["resolution", "confidence", "provenance", "consent", "adoption"])
     && ["owner-input-and-evidence-validated", "owner-input-not-received", "unresolved"].includes(String(value.resolution))
@@ -717,19 +762,28 @@ function isReportSemantics(value: unknown): boolean {
     && (value.consent === "not-recorded" || value.consent === "recorded-for-review") && value.adoption === "not-asserted";
 }
 
-/** @lang zh-CN 验证所有 privacy disclosure 均为 deny-all。 @lang en Validates that every privacy disclosure is deny-all. */
+/**
+ * @lang zh-CN 验证所有 privacy disclosure 均为 deny-all。
+ * @lang en Validates that every privacy disclosure is deny-all.
+ */
 function isReportPrivacy(value: unknown): boolean {
   if (!isRecord(value) || !hasExactKeys(value, ["adoptionRequestBodySerialized", "baselineEvidenceSerialized", "currentEvidenceSerialized", "entryIdsSerialized", "producerIdsSerialized", "sourceBodySerialized", "artifactBodySerialized", "pathSerialized", "credentialSerialized", "workingStateSerialized", "sourcesContentPolicy"])) return false;
   return Object.entries(value).every(([key, nested]) => key === "sourcesContentPolicy" ? nested === "none" : nested === false);
 }
 
-/** @lang zh-CN 验证 workflow 不授予任何 external action。 @lang en Validates that the workflow grants no external action. */
+/**
+ * @lang zh-CN 验证 workflow 不授予任何 external action。
+ * @lang en Validates that the workflow grants no external action.
+ */
 function isReportPermissions(value: unknown): boolean {
   return isRecord(value) && hasExactKeys(value, ["ownerContacted", "targetRepositoryRead", "targetRepositoryWrite", "targetCommandExecuted", "targetRuntimeOpened", "targetBranchOrPrCreated", "networkAccessed", "packagePublished", "targetAdoptionClaimed"])
     && Object.values(value).every((nested) => nested === false);
 }
 
-/** @lang zh-CN 验证 diagnostic 使用固定 code/message pairing。 @lang en Validates fixed diagnostic code/message pairing. */
+/**
+ * @lang zh-CN 验证 diagnostic 使用固定 code/message pairing。
+ * @lang en Validates fixed diagnostic code/message pairing.
+ */
 function isDiagnostics(value: unknown): boolean {
   return Array.isArray(value) && value.every((diagnostic) => isRecord(diagnostic)
     && hasExactKeys(diagnostic, ["code", "message", "severity"])
@@ -738,7 +792,10 @@ function isDiagnostics(value: unknown): boolean {
     && diagnostic.message === DIAGNOSTIC_MESSAGES[diagnostic.code as EnterpriseBaselineCurrentOwnerWorkflowDiagnosticCode]);
 }
 
-/** @lang zh-CN closed option parser 拒绝 positional、unknown、duplicate 与 missing value。 @lang en Closed option parser rejects positional, unknown, duplicate, and missing values. */
+/**
+ * @lang zh-CN closed option parser 拒绝 positional、unknown、duplicate 与 missing value。
+ * @lang en Closed option parser rejects positional, unknown, duplicate, and missing values.
+ */
 function parseOptions(argv: string[], allowedOptions: string[]): { valid: boolean; values: Map<string, string> } {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 2) {
@@ -750,39 +807,60 @@ function parseOptions(argv: string[], allowedOptions: string[]): { valid: boolea
   return { valid: argv.length % 2 === 0, values };
 }
 
-/** @lang zh-CN 只允许 caller cwd 下的 normalized relative path。 @lang en Allows only normalized relative paths under caller cwd. */
+/**
+ * @lang zh-CN 只允许 caller cwd 下的 normalized relative path。
+ * @lang en Allows only normalized relative paths under caller cwd.
+ */
 function isSafeRelativePath(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= 512 && !path.isAbsolute(value)
     && !value.includes("\0") && !value.split(/[\\/]+/u).some((segment) => segment === ".." || segment === "")
     && !/^[A-Za-z]:/u.test(value);
 }
 
-/** @lang zh-CN 规范化 path equality，阻止 Windows case/separator alias 覆盖 input。 @lang en Normalizes path equality to prevent Windows case/separator aliases from overwriting an input. */
+/**
+ * @lang zh-CN 规范化 path equality，阻止 Windows case/separator alias 覆盖 input。
+ * @lang en Normalizes path equality to prevent Windows case/separator aliases from overwriting an input.
+ */
 function normalizeComparablePath(value: string): string {
   return value.replaceAll("\\", "/").toLowerCase();
 }
 
-/** @lang zh-CN 验证公开 stable identifier grammar。 @lang en Validates the public stable-identifier grammar. */
+/**
+ * @lang zh-CN 验证公开 stable identifier grammar。
+ * @lang en Validates the public stable-identifier grammar.
+ */
 function isStableIdentifier(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value);
 }
 
-/** @lang zh-CN 验证非负整数 count。 @lang en Validates a non-negative integer count. */
+/**
+ * @lang zh-CN 验证非负整数 count。
+ * @lang en Validates a non-negative integer count.
+ */
 function isNonNegativeInteger(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 0;
 }
 
-/** @lang zh-CN JSON object type guard。 @lang en JSON-object type guard. */
+/**
+ * @lang zh-CN JSON object type guard。
+ * @lang en JSON-object type guard.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 验证 object exact keys。 @lang en Validates exact object keys. */
+/**
+ * @lang zh-CN 验证 object exact keys。
+ * @lang en Validates exact object keys.
+ */
 function hasExactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
   return Object.keys(value).length === expected.length && expected.every((key) => Object.hasOwn(value, key));
 }
 
-/** @lang zh-CN 验证 required + optional closed-world keys。 @lang en Validates required plus optional closed-world keys. */
+/**
+ * @lang zh-CN 验证 required + optional closed-world keys。
+ * @lang en Validates required plus optional closed-world keys.
+ */
 function hasOnlyExactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[]): boolean {
   const keys = Object.keys(value);
   return required.every((key) => Object.hasOwn(value, key)) && keys.every((key) => required.includes(key) || optional.includes(key));

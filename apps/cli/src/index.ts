@@ -291,11 +291,20 @@ Options:
  * @lang en CLI-host working directory and output callbacks; callers own callback effects and final message destinations.
  */
 export interface CliIo {
-  /** @lang zh-CN 宿主解析相对输入/输出路径的工作目录，不自动授权读取任意仓库。 @lang en Host working directory for relative input/output paths, without automatic authority over arbitrary repositories. */
+  /**
+   * @lang zh-CN 宿主解析相对输入/输出路径的工作目录，不自动授权读取任意仓库。
+   * @lang en Host working directory for relative input/output paths, without automatic authority over arbitrary repositories.
+   */
   cwd: string;
-  /** @lang zh-CN 普通输出消息回调，最终流/文件去向及副作用由宿主负责。 @lang en Normal-output callback; the host owns stream/file destinations and side effects. */
+  /**
+   * @lang zh-CN 普通输出消息回调，最终流/文件去向及副作用由宿主负责。
+   * @lang en Normal-output callback; the host owns stream/file destinations and side effects.
+   */
   stdout: (message: string) => void;
-  /** @lang zh-CN 诊断/错误消息回调，不把回调本身当作隐私过滤器。 @lang en Diagnostic/error callback, which is not itself a privacy filter. */
+  /**
+   * @lang zh-CN 诊断/错误消息回调，不把回调本身当作隐私过滤器。
+   * @lang en Diagnostic/error callback, which is not itself a privacy filter.
+   */
   stderr: (message: string) => void;
 }
 
@@ -427,7 +436,10 @@ export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo =
   return 1;
 }
 
-/** @lang zh-CN 将共享主题文件写入显式--out根，配置无效时不创建目录；不读取文档工件。 @lang en Writes shared theme files under explicit --out, creating no directory on invalid config and reading no documentation artifacts. */
+/**
+ * @lang zh-CN 将共享主题文件写入显式--out根，配置无效时不创建目录；不读取文档工件。
+ * @lang en Writes shared theme files under explicit --out, creating no directory on invalid config and reading no documentation artifacts.
+ */
 async function runThemeAssets(argv: string[], io: CliIo): Promise<number> {
   const optionDiagnostics = validateOptionValues(argv, ["--config", "--out"]);
   const supported = argv.every((value, index) => index % 2 === 1 || value === "--config" || value === "--out");
@@ -2387,11 +2399,9 @@ function hiaSymbolToProjectEntry(
 }
 
 /**
- * @lang zh-CN
- * 只消费 HIA symbol metadata 中已生成的中性 projection；本函数不读取源码、sidecar path 或 parser AST。
+ * @lang zh-CN 只消费 HIA symbol metadata 中已生成的中性 projection；本函数不读取源码、sidecar path 或 parser AST。
  *
- * @lang en
- * Consumes only a prebuilt neutral projection from HIA symbol metadata; it reads no source, sidecar path, or parser AST.
+ * @lang en Consumes only a prebuilt neutral projection from HIA symbol metadata; it reads no source, sidecar path, or parser AST.
  */
 function readHiaSymbolSourceCommentProjection(
   symbol: HiaSymbol,

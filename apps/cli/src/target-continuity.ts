@@ -49,7 +49,10 @@ export const TARGET_DOCUMENTATION_CONTINUITY_DIAGNOSTIC_CODES = [
   "HIA_TARGET_CONTINUITY_PERMISSION_OR_ADOPTION_REFUSED"
 ] as const;
 
-/** @lang zh-CN 连续性报告 diagnostic code。 @lang en Continuity-report diagnostic code. */
+/**
+ * @lang zh-CN 连续性报告 diagnostic code。
+ * @lang en Continuity-report diagnostic code.
+ */
 export type TargetDocumentationContinuityDiagnosticCode = typeof TARGET_DOCUMENTATION_CONTINUITY_DIAGNOSTIC_CODES[number];
 
 /**
@@ -73,14 +76,20 @@ export interface TargetDocumentationContinuityDiagnostic {
   severity: "error";
 }
 
-/** @lang zh-CN 单个 required output 的两侧连续性。 @lang en Two-sided continuity for one required output. */
+/**
+ * @lang zh-CN 单个 required output 的两侧连续性。
+ * @lang en Two-sided continuity for one required output.
+ */
 export interface TargetDocumentationContinuityRequiredOutput {
   baseline: boolean;
   current: boolean;
   preserved: boolean;
 }
 
-/** @lang zh-CN 一侧 producer 的无 identity 计数摘要。 @lang en Identity-free producer count summary for one side. */
+/**
+ * @lang zh-CN 一侧 producer 的无 identity 计数摘要。
+ * @lang en Identity-free producer count summary for one side.
+ */
 export interface TargetDocumentationContinuityProducerSummary {
   artifactCount: number;
   producerCount: number;
@@ -161,7 +170,10 @@ export interface TargetDocumentationContinuityReport {
   };
 }
 
-/** @lang zh-CN report 中不反射 input body 的 contract/status 引用。 @lang en Body-free contract/status reference used by the report. */
+/**
+ * @lang zh-CN report 中不反射 input body 的 contract/status 引用。
+ * @lang en Body-free contract/status reference used by the report.
+ */
 export interface TargetDocumentationContinuityInputRef {
   contract: "hia-generated-docs-evidence-summary" | "invalid";
   contractVersion: "0.1.0-draft" | "invalid";
@@ -387,21 +399,30 @@ export const TARGET_DOCUMENTATION_CONTINUITY_JSON_SCHEMA = {
   }
 } as const;
 
-/** @lang zh-CN evaluator 内部使用的三项 required output。 @lang en Three required outputs used internally by the evaluator. */
+/**
+ * @lang zh-CN evaluator 内部使用的三项 required output。
+ * @lang en Three required outputs used internally by the evaluator.
+ */
 interface NormalizedRequiredOutputs {
   indexHtml: boolean;
   manifest: boolean;
   projectIndex: boolean;
 }
 
-/** @lang zh-CN evaluator 内部的 producer metadata；id 从不进入 report。 @lang en Internal producer metadata; IDs never enter the report. */
+/**
+ * @lang zh-CN evaluator 内部的 producer metadata；id 从不进入 report。
+ * @lang en Internal producer metadata; IDs never enter the report.
+ */
 interface NormalizedProducer {
   artifactCount: number;
   id: string;
   status: string;
 }
 
-/** @lang zh-CN 已安全规范化的 evidence summary 中间表示。 @lang en Safely normalized intermediate representation of an evidence summary. */
+/**
+ * @lang zh-CN 已安全规范化的 evidence summary 中间表示。
+ * @lang en Safely normalized intermediate representation of an evidence summary.
+ */
 interface NormalizedEvidenceSummary {
   contractValid: boolean;
   entryIds: string[];

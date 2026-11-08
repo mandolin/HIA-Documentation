@@ -16,11 +16,20 @@ export function renderThemeAssets(options: HiaThemeAssetOptions = {}): RenderedH
   return getDefaultThemeAssets(options).map((file) => ({ ...file, role: "asset" }));
 }
 
-/** @lang zh-CN 只定义主题资源所有权与URL，不将父相对URL当作文件写入路径。 @lang en Defines only theme-resource ownership and URLs, never treating parent-relative URLs as write paths. */
+/**
+ * @lang zh-CN 只定义主题资源所有权与URL，不将父相对URL当作文件写入路径。
+ * @lang en Defines only theme-resource ownership and URLs, never treating parent-relative URLs as write paths.
+ */
 export interface ThemeAssetRouting {
-  /** @lang zh-CN 默认local，external由外部唯一写入者提供。 @lang en Defaults to local; external resources are supplied by one external writer. */
+  /**
+   * @lang zh-CN 默认local，external由外部唯一写入者提供。
+   * @lang en Defaults to local; external resources are supplied by one external writer.
+   */
   mode?: "local" | "external";
-  /** @lang zh-CN external资源目录，按输出根相对或站点根相对解释。 @lang en External asset directory, relative to the output root or site root. */
+  /**
+   * @lang zh-CN external资源目录，按输出根相对或站点根相对解释。
+   * @lang en External asset directory, relative to the output root or site root.
+   */
   baseUrl?: string;
 }
 
