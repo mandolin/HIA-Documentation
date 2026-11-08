@@ -63,7 +63,10 @@ export const DOCUMENTATION_TERMINOLOGY_DIAGNOSTIC_CODE_REGISTRY = [
   { code: "TERM_PRIVACY_VIOLATION", defaultSeverity: "error", description: "A terminology artifact contains prohibited source or locator data." }
 ] as const satisfies readonly { code: string; defaultSeverity: HiaDiagnosticSeverity; description: string }[];
 
-/** @lang zh-CN portable candidate 的稳定逻辑范围。 @lang en Stable logical scope of a portable candidate. */
+/**
+ * @lang zh-CN portable candidate 的稳定逻辑范围。
+ * @lang en Stable logical scope of a portable candidate.
+ */
 export interface DocumentationTerminologyScope {
   annotationKind: string;
   fieldPath: string;
@@ -72,20 +75,29 @@ export interface DocumentationTerminologyScope {
   symbolId?: string;
 }
 
-/** @lang zh-CN candidate 的 profile 或生成链来源。 @lang en Profile or generation-chain provenance for a candidate. */
+/**
+ * @lang zh-CN candidate 的 profile 或生成链来源。
+ * @lang en Profile or generation-chain provenance for a candidate.
+ */
 export interface DocumentationTerminologyCandidateProvenance {
   kind: "profile-candidate" | "generated-source-linkage";
   profile: string;
   relationId?: string;
 }
 
-/** @lang zh-CN candidate 的人工 review 记录，不含人员实名、路径或正文。 @lang en Human-review record for a candidate, without personal names, paths, or bodies. */
+/**
+ * @lang zh-CN candidate 的人工 review 记录，不含人员实名、路径或正文。
+ * @lang en Human-review record for a candidate, without personal names, paths, or bodies.
+ */
 export interface DocumentationTerminologyHumanReview {
   decision: "reviewed" | "linked" | "ignored";
   reviewId: string;
 }
 
-/** @lang zh-CN 一个无正文 candidate 的 portable shape。 @lang en Portable shape of one body-free candidate. */
+/**
+ * @lang zh-CN 一个无正文 candidate 的 portable shape。
+ * @lang en Portable shape of one body-free candidate.
+ */
 export interface DocumentationTerminologyCandidate {
   candidateId: string;
   extractionKind: typeof DOCUMENTATION_TERMINOLOGY_EXTRACTION_KINDS[number];
@@ -97,7 +109,10 @@ export interface DocumentationTerminologyCandidate {
   termId?: string;
 }
 
-/** @lang zh-CN profile 已完成语法处理后交给 core 的观察输入。 @lang en Observation input delivered to core after a profile has completed grammar handling. */
+/**
+ * @lang zh-CN profile 已完成语法处理后交给 core 的观察输入。
+ * @lang en Observation input delivered to core after a profile has completed grammar handling.
+ */
 export interface DocumentationTerminologyProfileObservation {
   candidateId: string;
   extractionKind: DocumentationTerminologyCandidate["extractionKind"];
@@ -106,13 +121,19 @@ export interface DocumentationTerminologyProfileObservation {
   scope: DocumentationTerminologyScope;
 }
 
-/** @lang zh-CN profile observation 转换结果；diagnostic 不回显 raw locale 或 candidate phrase。 @lang en Profile-observation conversion result; diagnostics never echo raw locales or candidate phrases. */
+/**
+ * @lang zh-CN profile observation 转换结果；diagnostic 不回显 raw locale 或 candidate phrase。
+ * @lang en Profile-observation conversion result; diagnostics never echo raw locales or candidate phrases.
+ */
 export interface DocumentationTerminologyProfileObservationResult {
   candidate?: DocumentationTerminologyCandidate;
   diagnostics: HiaDiagnostic[];
 }
 
-/** @lang zh-CN candidate-set artifact。 @lang en Candidate-set artifact. */
+/**
+ * @lang zh-CN candidate-set artifact。
+ * @lang en Candidate-set artifact.
+ */
 export interface DocumentationTerminologyCandidateSet {
   candidates: DocumentationTerminologyCandidate[];
   contract: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT;
@@ -126,13 +147,19 @@ export interface DocumentationTerminologyCandidateSet {
   };
 }
 
-/** @lang zh-CN 单 locale 的受控术语 form；它不是 source phrase。 @lang en Controlled terminology form for one locale; it is not a source phrase. */
+/**
+ * @lang zh-CN 单 locale 的受控术语 form；它不是 source phrase。
+ * @lang en Controlled terminology form for one locale; it is not a source phrase.
+ */
 export interface DocumentationTerminologyForm {
   canonical: string;
   synonyms?: string[];
 }
 
-/** @lang zh-CN 人工维护的 registry entry。 @lang en Human-maintained registry entry. */
+/**
+ * @lang zh-CN 人工维护的 registry entry。
+ * @lang en Human-maintained registry entry.
+ */
 export interface DocumentationTerminologyRegistryEntry {
   definition?: Record<string, string>;
   forms: Record<string, DocumentationTerminologyForm>;
@@ -146,7 +173,10 @@ export interface DocumentationTerminologyRegistryEntry {
   visibility: typeof DOCUMENTATION_TERMINOLOGY_VISIBILITIES[number];
 }
 
-/** @lang zh-CN 受控 registry artifact；form 文本只允许留在该受控输入中。 @lang en Controlled registry artifact; form text is allowed only in this controlled input. */
+/**
+ * @lang zh-CN 受控 registry artifact；form 文本只允许留在该受控输入中。
+ * @lang en Controlled registry artifact; form text is allowed only in this controlled input.
+ */
 export interface DocumentationTerminologyRegistry {
   contract: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT;
   contractVersion: typeof DOCUMENTATION_TERMINOLOGY_CONTRACT_VERSION;
@@ -160,7 +190,10 @@ export interface DocumentationTerminologyRegistry {
   terms: DocumentationTerminologyRegistryEntry[];
 }
 
-/** @lang zh-CN quality input 的可见性 audience。 @lang en Visibility audience for a quality input. */
+/**
+ * @lang zh-CN quality input 的可见性 audience。
+ * @lang en Visibility audience for a quality input.
+ */
 export type DocumentationTerminologyQualityAudience = "workspace" | "public";
 
 /**
@@ -332,7 +365,10 @@ export function createDocumentationTerminologyQualityReviewInput(
   };
 }
 
-/** @lang zh-CN owner validator 使用的 JSON Schema wire shape。 @lang en JSON Schema wire shape used by the owner validator. */
+/**
+ * @lang zh-CN owner validator 使用的 JSON Schema wire shape。
+ * @lang en JSON Schema wire shape used by the owner validator.
+ */
 export const DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   $id: DOCUMENTATION_TERMINOLOGY_SCHEMA_ID,
@@ -458,12 +494,18 @@ export const DOCUMENTATION_TERMINOLOGY_JSON_SCHEMA = {
   }
 } as const;
 
-/** @lang zh-CN 判断 stable term identity grammar。 @lang en Checks stable term-identity grammar. */
+/**
+ * @lang zh-CN 判断 stable term identity grammar。
+ * @lang en Checks stable term-identity grammar.
+ */
 export function isDocumentationTerminologyId(value: string): boolean {
   return isTerminologyId(value);
 }
 
-/** @lang zh-CN 创建单条 terminology diagnostic。 @lang en Creates one terminology diagnostic. */
+/**
+ * @lang zh-CN 创建单条 terminology diagnostic。
+ * @lang en Creates one terminology diagnostic.
+ */
 function createTerminologyDiagnostic(
   code: typeof DOCUMENTATION_TERMINOLOGY_DIAGNOSTIC_CODE_REGISTRY[number]["code"],
   message: string,
@@ -474,7 +516,10 @@ function createTerminologyDiagnostic(
   return createHiaDiagnostic(code, message, severity, Object.keys(data).length > 0 ? { data } : {});
 }
 
-/** @lang zh-CN 校验 candidate locale 必须已经是 canonical BCP 47。 @lang en Checks that a candidate locale is already canonical BCP 47. */
+/**
+ * @lang zh-CN 校验 candidate locale 必须已经是 canonical BCP 47。
+ * @lang en Checks that a candidate locale is already canonical BCP 47.
+ */
 function validateCandidateLocale(candidate: DocumentationTerminologyCandidate, diagnostics: HiaDiagnostic[]): void {
   const normalized = canonicalizeDocumentationLocale(candidate.locale);
   if (!normalized || normalized.canonical !== candidate.locale || normalized.usedLegacyUnderscore) {
@@ -482,7 +527,10 @@ function validateCandidateLocale(candidate: DocumentationTerminologyCandidate, d
   }
 }
 
-/** @lang zh-CN 校验 human-review 与 approved term 的 linkage 不变量。 @lang en Checks human-review and approved-term linkage invariants. */
+/**
+ * @lang zh-CN 校验 human-review 与 approved term 的 linkage 不变量。
+ * @lang en Checks human-review and approved-term linkage invariants.
+ */
 function validateCandidateLifecycle(
   candidate: DocumentationTerminologyCandidate,
   registryByTermId: Map<string, DocumentationTerminologyRegistryEntry> | undefined,
@@ -515,7 +563,10 @@ function validateCandidateLifecycle(
   }
 }
 
-/** @lang zh-CN 校验 registry entry 并登记无文本的 form owner。 @lang en Validates a registry entry and registers a text-free form owner. */
+/**
+ * @lang zh-CN 校验 registry entry 并登记无文本的 form owner。
+ * @lang en Validates a registry entry and registers a text-free form owner.
+ */
 function validateRegistryEntry(entry: DocumentationTerminologyRegistryEntry, formOwners: Map<string, string>, diagnostics: HiaDiagnostic[]): void {
   if (entry.lifecycle === "approved" && Object.keys(entry.forms).length === 0) {
     diagnostics.push(createTerminologyDiagnostic("TERM_LOCALE_MISSING", "An approved terminology entry requires at least one locale form.", "error", { termId: entry.termId }));
@@ -548,7 +599,10 @@ function validateRegistryEntry(entry: DocumentationTerminologyRegistryEntry, for
   }
 }
 
-/** @lang zh-CN 将一个 candidate 映射为 quality observation；永远不带 form/phrase。 @lang en Maps one candidate to a quality observation; it never carries a form or phrase. */
+/**
+ * @lang zh-CN 将一个 candidate 映射为 quality observation；永远不带 form/phrase。
+ * @lang en Maps one candidate to a quality observation; it never carries a form or phrase.
+ */
 function createQualityObservation(
   candidate: DocumentationTerminologyCandidate,
   linkedTerm: DocumentationTerminologyRegistryEntry | undefined,
@@ -594,12 +648,18 @@ function createQualityObservation(
   };
 }
 
-/** @lang zh-CN 以 stable scope/rule 排序 quality observations。 @lang en Sorts quality observations by stable scope and rule. */
+/**
+ * @lang zh-CN 以 stable scope/rule 排序 quality observations。
+ * @lang en Sorts quality observations by stable scope and rule.
+ */
 function sortObservations(observations: DocumentationQualityReviewObservation[]): DocumentationQualityReviewObservation[] {
   return [...observations].sort((left, right) => JSON.stringify([left.scope.sourceDocumentId, left.scope.fieldPath, left.scope.occurrence, left.rule]).localeCompare(JSON.stringify([right.scope.sourceDocumentId, right.scope.fieldPath, right.scope.occurrence, right.rule])));
 }
 
-/** @lang zh-CN 检测 candidate artifact 的禁止私有字段。 @lang en Detects prohibited private fields in a candidate artifact. */
+/**
+ * @lang zh-CN 检测 candidate artifact 的禁止私有字段。
+ * @lang en Detects prohibited private fields in a candidate artifact.
+ */
 function containsPrivateCandidateData(value: unknown, propertyName = ""): boolean {
   const forbiddenPropertyNames = new Set(["absolutepath", "ast", "body", "content", "locator", "observedtext", "range", "rawlocator", "snippet", "sourcebody"]);
   if (forbiddenPropertyNames.has(propertyName.toLowerCase())) {
@@ -614,7 +674,10 @@ function containsPrivateCandidateData(value: unknown, propertyName = ""): boolea
   return Object.entries(value).some(([key, nested]) => containsPrivateCandidateData(nested, key));
 }
 
-/** @lang zh-CN 检测 registry 中除允许 form/definition 外的禁止私有字段。 @lang en Detects prohibited private fields in a registry except permitted forms/definitions. */
+/**
+ * @lang zh-CN 检测 registry 中除允许 form/definition 外的禁止私有字段。
+ * @lang en Detects prohibited private fields in a registry except permitted forms/definitions.
+ */
 function containsPrivateRegistryData(value: unknown, propertyName = ""): boolean {
   const forbiddenPropertyNames = new Set(["absolutepath", "ast", "body", "content", "locator", "observedtext", "range", "rawlocator", "snippet", "sourcebody"]);
   if (forbiddenPropertyNames.has(propertyName.toLowerCase())) {
@@ -629,12 +692,18 @@ function containsPrivateRegistryData(value: unknown, propertyName = ""): boolean
   return Object.entries(value).some(([key, nested]) => containsPrivateRegistryData(nested, key));
 }
 
-/** @lang zh-CN 判断 candidate artifact privacy policy。 @lang en Checks the candidate-artifact privacy policy. */
+/**
+ * @lang zh-CN 判断 candidate artifact privacy policy。
+ * @lang en Checks the candidate-artifact privacy policy.
+ */
 function isCandidatePrivacyPolicy(value: unknown): value is DocumentationTerminologyCandidateSet["privacy"] {
   return isRecord(value) && value.allowObservedText === false && value.allowRawLocator === false && value.allowSourceBody === false;
 }
 
-/** @lang zh-CN 判断完整 candidate shape。 @lang en Checks a complete candidate shape. */
+/**
+ * @lang zh-CN 判断完整 candidate shape。
+ * @lang en Checks a complete candidate shape.
+ */
 function isCandidate(value: unknown): value is DocumentationTerminologyCandidate {
   if (!isRecord(value) || !isNonEmptyString(value.candidateId) || !isNonEmptyString(value.locale) || !isScope(value.scope) || !isCandidateProvenance(value.provenance)) {
     return false;
@@ -645,7 +714,10 @@ function isCandidate(value: unknown): value is DocumentationTerminologyCandidate
   return (value.review === undefined || isHumanReview(value.review)) && (value.termId === undefined || isNonEmptyString(value.termId));
 }
 
-/** @lang zh-CN 判断 registry entry shape。 @lang en Checks registry-entry shape. */
+/**
+ * @lang zh-CN 判断 registry entry shape。
+ * @lang en Checks registry-entry shape.
+ */
 function isRegistryEntry(value: unknown): value is DocumentationTerminologyRegistryEntry {
   return isRecord(value)
     && isNonEmptyString(value.termId)
@@ -657,12 +729,18 @@ function isRegistryEntry(value: unknown): value is DocumentationTerminologyRegis
     && isNonEmptyString(value.provenance.recordId);
 }
 
-/** @lang zh-CN 判断 locale form shape。 @lang en Checks locale-form shape. */
+/**
+ * @lang zh-CN 判断 locale form shape。
+ * @lang en Checks locale-form shape.
+ */
 function isForm(value: unknown): value is DocumentationTerminologyForm {
   return isRecord(value) && isNonEmptyString(value.canonical) && (value.synonyms === undefined || (Array.isArray(value.synonyms) && value.synonyms.every(isNonEmptyString)));
 }
 
-/** @lang zh-CN 判断 candidate scope。 @lang en Checks candidate scope. */
+/**
+ * @lang zh-CN 判断 candidate scope。
+ * @lang en Checks candidate scope.
+ */
 function isScope(value: unknown): value is DocumentationTerminologyScope {
   return isRecord(value)
     && isNonEmptyString(value.annotationKind)
@@ -674,7 +752,10 @@ function isScope(value: unknown): value is DocumentationTerminologyScope {
     && (value.symbolId === undefined || isNonEmptyString(value.symbolId));
 }
 
-/** @lang zh-CN 判断 candidate provenance。 @lang en Checks candidate provenance. */
+/**
+ * @lang zh-CN 判断 candidate provenance。
+ * @lang en Checks candidate provenance.
+ */
 function isCandidateProvenance(value: unknown): value is DocumentationTerminologyCandidateProvenance {
   return isRecord(value)
     && (value.kind === "profile-candidate" || value.kind === "generated-source-linkage")
@@ -682,29 +763,44 @@ function isCandidateProvenance(value: unknown): value is DocumentationTerminolog
     && (value.relationId === undefined || isNonEmptyString(value.relationId));
 }
 
-/** @lang zh-CN 判断 human review record。 @lang en Checks a human-review record. */
+/**
+ * @lang zh-CN 判断 human review record。
+ * @lang en Checks a human-review record.
+ */
 function isHumanReview(value: unknown): value is DocumentationTerminologyHumanReview {
   return isRecord(value)
     && (value.decision === "reviewed" || value.decision === "linked" || value.decision === "ignored")
     && isNonEmptyString(value.reviewId);
 }
 
-/** @lang zh-CN 判断 stable termId grammar。 @lang en Checks stable termId grammar. */
+/**
+ * @lang zh-CN 判断 stable termId grammar。
+ * @lang en Checks stable termId grammar.
+ */
 function isTerminologyId(value: string): boolean {
   return /^term\.[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)*$/.test(value);
 }
 
-/** @lang zh-CN 判断 non-empty string。 @lang en Checks a non-empty string. */
+/**
+ * @lang zh-CN 判断 non-empty string。
+ * @lang en Checks a non-empty string.
+ */
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-/** @lang zh-CN 判断 plain record。 @lang en Checks a plain record. */
+/**
+ * @lang zh-CN 判断 plain record。
+ * @lang en Checks a plain record.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 查找 diagnostic 的默认 severity。 @lang en Finds the default severity for a diagnostic. */
+/**
+ * @lang zh-CN 查找 diagnostic 的默认 severity。
+ * @lang en Finds the default severity for a diagnostic.
+ */
 function diagnosticSeverityFor(code: typeof DOCUMENTATION_TERMINOLOGY_DIAGNOSTIC_CODE_REGISTRY[number]["code"]): HiaDiagnosticSeverity {
   return DOCUMENTATION_TERMINOLOGY_DIAGNOSTIC_CODE_REGISTRY.find((definition) => definition.code === code)?.defaultSeverity ?? "error";
 }

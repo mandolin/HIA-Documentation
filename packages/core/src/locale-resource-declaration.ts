@@ -8,30 +8,30 @@ import {
 } from "./locale-resource.js";
 
 /**
- * Stable neutral contract for controlled DLR declarations and their public-safe discovery artifacts.
+ * @lang en Stable neutral contract for controlled DLR declarations and their public-safe discovery artifacts.
  *
- * 中文：受控 DLR 声明及其 public-safe discovery artifact 的稳定中性 contract。
+ * @lang zh-CN 受控 DLR 声明及其 public-safe discovery artifact 的稳定中性 contract。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT = "documentation-locale-resource-declaration" as const;
 
 /**
- * Draft version shared by every W-P62 declaration artifact kind.
+ * @lang en Draft version shared by every W-P62 declaration artifact kind.
  *
- * 中文：所有 W-P62 declaration artifact kind 共用的草案版本。
+ * @lang zh-CN 所有 W-P62 declaration artifact kind 共用的草案版本。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
- * Public schema id for the declaration/discovery union.
+ * @lang en Public schema id for the declaration/discovery union.
  *
- * 中文：declaration/discovery union 的公开 schema id。
+ * @lang zh-CN declaration/discovery union 的公开 schema id。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-declaration-0.1.0-draft.schema.json" as const;
 
 /**
- * Controlled declaration, public discovery, and public sidecar artifact discriminators.
+ * @lang en Controlled declaration, public discovery, and public sidecar artifact discriminators.
  *
- * 中文：受控 declaration、public discovery 与 public sidecar artifact discriminator。
+ * @lang zh-CN 受控 declaration、public discovery 与 public sidecar artifact discriminator。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_KINDS = [
   "controlled-declaration",
@@ -40,16 +40,16 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_KINDS = [
 ] as const;
 
 /**
- * Provenance kind emitted only after an approved declaration catalog matches a selection.
+ * @lang en Provenance kind emitted only after an approved declaration catalog matches a selection.
  *
- * 中文：仅在 approved declaration catalog 命中 selection 后输出的 provenance kind。
+ * @lang zh-CN 仅在 approved declaration catalog 命中 selection 后输出的 provenance kind。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DISCOVERY_PROVENANCE_KIND = "declaration-catalog" as const;
 
 /**
- * DLR declaration/discovery diagnostic catalog. Messages intentionally omit raw locators and source text.
+ * @lang en DLR declaration/discovery diagnostic catalog. Messages intentionally omit raw locators and source text.
  *
- * 中文：DLR declaration/discovery diagnostic 目录。message 刻意不含 raw locator 或 source text。
+ * @lang zh-CN DLR declaration/discovery diagnostic 目录。message 刻意不含 raw locator 或 source text。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_DIAGNOSTIC_CODE_REGISTRY = [
   { code: "DLR_DECLARATION_INVALID", defaultSeverity: "error", description: "DLR declaration shape is invalid." },
@@ -69,9 +69,9 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_DIAGNOSTIC_CODE_REGISTRY 
 }[];
 
 /**
- * One controlled catalog row. Its locator is a private matching input, never public discovery output.
+ * @lang en One controlled catalog row. Its locator is a private matching input, never public discovery output.
  *
- * 中文：一条受控 catalog row。其 locator 是 private matching input，绝不进入 public discovery output。
+ * @lang zh-CN 一条受控 catalog row。其 locator 是 private matching input，绝不进入 public discovery output。
  */
 export interface DocumentationLocaleResourceDeclarationCatalogEntry {
   locator: string;
@@ -79,9 +79,9 @@ export interface DocumentationLocaleResourceDeclarationCatalogEntry {
 }
 
 /**
- * A source-level selection already parsed by its owning profile.
+ * @lang en A source-level selection already parsed by its owning profile.
  *
- * 中文：已由所属 profile 解析完成的 source-level selection。
+ * @lang zh-CN 已由所属 profile 解析完成的 source-level selection。
  */
 export interface DocumentationLocaleResourceDeclarationReference {
   id: string;
@@ -90,9 +90,9 @@ export interface DocumentationLocaleResourceDeclarationReference {
 }
 
 /**
- * Controlled declaration input. It may hold locators solely for in-memory allowlist matching.
+ * @lang en Controlled declaration input. It may hold locators solely for in-memory allowlist matching.
  *
- * 中文：受控 declaration input。它可仅为 in-memory allowlist matching 持有 locator。
+ * @lang zh-CN 受控 declaration input。它可仅为 in-memory allowlist matching 持有 locator。
  */
 export interface DocumentationLocaleResourceDeclaration {
   catalog: DocumentationLocaleResourceDeclarationCatalogEntry[];
@@ -109,9 +109,9 @@ export interface DocumentationLocaleResourceDeclaration {
 }
 
 /**
- * Profile capability explicitly supplied by a profile owner; core never parses source grammar.
+ * @lang en Profile capability explicitly supplied by a profile owner; core never parses source grammar.
  *
- * 中文：由 profile owner 显式提供的 profile capability；core 绝不解析 source grammar。
+ * @lang zh-CN 由 profile owner 显式提供的 profile capability；core 绝不解析 source grammar。
  */
 export interface DocumentationLocaleResourceApprovedProfile {
   profile: string;
@@ -119,9 +119,9 @@ export interface DocumentationLocaleResourceApprovedProfile {
 }
 
 /**
- * One successful logical declaration binding. It records no locator, range, source text, or resource text.
+ * @lang en One successful logical declaration binding. It records no locator, range, source text, or resource text.
  *
- * 中文：一条成功的 logical declaration binding；不记录 locator、range、source text 或 resource text。
+ * @lang zh-CN 一条成功的 logical declaration binding；不记录 locator、range、source text 或 resource text。
  */
 export interface DocumentationLocaleResourceDiscoveryBinding {
   referenceId: string;
@@ -130,9 +130,9 @@ export interface DocumentationLocaleResourceDiscoveryBinding {
 }
 
 /**
- * Stable provenance for a public discovery artifact; this is not locale resolution provenance.
+ * @lang en Stable provenance for a public discovery artifact; this is not locale resolution provenance.
  *
- * 中文：public discovery artifact 的稳定 provenance；它不是 locale resolution provenance。
+ * @lang zh-CN public discovery artifact 的稳定 provenance；它不是 locale resolution provenance。
  */
 export interface DocumentationLocaleResourceDiscoveryProvenance {
   declarationId: string;
@@ -142,9 +142,9 @@ export interface DocumentationLocaleResourceDiscoveryProvenance {
 }
 
 /**
- * Privacy policy embedded into every public discovery artifact.
+ * @lang en Privacy policy embedded into every public discovery artifact.
  *
- * 中文：嵌入每个 public discovery artifact 的 privacy policy。
+ * @lang zh-CN 嵌入每个 public discovery artifact 的 privacy policy。
  */
 export interface DocumentationLocaleResourceDiscoveryPrivacy {
   allowRawLocator: false;
@@ -155,9 +155,9 @@ export interface DocumentationLocaleResourceDiscoveryPrivacy {
 }
 
 /**
- * Public-safe result of catalog-only discovery. It proves an allowlist match, not filesystem or entry validity.
+ * @lang en Public-safe result of catalog-only discovery. It proves an allowlist match, not filesystem or entry validity.
  *
- * 中文：catalog-only discovery 的 public-safe 结果。它只证明 allowlist match，不证明 filesystem 或 entry validity。
+ * @lang zh-CN catalog-only discovery 的 public-safe 结果。它只证明 allowlist match，不证明 filesystem 或 entry validity。
  */
 export interface DocumentationLocaleResourceDiscovery {
   bindings: DocumentationLocaleResourceDiscoveryBinding[];
@@ -178,9 +178,9 @@ export interface DocumentationLocaleResourceDiscovery {
 }
 
 /**
- * Independent sidecar for ordinary doc-source-map linkage. It repeats only public-safe discovery metadata.
+ * @lang en Independent sidecar for ordinary doc-source-map linkage. It repeats only public-safe discovery metadata.
  *
- * 中文：供 ordinary doc-source-map linkage 使用的独立 sidecar；只重复 public-safe discovery metadata。
+ * @lang zh-CN 供 ordinary doc-source-map linkage 使用的独立 sidecar；只重复 public-safe discovery metadata。
  */
 export interface DocumentationLocaleResourceDiscoverySidecar {
   contract: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT;
@@ -201,9 +201,9 @@ export interface DocumentationLocaleResourceDiscoverySidecar {
 }
 
 /**
- * Explicit input to pure catalog discovery. The caller must supply known profile/version pairs.
+ * @lang en Explicit input to pure catalog discovery. The caller must supply known profile/version pairs.
  *
- * 中文：pure catalog discovery 的显式输入。调用方必须提供已知 profile/version pair。
+ * @lang zh-CN pure catalog discovery 的显式输入。调用方必须提供已知 profile/version pair。
  */
 export interface DiscoverDocumentationLocaleResourcesOptions {
   approvedProfiles: readonly DocumentationLocaleResourceApprovedProfile[];
@@ -211,9 +211,9 @@ export interface DiscoverDocumentationLocaleResourcesOptions {
 }
 
 /**
- * Result of pure catalog discovery. Diagnostics remain separate from the public-safe artifact.
+ * @lang en Result of pure catalog discovery. Diagnostics remain separate from the public-safe artifact.
  *
- * 中文：pure catalog discovery 的结果。diagnostic 与 public-safe artifact 保持分离。
+ * @lang zh-CN pure catalog discovery 的结果。diagnostic 与 public-safe artifact 保持分离。
  */
 export interface DiscoverDocumentationLocaleResourcesResult {
   diagnostics: HiaDiagnostic[];
@@ -221,10 +221,9 @@ export interface DiscoverDocumentationLocaleResourcesResult {
 }
 
 /**
- * Validate a controlled declaration before a profile or later reader consumes it.
+ * @lang en Validate a controlled declaration before a profile or later reader consumes it.
  *
- * 中文：在 profile 或后续 reader 消费前校验受控 declaration。
- *
+ * @lang zh-CN 在 profile 或后续 reader 消费前校验受控 declaration。
  * @param value <lang><zh-CN>不可信 declaration runtime value。</zh-CN><en>Untrusted declaration runtime value.</en></lang>
  * @returns <lang><zh-CN>不包含 raw locator 的 diagnostic。</zh-CN><en>Diagnostics that contain no raw locator.</en></lang>
  */
@@ -312,10 +311,9 @@ export function validateDocumentationLocaleResourceDeclaration(value: unknown): 
 }
 
 /**
- * Resolve already-parsed selections only against a controlled in-memory catalog; this function never reads files.
+ * @lang en Resolve already-parsed selections only against a controlled in-memory catalog; this function never reads files.
  *
- * 中文：仅用受控 in-memory catalog 解析已解析的 selection；本函数绝不读取文件。
- *
+ * @lang zh-CN 仅用受控 in-memory catalog 解析已解析的 selection；本函数绝不读取文件。
  * @param declaration <lang><zh-CN>受控 declaration。</zh-CN><en>Controlled declaration.</en></lang>
  * @param options <lang><zh-CN>approved profile allowlist 与 stable discovery id。</zh-CN><en>Approved profile allowlist and stable discovery id.</en></lang>
  * @returns <lang><zh-CN>logical discovery，或 fail-closed diagnostic。</zh-CN><en>Logical discovery, or fail-closed diagnostics.</en></lang>
@@ -392,9 +390,9 @@ export function discoverDocumentationLocaleResources(
 }
 
 /**
- * Create a metadata-only sidecar from a public discovery artifact.
+ * @lang en Create a metadata-only sidecar from a public discovery artifact.
  *
- * 中文：从 public discovery artifact 创建 metadata-only sidecar。
+ * @lang zh-CN 从 public discovery artifact 创建 metadata-only sidecar。
  */
 export function createDocumentationLocaleResourceDiscoverySidecar(
   id: string,
@@ -421,9 +419,9 @@ export function createDocumentationLocaleResourceDiscoverySidecar(
 }
 
 /**
- * Validate a public discovery artifact and reject any private-source payload before it reaches an artifact boundary.
+ * @lang en Validate a public discovery artifact and reject any private-source payload before it reaches an artifact boundary.
  *
- * 中文：校验 public discovery artifact，并在进入 artifact boundary 前拒绝任何 private-source payload。
+ * @lang zh-CN 校验 public discovery artifact，并在进入 artifact boundary 前拒绝任何 private-source payload。
  */
 export function validateDocumentationLocaleResourceDiscovery(value: unknown): HiaDiagnostic[] {
   if (!isRecord(value)) {
@@ -444,9 +442,9 @@ export function validateDocumentationLocaleResourceDiscovery(value: unknown): Hi
 }
 
 /**
- * Validate a public discovery sidecar independently of ordinary doc-source-map linkage.
+ * @lang en Validate a public discovery sidecar independently of ordinary doc-source-map linkage.
  *
- * 中文：独立于 ordinary doc-source-map linkage 校验 public discovery sidecar。
+ * @lang zh-CN 独立于 ordinary doc-source-map linkage 校验 public discovery sidecar。
  */
 export function validateDocumentationLocaleResourceDiscoverySidecar(value: unknown): HiaDiagnostic[] {
   if (!isRecord(value)) {
@@ -468,9 +466,9 @@ export function validateDocumentationLocaleResourceDiscoverySidecar(value: unkno
 }
 
 /**
- * JSON Schema for every `documentation-locale-resource-declaration@0.1.0-draft` artifact kind.
+ * @lang en JSON Schema for every `documentation-locale-resource-declaration@0.1.0-draft` artifact kind.
  *
- * 中文：所有 `documentation-locale-resource-declaration@0.1.0-draft` artifact kind 的 JSON Schema。
+ * @lang zh-CN 所有 `documentation-locale-resource-declaration@0.1.0-draft` artifact kind 的 JSON Schema。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -609,9 +607,9 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_JSON_SCHEMA = {
 } as const;
 
 /**
- * Validate a logical resource-root identity without exposing or interpreting a filesystem root.
+ * @lang en Validate a logical resource-root identity without exposing or interpreting a filesystem root.
  *
- * 中文：校验 logical resource-root identity，不暴露或解释 filesystem root。
+ * @lang zh-CN 校验 logical resource-root identity，不暴露或解释 filesystem root。
  */
 export function isDocumentationLocaleResourceRootId(value: string): boolean {
   return isDocumentationLocaleResourceId(value);

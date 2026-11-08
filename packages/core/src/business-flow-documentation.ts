@@ -2,56 +2,86 @@ import { createHiaDiagnostic } from "./diagnostics.js";
 import type { HiaDiagnostic, HiaDiagnosticSeverity } from "./model.js";
 
 /**
- * @lang zh-CN
- * 非可执行业务流程文档事实的中性 contract 名称；它不绑定 HIA owner、BPMN wire format 或 renderer。
+ * @lang zh-CN 非可执行业务流程文档事实的中性 contract 名称；它不绑定 HIA owner、BPMN wire format 或 renderer。
  *
- * @lang en
- * Neutral contract name for non-executable business-flow documentation facts; it binds no HIA owner, BPMN wire format, or renderer.
+ * @lang en Neutral contract name for non-executable business-flow documentation facts; it binds no HIA owner, BPMN wire format, or renderer.
  */
 export const BUSINESS_FLOW_DOCUMENTATION_CONTRACT = "business-flow-documentation" as const;
 
 /**
- * @lang zh-CN
- * P1 草案版本；draft consumer 必须精确匹配，不能推测前向或后向兼容。
+ * @lang zh-CN P1 草案版本；draft consumer 必须精确匹配，不能推测前向或后向兼容。
  *
- * @lang en
- * P1 draft version; draft consumers must match it exactly and infer neither forward nor backward compatibility.
+ * @lang en P1 draft version; draft consumers must match it exactly and infer neither forward nor backward compatibility.
  */
 export const BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION = "0.1.0-draft" as const;
 
-/** @lang zh-CN 公开 schema identity。 @lang en Public schema identity. */
+/**
+ * @lang zh-CN 公开 schema identity。
+ * @lang en Public schema identity.
+ */
 export const BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/business-flow-documentation-0.1.0-draft.schema.json" as const;
 
-/** @lang zh-CN P1 节点 kind 闭集。 @lang en Closed P1 node-kind set. */
+/**
+ * @lang zh-CN P1 节点 kind 闭集。
+ * @lang en Closed P1 node-kind set.
+ */
 export const BUSINESS_FLOW_NODE_KINDS = ["start", "step", "decision", "merge", "end", "actor", "artifact"] as const;
-/** @lang zh-CN 参与控制流的节点 kind。 @lang en Node kinds participating in control flow. */
+/**
+ * @lang zh-CN 参与控制流的节点 kind。
+ * @lang en Node kinds participating in control flow.
+ */
 export const BUSINESS_FLOW_CONTROL_NODE_KINDS = ["start", "step", "decision", "merge", "end"] as const;
-/** @lang zh-CN P1 关系 family 闭集。 @lang en Closed P1 relation-family set. */
+/**
+ * @lang zh-CN P1 关系 family 闭集。
+ * @lang en Closed P1 relation-family set.
+ */
 export const BUSINESS_FLOW_RELATION_FAMILIES = ["control", "responsibility", "data"] as const;
-/** @lang zh-CN P1 关系 kind 闭集。 @lang en Closed P1 relation-kind set. */
+/**
+ * @lang zh-CN P1 关系 kind 闭集。
+ * @lang en Closed P1 relation-kind set.
+ */
 export const BUSINESS_FLOW_RELATION_KINDS = ["sequence", "branch", "exception", "performed-by", "reads", "writes", "emits"] as const;
-/** @lang zh-CN P1 actor role kind 闭集。 @lang en Closed P1 actor-role kind set. */
+/**
+ * @lang zh-CN P1 actor role kind 闭集。
+ * @lang en Closed P1 actor-role kind set.
+ */
 export const BUSINESS_FLOW_ACTOR_KINDS = ["human-role", "system-role", "organization-role"] as const;
-/** @lang zh-CN P1 artifact metadata kind 闭集。 @lang en Closed P1 artifact-metadata kind set. */
+/**
+ * @lang zh-CN P1 artifact metadata kind 闭集。
+ * @lang en Closed P1 artifact-metadata kind set.
+ */
 export const BUSINESS_FLOW_ARTIFACT_KINDS = ["data", "message", "record", "document"] as const;
-/** @lang zh-CN P1 end outcome 闭集。 @lang en Closed P1 end-outcome set. */
+/**
+ * @lang zh-CN P1 end outcome 闭集。
+ * @lang en Closed P1 end-outcome set.
+ */
 export const BUSINESS_FLOW_END_OUTCOMES = ["success", "rejected", "failed", "cancelled"] as const;
-/** @lang zh-CN 隐私分类；默认由 author 选择 internal。 @lang en Privacy classes; authors choose internal by default. */
+/**
+ * @lang zh-CN 隐私分类；默认由 author 选择 internal。
+ * @lang en Privacy classes; authors choose internal by default.
+ */
 export const BUSINESS_FLOW_PRIVACY_CLASSES = ["public", "internal", "restricted"] as const;
-/** @lang zh-CN 引用解析状态。 @lang en Reference-resolution states. */
+/**
+ * @lang zh-CN 引用解析状态。
+ * @lang en Reference-resolution states.
+ */
 export const BUSINESS_FLOW_RESOLUTION_VALUES = ["resolved", "unresolved", "ambiguous", "not-applicable"] as const;
-/** @lang zh-CN 置信度状态；它不由 resolution 推导。 @lang en Confidence states; they are not derived from resolution. */
+/**
+ * @lang zh-CN 置信度状态；它不由 resolution 推导。
+ * @lang en Confidence states; they are not derived from resolution.
+ */
 export const BUSINESS_FLOW_CONFIDENCE_VALUES = ["high", "medium", "low", "unknown"] as const;
-/** @lang zh-CN canonical 事实来源。 @lang en Canonical fact origins. */
+/**
+ * @lang zh-CN canonical 事实来源。
+ * @lang en Canonical fact origins.
+ */
 export const BUSINESS_FLOW_AUTHORSHIP_VALUES = ["author-provided", "producer-resolved"] as const;
 
 /**
- * @lang zh-CN
- * W-P114 冻结的 stable diagnostic code；后续草案不得静默复用为不同语义。
+ * @lang zh-CN W-P114 冻结的 stable diagnostic code；后续草案不得静默复用为不同语义。
  *
- * @lang en
- * Stable diagnostic codes frozen by W-P114; later drafts must not silently reuse them for different semantics.
+ * @lang en Stable diagnostic codes frozen by W-P114; later drafts must not silently reuse them for different semantics.
  */
 export const BUSINESS_FLOW_DOCUMENTATION_DIAGNOSTIC_CODES = [
   "BFD_INVALID_CONTRACT",
@@ -70,32 +100,51 @@ export const BUSINESS_FLOW_DOCUMENTATION_DIAGNOSTIC_CODES = [
   "BFD_COMPATIBILITY_UNSUPPORTED"
 ] as const;
 
-/** @lang zh-CN 节点 kind 类型。 @lang en Node-kind type. */
+/**
+ * @lang zh-CN 节点 kind 类型。
+ * @lang en Node-kind type.
+ */
 export type BusinessFlowNodeKind = typeof BUSINESS_FLOW_NODE_KINDS[number];
-/** @lang zh-CN 关系 family 类型。 @lang en Relation-family type. */
+/**
+ * @lang zh-CN 关系 family 类型。
+ * @lang en Relation-family type.
+ */
 export type BusinessFlowRelationFamily = typeof BUSINESS_FLOW_RELATION_FAMILIES[number];
-/** @lang zh-CN 关系 kind 类型。 @lang en Relation-kind type. */
+/**
+ * @lang zh-CN 关系 kind 类型。
+ * @lang en Relation-kind type.
+ */
 export type BusinessFlowRelationKind = typeof BUSINESS_FLOW_RELATION_KINDS[number];
-/** @lang zh-CN 隐私分类类型。 @lang en Privacy-class type. */
+/**
+ * @lang zh-CN 隐私分类类型。
+ * @lang en Privacy-class type.
+ */
 export type BusinessFlowPrivacyClass = typeof BUSINESS_FLOW_PRIVACY_CLASSES[number];
-/** @lang zh-CN stable diagnostic code 类型。 @lang en Stable diagnostic-code type. */
+/**
+ * @lang zh-CN stable diagnostic code 类型。
+ * @lang en Stable diagnostic-code type.
+ */
 export type BusinessFlowDocumentationDiagnosticCode = typeof BUSINESS_FLOW_DOCUMENTATION_DIAGNOSTIC_CODES[number];
 
-/** @lang zh-CN locale tag 到非空 label 的映射。 @lang en Map from locale tags to non-empty labels. */
+/**
+ * @lang zh-CN locale tag 到非空 label 的映射。
+ * @lang en Map from locale tags to non-empty labels.
+ */
 export type BusinessFlowLocalizedLabels = Record<string, string>;
 
-/** @lang zh-CN 独立的 provenance 元数据。 @lang en Independent provenance metadata. */
+/**
+ * @lang zh-CN 独立的 provenance 元数据。
+ * @lang en Independent provenance metadata.
+ */
 export interface BusinessFlowProvenance {
   evidenceRefs: string[];
   origin: typeof BUSINESS_FLOW_AUTHORSHIP_VALUES[number];
 }
 
 /**
- * @lang zh-CN
- * 引用质量三维；resolution、confidence 与 provenance 互不推导。
+ * @lang zh-CN 引用质量三维；resolution、confidence 与 provenance 互不推导。
  *
- * @lang en
- * Three reference-quality dimensions; resolution, confidence, and provenance do not imply one another.
+ * @lang en Three reference-quality dimensions; resolution, confidence, and provenance do not imply one another.
  */
 export interface BusinessFlowQuality {
   confidence: typeof BUSINESS_FLOW_CONFIDENCE_VALUES[number];
@@ -103,7 +152,10 @@ export interface BusinessFlowQuality {
   resolution: typeof BUSINESS_FLOW_RESOLUTION_VALUES[number];
 }
 
-/** @lang zh-CN 单个业务流程身份与入口/终点声明。 @lang en One business-flow identity and its entry/end declarations. */
+/**
+ * @lang zh-CN 单个业务流程身份与入口/终点声明。
+ * @lang en One business-flow identity and its entry/end declarations.
+ */
 export interface BusinessFlowDefinition {
   defaultLocale: string;
   endNodeIds: string[];
@@ -114,11 +166,9 @@ export interface BusinessFlowDefinition {
 }
 
 /**
- * @lang zh-CN
- * 中性业务节点；actorKind、artifactKind 与 outcome 只在对应 discriminator 下出现。
+ * @lang zh-CN 中性业务节点；actorKind、artifactKind 与 outcome 只在对应 discriminator 下出现。
  *
- * @lang en
- * Neutral business node; actorKind, artifactKind, and outcome appear only with their matching discriminators.
+ * @lang en Neutral business node; actorKind, artifactKind, and outcome appear only with their matching discriminators.
  */
 export interface BusinessFlowNode {
   actorKind?: typeof BUSINESS_FLOW_ACTOR_KINDS[number];
@@ -133,11 +183,9 @@ export interface BusinessFlowNode {
 }
 
 /**
- * @lang zh-CN
- * Typed directed relation；control order 仅用于确定性叙事，不表达运行优先级。
+ * @lang zh-CN Typed directed relation；control order 仅用于确定性叙事，不表达运行优先级。
  *
- * @lang en
- * Typed directed relation; control order is deterministic narrative order, never runtime priority.
+ * @lang en Typed directed relation; control order is deterministic narrative order, never runtime priority.
  */
 export interface BusinessFlowRelation {
   authorship: typeof BUSINESS_FLOW_AUTHORSHIP_VALUES[number];
@@ -152,7 +200,10 @@ export interface BusinessFlowRelation {
   to: string;
 }
 
-/** @lang zh-CN metadata-only evidence；不含正文或物理路径。 @lang en Metadata-only evidence with no body or physical path. */
+/**
+ * @lang zh-CN metadata-only evidence；不含正文或物理路径。
+ * @lang en Metadata-only evidence with no body or physical path.
+ */
 export interface BusinessFlowEvidence {
   bodyIncluded: false;
   id: string;
@@ -162,7 +213,10 @@ export interface BusinessFlowEvidence {
   privacyClass: BusinessFlowPrivacyClass;
 }
 
-/** @lang zh-CN 业务节点到既有文档 entry metadata 的非执行绑定。 @lang en Non-executing binding from a business node to existing documentation-entry metadata. */
+/**
+ * @lang zh-CN 业务节点到既有文档 entry metadata 的非执行绑定。
+ * @lang en Non-executing binding from a business node to existing documentation-entry metadata.
+ */
 export interface BusinessFlowCodeBinding {
   authorship: "producer-resolved";
   businessNodeId: string;
@@ -173,7 +227,10 @@ export interface BusinessFlowCodeBinding {
   targetKind: "doc-entry";
 }
 
-/** @lang zh-CN Contract 内嵌的 public-safe diagnostic。 @lang en Public-safe diagnostic embedded in the contract. */
+/**
+ * @lang zh-CN Contract 内嵌的 public-safe diagnostic。
+ * @lang en Public-safe diagnostic embedded in the contract.
+ */
 export interface BusinessFlowContractDiagnostic {
   code: BusinessFlowDocumentationDiagnosticCode;
   message: string;
@@ -182,7 +239,10 @@ export interface BusinessFlowContractDiagnostic {
   targetPath?: string;
 }
 
-/** @lang zh-CN 关闭所有敏感正文、位置与身份 carrier 的隐私事实。 @lang en Privacy facts that close every sensitive body, location, and identity carrier. */
+/**
+ * @lang zh-CN 关闭所有敏感正文、位置与身份 carrier 的隐私事实。
+ * @lang en Privacy facts that close every sensitive body, location, and identity carrier.
+ */
 export interface BusinessFlowPrivacy {
   absolutePathIncluded: false;
   credentialIncluded: false;
@@ -193,7 +253,10 @@ export interface BusinessFlowPrivacy {
   targetIdentityIncluded: false;
 }
 
-/** @lang zh-CN Exact draft 与显式迁移策略。 @lang en Exact-draft and explicit-migration policy. */
+/**
+ * @lang zh-CN Exact draft 与显式迁移策略。
+ * @lang en Exact-draft and explicit-migration policy.
+ */
 export interface BusinessFlowCompatibility {
   migrationPolicy: "explicit-pure-identity-preserving";
   unknownKindPolicy: "reject";
@@ -202,11 +265,9 @@ export interface BusinessFlowCompatibility {
 }
 
 /**
- * @lang zh-CN
- * `business-flow-documentation@0.1.0-draft` canonical wire payload。
+ * @lang zh-CN `business-flow-documentation@0.1.0-draft` canonical wire payload。
  *
- * @lang en
- * Canonical wire payload for `business-flow-documentation@0.1.0-draft`.
+ * @lang en Canonical wire payload for `business-flow-documentation@0.1.0-draft`.
  */
 export interface BusinessFlowDocumentation {
   codeBindings: BusinessFlowCodeBinding[];
@@ -221,12 +282,18 @@ export interface BusinessFlowDocumentation {
   relations: BusinessFlowRelation[];
 }
 
-/** @lang zh-CN Producer 只接受调用方显式提供的 metadata target registry。 @lang en The producer accepts only a caller-supplied metadata target registry. */
+/**
+ * @lang zh-CN Producer 只接受调用方显式提供的 metadata target registry。
+ * @lang en The producer accepts only a caller-supplied metadata target registry.
+ */
 export interface BusinessFlowProductionOptions {
   availableCodeTargetIds: readonly string[];
 }
 
-/** @lang zh-CN 不含正文的确定性计数摘要。 @lang en Deterministic body-free count summary. */
+/**
+ * @lang zh-CN 不含正文的确定性计数摘要。
+ * @lang en Deterministic body-free count summary.
+ */
 export interface BusinessFlowProductionSummary {
   actorNodes: number;
   artifactNodes: number;
@@ -240,11 +307,9 @@ export interface BusinessFlowProductionSummary {
 }
 
 /**
- * @lang zh-CN
- * Pure producer 结果；refused 结果没有 canonical payload，避免无效事实被下游误用。
+ * @lang zh-CN Pure producer 结果；refused 结果没有 canonical payload，避免无效事实被下游误用。
  *
- * @lang en
- * Pure producer result; a refused result has no canonical payload, preventing downstream use of invalid facts.
+ * @lang en Pure producer result; a refused result has no canonical payload, preventing downstream use of invalid facts.
  */
 export interface BusinessFlowProductionResult {
   canonical?: BusinessFlowDocumentation;
@@ -266,11 +331,9 @@ const labelsSchema = {
 } as const;
 
 /**
- * @lang zh-CN
- * Draft 2020-12 结构 schema；图不变量、引用、排序和隐私联动仍由 owner runtime validator 负责。
+ * @lang zh-CN Draft 2020-12 结构 schema；图不变量、引用、排序和隐私联动仍由 owner runtime validator 负责。
  *
- * @lang en
- * Draft 2020-12 structural schema; graph invariants, references, ordering, and privacy coupling remain owner-runtime responsibilities.
+ * @lang en Draft 2020-12 structural schema; graph invariants, references, ordering, and privacy coupling remain owner-runtime responsibilities.
  */
 export const BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -450,11 +513,9 @@ const localePattern = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/u;
 const forbiddenFieldNames = new Set(["absolutePath", "credential", "password", "personalIdentity", "runtimePayload", "secret", "sourceBody", "sourceRange", "token"]);
 
 /**
- * @lang zh-CN
- * 校验 closed-world shape、业务图不变量、质量三维、作者边界与隐私事实；不读取外部 code target registry。
+ * @lang zh-CN 校验 closed-world shape、业务图不变量、质量三维、作者边界与隐私事实；不读取外部 code target registry。
  *
- * @lang en
- * Validates closed-world shape, business-graph invariants, quality dimensions, authorship, and privacy facts; it reads no external code-target registry.
+ * @lang en Validates closed-world shape, business-graph invariants, quality dimensions, authorship, and privacy facts; it reads no external code-target registry.
  *
  * @param value <lang><zh-CN>未知 wire payload。</zh-CN><en>Unknown wire payload.</en></lang>
  * @returns 确定性 diagnostics；空数组表示 contract 与语义有效。 / Deterministic diagnostics; an empty array means contract and semantics are valid.
@@ -520,11 +581,9 @@ export function validateBusinessFlowDocumentation(value: unknown): HiaDiagnostic
 }
 
 /**
- * @lang zh-CN
- * 规范化并冻结已验证业务流程事实；只解析调用方 metadata registry 中的 code target，不执行、读取或推断代码。
+ * @lang zh-CN 规范化并冻结已验证业务流程事实；只解析调用方 metadata registry 中的 code target，不执行、读取或推断代码。
  *
- * @lang en
- * Normalizes and freezes validated business-flow facts; it resolves only caller-supplied code-target metadata and never executes, reads, or infers code.
+ * @lang en Normalizes and freezes validated business-flow facts; it resolves only caller-supplied code-target metadata and never executes, reads, or infers code.
  *
  * @param value <lang><zh-CN>待生产的 wire payload。</zh-CN><en>Wire payload to produce.</en></lang>
  * @param options <lang><zh-CN>显式 code target identity registry。</zh-CN><en>Explicit code-target identity registry.</en></lang>
@@ -563,7 +622,10 @@ export function produceBusinessFlowDocumentation(value: unknown, options: Busine
   return deepFreeze({ canonical, canonicalJson, diagnostics: [], status: "ready", summary });
 }
 
-/** @lang zh-CN 验证顶层及子对象基础 shape，不执行跨引用推断。 @lang en Validates top-level and child shapes without cross-reference inference. */
+/**
+ * @lang zh-CN 验证顶层及子对象基础 shape，不执行跨引用推断。
+ * @lang en Validates top-level and child shapes without cross-reference inference.
+ */
 function validateStructuralShape(value: Record<string, unknown>): HiaDiagnostic[] {
   const diagnostics: HiaDiagnostic[] = [];
   if (!Array.isArray(value.flows) || value.flows.length === 0 || value.flows.length > 1000 || !value.flows.every(isFlowShape)) {
@@ -593,7 +655,10 @@ function validateStructuralShape(value: Record<string, unknown>): HiaDiagnostic[
   return diagnostics;
 }
 
-/** @lang zh-CN 验证一个 flow 的入口、终点、locale 与隐私关系。 @lang en Validates one flow's entry, ends, locale, and privacy relation. */
+/**
+ * @lang zh-CN 验证一个 flow 的入口、终点、locale 与隐私关系。
+ * @lang en Validates one flow's entry, ends, locale, and privacy relation.
+ */
 function validateFlow(flow: BusinessFlowDefinition, document: BusinessFlowDocumentation, nodeById: Map<string, BusinessFlowNode>, diagnostics: HiaDiagnostic[]): void {
   const flowNodes = document.nodes.filter((node) => node.flowId === flow.id);
   const starts = flowNodes.filter(({ kind }) => kind === "start");
@@ -614,7 +679,10 @@ function validateFlow(flow: BusinessFlowDefinition, document: BusinessFlowDocume
   }
 }
 
-/** @lang zh-CN 验证节点 discriminator、作者、locale 与 privacy 不变量。 @lang en Validates node discriminators, authorship, locale, and privacy invariants. */
+/**
+ * @lang zh-CN 验证节点 discriminator、作者、locale 与 privacy 不变量。
+ * @lang en Validates node discriminators, authorship, locale, and privacy invariants.
+ */
 function validateNode(node: BusinessFlowNode, flowById: Map<string, BusinessFlowDefinition>, diagnostics: HiaDiagnostic[]): void {
   const flow = flowById.get(node.flowId);
   if (!flow) {
@@ -644,7 +712,10 @@ function validateNode(node: BusinessFlowNode, flowById: Map<string, BusinessFlow
   }
 }
 
-/** @lang zh-CN 验证 evidence 的 logical-only locator、隐私分类与 body-free 不变量。 @lang en Validates evidence logical-only locators, privacy class, and body-free invariant. */
+/**
+ * @lang zh-CN 验证 evidence 的 logical-only locator、隐私分类与 body-free 不变量。
+ * @lang en Validates evidence logical-only locators, privacy class, and body-free invariant.
+ */
 function validateEvidence(evidence: BusinessFlowEvidence, diagnostics: HiaDiagnostic[]): void {
   if (evidence.locatorKind !== "logical-id" || evidence.bodyIncluded !== false) {
     diagnostics.push(businessFlowDiagnostic("BFD_PRIVACY_BOUNDARY", "Evidence must remain logical-id-only metadata with no body.", `evidence.${evidence.id}`));
@@ -654,7 +725,10 @@ function validateEvidence(evidence: BusinessFlowEvidence, diagnostics: HiaDiagno
   }
 }
 
-/** @lang zh-CN 验证 relation family/kind、endpoint、质量与作者边界。 @lang en Validates relation family/kind, endpoints, quality, and authorship boundaries. */
+/**
+ * @lang zh-CN 验证 relation family/kind、endpoint、质量与作者边界。
+ * @lang en Validates relation family/kind, endpoints, quality, and authorship boundaries.
+ */
 function validateRelation(relation: BusinessFlowRelation, flowById: Map<string, BusinessFlowDefinition>, nodeById: Map<string, BusinessFlowNode>, evidenceById: Map<string, BusinessFlowEvidence>, diagnostics: HiaDiagnostic[]): void {
   const flow = flowById.get(relation.flowId);
   const from = nodeById.get(relation.from);
@@ -692,7 +766,10 @@ function validateRelation(relation: BusinessFlowRelation, flowById: Map<string, 
   }
 }
 
-/** @lang zh-CN 验证 code binding 的作者、引用和三维质量。 @lang en Validates code-binding authorship, references, and quality dimensions. */
+/**
+ * @lang zh-CN 验证 code binding 的作者、引用和三维质量。
+ * @lang en Validates code-binding authorship, references, and quality dimensions.
+ */
 function validateCodeBinding(binding: BusinessFlowCodeBinding, flowById: Map<string, BusinessFlowDefinition>, nodeById: Map<string, BusinessFlowNode>, evidenceById: Map<string, BusinessFlowEvidence>, diagnostics: HiaDiagnostic[]): void {
   const node = nodeById.get(binding.businessNodeId);
   if (!flowById.has(binding.flowId) || !node || node.flowId !== binding.flowId || !BUSINESS_FLOW_CONTROL_NODE_KINDS.includes(node.kind as typeof BUSINESS_FLOW_CONTROL_NODE_KINDS[number])) {
@@ -704,7 +781,10 @@ function validateCodeBinding(binding: BusinessFlowCodeBinding, flowById: Map<str
   validateQuality(binding.quality, binding.authorship, evidenceById, `codeBindings.${binding.id}.quality`, diagnostics);
 }
 
-/** @lang zh-CN 验证 resolution/confidence/provenance 独立闭集及 evidence 引用。 @lang en Validates independent resolution/confidence/provenance closed sets and evidence references. */
+/**
+ * @lang zh-CN 验证 resolution/confidence/provenance 独立闭集及 evidence 引用。
+ * @lang en Validates independent resolution/confidence/provenance closed sets and evidence references.
+ */
 function validateQuality(quality: BusinessFlowQuality, authorship: string, evidenceById: Map<string, BusinessFlowEvidence>, path: string, diagnostics: HiaDiagnostic[]): void {
   if (!BUSINESS_FLOW_RESOLUTION_VALUES.includes(quality.resolution)
     || !BUSINESS_FLOW_CONFIDENCE_VALUES.includes(quality.confidence)
@@ -721,7 +801,10 @@ function validateQuality(quality: BusinessFlowQuality, authorship: string, evide
   }
 }
 
-/** @lang zh-CN 验证单个 flow 的 reachability、acyclic、order、branch、merge 与 exception 规则。 @lang en Validates one flow's reachability, acyclicity, order, branch, merge, and exception rules. */
+/**
+ * @lang zh-CN 验证单个 flow 的 reachability、acyclic、order、branch、merge 与 exception 规则。
+ * @lang en Validates one flow's reachability, acyclicity, order, branch, merge, and exception rules.
+ */
 function validateControlGraph(flow: BusinessFlowDefinition, document: BusinessFlowDocumentation, nodeById: Map<string, BusinessFlowNode>, diagnostics: HiaDiagnostic[]): void {
   const controlNodes = document.nodes.filter((node) => node.flowId === flow.id && BUSINESS_FLOW_CONTROL_NODE_KINDS.includes(node.kind as typeof BUSINESS_FLOW_CONTROL_NODE_KINDS[number]));
   const controlRelations = document.relations.filter((relation) => relation.flowId === flow.id && relation.family === "control"
@@ -769,7 +852,10 @@ function validateControlGraph(flow: BusinessFlowDefinition, document: BusinessFl
   }
 }
 
-/** @lang zh-CN 验证 decision 的至少两个唯一 branch 与无混合 control kind。 @lang en Validates a decision's two-or-more unique branches and absence of mixed control kinds. */
+/**
+ * @lang zh-CN 验证 decision 的至少两个唯一 branch 与无混合 control kind。
+ * @lang en Validates a decision's two-or-more unique branches and absence of mixed control kinds.
+ */
 function validateDecision(node: BusinessFlowNode, outgoing: BusinessFlowRelation[], diagnostics: HiaDiagnostic[]): void {
   const branches = outgoing.filter(({ kind }) => kind === "branch");
   const caseKeys = branches.map(({ caseKey }) => caseKey ?? "");
@@ -778,7 +864,10 @@ function validateDecision(node: BusinessFlowNode, outgoing: BusinessFlowRelation
   }
 }
 
-/** @lang zh-CN 验证每个 source 的 control order 从 0 连续递增。 @lang en Validates contiguous zero-based control order per source. */
+/**
+ * @lang zh-CN 验证每个 source 的 control order 从 0 连续递增。
+ * @lang en Validates contiguous zero-based control order per source.
+ */
 function validateOutgoingOrder(node: BusinessFlowNode, outgoing: BusinessFlowRelation[], diagnostics: HiaDiagnostic[]): void {
   const orders = outgoing.map(({ order }) => order).sort((left, right) => (left ?? -1) - (right ?? -1));
   if (orders.some((order, index) => order !== index)) {
@@ -789,7 +878,10 @@ function validateOutgoingOrder(node: BusinessFlowNode, outgoing: BusinessFlowRel
   }
 }
 
-/** @lang zh-CN 要求每个 step/decision 都显式关联 actor role。 @lang en Requires every step and decision to have an explicit actor-role relation. */
+/**
+ * @lang zh-CN 要求每个 step/decision 都显式关联 actor role。
+ * @lang en Requires every step and decision to have an explicit actor-role relation.
+ */
 function validateResponsibilityCoverage(document: BusinessFlowDocumentation, diagnostics: HiaDiagnostic[]): void {
   const performedNodeIds = new Set(document.relations.filter(({ family, kind }) => family === "responsibility" && kind === "performed-by").map(({ from }) => from));
   for (const node of document.nodes) {
@@ -799,7 +891,10 @@ function validateResponsibilityCoverage(document: BusinessFlowDocumentation, dia
   }
 }
 
-/** @lang zh-CN 创建按 endpoint 分组且按 order/id 稳定排序的 control relation map。 @lang en Creates a control-relation map grouped by endpoint and stably sorted by order/id. */
+/**
+ * @lang zh-CN 创建按 endpoint 分组且按 order/id 稳定排序的 control relation map。
+ * @lang en Creates a control-relation map grouped by endpoint and stably sorted by order/id.
+ */
 function groupRelations(relations: BusinessFlowRelation[], endpoint: "from" | "to"): Map<string, BusinessFlowRelation[]> {
   const grouped = new Map<string, BusinessFlowRelation[]>();
   for (const relation of relations) {
@@ -812,7 +907,10 @@ function groupRelations(relations: BusinessFlowRelation[], endpoint: "from" | "t
   return grouped;
 }
 
-/** @lang zh-CN 从 entry 遍历显式 control edge，不使用数组位置。 @lang en Traverses explicit control edges from entry without using array position. */
+/**
+ * @lang zh-CN 从 entry 遍历显式 control edge，不使用数组位置。
+ * @lang en Traverses explicit control edges from entry without using array position.
+ */
 function collectReachableNodeIds(entryNodeId: string, outgoing: Map<string, BusinessFlowRelation[]>): Set<string> {
   const reachable = new Set<string>();
   const pending = [entryNodeId];
@@ -825,7 +923,10 @@ function collectReachableNodeIds(entryNodeId: string, outgoing: Map<string, Busi
   return reachable;
 }
 
-/** @lang zh-CN 以三色 DFS 检测 P1 禁止的 control cycle。 @lang en Detects P1-forbidden control cycles with a three-color DFS. */
+/**
+ * @lang zh-CN 以三色 DFS 检测 P1 禁止的 control cycle。
+ * @lang en Detects P1-forbidden control cycles with a three-color DFS.
+ */
 function hasControlCycle(nodeIds: string[], outgoing: Map<string, BusinessFlowRelation[]>): boolean {
   const state = new Map<string, "visiting" | "visited">();
   const visit = (nodeId: string): boolean => {
@@ -841,7 +942,10 @@ function hasControlCycle(nodeIds: string[], outgoing: Map<string, BusinessFlowRe
   return nodeIds.some((nodeId) => visit(nodeId));
 }
 
-/** @lang zh-CN 规范化所有非语义集合与 locale/evidenceRef map。 @lang en Normalizes every non-semantic collection and locale/evidenceRef map. */
+/**
+ * @lang zh-CN 规范化所有非语义集合与 locale/evidenceRef map。
+ * @lang en Normalizes every non-semantic collection and locale/evidenceRef map.
+ */
 function normalizeBusinessFlowDocumentation(document: BusinessFlowDocumentation): BusinessFlowDocumentation {
   return {
     contract: BUSINESS_FLOW_DOCUMENTATION_CONTRACT,
@@ -864,14 +968,20 @@ function normalizeBusinessFlowDocumentation(document: BusinessFlowDocumentation)
   };
 }
 
-/** @lang zh-CN 复制 relation 并稳定 evidenceRef。 @lang en Copies a relation and stabilizes evidence references. */
+/**
+ * @lang zh-CN 复制 relation 并稳定 evidenceRef。
+ * @lang en Copies a relation and stabilizes evidence references.
+ */
 function normalizeRelation(relation: BusinessFlowRelation): BusinessFlowRelation {
   const normalized = structuredClone(relation);
   if (normalized.quality) normalized.quality = normalizeQuality(normalized.quality);
   return normalized;
 }
 
-/** @lang zh-CN 复制三维质量并排序 evidenceRef。 @lang en Copies quality dimensions and sorts evidence references. */
+/**
+ * @lang zh-CN 复制三维质量并排序 evidenceRef。
+ * @lang en Copies quality dimensions and sorts evidence references.
+ */
 function normalizeQuality(quality: BusinessFlowQuality): BusinessFlowQuality {
   return {
     confidence: quality.confidence,
@@ -880,7 +990,10 @@ function normalizeQuality(quality: BusinessFlowQuality): BusinessFlowQuality {
   };
 }
 
-/** @lang zh-CN 生成 public-safe count-only summary。 @lang en Builds a public-safe count-only summary. */
+/**
+ * @lang zh-CN 生成 public-safe count-only summary。
+ * @lang en Builds a public-safe count-only summary.
+ */
 function createBusinessFlowSummary(document: BusinessFlowDocumentation): BusinessFlowProductionSummary {
   return {
     actorNodes: document.nodes.filter(({ kind }) => kind === "actor").length,
@@ -895,7 +1008,10 @@ function createBusinessFlowSummary(document: BusinessFlowDocumentation): Busines
   };
 }
 
-/** @lang zh-CN 将对象递归转换为 key-sorted JSON value。 @lang en Recursively converts an object into a key-sorted JSON value. */
+/**
+ * @lang zh-CN 将对象递归转换为 key-sorted JSON value。
+ * @lang en Recursively converts an object into a key-sorted JSON value.
+ */
 function toStableJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(toStableJsonValue);
   if (!isRecord(value)) return value;
@@ -904,7 +1020,10 @@ function toStableJsonValue(value: unknown): unknown {
   return stable;
 }
 
-/** @lang zh-CN 深度冻结 producer-owned 输出，防止校验后漂移。 @lang en Deep-freezes producer-owned output to prevent post-validation drift. */
+/**
+ * @lang zh-CN 深度冻结 producer-owned 输出，防止校验后漂移。
+ * @lang en Deep-freezes producer-owned output to prevent post-validation drift.
+ */
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -913,14 +1032,20 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-/** @lang zh-CN 基础 flow shape。 @lang en Basic flow shape. */
+/**
+ * @lang zh-CN 基础 flow shape。
+ * @lang en Basic flow shape.
+ */
 function isFlowShape(value: unknown): boolean {
   return isExactRecord(value, flowKeys) && hasRequiredKeys(value, flowKeys)
     && isIdentity(value.id) && isLocale(value.defaultLocale) && typeof value.privacyClass === "string"
     && isLabels(value.labels) && isIdentity(value.entryNodeId) && isIdentityArray(value.endNodeIds, 256, false);
 }
 
-/** @lang zh-CN 基础 node shape；闭集 value 由分类 diagnostic 单独报告。 @lang en Basic node shape; category diagnostics report closed-set values separately. */
+/**
+ * @lang zh-CN 基础 node shape；闭集 value 由分类 diagnostic 单独报告。
+ * @lang en Basic node shape; category diagnostics report closed-set values separately.
+ */
 function isNodeShape(value: unknown): boolean {
   return isExactRecord(value, nodeKeys) && hasRequiredKeys(value, ["authorship", "flowId", "id", "kind", "labels", "privacyClass"] as const)
     && isIdentity(value.id) && isIdentity(value.flowId) && typeof value.kind === "string" && typeof value.authorship === "string"
@@ -930,7 +1055,10 @@ function isNodeShape(value: unknown): boolean {
     && (value.outcome === undefined || typeof value.outcome === "string");
 }
 
-/** @lang zh-CN 基础 relation shape。 @lang en Basic relation shape. */
+/**
+ * @lang zh-CN 基础 relation shape。
+ * @lang en Basic relation shape.
+ */
 function isRelationShape(value: unknown): boolean {
   return isExactRecord(value, relationKeys) && hasRequiredKeys(value, ["authorship", "family", "flowId", "from", "id", "kind", "to"] as const)
     && isIdentity(value.id) && isIdentity(value.flowId) && isIdentity(value.from) && isIdentity(value.to)
@@ -940,14 +1068,20 @@ function isRelationShape(value: unknown): boolean {
     && (value.quality === undefined || isQualityShape(value.quality));
 }
 
-/** @lang zh-CN 基础 metadata-only evidence shape。 @lang en Basic metadata-only evidence shape. */
+/**
+ * @lang zh-CN 基础 metadata-only evidence shape。
+ * @lang en Basic metadata-only evidence shape.
+ */
 function isEvidenceShape(value: unknown): boolean {
   return isExactRecord(value, evidenceKeys) && hasRequiredKeys(value, evidenceKeys)
     && isIdentity(value.id) && isIdentity(value.kind) && typeof value.privacyClass === "string"
     && value.locatorKind === "logical-id" && isIdentity(value.locator) && typeof value.bodyIncluded === "boolean";
 }
 
-/** @lang zh-CN 基础 code-binding shape。 @lang en Basic code-binding shape. */
+/**
+ * @lang zh-CN 基础 code-binding shape。
+ * @lang en Basic code-binding shape.
+ */
 function isCodeBindingShape(value: unknown): boolean {
   return isExactRecord(value, bindingKeys) && hasRequiredKeys(value, bindingKeys)
     && isIdentity(value.id) && isIdentity(value.flowId) && isIdentity(value.businessNodeId)
@@ -955,7 +1089,10 @@ function isCodeBindingShape(value: unknown): boolean {
     && isQualityShape(value.quality);
 }
 
-/** @lang zh-CN 基础 quality/provenance shape。 @lang en Basic quality/provenance shape. */
+/**
+ * @lang zh-CN 基础 quality/provenance shape。
+ * @lang en Basic quality/provenance shape.
+ */
 function isQualityShape(value: unknown): boolean {
   return isExactRecord(value, qualityKeys) && hasRequiredKeys(value, qualityKeys)
     && typeof value.resolution === "string" && typeof value.confidence === "string"
@@ -963,7 +1100,10 @@ function isQualityShape(value: unknown): boolean {
     && typeof value.provenance.origin === "string" && isIdentityArray(value.provenance.evidenceRefs, 256, true);
 }
 
-/** @lang zh-CN 基础 embedded diagnostic shape。 @lang en Basic embedded-diagnostic shape. */
+/**
+ * @lang zh-CN 基础 embedded diagnostic shape。
+ * @lang en Basic embedded-diagnostic shape.
+ */
 function isContractDiagnosticShape(value: unknown): boolean {
   return isExactRecord(value, diagnosticKeys) && hasRequiredKeys(value, ["code", "message", "severity"] as const)
     && typeof value.code === "string" && typeof value.message === "string" && value.message.length > 0
@@ -971,111 +1111,171 @@ function isContractDiagnosticShape(value: unknown): boolean {
     && (value.path === undefined || typeof value.path === "string") && (value.targetPath === undefined || typeof value.targetPath === "string");
 }
 
-/** @lang zh-CN 验证 labels 的 locale tag 与非空正文。 @lang en Validates label locale tags and non-empty text. */
+/**
+ * @lang zh-CN 验证 labels 的 locale tag 与非空正文。
+ * @lang en Validates label locale tags and non-empty text.
+ */
 function isLabels(value: unknown): value is BusinessFlowLocalizedLabels {
   return isRecord(value) && Object.keys(value).length > 0 && Object.keys(value).length <= 64
     && Object.entries(value).every(([locale, label]) => isLocale(locale) && typeof label === "string" && label.length > 0 && label.length <= 4096);
 }
 
-/** @lang zh-CN 验证固定 privacy false facts。 @lang en Validates fixed false privacy facts. */
+/**
+ * @lang zh-CN 验证固定 privacy false facts。
+ * @lang en Validates fixed false privacy facts.
+ */
 function isPrivacy(value: unknown): value is BusinessFlowPrivacy {
   return isExactRecord(value, privacyKeys) && hasRequiredKeys(value, privacyKeys) && privacyKeys.every((key) => value[key] === false);
 }
 
-/** @lang zh-CN 验证 exact/closed-world compatibility。 @lang en Validates exact, closed-world compatibility. */
+/**
+ * @lang zh-CN 验证 exact/closed-world compatibility。
+ * @lang en Validates exact, closed-world compatibility.
+ */
 function isCompatibility(value: unknown): value is BusinessFlowCompatibility {
   return isExactRecord(value, compatibilityKeys) && hasRequiredKeys(value, compatibilityKeys)
     && value.versionMatch === "exact" && value.unknownProperties === "reject" && value.unknownKindPolicy === "reject"
     && value.migrationPolicy === "explicit-pure-identity-preserving";
 }
 
-/** @lang zh-CN 验证 relation family 与 kind pairing。 @lang en Validates relation-family and kind pairing. */
+/**
+ * @lang zh-CN 验证 relation family 与 kind pairing。
+ * @lang en Validates relation-family and kind pairing.
+ */
 function relationKindMatchesFamily(family: string, kind: string): boolean {
   if (family === "control") return kind === "sequence" || kind === "branch" || kind === "exception";
   if (family === "responsibility") return kind === "performed-by";
   return family === "data" && (kind === "reads" || kind === "writes" || kind === "emits");
 }
 
-/** @lang zh-CN 隐私等级越大越严格。 @lang en Higher privacy ranks are more restrictive. */
+/**
+ * @lang zh-CN 隐私等级越大越严格。
+ * @lang en Higher privacy ranks are more restrictive.
+ */
 function privacyRank(value: BusinessFlowPrivacyClass): number {
   return { public: 0, internal: 1, restricted: 2 }[value] ?? -1;
 }
 
-/** @lang zh-CN 检测任何嵌套 private carrier field。 @lang en Detects any nested private-carrier field. */
+/**
+ * @lang zh-CN 检测任何嵌套 private carrier field。
+ * @lang en Detects any nested private-carrier field.
+ */
 function containsForbiddenField(value: unknown): boolean {
   if (Array.isArray(value)) return value.some(containsForbiddenField);
   if (!isRecord(value)) return false;
   return Object.entries(value).some(([key, child]) => forbiddenFieldNames.has(key) || containsForbiddenField(child));
 }
 
-/** @lang zh-CN 创建不含文件位置的 stable diagnostic。 @lang en Creates a stable diagnostic with no filesystem location. */
+/**
+ * @lang zh-CN 创建不含文件位置的 stable diagnostic。
+ * @lang en Creates a stable diagnostic with no filesystem location.
+ */
 function businessFlowDiagnostic(code: BusinessFlowDocumentationDiagnosticCode, message: string, path?: string): HiaDiagnostic {
   return createHiaDiagnostic(code, message, "error", path ? { path } : {});
 }
 
-/** @lang zh-CN 去重并按 code/path/message 稳定排序。 @lang en De-duplicates and stably sorts by code/path/message. */
+/**
+ * @lang zh-CN 去重并按 code/path/message 稳定排序。
+ * @lang en De-duplicates and stably sorts by code/path/message.
+ */
 function sortAndDeduplicateDiagnostics(diagnostics: HiaDiagnostic[]): HiaDiagnostic[] {
   const byKey = new Map<string, HiaDiagnostic>();
   for (const diagnostic of diagnostics) byKey.set(`${diagnostic.code}\u0000${diagnostic.path ?? ""}\u0000${diagnostic.message}`, diagnostic);
   return [...byKey.values()].sort(compareDiagnostics);
 }
 
-/** @lang zh-CN Diagnostic stable comparator。 @lang en Stable diagnostic comparator. */
+/**
+ * @lang zh-CN Diagnostic stable comparator。
+ * @lang en Stable diagnostic comparator.
+ */
 function compareDiagnostics(left: Pick<HiaDiagnostic, "code" | "message" | "path">, right: Pick<HiaDiagnostic, "code" | "message" | "path">): number {
   return compareStrings(`${left.code}\u0000${left.path ?? ""}\u0000${left.message}`, `${right.code}\u0000${right.path ?? ""}\u0000${right.message}`);
 }
 
-/** @lang zh-CN Narrative relation comparator：order 优先，id 决胜。 @lang en Narrative relation comparator: order first, id as tie-breaker. */
+/**
+ * @lang zh-CN Narrative relation comparator：order 优先，id 决胜。
+ * @lang en Narrative relation comparator: order first, id as tie-breaker.
+ */
 function compareRelationsByNarrativeOrder(left: BusinessFlowRelation, right: BusinessFlowRelation): number {
   return (left.order ?? Number.MAX_SAFE_INTEGER) - (right.order ?? Number.MAX_SAFE_INTEGER) || compareStrings(left.id, right.id);
 }
 
-/** @lang zh-CN Stable id comparator。 @lang en Stable id comparator. */
+/**
+ * @lang zh-CN Stable id comparator。
+ * @lang en Stable id comparator.
+ */
 function compareById(left: { id: string }, right: { id: string }): number {
   return compareStrings(left.id, right.id);
 }
 
-/** @lang zh-CN Locale-independent ASCII-compatible string comparator。 @lang en Locale-independent ASCII-compatible string comparator. */
+/**
+ * @lang zh-CN Locale-independent ASCII-compatible string comparator。
+ * @lang en Locale-independent ASCII-compatible string comparator.
+ */
 function compareStrings(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-/** @lang zh-CN 按 locale key 排序 string map。 @lang en Sorts a string map by locale key. */
+/**
+ * @lang zh-CN 按 locale key 排序 string map。
+ * @lang en Sorts a string map by locale key.
+ */
 function sortStringMap(value: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(value).sort(([left], [right]) => compareStrings(left, right)));
 }
 
-/** @lang zh-CN 判断 stable identity。 @lang en Checks a stable identity. */
+/**
+ * @lang zh-CN 判断 stable identity。
+ * @lang en Checks a stable identity.
+ */
 function isIdentity(value: unknown): value is string {
   return typeof value === "string" && stableIdentityPattern.test(value);
 }
 
-/** @lang zh-CN 判断 P1 locale tag grammar。 @lang en Checks the P1 locale-tag grammar. */
+/**
+ * @lang zh-CN 判断 P1 locale tag grammar。
+ * @lang en Checks the P1 locale-tag grammar.
+ */
 function isLocale(value: unknown): value is string {
   return typeof value === "string" && localePattern.test(value);
 }
 
-/** @lang zh-CN 判断有界 identity array，可选 unique。 @lang en Checks a bounded identity array with optional uniqueness. */
+/**
+ * @lang zh-CN 判断有界 identity array，可选 unique。
+ * @lang en Checks a bounded identity array with optional uniqueness.
+ */
 function isIdentityArray(value: unknown, maximum: number, unique: boolean): value is string[] {
   return Array.isArray(value) && value.length <= maximum && value.every(isIdentity) && (!unique || new Set(value).size === value.length);
 }
 
-/** @lang zh-CN 判断非空、唯一 stable identity array。 @lang en Checks a non-empty unique stable-identity array. */
+/**
+ * @lang zh-CN 判断非空、唯一 stable identity array。
+ * @lang en Checks a non-empty unique stable-identity array.
+ */
 function isUniqueIdentityArray(value: readonly string[]): boolean {
   return value.length > 0 && value.every(isIdentity) && new Set(value).size === value.length;
 }
 
-/** @lang zh-CN 判断非数组 plain record。 @lang en Checks a non-array plain record. */
+/**
+ * @lang zh-CN 判断非数组 plain record。
+ * @lang en Checks a non-array plain record.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 判断 record 只包含 allowlist key。 @lang en Checks that a record contains only allowlisted keys. */
+/**
+ * @lang zh-CN 判断 record 只包含 allowlist key。
+ * @lang en Checks that a record contains only allowlisted keys.
+ */
 function isExactRecord<const T extends readonly string[]>(value: unknown, keys: T): value is Record<T[number], unknown> {
   return isRecord(value) && Object.keys(value).every((key) => keys.includes(key as T[number]));
 }
 
-/** @lang zh-CN 判断 record 含有每个 required key。 @lang en Checks that a record contains every required key. */
+/**
+ * @lang zh-CN 判断 record 含有每个 required key。
+ * @lang en Checks that a record contains every required key.
+ */
 function hasRequiredKeys<const T extends readonly string[]>(value: Record<string, unknown>, keys: T): boolean {
   return keys.every((key) => Object.hasOwn(value, key));
 }

@@ -2,65 +2,65 @@ import { createHiaDiagnostic } from "./diagnostics.js";
 import type { HiaDiagnostic, HiaDiagnosticSeverity } from "./model.js";
 
 /**
- * Neutral contract name for a documentation locale resource (DLR).
+ * @lang en Neutral contract name for a documentation locale resource (DLR).
  *
- * 中文：文档语言资源（DLR）的中性 contract 名称。
+ * @lang zh-CN 文档语言资源（DLR）的中性 contract 名称。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_CONTRACT = "documentation-locale-resource" as const;
 
 /**
- * Draft contract version for the canonical DLR payload.
+ * @lang en Draft contract version for the canonical DLR payload.
  *
- * 中文：canonical DLR payload 的草案 contract 版本。
+ * @lang zh-CN canonical DLR payload 的草案 contract 版本。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
- * Canonical P1 wire format for a DLR payload.
+ * @lang en Canonical P1 wire format for a DLR payload.
  *
- * 中文：DLR payload 的 P1 canonical wire format。
+ * @lang zh-CN DLR payload 的 P1 canonical wire format。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_FORMAT = "documentation-locale-resource-json" as const;
 
 /**
- * Draft format version; it is deliberately independent from the contract version.
+ * @lang en Draft format version; it is deliberately independent from the contract version.
  *
- * 中文：format 的草案版本，刻意与 contract version 独立。
+ * @lang zh-CN format 的草案版本，刻意与 contract version 独立。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_FORMAT_VERSION = "0.1.0-draft" as const;
 
 /**
- * Public JSON Schema id for the canonical DLR payload.
+ * @lang en Public JSON Schema id for the canonical DLR payload.
  *
- * 中文：canonical DLR payload 的公开 JSON Schema 标识。
+ * @lang zh-CN canonical DLR payload 的公开 JSON Schema 标识。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resource-0.1.0-draft.schema.json" as const;
 
 /**
- * Sidecar contract name used to link a document field to one DLR resolution.
+ * @lang en Sidecar contract name used to link a document field to one DLR resolution.
  *
- * 中文：将文档 field 关联到一次 DLR resolution 的 sidecar contract 名称。
+ * @lang zh-CN 将文档 field 关联到一次 DLR resolution 的 sidecar contract 名称。
  */
 export const DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT = "documentation-locale-resolution" as const;
 
 /**
- * Draft contract version for the metadata-only resolution sidecar.
+ * @lang en Draft contract version for the metadata-only resolution sidecar.
  *
- * 中文：metadata-only resolution sidecar 的草案 contract 版本。
+ * @lang zh-CN metadata-only resolution sidecar 的草案 contract 版本。
  */
 export const DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
- * Public JSON Schema id for the metadata-only locale-resolution sidecar.
+ * @lang en Public JSON Schema id for the metadata-only locale-resolution sidecar.
  *
- * 中文：metadata-only locale-resolution sidecar 的公开 JSON Schema 标识。
+ * @lang zh-CN metadata-only locale-resolution sidecar 的公开 JSON Schema 标识。
  */
 export const DOCUMENTATION_LOCALE_RESOLUTION_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/documentation-locale-resolution-0.1.0-draft.schema.json" as const;
 
 /**
- * Resolution dimensions remain independent so fallback never implies low confidence.
+ * @lang en Resolution dimensions remain independent so fallback never implies low confidence.
  *
- * 中文：resolution 的三个维度保持独立，fallback 绝不隐含 low confidence。
+ * @lang zh-CN resolution 的三个维度保持独立，fallback 绝不隐含 low confidence。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_RESOLUTION_KINDS = [
   "direct",
@@ -71,16 +71,16 @@ export const DOCUMENTATION_LOCALE_RESOURCE_RESOLUTION_KINDS = [
 ] as const;
 
 /**
- * Confidence levels emitted by the neutral DLR resolver.
+ * @lang en Confidence levels emitted by the neutral DLR resolver.
  *
- * 中文：中性 DLR resolver 输出的 confidence 等级。
+ * @lang zh-CN 中性 DLR resolver 输出的 confidence 等级。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_CONFIDENCE_LEVELS = ["high", "medium", "low", "none"] as const;
 
 /**
- * Fixed P1 provenance kinds. Legacy is an explicit bridge signal, not canonical input.
+ * @lang en Fixed P1 provenance kinds. Legacy is an explicit bridge signal, not canonical input.
  *
- * 中文：固定的 P1 provenance kind；legacy 仅是显式 bridge 信号，不是 canonical input。
+ * @lang zh-CN 固定的 P1 provenance kind；legacy 仅是显式 bridge 信号，不是 canonical input。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_PROVENANCE_KINDS = [
   "inline-locale",
@@ -91,9 +91,9 @@ export const DOCUMENTATION_LOCALE_RESOURCE_PROVENANCE_KINDS = [
 ] as const;
 
 /**
- * Neutral diagnostic catalog required by the DLR P1 contract.
+ * @lang en Neutral diagnostic catalog required by the DLR P1 contract.
  *
- * 中文：DLR P1 contract 必须提供的中性 diagnostic 目录。
+ * @lang zh-CN DLR P1 contract 必须提供的中性 diagnostic 目录。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_DIAGNOSTIC_CODE_REGISTRY = [
   { code: "DLR_RESOURCE_ID_INVALID", defaultSeverity: "error", description: "DLR resourceId is invalid." },
@@ -121,18 +121,18 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DIAGNOSTIC_CODE_REGISTRY = [
 }[];
 
 /**
- * A stable DLR entry, keyed by `resourceId + entryKey` in the containing resource.
+ * @lang en A stable DLR entry, keyed by `resourceId + entryKey` in the containing resource.
  *
- * 中文：稳定的 DLR entry；其身份由包含它的 `resourceId + entryKey` 共同确定。
+ * @lang zh-CN 稳定的 DLR entry；其身份由包含它的 `resourceId + entryKey` 共同确定。
  */
 export interface DocumentationLocaleResourceEntry {
   localizedText: Record<string, string>;
 }
 
 /**
- * Canonical JSON shape for `documentation-locale-resource@0.1.0-draft`.
+ * @lang en Canonical JSON shape for `documentation-locale-resource@0.1.0-draft`.
  *
- * 中文：`documentation-locale-resource@0.1.0-draft` 的 canonical JSON 结构。
+ * @lang zh-CN `documentation-locale-resource@0.1.0-draft` 的 canonical JSON 结构。
  */
 export interface DocumentationLocaleResource {
   $schema?: string;
@@ -147,9 +147,9 @@ export interface DocumentationLocaleResource {
 }
 
 /**
- * Logical resource reference emitted by a doc-line profile before local I/O occurs.
+ * @lang en Logical resource reference emitted by a doc-line profile before local I/O occurs.
  *
- * 中文：doc-line profile 在 local I/O 前输出的逻辑资源引用。
+ * @lang zh-CN doc-line profile 在 local I/O 前输出的逻辑资源引用。
  */
 export interface DocumentationLocaleResourceReference {
   entryKey: string;
@@ -158,9 +158,9 @@ export interface DocumentationLocaleResourceReference {
 }
 
 /**
- * One deterministic source tier made available to the pure resolver.
+ * @lang en One deterministic source tier made available to the pure resolver.
  *
- * 中文：提供给纯 resolver 的一个确定性 source tier。
+ * @lang zh-CN 提供给纯 resolver 的一个确定性 source tier。
  */
 export interface DocumentationLocaleResourceResolutionSource {
   resource: DocumentationLocaleResource;
@@ -168,9 +168,9 @@ export interface DocumentationLocaleResourceResolutionSource {
 }
 
 /**
- * Resolver input. The runtime adapter owns resource loading and passes only validated data.
+ * @lang en Resolver input. The runtime adapter owns resource loading and passes only validated data.
  *
- * 中文：resolver 输入；runtime adapter 负责资源读取，只传入已校验的数据。
+ * @lang zh-CN resolver 输入；runtime adapter 负责资源读取，只传入已校验的数据。
  */
 export interface DocumentationLocaleResourceResolutionOptions {
   catalogDefaultResource?: DocumentationLocaleResource;
@@ -187,9 +187,9 @@ export interface DocumentationLocaleResourceResolutionOptions {
 }
 
 /**
- * Non-secret origin of a resolved text. It deliberately excludes locators and text bodies.
+ * @lang en Non-secret origin of a resolved text. It deliberately excludes locators and text bodies.
  *
- * 中文：已解析文本的非敏感来源；刻意不包含 locator 或文本正文。
+ * @lang zh-CN 已解析文本的非敏感来源；刻意不包含 locator 或文本正文。
  */
 export interface DocumentationLocaleResourceProvenance {
   coverage: "complete" | "missing";
@@ -200,9 +200,9 @@ export interface DocumentationLocaleResourceProvenance {
 }
 
 /**
- * Complete runtime result. `text` is process-local and must not be copied to a sidecar.
+ * @lang en Complete runtime result. `text` is process-local and must not be copied to a sidecar.
  *
- * 中文：完整 runtime 结果；`text` 仅限进程内使用，绝不可复制到 sidecar。
+ * @lang zh-CN 完整 runtime 结果；`text` 仅限进程内使用，绝不可复制到 sidecar。
  */
 export interface DocumentationLocaleResourceResolution {
   confidence: typeof DOCUMENTATION_LOCALE_RESOURCE_CONFIDENCE_LEVELS[number];
@@ -216,9 +216,9 @@ export interface DocumentationLocaleResourceResolution {
 }
 
 /**
- * Metadata-only record that can be linked from a doc-source-map without becoming a datastore.
+ * @lang en Metadata-only record that can be linked from a doc-source-map without becoming a datastore.
  *
- * 中文：可由 doc-source-map 关联、但绝不成为数据存储的 metadata-only record。
+ * @lang zh-CN 可由 doc-source-map 关联、但绝不成为数据存储的 metadata-only record。
  */
 export interface DocumentationLocaleResolutionSidecarEntry {
   confidence: DocumentationLocaleResourceResolution["confidence"];
@@ -235,9 +235,9 @@ export interface DocumentationLocaleResolutionSidecarEntry {
 }
 
 /**
- * Versioned sidecar container. No raw locator, resource body or rendered text is allowed.
+ * @lang en Versioned sidecar container. No raw locator, resource body or rendered text is allowed.
  *
- * 中文：版本化 sidecar 容器；禁止 raw locator、resource body 和 rendered text。
+ * @lang zh-CN 版本化 sidecar 容器；禁止 raw locator、resource body 和 rendered text。
  */
 export interface DocumentationLocaleResolutionSidecar {
   contract: typeof DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT;
@@ -252,9 +252,9 @@ export interface DocumentationLocaleResolutionSidecar {
 }
 
 /**
- * JSON Schema for the canonical DLR payload. Cross-resource policy remains in the validator.
+ * @lang en JSON Schema for the canonical DLR payload. Cross-resource policy remains in the validator.
  *
- * 中文：canonical DLR payload 的 JSON Schema；跨资源 policy 仍由 validator 执行。
+ * @lang zh-CN canonical DLR payload 的 JSON Schema；跨资源 policy 仍由 validator 执行。
  */
 export const DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -289,9 +289,9 @@ export const DOCUMENTATION_LOCALE_RESOURCE_JSON_SCHEMA = {
 } as const;
 
 /**
- * JSON Schema for the metadata-only DLR resolution sidecar.
+ * @lang en JSON Schema for the metadata-only DLR resolution sidecar.
  *
- * 中文：metadata-only DLR resolution sidecar 的 JSON Schema。
+ * @lang zh-CN metadata-only DLR resolution sidecar 的 JSON Schema。
  */
 export const DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -359,10 +359,9 @@ export const DOCUMENTATION_LOCALE_RESOLUTION_JSON_SCHEMA = {
 } as const;
 
 /**
- * Canonicalize one BCP 47 input without consulting a host, registry or network service.
+ * @lang en Canonicalize one BCP 47 input without consulting a host, registry or network service.
  *
- * 中文：在不查询 host、registry 或 network 的前提下 canonicalize 一个 BCP 47 输入。
- *
+ * @lang zh-CN 在不查询 host、registry 或 network 的前提下 canonicalize 一个 BCP 47 输入。
  * @param locale - English: Candidate locale tag. 中文：候选 locale tag。
  * @returns English: Canonical tag and legacy-underscore signal, or undefined when invalid. 中文：canonical tag 与 legacy-underscore 信号；非法时为 undefined。
  */
@@ -381,10 +380,9 @@ export function canonicalizeDocumentationLocale(locale: string): { canonical: st
 }
 
 /**
- * Build the frozen fallback order: requested, parents, explicit fallbacks, then default.
+ * @lang en Build the frozen fallback order: requested, parents, explicit fallbacks, then default.
  *
- * 中文：构造冻结的 fallback 顺序：requested、父级、显式 fallback、最后 default。
- *
+ * @lang zh-CN 构造冻结的 fallback 顺序：requested、父级、显式 fallback、最后 default。
  * @param requestedLocale - English: Requested BCP 47 locale. 中文：请求的 BCP 47 locale。
  * @param defaultLocale - English: Explicit source default locale. 中文：显式 source default locale。
  * @param fallbackLocales - English: Profile-declared fallback locales. 中文：profile 声明的 fallback locales。
@@ -421,19 +419,18 @@ export function buildDocumentationLocaleFallbackChain(
 }
 
 /**
- * Validate a stable resource id without tying it to a physical location.
+ * @lang en Validate a stable resource id without tying it to a physical location.
  *
- * 中文：校验稳定 resource id，不把它绑定到物理位置。
+ * @lang zh-CN 校验稳定 resource id，不把它绑定到物理位置。
  */
 export function isDocumentationLocaleResourceId(value: string): boolean {
   return /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/.test(value);
 }
 
 /**
- * Validate a strict project-relative POSIX DLR locator before any filesystem operation.
+ * @lang en Validate a strict project-relative POSIX DLR locator before any filesystem operation.
  *
- * 中文：在任何 filesystem operation 前校验严格的 project-relative POSIX DLR locator。
- *
+ * @lang zh-CN 在任何 filesystem operation 前校验严格的 project-relative POSIX DLR locator。
  * @param locator - English: Untrusted source locator. 中文：不可信 source locator。
  * @returns English: Privacy-safe diagnostics only. 中文：仅返回不泄漏 locator 的 diagnostics。
  */
@@ -460,9 +457,9 @@ export function validateDocumentationLocaleResourceLocator(locator: unknown): Hi
 }
 
 /**
- * Validate a neutral reference before a profile attempts catalog or file resolution.
+ * @lang en Validate a neutral reference before a profile attempts catalog or file resolution.
  *
- * 中文：在 profile 尝试 catalog 或 file resolution 前校验中性 reference。
+ * @lang zh-CN 在 profile 尝试 catalog 或 file resolution 前校验中性 reference。
  */
 export function validateDocumentationLocaleResourceReference(reference: unknown): HiaDiagnostic[] {
   if (!isRecord(reference)) {
@@ -496,10 +493,9 @@ export function validateDocumentationLocaleResourceReference(reference: unknown)
 }
 
 /**
- * Parse canonical UTF-8 JSON text and return normalized, validated DLR data.
+ * @lang en Parse canonical UTF-8 JSON text and return normalized, validated DLR data.
  *
- * 中文：解析 canonical UTF-8 JSON 文本，并返回 normalized、validated 的 DLR 数据。
- *
+ * @lang zh-CN 解析 canonical UTF-8 JSON 文本，并返回 normalized、validated 的 DLR 数据。
  * @param text - English: Already-decoded UTF-8 JSON text. 中文：已解码的 UTF-8 JSON 文本。
  * @returns English: Normalized resource when valid and privacy-safe diagnostics. 中文：合法时返回 normalized resource，并附 privacy-safe diagnostics。
  */
@@ -521,19 +517,18 @@ export function parseDocumentationLocaleResource(text: string): { diagnostics: H
 }
 
 /**
- * Validate an object-shaped DLR payload and normalize locale tags for runtime use.
+ * @lang en Validate an object-shaped DLR payload and normalize locale tags for runtime use.
  *
- * 中文：校验 object 形式的 DLR payload，并为 runtime 使用 normalize locale tag。
+ * @lang zh-CN 校验 object 形式的 DLR payload，并为 runtime 使用 normalize locale tag。
  */
 export function validateDocumentationLocaleResource(value: unknown): HiaDiagnostic[] {
   return normalizeDocumentationLocaleResource(value).diagnostics;
 }
 
 /**
- * Resolve one entry with frozen source priority and locale fallback semantics.
+ * @lang en Resolve one entry with frozen source priority and locale fallback semantics.
  *
- * 中文：按照冻结的 source priority 与 locale fallback 语义解析一个 entry。
- *
+ * @lang zh-CN 按照冻结的 source priority 与 locale fallback 语义解析一个 entry。
  * @param reference - English: Entry and resource selector. 中文：entry 与 resource selector。
  * @param options - English: Already-loaded source tiers. 中文：已读取的 source tiers。
  * @returns English: Text is runtime-only; provenance and diagnostics are serializable. 中文：text 仅 runtime 使用；provenance 与 diagnostics 可序列化。
@@ -599,9 +594,9 @@ export function resolveDocumentationLocaleResource(
 }
 
 /**
- * Convert a runtime resolution into a metadata-only sidecar entry.
+ * @lang en Convert a runtime resolution into a metadata-only sidecar entry.
  *
- * 中文：将 runtime resolution 转换为 metadata-only sidecar entry。
+ * @lang zh-CN 将 runtime resolution 转换为 metadata-only sidecar entry。
  */
 export function createDocumentationLocaleResolutionSidecar(
   id: string,
@@ -629,9 +624,9 @@ export function createDocumentationLocaleResolutionSidecar(
 }
 
 /**
- * Validate sidecar structure and ensure private DLR data did not cross the linkage boundary.
+ * @lang en Validate sidecar structure and ensure private DLR data did not cross the linkage boundary.
  *
- * 中文：校验 sidecar 结构，并确保 private DLR data 没有越过 linkage 边界。
+ * @lang zh-CN 校验 sidecar 结构，并确保 private DLR data 没有越过 linkage 边界。
  */
 export function validateDocumentationLocaleResolutionSidecar(value: unknown): HiaDiagnostic[] {
   const diagnostics: HiaDiagnostic[] = [];

@@ -3,37 +3,48 @@ import type { HiaDiagnostic } from "./model.js";
 import { isJsonDataGraph } from "./json-data.js";
 
 /**
- * @lang zh-CN
- * 跨 renderer UI locale 完整性报告的中性 contract 名称；它不绑定 Portal、JSDoc、DOM 或翻译平台。
+ * @lang zh-CN 跨 renderer UI locale 完整性报告的中性 contract 名称；它不绑定 Portal、JSDoc、DOM 或翻译平台。
  *
- * @lang en
- * Neutral contract name for cross-renderer UI-locale completeness reports; it binds no Portal, JSDoc, DOM, or translation platform.
+ * @lang en Neutral contract name for cross-renderer UI-locale completeness reports; it binds no Portal, JSDoc, DOM, or translation platform.
  */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT = "documentation-ui-locale-completeness" as const;
 
-/** @lang zh-CN 精确保留的历史读取版本，不是当前写者目标。 @lang en Exact historical reader version, not the current writer target. */
+/**
+ * @lang zh-CN 精确保留的历史读取版本，不是当前写者目标。
+ * @lang en Exact historical reader version, not the current writer target.
+ */
 export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION = "0.1.0-draft" as const;
 
-/** @lang zh-CN 当前写者的精确1.0.0身份，旧报告不得只换号取得此身份。 @lang en Exact 1.0.0 writer identity; legacy reports cannot acquire it by version replacement alone. */
+/**
+ * @lang zh-CN 当前写者的精确1.0.0身份，旧报告不得只换号取得此身份。
+ * @lang en Exact 1.0.0 writer identity; legacy reports cannot acquire it by version replacement alone.
+ */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION = "1.0.0" as const;
 
-/** @lang zh-CN 当前报告跨evaluation的总result上限；生成前与深度读取前各自核验。 @lang en Current report-wide result ceiling across evaluations, checked before generation and deep reading. */
+/**
+ * @lang zh-CN 当前报告跨evaluation的总result上限；生成前与深度读取前各自核验。
+ * @lang en Current report-wide result ceiling across evaluations, checked before generation and deep reading.
+ */
 export const DOCUMENTATION_UI_LOCALE_MAX_RESULTS = 100000;
 
-/** @lang zh-CN 公开 schema identity。 @lang en Public schema identity. */
+/**
+ * @lang zh-CN 公开 schema identity。
+ * @lang en Public schema identity.
+ */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-1.0.0.schema.json" as const;
 
-/** @lang zh-CN 精确历史Schema身份，内容不因当前身份升级而改写。 @lang en Exact historical schema identity, whose content is not rewritten by the current upgrade. */
+/**
+ * @lang zh-CN 精确历史Schema身份，内容不因当前身份升级而改写。
+ * @lang en Exact historical schema identity, whose content is not rewritten by the current upgrade.
+ */
 export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-ui-locale-completeness-0.1.0-draft.schema.json" as const;
 
 /**
- * @lang zh-CN
- * UI locale contract 与 gate 的稳定 diagnostic code；消息不会回显翻译正文或运行环境。
+ * @lang zh-CN UI locale contract 与 gate 的稳定 diagnostic code；消息不会回显翻译正文或运行环境。
  *
- * @lang en
- * Stable diagnostic codes for the UI-locale contract and gate; messages never echo translations or runtime-environment details.
+ * @lang en Stable diagnostic codes for the UI-locale contract and gate; messages never echo translations or runtime-environment details.
  */
 export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES = [
   "ULC_INVALID_INPUT",
@@ -50,23 +61,41 @@ export const DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES = [
   "ULC_COMPATIBILITY_UNSUPPORTED"
 ] as const;
 
-/** @lang zh-CN UI locale diagnostic code 类型。 @lang en UI-locale diagnostic-code type. */
+/**
+ * @lang zh-CN UI locale diagnostic code 类型。
+ * @lang en UI-locale diagnostic-code type.
+ */
 export type DocumentationUiLocaleCompletenessDiagnosticCode =
   typeof DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES[number];
 
-/** @lang zh-CN P1 必须覆盖的执行模式。 @lang en Execution modes that P1 must cover. */
+/**
+ * @lang zh-CN P1 必须覆盖的执行模式。
+ * @lang en Execution modes that P1 must cover.
+ */
 export const DOCUMENTATION_UI_LOCALE_MODES = ["interactive", "no-script"] as const;
 
-/** @lang zh-CN UI message 的可审计使用通道。 @lang en Auditable usage channels for UI messages. */
+/**
+ * @lang zh-CN UI message 的可审计使用通道。
+ * @lang en Auditable usage channels for UI messages.
+ */
 export const DOCUMENTATION_UI_LOCALE_CHANNELS = ["visible-text", "accessible-name", "status-message"] as const;
 
-/** @lang zh-CN 单个 UI surface 的执行模式。 @lang en Execution mode for one UI surface. */
+/**
+ * @lang zh-CN 单个 UI surface 的执行模式。
+ * @lang en Execution mode for one UI surface.
+ */
 export type DocumentationUiLocaleMode = typeof DOCUMENTATION_UI_LOCALE_MODES[number];
 
-/** @lang zh-CN 单个 required message 的使用通道。 @lang en Usage channel for one required message. */
+/**
+ * @lang zh-CN 单个 required message 的使用通道。
+ * @lang en Usage channel for one required message.
+ */
 export type DocumentationUiLocaleChannel = typeof DOCUMENTATION_UI_LOCALE_CHANNELS[number];
 
-/** @lang zh-CN 稳定 message identity 与占位符定义。 @lang en Stable message identity and placeholder definition. */
+/**
+ * @lang zh-CN 稳定 message identity 与占位符定义。
+ * @lang en Stable message identity and placeholder definition.
+ */
 export interface DocumentationUiLocaleMessageDefinition {
   messageId: string;
   placeholderNames: string[];
@@ -74,42 +103,47 @@ export interface DocumentationUiLocaleMessageDefinition {
 }
 
 /**
- * @lang zh-CN
- * 内存 locale bundle entry；`text` 只用于 gate，绝不投影到公开 report。
+ * @lang zh-CN 内存 locale bundle entry；`text` 只用于 gate，绝不投影到公开 report。
  *
- * @lang en
- * In-memory locale-bundle entry; `text` is gate input only and is never projected into the public report.
+ * @lang en In-memory locale-bundle entry; `text` is gate input only and is never projected into the public report.
  */
 export interface DocumentationUiLocaleBundleEntry {
   messageId: string;
   text: string;
 }
 
-/** @lang zh-CN 一个显式 locale 的 public plain-text bundle。 @lang en Public plain-text bundle for one explicit locale. */
+/**
+ * @lang zh-CN 一个显式 locale 的 public plain-text bundle。
+ * @lang en Public plain-text bundle for one explicit locale.
+ */
 export interface DocumentationUiLocaleBundle {
   bundleId: string;
   entries: DocumentationUiLocaleBundleEntry[];
   locale: string;
 }
 
-/** @lang zh-CN 单个 UI locale 的显式有序 fallback chain。 @lang en Explicit ordered fallback chain for one UI locale. */
+/**
+ * @lang zh-CN 单个 UI locale 的显式有序 fallback chain。
+ * @lang en Explicit ordered fallback chain for one UI locale.
+ */
 export interface DocumentationUiLocaleFallbackChain {
   fallbackLocales: string[];
   uiLocale: string;
 }
 
-/** @lang zh-CN 某执行模式声明的 UI message 通道。 @lang en UI-message channels declared for one execution mode. */
+/**
+ * @lang zh-CN 某执行模式声明的 UI message 通道。
+ * @lang en UI-message channels declared for one execution mode.
+ */
 export interface DocumentationUiLocaleSurfaceMode {
   channels: DocumentationUiLocaleChannel[];
   mode: DocumentationUiLocaleMode;
 }
 
 /**
- * @lang zh-CN
- * 页面默认语言与局部语言声明；W-P125 仍须把它映射到真实 DOM/accessibility tree。
+ * @lang zh-CN 页面默认语言与局部语言声明；W-P125 仍须把它映射到真实 DOM/accessibility tree。
  *
- * @lang en
- * Page-default and language-of-parts declaration; W-P125 must still map it to the real DOM/accessibility tree.
+ * @lang en Page-default and language-of-parts declaration; W-P125 must still map it to the real DOM/accessibility tree.
  */
 export interface DocumentationUiLocaleLanguageMetadata {
   documentLanguage: string;
@@ -117,7 +151,10 @@ export interface DocumentationUiLocaleLanguageMetadata {
   uiLocale: string;
 }
 
-/** @lang zh-CN 一个 renderer-neutral 文档 UI surface。 @lang en One renderer-neutral documentation UI surface. */
+/**
+ * @lang zh-CN 一个 renderer-neutral 文档 UI surface。
+ * @lang en One renderer-neutral documentation UI surface.
+ */
 export interface DocumentationUiLocaleSurface {
   contentLocale: string;
   languageMetadata: DocumentationUiLocaleLanguageMetadata[];
@@ -125,7 +162,10 @@ export interface DocumentationUiLocaleSurface {
   surfaceId: string;
 }
 
-/** @lang zh-CN 单个状态下必须覆盖的 stable message。 @lang en Stable message required in one state. */
+/**
+ * @lang zh-CN 单个状态下必须覆盖的 stable message。
+ * @lang en Stable message required in one state.
+ */
 export interface DocumentationUiLocaleRequirement {
   channel: DocumentationUiLocaleChannel;
   messageId: string;
@@ -136,11 +176,9 @@ export interface DocumentationUiLocaleRequirement {
 }
 
 /**
- * @lang zh-CN
- * Pure evaluator 的完整输入；所有 locale、bundle、surface 与 requirement 都必须由调用方显式给出。
+ * @lang zh-CN Pure evaluator 的完整输入；所有 locale、bundle、surface 与 requirement 都必须由调用方显式给出。
  *
- * @lang en
- * Complete input for the pure evaluator; callers must explicitly provide every locale, bundle, surface, and requirement.
+ * @lang en Complete input for the pure evaluator; callers must explicitly provide every locale, bundle, surface, and requirement.
  */
 export interface DocumentationUiLocaleCompletenessInput {
   bundles: DocumentationUiLocaleBundle[];
@@ -154,14 +192,20 @@ export interface DocumentationUiLocaleCompletenessInput {
   uiLocales: string[];
 }
 
-/** @lang zh-CN report 中不含译文的 bundle inventory。 @lang en Translation-free bundle inventory in the report. */
+/**
+ * @lang zh-CN report 中不含译文的 bundle inventory。
+ * @lang en Translation-free bundle inventory in the report.
+ */
 export interface DocumentationUiLocaleBundleInventory {
   bundleId: string;
   locale: string;
   messageIds: string[];
 }
 
-/** @lang zh-CN report 中冻结的 locale 分层策略。 @lang en Frozen locale-separation policy in the report. */
+/**
+ * @lang zh-CN report 中冻结的 locale 分层策略。
+ * @lang en Frozen locale-separation policy in the report.
+ */
 export interface DocumentationUiLocaleScope {
   contentAndUiIndependent: true;
   contentLocales: string[];
@@ -173,7 +217,10 @@ export interface DocumentationUiLocaleScope {
   uiSelection: "caller-explicit";
 }
 
-/** @lang zh-CN report 中冻结的显式 fallback 策略。 @lang en Frozen explicit-fallback policy in the report. */
+/**
+ * @lang zh-CN report 中冻结的显式 fallback 策略。
+ * @lang en Frozen explicit-fallback policy in the report.
+ */
 export interface DocumentationUiLocaleFallbackPolicy {
   chains: DocumentationUiLocaleFallbackChain[];
   mode: "explicit-chain-only";
@@ -181,13 +228,22 @@ export interface DocumentationUiLocaleFallbackPolicy {
   resolutionOrder: "exact-then-declared-chain";
 }
 
-/** @lang zh-CN requirement 的 locale resolution。 @lang en Locale resolution for one requirement. */
+/**
+ * @lang zh-CN requirement 的 locale resolution。
+ * @lang en Locale resolution for one requirement.
+ */
 export type DocumentationUiLocaleResolution = "exact" | "declared-fallback" | "missing";
 
-/** @lang zh-CN requirement 的占位符核对状态。 @lang en Placeholder-check state for one requirement. */
+/**
+ * @lang zh-CN requirement 的占位符核对状态。
+ * @lang en Placeholder-check state for one requirement.
+ */
 export type DocumentationUiLocalePlaceholderStatus = "match" | "mismatch" | "unavailable";
 
-/** @lang zh-CN 单个 required message 的可审计 gate 结果。 @lang en Auditable gate result for one required message. */
+/**
+ * @lang zh-CN 单个 required message 的可审计 gate 结果。
+ * @lang en Auditable gate result for one required message.
+ */
 export interface DocumentationUiLocaleRequirementResult {
   channel: DocumentationUiLocaleChannel;
   messageId: string;
@@ -199,7 +255,10 @@ export interface DocumentationUiLocaleRequirementResult {
   status: "covered" | "incomplete";
 }
 
-/** @lang zh-CN 一个 surface/mode/UI locale 组合的 count-only 摘要。 @lang en Count-only summary for one surface/mode/UI-locale combination. */
+/**
+ * @lang zh-CN 一个 surface/mode/UI locale 组合的 count-only 摘要。
+ * @lang en Count-only summary for one surface/mode/UI-locale combination.
+ */
 export interface DocumentationUiLocaleEvaluationSummary {
   exact: number;
   fallback: number;
@@ -208,7 +267,10 @@ export interface DocumentationUiLocaleEvaluationSummary {
   requirements: number;
 }
 
-/** @lang zh-CN 自动展开的单个完整性评估。 @lang en One automatically expanded completeness evaluation. */
+/**
+ * @lang zh-CN 自动展开的单个完整性评估。
+ * @lang en One automatically expanded completeness evaluation.
+ */
 export interface DocumentationUiLocaleEvaluation {
   contentLocale: string;
   documentLanguage: string;
@@ -221,7 +283,10 @@ export interface DocumentationUiLocaleEvaluation {
   uiLocale: string;
 }
 
-/** @lang zh-CN metadata-only report 的 all-false privacy 边界。 @lang en All-false privacy boundary for the metadata-only report. */
+/**
+ * @lang zh-CN metadata-only report 的 all-false privacy 边界。
+ * @lang en All-false privacy boundary for the metadata-only report.
+ */
 export interface DocumentationUiLocaleCompletenessPrivacy {
   absolutePathIncluded: false;
   contentBodyIncluded: false;
@@ -233,7 +298,10 @@ export interface DocumentationUiLocaleCompletenessPrivacy {
   sourceBodyIncluded: false;
 }
 
-/** @lang zh-CN exact draft 与 closed-world compatibility。 @lang en Exact-draft and closed-world compatibility. */
+/**
+ * @lang zh-CN exact draft 与 closed-world compatibility。
+ * @lang en Exact-draft and closed-world compatibility.
+ */
 export interface DocumentationUiLocaleCompletenessCompatibility {
   migrationPolicy: "explicit-pure";
   unknownChannelPolicy: "reject";
@@ -242,11 +310,9 @@ export interface DocumentationUiLocaleCompletenessCompatibility {
 }
 
 /**
- * @lang zh-CN
- * 新旧精确界面语言报告共享的无正文wire主体，不把旧报告当成当前写者产物。
+ * @lang zh-CN 新旧精确界面语言报告共享的无正文wire主体，不把旧报告当成当前写者产物。
  *
- * @lang en
- * Shared metadata-only body for exact current and historical UI-locale reports.
+ * @lang en Shared metadata-only body for exact current and historical UI-locale reports.
  */
 interface DocumentationUiLocaleCompletenessReportBody {
   bundles: DocumentationUiLocaleBundleInventory[];
@@ -264,22 +330,40 @@ interface DocumentationUiLocaleCompletenessReportBody {
   surfaces: DocumentationUiLocaleSurface[];
 }
 
-/** @lang zh-CN 当前1.0.0报告，仅当前评估器或完整输入重建产出。 @lang en Current 1.0.0 report, emitted only by current evaluation or rebuilding with complete input. */
+/**
+ * @lang zh-CN 当前1.0.0报告，仅当前评估器或完整输入重建产出。
+ * @lang en Current 1.0.0 report, emitted only by current evaluation or rebuilding with complete input.
+ */
 export interface CurrentDocumentationUiLocaleCompletenessReport extends DocumentationUiLocaleCompletenessReportBody {
-  /** @lang zh-CN 当前写者精确版本。 @lang en Exact current writer version. */
+  /**
+   * @lang zh-CN 当前写者精确版本。
+   * @lang en Exact current writer version.
+   */
   contractVersion: typeof DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
 }
 
-/** @lang zh-CN 可精确读取的历史报告，不自动取得当前门禁资格。 @lang en Exactly readable historical report, without automatic current gate qualification. */
+/**
+ * @lang zh-CN 可精确读取的历史报告，不自动取得当前门禁资格。
+ * @lang en Exactly readable historical report, without automatic current gate qualification.
+ */
 export interface LegacyDocumentationUiLocaleCompletenessReport extends DocumentationUiLocaleCompletenessReportBody {
-  /** @lang zh-CN 历史读取精确版本。 @lang en Exact historical reader version. */
+  /**
+   * @lang zh-CN 历史读取精确版本。
+   * @lang en Exact historical reader version.
+   */
   contractVersion: typeof LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_CONTRACT_VERSION;
 }
 
-/** @lang zh-CN 新旧精确可判别联合；未知相邻版本不在读取能力内。 @lang en Exact discriminated current/legacy union; adjacent unknown versions are unsupported. */
+/**
+ * @lang zh-CN 新旧精确可判别联合；未知相邻版本不在读取能力内。
+ * @lang en Exact discriminated current/legacy union; adjacent unknown versions are unsupported.
+ */
 export type DocumentationUiLocaleCompletenessReport = CurrentDocumentationUiLocaleCompletenessReport | LegacyDocumentationUiLocaleCompletenessReport;
 
-/** @lang zh-CN 整个 completeness gate 的 count-only 摘要。 @lang en Count-only summary for the whole completeness gate. */
+/**
+ * @lang zh-CN 整个 completeness gate 的 count-only 摘要。
+ * @lang en Count-only summary for the whole completeness gate.
+ */
 export interface DocumentationUiLocaleCompletenessSummary {
   evaluations: number;
   exact: number;
@@ -292,11 +376,9 @@ export interface DocumentationUiLocaleCompletenessSummary {
 }
 
 /**
- * @lang zh-CN
- * Pure evaluator 结果；非法、私密或超出 wire 容量的输入不返回 report，可表示但覆盖不足的输入返回 incomplete report。
+ * @lang zh-CN Pure evaluator 结果；非法、私密或超出 wire 容量的输入不返回 report，可表示但覆盖不足的输入返回 incomplete report。
  *
- * @lang en
- * Pure evaluator result; malformed, private, or unrepresentably large input returns no report, while representable under-coverage returns an incomplete report.
+ * @lang en Pure evaluator result; malformed, private, or unrepresentably large input returns no report, while representable under-coverage returns an incomplete report.
  */
 export interface DocumentationUiLocaleCompletenessResult {
   diagnostics: HiaDiagnostic[];
@@ -312,17 +394,21 @@ const messageIdentitySchema = { type: "string", pattern: "^[a-z][a-z0-9]*(?:\\.[
 const localeSchema = { type: "string", pattern: "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$", maxLength: 64 } as const;
 const placeholderSchema = { type: "string", pattern: "^[A-Za-z][A-Za-z0-9_]{0,63}$" } as const;
 const countSchema = { type: "integer", minimum: 0, maximum: 1000000 } as const;
-/** @lang zh-CN 与既有 wire schema 一致的 evaluation 上限；超限输入在展开前拒绝。 @lang en Existing wire-schema evaluation ceiling; oversized inputs are refused before expansion. */
+/**
+ * @lang zh-CN 与既有 wire schema 一致的 evaluation 上限；超限输入在展开前拒绝。
+ * @lang en Existing wire-schema evaluation ceiling; oversized inputs are refused before expansion.
+ */
 const maxReportEvaluations = 100000;
-/** @lang zh-CN 与既有 wire schema 一致的去重诊断上限；超限时不生成报告。 @lang en Existing wire-schema ceiling for distinct diagnostics; no report is emitted after overflow. */
+/**
+ * @lang zh-CN 与既有 wire schema 一致的去重诊断上限；超限时不生成报告。
+ * @lang en Existing wire-schema ceiling for distinct diagnostics; no report is emitted after overflow.
+ */
 const maxReportDiagnostics = 100000;
 
 /**
- * @lang zh-CN
- * Draft 2020-12 结构 schema；message text 不是 wire 字段，跨引用与计数 parity 由 owner validator 执行。
+ * @lang zh-CN Draft 2020-12 结构 schema；message text 不是 wire 字段，跨引用与计数 parity 由 owner validator 执行。
  *
- * @lang en
- * Draft 2020-12 structural schema; message text is not a wire field, while cross-reference and count parity are enforced by the owner validator.
+ * @lang en Draft 2020-12 structural schema; message text is not a wire field, while cross-reference and count parity are enforced by the owner validator.
  */
 export const LEGACY_DOCUMENTATION_UI_LOCALE_COMPLETENESS_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -549,7 +635,10 @@ const stableIdentityPattern = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 const messageIdentityPattern = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)+$/u;
 const localePattern = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/u;
 const placeholderPattern = /^[A-Za-z][A-Za-z0-9_]{0,63}$/u;
-/** @lang zh-CN 报告可出现的固定诊断正文；生产者与独立 reader 共用，避免词表漂移。 @lang en Fixed report diagnostic prose shared by producer and independent reader to prevent vocabulary drift. */
+/**
+ * @lang zh-CN 报告可出现的固定诊断正文；生产者与独立 reader 共用，避免词表漂移。
+ * @lang en Fixed report diagnostic prose shared by producer and independent reader to prevent vocabulary drift.
+ */
 const reportDiagnosticText = {
   noScript: "Every surface must declare a no-script UI message mode.",
   baseChannels: "Every surface mode must cover visible text and accessible names.",
@@ -560,7 +649,10 @@ const reportDiagnosticText = {
   missing: "A required UI message is missing from the exact locale and its declared chain.",
   placeholder: "A localized UI message does not preserve the declared placeholder set."
 } as const;
-/** @lang zh-CN 固定 code/message 配对是报告诊断的第一道隐私边界。 @lang en Fixed code/message pairs are the first privacy boundary for report diagnostics. */
+/**
+ * @lang zh-CN 固定 code/message 配对是报告诊断的第一道隐私边界。
+ * @lang en Fixed code/message pairs are the first privacy boundary for report diagnostics.
+ */
 const reportDiagnosticMessages = new Map<DocumentationUiLocaleCompletenessDiagnosticCode, readonly string[]>([
   ["ULC_NO_SCRIPT_INCOMPLETE", [reportDiagnosticText.noScript]],
   ["ULC_ACCESSIBILITY_INCOMPLETE", [reportDiagnosticText.baseChannels, reportDiagnosticText.language]],
@@ -570,11 +662,9 @@ const reportDiagnosticMessages = new Map<DocumentationUiLocaleCompletenessDiagno
 ]);
 
 /**
- * @lang zh-CN
- * 评估所有 surface × interactive/no-script × UI locale 组合；函数不读取文件、网络、系统 locale、浏览器或目标项目。
+ * @lang zh-CN 评估所有 surface × interactive/no-script × UI locale 组合；函数不读取文件、网络、系统 locale、浏览器或目标项目。
  *
- * @lang en
- * Evaluates every surface × interactive/no-script × UI-locale combination; the function reads no files, network, system locale, browser state, or target project.
+ * @lang en Evaluates every surface × interactive/no-script × UI-locale combination; the function reads no files, network, system locale, browser state, or target project.
  *
  * @param value <lang><zh-CN>显式、内存中的 message/surface 输入。</zh-CN><en>Explicit in-memory message and surface input.</en></lang>
  * @returns 深度冻结的 complete/incomplete 报告，或对非法、私密、超出 wire 容量的输入给出 public-safe refusal。 / Deeply frozen complete/incomplete report or a public-safe refusal for malformed, private or wire-overflow input.
@@ -620,7 +710,10 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
   // <lang><zh-CN>诊断预算按最终 code/path/message 去重身份计数；重复模式命中的同一路径不耗用额外 wire 容量。</zh-CN><en>Count diagnostic budget by final code/path/message identity so repeated mode hits on one path do not consume extra wire capacity.</en></lang>
   const diagnosticIdentities = new Set<string>();
   let diagnosticBudgetExceeded = false;
-  /** @lang zh-CN 只收集 schema 上限内的不同诊断，超限记状态并由当前生成块返回固定拒绝。 @lang en Collects distinct diagnostics only within the schema limit; the current generation block returns a fixed refusal after overflow. */
+  /**
+   * @lang zh-CN 只收集 schema 上限内的不同诊断，超限记状态并由当前生成块返回固定拒绝。
+   * @lang en Collects distinct diagnostics only within the schema limit; the current generation block returns a fixed refusal after overflow.
+   */
   function appendReportDiagnostic(item: HiaDiagnostic): void {
     const identity = `${item.code}\u0000${item.path ?? ""}\u0000${item.message}`;
     if (diagnosticIdentities.has(identity) || diagnosticBudgetExceeded) return;
@@ -773,11 +866,9 @@ export function evaluateDocumentationUiLocaleCompleteness(value: unknown): Docum
 }
 
 /**
- * @lang zh-CN
- * 验证公开 completeness report 的 closed-world shape、有界集合、固定诊断的隐私边界、compatibility、引用与计数 parity。
+ * @lang zh-CN 验证公开 completeness report 的 closed-world shape、有界集合、固定诊断的隐私边界、compatibility、引用与计数 parity。
  *
- * @lang en
- * Validates the closed-world shape, bounded collections, fixed-diagnostic privacy boundary, compatibility, reference parity, and count parity of a public completeness report.
+ * @lang en Validates the closed-world shape, bounded collections, fixed-diagnostic privacy boundary, compatibility, reference parity, and count parity of a public completeness report.
  *
  * @param value <lang><zh-CN>候选 report。</zh-CN><en>Candidate report.</en></lang>
  * @returns public-safe diagnostics；空数组表示有效。 / Public-safe diagnostics; an empty array means valid.
@@ -1023,7 +1114,10 @@ function isWireJsonDataGraph(value: unknown): boolean {
   } catch { return false; }
 }
 
-/** @lang zh-CN 输入预检返回第一个 public-safe refusal。 @lang en Input preflight returns the first public-safe refusal. */
+/**
+ * @lang zh-CN 输入预检返回第一个 public-safe refusal。
+ * @lang en Input preflight returns the first public-safe refusal.
+ */
 function validateInput(value: unknown): HiaDiagnostic | undefined {
   if (!isRecord(value) || !hasExactKeys(value, inputKeys)) {
     return diagnostic("ULC_INVALID_INPUT", "UI-locale completeness input must match the closed-world input shape.");
@@ -1099,7 +1193,10 @@ function validateInput(value: unknown): HiaDiagnostic | undefined {
   return undefined;
 }
 
-/** @lang zh-CN 校验显式 chain 完整性、目标 bundle 与无环约束。 @lang en Validates explicit chain coverage, target bundles, and acyclicity. */
+/**
+ * @lang zh-CN 校验显式 chain 完整性、目标 bundle 与无环约束。
+ * @lang en Validates explicit chain coverage, target bundles, and acyclicity.
+ */
 function validateFallbackChains(value: unknown, uiLocales: unknown[], bundleLocales: Set<string>): HiaDiagnostic | undefined {
   if (!Array.isArray(value) || value.length !== uiLocales.length) {
     return diagnostic("ULC_FALLBACK_UNDECLARED", "Every UI locale must have exactly one explicit fallback chain.");
@@ -1151,7 +1248,10 @@ function validateFallbackChains(value: unknown, uiLocales: unknown[], bundleLoca
   return undefined;
 }
 
-/** @lang zh-CN 校验 surface 的基础 shape；可访问性完整性留给 gate 形成 incomplete report。 @lang en Validates basic surface shape; accessibility completeness remains a gate-level incomplete result. */
+/**
+ * @lang zh-CN 校验 surface 的基础 shape；可访问性完整性留给 gate 形成 incomplete report。
+ * @lang en Validates basic surface shape; accessibility completeness remains a gate-level incomplete result.
+ */
 function isInputSurface(value: unknown, contentLocales: unknown[], uiLocales: unknown[]): value is DocumentationUiLocaleSurface {
   if (!isRecord(value) || !hasExactKeys(value, surfaceKeys) || !isStableIdentity(value.surfaceId) || !isLocale(value.contentLocale)
     || !includesLocale(contentLocales, value.contentLocale) || !Array.isArray(value.modes) || !Array.isArray(value.languageMetadata)) return false;
@@ -1170,7 +1270,10 @@ function isInputSurface(value: unknown, contentLocales: unknown[], uiLocales: un
   return true;
 }
 
-/** @lang zh-CN 把缺失 mode 显式投影为空 channel，以便完整组合仍可审计。 @lang en Projects missing modes as empty channels so the full combination matrix remains auditable. */
+/**
+ * @lang zh-CN 把缺失 mode 显式投影为空 channel，以便完整组合仍可审计。
+ * @lang en Projects missing modes as empty channels so the full combination matrix remains auditable.
+ */
 function normalizeSurface(surface: DocumentationUiLocaleSurface, uiLocales: string[]): DocumentationUiLocaleSurface {
   // <lang><zh-CN>固定 mode 顺序并用空 channel 暴露缺失声明；语言元数据按 UI locale 稳定排序。</zh-CN><en>Freeze mode order and expose missing declarations with empty channels; sort language metadata stably by UI locale.</en></lang>
   const modes = DOCUMENTATION_UI_LOCALE_MODES.map((mode) => ({
@@ -1184,7 +1287,10 @@ function normalizeSurface(surface: DocumentationUiLocaleSurface, uiLocales: stri
   return { surfaceId: surface.surfaceId, contentLocale: surface.contentLocale, modes, languageMetadata };
 }
 
-/** @lang zh-CN exact 优先，再按 caller chain 查找；不做 truncation、likely-subtag 或系统默认推断。 @lang en Resolves exact first, then the caller chain; it performs no truncation, likely-subtag, or system-default inference. */
+/**
+ * @lang zh-CN exact 优先，再按 caller chain 查找；不做 truncation、likely-subtag 或系统默认推断。
+ * @lang en Resolves exact first, then the caller chain; it performs no truncation, likely-subtag, or system-default inference.
+ */
 function resolveMessage(
   uiLocale: string,
   messageId: string,
@@ -1204,11 +1310,9 @@ function resolveMessage(
 }
 
 /**
- * @lang zh-CN
- * 仅用公开 bundle 清单重算报告声称的来源语言；不把占位符状态误当作可从无正文报告重验。
+ * @lang zh-CN 仅用公开 bundle 清单重算报告声称的来源语言；不把占位符状态误当作可从无正文报告重验。
  *
- * @lang en
- * Recomputes the claimed source locale from public bundle inventories only; placeholder status cannot be rechecked without message text.
+ * @lang en Recomputes the claimed source locale from public bundle inventories only; placeholder status cannot be rechecked without message text.
  *
  * @param uiLocale <lang><zh-CN>当前评估要求的界面语言。</zh-CN><en>UI locale required by this evaluation.</en></lang>
  * @param messageId <lang><zh-CN>已声明的稳定消息身份。</zh-CN><en>Declared stable message identity.</en></lang>
@@ -1233,7 +1337,10 @@ function resolveInventoryMessage(
   return { resolution: "missing" };
 }
 
-/** @lang zh-CN 提取非执行 `{name}` 占位符并稳定排序；非法 token 会以不可匹配名称保留。 @lang en Extracts non-executable `{name}` placeholders in stable order; invalid tokens remain as non-matching names. */
+/**
+ * @lang zh-CN 提取非执行 `{name}` 占位符并稳定排序；非法 token 会以不可匹配名称保留。
+ * @lang en Extracts non-executable `{name}` placeholders in stable order; invalid tokens remain as non-matching names.
+ */
 function extractPlaceholderNames(text: string): string[] {
   // <lang><zh-CN>临时 name list 不保留 text；重复 placeholder 规范化为同一声明 identity。</zh-CN><en>The temporary name list retains no text; repeated placeholders normalize to one declared identity.</en></lang>
   const names: string[] = [];
@@ -1242,7 +1349,10 @@ function extractPlaceholderNames(text: string): string[] {
   return [...new Set(names)].sort(compareStrings);
 }
 
-/** @lang zh-CN 汇总单次 evaluation 的 resolution 与 placeholder 计数。 @lang en Summarizes resolution and placeholder counts for one evaluation. */
+/**
+ * @lang zh-CN 汇总单次 evaluation 的 resolution 与 placeholder 计数。
+ * @lang en Summarizes resolution and placeholder counts for one evaluation.
+ */
 function summarizeResults(results: DocumentationUiLocaleRequirementResult[]): DocumentationUiLocaleEvaluationSummary {
   return {
     requirements: results.length,
@@ -1253,7 +1363,10 @@ function summarizeResults(results: DocumentationUiLocaleRequirementResult[]): Do
   };
 }
 
-/** @lang zh-CN 汇总整个 report；同一 requirement 在每个 UI locale 分别计数。 @lang en Summarizes the entire report; each requirement is counted once per UI locale. */
+/**
+ * @lang zh-CN 汇总整个 report；同一 requirement 在每个 UI locale 分别计数。
+ * @lang en Summarizes the entire report; each requirement is counted once per UI locale.
+ */
 function summarizeEvaluations(report: DocumentationUiLocaleCompletenessReport): DocumentationUiLocaleCompletenessSummary {
   return report.evaluations.reduce<DocumentationUiLocaleCompletenessSummary>((summary, evaluation) => ({
     ...summary,
@@ -1273,7 +1386,10 @@ function summarizeEvaluations(report: DocumentationUiLocaleCompletenessReport): 
   });
 }
 
-/** @lang zh-CN 创建不会泄漏 translation/source/runtime 的固定 privacy 边界。 @lang en Creates the fixed privacy boundary that exposes no translation, source, or runtime data. */
+/**
+ * @lang zh-CN 创建不会泄漏 translation/source/runtime 的固定 privacy 边界。
+ * @lang en Creates the fixed privacy boundary that exposes no translation, source, or runtime data.
+ */
 function createPrivacyBoundary(): DocumentationUiLocaleCompletenessPrivacy {
   return {
     messageTextIncluded: false,
@@ -1287,22 +1403,34 @@ function createPrivacyBoundary(): DocumentationUiLocaleCompletenessPrivacy {
   };
 }
 
-/** @lang zh-CN 创建 exact、closed-world compatibility 边界。 @lang en Creates the exact, closed-world compatibility boundary. */
+/**
+ * @lang zh-CN 创建 exact、closed-world compatibility 边界。
+ * @lang en Creates the exact, closed-world compatibility boundary.
+ */
 function createCompatibilityBoundary(): DocumentationUiLocaleCompletenessCompatibility {
   return { versionMatch: "exact", unknownProperties: "reject", unknownChannelPolicy: "reject", migrationPolicy: "explicit-pure" };
 }
 
-/** @lang zh-CN 生成不含 partial report 的 refusal。 @lang en Creates a refusal with no partial report. */
+/**
+ * @lang zh-CN 生成不含 partial report 的 refusal。
+ * @lang en Creates a refusal with no partial report.
+ */
 function refuse(item: HiaDiagnostic): DocumentationUiLocaleCompletenessResult {
   return deepFreeze({ status: "refused", diagnostics: [item] });
 }
 
-/** @lang zh-CN 生成固定英文 machine diagnostic；中文语义由 code 文档/evidence 解释。 @lang en Creates a stable English machine diagnostic; Chinese semantics live in code documentation and evidence. */
+/**
+ * @lang zh-CN 生成固定英文 machine diagnostic；中文语义由 code 文档/evidence 解释。
+ * @lang en Creates a stable English machine diagnostic; Chinese semantics live in code documentation and evidence.
+ */
 function diagnostic(code: DocumentationUiLocaleCompletenessDiagnosticCode, message: string, path?: string): HiaDiagnostic {
   return createHiaDiagnostic(code, message, "error", path ? { path } : {});
 }
 
-/** @lang zh-CN 按 code/path/message 去重并稳定排序 diagnostic。 @lang en Deduplicates and stably orders diagnostics by code/path/message. */
+/**
+ * @lang zh-CN 按 code/path/message 去重并稳定排序 diagnostic。
+ * @lang en Deduplicates and stably orders diagnostics by code/path/message.
+ */
 function normalizeDiagnostics(items: HiaDiagnostic[]): HiaDiagnostic[] {
   // <lang><zh-CN>Diagnostic identity 只由稳定 code/path/message 构成，不使用数组位置或时间戳。</zh-CN><en>Diagnostic identity uses only stable code/path/message, never array positions or timestamps.</en></lang>
   const byIdentity = new Map<string, HiaDiagnostic>();
@@ -1310,7 +1438,10 @@ function normalizeDiagnostics(items: HiaDiagnostic[]): HiaDiagnostic[] {
   return [...byIdentity.values()].sort((left, right) => compareStrings(`${left.code}\u0000${left.path ?? ""}`, `${right.code}\u0000${right.path ?? ""}`));
 }
 
-/** @lang zh-CN 判断 report 的完整结构 shape 与 schema 已限定的集合长度。 @lang en Checks the complete structural shape and schema-bounded collection lengths of a report. */
+/**
+ * @lang zh-CN 判断 report 的完整结构 shape 与 schema 已限定的集合长度。
+ * @lang en Checks the complete structural shape and schema-bounded collection lengths of a report.
+ */
 function isReportShape(value: Record<string, unknown>): boolean {
   return (value.status === "complete" || value.status === "incomplete")
     && isStableIdentity(value.profileId)
@@ -1326,7 +1457,10 @@ function isReportShape(value: Record<string, unknown>): boolean {
     && Array.isArray(value.diagnostics) && value.diagnostics.length <= maxReportDiagnostics && value.diagnostics.every((item) => isDiagnostic(item));
 }
 
-/** @lang zh-CN 判断 locale scope 固定字段和 locale 数组。 @lang en Checks fixed locale-scope fields and locale arrays. */
+/**
+ * @lang zh-CN 判断 locale scope 固定字段和 locale 数组。
+ * @lang en Checks fixed locale-scope fields and locale arrays.
+ */
 function isLocaleScope(value: unknown): value is DocumentationUiLocaleScope {
   return isRecord(value) && hasExactKeys(value, localeScopeKeys)
     && isLocaleArray(value.contentLocales, true) && isLocaleArray(value.uiLocales, true) && isLocale(value.defaultUiLocale)
@@ -1335,52 +1469,76 @@ function isLocaleScope(value: unknown): value is DocumentationUiLocaleScope {
     && value.languageTagProfile === "bcp47-well-formed-subset";
 }
 
-/** @lang zh-CN 判断 report fallback policy 的固定语义。 @lang en Checks the fixed semantics of a report fallback policy. */
+/**
+ * @lang zh-CN 判断 report fallback policy 的固定语义。
+ * @lang en Checks the fixed semantics of a report fallback policy.
+ */
 function isFallbackPolicy(value: unknown): value is DocumentationUiLocaleFallbackPolicy {
   return isRecord(value) && hasExactKeys(value, fallbackPolicyKeys) && value.mode === "explicit-chain-only"
     && value.resolutionOrder === "exact-then-declared-chain" && value.requiredMessageResolution === "exact"
     && Array.isArray(value.chains) && value.chains.length > 0 && value.chains.length <= 1000 && value.chains.every((item) => isFallbackChain(item));
 }
 
-/** @lang zh-CN 判断不含正文的 message definition。 @lang en Checks a text-free message definition. */
+/**
+ * @lang zh-CN 判断不含正文的 message definition。
+ * @lang en Checks a text-free message definition.
+ */
 function isMessageDefinition(value: unknown): value is DocumentationUiLocaleMessageDefinition {
   return isRecord(value) && hasExactKeys(value, messageKeys) && isMessageIdentity(value.messageId)
     && isPlaceholderArray(value.placeholderNames) && value.visibility === "public";
 }
 
-/** @lang zh-CN 判断 metadata-only bundle inventory。 @lang en Checks a metadata-only bundle inventory. */
+/**
+ * @lang zh-CN 判断 metadata-only bundle inventory。
+ * @lang en Checks a metadata-only bundle inventory.
+ */
 function isBundleInventory(value: unknown): value is DocumentationUiLocaleBundleInventory {
   return isRecord(value) && hasExactKeys(value, bundleInventoryKeys) && isStableIdentity(value.bundleId)
     && isLocale(value.locale) && Array.isArray(value.messageIds) && value.messageIds.length <= 10000
     && value.messageIds.every(isMessageIdentity) && new Set(value.messageIds).size === value.messageIds.length;
 }
 
-/** @lang zh-CN 判断 report surface；完整 report 固定包含两个 mode。 @lang en Checks a report surface; a complete report always contains both modes. */
+/**
+ * @lang zh-CN 判断 report surface；完整 report 固定包含两个 mode。
+ * @lang en Checks a report surface; a complete report always contains both modes.
+ */
 function isReportSurface(value: unknown): value is DocumentationUiLocaleSurface {
   return isRecord(value) && hasExactKeys(value, surfaceKeys) && isStableIdentity(value.surfaceId) && isLocale(value.contentLocale)
     && Array.isArray(value.modes) && value.modes.length === 2 && value.modes.every((item) => isSurfaceMode(item))
     && Array.isArray(value.languageMetadata) && value.languageMetadata.every((item) => isLanguageMetadata(item));
 }
 
-/** @lang zh-CN 判断 surface mode。 @lang en Checks a surface mode. */
+/**
+ * @lang zh-CN 判断 surface mode。
+ * @lang en Checks a surface mode.
+ */
 function isSurfaceMode(value: unknown): value is DocumentationUiLocaleSurfaceMode {
   return isRecord(value) && hasExactKeys(value, surfaceModeKeys) && isMode(value.mode) && isChannelArray(value.channels);
 }
 
-/** @lang zh-CN 判断页面/局部语言声明。 @lang en Checks page and language-of-parts metadata. */
+/**
+ * @lang zh-CN 判断页面/局部语言声明。
+ * @lang en Checks page and language-of-parts metadata.
+ */
 function isLanguageMetadata(value: unknown): value is DocumentationUiLocaleLanguageMetadata {
   return isRecord(value) && hasExactKeys(value, languageMetadataKeys) && isLocale(value.uiLocale)
     && isLocale(value.documentLanguage) && isLocaleArray(value.partLanguages, false);
 }
 
-/** @lang zh-CN 判断 requirement shape。 @lang en Checks requirement shape. */
+/**
+ * @lang zh-CN 判断 requirement shape。
+ * @lang en Checks requirement shape.
+ */
 function isRequirement(value: unknown): value is DocumentationUiLocaleRequirement {
   return isRecord(value) && hasExactKeys(value, requirementKeys) && isStableIdentity(value.requirementId)
     && isStableIdentity(value.surfaceId) && isMode(value.mode) && isStableIdentity(value.stateId)
     && isChannel(value.channel) && isMessageIdentity(value.messageId);
 }
 
-/** @lang zh-CN 判断单个 evaluation 与其 result/summary shape，并在逐项读取前应用 schema 上限。 @lang en Checks one evaluation and its result/summary shape, applying the schema limit before reading items. */
+/**
+ * @lang zh-CN 判断单个 evaluation 与其 result/summary shape，并在逐项读取前应用 schema 上限。
+ * @lang en Checks one evaluation and its result/summary shape, applying the schema limit before reading items.
+ */
 function isEvaluation(value: unknown): value is DocumentationUiLocaleEvaluation {
   return isRecord(value) && hasExactKeys(value, evaluationKeys) && isStableIdentity(value.surfaceId) && isMode(value.mode)
     && isLocale(value.contentLocale) && isLocale(value.uiLocale) && isLocale(value.documentLanguage) && isLocaleArray(value.partLanguages, false)
@@ -1388,7 +1546,10 @@ function isEvaluation(value: unknown): value is DocumentationUiLocaleEvaluation 
     && Array.isArray(value.results) && value.results.length <= 50000 && value.results.every((item) => isRequirementResult(item));
 }
 
-/** @lang zh-CN 判断 requirement result，包括 resolvedLocale 的条件 shape。 @lang en Checks a requirement result, including the conditional resolved locale. */
+/**
+ * @lang zh-CN 判断 requirement result，包括 resolvedLocale 的条件 shape。
+ * @lang en Checks a requirement result, including the conditional resolved locale.
+ */
 function isRequirementResult(value: unknown): value is DocumentationUiLocaleRequirementResult {
   if (!isRecord(value) || !hasExactKeys(value, requirementResultKeys) || !isStableIdentity(value.requirementId) || !isStableIdentity(value.stateId)
     || !isChannel(value.channel) || !isMessageIdentity(value.messageId) || !["exact", "declared-fallback", "missing"].includes(String(value.resolution))
@@ -1396,13 +1557,19 @@ function isRequirementResult(value: unknown): value is DocumentationUiLocaleRequ
   return value.resolution === "missing" ? value.resolvedLocale === undefined : isLocale(value.resolvedLocale);
 }
 
-/** @lang zh-CN 判断非负整数 evaluation summary。 @lang en Checks a non-negative integer evaluation summary. */
+/**
+ * @lang zh-CN 判断非负整数 evaluation summary。
+ * @lang en Checks a non-negative integer evaluation summary.
+ */
 function isEvaluationSummary(value: unknown): value is DocumentationUiLocaleEvaluationSummary {
   return isRecord(value) && hasExactKeys(value, evaluationSummaryKeys)
     && [value.requirements, value.exact, value.fallback, value.missing, value.placeholderMismatch].every(isCount);
 }
 
-/** @lang zh-CN 判断 diagnostic 基础 shape 与 code 闭集；正文/路径隐私另由 report 规则核定。 @lang en Checks the diagnostic base shape and closed code set; report rules separately verify prose/path privacy. */
+/**
+ * @lang zh-CN 判断 diagnostic 基础 shape 与 code 闭集；正文/路径隐私另由 report 规则核定。
+ * @lang en Checks the diagnostic base shape and closed code set; report rules separately verify prose/path privacy.
+ */
 function isDiagnostic(value: unknown): value is HiaDiagnostic {
   return isRecord(value) && hasExactKeys(value, diagnosticKeys)
     && DOCUMENTATION_UI_LOCALE_COMPLETENESS_DIAGNOSTIC_CODES.includes(value.code as DocumentationUiLocaleCompletenessDiagnosticCode)
@@ -1411,11 +1578,9 @@ function isDiagnostic(value: unknown): value is HiaDiagnostic {
 }
 
 /**
- * @lang zh-CN
- * 从报告已有的声明与结果重建八类可公开诊断路径；缺口事实超过 wire 上限时停止，不分配无限增长的路径集合。
+ * @lang zh-CN 从报告已有的声明与结果重建八类可公开诊断路径；缺口事实超过 wire 上限时停止，不分配无限增长的路径集合。
  *
- * @lang en
- * Rebuilds the eight admissible diagnostic path families from report declarations and results; stops if observable findings exceed the wire ceiling.
+ * @lang en Rebuilds the eight admissible diagnostic path families from report declarations and results; stops if observable findings exceed the wire ceiling.
  *
  * @param report <lang><zh-CN>已通过闭集 shape 与矩阵数量检查的报告。</zh-CN><en>Report with closed-world shape and matrix count already checked.</en></lang>
  * @param requirementById <lang><zh-CN>同一报告内已索引的 requirement。</zh-CN><en>Requirements indexed from the same report.</en></lang>
@@ -1428,7 +1593,10 @@ function createReportDiagnosticPathIndex(
   // <lang><zh-CN>路径按固定消息分组，同一路径可对应不同诊断事实，故容量按 message/path 配对计数。</zh-CN><en>Group paths by fixed message; one path may represent distinct findings, so the budget counts message/path pairs.</en></lang>
   const pathsByMessage = new Map<string, Set<string>>();
   let distinctPathCount = 0;
-  /** @lang zh-CN 在上限内记录真实缺口路径；返回 false 表示报告无法由本契约有界表示。 @lang en Records an actual finding path within the ceiling; false means this contract cannot represent the report within bounds. */
+  /**
+   * @lang zh-CN 在上限内记录真实缺口路径；返回 false 表示报告无法由本契约有界表示。
+   * @lang en Records an actual finding path within the ceiling; false means this contract cannot represent the report within bounds.
+   */
   function record(message: string, path: string): boolean {
     let paths = pathsByMessage.get(message);
     if (!paths) {
@@ -1488,11 +1656,9 @@ function createReportDiagnosticPathIndex(
 }
 
 /**
- * @lang zh-CN
- * 将报告诊断限制在 evaluator 的固定 code/message 配对及报告可回接的实际缺口路径；身份内容仍由生产者负责。
+ * @lang zh-CN 将报告诊断限制在 evaluator 的固定 code/message 配对及报告可回接的实际缺口路径；身份内容仍由生产者负责。
  *
- * @lang en
- * Restricts report diagnostics to the evaluator's fixed code/message pairs and paths backed by actual report facts; producers remain responsible for identity contents.
+ * @lang en Restricts report diagnostics to the evaluator's fixed code/message pairs and paths backed by actual report facts; producers remain responsible for identity contents.
  *
  * @param value <lang><zh-CN>待核的一条已过基础 shape 的诊断。</zh-CN><en>One diagnostic that passed the basic shape check.</en></lang>
  * @param pathsByMessage <lang><zh-CN>从同一报告重建的允许路径。</zh-CN><en>Admissible paths rebuilt from the same report.</en></lang>
@@ -1504,71 +1670,110 @@ function isPublicSafeReportDiagnostic(value: HiaDiagnostic, pathsByMessage: Read
     && typeof value.path === "string" && pathsByMessage.get(value.message)?.has(value.path) === true;
 }
 
-/** @lang zh-CN 判断 all-false privacy。 @lang en Checks the all-false privacy boundary. */
+/**
+ * @lang zh-CN 判断 all-false privacy。
+ * @lang en Checks the all-false privacy boundary.
+ */
 function isPrivacyBoundary(value: DocumentationUiLocaleCompletenessPrivacy): boolean {
   return Object.values(value).every((flag) => flag === false);
 }
 
-/** @lang zh-CN 判断 exact/closed-world compatibility。 @lang en Checks exact/closed-world compatibility. */
+/**
+ * @lang zh-CN 判断 exact/closed-world compatibility。
+ * @lang en Checks exact/closed-world compatibility.
+ */
 function isCompatibilityBoundary(value: DocumentationUiLocaleCompletenessCompatibility): boolean {
   return value.versionMatch === "exact" && value.unknownProperties === "reject"
     && value.unknownChannelPolicy === "reject" && value.migrationPolicy === "explicit-pure";
 }
 
-/** @lang zh-CN 判断 fallback chain 的基础 wire shape。 @lang en Checks the basic wire shape of a fallback chain. */
+/**
+ * @lang zh-CN 判断 fallback chain 的基础 wire shape。
+ * @lang en Checks the basic wire shape of a fallback chain.
+ */
 function isFallbackChain(value: unknown): value is DocumentationUiLocaleFallbackChain {
   return isRecord(value) && hasExactKeys(value, fallbackChainKeys) && isLocale(value.uiLocale) && isLocaleArray(value.fallbackLocales, false);
 }
 
-/** @lang zh-CN 判断 stable dotted identity。 @lang en Checks a stable dotted identity. */
+/**
+ * @lang zh-CN 判断 stable dotted identity。
+ * @lang en Checks a stable dotted identity.
+ */
 function isStableIdentity(value: unknown): value is string {
   return typeof value === "string" && value.length <= 128 && stableIdentityPattern.test(value);
 }
 
-/** @lang zh-CN 判断至少含两段的 stable dotted message identity。 @lang en Checks a stable dotted message identity with at least two segments. */
+/**
+ * @lang zh-CN 判断至少含两段的 stable dotted message identity。
+ * @lang en Checks a stable dotted message identity with at least two segments.
+ */
 function isMessageIdentity(value: unknown): value is string {
   return typeof value === "string" && value.length <= 128 && messageIdentityPattern.test(value);
 }
 
-/** @lang zh-CN 判断 BCP-47-shaped P1 locale。 @lang en Checks a BCP-47-shaped P1 locale. */
+/**
+ * @lang zh-CN 判断 BCP-47-shaped P1 locale。
+ * @lang en Checks a BCP-47-shaped P1 locale.
+ */
 function isLocale(value: unknown): value is string {
   return typeof value === "string" && value.length <= 64 && localePattern.test(value);
 }
 
-/** @lang zh-CN 判断大小写不敏感唯一的 locale array。 @lang en Checks a case-insensitively unique locale array. */
+/**
+ * @lang zh-CN 判断大小写不敏感唯一的 locale array。
+ * @lang en Checks a case-insensitively unique locale array.
+ */
 function isLocaleArray(value: unknown, nonEmpty: boolean): value is string[] {
   return Array.isArray(value) && (!nonEmpty || value.length > 0) && value.length <= 1000 && value.every(isLocale)
     && new Set(value.map(localeKey)).size === value.length;
 }
 
-/** @lang zh-CN 判断唯一、有效的 placeholder array。 @lang en Checks a unique valid placeholder array. */
+/**
+ * @lang zh-CN 判断唯一、有效的 placeholder array。
+ * @lang en Checks a unique valid placeholder array.
+ */
 function isPlaceholderArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.length <= 64 && value.every((item) => typeof item === "string" && placeholderPattern.test(item))
     && new Set(value).size === value.length;
 }
 
-/** @lang zh-CN 判断唯一 channel array。 @lang en Checks a unique channel array. */
+/**
+ * @lang zh-CN 判断唯一 channel array。
+ * @lang en Checks a unique channel array.
+ */
 function isChannelArray(value: unknown): value is DocumentationUiLocaleChannel[] {
   return Array.isArray(value) && value.length <= DOCUMENTATION_UI_LOCALE_CHANNELS.length && value.every(isChannel)
     && new Set(value).size === value.length;
 }
 
-/** @lang zh-CN 判断已冻结 mode。 @lang en Checks a frozen mode. */
+/**
+ * @lang zh-CN 判断已冻结 mode。
+ * @lang en Checks a frozen mode.
+ */
 function isMode(value: unknown): value is DocumentationUiLocaleMode {
   return DOCUMENTATION_UI_LOCALE_MODES.includes(value as DocumentationUiLocaleMode);
 }
 
-/** @lang zh-CN 判断已冻结 message channel。 @lang en Checks a frozen message channel. */
+/**
+ * @lang zh-CN 判断已冻结 message channel。
+ * @lang en Checks a frozen message channel.
+ */
 function isChannel(value: unknown): value is DocumentationUiLocaleChannel {
   return DOCUMENTATION_UI_LOCALE_CHANNELS.includes(value as DocumentationUiLocaleChannel);
 }
 
-/** @lang zh-CN 判断非负整数 count。 @lang en Checks a non-negative integer count. */
+/**
+ * @lang zh-CN 判断非负整数 count。
+ * @lang en Checks a non-negative integer count.
+ */
 function isCount(value: unknown): boolean {
   return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 1000000;
 }
 
-/** @lang zh-CN 判断对象是否只含允许键；optional key 缺失仍允许。 @lang en Checks that an object contains only allowed keys; optional keys may be absent. */
+/**
+ * @lang zh-CN 判断对象是否只含允许键；optional key 缺失仍允许。
+ * @lang en Checks that an object contains only allowed keys; optional keys may be absent.
+ */
 function hasExactKeys(value: Record<string, unknown>, allowedKeys: readonly string[]): boolean {
   // <lang><zh-CN>实际键用于 unknown-field 拒绝，允许集合同时用于 required-field 检查。</zh-CN><en>Actual keys reject unknown fields, while the allowed set also drives required-field checks.</en></lang>
   const actual = Object.keys(value);
@@ -1576,70 +1781,109 @@ function hasExactKeys(value: Record<string, unknown>, allowedKeys: readonly stri
   return actual.every((key) => allowed.has(key)) && allowedKeys.filter((key) => !["path", "resolvedLocale"].includes(key)).every((key) => key in value);
 }
 
-/** @lang zh-CN 判断非数组 object。 @lang en Checks for a non-array object. */
+/**
+ * @lang zh-CN 判断非数组 object。
+ * @lang en Checks for a non-array object.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 大小写不敏感 locale key。 @lang en Case-insensitive locale key. */
+/**
+ * @lang zh-CN 大小写不敏感 locale key。
+ * @lang en Case-insensitive locale key.
+ */
 function localeKey(value: string): string {
   return value.toLowerCase();
 }
 
-/** @lang zh-CN 比较两个 locale。 @lang en Compares two locales. */
+/**
+ * @lang zh-CN 比较两个 locale。
+ * @lang en Compares two locales.
+ */
 function localeEquals(left: string, right: string): boolean {
   return localeKey(left) === localeKey(right);
 }
 
-/** @lang zh-CN 判断数组是否包含 locale。 @lang en Checks whether an array contains a locale. */
+/**
+ * @lang zh-CN 判断数组是否包含 locale。
+ * @lang en Checks whether an array contains a locale.
+ */
 function includesLocale(values: unknown[], locale: string): boolean {
   return values.some((value) => typeof value === "string" && localeEquals(value, locale));
 }
 
-/** @lang zh-CN 判断页面默认语言与局部语言并集是否覆盖目标 locale。 @lang en Checks whether page-default and part languages jointly cover a target locale. */
+/**
+ * @lang zh-CN 判断页面默认语言与局部语言并集是否覆盖目标 locale。
+ * @lang en Checks whether page-default and part languages jointly cover a target locale.
+ */
 function coversLocale(documentLanguage: string, partLanguages: string[], locale: string): boolean {
   return localeEquals(documentLanguage, locale) || includesLocale(partLanguages, locale);
 }
 
-/** @lang zh-CN 按大小写不敏感 locale key 稳定排序。 @lang en Stably sorts by case-insensitive locale key. */
+/**
+ * @lang zh-CN 按大小写不敏感 locale key 稳定排序。
+ * @lang en Stably sorts by case-insensitive locale key.
+ */
 function sortLocales(values: string[]): string[] {
   return [...values].sort(compareLocales);
 }
 
-/** @lang zh-CN locale 比较函数。 @lang en Locale comparator. */
+/**
+ * @lang zh-CN locale 比较函数。
+ * @lang en Locale comparator.
+ */
 function compareLocales(left: string, right: string): number {
   return compareStrings(localeKey(left), localeKey(right));
 }
 
-/** @lang zh-CN channel 按冻结词表顺序排序。 @lang en Sorts channels by frozen-vocabulary order. */
+/**
+ * @lang zh-CN channel 按冻结词表顺序排序。
+ * @lang en Sorts channels by frozen-vocabulary order.
+ */
 function compareChannels(left: DocumentationUiLocaleChannel, right: DocumentationUiLocaleChannel): number {
   return DOCUMENTATION_UI_LOCALE_CHANNELS.indexOf(left) - DOCUMENTATION_UI_LOCALE_CHANNELS.indexOf(right);
 }
 
-/** @lang zh-CN Unicode code-point 近似稳定字符串比较。 @lang en Stable string comparison approximating Unicode code-point order. */
+/**
+ * @lang zh-CN Unicode code-point 近似稳定字符串比较。
+ * @lang en Stable string comparison approximating Unicode code-point order.
+ */
 function compareStrings(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-/** @lang zh-CN 比较两个有序字符串数组。 @lang en Compares two ordered string arrays. */
+/**
+ * @lang zh-CN 比较两个有序字符串数组。
+ * @lang en Compares two ordered string arrays.
+ */
 function equalStrings(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-/** @lang zh-CN 比较两个 evaluation summary。 @lang en Compares two evaluation summaries. */
+/**
+ * @lang zh-CN 比较两个 evaluation summary。
+ * @lang en Compares two evaluation summaries.
+ */
 function equalSummary(left: DocumentationUiLocaleEvaluationSummary, right: DocumentationUiLocaleEvaluationSummary): boolean {
   return left.requirements === right.requirements && left.exact === right.exact && left.fallback === right.fallback
     && left.missing === right.missing && left.placeholderMismatch === right.placeholderMismatch;
 }
 
-/** @lang zh-CN 生成 property-sorted deterministic JSON。 @lang en Produces property-sorted deterministic JSON. */
+/**
+ * @lang zh-CN 生成 property-sorted deterministic JSON。
+ * @lang en Produces property-sorted deterministic JSON.
+ */
 function stableJson(value: unknown): string {
   return `${JSON.stringify(value, (_, item) => isRecord(item)
     ? Object.fromEntries(Object.entries(item).sort(([left], [right]) => compareStrings(left, right)))
     : item, 2)}\n`;
 }
 
-/** @lang zh-CN 递归冻结公开结果，避免调用方改变已验证事实。 @lang en Recursively freezes public results so callers cannot mutate validated facts. */
+/**
+ * @lang zh-CN 递归冻结公开结果，避免调用方改变已验证事实。
+ * @lang en Recursively freezes public results so callers cannot mutate validated facts.
+ */
 function deepFreeze<T>(value: T): T {
   if (typeof value !== "object" || value === null || Object.isFrozen(value)) return value;
   Object.freeze(value);

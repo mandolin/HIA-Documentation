@@ -8,57 +8,45 @@ import {
 import type { HiaDiagnostic } from "./model.js";
 
 /**
- * @lang zh-CN
- * locale-aware 源码注释投影的中性 contract 名称。
+ * @lang zh-CN locale-aware 源码注释投影的中性 contract 名称。
  *
- * @lang en
- * Neutral contract name for locale-aware source comment projections.
+ * @lang en Neutral contract name for locale-aware source comment projections.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT = "documentation-source-comment-projection" as const;
 
 /**
- * @lang zh-CN
- * P1 草案版本；consumer 只能接受精确版本，不能推测 draft 兼容性。
+ * @lang zh-CN P1 草案版本；consumer 只能接受精确版本，不能推测 draft 兼容性。
  *
- * @lang en
- * P1 draft version; consumers must require an exact version instead of inferring draft compatibility.
+ * @lang en P1 draft version; consumers must require an exact version instead of inferring draft compatibility.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
- * @lang zh-CN
- * 公开 schema identity；普通 source map 只关联 projection identity，不承载此完整模型。
+ * @lang zh-CN 公开 schema identity；普通 source map 只关联 projection identity，不承载此完整模型。
  *
- * @lang en
- * Public schema identity; ordinary source maps link projection identity and never embed this full model.
+ * @lang en Public schema identity; ordinary source maps link projection identity and never embed this full model.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_PROJECTION_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-source-comment-projection-0.1.0-draft.schema.json" as const;
 
 /**
- * @lang zh-CN
- * P1 正文策略。`none` 是默认和拒绝态；显式策略只允许已投影纯文本。
+ * @lang zh-CN P1 正文策略。`none` 是默认和拒绝态；显式策略只允许已投影纯文本。
  *
- * @lang en
- * P1 body policies. `none` is the default and refusal state; the explicit policy permits projected plain text only.
+ * @lang en P1 body policies. `none` is the default and refusal state; the explicit policy permits projected plain text only.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_CONTENT_POLICIES = ["none", "explicit-projected-text"] as const;
 
 /**
- * @lang zh-CN
- * 结构化注释种类；它们是中性语义，不暴露 parser 私有 AST 节点。
+ * @lang zh-CN 结构化注释种类；它们是中性语义，不暴露 parser 私有 AST 节点。
  *
- * @lang en
- * Structured comment kinds; these are neutral semantics and expose no parser-private AST nodes.
+ * @lang en Structured comment kinds; these are neutral semantics and expose no parser-private AST nodes.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_KINDS = ["line", "block", "documentation"] as const;
 
 /**
- * @lang zh-CN
- * 固定 diagnostic 集合，便于 producer、CLI 和 Portal 以稳定 code 处理拒绝原因。
+ * @lang zh-CN 固定 diagnostic 集合，便于 producer、CLI 和 Portal 以稳定 code 处理拒绝原因。
  *
- * @lang en
- * Fixed diagnostics let producers, the CLI, and the Portal handle refusal reasons through stable codes.
+ * @lang en Fixed diagnostics let producers, the CLI, and the Portal handle refusal reasons through stable codes.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_DIAGNOSTIC_CODES = [
   "SOURCE_COMMENT_CONTRACT_UNSUPPORTED",
@@ -71,21 +59,31 @@ export const DOCUMENTATION_SOURCE_COMMENT_DIAGNOSTIC_CODES = [
   "SOURCE_COMMENT_PROJECTION_INVALID"
 ] as const;
 
-/** @lang zh-CN 正文授权策略类型。 @lang en Comment body authorization policy. */
+/**
+ * @lang zh-CN 正文授权策略类型。
+ * @lang en Comment body authorization policy.
+ */
 export type DocumentationSourceCommentContentPolicy = typeof DOCUMENTATION_SOURCE_COMMENT_CONTENT_POLICIES[number];
-/** @lang zh-CN 中性注释种类。 @lang en Neutral structured comment kind. */
+/**
+ * @lang zh-CN 中性注释种类。
+ * @lang en Neutral structured comment kind.
+ */
 export type DocumentationSourceCommentKind = typeof DOCUMENTATION_SOURCE_COMMENT_KINDS[number];
-/** @lang zh-CN locale 解析结果，与 confidence/provenance 独立。 @lang en Locale resolution, independent from confidence and provenance. */
+/**
+ * @lang zh-CN locale 解析结果，与 confidence/provenance 独立。
+ * @lang en Locale resolution, independent from confidence and provenance.
+ */
 export type DocumentationSourceCommentResolution = "exact" | "fallback" | "default" | "missing";
-/** @lang zh-CN producer 声明可信度，不暗示解析成功。 @lang en Producer-declared confidence that does not imply successful resolution. */
+/**
+ * @lang zh-CN producer 声明可信度，不暗示解析成功。
+ * @lang en Producer-declared confidence that does not imply successful resolution.
+ */
 export type DocumentationSourceCommentConfidence = "declared" | "none";
 
 /**
- * @lang zh-CN
- * 逻辑 source identity；字段刻意不允许 filesystem path、URI 或源码正文。
+ * @lang zh-CN 逻辑 source identity；字段刻意不允许 filesystem path、URI 或源码正文。
  *
- * @lang en
- * Logical source identity; the shape deliberately permits no filesystem path, URI, or source body.
+ * @lang en Logical source identity; the shape deliberately permits no filesystem path, URI, or source body.
  */
 export interface DocumentationSourceCommentIdentity {
   docSourceMapEntryId?: string;
@@ -95,11 +93,9 @@ export interface DocumentationSourceCommentIdentity {
 }
 
 /**
- * @lang zh-CN
- * 可选 source range 使用 1-based line 与 0-based column，并且只描述位置，不包含源文本。
+ * @lang zh-CN 可选 source range 使用 1-based line 与 0-based column，并且只描述位置，不包含源文本。
  *
- * @lang en
- * An optional source range uses one-based lines and zero-based columns and describes location without source text.
+ * @lang en An optional source range uses one-based lines and zero-based columns and describes location without source text.
  */
 export interface DocumentationSourceCommentRange {
   end: { column: number; line: number };
@@ -107,11 +103,9 @@ export interface DocumentationSourceCommentRange {
 }
 
 /**
- * @lang zh-CN
- * 由受信 producer 提供的结构化注释输入。localized text key 必须是 canonical BCP 47 tag。
+ * @lang zh-CN 由受信 producer 提供的结构化注释输入。localized text key 必须是 canonical BCP 47 tag。
  *
- * @lang en
- * Structured comment input from a trusted producer. Localized text keys must be canonical BCP 47 tags.
+ * @lang en Structured comment input from a trusted producer. Localized text keys must be canonical BCP 47 tags.
  */
 export interface DocumentationSourceCommentInput {
   commentId: string;
@@ -122,11 +116,9 @@ export interface DocumentationSourceCommentInput {
 }
 
 /**
- * @lang zh-CN
- * pure evaluator 的 closed-world 请求；它不授予读取文件、解析源码或执行表达式的能力。
+ * @lang zh-CN pure evaluator 的 closed-world 请求；它不授予读取文件、解析源码或执行表达式的能力。
  *
- * @lang en
- * Closed-world request for the pure evaluator; it grants no file reading, source parsing, or expression execution.
+ * @lang en Closed-world request for the pure evaluator; it grants no file reading, source parsing, or expression execution.
  */
 export interface DocumentationSourceCommentProjectionRequest {
   comments: DocumentationSourceCommentInput[];
@@ -141,11 +133,9 @@ export interface DocumentationSourceCommentProjectionRequest {
 }
 
 /**
- * @lang zh-CN
- * 可审计 provenance；confidence 与 resolution 另列，不能由 provenance 暗示。
+ * @lang zh-CN 可审计 provenance；confidence 与 resolution 另列，不能由 provenance 暗示。
  *
- * @lang en
- * Auditable provenance; confidence and resolution remain separate and cannot be implied by provenance.
+ * @lang en Auditable provenance; confidence and resolution remain separate and cannot be implied by provenance.
  */
 export interface DocumentationSourceCommentProvenance {
   kind: "structured-source-comment" | "unresolved";
@@ -153,11 +143,9 @@ export interface DocumentationSourceCommentProvenance {
 }
 
 /**
- * @lang zh-CN
- * 单条稳定注释投影。`stableCommentKey` 不含 locale 或正文，因此 fallback 不改变身份。
+ * @lang zh-CN 单条稳定注释投影。`stableCommentKey` 不含 locale 或正文，因此 fallback 不改变身份。
  *
- * @lang en
- * One stable comment projection. `stableCommentKey` excludes locale and text, so fallback cannot change identity.
+ * @lang en One stable comment projection. `stableCommentKey` excludes locale and text, so fallback cannot change identity.
  */
 export interface DocumentationSourceCommentProjectionEntry {
   commentId: string;
@@ -175,11 +163,9 @@ export interface DocumentationSourceCommentProjectionEntry {
 }
 
 /**
- * @lang zh-CN
- * P1 privacy 事实必须显式序列化；缺省 source body、raw comment 与 `sourcesContent` 永远关闭。
+ * @lang zh-CN P1 privacy 事实必须显式序列化；缺省 source body、raw comment 与 `sourcesContent` 永远关闭。
  *
- * @lang en
- * P1 privacy facts are serialized explicitly; source body, raw comments, and `sourcesContent` always remain disabled.
+ * @lang en P1 privacy facts are serialized explicitly; source body, raw comments, and `sourcesContent` always remain disabled.
  */
 export interface DocumentationSourceCommentPrivacy {
   projectedCommentTextIncluded: boolean;
@@ -190,11 +176,9 @@ export interface DocumentationSourceCommentPrivacy {
 }
 
 /**
- * @lang zh-CN
- * 可分发投影。拒绝态会强制 `contentPolicy=none` 并清除所有 projected text。
+ * @lang zh-CN 可分发投影。拒绝态会强制 `contentPolicy=none` 并清除所有 projected text。
  *
- * @lang en
- * Distributable projection. A refused result forces `contentPolicy=none` and removes all projected text.
+ * @lang en Distributable projection. A refused result forces `contentPolicy=none` and removes all projected text.
  */
 export interface DocumentationSourceCommentProjection {
   contentPolicy: DocumentationSourceCommentContentPolicy;
@@ -212,11 +196,9 @@ export interface DocumentationSourceCommentProjection {
 }
 
 /**
- * @lang zh-CN
- * Draft 2020-12 wire schema。runtime validator 继续负责 canonical locale、stable key 与 privacy 跨字段不变量。
+ * @lang zh-CN Draft 2020-12 wire schema。runtime validator 继续负责 canonical locale、stable key 与 privacy 跨字段不变量。
  *
- * @lang en
- * Draft 2020-12 wire schema. The runtime validator additionally enforces canonical locales, stable keys, and privacy invariants.
+ * @lang en Draft 2020-12 wire schema. The runtime validator additionally enforces canonical locales, stable keys, and privacy invariants.
  */
 export const DOCUMENTATION_SOURCE_COMMENT_PROJECTION_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -302,11 +284,9 @@ const outputKeys = ["contentPolicy", "contract", "contractVersion", "defaultLoca
 const identityPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
 
 /**
- * @lang zh-CN
- * 从结构化注释构造确定性 projection。函数纯计算、fail closed，并对输入数量和正文长度设界。
+ * @lang zh-CN 从结构化注释构造确定性 projection。函数纯计算、fail closed，并对输入数量和正文长度设界。
  *
- * @lang en
- * Builds a deterministic projection from structured comments. The function is pure, fail-closed, and size-bounded.
+ * @lang en Builds a deterministic projection from structured comments. The function is pure, fail-closed, and size-bounded.
  *
  * @param request - 结构化、无文件权限的投影请求。 / Structured projection request with no file authority.
  * @returns ready projection，或不含正文的 refused projection。 / A ready projection or a body-free refused projection.
@@ -379,11 +359,9 @@ export function createDocumentationSourceCommentProjection(request: unknown): Do
 }
 
 /**
- * @lang zh-CN
- * 校验可分发 projection 的 closed-world shape 与跨字段 privacy/identity 不变量。
+ * @lang zh-CN 校验可分发 projection 的 closed-world shape 与跨字段 privacy/identity 不变量。
  *
- * @lang en
- * Validates the closed-world wire shape and cross-field privacy and identity invariants of a projection.
+ * @lang en Validates the closed-world wire shape and cross-field privacy and identity invariants of a projection.
  *
  * @param value - 待校验的未知值。 / Unknown value to validate.
  * @returns 所有发现的 stable diagnostics；空数组表示有效。 / Stable diagnostics; an empty array means valid.
@@ -438,11 +416,9 @@ export function validateDocumentationSourceCommentProjection(value: unknown): Hi
 }
 
 /**
- * @lang zh-CN
- * Boolean runtime guard；适合 CLI/renderer 在消费 metadata 前 fail closed。
+ * @lang zh-CN Boolean runtime guard；适合 CLI/renderer 在消费 metadata 前 fail closed。
  *
- * @lang en
- * Boolean runtime guard for fail-closed CLI and renderer metadata consumption.
+ * @lang en Boolean runtime guard for fail-closed CLI and renderer metadata consumption.
  */
 export function isDocumentationSourceCommentProjection(value: unknown): value is DocumentationSourceCommentProjection {
   return validateDocumentationSourceCommentProjection(value).length === 0;

@@ -3,32 +3,29 @@ import { isJsonDataGraph } from "./json-data.js";
 import type { HiaDiagnostic } from "./model.js";
 
 /**
- * @lang zh-CN
- * 跨 renderer 呈现 profile 的中性 contract 名称；名称不绑定 HIA owner、模板或语言 AST。
+ * @lang zh-CN 跨 renderer 呈现 profile 的中性 contract 名称；名称不绑定 HIA owner、模板或语言 AST。
  *
- * @lang en
- * Neutral cross-renderer presentation profile contract name; it binds no HIA owner, template, or language AST.
+ * @lang en Neutral cross-renderer presentation profile contract name; it binds no HIA owner, template, or language AST.
  */
 export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT = "documentation-presentation-profile" as const;
 
 /**
- * @lang zh-CN
- * 当前写者的1.0.0源码身份；reader另精确支持历史0.1.0-draft，不推测其它版本兼容性。
+ * @lang zh-CN 当前写者的1.0.0源码身份；reader另精确支持历史0.1.0-draft，不推测其它版本兼容性。
  *
- * @lang en
- * Current writer's 1.0.0 source identity; readers also support exact historical 0.1.0-draft, without inferring other compatibility.
+ * @lang en Current writer's 1.0.0 source identity; readers also support exact historical 0.1.0-draft, without inferring other compatibility.
  */
 export const DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION = "1.0.0" as const;
 
-/** @lang zh-CN reader精确支持的两个wire身份，不是SemVer范围或包版本。 @lang en The two exact wire identities supported by readers, not a SemVer range or package version. */
+/**
+ * @lang zh-CN reader精确支持的两个wire身份，不是SemVer范围或包版本。
+ * @lang en The two exact wire identities supported by readers, not a SemVer range or package version.
+ */
 export type DocumentationPresentationProfileContractVersion = typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION | "0.1.0-draft";
 
 /**
- * @lang zh-CN
- * 公开 schema identity；分发包通过此稳定 URL 与 owner schema 对齐。
+ * @lang zh-CN 公开 schema identity；分发包通过此稳定 URL 与 owner schema 对齐。
  *
- * @lang en
- * Public schema identity used by the distribution package to align with the owner schema.
+ * @lang en Public schema identity used by the distribution package to align with the owner schema.
  */
 export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
   "https://mandolin.github.io/HIA-Documentation/schemas/documentation-presentation-profile-1.0.0.schema.json" as const;
@@ -38,19 +35,26 @@ export const DOCUMENTATION_PRESENTATION_PROFILE_SCHEMA_ID =
  * @lang en Page modes: multi-page is the explicitly required normative default and single-page is a compatibility projection. The tuple is type-readonly but not runtime-frozen; consumers must not mutate the shared vocabulary.
  */
 export const DOCUMENTATION_PRESENTATION_PAGE_MODES = ["multi-page", "single-page"] as const;
-/** @lang zh-CN fetch/embed/link为阅读模式，none为显式关闭态；类型只读的共享元组运行时未冻结，消费方不得修改。 @lang en fetch/embed/link are reading modes and none explicitly disables exposure; the shared type-readonly tuple is not runtime-frozen and consumers must not mutate it. */
+/**
+ * @lang zh-CN fetch/embed/link为阅读模式，none为显式关闭态；类型只读的共享元组运行时未冻结，消费方不得修改。
+ * @lang en fetch/embed/link are reading modes and none explicitly disables exposure; the shared type-readonly tuple is not runtime-frozen and consumers must not mutate it.
+ */
 export const DOCUMENTATION_PRESENTATION_SOURCE_MODES = ["fetch", "embed", "link", "none"] as const;
-/** @lang zh-CN dark/light/system声明，与skin独立；共享元组类型只读而运行未冻结，core不读取设备偏好。 @lang en dark/light/system declarations independent of skin; the shared tuple is type-readonly but not runtime-frozen, and core reads no device preference. */
+/**
+ * @lang zh-CN dark/light/system声明，与skin独立；共享元组类型只读而运行未冻结，core不读取设备偏好。
+ * @lang en dark/light/system declarations independent of skin; the shared tuple is type-readonly but not runtime-frozen, and core reads no device preference.
+ */
 export const DOCUMENTATION_PRESENTATION_SCHEMES = ["dark", "light", "system"] as const;
-/** @lang zh-CN 允许sha256/sha384/sha512的共享词汇；类型只读但运行未冻结，不进行hash运算。 @lang en Shared sha256/sha384/sha512 vocabulary, type-readonly but not runtime-frozen; performs no hashing. */
+/**
+ * @lang zh-CN 允许sha256/sha384/sha512的共享词汇；类型只读但运行未冻结，不进行hash运算。
+ * @lang en Shared sha256/sha384/sha512 vocabulary, type-readonly but not runtime-frozen; performs no hashing.
+ */
 export const DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS = ["sha256", "sha384", "sha512"] as const;
 
 /**
- * @lang zh-CN
- * Source reader 状态闭集；终态必须通过 `reset` 返回 idle 后才能重新读取。共享元组类型只读、运行未冻结，不保存reader实例状态。
+ * @lang zh-CN Source reader 状态闭集；终态必须通过 `reset` 返回 idle 后才能重新读取。共享元组类型只读、运行未冻结，不保存reader实例状态。
  *
- * @lang en
- * Closed source-reader state set; a terminal state must reset to idle before another load. The shared tuple is type-readonly, not runtime-frozen, and stores no reader instance state.
+ * @lang en Closed source-reader state set; a terminal state must reset to idle before another load. The shared tuple is type-readonly, not runtime-frozen, and stores no reader instance state.
  */
 export const DOCUMENTATION_SOURCE_READER_STATES = [
   "idle",
@@ -64,7 +68,10 @@ export const DOCUMENTATION_SOURCE_READER_STATES = [
   "aborted"
 ] as const;
 
-/** @lang zh-CN Source reader输入事件闭集；共享未冻结元组不得修改，事件只描述宿主观察，不执行I/O。 @lang en Closed source-reader input events; do not mutate the shared unfrozen tuple. Events describe host observations without executing I/O. */
+/**
+ * @lang zh-CN Source reader输入事件闭集；共享未冻结元组不得修改，事件只描述宿主观察，不执行I/O。
+ * @lang en Closed source-reader input events; do not mutate the shared unfrozen tuple. Events describe host observations without executing I/O.
+ */
 export const DOCUMENTATION_SOURCE_READER_EVENTS = [
   "load-requested",
   "content-ready",
@@ -78,11 +85,9 @@ export const DOCUMENTATION_SOURCE_READER_EVENTS = [
 ] as const;
 
 /**
- * @lang zh-CN
- * 本模块诊断词汇，不限制输入diagnostics的任意非空code。包含当前未直接发出的SOURCE_MODE_INVALID保留项；共享未冻结元组不得修改。
+ * @lang zh-CN 本模块诊断词汇，不限制输入diagnostics的任意非空code。包含当前未直接发出的SOURCE_MODE_INVALID保留项；共享未冻结元组不得修改。
  *
- * @lang en
- * Module diagnostic vocabulary, not a restriction on arbitrary nonempty input diagnostic codes. Includes the currently unissued SOURCE_MODE_INVALID reserved entry; do not mutate the shared unfrozen tuple.
+ * @lang en Module diagnostic vocabulary, not a restriction on arbitrary nonempty input diagnostic codes. Includes the currently unissued SOURCE_MODE_INVALID reserved entry; do not mutate the shared unfrozen tuple.
  */
 export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
   "PRESENTATION_CONTRACT_UNSUPPORTED",
@@ -99,326 +104,654 @@ export const DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES = [
   "PRESENTATION_COMPATIBILITY_UNSUPPORTED"
 ] as const;
 
-/** @lang zh-CN 仅含中性multi-page/single-page词汇；不接受owner的split-site配置别名。 @lang en Contains only neutral multi-page/single-page vocabulary, not the owner's split-site configuration alias. */
+/**
+ * @lang zh-CN 仅含中性multi-page/single-page词汇；不接受owner的split-site配置别名。
+ * @lang en Contains only neutral multi-page/single-page vocabulary, not the owner's split-site configuration alias.
+ */
 export type DocumentationPresentationPageMode = typeof DOCUMENTATION_PRESENTATION_PAGE_MODES[number];
-/** @lang zh-CN 四种精确源码模式的联合，不包含自动fallback或宿主别名。 @lang en Union of four exact source modes, with no automatic fallback or host aliases. */
+/**
+ * @lang zh-CN 四种精确源码模式的联合，不包含自动fallback或宿主别名。
+ * @lang en Union of four exact source modes, with no automatic fallback or host aliases.
+ */
 export type DocumentationPresentationSourceMode = typeof DOCUMENTATION_PRESENTATION_SOURCE_MODES[number];
-/** @lang zh-CN 三种精确scheme声明；system交owner解释，不等同CSS媒体查询枚举。 @lang en Three exact scheme declarations; system is interpreted by the owner and is not a CSS media-query enum value. */
+/**
+ * @lang zh-CN 三种精确scheme声明；system交owner解释，不等同CSS媒体查询枚举。
+ * @lang en Three exact scheme declarations; system is interpreted by the owner and is not a CSS media-query enum value.
+ */
 export type DocumentationPresentationScheme = typeof DOCUMENTATION_PRESENTATION_SCHEMES[number];
-/** @lang zh-CN 九种状态联合，类型不验证绕过类型的运行时state。 @lang en Nine-state union; types do not validate runtime state values that bypass typing. */
+/**
+ * @lang zh-CN 九种状态联合，类型不验证绕过类型的运行时state。
+ * @lang en Nine-state union; types do not validate runtime state values that bypass typing.
+ */
 export type DocumentationSourceReaderState = typeof DOCUMENTATION_SOURCE_READER_STATES[number];
-/** @lang zh-CN 九种事件联合，不隐含真实网络/摘要或权限已检查。 @lang en Nine-event union, without implying actual network, digest or permission checks occurred. */
+/**
+ * @lang zh-CN 九种事件联合，不隐含真实网络/摘要或权限已检查。
+ * @lang en Nine-event union, without implying actual network, digest or permission checks occurred.
+ */
 export type DocumentationSourceReaderEvent = typeof DOCUMENTATION_SOURCE_READER_EVENTS[number];
 
 /**
- * @lang zh-CN
- * 单个 topic 的稳定身份与 page projection。canonical reference 必须等于 `pageId#fragmentId`。
+ * @lang zh-CN 单个 topic 的稳定身份与 page projection。canonical reference 必须等于 `pageId#fragmentId`。
  *
- * @lang en
- * Stable topic identity plus page projection. The canonical reference must equal `pageId#fragmentId`.
+ * @lang en Stable topic identity plus page projection. The canonical reference must equal `pageId#fragmentId`.
  */
 export interface DocumentationPresentationTopicProjection {
-  /** @lang zh-CN 精确等于pageId#fragmentId的逻辑引用；不是可解析URL，不证明文件或锚点存在。 @lang en Logical reference exactly equal to pageId#fragmentId; not a resolved URL or proof that a file or anchor exists. */
+  /**
+   * @lang zh-CN 精确等于pageId#fragmentId的逻辑引用；不是可解析URL，不证明文件或锚点存在。
+   * @lang en Logical reference exactly equal to pageId#fragmentId; not a resolved URL or proof that a file or anchor exists.
+   */
   canonicalReference: string;
-  /** @lang zh-CN profile内唯一的稳定片段身份；跨模式保留，不从pageId推导。 @lang en Stable fragment identity unique within the profile; retained across modes and not derived from pageId. */
+  /**
+   * @lang zh-CN profile内唯一的稳定片段身份；跨模式保留，不从pageId推导。
+   * @lang en Stable fragment identity unique within the profile; retained across modes and not derived from pageId.
+   */
   fragmentId: string;
-  /** @lang zh-CN profile内唯一的稳定导航身份；与topic/fragment各有独立唯一性域。 @lang en Stable navigation identity unique within the profile, with a uniqueness domain separate from topic/fragment identities. */
+  /**
+   * @lang zh-CN profile内唯一的稳定导航身份；与topic/fragment各有独立唯一性域。
+   * @lang en Stable navigation identity unique within the profile, with a uniqueness domain separate from topic/fragment identities.
+   */
   navigationId: string;
-  /** @lang zh-CN 非负安全整数，topics按数值严格递增；可有空档，不参与当前身份比较。 @lang en Nonnegative safe integer; topics strictly increase numerically. Gaps are allowed; this field is not compared as identity. */
+  /**
+   * @lang zh-CN 非负安全整数，topics按数值严格递增；可有空档，不参与当前身份比较。
+   * @lang en Nonnegative safe integer; topics strictly increase numerically. Gaps are allowed; this field is not compared as identity.
+   */
   order: number;
-  /** @lang zh-CN 页面投影身份，可被多个topic共享；只有显式模式变化才豁免跨profile页面身份比较。 @lang en Projected page identity, shareable by multiple topics; only an explicit mode change exempts page identity from cross-profile comparison. */
+  /**
+   * @lang zh-CN 页面投影身份，可被多个topic共享；只有显式模式变化才豁免跨profile页面身份比较。
+   * @lang en Projected page identity, shareable by multiple topics; only an explicit mode change exempts page identity from cross-profile comparison.
+   */
   pageId: string;
-  /** @lang zh-CN 0至256个唯一、ASCII身份字典序的稳定关系引用；不同topic可共享，不校验外部关系实体存在。 @lang en Zero to 256 unique, ASCII-identity-ordered stable relation references; topics may share them and external relation existence is not checked. */
+  /**
+   * @lang zh-CN 0至256个唯一、ASCII身份字典序的稳定关系引用；不同topic可共享，不校验外部关系实体存在。
+   * @lang en Zero to 256 unique, ASCII-identity-ordered stable relation references; topics may share them and external relation existence is not checked.
+   */
   relationIds: string[];
-  /** @lang zh-CN profile内唯一且精确区分大小写的连接键；合法身份为1至256个受限ASCII字符，不使用数组位置连接。 @lang en Unique, case-sensitive join key within the profile; valid identities use one to 256 restricted ASCII characters and never join by array position. */
+  /**
+   * @lang zh-CN profile内唯一且精确区分大小写的连接键；合法身份为1至256个受限ASCII字符，不使用数组位置连接。
+   * @lang en Unique, case-sensitive join key within the profile; valid identities use one to 256 restricted ASCII characters and never join by array position.
+   */
   topicId: string;
-  /** @lang zh-CN 合法逻辑类别身份；不要求属于pageTopicKinds，不参与当前身份比较。 @lang en Valid logical kind identity; membership in pageTopicKinds is not required and it is not compared as identity. */
+  /**
+   * @lang zh-CN 合法逻辑类别身份；不要求属于pageTopicKinds，不参与当前身份比较。
+   * @lang en Valid logical kind identity; membership in pageTopicKinds is not required and it is not compared as identity.
+   */
   topicKind: string;
 }
 
-/** @lang zh-CN 确定性分区声明与投影；接口可变，类型不编码全部跨字段条件，须校验完整profile。 @lang en Deterministic partition declarations and projections; the mutable interface does not encode every cross-field condition, so validate the complete profile. */
+/**
+ * @lang zh-CN 确定性分区声明与投影；接口可变，类型不编码全部跨字段条件，须校验完整profile。
+ * @lang en Deterministic partition declarations and projections; the mutable interface does not encode every cross-field condition, so validate the complete profile.
+ */
 export interface DocumentationPresentationPagePartition {
-  /** @lang zh-CN 必填且固定multi-page；校验器不自动填充缺省值。 @lang en Required and fixed to multi-page; validation does not insert omitted defaults. */
+  /**
+   * @lang zh-CN 必填且固定multi-page；校验器不自动填充缺省值。
+   * @lang en Required and fixed to multi-page; validation does not insert omitted defaults.
+   */
   defaultMode: "multi-page";
-  /** @lang zh-CN owner声明叶节点用fragment或page投影；core不由此推导父子关系或实际路由。 @lang en Owner declaration of fragment/page leaf projection; core infers neither parentage nor actual routes from it. */
+  /**
+   * @lang zh-CN owner声明叶节点用fragment或page投影；core不由此推导父子关系或实际路由。
+   * @lang en Owner declaration of fragment/page leaf projection; core infers neither parentage nor actual routes from it.
+   */
   leafTopicPolicy: "fragment" | "page";
-  /** @lang zh-CN 本profile实际模式；与defaultMode独立，是比较器页面投影豁免的开关。 @lang en Actual mode independent of defaultMode; controls the comparator's page-projection exemption. */
+  /**
+   * @lang zh-CN 本profile实际模式；与defaultMode独立，是比较器页面投影豁免的开关。
+   * @lang en Actual mode independent of defaultMode; controls the comparator's page-projection exemption.
+   */
   mode: DocumentationPresentationPageMode;
-  /** @lang zh-CN 0至256个唯一且ASCII身份字典序的页面类别声明；允许空，不强制覆盖topicKind集合。 @lang en Zero to 256 unique ASCII-identity-ordered page-kind declarations; may be empty and need not cover topicKind values. */
+  /**
+   * @lang zh-CN 0至256个唯一且ASCII身份字典序的页面类别声明；允许空，不强制覆盖topicKind集合。
+   * @lang en Zero to 256 unique ASCII-identity-ordered page-kind declarations; may be empty and need not cover topicKind values.
+   */
   pageTopicKinds: string[];
-  /** @lang zh-CN single-page时必填且必须等于每个topic.pageId；multi-page必须省略，结构类型本身不强制此条件。 @lang en Required in single-page and equal to every topic.pageId; omitted in multi-page. The structural type itself does not enforce this condition. */
+  /**
+   * @lang zh-CN single-page时必填且必须等于每个topic.pageId；multi-page必须省略，结构类型本身不强制此条件。
+   * @lang en Required in single-page and equal to every topic.pageId; omitted in multi-page. The structural type itself does not enforce this condition.
+   */
   singlePageId?: string;
-  /** @lang zh-CN 1至10000个投影，order数值严格递增，topic/fragment/navigation各自唯一；不要求pageId唯一。 @lang en One to 10,000 projections with strictly increasing numeric order and independently unique topic/fragment/navigation ids; pageId need not be unique. */
+  /**
+   * @lang zh-CN 1至10000个投影，order数值严格递增，topic/fragment/navigation各自唯一；不要求pageId唯一。
+   * @lang en One to 10,000 projections with strictly increasing numeric order and independently unique topic/fragment/navigation ids; pageId need not be unique.
+   */
   topics: DocumentationPresentationTopicProjection[];
 }
 
 /**
- * @lang zh-CN
- * 跨呈现变体的 identity 规则；pageId 只允许受 partition mode 影响。
+ * @lang zh-CN 跨呈现变体的 identity 规则；pageId 只允许受 partition mode 影响。
  *
- * @lang en
- * Identity rules across presentation variants; only partition mode may affect pageId.
+ * @lang en Identity rules across presentation variants; only partition mode may affect pageId.
  */
 export interface DocumentationPresentationIdentityPolicy {
-  /** @lang zh-CN 固定partition-mode-only；同模式比较pageId/canonicalReference，不同模式仅豁免这两个字段。 @lang en Fixed partition-mode-only policy; same-mode comparisons include pageId/canonicalReference and different modes exempt only those fields. */
+  /**
+   * @lang zh-CN 固定partition-mode-only；同模式比较pageId/canonicalReference，不同模式仅豁免这两个字段。
+   * @lang en Fixed partition-mode-only policy; same-mode comparisons include pageId/canonicalReference and different modes exempt only those fields.
+   */
   pageIdProjection: "partition-mode-only";
-  /** @lang zh-CN 固定false，色彩scheme不得改变稳定身份；并非宿主行为证明。 @lang en Fixed false: color scheme must not alter stable identity; this is not proof of host behavior. */
+  /**
+   * @lang zh-CN 固定false，色彩scheme不得改变稳定身份；并非宿主行为证明。
+   * @lang en Fixed false: color scheme must not alter stable identity; this is not proof of host behavior.
+   */
   schemeAffectsIdentity: false;
-  /** @lang zh-CN 固定false，皮肤不得改变稳定身份。 @lang en Fixed false: skin must not alter stable identity. */
+  /**
+   * @lang zh-CN 固定false，皮肤不得改变稳定身份。
+   * @lang en Fixed false: skin must not alter stable identity.
+   */
   skinAffectsIdentity: false;
-  /** @lang zh-CN 固定false，源码阅读模式不得改变稳定身份。 @lang en Fixed false: source reading mode must not alter stable identity. */
+  /**
+   * @lang zh-CN 固定false，源码阅读模式不得改变稳定身份。
+   * @lang en Fixed false: source reading mode must not alter stable identity.
+   */
   sourceModeAffectsIdentity: false;
-  /** @lang zh-CN 精确固定顺序的四字段元组；不包含order/topicKind/profileId或分区policy声明。 @lang en Exact ordered tuple of four stable fields; excludes order/topicKind/profileId and partition policy declarations. */
+  /**
+   * @lang zh-CN 精确固定顺序的四字段元组；不包含order/topicKind/profileId或分区policy声明。
+   * @lang en Exact ordered tuple of four stable fields; excludes order/topicKind/profileId and partition policy declarations.
+   */
   stableFields: ["topicId", "fragmentId", "navigationId", "relationIds"];
 }
 
-/** @lang zh-CN Revision-bound public source asset 摘要。 @lang en Digest for a revision-bound public source asset. */
+/**
+ * @lang zh-CN Revision-bound public source asset 摘要。
+ * @lang en Digest for a revision-bound public source asset.
+ */
 export interface DocumentationPresentationDigest {
-  /** @lang zh-CN 三个允许算法之一，分别要求32/48/64字节的base64长度；不验证实际正文。 @lang en One of three allowed algorithms requiring base64 lengths for 32/48/64 bytes respectively; does not verify an actual body. */
+  /**
+   * @lang zh-CN 三个允许算法之一，分别要求32/48/64字节的base64长度；不验证实际正文。
+   * @lang en One of three allowed algorithms requiring base64 lengths for 32/48/64 bytes respectively; does not verify an actual body.
+   */
   algorithm: typeof DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS[number];
-  /** @lang zh-CN 标准base64字母表/分组/padding及推算字节长度；不规范化未用padding位或核正文hash。 @lang en Standard base64 alphabet/grouping/padding and inferred byte length; unused padding bits are not canonicalized and no body hash is checked. */
+  /**
+   * @lang zh-CN 标准base64字母表/分组/padding及推算字节长度；不规范化未用padding位或核正文hash。
+   * @lang en Standard base64 alphabet/grouping/padding and inferred byte length; unused padding bits are not canonicalized and no body hash is checked.
+   */
   value: string;
 }
 
 /**
- * @lang zh-CN
- * 不含正文的 source asset manifest entry。`relativeUrl` 不能包含 origin、凭据或目录逃逸。
+ * @lang zh-CN 不含正文的 source asset manifest entry。`relativeUrl` 不能包含 origin、凭据或目录逃逸。
  *
- * @lang en
- * Body-free source asset manifest entry. `relativeUrl` cannot contain an origin, credentials, or path traversal.
+ * @lang en Body-free source asset manifest entry. `relativeUrl` cannot contain an origin, credentials, or path traversal.
  */
 export interface DocumentationPresentationSourceAsset {
-  /** @lang zh-CN manifest内唯一的逻辑资产身份；数组按此ASCII身份字典序排列。 @lang en Logical asset identity unique within the manifest; assets are sorted by this ASCII identity. */
+  /**
+   * @lang zh-CN manifest内唯一的逻辑资产身份；数组按此ASCII身份字典序排列。
+   * @lang en Logical asset identity unique within the manifest; assets are sorted by this ASCII identity.
+   */
   assetId: string;
-  /** @lang zh-CN 可选0至16777216字节声明，不证明实际大小，也不与reader maxBytes交叉比较。 @lang en Optional declared zero to 16,777,216 bytes; not proof of actual size and not cross-checked against reader maxBytes. */
+  /**
+   * @lang zh-CN 可选0至16777216字节声明，不证明实际大小，也不与reader maxBytes交叉比较。
+   * @lang en Optional declared zero to 16,777,216 bytes; not proof of actual size and not cross-checked against reader maxBytes.
+   */
   byteLength?: number;
-  /** @lang zh-CN 必须显式public，仅为分类声明，不构成公开授权。 @lang en Must explicitly be public; a classification declaration, not publication authorization. */
+  /**
+   * @lang zh-CN 必须显式public，仅为分类声明，不构成公开授权。
+   * @lang en Must explicitly be public; a classification declaration, not publication authorization.
+   */
   classification: "public";
-  /** @lang zh-CN 完整算法与摘要元数据；宿主仍须校验实际响应字节。 @lang en Complete algorithm/digest metadata; the host must still verify actual response bytes. */
+  /**
+   * @lang zh-CN 完整算法与摘要元数据；宿主仍须校验实际响应字节。
+   * @lang en Complete algorithm/digest metadata; the host must still verify actual response bytes.
+   */
   digest: DocumentationPresentationDigest;
-  /** @lang zh-CN 可选0至100000行声明，不证明实测行数，不与reader maxLines交叉比较。 @lang en Optional declared zero to 100,000 lines; not a measured line count and not cross-checked against reader maxLines. */
+  /**
+   * @lang zh-CN 可选0至100000行声明，不证明实测行数，不与reader maxLines交叉比较。
+   * @lang en Optional declared zero to 100,000 lines; not a measured line count and not cross-checked against reader maxLines.
+   */
   lineCount?: number;
-  /** @lang zh-CN 2至128字符的受限字符串，不是完整MIME解析或实际响应Content-Type证明。 @lang en Restricted string of two to 128 characters, not full MIME parsing or proof of the response Content-Type. */
+  /**
+   * @lang zh-CN 2至128字符的受限字符串，不是完整MIME解析或实际响应Content-Type证明。
+   * @lang en Restricted string of two to 128 characters, not full MIME parsing or proof of the response Content-Type.
+   */
   mediaType: string;
-  /** @lang zh-CN fetch/link必填，embed可省略；相对URL最长2048字符，不解析宿主origin或证明文件存在。 @lang en Required for fetch/link and optional for embed; relative URL up to 2048 characters, without resolving host origin or proving file existence. */
+  /**
+   * @lang zh-CN fetch/link必填，embed可省略；相对URL最长2048字符，不解析宿主origin或证明文件存在。
+   * @lang en Required for fetch/link and optional for embed; relative URL up to 2048 characters, without resolving host origin or proving file existence.
+   */
   relativeUrl?: string;
-  /** @lang zh-CN 7至128字符的受限逻辑修订标签，不要求Git SHA或URL内出现该标签。 @lang en Restricted logical revision label of seven to 128 characters; need not be a Git SHA or occur in the URL. */
+  /**
+   * @lang zh-CN 7至128字符的受限逻辑修订标签，不要求Git SHA或URL内出现该标签。
+   * @lang en Restricted logical revision label of seven to 128 characters; need not be a Git SHA or occur in the URL.
+   */
   revision: string;
-  /** @lang zh-CN manifest内唯一的逻辑来源身份，不是文件路径。 @lang en Logical source identity unique within the manifest, not a file path. */
+  /**
+   * @lang zh-CN manifest内唯一的逻辑来源身份，不是文件路径。
+   * @lang en Logical source identity unique within the manifest, not a file path.
+   */
   sourceId: string;
-  /** @lang zh-CN 可选逻辑映射引用；不读取映射、不验证存在或唯一性。 @lang en Optional logical map reference; no map read, existence check or uniqueness requirement. */
+  /**
+   * @lang zh-CN 可选逻辑映射引用；不读取映射、不验证存在或唯一性。
+   * @lang en Optional logical map reference; no map read, existence check or uniqueness requirement.
+   */
   sourceMapId?: string;
 }
 
-/** @lang zh-CN Source reader 的宿主执行限额。 @lang en Host execution limits for a source reader. */
+/**
+ * @lang zh-CN Source reader 的宿主执行限额。
+ * @lang en Host execution limits for a source reader.
+ */
 export interface DocumentationPresentationSourceLimits {
-  /** @lang zh-CN 1至16777216的安全整数字节限额，实际读取中由宿主执行。 @lang en Safe-integer byte limit from one to 16,777,216, enforced by the host during actual reading. */
+  /**
+   * @lang zh-CN 1至16777216的安全整数字节限额，实际读取中由宿主执行。
+   * @lang en Safe-integer byte limit from one to 16,777,216, enforced by the host during actual reading.
+   */
   maxBytes: number;
-  /** @lang zh-CN 1至100000的安全整数行限额，由宿主执行，不在core读取正文。 @lang en Safe-integer line limit from one to 100,000, enforced by the host; core reads no body. */
+  /**
+   * @lang zh-CN 1至100000的安全整数行限额，由宿主执行，不在core读取正文。
+   * @lang en Safe-integer line limit from one to 100,000, enforced by the host; core reads no body.
+   */
   maxLines: number;
-  /** @lang zh-CN 100至60000的安全整数毫秒超时；本接口不创建timer或AbortSignal。 @lang en Safe-integer timeout of 100 to 60,000 milliseconds; creates no timer or AbortSignal. */
+  /**
+   * @lang zh-CN 100至60000的安全整数毫秒超时；本接口不创建timer或AbortSignal。
+   * @lang en Safe-integer timeout of 100 to 60,000 milliseconds; creates no timer or AbortSignal.
+   */
   timeoutMs: number;
 }
 
 /**
- * @lang zh-CN
- * 固定的安全 fetch policy；它只描述请求，不授予网络能力。
+ * @lang zh-CN 固定的安全 fetch policy；它只描述请求，不授予网络能力。
  *
- * @lang en
- * Fixed safe fetch policy that describes a request without granting network authority.
+ * @lang en Fixed safe fetch policy that describes a request without granting network authority.
  */
 export interface DocumentationPresentationSourceReaderPolicy {
-  /** @lang zh-CN 固定false，不允许执行正文；宿主仍须使用安全文本呈现。 @lang en Fixed false, disallowing body execution; the host must still render safe text. */
+  /**
+   * @lang zh-CN 固定false，不允许执行正文；宿主仍须使用安全文本呈现。
+   * @lang en Fixed false, disallowing body execution; the host must still render safe text.
+   */
   bodyExecution: false;
-  /** @lang zh-CN 固定default请求缓存声明，不保证命中或持久化。 @lang en Fixed default request-cache declaration, without promising cache hits or persistence. */
+  /**
+   * @lang zh-CN 固定default请求缓存声明，不保证命中或持久化。
+   * @lang en Fixed default request-cache declaration, without promising cache hits or persistence.
+   */
   cache: "default";
-  /** @lang zh-CN 固定omit，独立于same-origin；宿主必须省略凭据。 @lang en Fixed omit, independent of same-origin; the host must omit credentials. */
+  /**
+   * @lang zh-CN 固定omit，独立于same-origin；宿主必须省略凭据。
+   * @lang en Fixed omit, independent of same-origin; the host must omit credentials.
+   */
   credentials: "omit";
-  /** @lang zh-CN 固定same-origin-relative；core只检查相对字符串，真实origin/root由宿主核验。 @lang en Fixed same-origin-relative; core checks the relative string and the host verifies actual origin/root. */
+  /**
+   * @lang zh-CN 固定same-origin-relative；core只检查相对字符串，真实origin/root由宿主核验。
+   * @lang en Fixed same-origin-relative; core checks the relative string and the host verifies actual origin/root.
+   */
   endpointPolicy: "same-origin-relative";
-  /** @lang zh-CN 三个显式限额，所有模式都须保留合法policy；不是执行器。 @lang en Three explicit limits; every mode retains a valid policy, not an executor. */
+  /**
+   * @lang zh-CN 三个显式限额，所有模式都须保留合法policy；不是执行器。
+   * @lang en Three explicit limits; every mode retains a valid policy, not an executor.
+   */
   limits: DocumentationPresentationSourceLimits;
-  /** @lang zh-CN 固定error，不允许宿主静默跟随重定向。 @lang en Fixed error, disallowing silent host redirect following. */
+  /**
+   * @lang zh-CN 固定error，不允许宿主静默跟随重定向。
+   * @lang en Fixed error, disallowing silent host redirect following.
+   */
   redirect: "error";
-  /** @lang zh-CN 固定same-origin，不替代credentials=omit或CSP检查。 @lang en Fixed same-origin, not a substitute for credentials=omit or CSP checks. */
+  /**
+   * @lang zh-CN 固定same-origin，不替代credentials=omit或CSP检查。
+   * @lang en Fixed same-origin, not a substitute for credentials=omit or CSP checks.
+   */
   requestMode: "same-origin";
 }
 
-/** @lang zh-CN Profile 的 source mode、manifest 与 reader policy。 @lang en Profile source mode, manifest, and reader policy. */
+/**
+ * @lang zh-CN Profile 的 source mode、manifest 与 reader policy。
+ * @lang en Profile source mode, manifest, and reader policy.
+ */
 export interface DocumentationPresentationSourceProfile {
-  /** @lang zh-CN 0至10000个公开声明，assetId/sourceId各唯一并按assetId排序；none必须为空。 @lang en Zero to 10,000 public declarations with independently unique assetId/sourceId and assetId ordering; empty in none mode. */
+  /**
+   * @lang zh-CN 0至10000个公开声明，assetId/sourceId各唯一并按assetId排序；none必须为空。
+   * @lang en Zero to 10,000 public declarations with independently unique assetId/sourceId and assetId ordering; empty in none mode.
+   */
   assets: DocumentationPresentationSourceAsset[];
-  /** @lang zh-CN 必填固定fetch，与实际mode独立，不自动填入缺省字段。 @lang en Required fixed fetch default independent of actual mode; omitted fields are not filled automatically. */
+  /**
+   * @lang zh-CN 必填固定fetch，与实际mode独立，不自动填入缺省字段。
+   * @lang en Required fixed fetch default independent of actual mode; omitted fields are not filled automatically.
+   */
   defaultMode: "fetch";
-  /** @lang zh-CN 固定none；失败不自动改link/embed。 @lang en Fixed none; failures do not automatically switch to link/embed. */
+  /**
+   * @lang zh-CN 固定none；失败不自动改link/embed。
+   * @lang en Fixed none; failures do not automatically switch to link/embed.
+   */
   fallbackPolicy: "none";
-  /** @lang zh-CN 实际四态源码模式；none还要求privacy.sourceExposure=none，其它模式为public-explicit。 @lang en Actual four-way source mode; none also requires privacy.sourceExposure=none and other modes require public-explicit. */
+  /**
+   * @lang zh-CN 实际四态源码模式；none还要求privacy.sourceExposure=none，其它模式为public-explicit。
+   * @lang en Actual four-way source mode; none also requires privacy.sourceExposure=none and other modes require public-explicit.
+   */
   mode: DocumentationPresentationSourceMode;
-  /** @lang zh-CN 所有模式都需显式合法reader policy，core不据此执行网络或读取文件。 @lang en Every mode requires an explicit valid reader policy; core performs no network or file reads from it. */
+  /**
+   * @lang zh-CN 所有模式都需显式合法reader policy，core不据此执行网络或读取文件。
+   * @lang en Every mode requires an explicit valid reader policy; core performs no network or file reads from it.
+   */
   readerPolicy: DocumentationPresentationSourceReaderPolicy;
 }
 
-/** @lang zh-CN 一个 renderer-neutral skin capability entry。 @lang en One renderer-neutral skin capability entry. */
+/**
+ * @lang zh-CN 一个 renderer-neutral skin capability entry。
+ * @lang en One renderer-neutral skin capability entry.
+ */
 export interface DocumentationPresentationSkin {
-  /** @lang zh-CN 0至64个唯一、ASCII身份字典序的能力声明，不证明实现存在。 @lang en Zero to 64 unique ASCII-identity-ordered capability declarations, not proof of implementation. */
+  /**
+   * @lang zh-CN 0至64个唯一、ASCII身份字典序的能力声明，不证明实现存在。
+   * @lang en Zero to 64 unique ASCII-identity-ordered capability declarations, not proof of implementation.
+   */
   capabilities: string[];
-  /** @lang zh-CN catalog内唯一且用于选择的逻辑身份。 @lang en Logical identity unique within the catalog and used for selection. */
+  /**
+   * @lang zh-CN catalog内唯一且用于选择的逻辑身份。
+   * @lang en Logical identity unique within the catalog and used for selection.
+   */
   skinId: string;
-  /** @lang zh-CN 至少一种唯一且排序的dark/light/system；选中skin必须支持当前scheme。 @lang en At least one unique sorted dark/light/system value; the selected skin must support the current scheme. */
+  /**
+   * @lang zh-CN 至少一种唯一且排序的dark/light/system；选中skin必须支持当前scheme。
+   * @lang en At least one unique sorted dark/light/system value; the selected skin must support the current scheme.
+   */
   supportedSchemes: DocumentationPresentationScheme[];
-  /** @lang zh-CN 1至256字符非绝对路径标签；1.0.0额外要求非纯空白，旧身份仍可读取空白。不trim/解析/获取，也不证明引用存在。 @lang en Non-absolute-path label of one to 256 characters; 1.0.0 additionally requires nonblank text while legacy reads retain whitespace. No trimming/parsing/fetching or existence proof. */
+  /**
+   * @lang zh-CN 1至256字符非绝对路径标签；1.0.0额外要求非纯空白，旧身份仍可读取空白。不trim/解析/获取，也不证明引用存在。
+   * @lang en Non-absolute-path label of one to 256 characters; 1.0.0 additionally requires nonblank text while legacy reads retain whitespace. No trimming/parsing/fetching or existence proof.
+   */
   tokenContract: string;
 }
 
-/** @lang zh-CN 选中主题与至少三套 skin 的 capability catalog。 @lang en Selected theme and a capability catalog of at least three skins. */
+/**
+ * @lang zh-CN 选中主题与至少三套 skin 的 capability catalog。
+ * @lang en Selected theme and a capability catalog of at least three skins.
+ */
 export interface DocumentationPresentationThemeProfile {
-  /** @lang zh-CN 0至64个唯一排序能力，须被选中skin覆盖，允许空。 @lang en Zero to 64 unique sorted capabilities covered by the selected skin; may be empty. */
+  /**
+   * @lang zh-CN 0至64个唯一排序能力，须被选中skin覆盖，允许空。
+   * @lang en Zero to 64 unique sorted capabilities covered by the selected skin; may be empty.
+   */
   requiredCapabilities: string[];
-  /** @lang zh-CN 显式scheme声明，不在core解析系统偏好或加载CSS。 @lang en Explicit scheme declaration; core neither resolves system preferences nor loads CSS. */
+  /**
+   * @lang zh-CN 显式scheme声明，不在core解析系统偏好或加载CSS。
+   * @lang en Explicit scheme declaration; core neither resolves system preferences nor loads CSS.
+   */
   scheme: DocumentationPresentationScheme;
-  /** @lang zh-CN 必须精确匹配catalog内一项skinId，不自动选默认skin。 @lang en Must exactly match a catalog skinId; no default skin is selected automatically. */
+  /**
+   * @lang zh-CN 必须精确匹配catalog内一项skinId，不自动选默认skin。
+   * @lang en Must exactly match a catalog skinId; no default skin is selected automatically.
+   */
   skinId: string;
-  /** @lang zh-CN 3至64项，skinId唯一且ASCII身份字典序；不要求每项均覆盖选中scheme/全部需求。 @lang en Three to 64 entries with unique ASCII-identity-ordered skinId values; unselected entries need not cover the selected scheme/all requirements. */
+  /**
+   * @lang zh-CN 3至64项，skinId唯一且ASCII身份字典序；不要求每项均覆盖选中scheme/全部需求。
+   * @lang en Three to 64 entries with unique ASCII-identity-ordered skinId values; unselected entries need not cover the selected scheme/all requirements.
+   */
   skins: DocumentationPresentationSkin[];
 }
 
 /**
- * @lang zh-CN
- * 可序列化 privacy 事实；正文可以由后续 host 显式呈现，但绝不进入本 contract 或 search index。
+ * @lang zh-CN 可序列化 privacy 事实；正文可以由后续 host 显式呈现，但绝不进入本 contract 或 search index。
  *
- * @lang en
- * Serializable privacy facts. A later host may explicitly project a body, but it never enters this contract or its search index.
+ * @lang en Serializable privacy facts. A later host may explicitly project a body, but it never enters this contract or its search index.
  */
 export interface DocumentationPresentationPrivacy {
-  /** @lang zh-CN 固定false的无绝对路径声明，不代表任意自由文本已扫描脱敏。 @lang en Fixed false declaration of no absolute paths, not proof that arbitrary free text has been scanned/redacted. */
+  /**
+   * @lang zh-CN 固定false的无绝对路径声明，不代表任意自由文本已扫描脱敏。
+   * @lang en Fixed false declaration of no absolute paths, not proof that arbitrary free text has been scanned/redacted.
+   */
   absolutePathsIncluded: false;
-  /** @lang zh-CN 固定false的无cookie依赖声明；宿主负责实际执行。 @lang en Fixed false declaration of no cookie dependency, enforced by the host. */
+  /**
+   * @lang zh-CN 固定false的无cookie依赖声明；宿主负责实际执行。
+   * @lang en Fixed false declaration of no cookie dependency, enforced by the host.
+   */
   cookiesRequired: false;
-  /** @lang zh-CN 固定false的无凭据声明，不是请求执行或秘密检测证明。 @lang en Fixed false declaration of no credentials, not proof of request execution or secret detection. */
+  /**
+   * @lang zh-CN 固定false的无凭据声明，不是请求执行或秘密检测证明。
+   * @lang en Fixed false declaration of no credentials, not proof of request execution or secret detection.
+   */
   credentialsIncluded: false;
-  /** @lang zh-CN 固定false的无私有sidecar声明，不读取外部文件核验。 @lang en Fixed false declaration of no private sidecars; external files are not read for verification. */
+  /**
+   * @lang zh-CN 固定false的无私有sidecar声明，不读取外部文件核验。
+   * @lang en Fixed false declaration of no private sidecars; external files are not read for verification.
+   */
   privateSidecarsIncluded: false;
-  /** @lang zh-CN 固定false；contract不得承载正文，已知禁止键检查不替代自由文本审查。 @lang en Fixed false: the contract must not carry bodies; prohibited-key checks do not replace free-text review. */
+  /**
+   * @lang zh-CN 固定false；contract不得承载正文，已知禁止键检查不替代自由文本审查。
+   * @lang en Fixed false: the contract must not carry bodies; prohibited-key checks do not replace free-text review.
+   */
   sourceBodyInContract: false;
-  /** @lang zh-CN 固定false；宿主负责不将正文纳入索引，core不访问索引。 @lang en Fixed false: the host excludes bodies from search indexes; core accesses no index. */
+  /**
+   * @lang zh-CN 固定false；宿主负责不将正文纳入索引，core不访问索引。
+   * @lang en Fixed false: the host excludes bodies from search indexes; core accesses no index.
+   */
   sourceBodyInSearchIndex: false;
-  /** @lang zh-CN none模式为none，其余为public-explicit；显式分类仍需宿主公开授权。 @lang en none for none mode and public-explicit otherwise; explicit classification still requires host publication authorization. */
+  /**
+   * @lang zh-CN none模式为none，其余为public-explicit；显式分类仍需宿主公开授权。
+   * @lang en none for none mode and public-explicit otherwise; explicit classification still requires host publication authorization.
+   */
   sourceExposure: "none" | "public-explicit";
-  /** @lang zh-CN 固定false的遥测关闭声明，不扫描宿主网络或收集运行证据。 @lang en Fixed false telemetry-off declaration, without scanning host traffic or collecting runtime evidence. */
+  /**
+   * @lang zh-CN 固定false的遥测关闭声明，不扫描宿主网络或收集运行证据。
+   * @lang en Fixed false telemetry-off declaration, without scanning host traffic or collecting runtime evidence.
+   */
   telemetryEnabled: false;
 }
 
-/** @lang zh-CN Draft compatibility 采用 exact/closed-world 策略。 @lang en Draft compatibility uses an exact, closed-world policy. */
+/**
+ * @lang zh-CN Draft compatibility 采用 exact/closed-world 策略。
+ * @lang en Draft compatibility uses an exact, closed-world policy.
+ */
 export interface DocumentationPresentationCompatibility {
-  /** @lang zh-CN 固定new-contract-version，身份变化需新版，不自动执行迁移。 @lang en Fixed new-contract-version: identity changes require a new version; no migration runs automatically. */
+  /**
+   * @lang zh-CN 固定new-contract-version，身份变化需新版，不自动执行迁移。
+   * @lang en Fixed new-contract-version: identity changes require a new version; no migration runs automatically.
+   */
   identityChange: "new-contract-version";
-  /** @lang zh-CN 固定new-contract-version，语义变化需新版，不推断兼容性。 @lang en Fixed new-contract-version: semantic changes require a new version; compatibility is not inferred. */
+  /**
+   * @lang zh-CN 固定new-contract-version，语义变化需新版，不推断兼容性。
+   * @lang en Fixed new-contract-version: semantic changes require a new version; compatibility is not inferred.
+   */
   semanticChange: "new-contract-version";
-  /** @lang zh-CN 固定reject，未知wire字段被拒绝，不丢弃后继续接纳。 @lang en Fixed reject: unknown wire fields are refused, not silently discarded and accepted. */
+  /**
+   * @lang zh-CN 固定reject，未知wire字段被拒绝，不丢弃后继续接纳。
+   * @lang en Fixed reject: unknown wire fields are refused, not silently discarded and accepted.
+   */
   unknownProperties: "reject";
-  /** @lang zh-CN 固定exact，只匹配明确支持的名称/版本，不实施SemVer范围。 @lang en Fixed exact: matches explicitly supported names/versions only, not a SemVer range. */
+  /**
+   * @lang zh-CN 固定exact，只匹配明确支持的名称/版本，不实施SemVer范围。
+   * @lang en Fixed exact: matches explicitly supported names/versions only, not a SemVer range.
+   */
   versionMatch: "exact";
 }
 
 /**
- * @lang zh-CN
- * Neutral presentation wire profile；拒绝态仍保持安全 shape 与可审计 diagnostics。
+ * @lang zh-CN Neutral presentation wire profile；拒绝态仍保持安全 shape 与可审计 diagnostics。
  *
- * @lang en
- * Neutral presentation wire profile; a refused profile retains a safe shape and auditable diagnostics.
+ * @lang en Neutral presentation wire profile; a refused profile retains a safe shape and auditable diagnostics.
  */
 export interface DocumentationPresentationProfile {
-  /** @lang zh-CN 必填exact/closed-world与新版策略声明，不是迁移结果。 @lang en Required exact/closed-world/new-version policy declarations, not a migration result. */
+  /**
+   * @lang zh-CN 必填exact/closed-world与新版策略声明，不是迁移结果。
+   * @lang en Required exact/closed-world/new-version policy declarations, not a migration result.
+   */
   compatibility: DocumentationPresentationCompatibility;
-  /** @lang zh-CN 精确documentation-presentation-profile，不接受别名。 @lang en Exact documentation-presentation-profile name with no alias. */
+  /**
+   * @lang zh-CN 精确documentation-presentation-profile，不接受别名。
+   * @lang en Exact documentation-presentation-profile name with no alias.
+   */
   contract: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT;
-  /** @lang zh-CN 精确旧0.1.0-draft或当前1.0.0；读取不自动迁移，当前写者使用专门类型。 @lang en Exact legacy 0.1.0-draft or current 1.0.0; reading does not migrate, and current writers use a dedicated type. */
+  /**
+   * @lang zh-CN 精确旧0.1.0-draft或当前1.0.0；读取不自动迁移，当前写者使用专门类型。
+   * @lang en Exact legacy 0.1.0-draft or current 1.0.0; reading does not migrate, and current writers use a dedicated type.
+   */
   contractVersion: DocumentationPresentationProfileContractVersion;
-  /** @lang zh-CN 最多128个输入记录，不由校验器透传或按severity推导status；自由code/message未全面脱敏。 @lang en Up to 128 input records; validation neither forwards them nor infers status from severity, and free code/message text is not comprehensively redacted. */
+  /**
+   * @lang zh-CN 最多128个输入记录，不由校验器透传或按severity推导status；自由code/message未全面脱敏。
+   * @lang en Up to 128 input records; validation neither forwards them nor infers status from severity, and free code/message text is not comprehensively redacted.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 精确稳定字段及页面投影声明，比较器不证明宿主履约。 @lang en Exact stable-field/page-projection declarations; comparison does not prove host conformance. */
+  /**
+   * @lang zh-CN 精确稳定字段及页面投影声明，比较器不证明宿主履约。
+   * @lang en Exact stable-field/page-projection declarations; comparison does not prove host conformance.
+   */
   identityPolicy: DocumentationPresentationIdentityPolicy;
-  /** @lang zh-CN 完整分区声明与投影，非真实路由解析器。 @lang en Complete partition declarations/projections, not an actual route resolver. */
+  /**
+   * @lang zh-CN 完整分区声明与投影，非真实路由解析器。
+   * @lang en Complete partition declarations/projections, not an actual route resolver.
+   */
   pagePartition: DocumentationPresentationPagePartition;
-  /** @lang zh-CN 八项显式隐私声明，不能替代公开授权/自由文本审查。 @lang en Eight explicit privacy declarations, not substitutes for publication authorization/free-text review. */
+  /**
+   * @lang zh-CN 八项显式隐私声明，不能替代公开授权/自由文本审查。
+   * @lang en Eight explicit privacy declarations, not substitutes for publication authorization/free-text review.
+   */
   privacy: DocumentationPresentationPrivacy;
-  /** @lang zh-CN 合法逻辑profile身份，不参与topic身份比较。 @lang en Valid logical profile identity, not part of topic identity comparison. */
+  /**
+   * @lang zh-CN 合法逻辑profile身份，不参与topic身份比较。
+   * @lang en Valid logical profile identity, not part of topic identity comparison.
+   */
   profileId: string;
-  /** @lang zh-CN 完整源码模式/资产/policy，不授予I/O能力。 @lang en Complete source mode/assets/policy, granting no I/O capability. */
+  /**
+   * @lang zh-CN 完整源码模式/资产/policy，不授予I/O能力。
+   * @lang en Complete source mode/assets/policy, granting no I/O capability.
+   */
   source: DocumentationPresentationSourceProfile;
-  /** @lang zh-CN 显式ready/refused；不从diagnostics计算，也不单独阻止现行纯计划构造。 @lang en Explicit ready/refused status, neither computed from diagnostics nor an independent gate on current pure-plan construction. */
+  /**
+   * @lang zh-CN 显式ready/refused；不从diagnostics计算，也不单独阻止现行纯计划构造。
+   * @lang en Explicit ready/refused status, neither computed from diagnostics nor an independent gate on current pure-plan construction.
+   */
   status: "ready" | "refused";
-  /** @lang zh-CN 选中skin/scheme/能力声明，不包含DOM/CSS或设备状态。 @lang en Selected skin/scheme/capability declarations without DOM/CSS or device state. */
+  /**
+   * @lang zh-CN 选中skin/scheme/能力声明，不包含DOM/CSS或设备状态。
+   * @lang en Selected skin/scheme/capability declarations without DOM/CSS or device state.
+   */
   theme: DocumentationPresentationThemeProfile;
 }
 
-/** @lang zh-CN 仅当前1.0.0写者/迁移结果；不允许旧身份冒充当前输出。 @lang en Current 1.0.0 writers/migration results only; legacy identities cannot masquerade as current output. */
+/**
+ * @lang zh-CN 仅当前1.0.0写者/迁移结果；不允许旧身份冒充当前输出。
+ * @lang en Current 1.0.0 writers/migration results only; legacy identities cannot masquerade as current output.
+ */
 export type CurrentDocumentationPresentationProfile = DocumentationPresentationProfile & {
-  /** @lang zh-CN 当前写者精确版本。 @lang en Exact current writer version. */
+  /**
+   * @lang zh-CN 当前写者精确版本。
+   * @lang en Exact current writer version.
+   */
   contractVersion: typeof DOCUMENTATION_PRESENTATION_PROFILE_CONTRACT_VERSION;
 };
 
-/** @lang zh-CN 显式纯迁移的判别结果；失败不提供局部profile，成功也不授予执行/公开权限。 @lang en Discriminated pure migration result; failure has no partial profile, and success grants no execution/publication permission. */
+/**
+ * @lang zh-CN 显式纯迁移的判别结果；失败不提供局部profile，成功也不授予执行/公开权限。
+ * @lang en Discriminated pure migration result; failure has no partial profile, and success grants no execution/publication permission.
+ */
 export type DocumentationPresentationProfileMigrationResult = {
-  /** @lang zh-CN 迁移或当前副本构造成功，非输入profile的业务状态。 @lang en Migration/current-copy success, not the input profile's business status. */
+  /**
+   * @lang zh-CN 迁移或当前副本构造成功，非输入profile的业务状态。
+   * @lang en Migration/current-copy success, not the input profile's business status.
+   */
   status: "ready";
-  /** @lang zh-CN 独立可变的当前版本工件，保留原诊断/状态/身份。 @lang en Detached mutable current artifact preserving original diagnostics/status/identities. */
+  /**
+   * @lang zh-CN 独立可变的当前版本工件，保留原诊断/状态/身份。
+   * @lang en Detached mutable current artifact preserving original diagnostics/status/identities.
+   */
   profile: CurrentDocumentationPresentationProfile;
-  /** @lang zh-CN 本次新建验证诊断；成功为空，不透传输入记录。 @lang en Newly created validation diagnostics, empty on success and not forwarded input records. */
+  /**
+   * @lang zh-CN 本次新建验证诊断；成功为空，不透传输入记录。
+   * @lang en Newly created validation diagnostics, empty on success and not forwarded input records.
+   */
   diagnostics: HiaDiagnostic[];
 } | {
-  /** @lang zh-CN 验证或新规则拒绝，不返回部分产物。 @lang en Validation/new-rule refusal without a partial artifact. */
+  /**
+   * @lang zh-CN 验证或新规则拒绝，不返回部分产物。
+   * @lang en Validation/new-rule refusal without a partial artifact.
+   */
   status: "refused";
-  /** @lang zh-CN 固定安全诊断，不回显原异常或危险输入。 @lang en Fixed safe diagnostics without original exceptions or hostile input echoes. */
+  /**
+   * @lang zh-CN 固定安全诊断，不回显原异常或危险输入。
+   * @lang en Fixed safe diagnostics without original exceptions or hostile input echoes.
+   */
   diagnostics: HiaDiagnostic[];
 };
 
-/** @lang zh-CN 纯数据 fetch 请求计划；没有响应 body 或可执行 callback。 @lang en Data-only fetch request plan with no response body or executable callback. */
+/**
+ * @lang zh-CN 纯数据 fetch 请求计划；没有响应 body 或可执行 callback。
+ * @lang en Data-only fetch request plan with no response body or executable callback.
+ */
 export interface DocumentationSourceFetchPlan {
-  /** @lang zh-CN 从已验证副本精确匹配的资产身份。 @lang en Asset identity matched exactly in the validated snapshot. */
+  /**
+   * @lang zh-CN 从已验证副本精确匹配的资产身份。
+   * @lang en Asset identity matched exactly in the validated snapshot.
+   */
   readonly assetId: string;
-  /** @lang zh-CN 独立冻结的禁止执行/正文索引声明；宿主负责实施。 @lang en Detached frozen declarations forbidding execution/body indexing, enforced by the host. */
+  /**
+   * @lang zh-CN 独立冻结的禁止执行/正文索引声明；宿主负责实施。
+   * @lang en Detached frozen declarations forbidding execution/body indexing, enforced by the host.
+   */
   readonly bodyPolicy: Readonly<{ execute: false; includeInSearchIndex: false }>;
-  /** @lang zh-CN algorithm-base64元数据字符串，不代表正文hash已校验。 @lang en algorithm-base64 metadata string, not proof of a verified body hash. */
+  /**
+   * @lang zh-CN algorithm-base64元数据字符串，不代表正文hash已校验。
+   * @lang en algorithm-base64 metadata string, not proof of a verified body hash.
+   */
   readonly integrity: string;
-  /** @lang zh-CN 从副本复制并冻结的字节/行/毫秒限额；不与资产声明大小交叉拒绝。 @lang en Copied frozen byte/line/millisecond limits, without cross-refusing declared asset sizes. */
+  /**
+   * @lang zh-CN 从副本复制并冻结的字节/行/毫秒限额；不与资产声明大小交叉拒绝。
+   * @lang en Copied frozen byte/line/millisecond limits, without cross-refusing declared asset sizes.
+   */
   readonly limits: Readonly<DocumentationPresentationSourceLimits>;
-  /** @lang zh-CN 资产声明的媒体类型，不是响应实测值。 @lang en Declared asset media type, not an observed response value. */
+  /**
+   * @lang zh-CN 资产声明的媒体类型，不是响应实测值。
+   * @lang en Declared asset media type, not an observed response value.
+   */
   readonly mediaType: string;
-  /** @lang zh-CN 原样保留通过检查的相对URL，宿主在批准的根下解析。 @lang en Unchanged validated relative URL, resolved by the host under its approved root. */
+  /**
+   * @lang zh-CN 原样保留通过检查的相对URL，宿主在批准的根下解析。
+   * @lang en Unchanged validated relative URL, resolved by the host under its approved root.
+   */
   readonly relativeUrl: string;
-  /** @lang zh-CN 冻结的default/omit/same-origin/error请求选项，不发起请求。 @lang en Frozen default/omit/same-origin/error request options; no request is issued. */
+  /**
+   * @lang zh-CN 冻结的default/omit/same-origin/error请求选项，不发起请求。
+   * @lang en Frozen default/omit/same-origin/error request options; no request is issued.
+   */
   readonly request: Readonly<{ cache: "default"; credentials: "omit"; mode: "same-origin"; redirect: "error" }>;
-  /** @lang zh-CN 原样保留资产逻辑修订标签，不做Git查询或URL重写。 @lang en Unchanged logical revision label, with no Git lookup or URL rewriting. */
+  /**
+   * @lang zh-CN 原样保留资产逻辑修订标签，不做Git查询或URL重写。
+   * @lang en Unchanged logical revision label, with no Git lookup or URL rewriting.
+   */
   readonly revision: string;
-  /** @lang zh-CN 精确来源逻辑身份，不含路径或正文。 @lang en Exact logical source identity without a path or body. */
+  /**
+   * @lang zh-CN 精确来源逻辑身份，不含路径或正文。
+   * @lang en Exact logical source identity without a path or body.
+   */
   readonly sourceId: string;
 }
 
-/** @lang zh-CN Fetch plan builder 的成功或拒绝结果。 @lang en Ready or refused result from the fetch-plan builder. */
+/**
+ * @lang zh-CN Fetch plan builder 的成功或拒绝结果。
+ * @lang en Ready or refused result from the fetch-plan builder.
+ */
 export interface DocumentationSourceFetchPlanResult {
-  /** @lang zh-CN 本次构造的诊断；不复制profile内已存在的safe diagnostics，数组可变。 @lang en Diagnostics from this construction, not copies of existing safe profile diagnostics; the array is mutable. */
+  /**
+   * @lang zh-CN 本次构造的诊断；不复制profile内已存在的safe diagnostics，数组可变。
+   * @lang en Diagnostics from this construction, not copies of existing safe profile diagnostics; the array is mutable.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 实际成功时存在且嵌套冻结；结构类型本身不使status成为判别联合。 @lang en Present and nested-frozen on actual success; the structural type itself is not a status-discriminated union. */
+  /**
+   * @lang zh-CN 实际成功时存在且嵌套冻结；结构类型本身不使status成为判别联合。
+   * @lang en Present and nested-frozen on actual success; the structural type itself is not a status-discriminated union.
+   */
   plan?: DocumentationSourceFetchPlan;
-  /** @lang zh-CN 本次计划构造ready/refused，不代表profile已获执行授权或响应已验证；外层结果可变。 @lang en This plan construction's ready/refused status, not profile execution consent or response verification; the outer result is mutable. */
+  /**
+   * @lang zh-CN 本次计划构造ready/refused，不代表profile已获执行授权或响应已验证；外层结果可变。
+   * @lang en This plan construction's ready/refused status, not profile execution consent or response verification; the outer result is mutable.
+   */
   status: "ready" | "refused";
 }
 
-/** @lang zh-CN Source reader 状态迁移结果。 @lang en Source-reader state-transition result. */
+/**
+ * @lang zh-CN Source reader 状态迁移结果。
+ * @lang en Source-reader state-transition result.
+ */
 export interface DocumentationSourceReaderTransitionResult {
-  /** @lang zh-CN 本次非法迁移诊断，可变新数组；合法network/integrity失败事件迁移仍返回空数组。 @lang en New mutable diagnostics for invalid transitions; legal network/integrity-failure event transitions still return an empty array. */
+  /**
+   * @lang zh-CN 本次非法迁移诊断，可变新数组；合法network/integrity失败事件迁移仍返回空数组。
+   * @lang en New mutable diagnostics for invalid transitions; legal network/integrity-failure event transitions still return an empty array.
+   */
   diagnostics: HiaDiagnostic[];
-  /** @lang zh-CN 新状态或原state回显；绕过类型传入的非法回显未校验/脱敏/复制。 @lang en Next state or original state echo; invalid echoes passed by bypassing types are unvalidated, unredacted and un-cloned. */
+  /**
+   * @lang zh-CN 新状态或原state回显；绕过类型传入的非法回显未校验/脱敏/复制。
+   * @lang en Next state or original state echo; invalid echoes passed by bypassing types are unvalidated, unredacted and un-cloned.
+   */
   state: DocumentationSourceReaderState;
 }
 
 /**
- * @lang zh-CN
- * Draft 2020-12 wire schema。runtime validator 另外执行排序、摘要长度、同源相对 URL 与跨字段 privacy/identity 不变量。
+ * @lang zh-CN Draft 2020-12 wire schema。runtime validator 另外执行排序、摘要长度、同源相对 URL 与跨字段 privacy/identity 不变量。
  *
- * @lang en
- * Draft 2020-12 wire schema. The runtime validator additionally enforces ordering, digest lengths, same-origin relative URLs,
+ * @lang en Draft 2020-12 wire schema. The runtime validator additionally enforces ordering, digest lengths, same-origin relative URLs,
  * and cross-field privacy and identity invariants.
  * @remarks
  * @lang zh-CN 此导出类型只读但运行时共享可变，enum部分复用公开词汇数组；修改前先复制。schema identity不触发下载或证明宿主行为。
@@ -610,11 +943,9 @@ const base64Pattern = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]
 const privateFieldNames = new Set(["absolutePath", "ast", "cookie", "css", "html", "ownerTemplate", "password", "sourceBody", "sourcePath", "sourcesContent", "template"]);
 
 /**
- * @lang zh-CN
- * 校验 neutral profile 的 closed-world shape、确定性排序以及跨字段 identity/source/theme/privacy 不变量。
+ * @lang zh-CN 校验 neutral profile 的 closed-world shape、确定性排序以及跨字段 identity/source/theme/privacy 不变量。
  *
- * @lang en
- * Validates a neutral profile's closed-world shape, deterministic ordering, and cross-field identity/source/theme/privacy invariants.
+ * @lang en Validates a neutral profile's closed-world shape, deterministic ordering, and cross-field identity/source/theme/privacy invariants.
  *
  * @param value - 待校验的未知 wire value。 / Unknown wire value to validate.
  * @returns 仅本次新建且可变的验证diagnostics，不复制输入记录；空表示结构/已实现规则有效，不证明文本脱敏或授权。非JSON图/复制/反射失败固定拒绝。 / Only newly created mutable validation diagnostics, not copied input records; empty means valid shape/implemented rules, not proven text redaction or authorization. Non-JSON/cloning/reflection failures use a fixed refusal.
@@ -670,7 +1001,10 @@ function readPresentationProfile(value: unknown): { diagnostics: HiaDiagnostic[]
   return { diagnostics: [presentationDiagnostic("PRESENTATION_PROFILE_INVALID", "Presentation profile must be ordinary, acyclic JSON data that can be copied and validated.")] };
 }
 
-/** @lang zh-CN 在预检复制后的JSON快照上保留既有closed-world及跨字段规则。 @lang en Preserves existing closed-world and cross-field rules on a preflighted JSON snapshot. */
+/**
+ * @lang zh-CN 在预检复制后的JSON快照上保留既有closed-world及跨字段规则。
+ * @lang en Preserves existing closed-world and cross-field rules on a preflighted JSON snapshot.
+ */
 function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
   if (containsPrivateField(value)) {
     return [presentationDiagnostic("PRESENTATION_PRIVACY_BOUNDARY", "Presentation profile contains a prohibited private field.")];
@@ -740,11 +1074,9 @@ function validatePreparedPresentationProfile(value: unknown): HiaDiagnostic[] {
 }
 
 /**
- * @lang zh-CN
- * 比较两个 profile 的稳定 topic/navigation/relation identity；不同 partition mode 只豁免 pageId/canonicalReference 投影。
+ * @lang zh-CN 比较两个 profile 的稳定 topic/navigation/relation identity；不同 partition mode 只豁免 pageId/canonicalReference 投影。
  *
- * @lang en
- * Compares stable topic/navigation/relation identity across profiles; a different partition mode exempts only pageId/canonicalReference projection.
+ * @lang en Compares stable topic/navigation/relation identity across profiles; a different partition mode exempts only pageId/canonicalReference projection.
  *
  * @param reference - 身份基准 profile。 / Reference identity profile.
  * @param candidate - 待比较 profile。 / Candidate profile to compare.
@@ -783,11 +1115,9 @@ export function compareDocumentationPresentationIdentity(reference: unknown, can
 }
 
 /**
- * @lang zh-CN
- * 从已验证 fetch profile 构造有界、同源、无凭据的纯数据 request plan；本函数不解析 origin、不调用网络。
+ * @lang zh-CN 从已验证 fetch profile 构造有界、同源、无凭据的纯数据 request plan；本函数不解析 origin、不调用网络。
  *
- * @lang en
- * Builds a bounded, same-origin, credential-free data-only request plan from a validated fetch profile; it resolves no origin and performs no network call.
+ * @lang en Builds a bounded, same-origin, credential-free data-only request plan from a validated fetch profile; it resolves no origin and performs no network call.
  *
  * @param value - Presentation profile wire value。 / Presentation profile wire value.
  * @param assetId - 要读取的稳定 asset identity。 / Stable asset identity to read.
@@ -833,11 +1163,9 @@ export function createDocumentationSourceFetchPlan(value: unknown, assetId: stri
 }
 
 /**
- * @lang zh-CN
- * 执行 deterministic source-reader 状态迁移。非法事件保持原状态并返回 diagnostic，不自动重试或降级。
+ * @lang zh-CN 执行 deterministic source-reader 状态迁移。非法事件保持原状态并返回 diagnostic，不自动重试或降级。
  *
- * @lang en
- * Applies a deterministic source-reader transition. An invalid event preserves the state and returns a diagnostic without retry or fallback.
+ * @lang en Applies a deterministic source-reader transition. An invalid event preserves the state and returns a diagnostic without retry or fallback.
  *
  * @param state - 当前 reader 状态。 / Current reader state.
  * @param event - 单个明确事件。 / One explicit event.
@@ -889,7 +1217,10 @@ const sourceReaderTransitions: Readonly<Record<DocumentationSourceReaderState, P
   aborted: { reset: "idle" }
 };
 
-/** @lang zh-CN 验证 page partition shape、排序和 single-page 投影。 @lang en Validates page-partition shape, ordering, and single-page projection. */
+/**
+ * @lang zh-CN 验证 page partition shape、排序和 single-page 投影。
+ * @lang en Validates page-partition shape, ordering, and single-page projection.
+ */
 function isPagePartition(value: unknown): value is DocumentationPresentationPagePartition {
   // <lang><zh-CN>先确认声明与每个投影形状，再读取数值顺序；不填默认值或推导路由。</zh-CN><en>Check declarations and each projection shape before reading numeric order; insert no defaults and infer no routes.</en></lang>
   if (!isExactRecord(value, pagePartitionKeys) || !hasRequiredKeys(value, ["defaultMode", "leafTopicPolicy", "mode", "pageTopicKinds", "topics"] as const)) return false;
@@ -906,7 +1237,10 @@ function isPagePartition(value: unknown): value is DocumentationPresentationPage
   return true;
 }
 
-/** @lang zh-CN 验证单个 topic identity 与 canonical reference。 @lang en Validates one topic identity and canonical reference. */
+/**
+ * @lang zh-CN 验证单个 topic identity 与 canonical reference。
+ * @lang en Validates one topic identity and canonical reference.
+ */
 function isTopicProjection(value: unknown): value is DocumentationPresentationTopicProjection {
   return isExactRecord(value, topicKeys) && hasRequiredKeys(value, topicKeys)
     && isIdentity(value.topicId) && isIdentity(value.topicKind) && isIdentity(value.pageId) && isIdentity(value.fragmentId)
@@ -915,7 +1249,10 @@ function isTopicProjection(value: unknown): value is DocumentationPresentationTo
     && value.canonicalReference === `${value.pageId}#${value.fragmentId}`;
 }
 
-/** @lang zh-CN 验证冻结的跨变体 identity policy。 @lang en Validates the frozen cross-variant identity policy. */
+/**
+ * @lang zh-CN 验证冻结的跨变体 identity policy。
+ * @lang en Validates the frozen cross-variant identity policy.
+ */
 function isIdentityPolicy(value: unknown): value is DocumentationPresentationIdentityPolicy {
   return isExactRecord(value, identityPolicyKeys) && hasRequiredKeys(value, identityPolicyKeys)
     && Array.isArray(value.stableFields) && arraysEqual(value.stableFields, ["topicId", "fragmentId", "navigationId", "relationIds"])
@@ -923,7 +1260,10 @@ function isIdentityPolicy(value: unknown): value is DocumentationPresentationIde
     && value.skinAffectsIdentity === false && value.schemeAffectsIdentity === false;
 }
 
-/** @lang zh-CN 验证 source mode、reader policy 与确定性 asset manifest。 @lang en Validates source mode, reader policy, and deterministic asset manifest. */
+/**
+ * @lang zh-CN 验证 source mode、reader policy 与确定性 asset manifest。
+ * @lang en Validates source mode, reader policy, and deterministic asset manifest.
+ */
 function isSourceProfile(value: unknown): value is DocumentationPresentationSourceProfile {
   if (!isExactRecord(value, sourceKeys) || !hasRequiredKeys(value, sourceKeys)) return false;
   if (value.defaultMode !== "fetch" || value.fallbackPolicy !== "none"
@@ -935,21 +1275,30 @@ function isSourceProfile(value: unknown): value is DocumentationPresentationSour
     && !hasDuplicates(assets.map(({ sourceId }) => sourceId));
 }
 
-/** @lang zh-CN 验证无凭据、同源且不执行正文的 reader policy。 @lang en Validates a credential-free, same-origin, non-executing reader policy. */
+/**
+ * @lang zh-CN 验证无凭据、同源且不执行正文的 reader policy。
+ * @lang en Validates a credential-free, same-origin, non-executing reader policy.
+ */
 function isReaderPolicy(value: unknown): value is DocumentationPresentationSourceReaderPolicy {
   return isExactRecord(value, readerPolicyKeys) && hasRequiredKeys(value, readerPolicyKeys)
     && value.endpointPolicy === "same-origin-relative" && value.credentials === "omit" && value.requestMode === "same-origin"
     && value.redirect === "error" && value.cache === "default" && value.bodyExecution === false && isLimits(value.limits);
 }
 
-/** @lang zh-CN 验证 reader byte/line/time 上界。 @lang en Validates reader byte, line, and time bounds. */
+/**
+ * @lang zh-CN 验证 reader byte/line/time 上界。
+ * @lang en Validates reader byte, line, and time bounds.
+ */
 function isLimits(value: unknown): value is DocumentationPresentationSourceLimits {
   return isExactRecord(value, limitKeys) && hasRequiredKeys(value, limitKeys)
     && isBoundedInteger(value.maxBytes, 1, 16_777_216) && isBoundedInteger(value.maxLines, 1, 100_000)
     && isBoundedInteger(value.timeoutMs, 100, 60_000);
 }
 
-/** @lang zh-CN 验证 public、revision/digest-bound、body-free asset metadata。 @lang en Validates public, revision/digest-bound, body-free asset metadata. */
+/**
+ * @lang zh-CN 验证 public、revision/digest-bound、body-free asset metadata。
+ * @lang en Validates public, revision/digest-bound, body-free asset metadata.
+ */
 function isSourceAsset(value: unknown): value is DocumentationPresentationSourceAsset {
   if (!isExactRecord(value, assetKeys)
     || !hasRequiredKeys(value, ["assetId", "classification", "digest", "mediaType", "revision", "sourceId"] as const)) return false;
@@ -961,7 +1310,10 @@ function isSourceAsset(value: unknown): value is DocumentationPresentationSource
   return value.lineCount === undefined || isBoundedInteger(value.lineCount, 0, 100_000);
 }
 
-/** @lang zh-CN 验证 SRI 算法与 base64 解码字节长度。 @lang en Validates the SRI algorithm and decoded base64 byte length. */
+/**
+ * @lang zh-CN 验证 SRI 算法与 base64 解码字节长度。
+ * @lang en Validates the SRI algorithm and decoded base64 byte length.
+ */
 function isDigest(value: unknown): value is DocumentationPresentationDigest {
   if (!isExactRecord(value, digestKeys) || !hasRequiredKeys(value, digestKeys)
     || !DOCUMENTATION_PRESENTATION_DIGEST_ALGORITHMS.includes(value.algorithm as DocumentationPresentationDigest["algorithm"])
@@ -970,7 +1322,10 @@ function isDigest(value: unknown): value is DocumentationPresentationDigest {
   return decodedBase64Length(value.value) === expectedBytes;
 }
 
-/** @lang zh-CN 验证至少三套skin及选中能力；当前版本额外拒绝纯空白标签，旧版本不隐式收紧。 @lang en Validates at least three skins and selected capabilities; only the current version additionally refuses whitespace-only labels. */
+/**
+ * @lang zh-CN 验证至少三套skin及选中能力；当前版本额外拒绝纯空白标签，旧版本不隐式收紧。
+ * @lang en Validates at least three skins and selected capabilities; only the current version additionally refuses whitespace-only labels.
+ */
 function isThemeProfile(value: unknown, requireNonBlankToken: boolean): value is DocumentationPresentationThemeProfile {
   if (!isExactRecord(value, themeKeys) || !hasRequiredKeys(value, themeKeys) || !isIdentity(value.skinId)
     || !DOCUMENTATION_PRESENTATION_SCHEMES.includes(value.scheme as DocumentationPresentationScheme)
@@ -983,7 +1338,10 @@ function isThemeProfile(value: unknown, requireNonBlankToken: boolean): value is
     && (value.requiredCapabilities as string[]).every((capability) => selected.capabilities.includes(capability));
 }
 
-/** @lang zh-CN 验证单个中性skin，按调用方版本选择非空白约束；不trim或解析标签。 @lang en Validates one neutral skin with the caller-version nonblank constraint, without trimming or parsing its label. */
+/**
+ * @lang zh-CN 验证单个中性skin，按调用方版本选择非空白约束；不trim或解析标签。
+ * @lang en Validates one neutral skin with the caller-version nonblank constraint, without trimming or parsing its label.
+ */
 function isSkin(value: unknown, requireNonBlankToken: boolean): value is DocumentationPresentationSkin {
   return isExactRecord(value, skinKeys) && hasRequiredKeys(value, skinKeys) && isIdentity(value.skinId)
     && typeof value.tokenContract === "string" && value.tokenContract.length > 0 && value.tokenContract.length <= 256
@@ -992,7 +1350,10 @@ function isSkin(value: unknown, requireNonBlankToken: boolean): value is Documen
     && isSortedIdentityArray(value.capabilities, 64);
 }
 
-/** @lang zh-CN 校验固定隐私声明，不观察宿主或证明任意文本已脱敏。 @lang en Checks fixed privacy declarations without observing hosts or proving arbitrary text is redacted. */
+/**
+ * @lang zh-CN 校验固定隐私声明，不观察宿主或证明任意文本已脱敏。
+ * @lang en Checks fixed privacy declarations without observing hosts or proving arbitrary text is redacted.
+ */
 function isPrivacy(value: unknown): value is DocumentationPresentationPrivacy {
   return isExactRecord(value, privacyKeys) && hasRequiredKeys(value, privacyKeys)
     && (value.sourceExposure === "none" || value.sourceExposure === "public-explicit") && value.sourceBodyInContract === false
@@ -1000,13 +1361,19 @@ function isPrivacy(value: unknown): value is DocumentationPresentationPrivacy {
     && value.cookiesRequired === false && value.privateSidecarsIncluded === false && value.telemetryEnabled === false;
 }
 
-/** @lang zh-CN 验证精确版本与closed-world兼容声明，不实施隐式迁移。 @lang en Validates exact-version and closed-world compatibility declarations without implicit migration. */
+/**
+ * @lang zh-CN 验证精确版本与closed-world兼容声明，不实施隐式迁移。
+ * @lang en Validates exact-version and closed-world compatibility declarations without implicit migration.
+ */
 function isCompatibility(value: unknown): value is DocumentationPresentationCompatibility {
   return isExactRecord(value, compatibilityKeys) && hasRequiredKeys(value, compatibilityKeys) && value.versionMatch === "exact"
     && value.unknownProperties === "reject" && value.identityChange === "new-contract-version" && value.semanticChange === "new-contract-version";
 }
 
-/** @lang zh-CN 校验diagnostic结构及部分定位字段边界，不扫描自由code/message中的秘密。 @lang en Checks diagnostic shape and selected locator boundaries, without scanning free code/message text for secrets. */
+/**
+ * @lang zh-CN 校验diagnostic结构及部分定位字段边界，不扫描自由code/message中的秘密。
+ * @lang en Checks diagnostic shape and selected locator boundaries, without scanning free code/message text for secrets.
+ */
 function isSafeDiagnostic(value: unknown): value is HiaDiagnostic {
   if (!isExactRecord(value, diagnosticKeys) || !hasRequiredKeys(value, ["code", "message", "severity"] as const)) return false;
   if (typeof value.code !== "string" || value.code.length === 0 || typeof value.message !== "string" || value.message.length === 0
@@ -1017,7 +1384,10 @@ function isSafeDiagnostic(value: unknown): value is HiaDiagnostic {
   return value.data === undefined || isPublicDiagnosticData(value.data);
 }
 
-/** @lang zh-CN 递归验证 diagnostic data 不含私有字段或绝对路径。 @lang en Recursively validates diagnostic data for private fields and absolute paths. */
+/**
+ * @lang zh-CN 递归验证 diagnostic data 不含私有字段或绝对路径。
+ * @lang en Recursively validates diagnostic data for private fields and absolute paths.
+ */
 function isPublicDiagnosticData(value: unknown): boolean {
   if (value === null || typeof value === "boolean" || typeof value === "number") return true;
   if (typeof value === "string") return !isAbsolutePathLike(value);
@@ -1026,7 +1396,10 @@ function isPublicDiagnosticData(value: unknown): boolean {
   return Object.entries(value).every(([key, child]) => !privateFieldNames.has(key) && isPublicDiagnosticData(child));
 }
 
-/** @lang zh-CN 验证无 origin、query、fragment、反斜杠或目录逃逸的相对 asset URL。 @lang en Validates a relative asset URL without origin, query, fragment, backslash, or path traversal. */
+/**
+ * @lang zh-CN 验证无 origin、query、fragment、反斜杠或目录逃逸的相对 asset URL。
+ * @lang en Validates a relative asset URL without origin, query, fragment, backslash, or path traversal.
+ */
 function isSafeRelativeUrl(value: unknown): value is string {
   // <lang><zh-CN>URL解析会剥离首尾ASCII空格；直接拒绝，避免绝对scheme/authority藏在前导空格后，不trim后继续接受。</zh-CN><en>URL parsing strips boundary ASCII spaces; reject them directly so leading spaces cannot hide an absolute scheme/authority, rather than trimming and accepting.</en></lang>
   if (typeof value !== "string" || value.length === 0 || value.length > 2048 || /[\u0000-\u001F\u007F\\]/u.test(value)
@@ -1045,83 +1418,128 @@ function isSafeRelativeUrl(value: unknown): value is string {
   return !pathPart.startsWith("/") && !pathPart.split("/").some((segment) => segment === "..");
 }
 
-/** @lang zh-CN 对已检查分组语法的base64推算字节数，不分配正文buffer或验证未用padding位。 @lang en Infers the byte length of grouping-checked base64 without allocating a body buffer or validating unused padding bits. */
+/**
+ * @lang zh-CN 对已检查分组语法的base64推算字节数，不分配正文buffer或验证未用padding位。
+ * @lang en Infers the byte length of grouping-checked base64 without allocating a body buffer or validating unused padding bits.
+ */
 function decodedBase64Length(value: string): number {
   if (value.length === 0 || value.length % 4 !== 0) return -1;
   const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
   return (value.length / 4) * 3 - padding;
 }
 
-/** @lang zh-CN 验证公开稳定 identity。 @lang en Validates a public stable identity. */
+/**
+ * @lang zh-CN 验证公开稳定 identity。
+ * @lang en Validates a public stable identity.
+ */
 function isIdentity(value: unknown): value is string {
   return typeof value === "string" && value.length <= 256 && identityPattern.test(value);
 }
 
-/** @lang zh-CN 验证有界、唯一、code-point 排序的 identity 数组。 @lang en Validates a bounded, unique, code-point-sorted identity array. */
+/**
+ * @lang zh-CN 验证有界、唯一、code-point 排序的 identity 数组。
+ * @lang en Validates a bounded, unique, code-point-sorted identity array.
+ */
 function isSortedIdentityArray(value: unknown, maxItems: number): value is string[] {
   return Array.isArray(value) && value.length <= maxItems && value.every(isIdentity) && !hasDuplicates(value)
     && arraysEqual(value, [...value].sort(compareText));
 }
 
-/** @lang zh-CN 验证非空、唯一、排序的 enum 数组。 @lang en Validates a non-empty, unique, sorted enum array. */
+/**
+ * @lang zh-CN 验证非空、唯一、排序的 enum 数组。
+ * @lang en Validates a non-empty, unique, sorted enum array.
+ */
 function isSortedEnumArray<const T extends readonly string[]>(value: unknown, allowed: T): value is T[number][] {
   return Array.isArray(value) && value.length > 0 && value.every((candidate) => allowed.includes(candidate as T[number]))
     && !hasDuplicates(value) && arraysEqual(value, [...value].sort(compareText));
 }
 
-/** @lang zh-CN 按稳定 selector 检查既有数组顺序，不修改输入。 @lang en Checks existing array order with a stable selector without mutating input. */
+/**
+ * @lang zh-CN 按稳定 selector 检查既有数组顺序，不修改输入。
+ * @lang en Checks existing array order with a stable selector without mutating input.
+ */
 function isSortedBy<T>(value: T[], selector: (item: T) => string): boolean {
   return arraysEqual(value.map(selector), value.map(selector).sort(compareText));
 }
 
-/** @lang zh-CN 验证安全整数的闭区间。 @lang en Validates a safe integer within a closed interval. */
+/**
+ * @lang zh-CN 验证安全整数的闭区间。
+ * @lang en Validates a safe integer within a closed interval.
+ */
 function isBoundedInteger(value: unknown, minimum: number, maximum: number): value is number {
   return Number.isSafeInteger(value) && (value as number) >= minimum && (value as number) <= maximum;
 }
 
-/** @lang zh-CN 检测 primitive identity/value 重复。 @lang en Detects duplicate primitive identities or values. */
+/**
+ * @lang zh-CN 检测 primitive identity/value 重复。
+ * @lang en Detects duplicate primitive identities or values.
+ */
 function hasDuplicates<T>(values: T[]): boolean {
   return new Set(values).size !== values.length;
 }
 
-/** @lang zh-CN 进行浅层、顺序敏感数组比较。 @lang en Performs a shallow, order-sensitive array comparison. */
+/**
+ * @lang zh-CN 进行浅层、顺序敏感数组比较。
+ * @lang en Performs a shallow, order-sensitive array comparison.
+ */
 function arraysEqual(left: readonly unknown[], right: readonly unknown[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-/** @lang zh-CN 提供 locale-independent code-point 文本顺序。 @lang en Provides locale-independent code-point text ordering. */
+/**
+ * @lang zh-CN 提供 locale-independent code-point 文本顺序。
+ * @lang en Provides locale-independent code-point text ordering.
+ */
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-/** @lang zh-CN 识别非数组 object record。 @lang en Identifies a non-array object record. */
+/**
+ * @lang zh-CN 识别非数组 object record。
+ * @lang en Identifies a non-array object record.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** @lang zh-CN 拒绝 allowlist 之外的 object key。 @lang en Rejects object keys outside an allowlist. */
+/**
+ * @lang zh-CN 拒绝 allowlist 之外的 object key。
+ * @lang en Rejects object keys outside an allowlist.
+ */
 function isExactRecord<const T extends readonly string[]>(value: unknown, keys: T): value is Record<T[number], unknown> {
   return isRecord(value) && Object.keys(value).every((key) => (keys as readonly string[]).includes(key));
 }
 
-/** @lang zh-CN 检查所有必需 own property。 @lang en Checks every required own property. */
+/**
+ * @lang zh-CN 检查所有必需 own property。
+ * @lang en Checks every required own property.
+ */
 function hasRequiredKeys<const T extends readonly string[]>(value: Record<string, unknown>, keys: T): boolean {
   return keys.every((key) => Object.hasOwn(value, key));
 }
 
-/** @lang zh-CN 深度检测显式禁止的私有字段名。 @lang en Deeply detects explicitly prohibited private field names. */
+/**
+ * @lang zh-CN 深度检测显式禁止的私有字段名。
+ * @lang en Deeply detects explicitly prohibited private field names.
+ */
 function containsPrivateField(value: unknown): boolean {
   if (Array.isArray(value)) return value.some(containsPrivateField);
   if (!isRecord(value)) return false;
   return Object.entries(value).some(([key, child]) => privateFieldNames.has(key) || containsPrivateField(child));
 }
 
-/** @lang zh-CN 检测 Windows、POSIX 与 UNC 绝对路径。 @lang en Detects Windows, POSIX, and UNC absolute paths. */
+/**
+ * @lang zh-CN 检测 Windows、POSIX 与 UNC 绝对路径。
+ * @lang en Detects Windows, POSIX, and UNC absolute paths.
+ */
 function isAbsolutePathLike(value: string): boolean {
   return /^[A-Za-z]:[\\/]/u.test(value) || value.startsWith("/") || value.startsWith("\\\\");
 }
 
-/** @lang zh-CN 按 code/path/message 确定性去重 diagnostic。 @lang en Deterministically deduplicates diagnostics by code, path, and message. */
+/**
+ * @lang zh-CN 按 code/path/message 确定性去重 diagnostic。
+ * @lang en Deterministically deduplicates diagnostics by code, path, and message.
+ */
 function deduplicateDiagnostics(diagnostics: HiaDiagnostic[]): HiaDiagnostic[] {
   const seen = new Set<string>();
   return diagnostics.filter((diagnostic) => {
@@ -1132,7 +1550,10 @@ function deduplicateDiagnostics(diagnostics: HiaDiagnostic[]): HiaDiagnostic[] {
   });
 }
 
-/** @lang zh-CN 构造 stable error diagnostic，可选逻辑 path 不能是 filesystem locator。 @lang en Builds a stable error diagnostic whose optional logical path is never a filesystem locator. */
+/**
+ * @lang zh-CN 构造 stable error diagnostic，可选逻辑 path 不能是 filesystem locator。
+ * @lang en Builds a stable error diagnostic whose optional logical path is never a filesystem locator.
+ */
 function presentationDiagnostic(
   code: typeof DOCUMENTATION_PRESENTATION_DIAGNOSTIC_CODES[number],
   message: string,

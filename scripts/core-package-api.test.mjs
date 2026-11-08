@@ -95,6 +95,35 @@ test("config and plugin SDK public declarations and nested members retain explic
   }
 });
 
+test("core model existing bilingual comments retain canonical description locale lines", () => {
+  // <lang><zh-CN>限定本轮九份真实源，仅检查已有两语注释，缺描述节点另行治理。</zh-CN><en>Limit this gate to nine actual sources and existing bilingual comments; absent descriptions remain a separate task.</en></lang>
+  const files = ["business-flow-documentation-projection", "business-flow-documentation", "documentation-presentation-profile", "documentation-quality-review", "documentation-terminology", "documentation-ui-locale-completeness", "locale-resource-declaration", "locale-resource", "source-comment-projection"];
+  for (const name of files) {
+    // <lang><zh-CN>语法树限定真实注释附着点，排除字符串与生成模板里的文本。</zh-CN><en>The syntax tree fixes actual comment attachments and excludes strings and generation templates.</en></lang>
+    const file = fileURLToPath(new URL(`../packages/core/src/${name}.ts`, import.meta.url));
+    const source = ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    /**
+     * @lang zh-CN 检查显式两语或原中文标记的描述正文，不借参数段推断描述语言。
+     * @lang en Checks explicit bilingual descriptions or original Chinese markers without inferring description locales from parameter sections.
+     * @param {import("typescript").Node} node <lang><zh-CN>当前语义节点。</zh-CN><en>The current semantic node.</en></lang>
+     */
+    function check(node) {
+      for (const doc of node.jsDoc ?? []) {
+        // <lang><zh-CN>只将描述头部的中文标记视为本次可恢复语言证据。</zh-CN><en>Only Chinese markers in the description head count as recoverable locale evidence here.</en></lang>
+        const text = doc.getText(source);
+        const body = text.slice(3, -2).replace(/^[ \t]*\* ?/gm, "");
+        const head = body.split(/\n\s*@/)[0];
+        if ((text.includes("@lang zh-CN") && text.includes("@lang en")) || /中文[：:]/.test(head)) {
+          assert.match(text, /^\s*\*\s+@lang zh-CN[ \t]+\S/m, name + " Chinese");
+          assert.match(text, /^\s*\*\s+@lang en[ \t]+\S/m, name + " English");
+        }
+      }
+      ts.forEachChild(node, check);
+    }
+    check(source);
+  }
+});
+
 test("distribution and theme public declarations retain canonical bilingual source comments", () => {
   for(const name of ["profiles","schemas","theme-default"]) {
     // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>
