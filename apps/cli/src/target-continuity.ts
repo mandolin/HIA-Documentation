@@ -60,9 +60,25 @@ export type TargetDocumentationContinuityDiagnosticCode = typeof TARGET_DOCUMENT
  * @lang en Pure-evaluator request; baseline/current remain unknown so runtime validation, not TypeScript, establishes trust.
  */
 export interface TargetDocumentationContinuityRequest {
+  /**
+   * @lang zh-CN 调用方提供的基线证据候选，运行时按未知输入校验。
+   * @lang en Baseline evidence candidate supplied by the caller and validated as unknown input at runtime.
+   */
   baseline: unknown;
+  /**
+   * @lang zh-CN 调用方提供的当前证据候选，运行时按未知输入校验。
+   * @lang en Current evidence candidate supplied by the caller and validated as unknown input at runtime.
+   */
   current: unknown;
+  /**
+   * @lang zh-CN 调用方显式声明的目标族，当前连续性契约接受enterprise-business。
+   * @lang en Target family explicitly declared by the caller, with the current continuity contract accepting enterprise-business.
+   */
   targetFamily: string;
+  /**
+   * @lang zh-CN 调用方显式提供的稳定公开目标标识。
+   * @lang en Stable public target identifier explicitly supplied by the caller.
+   */
   targetId: string;
 }
 
@@ -71,8 +87,20 @@ export interface TargetDocumentationContinuityRequest {
  * @lang en Fixed report diagnostic containing no caller path, identity, or body.
  */
 export interface TargetDocumentationContinuityDiagnostic {
+  /**
+   * @lang zh-CN 连续性报告闭集中的稳定诊断码。
+   * @lang en Stable diagnostic code from the continuity report's closed vocabulary.
+   */
   code: TargetDocumentationContinuityDiagnosticCode;
+  /**
+   * @lang zh-CN 固定的公开诊断说明，保持输入正文与路径的隐私边界。
+   * @lang en Fixed public diagnostic explanation preserving input-body and path privacy boundaries.
+   */
   message: string;
+  /**
+   * @lang zh-CN 固定为error的连续性拒绝诊断严重程度。
+   * @lang en Continuity-refusal diagnostic severity fixed to error.
+   */
   severity: "error";
 }
 
@@ -81,8 +109,20 @@ export interface TargetDocumentationContinuityDiagnostic {
  * @lang en Two-sided continuity for one required output.
  */
 export interface TargetDocumentationContinuityRequiredOutput {
+  /**
+   * @lang zh-CN 基线摘要是否明确声明此项必需输出存在。
+   * @lang en Whether the baseline summary explicitly declares this required output present.
+   */
   baseline: boolean;
+  /**
+   * @lang zh-CN 当前摘要是否明确声明此项必需输出存在。
+   * @lang en Whether the current summary explicitly declares this required output present.
+   */
   current: boolean;
+  /**
+   * @lang zh-CN baseline与current的逻辑合取，两侧都存在时为true。
+   * @lang en Logical conjunction of baseline and current, true only when present on both sides.
+   */
   preserved: boolean;
 }
 
@@ -91,8 +131,20 @@ export interface TargetDocumentationContinuityRequiredOutput {
  * @lang en Identity-free producer count summary for one side.
  */
 export interface TargetDocumentationContinuityProducerSummary {
+  /**
+   * @lang zh-CN 规范化生产器记录的非负工件计数总和，无效原计数按0累计。
+   * @lang en Sum of non-negative artifact counts in normalized producer records, with invalid original counts contributing zero.
+   */
   artifactCount: number;
+  /**
+   * @lang zh-CN 规范化后保留的生产器对象记录数量。
+   * @lang en Number of producer-object records retained after normalization.
+   */
   producerCount: number;
+  /**
+   * @lang zh-CN 规范化生产器记录中status为success的数量。
+   * @lang en Number of normalized producer records whose status is success.
+   */
   successfulProducerCount: number;
 }
 
@@ -101,71 +153,295 @@ export interface TargetDocumentationContinuityProducerSummary {
  * @lang en Metadata-only continuity report derived from two generated-docs evidence summaries.
  */
 export interface TargetDocumentationContinuityReport {
+  /**
+   * @lang zh-CN 固定的target-documentation-continuity契约名称。
+   * @lang en Fixed target-documentation-continuity contract name.
+   */
   contract: typeof TARGET_DOCUMENTATION_CONTINUITY_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft连续性报告精确版本。
+   * @lang en Fixed exact 0.1.0-draft continuity-report version.
+   */
   contractVersion: typeof TARGET_DOCUMENTATION_CONTINUITY_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 两侧条目、必需输出、生产器与隐私摘要的比较结果。
+   * @lang en Comparison results for entries, required outputs, producers and privacy summaries on both sides.
+   */
   continuity: {
+    /**
+     * @lang zh-CN 基线与当前规范化条目标识列表的数量及差分计数。
+     * @lang en Counts and differences for baseline and current normalized entry-identifier lists.
+     */
     entries: {
+      /**
+       * @lang zh-CN 当前规范化标识列表中基线集合不存在的项数。
+       * @lang en Number of current normalized identifier-list items absent from the baseline set.
+       */
       addedCount: number;
+      /**
+       * @lang zh-CN 基线规范化字符串条目标识的数量。
+       * @lang en Number of normalized string entry identifiers on the baseline side.
+       */
       baselineCount: number;
+      /**
+       * @lang zh-CN 当前规范化字符串条目标识的数量。
+       * @lang en Number of normalized string entry identifiers on the current side.
+       */
       currentCount: number;
+      /**
+       * @lang zh-CN 基线规范化标识列表中当前集合不存在的项数。
+       * @lang en Number of baseline normalized identifier-list items absent from the current set.
+       */
       removedCount: number;
+      /**
+       * @lang zh-CN 基线规范化标识列表中当前集合仍存在的项数。
+       * @lang en Number of baseline normalized identifier-list items still present in the current set.
+       */
       unchangedCount: number;
     };
+    /**
+     * @lang zh-CN 两侧隐私摘要兼容性及其合取结果。
+     * @lang en Privacy-summary compatibility on each side and their conjunction.
+     */
     privacy: {
+      /**
+       * @lang zh-CN 基线隐私摘要满足none或link、无正文与绝对路径样式计数为0的边界。
+       * @lang en Whether the baseline privacy summary satisfies the none-or-link, body-free and zero-absolute-path-like-count boundary.
+       */
       baselineCompatible: boolean;
+      /**
+       * @lang zh-CN baselineCompatible与currentCompatible的逻辑合取。
+       * @lang en Logical conjunction of baselineCompatible and currentCompatible.
+       */
       continuityPreserved: boolean;
+      /**
+       * @lang zh-CN 当前隐私摘要满足none或link、无正文与绝对路径样式计数为0的边界。
+       * @lang en Whether the current privacy summary satisfies the none-or-link, body-free and zero-absolute-path-like-count boundary.
+       */
       currentCompatible: boolean;
     };
+    /**
+     * @lang zh-CN 两侧生产器计数、身份差分及成功/工件数量连续性。
+     * @lang en Producer counts, identity differences and success/artifact-count continuity on both sides.
+     */
     producers: {
+      /**
+       * @lang zh-CN 当前聚合工件计数是否大于或等于基线计数。
+       * @lang en Whether the current aggregate artifact count is at least the baseline count.
+       */
       artifactCountNonDecreasing: boolean;
+      /**
+       * @lang zh-CN 基线生产器的无身份计数摘要。
+       * @lang en Identity-free count summary of baseline producers.
+       */
       baseline: TargetDocumentationContinuityProducerSummary;
+      /**
+       * @lang zh-CN 当前生产器的无身份计数摘要。
+       * @lang en Identity-free count summary of current producers.
+       */
       current: TargetDocumentationContinuityProducerSummary;
+      /**
+       * @lang zh-CN 生产器标识列表在两侧的增加、移除及保留计数。
+       * @lang en Added, removed and retained counts for producer-identifier lists on both sides.
+       */
       identity: {
+        /**
+         * @lang zh-CN 当前生产器标识列表中基线集合不存在的项数。
+         * @lang en Number of current producer-identifier-list items absent from the baseline set.
+         */
         addedCount: number;
+        /**
+         * @lang zh-CN 基线生产器标识列表中当前集合不存在的项数。
+         * @lang en Number of baseline producer-identifier-list items absent from the current set.
+         */
         removedCount: number;
+        /**
+         * @lang zh-CN 基线生产器标识列表中当前集合仍存在的项数。
+         * @lang en Number of baseline producer-identifier-list items still present in the current set.
+         */
         unchangedCount: number;
       };
+      /**
+       * @lang zh-CN 两侧生产器兼容性均通过，含非空、唯一稳定标识及全部成功等检查。
+       * @lang en Whether producer compatibility passes on both sides, including non-empty records, unique stable identifiers and all-success checks.
+       */
       successPreserved: boolean;
     };
+    /**
+     * @lang zh-CN 三类必需输出在两侧的存在与共同保留结果。
+     * @lang en Presence on both sides and joint preservation results for the three required output kinds.
+     */
     requiredOutputs: {
+      /**
+       * @lang zh-CN HTML入口、渲染清单及项目索引均在两侧存在的合取结果。
+       * @lang en Conjunction requiring the HTML entrypoint, renderer manifest and project index to be present on both sides.
+       */
       allPreserved: boolean;
+      /**
+       * @lang zh-CN HTML入口在基线与当前侧的存在及共同保留状态。
+       * @lang en Baseline/current presence and joint-preservation state of the HTML entrypoint.
+       */
       indexHtml: TargetDocumentationContinuityRequiredOutput;
+      /**
+       * @lang zh-CN 渲染清单在基线与当前侧的存在及共同保留状态。
+       * @lang en Baseline/current presence and joint-preservation state of the renderer manifest.
+       */
       manifest: TargetDocumentationContinuityRequiredOutput;
+      /**
+       * @lang zh-CN 项目索引在基线与当前侧的存在及共同保留状态。
+       * @lang en Baseline/current presence and joint-preservation state of the project index.
+       */
       projectIndex: TargetDocumentationContinuityRequiredOutput;
     };
   };
+  /**
+   * @lang zh-CN 固定顺序的公开拒绝诊断集合。
+   * @lang en Collection of public refusal diagnostics in fixed order.
+   */
   diagnostics: TargetDocumentationContinuityDiagnostic[];
+  /**
+   * @lang zh-CN 基线与当前输入的契约、版本及状态引用。
+   * @lang en Contract, version and status references for baseline and current inputs.
+   */
   input: {
+    /**
+     * @lang zh-CN 基线证据的契约、精确版本与状态引用。
+     * @lang en Contract, exact version and status reference of baseline evidence.
+     */
     baseline: TargetDocumentationContinuityInputRef;
+    /**
+     * @lang zh-CN 当前证据的契约、精确版本与状态引用。
+     * @lang en Contract, exact version and status reference of current evidence.
+     */
     current: TargetDocumentationContinuityInputRef;
   };
+  /**
+   * @lang zh-CN 固定全false的比较活动边界声明。
+   * @lang en Comparison-activity boundary declaration fixed entirely to false.
+   */
   permissions: {
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无网络访问边界。
+     * @lang en Fixed to false, recording the comparison's network-access-free boundary.
+     */
     networkAccessed: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无包发布边界。
+     * @lang en Fixed to false, recording the comparison's package-publication-free boundary.
+     */
     packagePublished: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标采用声明边界。
+     * @lang en Fixed to false, recording the comparison boundary without target-adoption claims.
+     */
     targetAdoptionClaimed: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标工件正文读取边界。
+     * @lang en Fixed to false, recording the comparison boundary without target-artifact body reads.
+     */
     targetArtifactBodyRead: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标分支或拉取请求创建边界。
+     * @lang en Fixed to false, recording the comparison boundary without target branch or pull-request creation.
+     */
     targetBranchOrPrCreated: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标命令执行边界。
+     * @lang en Fixed to false, recording the comparison boundary without target-command execution.
+     */
     targetCommandExecuted: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标仓库写入边界。
+     * @lang en Fixed to false, recording the comparison's target-write-free boundary.
+     */
     targetRepositoryWrite: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标运行时打开边界。
+     * @lang en Fixed to false, recording the comparison boundary without opening target runtimes.
+     */
     targetRuntimeOpened: false;
+    /**
+     * @lang zh-CN 固定为false，记录比较过程的无目标源码正文读取边界。
+     * @lang en Fixed to false, recording the comparison boundary without target-source body reads.
+     */
     targetSourceBodyRead: false;
   };
+  /**
+   * @lang zh-CN 固定关闭身份列表、正文、路径及工作状态序列化的隐私标记。
+   * @lang en Fixed privacy flags excluding identity lists, bodies, paths and working-state serialization.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为false，报告关闭工件正文序列化。
+     * @lang en Fixed to false, excluding artifact-body serialization from the report.
+     */
     artifactBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告仅保留条目标识的差分计数。
+     * @lang en Fixed to false, retaining only difference counts for entry identifiers in the report.
+     */
     entryIdsSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告关闭输入路径序列化。
+     * @lang en Fixed to false, excluding input-path serialization from the report.
+     */
     pathSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告仅保留生产器标识的差分计数。
+     * @lang en Fixed to false, retaining only difference counts for producer identifiers in the report.
+     */
     producerIdsSerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告关闭源码正文序列化。
+     * @lang en Fixed to false, excluding source-body serialization from the report.
+     */
     sourceBodySerialized: false;
+    /**
+     * @lang zh-CN 固定为false，报告关闭工作状态序列化。
+     * @lang en Fixed to false, excluding working-state serialization from the report.
+     */
     workingStateSerialized: false;
   };
+  /**
+   * @lang zh-CN 独立记录配对解析状态、未核置信度和元数据比较来源。
+   * @lang en Separate records of pair-resolution state, unverified confidence and metadata-comparison provenance.
+   */
   semantics: {
+    /**
+     * @lang zh-CN 固定为caller-provided-unverified，保留调用方证据未获独立认证的边界。
+     * @lang en Fixed to caller-provided-unverified, preserving the boundary of caller evidence without independent attestation.
+     */
     confidence: "caller-provided-unverified";
+    /**
+     * @lang zh-CN 固定为metadata-only-comparison，来源为两份证据摘要的元数据比较。
+     * @lang en Fixed to metadata-only-comparison, deriving provenance from metadata comparison of two evidence summaries.
+     */
     provenance: "metadata-only-comparison";
+    /**
+     * @lang zh-CN accepted结果为evidence-summary-pair-validated，refused结果为unresolved。
+     * @lang en Evidence-summary-pair-validated for accepted results and unresolved for refused results.
+     */
     resolution: "evidence-summary-pair-validated" | "unresolved";
   };
+  /**
+   * @lang zh-CN 全部比较维度无诊断时为accepted，其余为refused。
+   * @lang en Accepted when every comparison dimension produces no diagnostic, otherwise refused.
+   */
   status: "accepted" | "refused";
+  /**
+   * @lang zh-CN 已校验语法的公开目标标识及enterprise-business或invalid目标族。
+   * @lang en Grammar-checked public target identifier and enterprise-business or invalid target family.
+   */
   target: {
+    /**
+     * @lang zh-CN 有效输入记录enterprise-business，其余记录invalid。
+     * @lang en Records enterprise-business for valid input and invalid otherwise.
+     */
     family: TargetDocumentationContinuityFamily | "invalid";
+    /**
+     * @lang zh-CN 调用方稳定公开目标标识，语法无效时替换为invalid-target。
+     * @lang en Caller-supplied stable public target identifier, replaced by invalid-target when its grammar is invalid.
+     */
     id: string;
   };
 }
@@ -175,8 +451,20 @@ export interface TargetDocumentationContinuityReport {
  * @lang en Body-free contract/status reference used by the report.
  */
 export interface TargetDocumentationContinuityInputRef {
+  /**
+   * @lang zh-CN 输入名称匹配时记录hia-generated-docs-evidence-summary，否则为invalid。
+   * @lang en Records hia-generated-docs-evidence-summary when the input name matches, otherwise invalid.
+   */
   contract: "hia-generated-docs-evidence-summary" | "invalid";
+  /**
+   * @lang zh-CN 输入版本匹配时记录0.1.0-draft，否则为invalid。
+   * @lang en Records 0.1.0-draft when the input version matches, otherwise invalid.
+   */
   contractVersion: "0.1.0-draft" | "invalid";
+  /**
+   * @lang zh-CN 输入ready或incomplete状态，其他值规范为invalid。
+   * @lang en Input ready or incomplete state, with other values normalized to invalid.
+   */
   status: "ready" | "incomplete" | "invalid";
 }
 

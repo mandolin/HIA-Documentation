@@ -93,45 +93,177 @@ export interface TargetDocumentationAcceptanceDiagnostic {
  * @lang en Versioned report that a target owner may review or retain as their own evidence.
  */
 export interface TargetDocumentationAcceptanceReport {
+  /**
+   * @lang zh-CN 从已生成证据摘要计算的必需输出、生产器、身份与权限结果。
+   * @lang en Required-output, producer, identity and permission results computed from generated evidence summaries.
+   */
   acceptance: {
+    /**
+     * @lang zh-CN 证据声明的HTML入口、渲染清单及项目索引存在状态。
+     * @lang en Evidence-declared presence of the HTML entrypoint, renderer manifest and project index.
+     */
     requiredOutputs: {
+      /**
+       * @lang zh-CN 输入摘要是否明确将HTML入口标记为存在。
+       * @lang en Whether the input summary explicitly marks the HTML entrypoint as present.
+       */
       indexHtml: boolean;
+      /**
+       * @lang zh-CN 输入摘要是否明确将渲染清单标记为存在。
+       * @lang en Whether the input summary explicitly marks the renderer manifest as present.
+       */
       manifest: boolean;
+      /**
+       * @lang zh-CN 输入摘要是否明确将项目索引标记为存在。
+       * @lang en Whether the input summary explicitly marks the project index as present.
+       */
       projectIndex: boolean;
     };
+    /**
+     * @lang zh-CN 从生产器记录提取的工件数量与成功状态计数。
+     * @lang en Artifact totals and success-state counts extracted from producer records.
+     */
     producerCompatibility: {
+      /**
+       * @lang zh-CN 生产器记录中有效非负工件计数之和，无效计数按0累计。
+       * @lang en Sum of valid non-negative artifact counts in producer records, with invalid counts contributing zero.
+       */
       artifactCount: number;
+      /**
+       * @lang zh-CN 输入数组中被保留为对象的生产器记录数量。
+       * @lang en Number of producer records retained as objects from the input array.
+       */
       producerCount: number;
+      /**
+       * @lang zh-CN 被保留生产器记录中status为success的数量。
+       * @lang en Number of retained producer records whose status is success.
+       */
       successfulProducerCount: number;
     };
+    /**
+     * @lang zh-CN 纯验收计算所需的固定最小权限声明。
+     * @lang en Fixed minimal-permission declaration for pure acceptance evaluation.
+     */
     requiredPermissions: {
+      /**
+       * @lang zh-CN 固定为false，记录纯验收计算的无网络权限边界。
+       * @lang en Fixed to false, recording the network-free permission boundary of pure acceptance evaluation.
+       */
       network: false;
+      /**
+       * @lang zh-CN 固定为false，记录纯验收计算的无源码正文读取边界。
+       * @lang en Fixed to false, recording the source-body-read-free boundary of pure acceptance evaluation.
+       */
       sourceBodyRead: false;
+      /**
+       * @lang zh-CN 固定为false，记录纯验收计算的无目标仓库写入边界。
+       * @lang en Fixed to false, recording the target-write-free boundary of pure acceptance evaluation.
+       */
       targetRepositoryWrite: false;
     };
+    /**
+     * @lang zh-CN 规范化字符串条目标识的总数、去重数及重复数。
+     * @lang en Total, unique and duplicate counts of normalized string entry identifiers.
+     */
     stableEntryIdentity: {
+      /**
+       * @lang zh-CN 规范化条目标识总数减去不同标识数量。
+       * @lang en Normalized entry-identifier total minus the number of distinct identifiers.
+       */
       duplicateCount: number;
+      /**
+       * @lang zh-CN 过滤为字符串后的条目标识数量，保留重复项。
+       * @lang en Number of entry identifiers after string filtering, retaining duplicates.
+       */
       entryCount: number;
+      /**
+       * @lang zh-CN 规范化字符串标识集合的不同值数量。
+       * @lang en Number of distinct values in the normalized string-identifier collection.
+       */
       uniqueCount: number;
     };
   };
+  /**
+   * @lang zh-CN 固定的target-documentation-acceptance契约名称。
+   * @lang en Fixed target-documentation-acceptance contract name.
+   */
   contract: typeof TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft验收报告版本。
+   * @lang en Fixed 0.1.0-draft acceptance-report version.
+   */
   contractVersion: typeof TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 按固定顺序去重的公开诊断，文本采用固定说明。
+   * @lang en Public diagnostics deduplicated in fixed order, using fixed explanatory messages.
+   */
   diagnostics: TargetDocumentationAcceptanceDiagnostic[];
+  /**
+   * @lang zh-CN 输入证据的精确契约/版本标记，不匹配时分别记录invalid。
+   * @lang en Exact input-evidence contract/version markers, each recorded as invalid on mismatch.
+   */
   input: {
+    /**
+     * @lang zh-CN 输入名称匹配时记录hia-generated-docs-evidence-summary，否则为invalid。
+     * @lang en Records hia-generated-docs-evidence-summary when the input name matches, otherwise invalid.
+     */
     contract: "hia-generated-docs-evidence-summary" | "invalid";
+    /**
+     * @lang zh-CN 输入版本匹配时记录0.1.0-draft，否则为invalid。
+     * @lang en Records 0.1.0-draft when the input version matches, otherwise invalid.
+     */
     contractVersion: "0.1.0-draft" | "invalid";
   };
+  /**
+   * @lang zh-CN 由调用方证据隐私声明规范化的标记与计数。
+   * @lang en Flags and counts normalized from caller-provided evidence privacy declarations.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 上游声明的绝对路径样式字符串数量，缺失或无效时记录-1。
+     * @lang en Upstream-declared count of absolute-path-like strings, recorded as -1 when missing or invalid.
+     */
     absolutePathLikeStringCount: number;
+    /**
+     * @lang zh-CN 上游源码正文存在标记，仅显式true规范为true。
+     * @lang en Upstream source-body presence flag, normalized to true only for an explicit true value.
+     */
     sourceBodyPresent: boolean;
+    /**
+     * @lang zh-CN 上游源码呈现方式，未知或缺失值记录invalid。
+     * @lang en Upstream source-presentation mode, recorded as invalid when unknown or missing.
+     */
     sourcePresentation: "none" | "link" | "embed" | "fetch" | "invalid";
+    /**
+     * @lang zh-CN 上游sourcesContent策略，识别none或explicit-embed，其余记录invalid。
+     * @lang en Upstream sourcesContent policy, recognizing none or explicit-embed and recording other values as invalid.
+     */
     sourcesContentPolicy: "none" | "explicit-embed" | "invalid";
+    /**
+     * @lang zh-CN 上游sourcesContent存在标记，仅显式true规范为true。
+     * @lang en Upstream sourcesContent presence flag, normalized to true only for an explicit true value.
+     */
     sourcesContentPresent: boolean;
   };
+  /**
+   * @lang zh-CN 全部验收维度无诊断时为accepted，其余为refused。
+   * @lang en Accepted when every acceptance dimension produces no diagnostic, otherwise refused.
+   */
   status: "accepted" | "refused";
+  /**
+   * @lang zh-CN 语法受限的公开目标标识与已知目标族，非法值替换为哨兵。
+   * @lang en Grammar-constrained public target identifier and known target family, with invalid values replaced by sentinels.
+   */
   target: {
+    /**
+     * @lang zh-CN 识别到的公开目标族，未知值记录invalid。
+     * @lang en Recognized public target family, recorded as invalid for unknown values.
+     */
     family: TargetDocumentationPortfolioFamily | "invalid";
+    /**
+     * @lang zh-CN 调用方提供的稳定公开目标标识，语法无效时替换为invalid-target。
+     * @lang en Caller-supplied stable public target identifier, replaced by invalid-target when its grammar is invalid.
+     */
     id: string;
   };
 }
