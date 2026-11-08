@@ -69,6 +69,32 @@ test("profile and source-linkage bilingual comments retain separate canonical lo
   }
 });
 
+test("config and plugin SDK public declarations and nested members retain explicit bilingual descriptions", () => {
+  // <lang><zh-CN>固定配置、项目清单及生产器SDK的四份真实声明源，递归覆盖匿名类型字段。</zh-CN><en>Fix the four config, project-manifest and producer SDK sources, recursively covering anonymous type fields.</en></lang>
+  const files = ["config/src/index.ts", "config/src/project-manifest.ts", "plugin-sdk/src/constants.ts", "plugin-sdk/src/index.ts"];
+  for (const relative of files) {
+    // <lang><zh-CN>使用已安装编译器读取真实声明，字符串中的示例不进入节点检查。</zh-CN><en>Read actual declarations with the installed compiler, excluding examples inside strings.</en></lang>
+    const file = fileURLToPath(new URL(`../packages/${relative}`, import.meta.url));
+    const source = ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    /**
+     * @lang zh-CN 对当前声明及嵌套字段核两语行首标签，生成链另核正文与投影。
+     * @lang en Checks line-leading locale tags on declarations and nested fields; production separately verifies text and projection.
+     * @param {import("typescript").Node} node <lang><zh-CN>当前声明或字段。</zh-CN><en>The current declaration or field.</en></lang>
+     */
+    function check(node) {
+      // <lang><zh-CN>节点附着文档必须含显式语言声明，默认英文或deprecated字段不能代替description。</zh-CN><en>Attached docs require explicit locales; default English or deprecated fields cannot replace descriptions.</en></lang>
+      const comment = node.jsDoc?.at(-1)?.getText(source) ?? "";
+      assert.match(comment, /^\s*\*\s+@lang zh-CN(?:[ \t]|\r?$)/m, `${relative} ${node.name?.getText(source) ?? ts.SyntaxKind[node.kind]} Chinese`);
+      assert.match(comment, /^\s*\*\s+@lang en(?:[ \t]|\r?$)/m, `${relative} ${node.name?.getText(source) ?? ts.SyntaxKind[node.kind]} English`);
+      for (const member of node.members ?? []) check(member);
+      if (node.type && ts.isTypeLiteralNode(node.type)) for (const member of node.type.members) check(member);
+    }
+    for (const statement of source.statements) {
+      if (statement.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword) && (ts.isInterfaceDeclaration(statement) || ts.isTypeAliasDeclaration(statement) || ts.isVariableStatement(statement) || ts.isFunctionDeclaration(statement))) check(statement);
+    }
+  }
+});
+
 test("distribution and theme public declarations retain canonical bilingual source comments", () => {
   for(const name of ["profiles","schemas","theme-default"]) {
     // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>

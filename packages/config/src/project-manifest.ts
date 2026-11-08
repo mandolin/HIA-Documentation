@@ -8,195 +8,345 @@ import { isProjectManifestJsonDataGraph } from "./manifest-json-data.js";
 import { createHiaDiagnostic } from "@hia-doc/core";
 import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@hia-doc/core";
 
-/** @lang zh-CN 当前源码清单定义版本候选，与配置包/系统正式发行身份独立。
+/**
+ * @lang zh-CN 当前源码清单定义版本候选，与配置包/系统正式发行身份独立。
  * @lang en Current source manifest-definition candidate, independent of config-package/system release identity.
  */
 export const HIA_PROJECT_MANIFEST_SCHEMA_VERSION = "1.0.0";
-/** @lang zh-CN 当前新根的固定schema身份；旧0.1.0-draft归档不会重定向为它。
+/**
+ * @lang zh-CN 当前新根的固定schema身份；旧0.1.0-draft归档不会重定向为它。
  * @lang en Fixed schema identity for the new current root; the legacy 0.1.0-draft archive never redirects to it.
  */
 export const HIA_PROJECT_MANIFEST_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json";
-/** @lang zh-CN 静态artifact输入种类闭集，不触发源语言解析或自动发现生产器；运行时按只读约定使用。
+/**
+ * @lang zh-CN 静态artifact输入种类闭集，不触发源语言解析或自动发现生产器；运行时按只读约定使用。
  * @lang en Closed static-artifact input kinds, without source-language parsing or producer discovery; use the runtime collection as read-only.
  */
 export const HIA_PROJECT_MANIFEST_INPUT_KINDS = ["hia-document", "jsdoc-integration", "htmdoc-extraction", "cssdoc-extraction", "doc-source-map", "documentation-producer-result"] as const;
-/** @lang zh-CN 已支持的聚合领域标识，other保留通用投影；不从路径推断领域。
+/**
+ * @lang zh-CN 已支持的聚合领域标识，other保留通用投影；不从路径推断领域。
  * @lang en Supported aggregation-domain identifiers, with other retaining generic projection; domains are not inferred from paths.
  */
 export const HIA_PROJECT_MANIFEST_DOMAINS = ["js", "css", "html", "dotnet", "powershell", "other"] as const;
-/** @lang zh-CN 输入artifact选择策略；relations-only仅允许生产器结果输入，不授予关系编辑权限。
+/**
+ * @lang zh-CN 输入artifact选择策略；relations-only仅允许生产器结果输入，不授予关系编辑权限。
  * @lang en Input artifact-selection policies; relations-only applies only to producer-result inputs and grants no relation-edit permission.
  */
 export const HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES = ["all", "relations-only"] as const;
-/** @lang zh-CN 已确认的中性语义导航段种类；调用者不得修改共享常量数组。
+/**
+ * @lang zh-CN 已确认的中性语义导航段种类；调用者不得修改共享常量数组。
  * @lang en Confirmed neutral semantic-navigation segment kinds; callers must not mutate the shared constant array.
  */
 export const HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS = [
   "repository", "package", "layer", "contract", "operation", "project", "assembly", "namespace", "type"
 ] as const;
 
-/** @lang zh-CN 静态输入kind闭集的类型投影，不代表已读取artifact。
+/**
+ * @lang zh-CN 静态输入kind闭集的类型投影，不代表已读取artifact。
  * @lang en Type projection of closed static input kinds, not proof that an artifact was read.
  */
 export type HiaProjectManifestInputKind = typeof HIA_PROJECT_MANIFEST_INPUT_KINDS[number];
-/** @lang zh-CN 支持的聚合领域类型，不扩展某个领域的抽取契约。
+/**
+ * @lang zh-CN 支持的聚合领域类型，不扩展某个领域的抽取契约。
  * @lang en Supported aggregation-domain type, without extending a domain's extraction contract.
  */
 export type HiaProjectManifestDomain = typeof HIA_PROJECT_MANIFEST_DOMAINS[number];
-/** @lang zh-CN artifact选择类型，省略时由CLI沿用全部可消费产物规则。
+/**
+ * @lang zh-CN artifact选择类型，省略时由CLI沿用全部可消费产物规则。
  * @lang en Artifact-selection type; omission retains the CLI's all-consumable-artifacts behavior.
  */
 export type HiaProjectManifestArtifactPolicy = typeof HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES[number];
-/** @lang zh-CN 已确认的语义路径段kind，不承载文件系统路径。
+/**
+ * @lang zh-CN 已确认的语义路径段kind，不承载文件系统路径。
  * @lang en Confirmed semantic-path segment kind, carrying no filesystem path.
  */
 export type HiaProjectManifestSemanticPathKind = typeof HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS[number];
-/** @lang zh-CN 两个准入的精确根版本，不协商未知patch/minor/预发行或build元数据。
+/**
+ * @lang zh-CN 两个准入的精确根版本，不协商未知patch/minor/预发行或build元数据。
  * @lang en The two admitted exact root versions, without negotiating unknown patches/minors/prereleases or build metadata.
  */
 export type HiaProjectManifestSchemaVersion = typeof HIA_PROJECT_MANIFEST_SCHEMA_VERSION | "0.1.0-draft";
 
-/** @lang zh-CN 未验证清单的宽松声明视图；required/JSON/路径及跨字段条件仍须纯守卫验证，数组与metadata不被克隆。
+/**
+ * @lang zh-CN 未验证清单的宽松声明视图；required/JSON/路径及跨字段条件仍须纯守卫验证，数组与metadata不被克隆。
  * @lang en Loose declaration view of an unvalidated manifest; the pure guard still checks required/JSON/path/cross-field conditions without cloning arrays or metadata.
  */
 export interface HiaProjectDocsManifest {
-  /** @lang zh-CN 精确根版本，wire必填；省略不会自动补当前值。 @lang en Exact root version, required on the wire; omission does not insert the current value. */
+  /**
+   * @lang zh-CN 精确根版本，wire必填；省略不会自动补当前值。
+   * @lang en Exact root version, required on the wire; omission does not insert the current value.
+   */
   schemaVersion?: HiaProjectManifestSchemaVersion;
-  /** @lang zh-CN wire必需的项目外壳，name须非空。 @lang en Project shell required on the wire, with a nonempty name. */
+  /**
+   * @lang zh-CN wire必需的项目外壳，name须非空。
+   * @lang en Project shell required on the wire, with a nonempty name.
+   */
   project?: HiaProjectManifestProjectInfo;
-  /** @lang zh-CN 显式生产器声明，出现时非空；仅CLI实际build才加载。 @lang en Explicit producer declarations, nonempty when present; only an actual CLI build loads them. */
+  /**
+   * @lang zh-CN 显式生产器声明，出现时非空；仅CLI实际build才加载。
+   * @lang en Explicit producer declarations, nonempty when present; only an actual CLI build loads them.
+   */
   producers?: HiaProjectManifestProducerRef[];
-  /** @lang zh-CN 可为空的引用/元信息列表，不自动加载远程profile。 @lang en Possibly empty reference/metadata list, without automatic remote-profile loading. */
+  /**
+   * @lang zh-CN 可为空的引用/元信息列表，不自动加载远程profile。
+   * @lang en Possibly empty reference/metadata list, without automatic remote-profile loading.
+   */
   profiles?: HiaProjectManifestProfileRef[];
-  /** @lang zh-CN 显式静态输入，出现时非空；与producers至少提供一条非空链。 @lang en Explicit static inputs, nonempty when present; at least one nonempty chain of inputs/producers is required. */
+  /**
+   * @lang zh-CN 显式静态输入，出现时非空；与producers至少提供一条非空链。
+   * @lang en Explicit static inputs, nonempty when present; at least one nonempty chain of inputs/producers is required.
+   */
   inputs?: HiaProjectManifestInput[];
-  /** @lang zh-CN 可选普通JSON对象，领域内容及隐私仍归调用者。 @lang en Optional ordinary JSON object; domain content and privacy remain caller responsibilities. */
+  /**
+   * @lang zh-CN 可选普通JSON对象，领域内容及隐私仍归调用者。
+   * @lang en Optional ordinary JSON object; domain content and privacy remain caller responsibilities.
+   */
   metadata?: Record<string, unknown>;
 }
 
-/** @lang zh-CN 项目公开身份及语言元信息，不建立版本路由或推断目录结构。
+/**
+ * @lang zh-CN 项目公开身份及语言元信息，不建立版本路由或推断目录结构。
  * @lang en Public project identity and locale metadata, without version routing or directory-structure inference.
  */
 export interface HiaProjectManifestProjectInfo {
-  /** @lang zh-CN 可选非空公开ID，不默认生成。 @lang en Optional nonempty public ID, never generated by default. */
+  /**
+   * @lang zh-CN 可选非空公开ID，不默认生成。
+   * @lang en Optional nonempty public ID, never generated by default.
+   */
   id?: string;
-  /** @lang zh-CN wire必填的非空项目名，不自动脱敏正文。 @lang en Nonempty project name required on the wire, without automatic prose redaction. */
+  /**
+   * @lang zh-CN wire必填的非空项目名，不自动脱敏正文。
+   * @lang en Nonempty project name required on the wire, without automatic prose redaction.
+   */
   name?: string;
-  /** @lang zh-CN 可选非空展示标题。 @lang en Optional nonempty display title. */
+  /**
+   * @lang zh-CN 可选非空展示标题。
+   * @lang en Optional nonempty display title.
+   */
   title?: string;
-  /** @lang zh-CN 可选默认内容语言，locales出现时必须包含它。 @lang en Optional default content locale, which must occur in locales when that list is present. */
+  /**
+   * @lang zh-CN 可选默认内容语言，locales出现时必须包含它。
+   * @lang en Optional default content locale, which must occur in locales when that list is present.
+   */
   defaultLocale?: string;
-  /** @lang zh-CN 可选非空语言列表，不在此规范化或去重。 @lang en Optional nonempty locale list, without canonicalization or deduplication here. */
+  /**
+   * @lang zh-CN 可选非空语言列表，不在此规范化或去重。
+   * @lang en Optional nonempty locale list, without canonicalization or deduplication here.
+   */
   locales?: string[];
-  /** @lang zh-CN 可选非空产品版本元信息，不改变清单schema或创建版本页面。 @lang en Optional nonempty product-version metadata, without changing the manifest schema or creating version pages. */
+  /**
+   * @lang zh-CN 可选非空产品版本元信息，不改变清单schema或创建版本页面。
+   * @lang en Optional nonempty product-version metadata, without changing the manifest schema or creating version pages.
+   */
   productVersion?: string;
 }
 
-/** @lang zh-CN 可选的profile元信息/本地文件引用；无path时不读取文件，缺profileId的惰性条目不会被CLI自动补身份。
+/**
+ * @lang zh-CN 可选的profile元信息/本地文件引用；无path时不读取文件，缺profileId的惰性条目不会被CLI自动补身份。
  * @lang en Optional profile metadata/local-file reference; omission of path reads no file, and the CLI never invents identities for inert entries without profileId.
  */
 export interface HiaProjectManifestProfileRef {
-  /** @lang zh-CN 可选非空profile身份；实际CLI消费引用应显式提供。 @lang en Optional nonempty profile identity; references intended for actual CLI consumption should provide it explicitly. */
+  /**
+   * @lang zh-CN 可选非空profile身份；实际CLI消费引用应显式提供。
+   * @lang en Optional nonempty profile identity; references intended for actual CLI consumption should provide it explicitly.
+   */
   profileId?: string;
-  /** @lang zh-CN 可选profile自身版本，不等于清单/包版本。 @lang en Optional profile's own version, distinct from manifest/package versions. */
+  /**
+   * @lang zh-CN 可选profile自身版本，不等于清单/包版本。
+   * @lang en Optional profile's own version, distinct from manifest/package versions.
+   */
   profileVersion?: string;
-  /** @lang zh-CN 可选非空层元信息，具体支持由profile运行时决定。 @lang en Optional nonempty layer metadata; the profile runtime decides concrete support. */
+  /**
+   * @lang zh-CN 可选非空层元信息，具体支持由profile运行时决定。
+   * @lang en Optional nonempty layer metadata; the profile runtime decides concrete support.
+   */
   layer?: string;
-  /** @lang zh-CN 可选清单目录相对路径，不可绝对、越界或使用控制字符。 @lang en Optional manifest-directory-relative path, without absolute/traversing/control-character locators. */
+  /**
+   * @lang zh-CN 可选清单目录相对路径，不可绝对、越界或使用控制字符。
+   * @lang en Optional manifest-directory-relative path, without absolute/traversing/control-character locators.
+   */
   path?: string;
 }
 
-/** @lang zh-CN 单个静态输入的profile引用；出现时profileId必填，不触发下载或继承求值。
+/**
+ * @lang zh-CN 单个静态输入的profile引用；出现时profileId必填，不触发下载或继承求值。
  * @lang en Profile reference for one static input; profileId is required when present, without downloads or inheritance evaluation.
  */
 export interface HiaProjectManifestInputProfileRef {
-  /** @lang zh-CN 非空精确profile身份。 @lang en Nonempty exact profile identity. */
+  /**
+   * @lang zh-CN 非空精确profile身份。
+   * @lang en Nonempty exact profile identity.
+   */
   profileId: string;
-  /** @lang zh-CN 可选非空profile版本。 @lang en Optional nonempty profile version. */
+  /**
+   * @lang zh-CN 可选非空profile版本。
+   * @lang en Optional nonempty profile version.
+   */
   profileVersion?: string;
-  /** @lang zh-CN 可选非空层元信息。 @lang en Optional nonempty layer metadata. */
+  /**
+   * @lang zh-CN 可选非空层元信息。
+   * @lang en Optional nonempty layer metadata.
+   */
   layer?: string;
 }
 
-/** @lang zh-CN 未验证静态artifact输入视图；kind的宽松string便于表示未知输入，守卫仍拒绝闭集外kind。
+/**
+ * @lang zh-CN 未验证静态artifact输入视图；kind的宽松string便于表示未知输入，守卫仍拒绝闭集外kind。
  * @lang en Unvalidated static-artifact input view; a loose string kind can represent unknown input, while the guard still rejects kinds outside the closed set.
  */
 export interface HiaProjectManifestInput {
-  /** @lang zh-CN wire必需输入kind，不直接解析源语言。 @lang en Input kind required on the wire, without direct source-language parsing. */
+  /**
+   * @lang zh-CN wire必需输入kind，不直接解析源语言。
+   * @lang en Input kind required on the wire, without direct source-language parsing.
+   */
   kind?: HiaProjectManifestInputKind | string;
-  /** @lang zh-CN wire必需artifact相对路径，基于清单目录。 @lang en Artifact-relative path required on the wire, based on the manifest directory. */
+  /**
+   * @lang zh-CN wire必需artifact相对路径，基于清单目录。
+   * @lang en Artifact-relative path required on the wire, based on the manifest directory.
+   */
   path?: string;
-  /** @lang zh-CN 可选领域标识，省略时消费者沿用既有kind推断。 @lang en Optional domain identifier; omission retains the consumer's existing kind-based inference. */
+  /**
+   * @lang zh-CN 可选领域标识，省略时消费者沿用既有kind推断。
+   * @lang en Optional domain identifier; omission retains the consumer's existing kind-based inference.
+   */
   domain?: HiaProjectManifestDomain;
-  /** @lang zh-CN 可选显式输入profile引用。 @lang en Optional explicit input-profile reference. */
+  /**
+   * @lang zh-CN 可选显式输入profile引用。
+   * @lang en Optional explicit input-profile reference.
+   */
   profile?: HiaProjectManifestInputProfileRef;
-  /** @lang zh-CN 可选源码相对根，声明不读取源码或授予发布。 @lang en Optional relative source root; declaration reads no source and grants no publication rights. */
+  /**
+   * @lang zh-CN 可选源码相对根，声明不读取源码或授予发布。
+   * @lang en Optional relative source root; declaration reads no source and grants no publication rights.
+   */
   sourceRoot?: string;
-  /** @lang zh-CN 可选产物策略；relations-only仅消费生产器结果的关系增强产物。 @lang en Optional artifact policy; relations-only consumes relation augmentation from producer results only. */
+  /**
+   * @lang zh-CN 可选产物策略；relations-only仅消费生产器结果的关系增强产物。
+   * @lang en Optional artifact policy; relations-only consumes relation augmentation from producer results only.
+   */
   artifactPolicy?: HiaProjectManifestArtifactPolicy;
-  /** @lang zh-CN 可选非空owner-reviewed导航前缀，不从source/container路径猜测。 @lang en Optional nonempty owner-reviewed navigation prefix, never guessed from source/container paths. */
+  /**
+   * @lang zh-CN 可选非空owner-reviewed导航前缀，不从source/container路径猜测。
+   * @lang en Optional nonempty owner-reviewed navigation prefix, never guessed from source/container paths.
+   */
   semanticPath?: HiaProjectManifestSemanticPathSegment[];
 }
 
-/** @lang zh-CN 单个稳定公开语义段，字段闭集kind/id/label，不承载路径或私有扩展。
+/**
+ * @lang zh-CN 单个稳定公开语义段，字段闭集kind/id/label，不承载路径或私有扩展。
  * @lang en One stable public semantic segment with closed kind/id/label fields, carrying no path or private extensions.
  */
 export interface HiaProjectManifestSemanticPathSegment {
-  /** @lang zh-CN 已确认种类。 @lang en Confirmed kind. */
+  /**
+   * @lang zh-CN 已确认种类。
+   * @lang en Confirmed kind.
+   */
   kind: HiaProjectManifestSemanticPathKind;
-  /** @lang zh-CN 1–128字符公开token，同一前缀内唯一。 @lang en Public token of 1–128 characters, unique within the prefix. */
+  /**
+   * @lang zh-CN 1–128字符公开token，同一前缀内唯一。
+   * @lang en Public token of 1–128 characters, unique within the prefix.
+   */
   id: string;
-  /** @lang zh-CN 最长160字符公开标签，拒绝路径/URI式值及控制字符。 @lang en Public label of at most 160 characters, rejecting path/URI-like values and controls. */
+  /**
+   * @lang zh-CN 最长160字符公开标签，拒绝路径/URI式值及控制字符。
+   * @lang en Public label of at most 160 characters, rejecting path/URI-like values and controls.
+   */
   label: string;
 }
 
-/** @lang zh-CN 显式生产器的领域输入；扩展保持普通JSON，名称以path/root/directory结尾者另受相对路径约束。
+/**
+ * @lang zh-CN 显式生产器的领域输入；扩展保持普通JSON，名称以path/root/directory结尾者另受相对路径约束。
  * @lang en Domain input for an explicit producer; extensions remain ordinary JSON, with names ending in path/root/directory also constrained to relative paths.
  */
 export interface HiaProjectManifestProducerInput {
-  /** @lang zh-CN wire必需非空领域kind，不强行复用静态artifact闭集。 @lang en Nonempty domain kind required on the wire, without imposing the static-artifact kind set. */
+  /**
+   * @lang zh-CN wire必需非空领域kind，不强行复用静态artifact闭集。
+   * @lang en Nonempty domain kind required on the wire, without imposing the static-artifact kind set.
+   */
   kind?: string;
-  /** @lang zh-CN 可选非空语言元信息。 @lang en Optional nonempty language metadata. */
+  /**
+   * @lang zh-CN 可选非空语言元信息。
+   * @lang en Optional nonempty language metadata.
+   */
   language?: string;
-  /** @lang zh-CN wire必需相对输入路径，基于生产器workspace。 @lang en Relative input path required on the wire, based on the producer workspace. */
+  /**
+   * @lang zh-CN wire必需相对输入路径，基于生产器workspace。
+   * @lang en Relative input path required on the wire, based on the producer workspace.
+   */
   path?: string;
-  /** @lang zh-CN 领域扩展，不因开放而免除JSON/路径检查。 @lang en Domain extensions, whose openness does not waive JSON/path checks. */
+  /**
+   * @lang zh-CN 领域扩展，不因开放而免除JSON/路径检查。
+   * @lang en Domain extensions, whose openness does not waive JSON/path checks.
+   */
   [key: string]: unknown;
 }
 
-/** @lang zh-CN 生产器执行的显式声明，不自动安装模块或执行shell；实际权限由CLI执行边界和负责人授权决定。
+/**
+ * @lang zh-CN 生产器执行的显式声明，不自动安装模块或执行shell；实际权限由CLI执行边界和负责人授权决定。
  * @lang en Explicit producer-execution declaration, without automatic installation or shell execution; actual permissions remain with CLI execution boundaries and owner authorization.
  */
 export interface HiaProjectManifestProducerRef {
-  /** @lang zh-CN 可选非空导出名，省略时CLI沿用原模块选择顺序。 @lang en Optional nonempty export name; omission retains the CLI's existing module-selection order. */
+  /**
+   * @lang zh-CN 可选非空导出名，省略时CLI沿用原模块选择顺序。
+   * @lang en Optional nonempty export name; omission retains the CLI's existing module-selection order.
+   */
   exportName?: string;
-  /** @lang zh-CN 默认fail，warn沿用CLI既有结果严重度策略。 @lang en Defaults to fail; warn retains the CLI's existing result-severity policy. */
+  /**
+   * @lang zh-CN 默认fail，warn沿用CLI既有结果严重度策略。
+   * @lang en Defaults to fail; warn retains the CLI's existing result-severity policy.
+   */
   failureMode?: "fail" | "warn";
-  /** @lang zh-CN wire必需非空ID，同一清单内不得重复。 @lang en Nonempty ID required on the wire, unique within the manifest. */
+  /**
+   * @lang zh-CN wire必需非空ID，同一清单内不得重复。
+   * @lang en Nonempty ID required on the wire, unique within the manifest.
+   */
   id?: string;
-  /** @lang zh-CN wire必需非空领域输入数组。 @lang en Nonempty domain-input array required on the wire. */
+  /**
+   * @lang zh-CN wire必需非空领域输入数组。
+   * @lang en Nonempty domain-input array required on the wire.
+   */
   inputs?: HiaProjectManifestProducerInput[];
-  /** @lang zh-CN wire必需本地模块相对路径，基于清单目录，不进行package发现。 @lang en Local-module relative path required on the wire, based on the manifest directory, without package discovery. */
+  /**
+   * @lang zh-CN wire必需本地模块相对路径，基于清单目录，不进行package发现。
+   * @lang en Local-module relative path required on the wire, based on the manifest directory, without package discovery.
+   */
   module?: string;
-  /** @lang zh-CN 可选普通JSON选项对象，领域含义由生产器解释。 @lang en Optional ordinary-JSON options object whose domain semantics belong to the producer. */
+  /**
+   * @lang zh-CN 可选普通JSON选项对象，领域含义由生产器解释。
+   * @lang en Optional ordinary-JSON options object whose domain semantics belong to the producer.
+   */
   options?: Record<string, unknown>;
-  /** @lang zh-CN 可选CLI输出目录内的相对目录，缺省由CLI按生产器ID建立。 @lang en Optional relative directory within CLI output; omission lets the CLI derive it from producer identity. */
+  /**
+   * @lang zh-CN 可选CLI输出目录内的相对目录，缺省由CLI按生产器ID建立。
+   * @lang en Optional relative directory within CLI output; omission lets the CLI derive it from producer identity.
+   */
   outputDirectory?: string;
-  /** @lang zh-CN 出现时非空profile ID列表，不隐式加载profile文件。 @lang en Nonempty profile-ID list when present, without implicit profile-file loading. */
+  /**
+   * @lang zh-CN 出现时非空profile ID列表，不隐式加载profile文件。
+   * @lang en Nonempty profile-ID list when present, without implicit profile-file loading.
+   */
   profileIds?: string[];
-  /** @lang zh-CN 可选清单相对workspace，允许点目录，缺省为清单目录。 @lang en Optional manifest-relative workspace allowing dot, defaulting to the manifest directory. */
+  /**
+   * @lang zh-CN 可选清单相对workspace，允许点目录，缺省为清单目录。
+   * @lang en Optional manifest-relative workspace allowing dot, defaulting to the manifest directory.
+   */
   workspaceRoot?: string;
 }
 
-/** @lang zh-CN 诊断定位选项，缺省空；调用者负责前缀的公开范围，守卫不清洗调用者定位。
+/**
+ * @lang zh-CN 诊断定位选项，缺省空；调用者负责前缀的公开范围，守卫不清洗调用者定位。
  * @lang en Diagnostic-location options, empty by default; callers own the prefix's publication scope, which the guard does not sanitize.
  */
 export interface HiaProjectManifestValidationOptions {
-  /** @lang zh-CN 可选诊断前缀，原样参与targetPath/path，不执行文件I/O。 @lang en Optional diagnostic prefix used unchanged in targetPath/path, without file I/O. */
+  /**
+   * @lang zh-CN 可选诊断前缀，原样参与targetPath/path，不执行文件I/O。
+   * @lang en Optional diagnostic prefix used unchanged in targetPath/path, without file I/O.
+   */
   targetPath?: string;
 }
 
-/** @lang zh-CN 当前1.0.0新根的2020-12 schema，开放领域扩展、闭合语义导航段；旧固定定义另行归档。
+/**
+ * @lang zh-CN 当前1.0.0新根的2020-12 schema，开放领域扩展、闭合语义导航段；旧固定定义另行归档。
  * @lang en 2020-12 schema for the current 1.0.0 root, with open domain extensions and closed semantic-navigation segments; the fixed legacy definition is archived separately.
  */
 export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
@@ -494,7 +644,8 @@ function validateProjectLocales(
   }
 }
 
-/** @lang zh-CN 校验可选字符串，空串与其它类型都不能充当已声明token；不做格式/版本推断。
+/**
+ * @lang zh-CN 校验可选字符串，空串与其它类型都不能充当已声明token；不做格式/版本推断。
  * @lang en Validates optional strings; empty strings and other types cannot act as declared tokens, without format/version inference.
  */
 function validateOptionalString(item: Record<string, unknown>, field: string, itemPath: string, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
@@ -505,7 +656,8 @@ function validateOptionalString(item: Record<string, unknown>, field: string, it
   }
 }
 
-/** @lang zh-CN 校验已声明对象外壳，内部领域值只受普通JSON图约束。
+/**
+ * @lang zh-CN 校验已声明对象外壳，内部领域值只受普通JSON图约束。
  * @lang en Validates declared object shells; internal domain values receive ordinary-JSON graph constraints only.
  */
 function validateOptionalObject(item: Record<string, unknown>, field: string, itemPath: string, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
@@ -515,7 +667,8 @@ function validateOptionalObject(item: Record<string, unknown>, field: string, it
   }
 }
 
-/** @lang zh-CN 验证可选token列表；producer profileIds出现时非空，不排序/去重/补值。
+/**
+ * @lang zh-CN 验证可选token列表；producer profileIds出现时非空，不排序/去重/补值。
  * @lang en Validates optional token lists; producer profileIds must be nonempty when present, without sorting/deduplication/default insertion.
  */
 function validateOptionalStringList(value: unknown, itemPath: string, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[], nonempty: boolean): void {
@@ -524,7 +677,8 @@ function validateOptionalStringList(value: unknown, itemPath: string, targetPref
   }
 }
 
-/** @lang zh-CN 清单profile引用仅检查形状；顶层元信息可以省略，输入自己的profile引用须给profileId。
+/**
+ * @lang zh-CN 清单profile引用仅检查形状；顶层元信息可以省略，输入自己的profile引用须给profileId。
  * @lang en Checks manifest profile-reference shapes only; top-level metadata may be omitted, while an input's own reference requires profileId.
  */
 function validateProfileReference(value: unknown, itemPath: string, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[], requireIdentity: boolean): void {
@@ -539,7 +693,8 @@ function validateProfileReference(value: unknown, itemPath: string, targetPrefix
   }
 }
 
-/** @lang zh-CN 验证显式生产器声明及身份唯一性，保留领域kind/options，不加载模块。
+/**
+ * @lang zh-CN 验证显式生产器声明及身份唯一性，保留领域kind/options，不加载模块。
  * @lang en Validates explicit producer declarations and identity uniqueness, retaining domain kinds/options without loading modules.
  */
 function validateProducerEntries(value: unknown, targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
@@ -637,7 +792,8 @@ function validateProducerEntries(value: unknown, targetPrefix: string | undefine
   });
 }
 
-/** @lang zh-CN 只对既有路径后缀扩展施加词法约束，未知字段名不泄漏到公开诊断。
+/**
+ * @lang zh-CN 只对既有路径后缀扩展施加词法约束，未知字段名不泄漏到公开诊断。
  * @lang en Applies lexical constraints to established path-suffix extensions without leaking unknown field names into public diagnostics.
  */
 function validatePathLikeExtensionFields(
@@ -656,7 +812,8 @@ function validatePathLikeExtensionFields(
   }
 }
 
-/** @lang zh-CN 检查必需自有非空字符串，不转换或回显输入值。
+/**
+ * @lang zh-CN 检查必需自有非空字符串，不转换或回显输入值。
  * @lang en Checks required own nonempty strings without coercing or reflecting input values.
  */
 function validateRequiredString(
@@ -676,7 +833,8 @@ function validateRequiredString(
   }
 }
 
-/** @lang zh-CN 验证已提供路径或必需路径，current-directory例外须由调用点显式给出。
+/**
+ * @lang zh-CN 验证已提供路径或必需路径，current-directory例外须由调用点显式给出。
  * @lang en Validates present/required paths, with current-directory exceptions explicitly supplied by the call site.
  */
 function validateSafeOptionalPath(
@@ -706,14 +864,16 @@ function validateSafeOptionalPath(
   }
 }
 
-/** @lang zh-CN 沿用不区分大小写的path/root/directory后缀规则，不推断其它领域字段。
+/**
+ * @lang zh-CN 沿用不区分大小写的path/root/directory后缀规则，不推断其它领域字段。
  * @lang en Retains case-insensitive path/root/directory suffix rules without inferring other domain fields.
  */
 function isPathLikeFieldName(field: string): boolean {
   return /(?:path|root|directory)$/iu.test(field);
 }
 
-/** @lang zh-CN 分别验证静态输入与可选profile元信息列表，不归一化或加载引用。
+/**
+ * @lang zh-CN 分别验证静态输入与可选profile元信息列表，不归一化或加载引用。
  * @lang en Validates static inputs and optional profile metadata lists separately, without normalization or reference loading.
  */
 function validateManifestPathEntries(value: unknown, field: "profiles" | "inputs", targetPrefix: string | undefined, diagnostics: HiaDiagnostic[]): void {
@@ -874,7 +1034,8 @@ function isSafeSemanticLabel(value: string): boolean {
     && !/^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(normalized);
 }
 
-/** @lang zh-CN 同时检查Windows/POSIX、URI、父跳转和控制字符，只判断词法边界。
+/**
+ * @lang zh-CN 同时检查Windows/POSIX、URI、父跳转和控制字符，只判断词法边界。
  * @lang en Checks Windows/POSIX, URI, traversal and control characters at the lexical boundary only.
  */
 function isUnsafeRelativePath(value: string, allowCurrentDirectory = false): boolean {
@@ -894,7 +1055,8 @@ function isUnsafeRelativePath(value: string, allowCurrentDirectory = false): boo
     || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(normalized);
 }
 
-/** @lang zh-CN 用固定消息与已净化位置创建新诊断；调用者前缀原样保留，data原引用透传。
+/**
+ * @lang zh-CN 用固定消息与已净化位置创建新诊断；调用者前缀原样保留，data原引用透传。
  * @lang en Creates new diagnostics from fixed messages and sanitized locations, retaining caller prefixes and passing data by reference.
  */
 function createProjectManifestDiagnostic(
@@ -921,14 +1083,16 @@ function createProjectManifestDiagnostic(
   return createHiaDiagnostic(code, message, severity, options);
 }
 
-/** @lang zh-CN 将可信调用者前缀与已知后缀连接，空前缀不生成多余点号。
+/**
+ * @lang zh-CN 将可信调用者前缀与已知后缀连接，空前缀不生成多余点号。
  * @lang en Joins a trusted caller prefix with a known suffix, without an extra dot for an empty prefix.
  */
 function joinTarget(prefix: string | undefined, suffix: string): string {
   return prefix ? `${prefix}.${suffix}` : suffix;
 }
 
-/** @lang zh-CN 在普通JSON图预检后识别非数组对象，不负责实例或Proxy安全边界。
+/**
+ * @lang zh-CN 在普通JSON图预检后识别非数组对象，不负责实例或Proxy安全边界。
  * @lang en Identifies non-array objects after the ordinary-JSON preflight, without owning instance/proxy security boundaries.
  */
 function isRecord(value: unknown): value is Record<string, unknown> {

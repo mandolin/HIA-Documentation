@@ -41,7 +41,10 @@ export const HIA_CONFIG_SOURCE_PRESENTATIONS = ["none", "link", "embed", "fetch"
  * @lang en On-expand or manual loading of same-origin public source assets, without controlling build-time file access.
  */
 export const HIA_CONFIG_SOURCE_FETCH_TRIGGERS = ["on-expand", "manual"] as const;
-/** @lang zh-CN CLI 可执行的 build-time 源码公开授权。 @lang en Build-time source-publication authorization executable by the CLI. */
+/**
+ * @lang zh-CN CLI 可执行的 build-time 源码公开授权。
+ * @lang en Build-time source-publication authorization executable by the CLI.
+ */
 export const HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES = ["none", "explicit-public"] as const;
 /**
  * @lang zh-CN 项目输出布局split-site/single-page的闭集，不改变单文档入口的单页语义。
@@ -49,39 +52,70 @@ export const HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES = ["none", "explicit-public
  */
 export const HIA_CONFIG_PROJECT_LAYOUTS = ["split-site", "single-page"] as const;
 /**
- * Portal IA contract 的中性 identity；config 只验证 vocabulary，不成为 runtime contract owner。
- * Neutral Portal IA contract identity; config validates vocabulary without becoming the runtime contract owner.
+ * @lang zh-CN Portal IA contract 的中性 identity；config 只验证 vocabulary，不成为 runtime contract owner。
+ * @lang en Neutral Portal IA contract identity; config validates vocabulary without becoming the runtime contract owner.
  */
 export const HIA_CONFIG_PORTAL_IA_CONTRACT = "documentation-portal-information-architecture";
-/** Portal IA 首轮只接受 exact draft version。The first Portal IA slice accepts only this exact draft version. */
+/**
+ * @lang zh-CN Portal IA 首轮只接受 exact draft version。
+ * @lang en The first Portal IA slice accepts only this exact draft version.
+ */
 export const HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION = "0.1.0-draft";
-/** 内容分组与获取时机保持正交。Content grouping remains orthogonal to acquisition timing. */
+/**
+ * @lang zh-CN 内容分组与获取时机保持正交。
+ * @lang en Content grouping remains orthogonal to acquisition timing.
+ */
 export const HIA_CONFIG_PORTAL_CONTENT_GROUPINGS = ["entry", "semantic-container"] as const;
-/** fragment 获取策略闭集。Closed fragment acquisition strategy set. */
+/**
+ * @lang zh-CN fragment 获取策略闭集。
+ * @lang en Closed fragment acquisition strategy set.
+ */
 export const HIA_CONFIG_PORTAL_LOADING_STRATEGIES = ["lazy", "eager"] as const;
-/** member 呈现位置闭集。Closed member presentation placement set. */
+/**
+ * @lang zh-CN member 呈现位置闭集。
+ * @lang en Closed member presentation placement set.
+ */
 export const HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS = ["separate", "with-parent"] as const;
-/** 首轮 touched-label catalog 支持的 UI locale。UI locales supported by the first touched-label catalog. */
+/**
+ * @lang zh-CN 首轮 touched-label catalog 支持的 UI locale。
+ * @lang en UI locales supported by the first touched-label catalog.
+ */
 export const HIA_CONFIG_PORTAL_UI_LOCALES = ["zh-CN", "en"] as const;
 /**
- * @lang zh-CN
- * source-comment projection 的精确中性 contract pin；config 不拥有 runtime contract。
+ * @lang zh-CN source-comment projection 的精确中性 contract pin；config 不拥有 runtime contract。
  *
- * @lang en
- * Exact neutral source-comment projection contract pin; config does not own the runtime contract.
+ * @lang en Exact neutral source-comment projection contract pin; config does not own the runtime contract.
  */
 export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT = "documentation-source-comment-projection" as const;
-/** @lang zh-CN P1 只接受这一精确 draft。 @lang en P1 accepts this exact draft only. */
+/**
+ * @lang zh-CN P1 只接受这一精确 draft。
+ * @lang en P1 accepts this exact draft only.
+ */
 export const HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION = "0.1.0-draft" as const;
-/** @lang zh-CN 正文默认关闭，显式模式仍只允许投影纯文本。 @lang en Bodies default off; explicit mode still permits projected plain text only. */
+/**
+ * @lang zh-CN 正文默认关闭，显式模式仍只允许投影纯文本。
+ * @lang en Bodies default off; explicit mode still permits projected plain text only.
+ */
 export const HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES = ["none", "explicit-projected-text"] as const;
-/** @lang zh-CN 已实现的默认主题及skin别名；未知主题继续产生兼容warning，不动态加载代码。 @lang en Implemented default theme and skin aliases; unknown themes retain compatibility warnings without dynamic code loading. */
+/**
+ * @lang zh-CN 已实现的默认主题及skin别名；未知主题继续产生兼容warning，不动态加载代码。
+ * @lang en Implemented default theme and skin aliases; unknown themes retain compatibility warnings without dynamic code loading.
+ */
 export const HIA_CONFIG_THEME_NAMES = ["default", "portal.classic", "portal.graphite", "portal.lumen"] as const;
-/** @lang zh-CN 镜像主题owner的semantic颜色词汇；配置校验不成为主题实现owner。 @lang en Mirrors the theme owner's semantic color vocabulary without making config validation the theme implementation owner. */
+/**
+ * @lang zh-CN 镜像主题owner的semantic颜色词汇；配置校验不成为主题实现owner。
+ * @lang en Mirrors the theme owner's semantic color vocabulary without making config validation the theme implementation owner.
+ */
 export const HIA_CONFIG_THEME_COLOR_NAMES = ["canvas", "surface", "surfaceMuted", "border", "text", "textMuted", "accent", "accentContrast", "accentSoft", "accentHover", "focusRing", "codeBackground", "codeText", "danger"] as const;
-/** @lang zh-CN Portal owner 的内置 skin 闭集；不复用 JTH 私有 catalog。 @lang en Closed Portal-owned skin set; it does not reuse the private JTH catalog. */
+/**
+ * @lang zh-CN Portal owner 的内置 skin 闭集；不复用 JTH 私有 catalog。
+ * @lang en Closed Portal-owned skin set; it does not reuse the private JTH catalog.
+ */
 export const HIA_CONFIG_PORTAL_SKINS = ["portal.classic", "portal.graphite", "portal.lumen"] as const;
-/** @lang zh-CN skin 正交的 scheme 选择。 @lang en Scheme selection orthogonal to skin. */
+/**
+ * @lang zh-CN skin 正交的 scheme 选择。
+ * @lang en Scheme selection orthogonal to skin.
+ */
 export const HIA_CONFIG_PORTAL_SCHEMES = ["system", "light", "dark"] as const;
 
 /**
@@ -89,7 +123,15 @@ export const HIA_CONFIG_PORTAL_SCHEMES = ["system", "light", "dark"] as const;
  * @lang en Static project-config root whose omitted fields use consumer defaults; neither executable configuration nor proof of validation.
  */
 export interface HiaProjectConfig {
+  /**
+   * @lang zh-CN 可省略的静态配置根版本，显式值由配置校验器核对。
+   * @lang en Optional static configuration root version, checked by the config validator when supplied.
+   */
   schemaVersion?: string;
+  /**
+   * @lang zh-CN 文档构建配置，省略时由宿主选择构建参数。
+   * @lang en Documentation build settings, with omitted settings selected by the host.
+   */
   docs?: HiaDocsConfig;
 }
 
@@ -98,14 +140,50 @@ export interface HiaProjectConfig {
  * @lang en Documentation inputs, outputs, locales and presentation policy; hosts resolve relative paths against config baseDir, and structural validation does not execute builds.
  */
 export interface HiaDocsConfig {
+  /**
+   * @lang zh-CN 单文档输入路径，与项目清单的选择由CLI协调。
+   * @lang en Single-document input path, coordinated with project-manifest selection by the CLI.
+   */
   input?: string;
+  /**
+   * @lang zh-CN 项目输入清单路径，由宿主解析后交项目生产链。
+   * @lang en Project input manifest path, resolved by the host for the project production pipeline.
+   */
   projectManifest?: string;
+  /**
+   * @lang zh-CN 文档输出目录，路径解释及写入权限由宿主负责。
+   * @lang en Documentation output directory, whose resolution and write authority belong to the host.
+   */
   output?: string;
+  /**
+   * @lang zh-CN 单次正文输出的语言选择，与界面语言分别配置。
+   * @lang en Content-locale selection for a build, configured separately from the UI locale.
+   */
   locale?: string;
+  /**
+   * @lang zh-CN 多语言正文输出列表，具体构建顺序由消费方决定。
+   * @lang en Content-locale list for multilingual output, ordered by the consuming build.
+   */
   locales?: string[];
+  /**
+   * @lang zh-CN 输出目录内的清单相对路径，由CLI检查其输出边界。
+   * @lang en Manifest path relative to the output directory, checked against that boundary by the CLI.
+   */
   manifest?: string;
+  /**
+   * @lang zh-CN HTML布局、界面语言和输出策略配置。
+   * @lang en HTML layout, UI-locale and output-policy settings.
+   */
   renderer?: HiaRendererHtmlConfig;
+  /**
+   * @lang zh-CN 内置主题、配色及共享资产引用配置。
+   * @lang en Built-in theme, palette and shared-asset reference settings.
+   */
   theme?: HiaThemeConfig;
+  /**
+   * @lang zh-CN 源码呈现及公开资源授权配置。
+   * @lang en Source-presentation and public-asset authorization settings.
+   */
   source?: HiaSourceLinkConfig;
 }
 
@@ -114,99 +192,169 @@ export interface HiaDocsConfig {
  * @lang en Implemented HTML-output options with independent project layout, UI locale and content locale; omissions follow renderer documentation.
  */
 export interface HiaRendererHtmlConfig {
-  /** 生成站点标题。Generated site title. */
+  /**
+   * @lang zh-CN 生成站点标题。
+   * @lang en Generated site title.
+   */
   title?: string;
-  /** 是否输出默认主题静态资源。Whether to emit default theme assets. */
+  /**
+   * @lang zh-CN 是否输出默认主题静态资源。
+   * @lang en Whether to emit default theme assets.
+   */
   includeThemeAssets?: boolean;
-  /** 大型项目默认使用分片站点；单页模式仅用于兼容和小型输出。Large projects default to split-site; single-page is for compatibility and small outputs. */
+  /**
+   * @lang zh-CN 大型项目默认使用分片站点；单页模式仅用于兼容和小型输出。
+   * @lang en Large projects default to split-site; single-page is for compatibility and small outputs.
+   */
   projectLayout?: typeof HIA_CONFIG_PROJECT_LAYOUTS[number];
   /**
-   * 显式 Portal IA 配置；缺失时 renderer 保持 P3 兼容路径。
-   * Explicit Portal IA configuration; omission preserves the P3-compatible renderer path.
+   * @lang zh-CN 显式 Portal IA 配置；缺失时 renderer 保持 P3 兼容路径。
+   * @lang en Explicit Portal IA configuration; omission preserves the P3-compatible renderer path.
    */
   informationArchitecture?: HiaPortalInformationArchitectureConfig;
   /**
-   * @lang zh-CN
-   * 显式 source-comment locale 与正文授权；与 UI locale、content locale 分离。
+   * @lang zh-CN 显式 source-comment locale 与正文授权；与 UI locale、content locale 分离。
    *
-   * @lang en
-   * Explicit source-comment locale and body authorization, separate from UI and content locales.
+   * @lang en Explicit source-comment locale and body authorization, separate from UI and content locales.
    */
   sourceCommentProjection?: HiaSourceCommentProjectionConfig;
-  /** UI chrome 语言，与 content locale 分离。UI chrome locale, separate from content locale. */
+  /**
+   * @lang zh-CN UI chrome 语言，与 content locale 分离。
+   * @lang en UI chrome locale, separate from content locale.
+   */
   uiLocale?: typeof HIA_CONFIG_PORTAL_UI_LOCALES[number];
   /**
-   * @lang zh-CN
-   * W-P123 完整性报告的公开 profile/surface identity；只声明 owner 接入身份，不携带翻译正文。
+   * @lang zh-CN W-P123 完整性报告的公开 profile/surface identity；只声明 owner 接入身份，不携带翻译正文。
    *
-   * @lang en
-   * Public profile/surface identity for the W-P123 completeness report; it declares owner adoption without carrying translations.
+   * @lang en Public profile/surface identity for the W-P123 completeness report; it declares owner adoption without carrying translations.
    */
   uiLocaleCompleteness?: HiaPortalUiLocaleCompletenessConfig;
 }
 
 /**
- * @lang zh-CN
- * Portal UI locale 完整性报告的稳定身份配置。字段值是公开 ID，不是文件系统路径。
+ * @lang zh-CN Portal UI locale 完整性报告的稳定身份配置。字段值是公开 ID，不是文件系统路径。
  *
- * @lang en
- * Stable identity configuration for the Portal UI-locale completeness report. Values are public IDs, not filesystem paths.
+ * @lang en Stable identity configuration for the Portal UI-locale completeness report. Values are public IDs, not filesystem paths.
  */
 export interface HiaPortalUiLocaleCompletenessConfig {
+  /**
+   * @lang zh-CN 完整性报告使用的公开规范身份，出现时须为安全标识。
+   * @lang en Public profile identity used in the completeness report, required to be a safe identifier when present.
+   */
   profileId?: string;
+  /**
+   * @lang zh-CN 完整性报告的公开界面身份，出现时须为安全标识。
+   * @lang en Public surface identity used in the completeness report, required to be a safe identifier when present.
+   */
   surfaceId?: string;
 }
 
 /**
- * @lang zh-CN
- * Portal P5 有界 slice 配置。locale 必填，避免从 UI/content locale 猜测注释语言。
+ * @lang zh-CN Portal P5 有界 slice 配置。locale 必填，避免从 UI/content locale 猜测注释语言。
  *
- * @lang en
- * Bounded Portal P5 slice configuration. Locale is required so comment language is never inferred from UI or content locale.
+ * @lang en Bounded Portal P5 slice configuration. Locale is required so comment language is never inferred from UI or content locale.
  */
 export interface HiaSourceCommentProjectionConfig {
+  /**
+   * @lang zh-CN 可选的源码注释投影精确契约身份。
+   * @lang en Optional exact contract identity for source-comment projection.
+   */
   contract?: typeof HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT;
+  /**
+   * @lang zh-CN 可选的源码注释投影精确契约版本。
+   * @lang en Optional exact contract version for source-comment projection.
+   */
   contractVersion?: typeof HIA_CONFIG_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 必须显式给出的注释语言，由校验器检查语言标识。
+   * @lang en Explicitly required comment locale whose identifier is checked by the validator.
+   */
   locale: string;
+  /**
+   * @lang zh-CN 源码注释正文公开策略，缺省由投影消费方应用关闭策略。
+   * @lang en Disclosure policy for source-comment bodies, with consumers applying the disabled policy when omitted.
+   */
   contentPolicy?: typeof HIA_CONFIG_SOURCE_COMMENT_CONTENT_POLICIES[number];
 }
 
 /**
- * Portal IA 的三个独立配置维度；所有字段均可省略并使用 contract defaults。
- * Three independent Portal IA dimensions; every field may be omitted to use contract defaults.
+ * @lang zh-CN Portal IA 的三个独立配置维度；所有字段均可省略并使用 contract defaults。
+ * @lang en Three independent Portal IA dimensions; every field may be omitted to use contract defaults.
  */
 export interface HiaPortalInformationArchitectureConfig {
-  /** 可选 exact contract identity，用于显式能力钉住。Optional exact contract identity for explicit capability pinning. */
+  /**
+   * @lang zh-CN 可选 exact contract identity，用于显式能力钉住。
+   * @lang en Optional exact contract identity for explicit capability pinning.
+   */
   contract?: typeof HIA_CONFIG_PORTAL_IA_CONTRACT;
-  /** 可选 exact draft version；未知 draft fail closed。Optional exact draft version; unknown drafts fail closed. */
+  /**
+   * @lang zh-CN 可选 exact draft version；未知 draft fail closed。
+   * @lang en Optional exact draft version; unknown drafts fail closed.
+   */
   contractVersion?: typeof HIA_CONFIG_PORTAL_IA_CONTRACT_VERSION;
-  /** 逻辑内容边界，不决定下载时机。Logical content boundary; does not decide download timing. */
+  /**
+   * @lang zh-CN 逻辑内容边界，不决定下载时机。
+   * @lang en Logical content boundary; does not decide download timing.
+   */
   contentGrouping?: typeof HIA_CONFIG_PORTAL_CONTENT_GROUPINGS[number];
-  /** fragment 获取时机，不改变 canonical identity。Fragment acquisition timing; does not change canonical identity. */
+  /**
+   * @lang zh-CN fragment 获取时机，不改变 canonical identity。
+   * @lang en Fragment acquisition timing; does not change canonical identity.
+   */
   loadingStrategy?: typeof HIA_CONFIG_PORTAL_LOADING_STRATEGIES[number];
-  /** member 的呈现位置，不替换 canonical member route。Member presentation placement; does not replace its canonical route. */
+  /**
+   * @lang zh-CN member 的呈现位置，不替换 canonical member route。
+   * @lang en Member presentation placement; does not replace its canonical route.
+   */
   memberPlacement?: typeof HIA_CONFIG_PORTAL_MEMBER_PLACEMENTS[number];
 }
 
-/** @lang zh-CN 主题选择、安全品牌颜色与资源所有权配置，不动态执行主题代码。 @lang en Theme selection, safe brand colors and resource ownership without dynamic theme-code execution. */
+/**
+ * @lang zh-CN 主题选择、安全品牌颜色与资源所有权配置，不动态执行主题代码。
+ * @lang en Theme selection, safe brand colors and resource ownership without dynamic theme-code execution.
+ */
 export interface HiaThemeConfig {
-  /** @lang zh-CN default或已实现skin的别名；显式skin优先，未知名称兼容回退。 @lang en Default or an implemented skin alias; explicit skin wins and unknown names retain compatibility fallback. */
+  /**
+   * @lang zh-CN default或已实现skin的别名；显式skin优先，未知名称兼容回退。
+   * @lang en Default or an implemented skin alias; explicit skin wins and unknown names retain compatibility fallback.
+   */
   name?: string;
-  /** @lang zh-CN 构建期无脚本默认 skin。 @lang en Build-time no-script default skin. */
+  /**
+   * @lang zh-CN 构建期无脚本默认 skin。
+   * @lang en Build-time no-script default skin.
+   */
   skin?: typeof HIA_CONFIG_PORTAL_SKINS[number];
-  /** @lang zh-CN 构建期无脚本默认 scheme。 @lang en Build-time no-script default scheme. */
+  /**
+   * @lang zh-CN 构建期无脚本默认 scheme。
+   * @lang en Build-time no-script default scheme.
+   */
   scheme?: typeof HIA_CONFIG_PORTAL_SCHEMES[number];
-  /** @lang zh-CN 明确的安全hex品牌颜色；省略时保留内置palette，不接收CSS代码。 @lang en Explicit safe hex brand colors; omission retains built-in palettes and accepts no CSS code. */
+  /**
+   * @lang zh-CN 明确的安全hex品牌颜色；省略时保留内置palette，不接收CSS代码。
+   * @lang en Explicit safe hex brand colors; omission retains built-in palettes and accepts no CSS code.
+   */
   colors?: Partial<Record<typeof HIA_CONFIG_THEME_COLOR_NAMES[number], string>>;
-  /** @lang zh-CN 外部共享资源只声明同站URL引用，不授予向父目录写文件权限。 @lang en External shared assets declare same-site URL references only, granting no parent-directory file writes. */
+  /**
+   * @lang zh-CN 外部共享资源只声明同站URL引用，不授予向父目录写文件权限。
+   * @lang en External shared assets declare same-site URL references only, granting no parent-directory file writes.
+   */
   assets?: HiaThemeAssetsConfig;
 }
 
-/** @lang zh-CN 主题资源唯一所有者策略；默认local，external由独立的theme-assets命令或宿主提供资源。 @lang en Theme-asset ownership policy, defaulting to local; external assets are provided by a separate theme-assets command or host. */
+/**
+ * @lang zh-CN 主题资源唯一所有者策略；默认local，external由独立的theme-assets命令或宿主提供资源。
+ * @lang en Theme-asset ownership policy, defaulting to local; external assets are provided by a separate theme-assets command or host.
+ */
 export interface HiaThemeAssetsConfig {
-  /** @lang zh-CN local随构建输出，external只生成引用。 @lang en Local emits with the build, while external emits references only. */
+  /**
+   * @lang zh-CN local随构建输出，external只生成引用。
+   * @lang en Local emits with the build, while external emits references only.
+   */
   mode?: "local" | "external";
-  /** @lang zh-CN external必需的同站资源目录URL，可为相对或站点根相对，不是文件系统路径。 @lang en Same-site asset-directory URL required for external mode, relative or site-root-relative, never a filesystem path. */
+  /**
+   * @lang zh-CN external必需的同站资源目录URL，可为相对或站点根相对，不是文件系统路径。
+   * @lang en Same-site asset-directory URL required for external mode, relative or site-root-relative, never a filesystem path.
+   */
   baseUrl?: string;
 }
 
@@ -215,29 +363,68 @@ export interface HiaThemeAssetsConfig {
  * @lang en Build-time source disclosure/presentation policy; legacy external URLs yield migration diagnostics, while hosts validate explicit public-asset policy and local roots.
  */
 export interface HiaSourceLinkConfig {
-  /** 是否启用源码呈现；false 会覆盖 presentation 并按 none 处理。Whether source presentation is enabled; false overrides presentation as none. */
+  /**
+   * @lang zh-CN 是否启用源码呈现；false 会覆盖 presentation 并按 none 处理。
+   * @lang en Whether source presentation is enabled; false overrides presentation as none.
+   */
   enabled?: boolean;
-  /** 旧版兼容模式；新配置应使用 presentation。Legacy compatibility mode; new configurations should use presentation. */
+  /**
+   * @lang zh-CN 旧版兼容模式；新配置应使用 presentation。
+   * @lang en Legacy compatibility mode; new configurations should use presentation.
+   */
   mode?: typeof HIA_CONFIG_SOURCE_MODES[number];
-  /** @deprecated W-P117 起外部 link endpoint 不再进入 Portal 输出。Since W-P117, external link endpoints no longer enter Portal output. */
+  /**
+   * @lang zh-CN 旧版外部源码端点字段，供兼容诊断和迁移定位。
+   * @lang en Legacy external source endpoint field retained for compatibility diagnostics and migration context.
+   * @deprecated W-P117 起外部 link endpoint 不再进入 Portal 输出。Since W-P117, external link endpoints no longer enter Portal output.
+   */
   baseUrl?: string;
-  /** @deprecated W-P117 起 link 只指向 build-generated same-origin asset。Since W-P117, link points only to build-generated same-origin assets. */
+  /**
+   * @lang zh-CN 旧版源码链接基址字段，现代链接由构建期同源资产生成。
+   * @lang en Legacy source-link base field, with modern links generated from same-origin build assets.
+   * @deprecated W-P117 起 link 只指向 build-generated same-origin asset。Since W-P117, link points only to build-generated same-origin assets.
+   */
   linkBaseUrl?: string;
-  /** @deprecated W-P117 起 fetch 只消费 build-generated same-origin asset；该字段只用于产生迁移 diagnostic。Since W-P117, fetch consumes only build-generated same-origin assets; this field remains only for migration diagnostics. */
+  /**
+   * @lang zh-CN 旧版动态源码端点字段，用于迁移诊断。
+   * @lang en Legacy dynamic-source endpoint field used for migration diagnostics.
+   * @deprecated W-P117 起 fetch 只消费 build-generated same-origin asset；该字段只用于产生迁移 diagnostic。Since W-P117, fetch consumes only build-generated same-origin assets; this field remains only for migration diagnostics.
+   */
   fetchBaseUrl?: string;
-  /** fetch 模式的加载触发方式；默认展开源码区域时自动加载。Fetch loading trigger; defaults to loading when the source details are expanded. */
+  /**
+   * @lang zh-CN fetch 模式的加载触发方式；默认展开源码区域时自动加载。
+   * @lang en Fetch loading trigger; defaults to loading when the source details are expanded.
+   */
   fetchTrigger?: typeof HIA_CONFIG_SOURCE_FETCH_TRIGGERS[number];
-  /** embed 模式读取相对源码路径时使用的本地根目录。Local root used to resolve relative source paths in embed mode. */
+  /**
+   * @lang zh-CN embed 模式读取相对源码路径时使用的本地根目录。
+   * @lang en Local root used to resolve relative source paths in embed mode.
+   */
   localRoot?: string;
-  /** @lang zh-CN 显式授权 CLI 把安全相对源码片段发布为公开静态资源。 @lang en Explicitly authorizes the CLI to publish safe relative source excerpts as public static assets. */
+  /**
+   * @lang zh-CN 显式授权 CLI 把安全相对源码片段发布为公开静态资源。
+   * @lang en Explicitly authorizes the CLI to publish safe relative source excerpts as public static assets.
+   */
   publicAssetPolicy?: typeof HIA_CONFIG_SOURCE_PUBLIC_ASSET_POLICIES[number];
-  /** 源码卡片呈现策略。Source-card presentation policy. */
+  /**
+   * @lang zh-CN 源码卡片呈现策略。
+   * @lang en Source-card presentation policy.
+   */
   presentation?: typeof HIA_CONFIG_SOURCE_PRESENTATIONS[number];
-  /** embed 模式生成的源码详情是否默认展开。Whether embedded source details are expanded by default. */
+  /**
+   * @lang zh-CN embed 模式生成的源码详情是否默认展开。
+   * @lang en Whether embedded source details are expanded by default.
+   */
   defaultExpanded?: boolean;
-  /** 单个源码片段允许嵌入或动态显示的最大行数。Maximum lines embedded or dynamically displayed per source excerpt. */
+  /**
+   * @lang zh-CN 单个源码片段允许嵌入或动态显示的最大行数。
+   * @lang en Maximum lines embedded or dynamically displayed per source excerpt.
+   */
   maxLines?: number;
-  /** 旧版源码链接打开方式；当前项目站链接沿用普通浏览器导航。Legacy source-link open mode; project-site links currently use normal browser navigation. */
+  /**
+   * @lang zh-CN 旧版源码链接打开方式；当前项目站链接沿用普通浏览器导航。
+   * @lang en Legacy source-link open mode; project-site links currently use normal browser navigation.
+   */
   openMode?: typeof HIA_CONFIG_SOURCE_OPEN_MODES[number];
 }
 
@@ -246,8 +433,20 @@ export interface HiaSourceLinkConfig {
  * @lang en Readonly loading options; cwd defaults to the process directory, explicit configPath takes priority, otherwise fileNames are searched in order within cwd.
  */
 export interface HiaConfigLoadOptions {
+  /**
+   * @lang zh-CN 发现和解析配置路径的工作目录，省略使用当前进程目录。
+   * @lang en Working directory for config discovery and resolution, defaulting to the process directory.
+   */
   cwd?: string;
+  /**
+   * @lang zh-CN 显式配置路径，由工作目录解析并直接读取。
+   * @lang en Explicit configuration path resolved from the working directory and read directly.
+   */
   configPath?: string;
+  /**
+   * @lang zh-CN 当前目录内按顺序检查的候选名，省略使用内置文件名列表。
+   * @lang en Ordered candidate names checked in the current directory, defaulting to the built-in filename list.
+   */
   fileNames?: readonly string[];
 }
 
@@ -256,10 +455,30 @@ export interface HiaConfigLoadOptions {
  * @lang en Loaded config and diagnostics; baseDir/path are host-internal absolute paths and must not be projected directly into public diagnostics. Found indicates a located path, not validation success.
  */
 export interface HiaLoadedProjectConfig {
+  /**
+   * @lang zh-CN 解析后的配置视图；调用方须结合诊断确认可用性。
+   * @lang en Parsed configuration view whose usability must be established from diagnostics.
+   */
   config: HiaProjectConfig;
+  /**
+   * @lang zh-CN 是否取得候选配置路径，读取或解析失败时仍可为true。
+   * @lang en Whether a candidate config path was obtained, which can remain true after read or parse failure.
+   */
   found: boolean;
+  /**
+   * @lang zh-CN 解析相对配置路径的内部基准目录。
+   * @lang en Internal base directory for resolving relative configuration paths.
+   */
   baseDir: string;
+  /**
+   * @lang zh-CN 加载与校验诊断，error应阻止后续消费。
+   * @lang en Load and validation diagnostics whose errors should prevent subsequent consumption.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 实际读取的内部配置路径，未发现时省略。
+   * @lang en Internal config path selected for reading, omitted when no candidate is found.
+   */
   path?: string;
 }
 
@@ -490,11 +709,9 @@ function validateRendererConfig(value: unknown, diagnostics: HiaDiagnostic[], ta
 }
 
 /**
- * @lang zh-CN
- * 校验 owner adoption identity 的 closed-world 结构和 public-safe 稳定 ID，拒绝路径与任意扩展字段。
+ * @lang zh-CN 校验 owner adoption identity 的 closed-world 结构和 public-safe 稳定 ID，拒绝路径与任意扩展字段。
  *
- * @lang en
- * Validates the closed-world owner-adoption identity and public-safe stable IDs, rejecting paths and arbitrary extension fields.
+ * @lang en Validates the closed-world owner-adoption identity and public-safe stable IDs, rejecting paths and arbitrary extension fields.
  */
 function validatePortalUiLocaleCompletenessConfig(
   value: unknown,
@@ -538,11 +755,9 @@ function validatePortalUiLocaleCompletenessConfig(
 }
 
 /**
- * @lang zh-CN
- * 校验 source-comment projection 的 closed-world、精确版本与 canonical BCP 47 locale。
+ * @lang zh-CN 校验 source-comment projection 的 closed-world、精确版本与 canonical BCP 47 locale。
  *
- * @lang en
- * Validates closed-world source-comment projection configuration, exact version, and canonical BCP 47 locale.
+ * @lang en Validates closed-world source-comment projection configuration, exact version, and canonical BCP 47 locale.
  */
 function validateSourceCommentProjectionConfig(
   value: unknown,
@@ -702,7 +917,10 @@ function isSafeConfigDiagnosticIdentifier(value: string): boolean {
   return !/^[A-Za-z0-9]{32,}$/u.test(value);
 }
 
-/** @lang zh-CN 新主题选项只接受无访问器的普通自有数据；反射异常不回显。 @lang en New theme options accept only ordinary own data without accessors, never echoing reflection errors. */
+/**
+ * @lang zh-CN 新主题选项只接受无访问器的普通自有数据；反射异常不回显。
+ * @lang en New theme options accept only ordinary own data without accessors, never echoing reflection errors.
+ */
 function themeOptionData(value: unknown): Record<string, unknown> | undefined {
   try {
     if (!value || typeof value !== "object" || Array.isArray(value) || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) return undefined;
@@ -716,13 +934,19 @@ function themeOptionData(value: unknown): Record<string, unknown> | undefined {
   } catch { return undefined; }
 }
 
-/** @lang zh-CN 检查封闭semantic颜色名及hex值，不解析CSS表达式。 @lang en Checks closed semantic color names and hex values without parsing CSS expressions. */
+/**
+ * @lang zh-CN 检查封闭semantic颜色名及hex值，不解析CSS表达式。
+ * @lang en Checks closed semantic color names and hex values without parsing CSS expressions.
+ */
 function isSafeThemeColors(value: unknown): boolean {
   const colors = themeOptionData(value);
   return Boolean(colors && Object.entries(colors).every(([name, color]) => HIA_CONFIG_THEME_COLOR_NAMES.includes(name as typeof HIA_CONFIG_THEME_COLOR_NAMES[number]) && typeof color === "string" && color.trim() === color && /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/iu.test(color)));
 }
 
-/** @lang zh-CN 资源引用必须同站且无query/hash；相对父路径只用于URL，不用于写入。 @lang en Asset references must remain same-site without queries/fragments; parent-relative segments are URLs only, never write paths. */
+/**
+ * @lang zh-CN 资源引用必须同站且无query/hash；相对父路径只用于URL，不用于写入。
+ * @lang en Asset references must remain same-site without queries/fragments; parent-relative segments are URLs only, never write paths.
+ */
 function isSafeThemeAssets(value: unknown): boolean {
   const assets = themeOptionData(value);
   if (!assets || Object.keys(assets).some((name) => !["mode", "baseUrl"].includes(name))) return false;

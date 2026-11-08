@@ -1,3 +1,8 @@
+/**
+ * @lang zh-CN 文档生产器SDK的描述校验、请求/结果边界与受宿主授权的执行编排。
+ * @lang en Documentation producer SDK for descriptor validation, request/result boundaries and host-authorized execution.
+ * @file
+ */
 import path from "node:path";
 import {
   createHiaDiagnostic,
@@ -26,26 +31,78 @@ export {
   DOCUMENTATION_PRODUCER_RESULT_JSON_SCHEMA
 } from "./schema.js";
 
-/** @lang zh-CN success 要求产物且无 error，partial 要求产物和诊断，failed 要求无产物且有 error。 @lang en Success requires artifacts and no errors; partial requires artifacts and diagnostics; failed requires no artifacts and an error. */
+/**
+ * @lang zh-CN success 要求产物且无 error，partial 要求产物和诊断，failed 要求无产物且有 error。
+ * @lang en Success requires artifacts and no errors; partial requires artifacts and diagnostics; failed requires no artifacts and an error.
+ */
 export type DocumentationProducerStatus = "success" | "partial" | "failed";
 
-/** @lang zh-CN 显式能力声明；本 runtime 只接受 incremental/watch=false，sourceLinkage 可按 producer 声明。 @lang en Explicit capabilities; this runtime accepts only incremental/watch=false, while sourceLinkage is producer-defined. */
+/**
+ * @lang zh-CN 显式能力声明；本 runtime 只接受 incremental/watch=false，sourceLinkage 可按 producer 声明。
+ * @lang en Explicit capabilities; this runtime accepts only incremental/watch=false, while sourceLinkage is producer-defined.
+ */
 export interface DocumentationProducerCapabilities {
+  /**
+   * @lang zh-CN 增量生成能力声明，当前SDK只接受false。
+   * @lang en Incremental-generation capability declaration, currently accepted only as false by the SDK.
+   */
   incremental: boolean;
+  /**
+   * @lang zh-CN 生产器声明的源码关联能力，由其具体实现履行。
+   * @lang en Producer-declared source-linkage capability implemented by that producer.
+   */
   sourceLinkage: boolean;
+  /**
+   * @lang zh-CN 持续监听能力声明，当前SDK只接受false。
+   * @lang en Watch capability declaration, currently accepted only as false by the SDK.
+   */
   watch: boolean;
 }
 
-/** @lang zh-CN 不含运行时路径的闭集生产器描述；version 是 producer 自身身份，独立于 contractVersion。 @lang en Closed producer descriptor without runtime paths; version identifies the producer itself independently of contractVersion. */
+/**
+ * @lang zh-CN 不含运行时路径的闭集生产器描述；version 是 producer 自身身份，独立于 contractVersion。
+ * @lang en Closed producer descriptor without runtime paths; version identifies the producer itself independently of contractVersion.
+ */
 export interface DocumentationProducerDescriptor {
+  /**
+   * @lang zh-CN 显式生产器能力集合，按SDK支持边界校验。
+   * @lang en Explicit producer capabilities validated against the SDK support boundary.
+   */
   capabilities: DocumentationProducerCapabilities;
+  /**
+   * @lang zh-CN 生产器描述的精确中性契约身份。
+   * @lang en Exact neutral contract identity of the producer descriptor.
+   */
   contract: typeof DOCUMENTATION_PRODUCER_CONTRACT;
-  /** @lang zh-CN reader 接受的两个精确版本；未知版本须诊断拒绝。 @lang en Two exact reader versions; unknown versions must be rejected with diagnostics. */
+  /**
+   * @lang zh-CN reader 接受的两个精确版本；未知版本须诊断拒绝。
+   * @lang en Two exact reader versions; unknown versions must be rejected with diagnostics.
+   */
   contractVersion: typeof DOCUMENTATION_PRODUCER_CONTRACT_VERSION | "0.1.0-draft";
+  /**
+   * @lang zh-CN 面向使用者的非空生产器名称。
+   * @lang en Nonempty producer name presented to users.
+   */
   displayName: string;
+  /**
+   * @lang zh-CN 非空且符合SDK标识语法的生产器身份。
+   * @lang en Nonempty producer identity conforming to the SDK identifier syntax.
+   */
   id: string;
+  /**
+   * @lang zh-CN 声明可接受的非空输入种类列表，用于请求匹配。
+   * @lang en Declared nonempty input-kind list used to match requests.
+   */
   inputKinds: string[];
+  /**
+   * @lang zh-CN 声明可产生的非空产物种类列表，用于结果匹配。
+   * @lang en Declared nonempty output-kind list used to match results.
+   */
   outputKinds: string[];
+  /**
+   * @lang zh-CN 生产器自身的非空版本文本，与描述契约版本分别管理。
+   * @lang en Nonempty producer version text managed independently of the descriptor contract version.
+   */
   version: string;
 }
 
@@ -54,45 +111,153 @@ export interface DocumentationProducerDescriptor {
  * @lang en Input kind and a locator; path/paths/projectPath/glob/globs locators and recognized path extension fields must be safe relative paths. Other extension values must be JSON data.
  */
 export interface DocumentationProducerInput {
+  /**
+   * @lang zh-CN 输入种类，执行前与描述的inputKinds匹配。
+   * @lang en Input kind matched against the descriptor inputKinds before execution.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 可选的非空输入语言标识。
+   * @lang en Optional nonempty input-language identifier.
+   */
   language?: string;
+  /**
+   * @lang zh-CN 可选输入定位路径，具体解析由生产器结合请求根处理。
+   * @lang en Optional input locator path resolved by the producer in the request-root context.
+   */
   path?: string;
+  /**
+   * @lang zh-CN 生产器领域扩展值，须满足SDK的JSON与已知路径字段检查。
+   * @lang en Producer-domain extension values subject to SDK JSON and recognized path-field checks.
+   */
   [key: string]: unknown;
 }
 
-/** @lang zh-CN 只在内存中传递的执行请求；workspaceRoot/outputDirectory 为绝对路径，不是公开 wire 产物。 @lang en In-memory execution request; workspaceRoot/outputDirectory are absolute paths, not public wire artifacts. */
+/**
+ * @lang zh-CN 只在内存中传递的执行请求；workspaceRoot/outputDirectory 为绝对路径，不是公开 wire 产物。
+ * @lang en In-memory execution request; workspaceRoot/outputDirectory are absolute paths, not public wire artifacts.
+ */
 export interface DocumentationProducerRequest {
+  /**
+   * @lang zh-CN 至少一个输入定位声明，逐项匹配生产器种类与定位要求。
+   * @lang en At least one input locator declaration, checked against producer kinds and locator requirements.
+   */
   inputs: DocumentationProducerInput[];
+  /**
+   * @lang zh-CN 可选JSON兼容选项对象，由具体生产器解释。
+   * @lang en Optional JSON-compatible options object interpreted by the specific producer.
+   */
   options?: Record<string, unknown>;
+  /**
+   * @lang zh-CN 绝对输出目录，实际写入范围由宿主与生产器负责。
+   * @lang en Absolute output directory whose actual write scope belongs to the host and producer.
+   */
   outputDirectory: string;
+  /**
+   * @lang zh-CN 可选规范身份列表，供生产器选择对应文档规则。
+   * @lang en Optional profile-identity list used by the producer to select documentation rules.
+   */
   profileIds?: string[];
+  /**
+   * @lang zh-CN 绝对工作区根，作为生产器解释输入的运行上下文。
+   * @lang en Absolute workspace root providing runtime context for input interpretation.
+   */
   workspaceRoot: string;
 }
 
-/** @lang zh-CN producer 向调用者报告的进度；数值单位由 producer 定义，SDK 不验证计数或自动转换百分比。 @lang en Progress reported by a producer; units are producer-defined and the SDK neither validates counts nor converts percentages. */
+/**
+ * @lang zh-CN producer 向调用者报告的进度；数值单位由 producer 定义，SDK 不验证计数或自动转换百分比。
+ * @lang en Progress reported by a producer; units are producer-defined and the SDK neither validates counts nor converts percentages.
+ */
 export interface DocumentationProducerProgress {
+  /**
+   * @lang zh-CN 可选当前进度，单位由报告进度的生产器约定。
+   * @lang en Optional current progress in units defined by the reporting producer.
+   */
   current?: number;
+  /**
+   * @lang zh-CN 可选进度说明，由生产器负责公开内容的适当性。
+   * @lang en Optional progress text whose suitability for disclosure belongs to the producer.
+   */
   message?: string;
+  /**
+   * @lang zh-CN 生产器报告的阶段身份，与最终结果状态分别管理。
+   * @lang en Producer-reported phase identity managed independently of the final result status.
+   */
   phase: string;
+  /**
+   * @lang zh-CN 可选总工作量，与current使用同一生产器约定单位。
+   * @lang en Optional total workload in the same producer-defined units as current.
+   */
   total?: number;
 }
 
-/** @lang zh-CN 调用者提供的可选回调/中止信号；原对象传给 producer，中止不强杀 Promise，也不回滚其副作用。 @lang en Optional caller callbacks/signal; the original context reaches the producer, and cancellation neither kills a Promise nor rolls back its effects. */
+/**
+ * @lang zh-CN 调用者提供的可选回调/中止信号；原对象传给 producer，中止不强杀 Promise，也不回滚其副作用。
+ * @lang en Optional caller callbacks/signal; the original context reaches the producer, and cancellation neither kills a Promise nor rolls back its effects.
+ */
 export interface DocumentationProducerContext {
+  /**
+   * @lang zh-CN 由生产器选择调用的进度回调，回调异常可能导致执行失败。
+   * @lang en Progress callback invoked at the producer choice, whose exceptions may fail execution.
+   */
   reportProgress?: (progress: DocumentationProducerProgress) => void;
+  /**
+   * @lang zh-CN 宿主传入的可选中止信号，运行器在执行前后检查状态。
+   * @lang en Optional host-provided abort signal checked by the runner before and after execution.
+   */
   signal?: AbortSignal;
 }
 
-/** @lang zh-CN 输出目录内的产物声明；path 只作安全相对路径检查，不证明文件存在。contract 与 contractVersion 须同时声明。 @lang en Artifact declaration within the output directory; path is checked only as a safe relative path, not for file existence. Contract and contractVersion must be declared together. */
+/**
+ * @lang zh-CN 输出目录内的产物声明；path 只作安全相对路径检查，不证明文件存在。contract 与 contractVersion 须同时声明。
+ * @lang en Artifact declaration within the output directory; path is checked only as a safe relative path, not for file existence. Contract and contractVersion must be declared together.
+ */
 export interface DocumentationProducerArtifact {
+  /**
+   * @lang zh-CN 可选产物内容契约名，须与contractVersion成对声明。
+   * @lang en Optional artifact-content contract name declared together with contractVersion.
+   */
   contract?: string;
+  /**
+   * @lang zh-CN 可选产物内容契约版本，须与contract成对声明。
+   * @lang en Optional artifact-content contract version declared together with contract.
+   */
   contractVersion?: string;
+  /**
+   * @lang zh-CN 可选非空产物格式提示。
+   * @lang en Optional nonempty artifact-format hint.
+   */
   format?: string;
+  /**
+   * @lang zh-CN 结果中唯一的产物身份，受SDK标识校验约束。
+   * @lang en Artifact identity unique within the result and checked by the SDK identifier rules.
+   */
   id: string;
+  /**
+   * @lang zh-CN 声明的产物种类，须匹配生产器outputKinds。
+   * @lang en Declared artifact kind required to match the producer outputKinds.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 可选非空产物语言标识。
+   * @lang en Optional nonempty artifact-language identifier.
+   */
   language?: string;
+  /**
+   * @lang zh-CN 可选非空产物媒体类型文本。
+   * @lang en Optional nonempty artifact media-type text.
+   */
   mediaType?: string;
+  /**
+   * @lang zh-CN 输出目录内的安全相对产物路径，由结果校验器检查。
+   * @lang en Safe artifact path relative to the output directory, checked by result validation.
+   */
   path: string;
+  /**
+   * @lang zh-CN 可选的产物适用规范身份列表。
+   * @lang en Optional profile identities applicable to this artifact.
+   */
   profileIds?: string[];
 }
 
@@ -101,26 +266,86 @@ export interface DocumentationProducerArtifact {
  * @lang en Public type for producer-native diagnostics; metadata/source reuse existing wire fields, all values must be representable as JSON and source.path must be safe relative.
  */
 export interface DocumentationProducerDiagnostic extends HiaDiagnostic {
+  /**
+   * @lang zh-CN 可选JSON兼容诊断元数据，生产器负责可公开内容。
+   * @lang en Optional JSON-compatible diagnostic metadata whose disclosure content belongs to the producer.
+   */
   metadata?: Record<string, unknown>;
-  source?: { path?: string; [key: string]: unknown };
+  /**
+   * @lang zh-CN 可选源码定位对象，其中path按安全相对路径校验。
+   * @lang en Optional source-location object whose path is checked as a safe relative path.
+   */
+  source?: {
+    /**
+     * @lang zh-CN 可选的安全相对源码路径。
+     * @lang en Optional safe relative source path.
+     */
+    path?: string;
+    /**
+     * @lang zh-CN 额外源码定位信息，具体含义由生产器领域约定。
+     * @lang en Additional source-location information whose semantics belong to the producer domain.
+     */
+    [key: string]: unknown;
+  };
 }
 
-/** @lang zh-CN 可序列化的闭集执行结果；diagnostic 文案/元数据由 producer 负责脱敏，SDK 不把领域正文自动变成可公开数据。 @lang en Serializable closed execution result; producers own redaction of diagnostic text/metadata, and the SDK does not automatically make domain content public-safe. */
+/**
+ * @lang zh-CN 可序列化的闭集执行结果；diagnostic 文案/元数据由 producer 负责脱敏，SDK 不把领域正文自动变成可公开数据。
+ * @lang en Serializable closed execution result; producers own redaction of diagnostic text/metadata, and the SDK does not automatically make domain content public-safe.
+ */
 export interface DocumentationProducerResult {
+  /**
+   * @lang zh-CN 本次产物声明数组，与最终状态和输出种类联合校验。
+   * @lang en Artifact declarations for this run, validated together with final status and output kinds.
+   */
   artifacts: DocumentationProducerArtifact[];
+  /**
+   * @lang zh-CN 生产器结果的精确中性契约身份。
+   * @lang en Exact neutral contract identity of the producer result.
+   */
   contract: typeof DOCUMENTATION_PRODUCER_RESULT_CONTRACT;
-  /** @lang zh-CN 可读取当前版本或已知历史草案；run 保留有效返回的原版本。 @lang en Reads the current version or known historical draft; run retains the original version of a valid return. */
+  /**
+   * @lang zh-CN 可读取当前版本或已知历史草案；run 保留有效返回的原版本。
+   * @lang en Reads the current version or known historical draft; run retains the original version of a valid return.
+   */
   contractVersion: typeof DOCUMENTATION_PRODUCER_RESULT_CONTRACT_VERSION | "0.1.0-draft";
+  /**
+   * @lang zh-CN 生产器返回的诊断数组，severity与公开路径须满足SDK检查。
+   * @lang en Producer diagnostics whose severities and public paths must satisfy SDK checks.
+   */
   diagnostics: DocumentationProducerDiagnostic[];
+  /**
+   * @lang zh-CN 实际执行生产器的身份和版本，运行器与描述逐项匹配。
+   * @lang en Identity and version of the executed producer, matched against its descriptor by the runner.
+   */
   producer: {
+    /**
+     * @lang zh-CN 实际执行的生产器身份。
+     * @lang en Identity of the producer that executed this run.
+     */
     id: string;
+    /**
+     * @lang zh-CN 实际执行的生产器版本文本。
+     * @lang en Version text of the producer that executed this run.
+     */
     version: string;
   };
+  /**
+   * @lang zh-CN success、partial或failed，与产物和诊断组合联合验收。
+   * @lang en Success, partial or failed status validated against artifacts and diagnostics.
+   */
   status: DocumentationProducerStatus;
 }
 
-/** @lang zh-CN 调用方明确加载的生产器；执行权限来自宿主，SDK 不是沙箱。 @lang en Producer explicitly loaded by the caller; execution authority belongs to the host and the SDK is not a sandbox. */
+/**
+ * @lang zh-CN 调用方明确加载的生产器；执行权限来自宿主，SDK 不是沙箱。
+ * @lang en Producer explicitly loaded by the caller; execution authority belongs to the host and the SDK is not a sandbox.
+ */
 export interface DocumentationProducer {
+  /**
+   * @lang zh-CN 本次生产器的描述，执行前重新验证其能力与身份。
+   * @lang en Producer descriptor whose capabilities and identity are revalidated before execution.
+   */
   descriptor: DocumentationProducerDescriptor;
   /**
    * @lang zh-CN 生成文件/数据并返回声明；I/O、进度和信号响应由该实现负责，返回值还会由 runner 校验。
@@ -135,9 +360,20 @@ export interface DocumentationProducer {
   ): Promise<DocumentationProducerResult>;
 }
 
-/** @lang zh-CN 可选验证上下文，默认空；descriptor 必须是已验证的可信描述，targetPath 仅作诊断前缀。 @lang en Optional validation context, empty by default; descriptor must be trusted and prevalidated, and targetPath only prefixes diagnostics. */
+/**
+ * @lang zh-CN 可选验证上下文，默认空；descriptor 必须是已验证的可信描述，targetPath 仅作诊断前缀。
+ * @lang en Optional validation context, empty by default; descriptor must be trusted and prevalidated, and targetPath only prefixes diagnostics.
+ */
 export interface DocumentationProducerValidationOptions {
+  /**
+   * @lang zh-CN 已验证的可信描述，用于核对输入种类、产物及执行身份。
+   * @lang en Trusted prevalidated descriptor used to check input kinds, artifacts and execution identity.
+   */
   descriptor?: DocumentationProducerDescriptor;
+  /**
+   * @lang zh-CN 可选的可信诊断定位前缀。
+   * @lang en Optional trusted location prefix for diagnostics.
+   */
   targetPath?: string;
 }
 
