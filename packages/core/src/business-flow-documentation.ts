@@ -137,7 +137,15 @@ export type BusinessFlowLocalizedLabels = Record<string, string>;
  * @lang en Independent provenance metadata.
  */
 export interface BusinessFlowProvenance {
+  /**
+   * @lang zh-CN 质量来源所引用的去重逻辑证据标识，须在事实集合中存在。
+   * @lang en Unique logical evidence identifiers referenced by quality provenance, each required to exist in the fact collection.
+   */
   evidenceRefs: string[];
+  /**
+   * @lang zh-CN 事实来源类别，须与所属节点关系或代码绑定的作者归属一致。
+   * @lang en Fact-origin category, required to agree with the authorship of the containing relation or code binding.
+   */
   origin: typeof BUSINESS_FLOW_AUTHORSHIP_VALUES[number];
 }
 
@@ -147,8 +155,20 @@ export interface BusinessFlowProvenance {
  * @lang en Three reference-quality dimensions; resolution, confidence, and provenance do not imply one another.
  */
 export interface BusinessFlowQuality {
+  /**
+   * @lang zh-CN 独立声明的置信度，取high、medium、low或unknown。
+   * @lang en Independently declared confidence, using high, medium, low or unknown.
+   */
   confidence: typeof BUSINESS_FLOW_CONFIDENCE_VALUES[number];
+  /**
+   * @lang zh-CN 记录作者来源及逻辑证据引用的独立来源元数据。
+   * @lang en Independent provenance metadata recording authorship origin and logical evidence references.
+   */
   provenance: BusinessFlowProvenance;
+  /**
+   * @lang zh-CN 独立的引用解析状态，取resolved、unresolved、ambiguous或not-applicable。
+   * @lang en Independent reference-resolution state, using resolved, unresolved, ambiguous or not-applicable.
+   */
   resolution: typeof BUSINESS_FLOW_RESOLUTION_VALUES[number];
 }
 
@@ -157,11 +177,35 @@ export interface BusinessFlowQuality {
  * @lang en One business-flow identity and its entry/end declarations.
  */
 export interface BusinessFlowDefinition {
+  /**
+   * @lang zh-CN 流程与其节点必须提供标签的默认语言，也是投影唯一的回退语言。
+   * @lang en Default locale required in labels of the flow and its nodes, also serving as the projection's sole fallback locale.
+   */
   defaultLocale: string;
+  /**
+   * @lang zh-CN 本流程全部终点节点的唯一标识集合，至少包含一个终点。
+   * @lang en Unique identifiers of every end node in this flow, containing at least one end.
+   */
   endNodeIds: string[];
+  /**
+   * @lang zh-CN 本流程唯一start节点的稳定标识。
+   * @lang en Stable identifier of this flow's sole start node.
+   */
   entryNodeId: string;
+  /**
+   * @lang zh-CN 负责人提供的稳定流程标识，标签或集合位置均不参与身份计算。
+   * @lang en Owner-provided stable flow identifier, with neither labels nor collection positions determining identity.
+   */
   id: string;
+  /**
+   * @lang zh-CN 按语言标记保存的非空流程标签，必须包含defaultLocale。
+   * @lang en Non-empty flow labels keyed by locale tags, required to include defaultLocale.
+   */
   labels: BusinessFlowLocalizedLabels;
+  /**
+   * @lang zh-CN 显式声明的流程隐私分类，节点的限制程度须至少与其相同。
+   * @lang en Explicit flow privacy class, with every node required to be at least as restrictive.
+   */
   privacyClass: BusinessFlowPrivacyClass;
 }
 
@@ -171,14 +215,50 @@ export interface BusinessFlowDefinition {
  * @lang en Neutral business node; actorKind, artifactKind, and outcome appear only with their matching discriminators.
  */
 export interface BusinessFlowNode {
+  /**
+   * @lang zh-CN actor节点必需的角色类别，其它节点必须省略。
+   * @lang en Role category required for actor nodes and required to be absent on other nodes.
+   */
   actorKind?: typeof BUSINESS_FLOW_ACTOR_KINDS[number];
+  /**
+   * @lang zh-CN artifact节点必需的工件类型类别，其它节点必须省略。
+   * @lang en Artifact-type category required for artifact nodes and required to be absent on other nodes.
+   */
   artifactKind?: typeof BUSINESS_FLOW_ARTIFACT_KINDS[number];
+  /**
+   * @lang zh-CN 业务节点的作者归属，校验要求为author-provided。
+   * @lang en Business-node authorship, required by validation to be author-provided.
+   */
   authorship: typeof BUSINESS_FLOW_AUTHORSHIP_VALUES[number];
+  /**
+   * @lang zh-CN 所属流程的稳定标识，必须解析到现有流程。
+   * @lang en Stable identifier of the containing flow, required to resolve to an existing flow.
+   */
   flowId: string;
+  /**
+   * @lang zh-CN 负责人提供的稳定节点标识，供关系、入口与代码绑定引用。
+   * @lang en Owner-provided stable node identifier referenced by relations, entries and code bindings.
+   */
   id: string;
+  /**
+   * @lang zh-CN 节点的闭集类别，决定控制流参与方式及类别专属字段。
+   * @lang en Closed-set node kind determining control-flow participation and kind-specific fields.
+   */
   kind: BusinessFlowNodeKind;
+  /**
+   * @lang zh-CN 按语言标记保存的非空节点标签，必须包含所属流程的默认语言。
+   * @lang en Non-empty node labels keyed by locale tags, required to include the containing flow's default locale.
+   */
   labels: BusinessFlowLocalizedLabels;
+  /**
+   * @lang zh-CN end节点必需的终止结果，其它节点必须省略。
+   * @lang en Termination outcome required for end nodes and required to be absent on other nodes.
+   */
   outcome?: typeof BUSINESS_FLOW_END_OUTCOMES[number];
+  /**
+   * @lang zh-CN 节点隐私分类，限制程度须至少与所属流程相同。
+   * @lang en Node privacy class, required to be at least as restrictive as its containing flow.
+   */
   privacyClass: BusinessFlowPrivacyClass;
 }
 
@@ -188,15 +268,55 @@ export interface BusinessFlowNode {
  * @lang en Typed directed relation; control order is deterministic narrative order, never runtime priority.
  */
 export interface BusinessFlowRelation {
+  /**
+   * @lang zh-CN 业务关系的作者归属，校验要求为author-provided。
+   * @lang en Business-relation authorship, required by validation to be author-provided.
+   */
   authorship: typeof BUSINESS_FLOW_AUTHORSHIP_VALUES[number];
+  /**
+   * @lang zh-CN 分支或异常路径的稳定情况标识，branch与exception关系必须提供。
+   * @lang en Stable case identifier for a branch or exception path, required for branch and exception relations.
+   */
   caseKey?: string;
+  /**
+   * @lang zh-CN 控制、责任或数据关系族，必须与kind匹配。
+   * @lang en Control, responsibility or data relation family, required to match kind.
+   */
   family: BusinessFlowRelationFamily;
+  /**
+   * @lang zh-CN 关系及其两个端点共同所属流程的稳定标识。
+   * @lang en Stable identifier of the flow containing both the relation and its endpoints.
+   */
   flowId: string;
+  /**
+   * @lang zh-CN 同一流程内来源节点的稳定标识。
+   * @lang en Stable identifier of the source node in the same flow.
+   */
   from: string;
+  /**
+   * @lang zh-CN 负责人提供的稳定关系标识，供两类投影视图引用。
+   * @lang en Owner-provided stable relation identifier referenced by both projection views.
+   */
   id: string;
+  /**
+   * @lang zh-CN 关系的闭集语义类别，决定允许的端点类型和附加字段。
+   * @lang en Closed-set semantic relation kind determining permitted endpoint types and additional fields.
+   */
   kind: BusinessFlowRelationKind;
+  /**
+   * @lang zh-CN 控制关系在同一来源节点下从零连续的叙事顺序，非控制关系须省略。
+   * @lang en Contiguous zero-based narrative order among control relations from one source node, required to be absent on non-control relations.
+   */
   order?: number;
+  /**
+   * @lang zh-CN 关系的独立解析、置信度和来源记录，控制关系必须提供。
+   * @lang en Independent resolution, confidence and provenance record for the relation, required on control relations.
+   */
   quality?: BusinessFlowQuality;
+  /**
+   * @lang zh-CN 同一流程内目标节点的稳定标识。
+   * @lang en Stable identifier of the target node in the same flow.
+   */
   to: string;
 }
 
@@ -205,11 +325,35 @@ export interface BusinessFlowRelation {
  * @lang en Metadata-only evidence with no body or physical path.
  */
 export interface BusinessFlowEvidence {
+  /**
+   * @lang zh-CN 固定为false，证据记录仅携带元数据。
+   * @lang en Fixed to false, keeping evidence records metadata-only.
+   */
   bodyIncluded: false;
+  /**
+   * @lang zh-CN 供质量来源引用的稳定证据标识。
+   * @lang en Stable evidence identifier referenced by quality provenance.
+   */
   id: string;
+  /**
+   * @lang zh-CN 证据的非空逻辑类别标识。
+   * @lang en Non-empty logical category identifier for the evidence.
+   */
   kind: string;
+  /**
+   * @lang zh-CN 仅表达逻辑证据标识的定位值。
+   * @lang en Locator value expressing only a logical evidence identifier.
+   */
   locator: string;
+  /**
+   * @lang zh-CN 固定为logical-id，按逻辑标识解释locator。
+   * @lang en Fixed to logical-id, interpreting locator as a logical identifier.
+   */
   locatorKind: "logical-id";
+  /**
+   * @lang zh-CN 证据的显式隐私分类，公开投影要求所有引用证据均为public。
+   * @lang en Explicit evidence privacy class, with public projection requiring every referenced evidence item to be public.
+   */
   privacyClass: BusinessFlowPrivacyClass;
 }
 
@@ -218,12 +362,40 @@ export interface BusinessFlowEvidence {
  * @lang en Non-executing binding from a business node to existing documentation-entry metadata.
  */
 export interface BusinessFlowCodeBinding {
+  /**
+   * @lang zh-CN 固定为producer-resolved，声明绑定由生产器解析。
+   * @lang en Fixed to producer-resolved, declaring that the binding is resolved by the producer.
+   */
   authorship: "producer-resolved";
+  /**
+   * @lang zh-CN 本流程中被绑定控制节点的稳定标识。
+   * @lang en Stable identifier of the bound control node in this flow.
+   */
   businessNodeId: string;
+  /**
+   * @lang zh-CN 绑定及其业务节点共同所属流程的稳定标识。
+   * @lang en Stable identifier of the flow containing the binding and its business node.
+   */
   flowId: string;
+  /**
+   * @lang zh-CN 供人读与图视图引用的稳定代码绑定标识。
+   * @lang en Stable code-binding identifier referenced by human and graph views.
+   */
   id: string;
+  /**
+   * @lang zh-CN 绑定的独立质量记录，resolved状态须与调用方目标登记表一致。
+   * @lang en Independent binding-quality record, whose resolved state must agree with the caller's target registry.
+   */
   quality: BusinessFlowQuality;
+  /**
+   * @lang zh-CN 调用方文档条目登记表使用的稳定目标标识。
+   * @lang en Stable target identifier used by the caller's documentation-entry registry.
+   */
   targetId: string;
+  /**
+   * @lang zh-CN 固定为doc-entry，目标按已有文档条目元数据解释。
+   * @lang en Fixed to doc-entry, interpreting the target as existing documentation-entry metadata.
+   */
   targetKind: "doc-entry";
 }
 
@@ -232,10 +404,30 @@ export interface BusinessFlowCodeBinding {
  * @lang en Public-safe diagnostic embedded in the contract.
  */
 export interface BusinessFlowContractDiagnostic {
+  /**
+   * @lang zh-CN 业务流程契约闭集中的稳定诊断码。
+   * @lang en Stable diagnostic code from the business-flow contract's closed vocabulary.
+   */
   code: BusinessFlowDocumentationDiagnosticCode;
+  /**
+   * @lang zh-CN 由生产方保证可公开的诊断说明。
+   * @lang en Diagnostic explanation that the producer must ensure is safe for publication.
+   */
   message: string;
+  /**
+   * @lang zh-CN 可选的契约内逻辑字段路径。
+   * @lang en Optional logical field path within the contract.
+   */
   path?: string;
+  /**
+   * @lang zh-CN 诊断严重程度，使用共享HIA诊断词汇。
+   * @lang en Diagnostic severity using the shared HIA diagnostic vocabulary.
+   */
   severity: HiaDiagnosticSeverity;
+  /**
+   * @lang zh-CN 可选的诊断目标逻辑路径。
+   * @lang en Optional logical path identifying the diagnostic target.
+   */
   targetPath?: string;
 }
 
@@ -244,12 +436,40 @@ export interface BusinessFlowContractDiagnostic {
  * @lang en Privacy facts that close every sensitive body, location, and identity carrier.
  */
 export interface BusinessFlowPrivacy {
+  /**
+   * @lang zh-CN 固定为false，关闭绝对文件路径载体。
+   * @lang en Fixed to false, excluding absolute filesystem path carriers.
+   */
   absolutePathIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭凭据载体。
+   * @lang en Fixed to false, excluding credential carriers.
+   */
   credentialIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭个人身份载体。
+   * @lang en Fixed to false, excluding personal-identity carriers.
+   */
   personalIdentityIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭运行时载荷载体。
+   * @lang en Fixed to false, excluding runtime-payload carriers.
+   */
   runtimePayloadIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭源码正文载体。
+   * @lang en Fixed to false, excluding source-body carriers.
+   */
   sourceBodyIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭源码范围载体。
+   * @lang en Fixed to false, excluding source-range carriers.
+   */
   sourceRangeIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭真实业务目标身份载体。
+   * @lang en Fixed to false, excluding real business-target identity carriers.
+   */
   targetIdentityIncluded: false;
 }
 
@@ -258,9 +478,25 @@ export interface BusinessFlowPrivacy {
  * @lang en Exact-draft and explicit-migration policy.
  */
 export interface BusinessFlowCompatibility {
+  /**
+   * @lang zh-CN 固定为explicit-pure-identity-preserving，迁移须显式、纯函数且保留稳定身份。
+   * @lang en Fixed to explicit-pure-identity-preserving, requiring explicit pure migration that preserves stable identities.
+   */
   migrationPolicy: "explicit-pure-identity-preserving";
+  /**
+   * @lang zh-CN 固定为reject，拒绝未知类别。
+   * @lang en Fixed to reject, rejecting unknown kinds.
+   */
   unknownKindPolicy: "reject";
+  /**
+   * @lang zh-CN 固定为reject，拒绝未声明的属性。
+   * @lang en Fixed to reject, rejecting undeclared properties.
+   */
   unknownProperties: "reject";
+  /**
+   * @lang zh-CN 固定为exact，消费者须精确匹配契约版本。
+   * @lang en Fixed to exact, requiring consumers to match the contract version exactly.
+   */
   versionMatch: "exact";
 }
 
@@ -270,15 +506,55 @@ export interface BusinessFlowCompatibility {
  * @lang en Canonical wire payload for `business-flow-documentation@0.1.0-draft`.
  */
 export interface BusinessFlowDocumentation {
+  /**
+   * @lang zh-CN 业务控制节点到文档条目元数据的代码绑定集合。
+   * @lang en Collection of code bindings from business control nodes to documentation-entry metadata.
+   */
   codeBindings: BusinessFlowCodeBinding[];
+  /**
+   * @lang zh-CN 精确版本匹配、未知输入拒绝及显式迁移策略。
+   * @lang en Policies for exact version matching, rejection of unknown input and explicit migration.
+   */
   compatibility: BusinessFlowCompatibility;
+  /**
+   * @lang zh-CN 固定的business-flow-documentation契约名称。
+   * @lang en Fixed business-flow-documentation contract name.
+   */
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft事实契约版本。
+   * @lang en Fixed 0.1.0-draft fact-contract version.
+   */
   contractVersion: typeof BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 由生产方保证可公开的内嵌业务流程诊断集合。
+   * @lang en Collection of embedded business-flow diagnostics that the producer must keep safe for publication.
+   */
   diagnostics: BusinessFlowContractDiagnostic[];
+  /**
+   * @lang zh-CN 质量来源引用的纯元数据逻辑证据集合。
+   * @lang en Collection of metadata-only logical evidence referenced by quality provenance.
+   */
   evidence: BusinessFlowEvidence[];
+  /**
+   * @lang zh-CN 至少一个具有稳定身份及显式入口终点的流程定义。
+   * @lang en At least one flow definition with stable identity and explicit entry and end nodes.
+   */
   flows: BusinessFlowDefinition[];
+  /**
+   * @lang zh-CN 流程控制节点、参与角色及工件类型的事实集合。
+   * @lang en Fact collection of flow-control nodes, participant roles and artifact types.
+   */
   nodes: BusinessFlowNode[];
+  /**
+   * @lang zh-CN 关闭敏感正文、位置和身份载体的固定隐私标记。
+   * @lang en Fixed privacy flags excluding sensitive body, location and identity carriers.
+   */
   privacy: BusinessFlowPrivacy;
+  /**
+   * @lang zh-CN 同一流程内有类型的控制、责任与数据关系集合。
+   * @lang en Collection of typed control, responsibility and data relations within individual flows.
+   */
   relations: BusinessFlowRelation[];
 }
 
@@ -287,6 +563,10 @@ export interface BusinessFlowDocumentation {
  * @lang en The producer accepts only a caller-supplied metadata target registry.
  */
 export interface BusinessFlowProductionOptions {
+  /**
+   * @lang zh-CN 调用方显式提供的唯一稳定文档目标标识登记表，可为空，生产器据此核对绑定解析状态。
+   * @lang en Explicit caller-supplied registry of unique stable documentation-target identifiers, possibly empty, used by the producer to check binding resolution.
+   */
   availableCodeTargetIds: readonly string[];
 }
 
@@ -295,14 +575,50 @@ export interface BusinessFlowProductionOptions {
  * @lang en Deterministic body-free count summary.
  */
 export interface BusinessFlowProductionSummary {
+  /**
+   * @lang zh-CN 规范事实中actor角色节点的数量。
+   * @lang en Number of actor-role nodes in canonical facts.
+   */
   actorNodes: number;
+  /**
+   * @lang zh-CN 规范事实中artifact类型节点的数量。
+   * @lang en Number of artifact-type nodes in canonical facts.
+   */
   artifactNodes: number;
+  /**
+   * @lang zh-CN 规范事实中代码绑定的数量。
+   * @lang en Number of code bindings in canonical facts.
+   */
   codeBindings: number;
+  /**
+   * @lang zh-CN 规范事实中start、step、decision、merge和end节点的总数。
+   * @lang en Total number of start, step, decision, merge and end nodes in canonical facts.
+   */
   controlNodes: number;
+  /**
+   * @lang zh-CN 规范事实中control关系的数量。
+   * @lang en Number of control relations in canonical facts.
+   */
   controlRelations: number;
+  /**
+   * @lang zh-CN 规范事实中data关系的数量。
+   * @lang en Number of data relations in canonical facts.
+   */
   dataRelations: number;
+  /**
+   * @lang zh-CN 规范事实中逻辑证据记录的数量。
+   * @lang en Number of logical evidence records in canonical facts.
+   */
   evidence: number;
+  /**
+   * @lang zh-CN 规范事实中流程定义的数量。
+   * @lang en Number of flow definitions in canonical facts.
+   */
   flows: number;
+  /**
+   * @lang zh-CN 规范事实中responsibility关系的数量。
+   * @lang en Number of responsibility relations in canonical facts.
+   */
   responsibilityRelations: number;
 }
 
@@ -312,10 +628,30 @@ export interface BusinessFlowProductionSummary {
  * @lang en Pure producer result; a refused result has no canonical payload, preventing downstream use of invalid facts.
  */
 export interface BusinessFlowProductionResult {
+  /**
+   * @lang zh-CN 仅ready结果提供的深度冻结规范事实。
+   * @lang en Deeply frozen canonical facts provided only for a ready result.
+   */
   canonical?: BusinessFlowDocumentation;
+  /**
+   * @lang zh-CN 仅ready结果提供的确定性规范JSON文本。
+   * @lang en Deterministic canonical JSON text provided only for a ready result.
+   */
   canonicalJson?: string;
+  /**
+   * @lang zh-CN 确定性排序并去重的校验诊断，ready时为空。
+   * @lang en Deterministically sorted and deduplicated validation diagnostics, empty when ready.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN ready表示规范事实可用，refused表示校验或目标登记核对未通过。
+   * @lang en ready indicates available canonical facts, while refused indicates failed validation or target-registry checks.
+   */
   status: "ready" | "refused";
+  /**
+   * @lang zh-CN 仅ready结果提供的无正文计数摘要。
+   * @lang en Body-free count summary provided only for a ready result.
+   */
   summary?: BusinessFlowProductionSummary;
 }
 

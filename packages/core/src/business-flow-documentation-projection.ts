@@ -63,8 +63,20 @@ export type BusinessFlowDocumentationProjectionDiagnosticCode =
  * @lang en Explicit public projection options required from callers.
  */
 export interface BusinessFlowDocumentationProjectionOptions {
+  /**
+   * @lang zh-CN 调用方必须显式指定的public受众。
+   * @lang en Public audience that the caller must explicitly specify.
+   */
   audience: "public";
+  /**
+   * @lang zh-CN 调用方显式选择的非空唯一流程标识集合。
+   * @lang en Non-empty set of unique flow identifiers explicitly selected by the caller.
+   */
   flowIds: readonly string[];
+  /**
+   * @lang zh-CN 调用方显式请求的展示语言标记。
+   * @lang en Display-locale tag explicitly requested by the caller.
+   */
   locale: string;
 }
 
@@ -73,8 +85,20 @@ export interface BusinessFlowDocumentationProjectionOptions {
  * @lang en Projection source records only stable contract and flow references.
  */
 export interface BusinessFlowDocumentationProjectionSource {
+  /**
+   * @lang zh-CN 来源事实固定的business-flow-documentation契约名称。
+   * @lang en Fixed business-flow-documentation contract name of the source facts.
+   */
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_CONTRACT;
+  /**
+   * @lang zh-CN 来源事实固定的0.1.0-draft精确版本。
+   * @lang en Fixed exact 0.1.0-draft version of the source facts.
+   */
   contractVersion: typeof BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 按稳定标识排序的已选流程引用，与共享事实及两类视图逐一对应。
+   * @lang en Selected flow references sorted by stable identifier, corresponding exactly to shared facts and both views.
+   */
   flowRefs: string[];
 }
 
@@ -84,10 +108,30 @@ export interface BusinessFlowDocumentationProjectionSource {
  * @lang en Single fact collection shared by both views; it does not duplicate the W-P119 diagnostic, privacy, or compatibility envelope.
  */
 export interface BusinessFlowDocumentationProjectionSharedFacts {
+  /**
+   * @lang zh-CN 所有已选流程共享的代码绑定事实，按稳定标识排序。
+   * @lang en Shared code-binding facts for all selected flows, sorted by stable identifier.
+   */
   codeBindings: BusinessFlowCodeBinding[];
+  /**
+   * @lang zh-CN 已选关系及绑定的质量来源引用到的公开证据元数据。
+   * @lang en Public evidence metadata referenced by quality provenance of selected relations and bindings.
+   */
   evidence: BusinessFlowEvidence[];
+  /**
+   * @lang zh-CN 两类视图共同引用的已选公开流程定义。
+   * @lang en Selected public flow definitions referenced by both views.
+   */
   flows: BusinessFlowDefinition[];
+  /**
+   * @lang zh-CN 已选流程的全部公开节点，包含控制、角色与工件节点。
+   * @lang en All public nodes of selected flows, including control, role and artifact nodes.
+   */
   nodes: BusinessFlowNode[];
+  /**
+   * @lang zh-CN 已选流程全部有类型的关系，供两类视图按稳定标识解析。
+   * @lang en All typed relations of selected flows, resolved by stable identifier in both views.
+   */
   relations: BusinessFlowRelation[];
 }
 
@@ -96,8 +140,20 @@ export interface BusinessFlowDocumentationProjectionSharedFacts {
  * @lang en Auditable locale-selection result.
  */
 export interface BusinessFlowProjectionLocaleResolution {
+  /**
+   * @lang zh-CN 调用方显式请求的语言标记，回退时仍保留原请求。
+   * @lang en Locale tag explicitly requested by the caller, retained unchanged during fallback.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 实际标签采用的语言，精确请求存在时用请求语言，否则用流程默认语言。
+   * @lang en Locale used by the actual label, using an exact requested label when available and otherwise the flow default.
+   */
   resolvedLocale: string;
+  /**
+   * @lang zh-CN requested-exact记录精确命中，flow-default记录仅向流程默认语言回退。
+   * @lang en requested-exact records an exact match, while flow-default records fallback solely to the flow default.
+   */
   strategy: "requested-exact" | "flow-default";
 }
 
@@ -107,17 +163,65 @@ export interface BusinessFlowProjectionLocaleResolution {
  * @lang en A human-linear item adds ordering and references only; it never becomes a new business-node identity.
  */
 export interface BusinessFlowHumanLinearItem {
+  /**
+   * @lang zh-CN 本控制节点经责任关系指向的角色节点引用，按标识排序。
+   * @lang en Actor-node references reached through responsibility relations from this control node, sorted by identifier.
+   */
   actorNodeRefs: string[];
+  /**
+   * @lang zh-CN 本控制节点经数据关系指向的工件类型节点引用，按标识排序。
+   * @lang en Artifact-type node references reached through data relations from this control node, sorted by identifier.
+   */
   artifactNodeRefs: string[];
+  /**
+   * @lang zh-CN 绑定本控制节点的代码绑定引用，按标识排序。
+   * @lang en References to code bindings attached to this control node, sorted by identifier.
+   */
   codeBindingRefs: string[];
+  /**
+   * @lang zh-CN 从本控制节点发出的数据关系引用，按标识排序。
+   * @lang en References to data relations originating at this control node, sorted by identifier.
+   */
   dataRelationRefs: string[];
+  /**
+   * @lang zh-CN 本节点出站控制关系及代码绑定质量来源中的去重证据引用，按标识排序。
+   * @lang en Unique evidence references from quality provenance of this node's outgoing control relations and code bindings, sorted by identifier.
+   */
   evidenceRefs: string[];
+  /**
+   * @lang zh-CN 按localeResolution选出的节点标签。
+   * @lang en Node label selected according to localeResolution.
+   */
   label: string;
+  /**
+   * @lang zh-CN 此节点标签的精确命中或流程默认语言回退记录。
+   * @lang en Exact-match or flow-default fallback record for this node's label.
+   */
   localeResolution: BusinessFlowProjectionLocaleResolution;
+  /**
+   * @lang zh-CN 被引用控制节点的类别，仅产生start、step、decision、merge或end。
+   * @lang en Kind of the referenced control node, emitted only as start, step, decision, merge or end.
+   */
   nodeKind: BusinessFlowNodeKind;
+  /**
+   * @lang zh-CN 共享事实中本项所指控制节点的稳定标识。
+   * @lang en Stable identifier of the control node referenced by this item in shared facts.
+   */
   nodeRef: string;
+  /**
+   * @lang zh-CN 按order及关系标识排列的出站控制关系引用。
+   * @lang en Outgoing control-relation references ordered by order and relation identifier.
+   */
   outgoingRelationRefs: string[];
+  /**
+   * @lang zh-CN 本流程首次访问深度优先叙事中的零基位置。
+   * @lang en Zero-based position in this flow's first-visit depth-first narrative.
+   */
   position: number;
+  /**
+   * @lang zh-CN 从本控制节点发出的责任关系引用，按标识排序。
+   * @lang en References to responsibility relations originating at this control node, sorted by identifier.
+   */
   responsibilityRelationRefs: string[];
 }
 
@@ -126,11 +230,35 @@ export interface BusinessFlowHumanLinearItem {
  * @lang en Deterministic human-linear view for one flow.
  */
 export interface BusinessFlowHumanLinearFlow {
+  /**
+   * @lang zh-CN 共享流程声明的全部终点引用，按稳定标识排序。
+   * @lang en All end-node references declared by the shared flow, sorted by stable identifier.
+   */
   endNodeRefs: string[];
+  /**
+   * @lang zh-CN 共享流程声明的唯一入口节点引用。
+   * @lang en Unique entry-node reference declared by the shared flow.
+   */
   entryNodeRef: string;
+  /**
+   * @lang zh-CN 本线性视图在共享事实中对应的稳定流程标识。
+   * @lang en Stable flow identifier corresponding to this linear view in shared facts.
+   */
   flowRef: string;
+  /**
+   * @lang zh-CN 从入口按控制关系叙事顺序深度优先遍历的控制节点项，汇合节点仅首次出现。
+   * @lang en Control-node items visited depth-first from the entry in control-relation narrative order, with each merge appearing only on first visit.
+   */
   items: BusinessFlowHumanLinearItem[];
+  /**
+   * @lang zh-CN 按localeResolution选出的流程标签。
+   * @lang en Flow label selected according to localeResolution.
+   */
   label: string;
+  /**
+   * @lang zh-CN 此流程标签的精确命中或默认语言回退记录。
+   * @lang en Exact-match or default-locale fallback record for this flow's label.
+   */
   localeResolution: BusinessFlowProjectionLocaleResolution;
 }
 
@@ -139,6 +267,10 @@ export interface BusinessFlowHumanLinearFlow {
  * @lang en Human view for every selected flow.
  */
 export interface BusinessFlowHumanLinearProjection {
+  /**
+   * @lang zh-CN 所有已选流程的人读线性视图，顺序与规范共享流程一致。
+   * @lang en Human-linear views of all selected flows, ordered consistently with canonical shared flows.
+   */
   flows: BusinessFlowHumanLinearFlow[];
 }
 
@@ -148,10 +280,30 @@ export interface BusinessFlowHumanLinearProjection {
  * @lang en An AI graph-ready entry carries stable refs only; typed node and edge facts always resolve through sharedFacts.
  */
 export interface BusinessFlowAiGraphEntry {
+  /**
+   * @lang zh-CN 本流程代码绑定的稳定引用，按标识排序。
+   * @lang en Stable references to this flow's code bindings, sorted by identifier.
+   */
   codeBindingRefs: string[];
+  /**
+   * @lang zh-CN 本流程全部控制、责任与数据关系的稳定引用，按标识排序。
+   * @lang en Stable references to all control, responsibility and data relations in this flow, sorted by identifier.
+   */
   edgeRefs: string[];
+  /**
+   * @lang zh-CN 本流程关系及绑定质量来源中的去重证据引用，按标识排序。
+   * @lang en Unique evidence references from quality provenance of this flow's relations and bindings, sorted by identifier.
+   */
   evidenceRefs: string[];
+  /**
+   * @lang zh-CN 本图索引在共享事实中对应的稳定流程标识。
+   * @lang en Stable flow identifier corresponding to this graph index in shared facts.
+   */
   flowRef: string;
+  /**
+   * @lang zh-CN 本流程全部控制、角色和工件节点的稳定引用，按标识排序。
+   * @lang en Stable references to all control, role and artifact nodes in this flow, sorted by identifier.
+   */
   nodeRefs: string[];
 }
 
@@ -160,6 +312,10 @@ export interface BusinessFlowAiGraphEntry {
  * @lang en AI graph-ready index for every selected flow.
  */
 export interface BusinessFlowAiGraphProjection {
+  /**
+   * @lang zh-CN 所有已选流程的图索引，类型化事实均通过共享集合解析。
+   * @lang en Graph indexes for all selected flows, with typed facts resolved through shared collections.
+   */
   graphs: BusinessFlowAiGraphEntry[];
 }
 
@@ -168,14 +324,50 @@ export interface BusinessFlowAiGraphProjection {
  * @lang en Projection privacy additionally closes topology and hidden-AI leakage.
  */
 export interface BusinessFlowDocumentationProjectionPrivacy {
+  /**
+   * @lang zh-CN 固定为false，关闭绝对文件路径载体。
+   * @lang en Fixed to false, excluding absolute filesystem path carriers.
+   */
   absolutePathIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭凭据载体。
+   * @lang en Fixed to false, excluding credential carriers.
+   */
   credentialIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，AI视图仅可引用人读受众获准的共享内容。
+   * @lang en Fixed to false, limiting the AI view to shared content authorized for the human audience.
+   */
   hiddenAiContentIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，任一选中事实非公开时整次拒绝投影。
+   * @lang en Fixed to false, refusing the entire projection when any selected fact is non-public.
+   */
   nonPublicTopologyIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭个人身份载体。
+   * @lang en Fixed to false, excluding personal-identity carriers.
+   */
   personalIdentityIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭运行时载荷载体。
+   * @lang en Fixed to false, excluding runtime-payload carriers.
+   */
   runtimePayloadIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭源码正文载体。
+   * @lang en Fixed to false, excluding source-body carriers.
+   */
   sourceBodyIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭源码范围载体。
+   * @lang en Fixed to false, excluding source-range carriers.
+   */
   sourceRangeIncluded: false;
+  /**
+   * @lang zh-CN 固定为false，关闭真实业务目标身份载体。
+   * @lang en Fixed to false, excluding real business-target identity carriers.
+   */
   targetIdentityIncluded: false;
 }
 
@@ -184,9 +376,25 @@ export interface BusinessFlowDocumentationProjectionPrivacy {
  * @lang en Exact-draft and closed-world projection compatibility.
  */
 export interface BusinessFlowDocumentationProjectionCompatibility {
+  /**
+   * @lang zh-CN 固定为explicit-pure-identity-preserving，迁移须显式、纯函数且保留稳定身份。
+   * @lang en Fixed to explicit-pure-identity-preserving, requiring explicit pure migration that preserves stable identities.
+   */
   migrationPolicy: "explicit-pure-identity-preserving";
+  /**
+   * @lang zh-CN 固定为reject，拒绝未知类别。
+   * @lang en Fixed to reject, rejecting unknown kinds.
+   */
   unknownKindPolicy: "reject";
+  /**
+   * @lang zh-CN 固定为reject，拒绝未声明的属性。
+   * @lang en Fixed to reject, rejecting undeclared properties.
+   */
   unknownProperties: "reject";
+  /**
+   * @lang zh-CN 固定为exact，消费者须精确匹配契约版本。
+   * @lang en Fixed to exact, requiring consumers to match the contract version exactly.
+   */
   versionMatch: "exact";
 }
 
@@ -196,15 +404,55 @@ export interface BusinessFlowDocumentationProjectionCompatibility {
  * @lang en Canonical wire payload for `business-flow-documentation-projection@0.1.0-draft`.
  */
 export interface BusinessFlowDocumentationProjection {
+  /**
+   * @lang zh-CN 通过稳定引用访问共享类型化事实的图索引。
+   * @lang en Graph index accessing shared typed facts through stable references.
+   */
   aiGraph: BusinessFlowAiGraphProjection;
+  /**
+   * @lang zh-CN 固定为public的投影受众。
+   * @lang en Projection audience fixed to public.
+   */
   audience: "public";
+  /**
+   * @lang zh-CN 投影精确版本匹配、未知输入拒绝及显式迁移策略。
+   * @lang en Projection policies for exact version matching, rejection of unknown input and explicit migration.
+   */
   compatibility: BusinessFlowDocumentationProjectionCompatibility;
+  /**
+   * @lang zh-CN 固定的business-flow-documentation-projection契约名称。
+   * @lang en Fixed business-flow-documentation-projection contract name.
+   */
   contract: typeof BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT;
+  /**
+   * @lang zh-CN 固定的0.1.0-draft投影契约版本。
+   * @lang en Fixed 0.1.0-draft projection-contract version.
+   */
   contractVersion: typeof BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 从各流程入口按首次访问深度优先顺序构建的人读视图。
+   * @lang en Human-readable view constructed from each flow's entry in first-visit depth-first order.
+   */
   humanLinear: BusinessFlowHumanLinearProjection;
+  /**
+   * @lang zh-CN 关闭敏感载体、非公开拓扑及AI隐藏内容的固定隐私标记。
+   * @lang en Fixed privacy flags excluding sensitive carriers, non-public topology and hidden AI content.
+   */
   privacy: BusinessFlowDocumentationProjectionPrivacy;
+  /**
+   * @lang zh-CN 此次投影显式请求的展示语言，具体标签解析另行记录。
+   * @lang en Display locale explicitly requested for this projection, with individual label resolution recorded separately.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 两类视图共同引用的唯一规范事实集合。
+   * @lang en Single canonical fact collection referenced by both views.
+   */
   sharedFacts: BusinessFlowDocumentationProjectionSharedFacts;
+  /**
+   * @lang zh-CN 来源事实契约身份、精确版本及已选流程引用。
+   * @lang en Source fact-contract identity, exact version and selected flow references.
+   */
   source: BusinessFlowDocumentationProjectionSource;
 }
 
@@ -213,11 +461,35 @@ export interface BusinessFlowDocumentationProjection {
  * @lang en Deterministic count summary with no body or refused topology.
  */
 export interface BusinessFlowDocumentationProjectionSummary {
+  /**
+   * @lang zh-CN 已选共享事实中全部类型化关系的数量。
+   * @lang en Number of all typed relations in the selected shared facts.
+   */
   aiEdges: number;
+  /**
+   * @lang zh-CN 已选共享事实中全部控制、角色及工件节点的数量。
+   * @lang en Number of all control, role and artifact nodes in the selected shared facts.
+   */
   aiNodes: number;
+  /**
+   * @lang zh-CN 已选共享事实中代码绑定的数量。
+   * @lang en Number of code bindings in the selected shared facts.
+   */
   codeBindings: number;
+  /**
+   * @lang zh-CN 已选关系及绑定实际引用的共享证据记录数。
+   * @lang en Number of shared evidence records actually referenced by selected relations and bindings.
+   */
   evidence: number;
+  /**
+   * @lang zh-CN 此次投影选择的公开流程数量。
+   * @lang en Number of public flows selected for this projection.
+   */
   flows: number;
+  /**
+   * @lang zh-CN 所有已选流程线性视图的控制节点项总数。
+   * @lang en Total number of control-node items across all selected human-linear flow views.
+   */
   humanItems: number;
 }
 
@@ -227,10 +499,30 @@ export interface BusinessFlowDocumentationProjectionSummary {
  * @lang en Pure producer result; every failure returns public-safe diagnostics only, with no partial projection or counts.
  */
 export interface BusinessFlowDocumentationProjectionResult {
+  /**
+   * @lang zh-CN 可公开的投影诊断，ready时为空，拒绝消息不复制来源细节。
+   * @lang en Public-safe projection diagnostics, empty when ready, with refusal messages excluding copied source details.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 仅ready结果提供的深度冻结双视图及共享事实。
+   * @lang en Deeply frozen dual views and shared facts provided only for a ready result.
+   */
   projection?: BusinessFlowDocumentationProjection;
+  /**
+   * @lang zh-CN 仅ready结果提供的确定性投影JSON，无生成时间戳。
+   * @lang en Deterministic projection JSON provided only for a ready result, without a generation timestamp.
+   */
   projectionJson?: string;
+  /**
+   * @lang zh-CN ready表示整次公开投影可用，refused表示来源、选项、隐私或一致性检查未通过。
+   * @lang en ready indicates an available whole public projection, while refused indicates failed source, option, privacy or consistency checks.
+   */
   status: "ready" | "refused";
+  /**
+   * @lang zh-CN 仅ready结果提供的无正文计数摘要，拒绝时省略。
+   * @lang en Body-free count summary provided only for a ready result and omitted on refusal.
+   */
   summary?: BusinessFlowDocumentationProjectionSummary;
 }
 
