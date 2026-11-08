@@ -96,10 +96,30 @@ export type DocumentationPortalUiLocale = typeof DOCUMENTATION_PORTAL_UI_LOCALES
  * @lang en Explicit IA input; omitting the whole object must preserve P3.
  */
 export interface DocumentationPortalInformationArchitectureOptions {
+  /**
+   * @lang zh-CN 可选的精确契约名称，省略时采用documentation-portal-information-architecture。
+   * @lang en Optional exact contract name, defaulting to documentation-portal-information-architecture when omitted.
+   */
   contract?: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT;
+  /**
+   * @lang zh-CN 可选的精确草案版本，省略时采用0.1.0-draft。
+   * @lang en Optional exact draft version, defaulting to 0.1.0-draft when omitted.
+   */
   contractVersion?: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 逻辑内容分组，默认entry，可选semantic-container。
+   * @lang en Logical content grouping, defaulting to entry with semantic-container also supported.
+   */
   contentGrouping?: DocumentationPortalContentGrouping;
+  /**
+   * @lang zh-CN 片段获取时机，默认lazy，可选eager。
+   * @lang en Fragment acquisition timing, defaulting to lazy with eager also supported.
+   */
   loadingStrategy?: DocumentationPortalLoadingStrategy;
+  /**
+   * @lang zh-CN 成员呈现位置，默认separate，可选with-parent，规范成员路由仍保留。
+   * @lang en Member placement, defaulting to separate with with-parent also supported, while canonical member routes remain available.
+   */
   memberPlacement?: DocumentationPortalMemberPlacement;
 }
 
@@ -108,8 +128,20 @@ export interface DocumentationPortalInformationArchitectureOptions {
  * @lang en Public semantic segment explicitly reviewed and projected by the manifest owner.
  */
 export interface DocumentationPortalSemanticPathSegment {
+  /**
+   * @lang zh-CN 负责人显式提供的语义层级类别，取已声明的路径类别闭集。
+   * @lang en Owner-supplied semantic hierarchy kind from the declared closed path-kind vocabulary.
+   */
   kind: DocumentationPortalSemanticPathKind;
+  /**
+   * @lang zh-CN 负责人提供的层级片段标识，用于构建显式语义路径。
+   * @lang en Owner-supplied hierarchy-segment identifier used to construct the explicit semantic path.
+   */
   id: string;
+  /**
+   * @lang zh-CN 负责人审阅后允许公开的层级显示标签。
+   * @lang en Hierarchy display label reviewed by the owner for publication.
+   */
   label: string;
 }
 
@@ -118,33 +150,133 @@ export interface DocumentationPortalSemanticPathSegment {
  * @lang en Resolved IA contract in project-index; it also freezes routing, locale, accessibility, and privacy boundaries.
  */
 export interface DocumentationPortalInformationArchitectureContract {
+  /**
+   * @lang zh-CN 已解析信息架构固定的中性契约名称。
+   * @lang en Fixed neutral contract name of the resolved information architecture.
+   */
   contract: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT;
+  /**
+   * @lang zh-CN 已解析信息架构固定的0.1.0-draft精确版本。
+   * @lang en Fixed exact 0.1.0-draft version of the resolved information architecture.
+   */
   contractVersion: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 本次解析选定的逻辑内容分组，独立于片段加载时机。
+   * @lang en Logical content grouping selected by this resolution, independent of fragment loading timing.
+   */
   contentGrouping: DocumentationPortalContentGrouping;
+  /**
+   * @lang zh-CN 本次解析选定的lazy或eager片段获取策略。
+   * @lang en Lazy or eager fragment acquisition strategy selected by this resolution.
+   */
   loadingStrategy: DocumentationPortalLoadingStrategy;
+  /**
+   * @lang zh-CN 本次解析选定的成员独立呈现或随父项呈现策略。
+   * @lang en Separate or with-parent member placement selected by this resolution.
+   */
   memberPlacement: DocumentationPortalMemberPlacement;
+  /**
+   * @lang zh-CN 固定为manifest-only，语义路径仅来自显式清单。
+   * @lang en Fixed to manifest-only, taking semantic paths solely from the explicit manifest.
+   */
   semanticPathPolicy: "manifest-only";
+  /**
+   * @lang zh-CN 本契约支持的语义路径类别清单。
+   * @lang en List of semantic-path kinds supported by this contract.
+   */
   semanticPathKinds: DocumentationPortalSemanticPathKind[];
+  /**
+   * @lang zh-CN 条目主题分区的固定语义顺序。
+   * @lang en Fixed semantic order of entry-topic sections.
+   */
   topicSections: DocumentationPortalTopicSection[];
+  /**
+   * @lang zh-CN 分别记录界面语言、正文语言与源码注释语言投影边界。
+   * @lang en Separate records of UI locale, content locale and the source-comment locale projection boundary.
+   */
   localeModel: {
+    /**
+     * @lang zh-CN 调用方选定的zh-CN或en界面语言。
+     * @lang en Caller-selected zh-CN or en UI locale.
+     */
     uiLocale: DocumentationPortalUiLocale;
+    /**
+     * @lang zh-CN 调用方显式提供的文档正文语言，独立于界面语言。
+     * @lang en Explicit caller-supplied document-content locale, independent of UI locale.
+     */
     contentLocale: string;
+    /**
+     * @lang zh-CN 固定为not-projected，此信息架构记录不投影源码注释语言。
+     * @lang en Fixed to not-projected, leaving source-comment locale outside this information-architecture record.
+     */
     sourceCommentLocale: "not-projected";
   };
+  /**
+   * @lang zh-CN 规范条目路由及附加呈现路径的固定路由策略。
+   * @lang en Fixed routing policies for canonical entries and additive presentation paths.
+   */
   routing: {
+    /**
+     * @lang zh-CN 固定为true，内容分组与成员呈现选择保留规范条目路由。
+     * @lang en Fixed to true, preserving canonical entry routes across content-grouping and member-placement choices.
+     */
     canonicalEntryRouteStable: true;
+    /**
+     * @lang zh-CN 固定为true，呈现路径作为附加路径提供。
+     * @lang en Fixed to true, providing presentation paths additively.
+     */
     presentationPathAdditive: true;
+    /**
+     * @lang zh-CN 固定为false，此契约不提供文档版本路由。
+     * @lang en Fixed to false, with document-version routing outside this contract.
+     */
     versionRouting: false;
   };
+  /**
+   * @lang zh-CN 原生折叠、键盘交互与ARIA能力边界。
+   * @lang en Native disclosure, keyboard interaction and ARIA capability boundaries.
+   */
   accessibility: {
+    /**
+     * @lang zh-CN 固定为native-details，层级展开采用原生details元素。
+     * @lang en Fixed to native-details, using native details elements for hierarchical disclosure.
+     */
     disclosureMode: "native-details";
+    /**
+     * @lang zh-CN 固定声明Tab、Enter/Space、可见焦点及活动祖先的交互能力。
+     * @lang en Fixed declaration of Tab, Enter/Space, visible-focus and active-ancestor interaction capabilities.
+     */
     interactions: ["tab", "enter-space", "visible-focus", "active-ancestor"];
+    /**
+     * @lang zh-CN 固定为false，此模式不实现完整ARIA tree交互模型。
+     * @lang en Fixed to false, leaving the full ARIA tree interaction model outside this mode.
+     */
     fullAriaTree: false;
   };
+  /**
+   * @lang zh-CN 语义路径来源、连续性元数据与源码和目标读取的固定隐私边界。
+   * @lang en Fixed privacy boundaries for semantic-path origins, continuity metadata, source bodies and target reads.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 固定为manifest-input，语义层级仅取调用方清单输入。
+     * @lang en Fixed to manifest-input, sourcing semantic hierarchy solely from the caller's manifest input.
+     */
     semanticPathSource: "manifest-input";
+    /**
+     * @lang zh-CN 固定为metadata-only，连续性信息仅保留元数据。
+     * @lang en Fixed to metadata-only, retaining continuity information as metadata only.
+     */
     continuityMode: "metadata-only";
+    /**
+     * @lang zh-CN 固定为false，此信息架构记录不携带源码正文。
+     * @lang en Fixed to false, excluding source bodies from this information-architecture record.
+     */
     sourceBodyIncluded: false;
+    /**
+     * @lang zh-CN 固定为false，解析此信息架构不读取目标状态。
+     * @lang en Fixed to false, performing no target-state reads during information-architecture resolution.
+     */
     targetStateRead: false;
   };
 }
@@ -231,23 +363,95 @@ export const DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA = {
  * @lang en Label catalog limited to shell and topic labels touched in this slice.
  */
 export interface DocumentationPortalLabels {
+  /**
+   * @lang zh-CN 契约主题分区的本地化标题。
+   * @lang en Localized heading for the contract topic section.
+   */
   contract: string;
+  /**
+   * @lang zh-CN 覆盖情况主题分区的本地化标题。
+   * @lang en Localized heading for the coverage topic section.
+   */
   coverage: string;
+  /**
+   * @lang zh-CN 声明主题分区的本地化标题。
+   * @lang en Localized heading for the declaration topic section.
+   */
   declaration: string;
+  /**
+   * @lang zh-CN 诊断主题分区的本地化标题。
+   * @lang en Localized heading for the diagnostics topic section.
+   */
   diagnostics: string;
+  /**
+   * @lang zh-CN 层级导航的本地化标题。
+   * @lang en Localized heading for hierarchical navigation.
+   */
   hierarchy: string;
+  /**
+   * @lang zh-CN 导航加载期间的本地化状态文本。
+   * @lang en Localized status text shown while navigation loads.
+   */
   loading: string;
+  /**
+   * @lang zh-CN 成员主题分区的本地化标题。
+   * @lang en Localized heading for the members topic section.
+   */
   members: string;
+  /**
+   * @lang zh-CN 元数据主题分区的本地化标题。
+   * @lang en Localized heading for the metadata topic section.
+   */
   metadata: string;
+  /**
+   * @lang zh-CN 打开文档条目操作的本地化标签。
+   * @lang en Localized label for the action that opens a documentation entry.
+   */
   open: string;
+  /**
+   * @lang zh-CN 来源主题分区的本地化标题。
+   * @lang en Localized heading for the provenance topic section.
+   */
   provenance: string;
+  /**
+   * @lang zh-CN 项目关系区域的本地化标题。
+   * @lang en Localized heading for the project-relations area.
+   */
   relations: string;
+  /**
+   * @lang zh-CN 要求通过HTTP或HTTPS静态服务访问站点的本地化提示。
+   * @lang en Localized instruction to serve the site through an HTTP or HTTPS static server.
+   */
   requiresServer: string;
+  /**
+   * @lang zh-CN 搜索操作的本地化标签。
+   * @lang en Localized label for the search action.
+   */
   search: string;
+  /**
+   * @lang zh-CN 提示可搜索名称、类别、源码或选择器的本地化输入占位文本。
+   * @lang en Localized input placeholder describing searches by name, kind, source or selector.
+   */
   searchPlaceholder: string;
+  /**
+   * @lang zh-CN 尚未选择文档节点时的本地化引导文本。
+   * @lang en Localized guidance shown before a documentation node is selected.
+   */
   select: string;
+  /**
+   * @lang zh-CN 源码主题分区的本地化标题。
+   * @lang en Localized heading for the source topic section.
+   */
   source: string;
+  /**
+   * @lang zh-CN 摘要主题分区的本地化标题。
+   * @lang en Localized heading for the summary topic section.
+   */
   summary: string;
+  /**
+   * @lang zh-CN 内容暂不可用时的本地化状态文本。
+   * @lang en Localized status text for temporarily unavailable content.
+   */
   unavailable: string;
 }
 

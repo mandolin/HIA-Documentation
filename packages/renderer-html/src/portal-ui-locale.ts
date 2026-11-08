@@ -221,10 +221,30 @@ export const DOCUMENTATION_PORTAL_UI_MESSAGE_IDS = Object.freeze(
  * @lang en Caller configuration for Portal locale adoption.
  */
 export interface DocumentationPortalUiLocaleAdoptionOptions {
+  /**
+   * @lang zh-CN 当前Portal界面面所呈现的正文语言。
+   * @lang en Content locale presented by the current Portal surface.
+   */
   contentLocale: string;
+  /**
+   * @lang zh-CN 本次构建可用的正文语言集合，用于语言部分元数据与完整性评估。
+   * @lang en Content locales available in this build, used for language-of-parts metadata and completeness evaluation.
+   */
   contentLocales: string[];
+  /**
+   * @lang zh-CN 本次构建显式选定的默认zh-CN或en界面语言。
+   * @lang en Default zh-CN or en UI locale explicitly selected for this build.
+   */
   defaultUiLocale: DocumentationPortalUiLocale;
+  /**
+   * @lang zh-CN 可选的已登记profile身份，默认portal.default，须与surfaceId精确配对。
+   * @lang en Optional registered profile identity, defaulting to portal.default and required to pair exactly with surfaceId.
+   */
   profileId?: string;
+  /**
+   * @lang zh-CN 可选的已登记界面面身份，默认portal.split-site，须与profileId精确配对。
+   * @lang en Optional registered surface identity, defaulting to portal.split-site and required to pair exactly with profileId.
+   */
   surfaceId?: string;
 }
 
@@ -233,13 +253,25 @@ export interface DocumentationPortalUiLocaleAdoptionOptions {
  * @lang en Gate-complete report, summary, and runtime bundles produced by the Portal owner.
  */
 export interface DocumentationPortalUiLocaleAdoption {
+  /**
+   * @lang zh-CN 按zh-CN或en及稳定消息标识检索的冻结公开纯文本词条。
+   * @lang en Frozen public plain-text messages indexed by zh-CN or en and stable message identifier.
+   */
   bundles: Readonly<Record<DocumentationPortalUiLocale, Readonly<Record<string, string>>>>;
   /**
    * @lang zh-CN 由本次实际消息输入评估的当前1.0.0报告，旧档案不会在owner写者中自动换号。
    * @lang en Current 1.0.0 report evaluated from this build's actual messages; the owner writer never relabels legacy archives automatically.
    */
   report: CurrentDocumentationUiLocaleCompletenessReport;
+  /**
+   * @lang zh-CN 由本次实际消息输入评估得到的当前1.0.0完整性报告JSON。
+   * @lang en Current 1.0.0 completeness-report JSON evaluated from this build's actual message inputs.
+   */
   reportJson: string;
+  /**
+   * @lang zh-CN 通过完整性门禁的消息、语言、界面面及精确覆盖计数摘要。
+   * @lang en Count summary of messages, locales, surfaces and exact coverage that passed the completeness gate.
+   */
   summary: DocumentationUiLocaleCompletenessSummary;
 }
 

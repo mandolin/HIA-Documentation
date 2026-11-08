@@ -37,8 +37,20 @@ export const PORTAL_PUBLIC_SOURCE_GITATTRIBUTES = "sources/*.txt -text\n";
  * @lang en One semantic topic input for a Portal profile.
  */
 export interface PortalPresentationTopicInput {
+  /**
+   * @lang zh-CN 用于派生稳定主题、片段和导航身份的文档条目标识。
+   * @lang en Documentation-entry identifier used to derive stable topic, fragment and navigation identities.
+   */
   entryId: string;
+  /**
+   * @lang zh-CN 此主题引用的关系标识，转换为中性身份后去重排序。
+   * @lang en Relation identifiers referenced by this topic, deduplicated and sorted after conversion to neutral identities.
+   */
   relationIds: string[];
+  /**
+   * @lang zh-CN 主题语义类别，合法中性标识原样保留，其它值映射为确定性摘要身份。
+   * @lang en Semantic topic kind, preserving valid neutral identifiers and mapping other values to deterministic digest identities.
+   */
   topicKind: string;
 }
 
@@ -47,11 +59,35 @@ export interface PortalPresentationTopicInput {
  * @lang en Renderer-authorized source preview whose body is used only to generate a public asset.
  */
 export interface PortalPresentationSourceInput {
+  /**
+   * @lang zh-CN 调用方已授权公开的内存源码文本，缺失时记录资源诊断。
+   * @lang en In-memory source text already authorized by the caller for publication, with missing text recorded as an asset diagnostic.
+   */
   content?: string;
+  /**
+   * @lang zh-CN 本源码资源关联的文档条目标识。
+   * @lang en Documentation-entry identifier associated with this source asset.
+   */
   entryId: string;
+  /**
+   * @lang zh-CN 可选的来源映射标识，写入中性资源时规范为安全身份。
+   * @lang en Optional source-map identifier normalized to a safe identity in the neutral asset record.
+   */
   sourceMapId?: string;
+  /**
+   * @lang zh-CN 用于构造稳定源码身份及公开查看页标题的调用方路径。
+   * @lang en Caller-supplied path used to construct stable source identity and the public viewer title.
+   */
   sourcePath: string;
+  /**
+   * @lang zh-CN 源码片段的一基起始行，省略时采用1，并参与身份及查看页定位。
+   * @lang en One-based first line of the source excerpt, defaulting to one and participating in identity and viewer positioning.
+   */
   startLine?: number;
+  /**
+   * @lang zh-CN 可选的一基结束行，参与稳定身份种子，正文由调用方预先提供。
+   * @lang en Optional one-based end line participating in the stable identity seed, with the excerpt body supplied beforehand by the caller.
+   */
   endLine?: number;
 }
 
@@ -60,13 +96,45 @@ export interface PortalPresentationSourceInput {
  * @lang en Build options for a presentation bundle.
  */
 export interface PortalPresentationBundleOptions {
+  /**
+   * @lang zh-CN 项目页面分区方式，split-site按条目分配页面，single-page共享单一页面身份。
+   * @lang en Project page partition, assigning pages per entry for split-site and sharing one page identity for single-page.
+   */
   layout: "split-site" | "single-page";
+  /**
+   * @lang zh-CN 写入源码读取策略的最大行数，构造资源时不据此截断调用方正文。
+   * @lang en Maximum line count recorded in the source-reader policy, without truncating caller text during asset construction.
+   */
   maxLines: number;
+  /**
+   * @lang zh-CN 用于派生呈现profile及单页身份的项目标识。
+   * @lang en Project identifier used to derive presentation-profile and single-page identities.
+   */
   projectId: string;
+  /**
+   * @lang zh-CN 本次呈现profile声明的主题配色方案。
+   * @lang en Theme color scheme declared by this presentation profile.
+   */
   scheme: DocumentationPresentationScheme;
+  /**
+   * @lang zh-CN 本次呈现profile声明的Portal主题皮肤标识。
+   * @lang en Portal theme-skin identifier declared by this presentation profile.
+   */
   skinId: PortalThemeSkinId;
+  /**
+   * @lang zh-CN 源码呈现策略，none不生成源码资源，fetch或link生成同源文本与查看页。
+   * @lang en Source-presentation policy, with none producing no source assets and fetch or link producing same-origin text and viewer pages.
+   */
   sourceMode: DocumentationPresentationSourceMode;
+  /**
+   * @lang zh-CN 调用方已授权的源码片段输入集合，按稳定源码身份去重。
+   * @lang en Collection of caller-authorized source excerpts, deduplicated by stable source identity.
+   */
   sources: PortalPresentationSourceInput[];
+  /**
+   * @lang zh-CN 用于构造页面、导航和关系引用的语义主题集合。
+   * @lang en Collection of semantic topics used to construct page, navigation and relation references.
+   */
   topics: PortalPresentationTopicInput[];
 }
 
@@ -75,9 +143,25 @@ export interface PortalPresentationBundleOptions {
  * @lang en One static presentation artifact writable by the renderer.
  */
 export interface PortalPresentationArtifact {
+  /**
+   * @lang zh-CN 静态产物的媒体类型及适用字符集。
+   * @lang en Media type and applicable character encoding of the static artifact.
+   */
   contentType: string;
+  /**
+   * @lang zh-CN 待写出的文本正文，源码查看页可在读取此属性时延迟生成HTML。
+   * @lang en Text body to be written, with source viewers permitted to generate HTML lazily when this property is read.
+   */
   contents: string;
+  /**
+   * @lang zh-CN 相对于本次输出根目录的静态产物路径。
+   * @lang en Static artifact path relative to this render's output root.
+   */
   path: string;
+  /**
+   * @lang zh-CN 产物角色，index用于profile索引，asset用于源码及相关静态资源。
+   * @lang en Artifact role, using index for the profile index and asset for source and related static resources.
+   */
   role: "asset" | "index";
 }
 
@@ -86,17 +170,45 @@ export interface PortalPresentationArtifact {
  * @lang en Safe public-asset projection for an entry, without a body.
  */
 export interface PortalPreparedSourceAsset {
+  /**
+   * @lang zh-CN 由源码位置身份及内容摘要派生的稳定资源标识。
+   * @lang en Stable asset identifier derived from source-location identity and the content digest.
+   */
   assetId: string;
+  /**
+   * @lang zh-CN 授权源码文本按UTF-8编码后的字节数。
+   * @lang en Byte length of the authorized source text encoded as UTF-8.
+   */
   byteLength: number;
+  /**
+   * @lang zh-CN 带sha384-前缀的Base64内容完整性摘要。
+   * @lang en Base64 content-integrity digest prefixed with sha384-.
+   */
   digest: string;
+  /**
+   * @lang zh-CN 授权文本按换行划分的行数，空文本为0。
+   * @lang en Number of newline-delimited lines in the authorized text, zero for empty text.
+   */
   lineCount: number;
+  /**
+   * @lang zh-CN 按内容SHA-256寻址的同源纯文本相对URL，fetch与link模式生成对应文件。
+   * @lang en Same-origin relative plain-text URL addressed by content SHA-256, with the corresponding file emitted in fetch and link modes.
+   */
   relativeUrl: string;
   /**
    * @lang zh-CN 可选同源源码页与行锚点；fetch仍用relativeUrl纯文本。
    * @lang en Optional same-origin source page/line anchor; fetch still uses relativeUrl plain text.
    */
   linkUrl?: string;
+  /**
+   * @lang zh-CN content:前缀加内容SHA-256十六进制值的修订标识。
+   * @lang en Revision identifier formed from the content: prefix and the hexadecimal SHA-256 content digest.
+   */
   revision: string;
+  /**
+   * @lang zh-CN 由源码路径及声明起止行派生的稳定源码标识。
+   * @lang en Stable source identifier derived from source path and declared first and last lines.
+   */
   sourceId: string;
 }
 
@@ -105,10 +217,30 @@ export interface PortalPreparedSourceAsset {
  * @lang en Exact profile, assets, and entry mapping built for one Portal render.
  */
 export interface PortalPresentationBundle {
+  /**
+   * @lang zh-CN 本次profile索引、去重源码文本、查看页及字节稳定性规则的静态产物。
+   * @lang en Static artifacts for this build's profile index, deduplicated source text, viewer pages and byte-stability rules.
+   */
   artifacts: PortalPresentationArtifact[];
+  /**
+   * @lang zh-CN 授权源码资源缺失或无效时产生的呈现诊断。
+   * @lang en Presentation diagnostics produced for missing or invalid authorized source assets.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 按当前1.0.0身份生成并通过结构校验的中性呈现profile，可记录refused状态。
+   * @lang en Neutral presentation profile generated with the current 1.0.0 identity and structurally validated, potentially recording a refused status.
+   */
   profile: CurrentDocumentationPresentationProfile;
+  /**
+   * @lang zh-CN 文档条目标识到已准备源码资源元数据的只读类型映射。
+   * @lang en Read-only typed map from documentation-entry identifiers to prepared source-asset metadata.
+   */
   sourceByEntryId: ReadonlyMap<string, PortalPreparedSourceAsset>;
+  /**
+   * @lang zh-CN 文档条目标识到稳定片段、导航、页面及主题身份的只读类型映射。
+   * @lang en Read-only typed map from documentation-entry identifiers to stable fragment, navigation, page and topic identities.
+   */
   topicByEntryId: ReadonlyMap<string, { fragmentId: string; navigationId: string; pageId: string; topicId: string }>;
 }
 
