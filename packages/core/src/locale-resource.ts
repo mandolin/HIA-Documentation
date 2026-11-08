@@ -126,6 +126,10 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DIAGNOSTIC_CODE_REGISTRY = [
  * @lang zh-CN 稳定的 DLR entry；其身份由包含它的 `resourceId + entryKey` 共同确定。
  */
 export interface DocumentationLocaleResourceEntry {
+  /**
+   * @lang zh-CN 按语言标签索引的资源条目正文。
+   * @lang en Resource-entry text indexed by locale tag.
+   */
   localizedText: Record<string, string>;
 }
 
@@ -135,14 +139,50 @@ export interface DocumentationLocaleResourceEntry {
  * @lang zh-CN `documentation-locale-resource@0.1.0-draft` 的 canonical JSON 结构。
  */
 export interface DocumentationLocaleResource {
+  /**
+   * @lang zh-CN 可选资源JSON Schema标识。
+   * @lang en Optional JSON Schema identifier for the resource.
+   */
   $schema?: string;
+  /**
+   * @lang zh-CN 文档语言资源的精确契约版本身份。
+   * @lang en Exact contract-version identity of the documentation locale resource.
+   */
   contractVersion: typeof DOCUMENTATION_LOCALE_RESOURCE_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 该资源的默认语言，须列入locales。
+   * @lang en Default locale of this resource, required to appear in locales.
+   */
   defaultLocale: string;
+  /**
+   * @lang zh-CN 按条目键索引的正文资源字典，结合resourceId形成条目身份。
+   * @lang en Text-resource dictionary indexed by entry key, forming entry identities together with resourceId.
+   */
   entries: Record<string, DocumentationLocaleResourceEntry>;
+  /**
+   * @lang zh-CN 资源序列化格式的固定名称。
+   * @lang en Fixed name of the resource serialization format.
+   */
   format: typeof DOCUMENTATION_LOCALE_RESOURCE_FORMAT;
+  /**
+   * @lang zh-CN 资源格式的独立精确版本身份。
+   * @lang en Independent exact version identity of the resource format.
+   */
   formatVersion: typeof DOCUMENTATION_LOCALE_RESOURCE_FORMAT_VERSION;
+  /**
+   * @lang zh-CN 文档语言资源的固定契约名称。
+   * @lang en Fixed contract name of the documentation locale resource.
+   */
   kind: typeof DOCUMENTATION_LOCALE_RESOURCE_CONTRACT;
+  /**
+   * @lang zh-CN 资源声明包含的语言标签列表。
+   * @lang en Locale tags declared by the resource.
+   */
   locales: string[];
+  /**
+   * @lang zh-CN 该资源的稳定逻辑身份，按资源身份规则校验。
+   * @lang en Stable logical identity of this resource, validated under resource-identity rules.
+   */
   resourceId: string;
 }
 
@@ -152,8 +192,20 @@ export interface DocumentationLocaleResource {
  * @lang zh-CN doc-line profile 在 local I/O 前输出的逻辑资源引用。
  */
 export interface DocumentationLocaleResourceReference {
+  /**
+   * @lang zh-CN 所需正文条目的逻辑键。
+   * @lang en Logical key of the requested text entry.
+   */
   entryKey: string;
+  /**
+   * @lang zh-CN 可选逻辑资源身份，与src互斥。
+   * @lang en Optional logical resource identity, mutually exclusive with src.
+   */
   resource?: string;
+  /**
+   * @lang zh-CN 可选项目相对资源定位器，与resource互斥，实际读取由宿主负责。
+   * @lang en Optional project-relative resource locator, mutually exclusive with resource, with actual reading owned by the host.
+   */
   src?: string;
 }
 
@@ -163,7 +215,15 @@ export interface DocumentationLocaleResourceReference {
  * @lang zh-CN 提供给纯 resolver 的一个确定性 source tier。
  */
 export interface DocumentationLocaleResourceResolutionSource {
+  /**
+   * @lang zh-CN 提供给当前解析层级的内存资源。
+   * @lang en In-memory resource supplied for this resolution tier.
+   */
   resource: DocumentationLocaleResource;
+  /**
+   * @lang zh-CN 该资源在直接资源、文档默认资源或目录默认资源中的层级角色。
+   * @lang en Tier role of the resource as direct, document-default or catalog-default resource.
+   */
   role: "direct-resource" | "document-default-resource" | "catalog-default-resource";
 }
 
@@ -173,16 +233,60 @@ export interface DocumentationLocaleResourceResolutionSource {
  * @lang zh-CN resolver 输入；runtime adapter 负责资源读取，只传入已校验的数据。
  */
 export interface DocumentationLocaleResourceResolutionOptions {
+  /**
+   * @lang zh-CN 直接资源与文档默认资源均未提供时使用的可选目录默认资源。
+   * @lang en Optional catalog-default resource used when neither a direct nor a document-default resource is supplied.
+   */
   catalogDefaultResource?: DocumentationLocaleResource;
+  /**
+   * @lang zh-CN 目录默认资源选取失败标记，未命中行内请求语言时使解析以missing结束。
+   * @lang en Catalog-default selection failure flag, ending resolution as missing when the requested inline locale has no match.
+   */
   catalogDefaultResourceSelectionFailed?: boolean;
+  /**
+   * @lang zh-CN 未选择资源且选取均未失败时可采用的源文档默认正文。
+   * @lang en Source-document default text usable when no resource is selected and no selection has failed.
+   */
   defaultText?: string;
+  /**
+   * @lang zh-CN 可选直接资源，在资源层级中优先采用。
+   * @lang en Optional direct resource, preferred among resource tiers.
+   */
   directResource?: DocumentationLocaleResource;
+  /**
+   * @lang zh-CN 直接资源选取失败标记，未命中行内请求语言时阻止资源降级与默认正文。
+   * @lang en Direct-resource selection failure flag, blocking lower resource tiers and default text when the requested inline locale has no match.
+   */
   directResourceSelectionFailed?: boolean;
+  /**
+   * @lang zh-CN 直接资源未提供时优先于目录默认资源的可选文档默认资源。
+   * @lang en Optional document-default resource, preferred over the catalog default when no direct resource is supplied.
+   */
   documentDefaultResource?: DocumentationLocaleResource;
+  /**
+   * @lang zh-CN 文档默认资源选取失败标记，未命中行内请求语言时使解析以missing结束。
+   * @lang en Document-default selection failure flag, ending resolution as missing when the requested inline locale has no match.
+   */
   documentDefaultResourceSelectionFailed?: boolean;
+  /**
+   * @lang zh-CN 可选显式回退语言列表，参与所选资源的确定性语言链。
+   * @lang en Optional explicit fallback locales participating in the selected resource's deterministic locale chain.
+   */
   fallbackLocales?: string[];
+  /**
+   * @lang zh-CN 可选行内语言正文，仅请求语言的规范化精确命中优先于资源解析。
+   * @lang en Optional inline locale text, taking precedence over resource resolution only for a canonical exact match to the requested locale.
+   */
   inlineLocalizedText?: Record<string, string>;
+  /**
+   * @lang zh-CN 本次所需语言，解析器将有效输入规范化为BCP 47标签。
+   * @lang en Locale requested for this resolution, canonicalized to BCP 47 when valid.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 可选源文档默认语言，默认正文解析时省略则采用请求语言。
+   * @lang en Optional source-document default locale, defaulting to the requested locale for default-text resolution when omitted.
+   */
   sourceDefaultLocale?: string;
 }
 
@@ -192,10 +296,30 @@ export interface DocumentationLocaleResourceResolutionOptions {
  * @lang zh-CN 已解析文本的非敏感来源；刻意不包含 locator 或文本正文。
  */
 export interface DocumentationLocaleResourceProvenance {
+  /**
+   * @lang zh-CN 来源正文的覆盖状态，采用complete或missing。
+   * @lang en Coverage state of the source text using complete or missing.
+   */
   coverage: "complete" | "missing";
+  /**
+   * @lang zh-CN 可选来源资源条目键。
+   * @lang en Optional source resource-entry key.
+   */
   entryKey?: string;
+  /**
+   * @lang zh-CN 来源类别，分别表达行内正文、资源条目、默认正文、兼容桥接或未解析。
+   * @lang en Provenance kind distinguishing inline text, resource entries, default text, compatibility bridges and unresolved origins.
+   */
   kind: typeof DOCUMENTATION_LOCALE_RESOURCE_PROVENANCE_KINDS[number];
+  /**
+   * @lang zh-CN 可选来源资源的逻辑身份。
+   * @lang en Optional logical identity of the source resource.
+   */
   resourceId?: string;
+  /**
+   * @lang zh-CN 可选实际来源正文语言。
+   * @lang en Optional locale of the actual source text.
+   */
   sourceLocale?: string;
 }
 
@@ -205,13 +329,45 @@ export interface DocumentationLocaleResourceProvenance {
  * @lang zh-CN 完整 runtime 结果；`text` 仅限进程内使用，绝不可复制到 sidecar。
  */
 export interface DocumentationLocaleResourceResolution {
+  /**
+   * @lang zh-CN 本次解析的可信度维度，与语言回退类别分开记录。
+   * @lang en Confidence dimension of this resolution, recorded separately from the locale-fallback kind.
+   */
   confidence: typeof DOCUMENTATION_LOCALE_RESOURCE_CONFIDENCE_LEVELS[number];
+  /**
+   * @lang zh-CN 引用校验、语言选择与资源解析产生的诊断。
+   * @lang en Diagnostics from reference validation, locale selection and resource resolution.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 本次解析使用的确定性候选语言顺序。
+   * @lang en Deterministic candidate-locale order used by this resolution.
+   */
   fallbackChain: string[];
+  /**
+   * @lang zh-CN 本次正文选择的逻辑来源事实。
+   * @lang en Logical provenance facts for this text selection.
+   */
   provenance: DocumentationLocaleResourceProvenance;
+  /**
+   * @lang zh-CN 本次请求语言，有效输入采用规范化标签。
+   * @lang en Requested locale, using its canonical tag when valid.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 实际选中正文的语言，missing时为空字符串。
+   * @lang en Locale of the selected text, empty for a missing resolution.
+   */
   resolvedLocale: string;
+  /**
+   * @lang zh-CN 直接命中、父语言/配置/默认回退或缺失的解析类别。
+   * @lang en Resolution kind identifying direct matches, parent/configured/default fallbacks or missing text.
+   */
   resolutionKind: typeof DOCUMENTATION_LOCALE_RESOURCE_RESOLUTION_KINDS[number];
+  /**
+   * @lang zh-CN 进程内解析正文，缺失时为空，供调用方消费并受公开范围约束。
+   * @lang en Process-local resolved text, empty when missing, consumed within the caller's disclosure scope.
+   */
   text: string;
 }
 
@@ -221,16 +377,60 @@ export interface DocumentationLocaleResourceResolution {
  * @lang zh-CN 可由 doc-source-map 关联、但绝不成为数据存储的 metadata-only record。
  */
 export interface DocumentationLocaleResolutionSidecarEntry {
+  /**
+   * @lang zh-CN 从运行时解析结果记录的可信度。
+   * @lang en Confidence recorded from the runtime resolution.
+   */
   confidence: DocumentationLocaleResourceResolution["confidence"];
+  /**
+   * @lang zh-CN 解析诊断的代码列表。
+   * @lang en Codes of the resolution diagnostics.
+   */
   diagnosticCodes: string[];
+  /**
+   * @lang zh-CN 该解析记录关联的文档身份。
+   * @lang en Document identity associated with this resolution record.
+   */
   documentId: string;
+  /**
+   * @lang zh-CN 可选逻辑资源条目键。
+   * @lang en Optional logical resource-entry key.
+   */
   entryKey?: string;
+  /**
+   * @lang zh-CN 该解析记录关联的文档字段路径。
+   * @lang en Documentation-field path associated with this resolution record.
+   */
   fieldPath: string;
+  /**
+   * @lang zh-CN 可关联的逻辑来源元数据。
+   * @lang en Logical provenance metadata available for linkage.
+   */
   provenance: DocumentationLocaleResourceProvenance;
+  /**
+   * @lang zh-CN 该字段解析请求的语言。
+   * @lang en Locale requested when resolving this field.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 实际解析语言，缺失时为空字符串。
+   * @lang en Actual resolved locale, empty when missing.
+   */
   resolvedLocale: string;
+  /**
+   * @lang zh-CN 从运行时结果保留的解析类别。
+   * @lang en Resolution kind retained from the runtime result.
+   */
   resolutionKind: DocumentationLocaleResourceResolution["resolutionKind"];
+  /**
+   * @lang zh-CN 可选关联资源的逻辑身份。
+   * @lang en Optional logical identity of the associated resource.
+   */
   resourceId?: string;
+  /**
+   * @lang zh-CN 该字段所属的可选符号身份。
+   * @lang en Optional identity of the symbol owning the field.
+   */
   symbolId?: string;
 }
 
@@ -240,13 +440,45 @@ export interface DocumentationLocaleResolutionSidecarEntry {
  * @lang zh-CN 版本化 sidecar 容器；禁止 raw locator、resource body 和 rendered text。
  */
 export interface DocumentationLocaleResolutionSidecar {
+  /**
+   * @lang zh-CN 语言解析关联工件的固定契约名称。
+   * @lang en Fixed contract name of the locale-resolution linkage artifact.
+   */
   contract: typeof DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT;
+  /**
+   * @lang zh-CN 语言解析关联工件的精确契约版本。
+   * @lang en Exact contract version of the locale-resolution linkage artifact.
+   */
   contractVersion: typeof DOCUMENTATION_LOCALE_RESOLUTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 按字段保留的语言解析元数据记录。
+   * @lang en Locale-resolution metadata records retained by field.
+   */
   entries: DocumentationLocaleResolutionSidecarEntry[];
+  /**
+   * @lang zh-CN 该关联工件的稳定身份。
+   * @lang en Stable identity of this linkage artifact.
+   */
   id: string;
+  /**
+   * @lang zh-CN 禁止原始定位器、资源正文和已解析正文进入关联工件的固定策略。
+   * @lang en Fixed policy prohibiting raw locators, resource bodies and resolved text in the linkage artifact.
+   */
   privacy: {
+    /**
+     * @lang zh-CN 原始资源定位器公开开关，契约要求为false。
+     * @lang en Raw resource-locator disclosure switch, required to be false by the contract.
+     */
     allowRawLocator: false;
+    /**
+     * @lang zh-CN 资源正文公开开关，契约要求为false。
+     * @lang en Resource-body disclosure switch, required to be false by the contract.
+     */
     allowResourceBody: false;
+    /**
+     * @lang zh-CN 解析正文公开开关，契约要求为false。
+     * @lang en Resolved-text disclosure switch, required to be false by the contract.
+     */
     allowResolvedText: false;
   };
 }
@@ -499,7 +731,18 @@ export function validateDocumentationLocaleResourceReference(reference: unknown)
  * @param text - English: Already-decoded UTF-8 JSON text. 中文：已解码的 UTF-8 JSON 文本。
  * @returns English: Normalized resource when valid and privacy-safe diagnostics. 中文：合法时返回 normalized resource，并附 privacy-safe diagnostics。
  */
-export function parseDocumentationLocaleResource(text: string): { diagnostics: HiaDiagnostic[]; resource?: DocumentationLocaleResource } {
+export function parseDocumentationLocaleResource(text: string): {
+  /**
+   * @lang zh-CN 资源JSON解析及规范化校验产生的诊断。
+   * @lang en Diagnostics produced by resource JSON parsing and normalization validation.
+   */
+  diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 解析及规范化成功时返回的可选内存资源。
+   * @lang en Optional in-memory resource returned after successful parsing and normalization.
+   */
+  resource?: DocumentationLocaleResource
+} {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);

@@ -74,7 +74,15 @@ export const DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_DIAGNOSTIC_CODE_REGISTRY 
  * @lang zh-CN 一条受控 catalog row。其 locator 是 private matching input，绝不进入 public discovery output。
  */
 export interface DocumentationLocaleResourceDeclarationCatalogEntry {
+  /**
+   * @lang zh-CN 仅用于受控目录匹配的项目相对资源定位器。
+   * @lang en Project-relative resource locator used for controlled catalog matching.
+   */
   locator: string;
+  /**
+   * @lang zh-CN 该目录行声明的稳定逻辑资源身份。
+   * @lang en Stable logical resource identity declared by this catalog row.
+   */
   resourceId: string;
 }
 
@@ -84,8 +92,20 @@ export interface DocumentationLocaleResourceDeclarationCatalogEntry {
  * @lang zh-CN 已由所属 profile 解析完成的 source-level selection。
  */
 export interface DocumentationLocaleResourceDeclarationReference {
+  /**
+   * @lang zh-CN 该源码选择引用的稳定逻辑身份。
+   * @lang en Stable logical identity of this source-selection reference.
+   */
   id: string;
+  /**
+   * @lang zh-CN 可选资源身份选择器，与src互斥并按目录精确匹配。
+   * @lang en Optional resource-identity selector, mutually exclusive with src and matched exactly against the catalog.
+   */
   resource?: string;
+  /**
+   * @lang zh-CN 可选受控定位器选择器，与resource互斥并按目录精确匹配。
+   * @lang en Optional controlled-locator selector, mutually exclusive with resource and matched exactly against the catalog.
+   */
   src?: string;
 }
 
@@ -95,16 +115,60 @@ export interface DocumentationLocaleResourceDeclarationReference {
  * @lang zh-CN 受控 declaration input。它可仅为 in-memory allowlist matching 持有 locator。
  */
 export interface DocumentationLocaleResourceDeclaration {
+  /**
+   * @lang zh-CN 受控资源身份与定位器目录，供内存白名单匹配。
+   * @lang en Controlled catalog of resource identities and locators for in-memory allowlist matching.
+   */
   catalog: DocumentationLocaleResourceDeclarationCatalogEntry[];
+  /**
+   * @lang zh-CN 资源声明与发现工件的固定中性契约名称。
+   * @lang en Fixed neutral contract name for resource declaration and discovery artifacts.
+   */
   contract: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT;
+  /**
+   * @lang zh-CN 受控声明的精确契约版本。
+   * @lang en Exact contract version of the controlled declaration.
+   */
   contractVersion: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 该受控声明的稳定逻辑身份。
+   * @lang en Stable logical identity of this controlled declaration.
+   */
   declarationId: string;
+  /**
+   * @lang zh-CN 受控声明的固定判别值controlled-declaration。
+   * @lang en Fixed controlled-declaration discriminator.
+   */
   kind: "controlled-declaration";
+  /**
+   * @lang zh-CN 负责源语法与选择解析的文档规范名称。
+   * @lang en Documentation-profile name responsible for source grammar and selection parsing.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 该文档规范的精确版本，须与批准清单配对。
+   * @lang en Exact documentation-profile version paired against the approved list.
+   */
   profileVersion: string;
+  /**
+   * @lang zh-CN 所属文档规范已解析的逻辑资源选择列表。
+   * @lang en Logical resource selections already parsed by the owning documentation profile.
+   */
   references: DocumentationLocaleResourceDeclarationReference[];
+  /**
+   * @lang zh-CN 资源授权根的逻辑身份，采用根身份命名规则。
+   * @lang en Logical identity of the authorized resource root using root-identity naming rules.
+   */
   resourceRootId: string;
+  /**
+   * @lang zh-CN 产生该声明的源码文档逻辑身份。
+   * @lang en Logical identity of the source document that produced the declaration.
+   */
   sourceDocumentId: string;
+  /**
+   * @lang zh-CN 声明可见范围的固定值controlled。
+   * @lang en Fixed controlled visibility of the declaration.
+   */
   visibility: "controlled";
 }
 
@@ -114,7 +178,15 @@ export interface DocumentationLocaleResourceDeclaration {
  * @lang zh-CN 由 profile owner 显式提供的 profile capability；core 绝不解析 source grammar。
  */
 export interface DocumentationLocaleResourceApprovedProfile {
+  /**
+   * @lang zh-CN 调用方显式批准的文档规范名称。
+   * @lang en Documentation-profile name explicitly approved by the caller.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 与该规范名称配对批准的精确版本。
+   * @lang en Exact version approved together with this profile name.
+   */
   profileVersion: string;
 }
 
@@ -124,8 +196,20 @@ export interface DocumentationLocaleResourceApprovedProfile {
  * @lang zh-CN 一条成功的 logical declaration binding；不记录 locator、range、source text 或 resource text。
  */
 export interface DocumentationLocaleResourceDiscoveryBinding {
+  /**
+   * @lang zh-CN 成功匹配的逻辑选择引用身份。
+   * @lang en Identity of the logical selection reference that matched successfully.
+   */
   referenceId: string;
+  /**
+   * @lang zh-CN 该选择命中的目录资源身份。
+   * @lang en Catalog resource identity matched by this selection.
+   */
   resourceId: string;
+  /**
+   * @lang zh-CN 按资源身份或定位器命中的匹配类别。
+   * @lang en Match kind identifying a resource-identity or locator selection.
+   */
   selectionKind: "catalog-resource" | "catalog-src";
 }
 
@@ -135,9 +219,25 @@ export interface DocumentationLocaleResourceDiscoveryBinding {
  * @lang zh-CN public discovery artifact 的稳定 provenance；它不是 locale resolution provenance。
  */
 export interface DocumentationLocaleResourceDiscoveryProvenance {
+  /**
+   * @lang zh-CN 提供匹配依据的受控声明身份。
+   * @lang en Identity of the controlled declaration supplying the matching evidence.
+   */
   declarationId: string;
+  /**
+   * @lang zh-CN 声明目录来源的固定判别值。
+   * @lang en Fixed discriminator for declaration-catalog provenance.
+   */
   kind: typeof DOCUMENTATION_LOCALE_RESOURCE_DISCOVERY_PROVENANCE_KIND;
+  /**
+   * @lang zh-CN 生成该逻辑发现结果的文档规范名称。
+   * @lang en Documentation-profile name producing this logical discovery result.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 生成该逻辑发现结果的文档规范版本。
+   * @lang en Documentation-profile version producing this logical discovery result.
+   */
   profileVersion: string;
 }
 
@@ -147,10 +247,30 @@ export interface DocumentationLocaleResourceDiscoveryProvenance {
  * @lang zh-CN 嵌入每个 public discovery artifact 的 privacy policy。
  */
 export interface DocumentationLocaleResourceDiscoveryPrivacy {
+  /**
+   * @lang zh-CN 原始定位器公开开关，固定为false。
+   * @lang en Raw-locator disclosure switch, fixed to false.
+   */
   allowRawLocator: false;
+  /**
+   * @lang zh-CN 源码范围公开开关，固定为false。
+   * @lang en Source-range disclosure switch, fixed to false.
+   */
   allowRanges: false;
+  /**
+   * @lang zh-CN 已解析正文公开开关，固定为false。
+   * @lang en Resolved-text disclosure switch, fixed to false.
+   */
   allowResolvedText: false;
+  /**
+   * @lang zh-CN 资源正文公开开关，固定为false。
+   * @lang en Resource-body disclosure switch, fixed to false.
+   */
   allowResourceBody: false;
+  /**
+   * @lang zh-CN 源码正文公开开关，固定为false。
+   * @lang en Source-body disclosure switch, fixed to false.
+   */
   allowSourceBody: false;
 }
 
@@ -160,20 +280,80 @@ export interface DocumentationLocaleResourceDiscoveryPrivacy {
  * @lang zh-CN catalog-only discovery 的 public-safe 结果。它只证明 allowlist match，不证明 filesystem 或 entry validity。
  */
 export interface DocumentationLocaleResourceDiscovery {
+  /**
+   * @lang zh-CN 成功目录匹配的绑定，按referenceId排序，须结合diagnosticCodes检查选择错误。
+   * @lang en Successful catalog bindings sorted by referenceId, interpreted together with diagnosticCodes for selection errors.
+   */
   bindings: DocumentationLocaleResourceDiscoveryBinding[];
+  /**
+   * @lang zh-CN 资源声明与发现工件的固定契约名称。
+   * @lang en Fixed contract name for resource declaration and discovery artifacts.
+   */
   contract: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT;
+  /**
+   * @lang zh-CN 公开发现工件的精确契约版本。
+   * @lang en Exact contract version of the public discovery artifact.
+   */
   contractVersion: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 产生发现结果的受控声明身份。
+   * @lang en Controlled-declaration identity producing this discovery result.
+   */
   declarationId: string;
+  /**
+   * @lang zh-CN 发现过程中产生并去重的诊断代码。
+   * @lang en Deduplicated diagnostic codes produced during discovery.
+   */
   diagnosticCodes: string[];
+  /**
+   * @lang zh-CN 调用方指定的稳定发现身份。
+   * @lang en Stable discovery identity supplied by the caller.
+   */
   discoveryId: string;
+  /**
+   * @lang zh-CN 公开发现结果的固定判别值public-discovery。
+   * @lang en Fixed public-discovery discriminator.
+   */
   kind: "public-discovery";
+  /**
+   * @lang zh-CN 公开发现工件的固定信息公开策略。
+   * @lang en Fixed disclosure policy of the public discovery artifact.
+   */
   privacy: DocumentationLocaleResourceDiscoveryPrivacy;
+  /**
+   * @lang zh-CN 通过批准清单匹配的文档规范名称。
+   * @lang en Documentation-profile name matched against the approved list.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 通过批准清单匹配的文档规范精确版本。
+   * @lang en Exact documentation-profile version matched against the approved list.
+   */
   profileVersion: string;
+  /**
+   * @lang zh-CN 声明目录匹配的逻辑来源。
+   * @lang en Logical provenance of declaration-catalog matching.
+   */
   provenance: DocumentationLocaleResourceDiscoveryProvenance;
+  /**
+   * @lang zh-CN 成功绑定涉及的资源身份，去重并排序。
+   * @lang en Deduplicated and sorted resource identities involved in successful bindings.
+   */
   resourceIds: string[];
+  /**
+   * @lang zh-CN 从受控声明保留的逻辑资源根身份。
+   * @lang en Logical resource-root identity retained from the controlled declaration.
+   */
   resourceRootId: string;
+  /**
+   * @lang zh-CN 从受控声明保留的源码文档身份。
+   * @lang en Source-document identity retained from the controlled declaration.
+   */
   sourceDocumentId: string;
+  /**
+   * @lang zh-CN 发现工件可见范围的固定值public。
+   * @lang en Fixed public visibility of the discovery artifact.
+   */
   visibility: "public";
 }
 
@@ -183,20 +363,80 @@ export interface DocumentationLocaleResourceDiscovery {
  * @lang zh-CN 供 ordinary doc-source-map linkage 使用的独立 sidecar；只重复 public-safe discovery metadata。
  */
 export interface DocumentationLocaleResourceDiscoverySidecar {
+  /**
+   * @lang zh-CN 资源声明与发现关联工件的固定契约名称。
+   * @lang en Fixed contract name of the resource declaration/discovery linkage artifact.
+   */
   contract: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT;
+  /**
+   * @lang zh-CN 公开发现关联工件的精确契约版本。
+   * @lang en Exact contract version of the public discovery linkage artifact.
+   */
   contractVersion: typeof DOCUMENTATION_LOCALE_RESOURCE_DECLARATION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 该发现结果的受控声明身份。
+   * @lang en Controlled-declaration identity for this discovery result.
+   */
   declarationId: string;
+  /**
+   * @lang zh-CN 从发现结果复制的诊断代码列表。
+   * @lang en Diagnostic-code list copied from the discovery result.
+   */
   diagnosticCodes: string[];
+  /**
+   * @lang zh-CN 该关联工件指向的发现身份。
+   * @lang en Discovery identity referenced by this linkage artifact.
+   */
   discoveryId: string;
+  /**
+   * @lang zh-CN 该关联工件自身的稳定身份。
+   * @lang en Stable identity of the linkage artifact itself.
+   */
   id: string;
+  /**
+   * @lang zh-CN 公开发现关联工件的固定判别值public-discovery-sidecar。
+   * @lang en Fixed public-discovery-sidecar discriminator.
+   */
   kind: "public-discovery-sidecar";
+  /**
+   * @lang zh-CN 该公开关联工件的固定信息公开策略。
+   * @lang en Fixed disclosure policy of this public linkage artifact.
+   */
   privacy: DocumentationLocaleResourceDiscoveryPrivacy;
+  /**
+   * @lang zh-CN 从发现结果保留的文档规范名称。
+   * @lang en Documentation-profile name retained from the discovery result.
+   */
   profile: string;
+  /**
+   * @lang zh-CN 从发现结果保留的文档规范精确版本。
+   * @lang en Exact documentation-profile version retained from the discovery result.
+   */
   profileVersion: string;
+  /**
+   * @lang zh-CN 从发现结果复制的逻辑来源元数据。
+   * @lang en Logical provenance metadata copied from the discovery result.
+   */
   provenance: DocumentationLocaleResourceDiscoveryProvenance;
+  /**
+   * @lang zh-CN 从发现结果复制的资源身份列表。
+   * @lang en Resource-identity list copied from the discovery result.
+   */
   resourceIds: string[];
+  /**
+   * @lang zh-CN 从发现结果保留的逻辑资源根身份。
+   * @lang en Logical resource-root identity retained from the discovery result.
+   */
   resourceRootId: string;
+  /**
+   * @lang zh-CN 从发现结果保留的源码文档身份。
+   * @lang en Source-document identity retained from the discovery result.
+   */
   sourceDocumentId: string;
+  /**
+   * @lang zh-CN 发现关联工件可见范围的固定值public。
+   * @lang en Fixed public visibility of the discovery linkage artifact.
+   */
   visibility: "public";
 }
 
@@ -206,7 +446,15 @@ export interface DocumentationLocaleResourceDiscoverySidecar {
  * @lang zh-CN pure catalog discovery 的显式输入。调用方必须提供已知 profile/version pair。
  */
 export interface DiscoverDocumentationLocaleResourcesOptions {
+  /**
+   * @lang zh-CN 调用方提供的允许采用的文档规范及精确版本清单。
+   * @lang en Caller-supplied allowlist of documentation profiles and exact versions.
+   */
   approvedProfiles: readonly DocumentationLocaleResourceApprovedProfile[];
+  /**
+   * @lang zh-CN 调用方指定的本次发现稳定身份。
+   * @lang en Stable identity supplied by the caller for this discovery.
+   */
   discoveryId: string;
 }
 
@@ -216,7 +464,15 @@ export interface DiscoverDocumentationLocaleResourcesOptions {
  * @lang zh-CN pure catalog discovery 的结果。diagnostic 与 public-safe artifact 保持分离。
  */
 export interface DiscoverDocumentationLocaleResourcesResult {
+  /**
+   * @lang zh-CN 受控声明、批准规范和逐引用目录匹配产生的诊断。
+   * @lang en Diagnostics from the controlled declaration, profile approval and per-reference catalog matching.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 可选公开发现工件，逐引用错误可与部分成功绑定并存，调用方须同时检查diagnostics。
+   * @lang en Optional public discovery artifact, where per-reference errors may coexist with successful bindings, requiring callers to inspect diagnostics.
+   */
   discovery?: DocumentationLocaleResourceDiscovery;
 }
 

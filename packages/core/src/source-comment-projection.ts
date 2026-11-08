@@ -86,9 +86,25 @@ export type DocumentationSourceCommentConfidence = "declared" | "none";
  * @lang en Logical source identity; the shape deliberately permits no filesystem path, URI, or source body.
  */
 export interface DocumentationSourceCommentIdentity {
+  /**
+   * @lang zh-CN 可选文档源码映射条目的逻辑身份。
+   * @lang en Optional logical identity of the documentation source-map entry.
+   */
   docSourceMapEntryId?: string;
+  /**
+   * @lang zh-CN 所属文档的逻辑身份。
+   * @lang en Logical identity of the owning document.
+   */
   documentId: string;
+  /**
+   * @lang zh-CN 所属源码的逻辑身份。
+   * @lang en Logical identity of the source.
+   */
   sourceId: string;
+  /**
+   * @lang zh-CN 所属符号的逻辑身份。
+   * @lang en Logical identity of the owning symbol.
+   */
   symbolId: string;
 }
 
@@ -98,8 +114,38 @@ export interface DocumentationSourceCommentIdentity {
  * @lang en An optional source range uses one-based lines and zero-based columns and describes location without source text.
  */
 export interface DocumentationSourceCommentRange {
-  end: { column: number; line: number };
-  start: { column: number; line: number };
+  /**
+   * @lang zh-CN 注释范围终点，采用一基准行号及零基准列号，须不早于起点。
+   * @lang en Comment-range end using one-based lines and zero-based columns, required not to precede the start.
+   */
+  end: {
+    /**
+     * @lang zh-CN 终点零基准列号，须为非负安全整数。
+     * @lang en Zero-based end column, required to be a nonnegative safe integer.
+     */
+    column: number;
+    /**
+     * @lang zh-CN 终点一基准行号，须为正安全整数。
+     * @lang en One-based end line, required to be a positive safe integer.
+     */
+    line: number
+  };
+  /**
+   * @lang zh-CN 注释范围起点，采用一基准行号及零基准列号。
+   * @lang en Comment-range start using one-based lines and zero-based columns.
+   */
+  start: {
+    /**
+     * @lang zh-CN 起点零基准列号，须为非负安全整数。
+     * @lang en Zero-based start column, required to be a nonnegative safe integer.
+     */
+    column: number;
+    /**
+     * @lang zh-CN 起点一基准行号，须为正安全整数。
+     * @lang en One-based start line, required to be a positive safe integer.
+     */
+    line: number
+  };
 }
 
 /**
@@ -108,10 +154,30 @@ export interface DocumentationSourceCommentRange {
  * @lang en Structured comment input from a trusted producer. Localized text keys must be canonical BCP 47 tags.
  */
 export interface DocumentationSourceCommentInput {
+  /**
+   * @lang zh-CN 该结构化注释的逻辑身份，同一请求内须唯一。
+   * @lang en Logical identity of this structured comment, required to be unique within the request.
+   */
   commentId: string;
+  /**
+   * @lang zh-CN 中性注释类别，采用line、block或documentation。
+   * @lang en Neutral comment kind using line, block or documentation.
+   */
   kind: DocumentationSourceCommentKind;
+  /**
+   * @lang zh-CN 以规范BCP 47标签为键的正文，单值长度为1至4096个JavaScript字符串单元。
+   * @lang en Text keyed by canonical BCP 47 tags, with each value measuring 1 through 4096 JavaScript string units.
+   */
   localizedText: Record<string, string>;
+  /**
+   * @lang zh-CN 非负安全整数排序值，相同时按commentId排序。
+   * @lang en Nonnegative safe-integer ordering value, with ties ordered by commentId.
+   */
   order: number;
+  /**
+   * @lang zh-CN 可选注释位置范围，使用一基准行号和零基准列号。
+   * @lang en Optional comment-location range using one-based lines and zero-based columns.
+   */
   range?: DocumentationSourceCommentRange;
 }
 
@@ -121,14 +187,50 @@ export interface DocumentationSourceCommentInput {
  * @lang en Closed-world request for the pure evaluator; it grants no file reading, source parsing, or expression execution.
  */
 export interface DocumentationSourceCommentProjectionRequest {
+  /**
+   * @lang zh-CN 本次请求的结构化注释，数量为1至256条。
+   * @lang en Structured comments for this request, containing 1 through 256 entries.
+   */
   comments: DocumentationSourceCommentInput[];
+  /**
+   * @lang zh-CN 可选投影正文策略，省略时为none，显式正文采用explicit-projected-text。
+   * @lang en Optional projected-text policy, defaulting to none, with explicit text using explicit-projected-text.
+   */
   contentPolicy?: DocumentationSourceCommentContentPolicy;
+  /**
+   * @lang zh-CN 源码注释投影请求的固定契约名称。
+   * @lang en Fixed contract name of the source-comment projection request.
+   */
   contract: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT;
+  /**
+   * @lang zh-CN 源码注释投影请求的精确契约版本。
+   * @lang en Exact contract version of the source-comment projection request.
+   */
   contractVersion: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 构造投影语言链及内存资源的默认规范语言标签。
+   * @lang en Canonical default locale tag used for the projection locale chain and in-memory resource.
+   */
   defaultLocale: string;
+  /**
+   * @lang zh-CN 可选显式回退语言列表，各值须为规范BCP 47标签。
+   * @lang en Optional explicit fallback locales, each required to be a canonical BCP 47 tag.
+   */
   fallbackLocales?: string[];
+  /**
+   * @lang zh-CN 本次投影的稳定逻辑身份，参与注释稳定键。
+   * @lang en Stable logical identity of this projection, participating in stable comment keys.
+   */
   projectionId: string;
+  /**
+   * @lang zh-CN 本次请求的规范BCP 47语言标签。
+   * @lang en Canonical BCP 47 locale tag requested for this projection.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 本次投影所属文档、符号与源码的逻辑身份组合。
+   * @lang en Logical identities of the document, symbol and source owning this projection.
+   */
   source: DocumentationSourceCommentIdentity;
 }
 
@@ -138,7 +240,15 @@ export interface DocumentationSourceCommentProjectionRequest {
  * @lang en Auditable provenance; confidence and resolution remain separate and cannot be implied by provenance.
  */
 export interface DocumentationSourceCommentProvenance {
+  /**
+   * @lang zh-CN 结构化注释来源或未解析来源的判别值。
+   * @lang en Discriminator identifying structured-comment or unresolved provenance.
+   */
   kind: "structured-source-comment" | "unresolved";
+  /**
+   * @lang zh-CN 成功解析时记录的实际来源语言。
+   * @lang en Actual source locale recorded after successful resolution.
+   */
   sourceLocale?: string;
 }
 
@@ -148,17 +258,65 @@ export interface DocumentationSourceCommentProvenance {
  * @lang en One stable comment projection. `stableCommentKey` excludes locale and text, so fallback cannot change identity.
  */
 export interface DocumentationSourceCommentProjectionEntry {
+  /**
+   * @lang zh-CN 该投影条目对应的结构化注释身份。
+   * @lang en Structured-comment identity associated with this projection entry.
+   */
   commentId: string;
+  /**
+   * @lang zh-CN 生产者声明可信度，成功解析为declared，缺失为none。
+   * @lang en Producer-declared confidence, using declared for successful resolution and none for missing text.
+   */
   confidence: DocumentationSourceCommentConfidence;
+  /**
+   * @lang zh-CN 该注释语言解析产生并去重的诊断代码。
+   * @lang en Deduplicated diagnostic codes produced while resolving this comment's locale.
+   */
   diagnosticCodes: string[];
+  /**
+   * @lang zh-CN 从结构化输入保留的中性注释类别。
+   * @lang en Neutral comment kind retained from the structured input.
+   */
   kind: DocumentationSourceCommentKind;
+  /**
+   * @lang zh-CN 从结构化输入保留的非负排序值。
+   * @lang en Nonnegative ordering value retained from the structured input.
+   */
   order: number;
+  /**
+   * @lang zh-CN 仅显式正文策略且解析成功时携带的可选纯文本，拒绝态会移除。
+   * @lang en Optional plain text carried only under the explicit policy after successful resolution, removed for refused results.
+   */
   projectedText?: string;
+  /**
+   * @lang zh-CN 该投影条目的实际语言来源事实。
+   * @lang en Actual locale-provenance facts for this projection entry.
+   */
   provenance: DocumentationSourceCommentProvenance;
+  /**
+   * @lang zh-CN 从输入复制的可选注释范围。
+   * @lang en Optional comment range copied from the input.
+   */
   range?: DocumentationSourceCommentRange;
+  /**
+   * @lang zh-CN 该条目所属投影请求的规范语言标签。
+   * @lang en Canonical locale tag of the projection request owning this entry.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 解析成功时可用的实际正文语言。
+   * @lang en Actual text locale available after successful resolution.
+   */
   resolvedLocale?: string;
+  /**
+   * @lang zh-CN 独立记录的精确命中、回退、默认或缺失状态。
+   * @lang en Independently recorded exact-match, fallback, default or missing resolution state.
+   */
   resolution: DocumentationSourceCommentResolution;
+  /**
+   * @lang zh-CN 由投影、文档、符号、源码和注释身份组成的稳定键。
+   * @lang en Stable key formed from projection, document, symbol, source and comment identities.
+   */
   stableCommentKey: string;
 }
 
@@ -168,10 +326,30 @@ export interface DocumentationSourceCommentProjectionEntry {
  * @lang en P1 privacy facts are serialized explicitly; source body, raw comments, and `sourcesContent` always remain disabled.
  */
 export interface DocumentationSourceCommentPrivacy {
+  /**
+   * @lang zh-CN 是否实际包含显式授权的投影注释正文。
+   * @lang en Whether explicitly authorized projected comment text is actually included.
+   */
   projectedCommentTextIncluded: boolean;
+  /**
+   * @lang zh-CN 原始注释正文包含标记，固定为false。
+   * @lang en Raw-comment inclusion flag, fixed to false.
+   */
   rawCommentIncluded: false;
+  /**
+   * @lang zh-CN 正文消费策略的固定值plain-text-only。
+   * @lang en Fixed plain-text-only policy for text consumption.
+   */
   richTextPolicy: "plain-text-only";
+  /**
+   * @lang zh-CN 源码文件正文包含标记，固定为false。
+   * @lang en Source-file-body inclusion flag, fixed to false.
+   */
   sourceBodyIncluded: false;
+  /**
+   * @lang zh-CN 普通源码映射内嵌正文策略，固定为none。
+   * @lang en Embedded source-content policy for ordinary source maps, fixed to none.
+   */
   sourcesContentPolicy: "none";
 }
 
@@ -181,17 +359,65 @@ export interface DocumentationSourceCommentPrivacy {
  * @lang en Distributable projection. A refused result forces `contentPolicy=none` and removes all projected text.
  */
 export interface DocumentationSourceCommentProjection {
+  /**
+   * @lang zh-CN 当前投影正文策略，拒绝态强制为none。
+   * @lang en Current projected-text policy, forced to none for refused results.
+   */
   contentPolicy: DocumentationSourceCommentContentPolicy;
+  /**
+   * @lang zh-CN 源码注释投影工件的固定契约名称。
+   * @lang en Fixed contract name of the source-comment projection artifact.
+   */
   contract: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT;
+  /**
+   * @lang zh-CN 源码注释投影工件的精确契约版本。
+   * @lang en Exact contract version of the source-comment projection artifact.
+   */
   contractVersion: typeof DOCUMENTATION_SOURCE_COMMENT_PROJECTION_CONTRACT_VERSION;
+  /**
+   * @lang zh-CN 投影采用的规范默认语言标签。
+   * @lang en Canonical default locale tag used by the projection.
+   */
   defaultLocale: string;
+  /**
+   * @lang zh-CN 请求校验、语言解析及拒绝处理产生的诊断。
+   * @lang en Diagnostics from request validation, locale resolution and refusal processing.
+   */
   diagnostics: HiaDiagnostic[];
+  /**
+   * @lang zh-CN 按输入order及commentId排序的注释投影条目。
+   * @lang en Comment-projection entries ordered by input order and commentId.
+   */
   entries: DocumentationSourceCommentProjectionEntry[];
+  /**
+   * @lang zh-CN 该投影采用的确定性候选语言顺序。
+   * @lang en Deterministic candidate-locale order used by the projection.
+   */
   fallbackChain: string[];
+  /**
+   * @lang zh-CN 正文包含事实及固定公开约束。
+   * @lang en Text-inclusion facts and fixed disclosure constraints.
+   */
   privacy: DocumentationSourceCommentPrivacy;
+  /**
+   * @lang zh-CN 该投影的稳定逻辑身份。
+   * @lang en Stable logical identity of this projection.
+   */
   projectionId: string;
+  /**
+   * @lang zh-CN 该投影请求的规范语言标签。
+   * @lang en Canonical locale tag requested for this projection.
+   */
   requestedLocale: string;
+  /**
+   * @lang zh-CN 投影关联的文档、符号和源码逻辑身份。
+   * @lang en Logical document, symbol and source identities associated with the projection.
+   */
   source: DocumentationSourceCommentIdentity;
+  /**
+   * @lang zh-CN 投影就绪或拒绝状态，采用ready或refused。
+   * @lang en Ready or refused state of the projection, using ready or refused.
+   */
   status: "ready" | "refused";
 }
 
