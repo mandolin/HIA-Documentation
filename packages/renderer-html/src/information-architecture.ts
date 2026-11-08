@@ -1,17 +1,32 @@
 /**
- * 中性 Portal IA contract identity；它不包含 renderer、theme 或语言 parser 私有结构。
- * Neutral Portal IA contract identity; it contains no renderer, theme, or language-parser private structures.
+ * @lang zh-CN 中性 Portal IA contract identity；它不包含 renderer、theme 或语言 parser 私有结构。
+ * @lang en Neutral Portal IA contract identity; it contains no renderer, theme, or language-parser private structures.
  */
 export const DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT = "documentation-portal-information-architecture";
-/** exact draft compatibility identity。Exact draft compatibility identity. */
+/**
+ * @lang zh-CN 门户信息架构契约的精确草案兼容身份。
+ * @lang en Exact draft compatibility identity.
+ */
 export const DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION = "0.1.0-draft";
-/** 三维 IA 中的逻辑内容分组闭集。Closed logical content-grouping vocabulary. */
+/**
+ * @lang zh-CN 三维 IA 中的逻辑内容分组闭集。
+ * @lang en Closed logical content-grouping vocabulary.
+ */
 export const DOCUMENTATION_PORTAL_CONTENT_GROUPINGS = ["entry", "semantic-container"] as const;
-/** 三维 IA 中的 fragment 获取闭集。Closed fragment-acquisition vocabulary. */
+/**
+ * @lang zh-CN 三维 IA 中的 fragment 获取闭集。
+ * @lang en Closed fragment-acquisition vocabulary.
+ */
 export const DOCUMENTATION_PORTAL_LOADING_STRATEGIES = ["lazy", "eager"] as const;
-/** 三维 IA 中的 member 呈现闭集。Closed member-presentation vocabulary. */
+/**
+ * @lang zh-CN 三维 IA 中的 member 呈现闭集。
+ * @lang en Closed member-presentation vocabulary.
+ */
 export const DOCUMENTATION_PORTAL_MEMBER_PLACEMENTS = ["separate", "with-parent"] as const;
-/** manifest-only semantic path 的 target-neutral kind 闭集。Target-neutral kind vocabulary for manifest-only semantic paths. */
+/**
+ * @lang zh-CN manifest-only semantic path 的 target-neutral kind 闭集。
+ * @lang en Target-neutral kind vocabulary for manifest-only semantic paths.
+ */
 export const DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS = [
   "repository",
   "package",
@@ -23,7 +38,10 @@ export const DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS = [
   "namespace",
   "type"
 ] as const;
-/** kind-aware topic 的稳定 section 顺序。Stable section order for kind-aware topics. */
+/**
+ * @lang zh-CN kind-aware topic 的稳定 section 顺序。
+ * @lang en Stable section order for kind-aware topics.
+ */
 export const DOCUMENTATION_PORTAL_TOPIC_SECTIONS = [
   "summary",
   "declaration",
@@ -36,7 +54,10 @@ export const DOCUMENTATION_PORTAL_TOPIC_SECTIONS = [
   "source",
   "diagnostics"
 ] as const;
-/** 首轮 touched-label catalog 的 locale 闭集。Locale vocabulary for the first touched-label catalog. */
+/**
+ * @lang zh-CN 首轮 touched-label catalog 的 locale 闭集。
+ * @lang en Locale vocabulary for the first touched-label catalog.
+ */
 export const DOCUMENTATION_PORTAL_UI_LOCALES = ["zh-CN", "en"] as const;
 
 /**
@@ -70,7 +91,10 @@ export type DocumentationPortalTopicSection = typeof DOCUMENTATION_PORTAL_TOPIC_
  */
 export type DocumentationPortalUiLocale = typeof DOCUMENTATION_PORTAL_UI_LOCALES[number];
 
-/** renderer 接受的显式 IA 配置；缺失整个对象时必须保留 P3。Explicit IA input; omitting the whole object must preserve P3. */
+/**
+ * @lang zh-CN renderer 接受的显式 IA 配置；缺失整个对象时必须保留 P3。
+ * @lang en Explicit IA input; omitting the whole object must preserve P3.
+ */
 export interface DocumentationPortalInformationArchitectureOptions {
   contract?: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT;
   contractVersion?: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION;
@@ -79,7 +103,10 @@ export interface DocumentationPortalInformationArchitectureOptions {
   memberPlacement?: DocumentationPortalMemberPlacement;
 }
 
-/** manifest owner 审阅并显式投影的公开 semantic segment。Public semantic segment explicitly reviewed and projected by the manifest owner. */
+/**
+ * @lang zh-CN manifest owner 审阅并显式投影的公开 semantic segment。
+ * @lang en Public semantic segment explicitly reviewed and projected by the manifest owner.
+ */
 export interface DocumentationPortalSemanticPathSegment {
   kind: DocumentationPortalSemanticPathKind;
   id: string;
@@ -87,8 +114,8 @@ export interface DocumentationPortalSemanticPathSegment {
 }
 
 /**
- * project-index 中的 resolved IA contract；它同时固定 route、locale、accessibility 与 privacy 边界。
- * Resolved IA contract in project-index; it also freezes routing, locale, accessibility, and privacy boundaries.
+ * @lang zh-CN project-index 中的 resolved IA contract；它同时固定 route、locale、accessibility 与 privacy 边界。
+ * @lang en Resolved IA contract in project-index; it also freezes routing, locale, accessibility, and privacy boundaries.
  */
 export interface DocumentationPortalInformationArchitectureContract {
   contract: typeof DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT;
@@ -123,8 +150,8 @@ export interface DocumentationPortalInformationArchitectureContract {
 }
 
 /**
- * owner-local Draft 2020-12 schema；用于验证 resolved contract，不承诺未知 draft 兼容。
- * Owner-local Draft 2020-12 schema for resolved contracts; it does not promise compatibility with unknown drafts.
+ * @lang zh-CN owner-local Draft 2020-12 schema；用于验证 resolved contract，不承诺未知 draft 兼容。
+ * @lang en Owner-local Draft 2020-12 schema for resolved contracts; it does not promise compatibility with unknown drafts.
  */
 export const DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -199,7 +226,10 @@ export const DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA = {
   }
 } as const;
 
-/** Portal shell 与 topic 本轮触碰的 label catalog。Label catalog limited to shell and topic labels touched in this slice. */
+/**
+ * @lang zh-CN Portal shell 与 topic 本轮触碰的 label catalog。
+ * @lang en Label catalog limited to shell and topic labels touched in this slice.
+ */
 export interface DocumentationPortalLabels {
   contract: string;
   coverage: string;
@@ -265,8 +295,8 @@ const PORTAL_LABEL_CATALOG: Record<DocumentationPortalUiLocale, DocumentationPor
 };
 
 /**
- * 把显式 IA 输入解析成可序列化 contract；未知 identity/enum 直接抛错，避免 direct API caller 绕过 config。
- * Resolves explicit IA input into a serializable contract; unknown identities/enums throw so direct API callers cannot bypass config.
+ * @lang zh-CN 把显式 IA 输入解析成可序列化 contract；未知 identity/enum 直接抛错，避免 direct API caller 绕过 config。
+ * @lang en Resolves explicit IA input into a serializable contract; unknown identities/enums throw so direct API callers cannot bypass config.
  */
 export function resolveDocumentationPortalInformationArchitecture(
   options: DocumentationPortalInformationArchitectureOptions,
@@ -320,7 +350,10 @@ export function resolveDocumentationPortalInformationArchitecture(
   };
 }
 
-/** 解析 touched-label locale；显式未知值 fail closed，缺省按 content locale 选择。Resolves touched-label locale; explicit unknown values fail closed, omission follows content locale. */
+/**
+ * @lang zh-CN 解析 touched-label locale；显式未知值 fail closed，缺省按 content locale 选择。
+ * @lang en Resolves touched-label locale; explicit unknown values fail closed, omission follows content locale.
+ */
 export function resolveDocumentationPortalUiLocale(requested: string | undefined, contentLocale: string): DocumentationPortalUiLocale {
   if (requested !== undefined) {
     if (!DOCUMENTATION_PORTAL_UI_LOCALES.includes(requested as DocumentationPortalUiLocale)) {
@@ -331,7 +364,10 @@ export function resolveDocumentationPortalUiLocale(requested: string | undefined
   return contentLocale.toLowerCase().startsWith("zh") ? "zh-CN" : "en";
 }
 
-/** 返回不可变 catalog 的浅拷贝，避免 caller 污染全局 label。Returns a shallow catalog copy so callers cannot mutate global labels. */
+/**
+ * @lang zh-CN 返回不可变 catalog 的浅拷贝，避免 caller 污染全局 label。
+ * @lang en Returns a shallow catalog copy so callers cannot mutate global labels.
+ */
 export function getDocumentationPortalLabels(locale: DocumentationPortalUiLocale): DocumentationPortalLabels {
   return { ...PORTAL_LABEL_CATALOG[locale] };
 }

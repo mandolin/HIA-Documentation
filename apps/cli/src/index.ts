@@ -3082,8 +3082,8 @@ function createDefaultIo(): CliIo {
 }
 
 /**
- * 判断当前模块是否是 CLI 入口，并兼容 npm 在 POSIX 平台创建的 `.bin` symlink。
- * Detects whether this module is the CLI entry point, including npm `.bin` symlinks on POSIX platforms.
+ * @lang zh-CN 判断当前模块是否是 CLI 入口，并兼容 npm 在 POSIX 平台创建的 `.bin` symlink。
+ * @lang en Detects whether this module is the CLI entry point, including npm `.bin` symlinks on POSIX platforms.
  *
  * @param moduleUrl - 当前模块 URL。Current module URL.
  * @param argvPath - Node 传入的入口脚本路径。Entrypoint script path passed by Node.

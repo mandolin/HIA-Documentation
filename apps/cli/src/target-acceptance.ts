@@ -11,18 +11,14 @@ import path from "node:path";
 export const TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT = "target-documentation-acceptance" as const;
 
 /**
- * Initial draft version for the target-documentation acceptance report.
- *
- * 中文：target-documentation acceptance report 的初始 draft version。
- * English: Initial draft version for the target-documentation acceptance report.
+ * @lang zh-CN target-documentation acceptance report 的初始 draft version。
+ * @lang en Initial draft version for the target-documentation acceptance report.
  */
 export const TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT_VERSION = "0.1.0-draft" as const;
 
 /**
- * The four public portfolio families identified without exposing target-local source details.
- *
- * 中文：在不暴露 target-local source details 的前提下识别出的四个 public portfolio family。
- * English: The four public portfolio families identified without exposing target-local source details.
+ * @lang zh-CN 在不暴露 target-local source details 的前提下识别出的四个 public portfolio family。
+ * @lang en The four public portfolio families identified without exposing target-local source details.
  */
 export const TARGET_DOCUMENTATION_PORTFOLIO_FAMILIES = [
   "unicode-compatible",
@@ -32,10 +28,8 @@ export const TARGET_DOCUMENTATION_PORTFOLIO_FAMILIES = [
 ] as const;
 
 /**
- * Stable union for a public target-documentation portfolio family.
- *
- * 中文：public target-documentation portfolio family 的 stable union。
- * English: Stable union for a public target-documentation portfolio family.
+ * @lang zh-CN public target-documentation portfolio family 的 stable union。
+ * @lang en Stable union for a public target-documentation portfolio family.
  */
 export type TargetDocumentationPortfolioFamily = typeof TARGET_DOCUMENTATION_PORTFOLIO_FAMILIES[number];
 
@@ -95,10 +89,8 @@ export interface TargetDocumentationAcceptanceDiagnostic {
 }
 
 /**
- * Versioned report that a target owner may review or retain as their own evidence.
- *
- * 中文：target owner 可自行 review 或 retain 为其 own evidence 的版本化 report。
- * English: Versioned report that a target owner may review or retain as their own evidence.
+ * @lang zh-CN target owner 可自行 review 或 retain 为其 own evidence 的版本化 report。
+ * @lang en Versioned report that a target owner may review or retain as their own evidence.
  */
 export interface TargetDocumentationAcceptanceReport {
   acceptance: {

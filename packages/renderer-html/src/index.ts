@@ -78,23 +78,23 @@ export { renderThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
  */
 export const HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION = "0.1.0";
 /**
- * 项目导航索引的中性 contract 名称；供静态 portal、搜索与宿主导航消费。
- * Neutral project-navigation-index contract name consumed by static portals, search, and host navigation.
+ * @lang zh-CN 项目导航索引的中性 contract 名称；供静态 portal、搜索与宿主导航消费。
+ * @lang en Neutral project-navigation-index contract name consumed by static portals, search, and host navigation.
  */
 export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT = "hia-project-navigation-index";
 /**
- * 项目导航索引的首个草案版本；它独立于 renderer manifest 的文件清单版本。
- * First draft version of the project navigation index; independent from the renderer manifest file-list version.
+ * @lang zh-CN 项目导航索引的首个草案版本；它独立于 renderer manifest 的文件清单版本。
+ * @lang en First draft version of the project navigation index; independent from the renderer manifest file-list version.
  */
 export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION = "0.1.0-draft";
 /**
- * 项目级关系图的中性 contract 名称；用于表达文档入口、源码、生成物与宿主能力之间的关系。
- * Neutral project-level relation-graph contract for documentation entries, sources, generated artifacts, and host capabilities.
+ * @lang zh-CN 项目级关系图的中性 contract 名称；用于表达文档入口、源码、生成物与宿主能力之间的关系。
+ * @lang en Neutral project-level relation-graph contract for documentation entries, sources, generated artifacts, and host capabilities.
  */
 export const HIA_PROJECT_RELATION_GRAPH_CONTRACT = "hia-project-relation-graph";
 /**
- * 项目级关系图的首个草案版本；后续 IDE/DevTools host 会按此 contract 做能力协商。
- * First draft version of the project relation graph; future IDE/DevTools hosts negotiate capabilities against this contract.
+ * @lang zh-CN 项目级关系图的首个草案版本；后续 IDE/DevTools host 会按此 contract 做能力协商。
+ * @lang en First draft version of the project relation graph; future IDE/DevTools hosts negotiate capabilities against this contract.
  */
 export const HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION = "0.1.0-draft";
 
@@ -175,14 +175,20 @@ export interface RenderHtmlThemeOptions extends RenderProjectThemeOptions, HiaTh
  * @lang en Project-site layout, information architecture, locales, theme and source policy; explicit information architecture enables its projections without changing canonical entry identities.
  */
 export interface RenderProjectSiteOptions {
-  /** 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。Defaults to split-site; single-page is for compatibility, small docs, or snapshots. */
+  /**
+   * @lang zh-CN 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。
+   * @lang en Defaults to split-site; single-page is for compatibility, small docs, or snapshots.
+   */
   layout?: RenderProjectSiteLayout;
   /**
-   * 显式 IA 才启用 P4 slice；缺失时保持 P3 output path。
-   * Only explicit IA enables the P4 slice; omission preserves the P3 output path.
+   * @lang zh-CN 显式 IA 才启用 P4 slice；缺失时保持 P3 output path。
+   * @lang en Only explicit IA enables the P4 slice; omission preserves the P3 output path.
    */
   informationArchitecture?: DocumentationPortalInformationArchitectureOptions;
-  /** UI chrome locale，与 project content locale 独立。UI chrome locale, independent from the project content locale. */
+  /**
+   * @lang zh-CN UI chrome locale，与 project content locale 独立。
+   * @lang en UI chrome locale, independent from the project content locale.
+   */
   uiLocale?: DocumentationPortalUiLocale;
   /**
    * @lang zh-CN W-P123 report 的 owner-neutral profile/surface identity；仅显式 IA 消费，译文与 DOM 结构不进入该 descriptor。
@@ -202,13 +208,25 @@ export interface RenderProjectSiteOptions {
    */
   theme?: RenderProjectThemeOptions;
   source?: {
-    /** 控制源码正文与链接是否进入输出。Controls whether source bodies or links enter the output. */
+    /**
+     * @lang zh-CN 控制源码正文与链接是否进入输出。
+     * @lang en Controls whether source bodies or links enter the output.
+     */
     presentation?: RenderProjectSourcePresentation;
-    /** embed 模式的源码详情默认展开状态。Default expansion state for embedded source details. */
+    /**
+     * @lang zh-CN embed 模式的源码详情默认展开状态。
+     * @lang en Default expansion state for embedded source details.
+     */
     defaultExpanded?: boolean;
-    /** fetch 模式默认在展开时加载；manual 保留显式加载按钮。Fetch mode loads on expansion by default; manual keeps an explicit load button. */
+    /**
+     * @lang zh-CN fetch 模式默认在展开时加载；manual 保留显式加载按钮。
+     * @lang en Fetch mode loads on expansion by default; manual keeps an explicit load button.
+     */
     fetchTrigger?: RenderProjectSourceFetchTrigger;
-    /** fetch 模式单次最多显示的源码行数。Maximum source lines displayed by one fetch operation. */
+    /**
+     * @lang zh-CN fetch 模式单次最多显示的源码行数。
+     * @lang en Maximum source lines displayed by one fetch operation.
+     */
     maxLines?: number;
   };
 }
@@ -242,15 +260,14 @@ export interface RenderProjectHtmlInput {
   profiles?: RenderProjectProfileRef[];
   docSourceMaps?: RenderProjectDocSourceMapRef[];
   /**
-   * 中文：由 @hia-doc/source-linkage 的 W-P52.5 index 产生的安全 binding relation 投影。
-   * English: Safe binding-relation projection produced by the W-P52.5
-   * @hia-doc/source-linkage index.
+   * @lang zh-CN 由 @hia-doc/source-linkage 的 W-P52.5 index 产生的安全 binding relation 投影。
+   * @lang en Safe binding-relation projection produced by the W-P52.5 @hia-doc/source-linkage index.
    */
   generatedDocumentationBindingProjection?: GeneratedDocumentationBindingHostProjection;
   relationGraph?: RenderProjectRelationGraph;
   /**
-   * optional、body-free 的 W-P84 continuity 摘要；renderer 不读取 report 文件或 target state。
-   * Optional body-free W-P84 continuity summary; the renderer reads neither report files nor target state.
+   * @lang zh-CN optional、body-free 的 W-P84 continuity 摘要；renderer 不读取 report 文件或 target state。
+   * @lang en Optional body-free W-P84 continuity summary; the renderer reads neither report files nor target state.
    */
   documentationContinuity?: RenderProjectDocumentationContinuitySummary;
   /**
@@ -276,20 +293,26 @@ export interface RenderProjectInfo {
   name: string;
   title?: string;
   /**
-   * 项目页面的默认语言；若未提供则从已声明语言或 `und` 推断。
-   * Default project-page locale; inferred from declared locales or `und` when omitted.
+   * @lang zh-CN 项目页面的默认语言；若未提供则从已声明语言或 `und` 推断。
+   * @lang en Default project-page locale; inferred from declared locales or `und` when omitted.
    */
   defaultLocale?: string;
   /**
-   * 项目聚合页中可切换的语言。
-   * Locales that can be switched within the project aggregation page.
+   * @lang zh-CN 项目聚合页中可切换的语言。
+   * @lang en Locales that can be switched within the project aggregation page.
    */
   locales?: string[];
-  /** 产品版本仅呈现为 metadata，不参与 route。Product version is displayed as metadata and never participates in routing. */
+  /**
+   * @lang zh-CN 产品版本仅呈现为 metadata，不参与 route。
+   * @lang en Product version is displayed as metadata and never participates in routing.
+   */
   productVersion?: string;
 }
 
-/** Portal 可消费的最小 continuity summary；不携带 target identity、path、entry id 或正文。Minimal Portal continuity summary without target identity, paths, entry ids, or bodies. */
+/**
+ * @lang zh-CN Portal 可消费的最小 continuity summary；不携带 target identity、path、entry id 或正文。
+ * @lang en Minimal Portal continuity summary without target identity, paths, entry ids, or bodies.
+ */
 export interface RenderProjectDocumentationContinuitySummary {
   contract: "target-documentation-continuity";
   contractVersion: "0.1.0-draft";
@@ -399,8 +422,8 @@ export type RenderProjectRelationKind =
   | "semantic-member";
 
 /**
- * 统一项目页与外部宿主共同消费的轻量关系图。
- * Lightweight relation graph shared by the unified project page and external hosts.
+ * @lang zh-CN 统一项目页与外部宿主共同消费的轻量关系图。
+ * @lang en Lightweight relation graph shared by the unified project page and external hosts.
  */
 export interface RenderProjectRelationGraph {
   contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
@@ -412,8 +435,8 @@ export interface RenderProjectRelationGraph {
 }
 
 /**
- * relation graph 中的稳定节点；节点可以代表文档入口、源码、生成物或运行时端点。
- * Stable node in the relation graph; it can represent a documentation entry, source, generated artifact, or runtime endpoint.
+ * @lang zh-CN relation graph 中的稳定节点；节点可以代表文档入口、源码、生成物或运行时端点。
+ * @lang en Stable node in the relation graph; it can represent a documentation entry, source, generated artifact, or runtime endpoint.
  */
 export interface RenderProjectRelationNode {
   id: string;
@@ -425,8 +448,8 @@ export interface RenderProjectRelationNode {
 }
 
 /**
- * relation graph 中的一条方向关系；第一轮仅表达统一页面和宿主导航需要的最小关系。
- * Directed relation in the graph; the first slice covers the minimal relationships needed by unified pages and host navigation.
+ * @lang zh-CN relation graph 中的一条方向关系；第一轮仅表达统一页面和宿主导航需要的最小关系。
+ * @lang en Directed relation in the graph; the first slice covers the minimal relationships needed by unified pages and host navigation.
  */
 export interface RenderProjectRelation {
   id: string;
@@ -451,8 +474,8 @@ export interface RenderProjectEntry {
   summary?: string;
   signature?: string;
   /**
-   * 从领域 adapter/core symbol 透传的字段级 i18n；description 会驱动项目页的语言切换。
-   * Field-level i18n forwarded from a domain adapter/core symbol; description drives project-page locale switching.
+   * @lang zh-CN 从领域 adapter/core symbol 透传的字段级 i18n；description 会驱动项目页的语言切换。
+   * @lang en Field-level i18n forwarded from a domain adapter/core symbol; description drives project-page locale switching.
    */
   i18n?: HiaI18nModel;
   profile?: RenderProjectProfileRef;
@@ -473,13 +496,16 @@ export interface RenderProjectEntry {
   hierarchy?: RenderProjectEntryHierarchyRef;
   docSourceMap?: RenderProjectEntryDocSourceMapRef;
   diagnostics?: HiaDiagnostic[];
-  /** manifest input 显式提供的 owner-reviewed semantic prefix。Owner-reviewed semantic prefix explicitly supplied by the manifest input. */
+  /**
+   * @lang zh-CN manifest input 显式提供的 owner-reviewed semantic prefix。
+   * @lang en Owner-reviewed semantic prefix explicitly supplied by the manifest input.
+   */
   semanticPath?: DocumentationPortalSemanticPathSegment[];
 }
 
 /**
- * 领域 adapter 或 source relation 提供的稳定语义层级，renderer 只投影、不重新猜测语言语义。
- * Stable semantic hierarchy supplied by a domain adapter or source relation; the renderer only projects it.
+ * @lang zh-CN 领域 adapter 或 source relation 提供的稳定语义层级，renderer 只投影、不重新猜测语言语义。
+ * @lang en Stable semantic hierarchy supplied by a domain adapter or source relation; the renderer only projects it.
  */
 export interface RenderProjectEntryHierarchyRef {
   assembly?: string;
@@ -746,8 +772,8 @@ export interface RenderHtmlManifestFile {
 }
 
 /**
- * renderer 输出中项目导航索引的位置与兼容性标识。
- * Location and compatibility identity for the project navigation index emitted by the renderer.
+ * @lang zh-CN renderer 输出中项目导航索引的位置与兼容性标识。
+ * @lang en Location and compatibility identity for the project navigation index emitted by the renderer.
  */
 export interface RenderProjectNavigationIndexRef {
   contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
@@ -769,8 +795,8 @@ export interface RenderProjectPresentationProfileRef {
 }
 
 /**
- * renderer manifest 中 relation graph 的摘要引用，避免主 manifest 直接内嵌完整图。
- * Summary reference to the relation graph in the renderer manifest, avoiding full graph embedding in the main manifest.
+ * @lang zh-CN renderer manifest 中 relation graph 的摘要引用，避免主 manifest 直接内嵌完整图。
+ * @lang en Summary reference to the relation graph in the renderer manifest, avoiding full graph embedding in the main manifest.
  */
 export interface RenderProjectRelationGraphRef {
   contract: typeof HIA_PROJECT_RELATION_GRAPH_CONTRACT;
@@ -781,9 +807,8 @@ export interface RenderProjectRelationGraphRef {
 }
 
 /**
- * 中文：renderer manifest 中 generated binding relation 投影的最小引用。
- * English: Minimal generated-binding relation projection reference in the
- * renderer manifest.
+ * @lang zh-CN renderer manifest 中 generated binding relation 投影的最小引用。
+ * @lang en Minimal generated-binding relation projection reference in the renderer manifest.
  */
 export interface RenderProjectGeneratedDocumentationBindingProjectionRef {
   bindingCount: number;
@@ -810,8 +835,8 @@ export interface RenderProjectBusinessFlowDocumentationProjectionRef {
 }
 
 /**
- * 供 portal 使用的、无 HTML 表示细节的项目入口索引。
- * Project entry index without HTML presentation details, intended for portal consumption.
+ * @lang zh-CN 供 portal 使用的、无 HTML 表示细节的项目入口索引。
+ * @lang en Project entry index without HTML presentation details, intended for portal consumption.
  */
 export interface RenderProjectNavigationIndex {
   contract: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT;
@@ -868,8 +893,8 @@ export interface RenderProjectNavigationIndex {
 export type RenderProjectNavigationGroupKind = "kind" | "profile-layer" | "source-root";
 
 /**
- * 大型项目导航索引中的轻量分组统计，用于门户、侧栏和后续大项目导航策略。
- * Lightweight group statistics in the large-project navigation index for portals, sidebars, and future navigation strategies.
+ * @lang zh-CN 大型项目导航索引中的轻量分组统计，用于门户、侧栏和后续大项目导航策略。
+ * @lang en Lightweight group statistics in the large-project navigation index for portals, sidebars, and future navigation strategies.
  */
 export interface RenderProjectNavigationGroup {
   id: string;
@@ -897,8 +922,8 @@ export type RenderProjectNavigationTreeNodeKind =
   | DocumentationPortalSemanticPathKind;
 
 /**
- * 项目级层级导航节点；用于把大型项目从平铺列表提升为可分域浏览的 API / 文件结构。
- * Project-level hierarchy node; it lifts large projects from a flat list into domain-aware API and file navigation.
+ * @lang zh-CN 项目级层级导航节点；用于把大型项目从平铺列表提升为可分域浏览的 API / 文件结构。
+ * @lang en Project-level hierarchy node; it lifts large projects from a flat list into domain-aware API and file navigation.
  */
 export interface RenderProjectNavigationTreeNode {
   id: string;
@@ -917,8 +942,8 @@ export interface RenderProjectNavigationTreeNode {
 }
 
 /**
- * 单个可导航入口的稳定标识及其公开元数据；完整详情仍由统一项目页负责渲染。
- * Stable identity and public metadata for one navigable entry; the unified project page still renders full detail.
+ * @lang zh-CN 单个可导航入口的稳定标识及其公开元数据；完整详情仍由统一项目页负责渲染。
+ * @lang en Stable identity and public metadata for one navigable entry; the unified project page still renders full detail.
  */
 export interface RenderProjectNavigationEntry {
   id: string;
@@ -944,9 +969,15 @@ export interface RenderProjectNavigationEntry {
   symbolId?: string;
   hierarchy?: RenderProjectEntryHierarchyRef;
   contentPath?: string;
-  /** 实际 router fetch 位置；省略时与 canonical contentPath 相同。Actual router fetch location; omission means the canonical contentPath. */
+  /**
+   * @lang zh-CN 实际 router fetch 位置；省略时与 canonical contentPath 相同。
+   * @lang en Actual router fetch location; omission means the canonical contentPath.
+   */
   presentationPath?: string;
-  /** stable member/entry anchor。稳定 member/entry anchor。 */
+  /**
+   * @lang zh-CN 成员或条目的稳定锚点标识。
+   * @lang en Stable anchor identifier for a member or entry.
+   */
   memberAnchor?: string;
   /**
    * @lang zh-CN 不依赖 JavaScript 的独立多页阅读路径。

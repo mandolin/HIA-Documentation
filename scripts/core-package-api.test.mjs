@@ -151,6 +151,116 @@ test("renderer and CLI explicit bilingual comments retain canonical locale lines
   }
 });
 
+test("renderer and CLI selected mixed descriptions have explicit locale heads", () => {
+  // <lang><zh-CN>固定四份真实源中的53个混合描述节点，防止回退正文掩盖中文缺口。</zh-CN><en>Fix the 53 mixed-description nodes in four actual sources so fallback prose cannot hide Chinese gaps.</en></lang>
+  const fixtures = [
+    {
+      "path": "packages/renderer-html/src/information-architecture.ts",
+      "qualified": [
+        "DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT",
+        "DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_VERSION",
+        "DOCUMENTATION_PORTAL_CONTENT_GROUPINGS",
+        "DOCUMENTATION_PORTAL_LOADING_STRATEGIES",
+        "DOCUMENTATION_PORTAL_MEMBER_PLACEMENTS",
+        "DOCUMENTATION_PORTAL_SEMANTIC_PATH_KINDS",
+        "DOCUMENTATION_PORTAL_TOPIC_SECTIONS",
+        "DOCUMENTATION_PORTAL_UI_LOCALES",
+        "DocumentationPortalInformationArchitectureOptions",
+        "DocumentationPortalSemanticPathSegment",
+        "DocumentationPortalInformationArchitectureContract",
+        "DOCUMENTATION_PORTAL_INFORMATION_ARCHITECTURE_JSON_SCHEMA",
+        "DocumentationPortalLabels",
+        "resolveDocumentationPortalInformationArchitecture",
+        "resolveDocumentationPortalUiLocale",
+        "getDocumentationPortalLabels"
+      ]
+    },
+    {
+      "path": "packages/renderer-html/src/index.ts",
+      "qualified": [
+        "HIA_PROJECT_NAVIGATION_INDEX_CONTRACT",
+        "HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION",
+        "HIA_PROJECT_RELATION_GRAPH_CONTRACT",
+        "HIA_PROJECT_RELATION_GRAPH_CONTRACT_VERSION",
+        "RenderProjectSiteOptions.layout",
+        "RenderProjectSiteOptions.informationArchitecture",
+        "RenderProjectSiteOptions.uiLocale",
+        "RenderProjectSiteOptions.source.presentation",
+        "RenderProjectSiteOptions.source.defaultExpanded",
+        "RenderProjectSiteOptions.source.fetchTrigger",
+        "RenderProjectSiteOptions.source.maxLines",
+        "RenderProjectHtmlInput.generatedDocumentationBindingProjection",
+        "RenderProjectHtmlInput.documentationContinuity",
+        "RenderProjectInfo.defaultLocale",
+        "RenderProjectInfo.locales",
+        "RenderProjectInfo.productVersion",
+        "RenderProjectDocumentationContinuitySummary",
+        "RenderProjectRelationGraph",
+        "RenderProjectRelationNode",
+        "RenderProjectRelation",
+        "RenderProjectEntry.i18n",
+        "RenderProjectEntry.semanticPath",
+        "RenderProjectEntryHierarchyRef",
+        "RenderProjectNavigationIndexRef",
+        "RenderProjectRelationGraphRef",
+        "RenderProjectGeneratedDocumentationBindingProjectionRef",
+        "RenderProjectNavigationIndex",
+        "RenderProjectNavigationGroup",
+        "RenderProjectNavigationTreeNode",
+        "RenderProjectNavigationEntry",
+        "RenderProjectNavigationEntry.presentationPath",
+        "RenderProjectNavigationEntry.memberAnchor"
+      ]
+    },
+    {
+      "path": "apps/cli/src/target-acceptance.ts",
+      "qualified": [
+        "TARGET_DOCUMENTATION_ACCEPTANCE_CONTRACT_VERSION",
+        "TARGET_DOCUMENTATION_PORTFOLIO_FAMILIES",
+        "TargetDocumentationPortfolioFamily",
+        "TargetDocumentationAcceptanceReport"
+      ]
+    },
+    {
+      "path": "apps/cli/src/index.ts",
+      "qualified": [
+        "isCliEntrypoint"
+      ]
+    }
+  ];
+  for (const fixture of fixtures) {
+    // <lang><zh-CN>逐声明构造物理限定名，变量的文档归属最近的语句。</zh-CN><en>Build physical declaration paths, resolving variable documentation to its nearest owning statement.</en></lang>
+    const file = fileURLToPath(new URL('../' + fixture.path, import.meta.url));
+    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+    const pending = new Set(fixture.qualified);
+    /**
+     * @lang zh-CN 按声明路径检查完整描述头，尾部参数和返回标签另行保持。
+     * @lang en Checks complete description heads by declaration path, preserving parameter and return tags separately.
+     * @param {import("typescript").Node} node <lang><zh-CN>当前语法节点。</zh-CN><en>The current syntax node.</en></lang>
+     * @param {string[]} parents <lang><zh-CN>外层声明名称。</zh-CN><en>Enclosing declaration names.</en></lang>
+     */
+    function visit(node, parents) {
+      // <lang><zh-CN>仅命名声明扩展路径，类型字面量不插入人为层级。</zh-CN><en>Only named declarations extend the path, without synthetic levels for type literals.</en></lang>
+      const named = ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node) || ts.isPropertySignature(node) || ts.isVariableDeclaration(node) || ts.isFunctionDeclaration(node);
+      const names = named && node.name ? [...parents, node.name.getText(source)] : parents;
+      const qualified = names.join('.');
+      if (named && pending.has(qualified)) {
+        let owner = node;
+        while (!owner.jsDoc?.length && owner.parent && !ts.isSourceFile(owner.parent)) owner = owner.parent;
+        const comment = owner.jsDoc?.at(-1)?.getText(source) ?? '';
+        assert.match(comment, /^\s*\*\s+@lang zh-CN[ \t]+\S/m, qualified + ' Chinese');
+        assert.match(comment, /^\s*\*\s+@lang en[ \t]+\S/m, qualified + ' English');
+        assert.match(comment, /^\/\*\*\s*\n\s*\*\s+@lang /, qualified + ' explicit head');
+        assert.doesNotMatch(comment.split(/\n\s*\*\s+@(?:param|returns)\b/)[0], /(?:English:|中文：)/, qualified + ' mixed markers');
+        pending.delete(qualified);
+      }
+      ts.forEachChild(node, child => visit(child, names));
+    }
+    visit(source, []);
+    assert.deepEqual([...pending], [], fixture.path + ' all selected declarations found');
+  }
+});
+
 test("distribution and theme public declarations retain canonical bilingual source comments", () => {
   for(const name of ["profiles","schemas","theme-default"]) {
     // <lang><zh-CN>固定三个本轮治理的真实入口，使用已有TypeScript依赖检查原注释位置。</zh-CN><en>Inspect original comment positions in the three governed entries using the existing TypeScript dependency.</en></lang>
