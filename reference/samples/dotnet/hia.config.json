@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.1.0",
+  "docs": {
+    "renderer": {
+      "title": "HIA Documentation System .NET Sample",
+      "projectLayout": "split-site",
+      "uiLocale": "zh-CN"
+    },
+    "theme": {
+      "name": "default",
+      "colors": {
+        "accent": "#0047AB"
+      }
+    },
+    "source": {
+      "presentation": "fetch",
+      "publicAssetPolicy": "explicit-public",
+      "localRoot": ".",
+      "maxLines": 100
+    }
+  }
+}
