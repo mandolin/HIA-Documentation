@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wri
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -63,12 +64,15 @@ function main() {
   try {
     const projectManifest = materializeProjectManifest(definition, sourceRoots, runtime, workspaceRoot, resolvedMainRepoRoot);
     writeJson(ephemeralManifestPath, projectManifest);
+    // <lang><zh-CN>源码读取仅授予独占单文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive single-file mirror, cleaned with its config in finally.</en></lang>
+    const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root);
 
     const locales = definition.acceptance.requiredLocales.map((locale) => buildLocale({
       definition,
       locale,
       outputRoot,
       projectManifestPath: ephemeralManifestPath,
+      sourceConfigPath,
       resolvedMainRepoRoot
     }));
     const sourceLinkage = buildSourceLinkagePanel({
@@ -228,11 +232,13 @@ function materializeProjectManifest(definition, sourceRoots, runtime, workspaceR
   };
 }
 
-function buildLocale({ definition, locale, outputRoot, projectManifestPath, resolvedMainRepoRoot }) {
+function buildLocale({ definition, locale, outputRoot, projectManifestPath, sourceConfigPath, resolvedMainRepoRoot }) {
   const localeOutput = path.join(outputRoot, locale);
   runMainRepoCli(resolvedMainRepoRoot, [
     "docs",
     "build",
+    "--config",
+    sourceConfigPath,
     "--project-manifest",
     projectManifestPath,
     "--out",

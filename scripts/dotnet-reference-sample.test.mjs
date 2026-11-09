@@ -9,9 +9,82 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import {validateHiaProjectConfig, validateHiaProjectManifest} from '../packages/config/dist/index.js';
+import {preparePublicReferenceSourceConfig} from './public-reference-source.mjs';
 
 // <lang><zh-CN>固定公开owner的显式样本根，测试不扫描WorkZone或业务仓。</zh-CN><en>Fix the public owner's explicit sample root without scanning WorkZone or business repositories.</en></lang>
 const sample = fileURLToPath(new URL('../reference/samples/dotnet/', import.meta.url));
+
+/**
+ * @lang zh-CN 在主仓忽略目录创建独占测试owner，清理前核绝对目标仍在该测试根内。
+ * @lang en Creates an exclusive test owner in ignored output and checks the absolute cleanup boundary.
+ * @param {import('node:test').TestContext} context <lang><zh-CN>当前测试的清理生命周期。</zh-CN><en>Current test cleanup lifecycle.</en></lang>
+ * @param {boolean} [withSource=true] <lang><zh-CN>是否创建正常样本，用于越根链接反例。</zh-CN><en>Whether to create the normal sample, omitted for escaping-link counterexamples.</en></lang>
+ * @returns {object} <lang><zh-CN>测试根、owner与runtime目录，仅含合成公开正文。</zh-CN><en>Fixture root, owner and runtime containing synthetic public text only.</en></lang>
+ */
+function createSourceConfigFixture(context, withSource = true) {
+  // <lang><zh-CN>临时根固定落在主仓dist内，每测试独占，避免互相覆盖。</zh-CN><en>Keep each exclusive fixture inside the owning repository's dist.</en></lang>
+  const outputRoot = fileURLToPath(new URL('../dist/', import.meta.url));
+  fs.mkdirSync(outputRoot, {recursive: true});
+  const root = fs.mkdtempSync(path.join(outputRoot, 'source-config-test-'));
+  const owner = path.join(root, 'owner');
+  const runtime = path.join(owner, 'dist/runtime');
+  fs.mkdirSync(runtime, {recursive: true});
+  fs.mkdirSync(path.join(owner, 'reference/samples'), {recursive: true});
+  if (withSource) {
+    fs.mkdirSync(path.join(owner, 'reference/samples/dotnet'));
+    fs.writeFileSync(path.join(owner, 'reference/samples/dotnet/Envelope.cs'), '// 中文样本。 English sample.\npublic class Envelope {}\n');
+  }
+  context.after(() => {
+    // <lang><zh-CN>仅删除明确验证位于测试输出根内的本次独占目录。</zh-CN><en>Remove only this exclusive directory after checking its containment in the test output root.</en></lang>
+    const relative = path.relative(outputRoot, path.resolve(root));
+    assert(relative.startsWith('source-config-test-') && !relative.includes(path.sep) && !path.isAbsolute(relative));
+    fs.rmSync(root, {recursive: true, force: true});
+  });
+  return {root, owner, runtime};
+}
+
+test('stages only the authorized file with valid relative source configuration', context => {
+  // <lang><zh-CN>真实主仓根的其它文件不进入镜像，源字节完整保留。</zh-CN><en>Exclude other owner files from the mirror and retain exact source bytes.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  fs.writeFileSync(path.join(fixture.owner, 'unselected.txt'), 'unselected fixture text');
+  const configPath = preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime);
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  assert.deepEqual(validateHiaProjectConfig(config), []);
+  assert.deepEqual(config.docs.source, {presentation: 'fetch', publicAssetPolicy: 'explicit-public', localRoot: 'source-root', maxLines: 400});
+  assert.deepEqual(fs.readFileSync(path.join(fixture.runtime, 'source-root/reference/samples/dotnet/Envelope.cs')), fs.readFileSync(path.join(fixture.owner, 'reference/samples/dotnet/Envelope.cs')));
+  assert(!fs.existsSync(path.join(fixture.runtime, 'source-root/unselected.txt')));
+  assert(!fs.readFileSync(configPath, 'utf8').includes(fixture.owner));
+});
+
+test('rejects an authorized source path redirected outside its owner', context => {
+  // <lang><zh-CN>目录链接模拟越根来源，所有目标都仍属于本次合成测试根。</zh-CN><en>A directory link simulates an escaping source; all targets remain synthetic fixture-owned files.</en></lang>
+  const fixture = createSourceConfigFixture(context, false);
+  const outside = path.join(fixture.root, 'outside');
+  fs.mkdirSync(outside);
+  fs.writeFileSync(path.join(outside, 'Envelope.cs'), 'outside fixture text');
+  fs.symlinkSync(outside, path.join(fixture.owner, 'reference/samples/dotnet'), process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime), /source escapes/);
+  assert(!fs.existsSync(path.join(fixture.runtime, 'source-root')));
+});
+
+test('refuses to reuse or overwrite an existing source staging directory', context => {
+  // <lang><zh-CN>已有内容必须保留，由runtime生命周期的拥有者管理。</zh-CN><en>Preserve existing content for the owner of the runtime lifecycle.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  fs.mkdirSync(path.join(fixture.runtime, 'source-root'));
+  const marker = path.join(fixture.runtime, 'source-root/previous.txt');
+  fs.writeFileSync(marker, 'previous staging');
+  assert.throws(() => preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime), {code: 'EEXIST'});
+  assert.equal(fs.readFileSync(marker, 'utf8'), 'previous staging');
+});
+
+test('rejects a source runtime outside the owning repository', context => {
+  // <lang><zh-CN>越根写入在创建镜像前拒绝，避免把授权根变成任意输出根。</zh-CN><en>Reject escaping writes before mirror creation instead of accepting an arbitrary output root.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  const outside = path.join(fixture.root, 'outside-runtime');
+  fs.mkdirSync(outside);
+  assert.throws(() => preparePublicReferenceSourceConfig(fixture.owner, outside), /runtime escapes/);
+  assert.deepEqual(fs.readdirSync(outside), []);
+});
 
 test('accepts the .NET sample renderer configuration with explicit source publication', () => {
   // <lang><zh-CN>真实配置由既有配置读者验证，公开许可与样本根须分别明确。</zh-CN><en>Validate the real config with the existing reader and keep publication policy and sample root explicit.</en></lang>

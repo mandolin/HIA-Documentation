@@ -31,7 +31,11 @@ English. A stable .NET 10 SDK is required. The normal `reference:build` entry fi
 
 English. The producer lists only this compiled XML input. Its two entries, `Envelope<T>` and `FormatLabel(string label)`, retain seven independently localized fields spanning summaries, a type parameter, remarks, a parameter, return, and exception. Source locations point to `Envelope.cs`. Pre-upload checks require canonical IDs, signatures, localized fields, and C# paths. Domain sample coverage is tracked separately from tool-package API coverage.
 
-See the [sample instructions](../reference/samples/dotnet/README.md) for standalone extraction and split-site rendering. The shared reference build retains its existing rendering and source-publication configuration.
+中文。混合参考构建在独占临时目录只复制本仓 `Envelope.cs`，复用现有 `fetch`、`explicit-public` 和相对 `localRoot` 配置。源码片段与独立行号页由正常 HIA 渲染链生成，上传前检查片段正文、SHA-384 摘要与行号锚点。来源真实路径和暂存根均须在本仓内，已有暂存目录会被拒绝，临时副本与配置随构建清理。原始地图继续使用 `sourcesContentPolicy=none`。
+
+English. The mixed reference build copies only this repository's `Envelope.cs` into an exclusive runtime mirror and reuses `fetch`, `explicit-public`, and relative `localRoot` configuration. Normal HIA rendering generates source excerpts and independent line-number pages. Pre-upload checks verify excerpt bytes, SHA-384 digests, and line anchors. Real source and staging paths must remain inside the owner; existing staging directories are refused, and runtime cleanup removes the copy and config. Raw maps retain `sourcesContentPolicy=none`.
+
+See the [sample instructions](../reference/samples/dotnet/README.md) for standalone extraction and split-site rendering. The reference build uses the existing 400-line excerpt limit.
 
 ## Local Verification
 

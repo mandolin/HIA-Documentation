@@ -2,6 +2,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -62,6 +63,19 @@ function checkDotnetSample(outputRoot, locale) {
     const entry = entries.find(item => item.id === id);
     assert(entry?.signature?.length > 0, `${locale}: .NET sample signature missing: ${id}`);
     assert(entry.source?.path === "reference/samples/dotnet/Envelope.cs" && entry.source.language === "csharp" && entry.source.range?.start?.line > 0, `${locale}: .NET sample C# origin missing: ${id}`);
+    // <lang><zh-CN>预览和独立页必须是同源生成资产，正文须逐字节对应当前声明窗口。</zh-CN><en>Previews and independent pages must be generated same-origin assets, with bytes matching the current declaration window.</en></lang>
+    const asset = entry.source.publicAsset;
+    assert(asset && /^sources\/[a-f0-9]+\.txt$/.test(asset.relativeUrl) && entry.source.fetchUrl === asset.relativeUrl, `${locale}: .NET sample authorized source asset missing: ${id}`);
+    const content = readFileSync(path.join(outputRoot, locale, asset.relativeUrl), "utf8");
+    const sourceLines = readFileSync(path.join(mainRepoRoot, entry.source.path), "utf8").replaceAll("\r\n", "\n").split("\n");
+    const expectedLines = sourceLines.slice(entry.source.range.start.line - 1, entry.source.range.end.line);
+    const expectedContent = expectedLines.join("\n");
+    assert(content === expectedContent, `${locale}: .NET sample source bytes mismatch: ${id}`);
+    assert(asset.digest === `sha384-${createHash("sha384").update(content).digest("base64")}`, `${locale}: .NET sample source digest mismatch: ${id}`);
+    assert(asset.byteLength === Buffer.byteLength(content, "utf8") && asset.lineCount === expectedLines.length, `${locale}: .NET sample source size metadata mismatch: ${id}`);
+    const [sourcePage, fragment] = (entry.source.linkUrl ?? "").split("#");
+    assert(entry.source.linkUrl === asset.linkUrl && /^sources\/[a-f0-9]+\.L[1-9][0-9]*\.html$/.test(sourcePage) && fragment === `L${entry.source.range.start.line}`, `${locale}: .NET sample source line URL invalid: ${id}`);
+    assert(readFileSync(path.join(outputRoot, locale, sourcePage), "utf8").includes(`id="${fragment}"`), `${locale}: .NET sample source line anchor missing: ${id}`);
     for (const field of fields) {
       // <lang><zh-CN>两种正文均须显式存在，当前语言不能依靠缺译回退。</zh-CN><en>Both content locales must exist explicitly, without fallback for the current locale.</en></lang>
       const localized = entry.i18n?.fields?.[field];

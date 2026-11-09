@@ -95,6 +95,20 @@ async function checkPublication() {
     for (const entryId of referenceDefinition.acceptance.requiredEntryIds) {
       assert(entryIds.has(entryId), `${locale}: published required reference entry missing: ${entryId}`);
     }
+    // <lang><zh-CN>新增.NET源码必须真实部署为同源纯文本，摘要与行号页均可消费。</zh-CN><en>Publish .NET source as consumable same-origin plain text with matching digests and line pages.</en></lang>
+    for (const id of ["hia-document:dotnet-t-hiadocumentationsample.envelope-1", "hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string"]) {
+      const entry = projectIndex.entries.find(item => item.id === id);
+      const asset = entry?.source?.publicAsset;
+      assert(asset && entry.source.fetchUrl === asset.relativeUrl && entry.source.linkUrl === asset.linkUrl && /^sources\/[a-f0-9]+\.txt$/.test(asset.relativeUrl), `${locale}: published .NET source asset missing.`);
+      const response = await fetchWithCacheBust(`${locale}/${asset.relativeUrl}`, "text/plain");
+      assert((response.headers.get("content-type") ?? "").toLowerCase().startsWith("text/plain"), `${locale}: published .NET source MIME is invalid.`);
+      const bytes = Buffer.from(await response.arrayBuffer());
+      assert(bytes.length === asset.byteLength && `sha384-${createHash("sha384").update(bytes).digest("base64")}` === asset.digest, `${locale}: published .NET source integrity mismatch.`);
+      const [sourcePage, fragment] = (entry.source.linkUrl ?? "").split("#");
+      assert(/^sources\/[a-f0-9]+\.L[1-9][0-9]*\.html$/.test(sourcePage) && fragment === `L${entry.source.range.start.line}`, `${locale}: published .NET source line URL is invalid.`);
+      const sourceHtml = await fetchText(`${locale}/${sourcePage}`);
+      assert(sourceHtml.includes(`id="${fragment}"`), `${locale}: published .NET source anchor missing.`);
+    }
     routeExpectations.push(
       [`${locale}/packages/`, "data-hia-public-portal-packages", "portal-nav"],
       [`${locale}/doc-lines/`, "data-hia-public-portal-doc-lines", "portal-nav"],
