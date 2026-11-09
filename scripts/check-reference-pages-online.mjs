@@ -95,8 +95,15 @@ async function checkPublication() {
     for (const entryId of referenceDefinition.acceptance.requiredEntryIds) {
       assert(entryIds.has(entryId), `${locale}: published required reference entry missing: ${entryId}`);
     }
+    // <lang><zh-CN>声明和成员必须在同一类型节点下，防止来源正确但导航仍分裂的旧索引混入。</zh-CN><en>Require the declaration and member under one type node, rejecting a stale split index even when sources are valid.</en></lang>
+    const sampleTypeId = "hia-document:dotnet-t-hiadocumentationsample.envelope-1";
+    const sampleMemberId = "hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string";
+    const dotnetNodes = [...(projectIndex.navigationTree ?? []).filter(node => node.id === "view:dotnet")];
+    for (const node of dotnetNodes) dotnetNodes.push(...node.children ?? []);
+    const sampleType = dotnetNodes.find(node => node.kind === "type" && node.entryId === sampleTypeId);
+    assert(sampleType?.label === "Envelope<T>" && sampleType.entryCount === 2 && sampleType.children?.some(node => node.entryId === sampleMemberId), `${locale}: published .NET navigation is split.`);
     // <lang><zh-CN>新增.NET源码必须真实部署为同源纯文本，摘要与行号页均可消费。</zh-CN><en>Publish .NET source as consumable same-origin plain text with matching digests and line pages.</en></lang>
-    for (const id of ["hia-document:dotnet-t-hiadocumentationsample.envelope-1", "hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string"]) {
+    for (const id of [sampleTypeId, sampleMemberId]) {
       const entry = projectIndex.entries.find(item => item.id === id);
       const asset = entry?.source?.publicAsset;
       assert(asset && entry.source.fetchUrl === asset.relativeUrl && entry.source.linkUrl === asset.linkUrl && /^sources\/[a-f0-9]+\.txt$/.test(asset.relativeUrl), `${locale}: published .NET source asset missing.`);

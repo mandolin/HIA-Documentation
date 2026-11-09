@@ -15,6 +15,10 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ## Current Scope
 
+中文。.NET 导航按程序集与文档类型身份分组。类型声明提供的语义显示名用于标签，成员的父类型文档标识用于归属；旧文档可从文档标识取得所属类型，保留泛型参数数量。导航中的类型入口可以展开到成员入口。
+
+English. .NET navigation groups entries by assembly and documentation type identity. Declaration-provided semantic names supply labels, while parent type documentation IDs associate members. Legacy documentation IDs retain generic arity and supply owner-type fallbacks. Type navigation entries expand to member entries.
+
 - 大站可调用 `renderProjectHtmlDocumentToWriter(input, writer, options)`，逐文件生成并等待writer；返回无正文的manifest/diagnostics/fileCount。旧API仍显式收集完整数组。详见[构建内存与源码边界](../../docs/project-build-memory.md)。
 - Large sites can use the awaited per-file writer API; input/index metadata still scales with the site, and explicit single-page/eager outputs may remain large.
 

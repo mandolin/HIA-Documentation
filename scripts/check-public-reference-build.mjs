@@ -53,7 +53,8 @@ function main() {
  */
 function checkDotnetSample(outputRoot, locale) {
   // <lang><zh-CN>只检查显式类型和方法槽位，工具包API覆盖由独立清单管理。</zh-CN><en>Check explicit type and method slots; tool-package API coverage is managed separately.</en></lang>
-  const entries = readJson(path.join(outputRoot, locale, "project-index.json")).entries;
+  const index = readJson(path.join(outputRoot, locale, "project-index.json"));
+  const entries = index.entries;
   const expected = [
     ["hia-document:dotnet-t-hiadocumentationsample.envelope-1", ["summary", "typeParams.T.summary"]],
     ["hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string", ["summary", "remarks", "params.label.summary", "returns.summary", "exceptions.T:System.ArgumentNullException.summary"]]
@@ -83,6 +84,11 @@ function checkDotnetSample(outputRoot, locale) {
       assert(localized.resolutions?.[locale]?.usedFallback === false && localized.resolutions[locale].missing === false, `${locale}: .NET sample locale fell back: ${field}`);
     }
   }
+  // <lang><zh-CN>真实样本的类型入口及方法必须共享一个类型节点，避免导航显示名分裂再次出现。</zh-CN><en>The real sample's type entry and method must share one type node to prevent display-name splitting.</en></lang>
+  const nodes = [...(index.navigationTree ?? []).filter(node => node.id === "view:dotnet")];
+  for (const node of nodes) nodes.push(...node.children ?? []);
+  const type = nodes.find(node => node.kind === "type" && node.entryId === expected[0][0]);
+  assert(type?.label === "Envelope<T>" && type.entryCount === 2 && type.children?.some(node => node.entryId === expected[1][0]), `${locale}: .NET sample type/member navigation is split.`);
 }
 
 function checkLocale(definition, outputRoot, locale) {

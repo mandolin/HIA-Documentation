@@ -5581,6 +5581,13 @@ function collectProjectNavigationTree(
     });
 }
 
+/**
+ * @lang zh-CN 按程序集、命名空间和文档身份构建.NET树，声明入口的显示名称优先于成员提供的标签。
+ * @lang en Builds a .NET tree by assembly, namespace and documentation identity, preferring declaration labels over member labels.
+ * @param entries <lang><zh-CN>已过滤到.NET视图的条目，不修改其内容。</zh-CN><en>Entries filtered to the .NET view, whose content is not mutated.</en></lang>
+ * @param includeTypeRelations <lang><zh-CN>是否加入既有继承节点，默认true。</zh-CN><en>Whether to include existing inheritance nodes, defaulting to true.</en></lang>
+ * @returns <lang><zh-CN>排序后的新导航树。</zh-CN><en>A new sorted navigation tree.</en></lang>
+ */
 function collectDotNetNavigationTree(
   entries: RenderProjectEntry[],
   includeTypeRelations = true
@@ -5627,6 +5634,8 @@ function collectDotNetNavigationTree(
     addProjectTreeEntry(typeNode, entry);
 
     if (isDotNetTypeNavigationEntry(entry)) {
+      // <lang><zh-CN>成员可能先到；声明到达时同步标签与声明入口，消除输入顺序带来的显示差异。</zh-CN><en>A member may arrive first; synchronize the label with the declaration entry when it arrives.</en></lang>
+      typeNode.label = parts.typeLabel;
       typeNode.entryId = entry.id;
       assignProjectTreeEntryRefs(typeNode, entry);
       if (includeTypeRelations && entry.kind === "dotnet-type") {
@@ -6034,6 +6043,12 @@ function projectTreeKindOrder(kind: RenderProjectNavigationTreeNodeKind): number
   return 12;
 }
 
+/**
+ * @lang zh-CN 复用文档ID和父类型ID分组，仅将语义显示文本用于标签；旧输入保留既有回退。
+ * @lang en Groups by documentation and parent-type IDs, using semantic display text only for labels while retaining legacy fallbacks.
+ * @param entry <lang><zh-CN>包含可选语义字段的.NET条目。</zh-CN><en>A .NET entry with optional semantic fields.</en></lang>
+ * @returns <lang><zh-CN>分组身份与独立显示标签，不修改条目。</zh-CN><en>Grouping identities and separate display labels without entry mutation.</en></lang>
+ */
 function getDotNetNavigationParts(entry: RenderProjectEntry): {
   assemblyLabel: string;
   memberLabel: string;
@@ -6042,13 +6057,24 @@ function getDotNetNavigationParts(entry: RenderProjectEntry): {
   typeId: string;
   typeLabel: string;
 } {
+  // <lang><zh-CN>领域根分类和程序集沿用旧输入规则，缺语义数据时继续可读。</zh-CN><en>Retain domain-root and assembly classification so inputs without semantic metadata remain readable.</en></lang>
   const fallback = getDotNetNonAssemblyNavigationParts(entry);
   const assemblyLabel = entry.hierarchy?.assembly || fallback.assemblyLabel;
   const semanticNamespace = entry.hierarchy?.namespace;
   const semanticContainingType = entry.hierarchy?.containingType;
+  // <lang><zh-CN>文档ID包含泛型参数数量，不能与C#显示名称互换。</zh-CN><en>Documentation IDs encode generic arity and cannot be replaced with C# display names.</en></lang>
   const symbolId = entry.hierarchy?.symbolDocumentationId
     || (entry.symbolId?.match(/^[A-Z]:/) ? entry.symbolId : "")
     || (entry.id.match(/^[A-Z]:/) ? entry.id : "");
+  const typeDocumentationId = entry.kind === "dotnet-type" ? symbolId : entry.hierarchy?.parentSymbolId;
+  const canonicalTypeId = typeDocumentationId?.startsWith("T:") ? typeDocumentationId : undefined;
+  // <lang><zh-CN>只移除已明确提供的命名空间前缀，保留泛型实参中的点和嵌套类型显示文本。</zh-CN><en>Remove only the supplied namespace prefix, retaining dots in generic arguments and nested type display text.</en></lang>
+  const semanticTypeName = entry.kind === "dotnet-type" ? entry.hierarchy?.displayName : semanticContainingType;
+  const namespacePrefix = semanticNamespace ? `${semanticNamespace}.` : "";
+  const semanticTypeLabel = namespacePrefix && semanticTypeName?.startsWith(namespacePrefix)
+    ? semanticTypeName.slice(namespacePrefix.length)
+    : semanticTypeName;
+  // <lang><zh-CN>既有文档ID拆分只作无父ID时的类型身份和旧标签回退，不解析显示文本中的C#语法。</zh-CN><en>Use existing documentation-ID splitting for owner identity and legacy labels when parent IDs are absent, without parsing display syntax.</en></lang>
   const symbolBody = symbolId.match(/^[A-Z]:/) ? symbolId.slice(2) : "";
   const normalizedSymbol = symbolBody.replace(/\(.+$/, "");
   const segments = normalizedSymbol.split(".").filter((segment) => segment.length > 0);
@@ -6063,8 +6089,8 @@ function getDotNetNavigationParts(entry: RenderProjectEntry): {
       memberLabel,
       namespaceLabel: semanticNamespace || namespaceLabel,
       rootKind: entry.hierarchy?.assembly ? "assembly" : fallback.rootKind,
-      typeId: semanticContainingType ? `T:${semanticContainingType}` : `T:${segments.slice(0, typeIndex + 1).join(".")}`,
-      typeLabel: semanticContainingType?.split(".").pop() || typeLabel
+      typeId: canonicalTypeId || `T:${segments.slice(0, typeIndex + 1).join(".")}`,
+      typeLabel: semanticTypeLabel || typeLabel
     };
   }
 
@@ -6076,8 +6102,8 @@ function getDotNetNavigationParts(entry: RenderProjectEntry): {
     memberLabel: entry.name,
     namespaceLabel: semanticNamespace || fallback.namespaceLabel,
     rootKind: entry.hierarchy?.assembly ? "assembly" : fallback.rootKind,
-    typeId: semanticContainingType ? `T:${semanticContainingType}` : symbolId || entry.id,
-    typeLabel: semanticContainingType?.split(".").pop() || sourceStem || entry.name
+    typeId: canonicalTypeId || (semanticContainingType ? `T:${semanticContainingType}` : symbolId || entry.id),
+    typeLabel: semanticTypeLabel || sourceStem || entry.name
   };
 }
 
