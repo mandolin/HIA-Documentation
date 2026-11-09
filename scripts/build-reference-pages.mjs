@@ -11,6 +11,9 @@ const defaultReleaseId = "0.1.0-draft";
 const currentDirectory = "current";
 const supportedLocales = ["en", "zh-CN"];
 
+// <lang><zh-CN>来源数量跟随同一显式构建清单，避免新增领域后保留旧常量。</zh-CN><en>Derive provenance counts from the same explicit build allowlist when adding domains.</en></lang>
+const referenceDefinition = JSON.parse(await readFile(path.join(rootDir, "reference", "public-reference-build.definition.json"), "utf8"));
+
 await main();
 
 /**
@@ -37,7 +40,7 @@ async function main() {
   const portalPages = await readJson(path.join(portalPagesDir, "public-portal-pages.json"));
   assert(referenceBuild.contract === "hia-public-reference-build", "Unexpected public reference build contract.");
   assert(referenceBuild.privacy?.status === "pass", "Public reference build did not pass its privacy boundary.");
-  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Public reference provenance is incomplete.");
+  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === referenceDefinition.sources.length, "Public reference provenance is incomplete.");
   assert(schemaCatalog.publicBaseUrl === "https://mandolin.github.io/HIA-Documentation/schemas/", "Unexpected schema Pages base URL.");
   assert(portalPages.contract === "hia-public-portal-pages", "Unexpected public portal pages contract.");
   assert(portalPages.privacy?.status === "pass" && portalPages.privacy?.sourcesContentPolicy === "none", "Public portal pages did not pass privacy validation.");

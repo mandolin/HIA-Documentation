@@ -42,6 +42,10 @@ English. Empty and whitespace-only labels return an empty string, ordinary label
 
 ## Files and license
 
+中文。该样本也进入[公开参考构建](../../../docs/public-reference-build.md)，由正常构建入口编译并作为独立的 .NET 领域输入。
+
+English. The sample also participates in the [public reference build](../../../docs/public-reference-build.md), whose normal entry compiles it as a distinct .NET domain input.
+
 - [Project](HiaDocumentationSample.csproj) and [source](Envelope.cs)
 - [Extraction config](dotnetdoc.config.json), [project manifest](hia.project.json), and [render config](hia.config.json)
 

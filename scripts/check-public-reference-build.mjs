@@ -1,3 +1,4 @@
+/** @file @lang zh-CN 核验公开参考来源、领域内容与隐私，.NET样本要求真实C#来源和独立语言字段。 @lang en Checks public reference provenance, domain content and privacy, requiring real C# origins and independent localized fields for the .NET sample. */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,12 +34,41 @@ function main() {
   assertEqualSets(expectedLocales, (report.locales ?? []).map((locale) => locale.locale), "Built locale inventory");
   for (const locale of expectedLocales) {
     checkLocale(definition, outputRoot, locale);
+    checkDotnetSample(outputRoot, locale);
   }
   checkSourceLinkage(definition, outputRoot, report.sourceLinkage);
   assertNoPrivateOutput(definition, outputRoot);
   assert(!existsSync(path.join(outputRoot, ".runtime")), "Public reference artifact must not retain runtime producer wrappers.");
 
   console.log(`Public reference build check passed: ${expectedLocales.length} locales, ${expectedSources.length} resolved sources, ${definition.producers.length} producers.`);
+}
+
+/**
+ * @lang zh-CN 校验唯一自有.NET样本的七语言字段及C#来源，避免数量门禁掩盖内容或映射降级。
+ * @lang en Checks seven localized fields and C# origins for the unique first-party .NET sample so counts cannot hide content or mapping regressions.
+ * @param {string} outputRoot <lang><zh-CN>已构建的公开输出根。</zh-CN><en>Built public output root.</en></lang>
+ * @param {string} locale <lang><zh-CN>当前待核正文语言。</zh-CN><en>Content locale being checked.</en></lang>
+ * @returns {void} <lang><zh-CN>通过时无返回值，缺字段或非C#来源时抛错。</zh-CN><en>No return value on success; throws for missing fields or non-C# origins.</en></lang>
+ */
+function checkDotnetSample(outputRoot, locale) {
+  // <lang><zh-CN>只检查显式类型和方法槽位，工具包API覆盖由独立清单管理。</zh-CN><en>Check explicit type and method slots; tool-package API coverage is managed separately.</en></lang>
+  const entries = readJson(path.join(outputRoot, locale, "project-index.json")).entries;
+  const expected = [
+    ["hia-document:dotnet-t-hiadocumentationsample.envelope-1", ["summary", "typeParams.T.summary"]],
+    ["hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string", ["summary", "remarks", "params.label.summary", "returns.summary", "exceptions.T:System.ArgumentNullException.summary"]]
+  ];
+  for (const [id, fields] of expected) {
+    // <lang><zh-CN>只接受本样本C#声明的非空签名和范围，XML文档自身行号不算源码定位。</zh-CN><en>Require nonempty signatures and ranges in this sample's C# declaration; XML document lines do not count as code locations.</en></lang>
+    const entry = entries.find(item => item.id === id);
+    assert(entry?.signature?.length > 0, `${locale}: .NET sample signature missing: ${id}`);
+    assert(entry.source?.path === "reference/samples/dotnet/Envelope.cs" && entry.source.language === "csharp" && entry.source.range?.start?.line > 0, `${locale}: .NET sample C# origin missing: ${id}`);
+    for (const field of fields) {
+      // <lang><zh-CN>两种正文均须显式存在，当前语言不能依靠缺译回退。</zh-CN><en>Both content locales must exist explicitly, without fallback for the current locale.</en></lang>
+      const localized = entry.i18n?.fields?.[field];
+      assert(localized?.localizedText?.["zh-CN"]?.trim() && localized?.localizedText?.en?.trim(), `${locale}: .NET sample localized field missing: ${field}`);
+      assert(localized.resolutions?.[locale]?.usedFallback === false && localized.resolutions[locale].missing === false, `${locale}: .NET sample locale fell back: ${field}`);
+    }
+  }
 }
 
 function checkLocale(definition, outputRoot, locale) {

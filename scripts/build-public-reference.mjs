@@ -1,3 +1,4 @@
+/** @file @lang zh-CN 从显式公开来源构建参考站；只编译自有.NET样本，生产器输出须通过来源和隐私门禁。 @lang en Builds reference output from explicit public sources, compiling only the first-party .NET sample and checking producer provenance and privacy. */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,7 +13,8 @@ const requiredSatelliteSourceIds = [
   "hia-sassdoc",
   "hia-pugdoc",
   "hia-tsdoc",
-  "hia-vuedoc"
+  "hia-vuedoc",
+  "hia-dotnetdoc"
 ];
 
 main();
@@ -41,6 +43,14 @@ function main() {
   assert(existsSync(path.join(resolvedMainRepoRoot, "apps", "cli", "dist", "index.js")), "main-repo CLI is not built. Run `pnpm run build` first.");
 
   const sourceRoots = resolveSourceRoots(definition, resolvedMainRepoRoot, sourcesRoot);
+  // <lang><zh-CN>只编译本构建owner内的固定公开样本；首次还原/编译写bin和obj，失败时保留上一份参考输出。</zh-CN><en>Compile only the owning repository's fixed public sample; restore/build writes bin and obj, preserving the previous reference output on failure.</en></lang>
+  const sampleBuild = spawnSync("dotnet", ["build", "reference/samples/dotnet/HiaDocumentationSample.csproj", "--configuration", "Release", "--nologo"], {
+    cwd: resolvedMainRepoRoot,
+    stdio: "inherit"
+  });
+  assert(sampleBuild.status === 0, `First-party .NET sample compilation failed${sampleBuild.error ? `: ${sampleBuild.error.message}` : "."}`);
+  assert(existsSync(path.join(resolvedMainRepoRoot, "reference/samples/dotnet/bin/Release/net10.0/HiaDocumentationSample.xml")), "Compiled .NET sample XML is missing.");
+  // <lang><zh-CN>来源快照仅在输入与编译准备成功后收集，后续公开产物只记录仓库和提交身份。</zh-CN><en>Collect provenance after input and compilation preparation; public artifacts retain only repository and commit identities.</en></lang>
   const provenance = collectProvenance(definition, sourceRoots);
   const runtime = createRuntimePaths(workspaceRoot, resolvedMainRepoRoot, outputRoot);
   const ephemeralManifestPath = path.join(workspaceRoot, ".hia-public-reference.runtime.hia-project.json");

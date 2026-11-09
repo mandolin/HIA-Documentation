@@ -104,6 +104,6 @@ mise exec -- pnpm run reference:pages:check
 
 ## Publication Security
 
-The `schema-pages.yml` workflow is the only workflow that deploys this Pages site. Its build job receives only `contents: read` and uses the read-only HIA Reference Builder GitHub App token only while checking out the seven allowlisted satellites. The deploy job does not check out satellites or access the App token; it receives only the GitHub Pages deployment permissions required by `actions/deploy-pages`.
+The `schema-pages.yml` workflow is the only workflow that deploys this Pages site. Its build job receives only `contents: read` and uses the read-only HIA Reference Builder GitHub App token only while checking out the eight allowlisted satellites. The deploy job does not check out satellites or access the App token; it receives only the GitHub Pages deployment permissions required by `actions/deploy-pages`.
 
 After deployment, `reference:pages:online` checks the public routes, generated portal routes, the version index when present, the sanitized provenance manifests, the catalog, every canonical schema URL and each package-style schema alias. Use `node scripts/check-reference-pages-online.mjs --report-only` when comparing an older deployment before a refreshed artifact is live. `reference:ops:check` adds publication age, source freshness and operational failure classification.

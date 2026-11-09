@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// <lang><zh-CN>发布来源数量由同一显式构建清单决定，与离线装配和上传前检查一致。</zh-CN><en>Use the same explicit build allowlist for published provenance counts, matching assembly and pre-upload checks.</en></lang>
+const referenceDefinition = JSON.parse(await readFile(path.join(rootDir, "reference", "public-reference-build.definition.json"), "utf8"));
 const catalog = JSON.parse(await readFile(path.join(rootDir, "packages", "schemas", "src", "catalog.json"), "utf8"));
 // <lang><zh-CN>线上历史字节必须与仓库固定索引一致，不能只检查当前 catalog 仍可访问。</zh-CN><en>Published historical bytes must match the repository's fixed index, beyond checking availability of the current catalog.</en></lang>
 const schemaHistory = JSON.parse(await readFile(path.join(rootDir, "packages", "schemas", "src", "history", "index.json"), "utf8"));
@@ -43,7 +45,7 @@ async function checkPublication() {
   const siteManifest = await fetchJson("reference-pages.json");
   assert(siteManifest.contract === "hia-reference-pages", "Published Reference Pages contract drifted.");
   assert(siteManifest.defaultLocale === "en", "Published Reference Pages default locale drifted.");
-  assert(siteManifest.provenance?.sourceCount === 8, "Published Reference Pages provenance source count drifted.");
+  assert(siteManifest.provenance?.sourceCount === referenceDefinition.sources.length, "Published Reference Pages provenance source count drifted.");
   assert(siteManifest.routes?.publicPortalPages === "public-portal-pages.json", "Published Reference Pages public portal manifest route is missing.");
   assert(siteManifest.routes?.publicPortalSearchIndex === "assets/public-portal-search-index.json", "Published Reference Pages public portal search route is missing.");
   assert(siteManifest.compatibleMerge?.strategy === "preserve-reference-pages-and-merge-public-portal-routes", "Published Reference Pages compatible merge strategy drifted.");
@@ -51,7 +53,7 @@ async function checkPublication() {
   const referenceBuild = await fetchJson("reference-build.json");
   assert(referenceBuild.contract === "hia-public-reference-build", "Published public reference build contract drifted.");
   assert(referenceBuild.privacy?.status === "pass", "Published public reference privacy status drifted.");
-  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Published public reference source provenance drifted.");
+  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === referenceDefinition.sources.length, "Published public reference source provenance drifted.");
 
   const portalPages = await fetchJson("public-portal-pages.json");
   assert(portalPages.contract === "hia-public-portal-pages", "Published public portal pages contract drifted.");
@@ -87,6 +89,12 @@ async function checkPublication() {
   }
 
   for (const locale of siteManifest.locales) {
+    // <lang><zh-CN>线上索引必须含显式关键条目，包括.NET类型与方法，避免只部署了新的来源计数。</zh-CN><en>The published index must contain canonical required entries, including the .NET type and method, beyond updated provenance counts.</en></lang>
+    const projectIndex = await fetchJson(`${locale}/project-index.json`);
+    const entryIds = new Set((projectIndex.entries ?? []).map(entry => entry.id));
+    for (const entryId of referenceDefinition.acceptance.requiredEntryIds) {
+      assert(entryIds.has(entryId), `${locale}: published required reference entry missing: ${entryId}`);
+    }
     routeExpectations.push(
       [`${locale}/packages/`, "data-hia-public-portal-packages", "portal-nav"],
       [`${locale}/doc-lines/`, "data-hia-public-portal-doc-lines", "portal-nav"],

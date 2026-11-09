@@ -14,6 +14,9 @@ const forbiddenMarkers = [
   "HIA-Documentation-Sys"
 ];
 
+// <lang><zh-CN>来源数量跟随同一显式构建清单，避免新增领域后保留旧常量。</zh-CN><en>Derive provenance counts from the same explicit build allowlist when adding domains.</en></lang>
+const referenceDefinition = JSON.parse(await readFile(path.join(rootDir, "reference", "public-reference-build.definition.json"), "utf8"));
+
 await main();
 
 /**
@@ -40,7 +43,7 @@ async function main() {
   assert(siteManifest.versioning?.releases?.length === 1, "Reference Pages release snapshot inventory drifted.");
   assert(referenceBuild.contract === "hia-public-reference-build", "Reference Pages provenance is missing the public reference build.");
   assert(referenceBuild.privacy?.status === "pass", "Reference Pages input failed public privacy validation.");
-  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === 8, "Reference Pages provenance source count drifted.");
+  assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === referenceDefinition.sources.length, "Reference Pages provenance source count drifted.");
   assert(portalPages.contract === "hia-public-portal-pages", "Reference Pages public portal manifest is missing or invalid.");
   assert(portalPages.privacy?.status === "pass" && portalPages.privacy?.sourcesContentPolicy === "none", "Reference Pages public portal privacy contract drifted.");
   assert(siteManifest.routes?.publicPortalPages === "public-portal-pages.json", "Reference Pages public portal manifest route is missing.");

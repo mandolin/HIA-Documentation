@@ -68,6 +68,12 @@
       "repository": "mandolin/hia-vuedoc",
       "ref": "main",
       "workspace": "source"
+    },
+    {
+      "id": "hia-dotnetdoc",
+      "repository": "mandolin/hia-dotnetdoc",
+      "ref": "main",
+      "workspace": "source"
     }
   ],
   "producers": [
@@ -271,14 +277,37 @@
         "sourcesContentPolicy": "none",
         "writeResultManifest": true
       }
+    },
+    {
+      "id": "main-repo-dotnet-sample",
+      "sourceId": "main-repo",
+      "moduleSourceId": "hia-dotnetdoc",
+      "module": "packages/dotnetdoc-producer/src/index.mjs",
+      "inputs": [
+        {
+          "kind": "dotnet-xml-doc",
+          "path": "reference/samples/dotnet/bin/Release/net10.0/HiaDocumentationSample.xml",
+          "projectPath": "reference/samples/dotnet/HiaDocumentationSample.csproj",
+          "artifactBasePath": "dotnet-sample/api",
+          "title": "HIA Documentation System .NET Sample"
+        }
+      ],
+      "profileIds": [
+        "doc-source-map"
+      ],
+      "options": {
+        "writeDocSourceMapArtifact": true,
+        "writeResultManifest": true
+      }
     }
   ],
   "acceptance": {
     "minimumEntryCounts": {
-      "all": 55,
+      "all": 57,
       "js": 35,
       "css": 10,
-      "html": 6
+      "html": 6,
+      "dotnet": 2
     },
     "requiredEntryIds": [
       "hia-document:attr-component-productcard-title",
@@ -296,11 +325,13 @@
       "hia-document:selector-profilecard-profile-card",
       "hia-document:slot-profilecard-actions",
       "hia-document:stylehook-profilecard-profile-card",
-      "hia-document:token-color.button.foreground"
+      "hia-document:token-color.button.foreground",
+      "hia-document:dotnet-t-hiadocumentationsample.envelope-1",
+      "hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string"
     ],
-    "minimumDocSourceMapCount": 6,
+    "minimumDocSourceMapCount": 7,
     "minimumPanelSourceMapCount": 5,
-    "requiredProducerCount": 7,
+    "requiredProducerCount": 8,
     "requiredLocales": [
       "en",
       "zh-CN"

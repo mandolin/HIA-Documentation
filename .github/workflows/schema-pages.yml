@@ -35,6 +35,12 @@ jobs:
           # English: Build on the declared Node.js 24 floor rather than the runner's older 24.21.0 cache.
           node-version: 24.22.1
 
+      # 中文：编译唯一公开.NET样本并运行现有Roslyn来源工具。 English: Compile the first-party .NET sample and run the existing Roslyn source tool.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
       - name: Enable pnpm
         run: |
           corepack enable
@@ -108,6 +114,15 @@ jobs:
           token: ${{ steps.reference_app_token.outputs.token }}
           persist-credentials: false
 
+      - name: Check out hia-dotnetdoc
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/hia-dotnetdoc
+          ref: main
+          path: reference/sources/hia-dotnetdoc
+          token: ${{ steps.reference_app_token.outputs.token }}
+          persist-credentials: false
+
       - name: Check out hia-vuedoc
         uses: actions/checkout@v6
         with:
@@ -146,8 +161,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          # 中文：安装集合来自既有七源声明，不把两个归档owner误当reference输入工程。
-          # English: Install only the seven declared sources, never treating archive owners as reference input projects.
+          # 中文：安装集合来自既有八个卫星来源声明，不把两个归档owner误当reference输入工程。
+          # English: Install only the eight declared satellite sources, never treating archive owners as reference input projects.
           $definition=Get-Content reference/public-reference-build.definition.json -Raw|ConvertFrom-Json
           foreach($source in $definition.sources|Where-Object {$_.workspace -eq 'source'}){
             Push-Location (Join-Path reference/sources $source.id)

@@ -55,3 +55,35 @@ test('limits extraction to the first-party XML and C# inputs with current schema
   assert.doesNotMatch(project, /<PackageReference\b/);
   assert(fs.existsSync(path.join(sample, config.inputs[1].path)));
 });
+
+test('includes the compiled first-party .NET sample in the public producer allowlist', () => {
+  // <lang><zh-CN>源码归主仓，提取器来自单独.NET仓；只读取一个编译XML输入避免声明重复。</zh-CN><en>The main repository owns the sample while the .NET repository owns extraction; one compiled XML input avoids duplicate declarations.</en></lang>
+  const definition = JSON.parse(fs.readFileSync(new URL('../reference/public-reference-build.definition.json', import.meta.url), 'utf8'));
+  assert(definition.sources.some(source => source.id === 'hia-dotnetdoc' && source.repository === 'mandolin/hia-dotnetdoc' && source.workspace === 'source'));
+  const producer = definition.producers.find(item => item.id === 'main-repo-dotnet-sample');
+  assert(producer);
+  assert.equal(producer.sourceId, 'main-repo');
+  assert.equal(producer.moduleSourceId, 'hia-dotnetdoc');
+  assert.equal(producer.inputs.length, 1);
+  assert.equal(producer.inputs[0].kind, 'dotnet-xml-doc');
+  assert.equal(producer.inputs[0].path, 'reference/samples/dotnet/bin/Release/net10.0/HiaDocumentationSample.xml');
+  assert.equal(producer.inputs[0].projectPath, 'reference/samples/dotnet/HiaDocumentationSample.csproj');
+  assert.equal(producer.options.writeDocSourceMapArtifact, true);
+  assert.equal(definition.acceptance.requiredProducerCount, definition.producers.length);
+  assert.equal(definition.acceptance.minimumEntryCounts.dotnet, 2);
+});
+
+test('requires both canonical .NET declarations and installs the SDK in public build workflows', () => {
+  // <lang><zh-CN>显式ID防止只有总数量通过；两条实际生产工作流都必须取得SDK和领域生产器。</zh-CN><en>Explicit IDs prevent count-only acceptance; both production workflows must acquire the SDK and domain producer.</en></lang>
+  const definition = JSON.parse(fs.readFileSync(new URL('../reference/public-reference-build.definition.json', import.meta.url), 'utf8'));
+  for (const id of ['hia-document:dotnet-t-hiadocumentationsample.envelope-1', 'hia-document:dotnet-m-hiadocumentationsample.envelope-1.formatlabel-system.string']) {
+    assert(definition.acceptance.requiredEntryIds.includes(id));
+  }
+  for (const name of ['public-reference-build.yml', 'schema-pages.yml']) {
+    const workflow = fs.readFileSync(new URL(`../.github/workflows/${name}`, import.meta.url), 'utf8');
+    assert.match(workflow, /uses: actions\/setup-dotnet@v5/);
+    assert.match(workflow, /dotnet-version: 10\.0\.x/);
+    assert.match(workflow, /repository: mandolin\/hia-dotnetdoc/);
+    assert.match(workflow, /path: reference\/sources\/hia-dotnetdoc/);
+  }
+});
