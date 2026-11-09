@@ -115,6 +115,7 @@ const portalUiMessageRecords: readonly PortalUiMessageRecord[] = [
   message("portal.noscript.pageindex", "页面索引", "Page index", [[noScript, visible]]),
   message("portal.noscript.localealternate", "切换到 {locale}", "Switch to {locale}", [[noScript, visible], [noScript, accessible]], ["locale"]),
   message("portal.section.summary", "摘要", "Summary", [[interactive, visible], [noScript, visible]]),
+  message("portal.section.localizedfields", "本地化字段", "Localized fields", [[interactive, visible], [noScript, visible]]),
   message("portal.section.declaration", "声明", "Declaration", [[interactive, visible], [noScript, visible]]),
   message("portal.section.metadata", "元数据", "Metadata", [[interactive, visible], [noScript, visible]]),
   message("portal.section.contract", "契约", "Contract", [[interactive, visible], [noScript, visible]]),

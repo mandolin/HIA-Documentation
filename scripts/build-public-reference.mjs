@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, wri
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
+import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -234,11 +234,13 @@ function materializeProjectManifest(definition, sourceRoots, runtime, workspaceR
 
 function buildLocale({ definition, locale, outputRoot, projectManifestPath, sourceConfigPath, resolvedMainRepoRoot }) {
   const localeOutput = path.join(outputRoot, locale);
+  // <lang><zh-CN>本站每语言显式采用既有UI/信息架构，来源相对根及许可由同目录配置保留。</zh-CN><en>Explicitly adopt existing UI/IA for each site locale, preserving source-root resolution and authorization in the same directory.</en></lang>
+  const localeConfigPath = preparePublicReferenceLocaleConfig(sourceConfigPath, locale);
   runMainRepoCli(resolvedMainRepoRoot, [
     "docs",
     "build",
     "--config",
-    sourceConfigPath,
+    localeConfigPath,
     "--project-manifest",
     projectManifestPath,
     "--out",

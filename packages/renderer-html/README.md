@@ -15,6 +15,10 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ## Current Scope
 
+中文。显式信息架构的附加字段标题与元数据、源码状态共用界面语言消息目录。正文保有各自语言标记，界面与正文可分别切换；兼容入口继续使用原有标题。
+
+English. Explicit-IA additional-field headings share the UI-language catalog used by metadata and source states. Prose retains its own language markers, and UI and content languages switch independently. Compatibility entry points retain their existing headings.
+
 中文。.NET 导航按程序集与文档类型身份分组。类型声明提供的语义显示名用于标签，成员的父类型文档标识用于归属；旧文档可从文档标识取得所属类型，保留泛型参数数量。导航中的类型入口可以展开到成员入口。
 
 English. .NET navigation groups entries by assembly and documentation type identity. Declaration-provided semantic names supply labels, while parent type documentation IDs associate members. Legacy documentation IDs retain generic arity and supply owner-type fallbacks. Type navigation entries expand to member entries.

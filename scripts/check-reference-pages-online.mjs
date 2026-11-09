@@ -91,6 +91,14 @@ async function checkPublication() {
   for (const locale of siteManifest.locales) {
     // <lang><zh-CN>线上索引必须含显式关键条目，包括.NET类型与方法，避免只部署了新的来源计数。</zh-CN><en>The published index must contain canonical required entries, including the .NET type and method, beyond updated provenance counts.</en></lang>
     const projectIndex = await fetchJson(`${locale}/project-index.json`);
+    // <lang><zh-CN>运维检查无需构建本地包；核实际部署的owner报告、两种语言模式和钴蓝资产。</zh-CN><en>Operations requires no local package build; check the deployed owner report, both UI-language modes and cobalt asset.</en></lang>
+    const ia = projectIndex.site?.informationArchitecture;
+    assert(ia?.contentGrouping === "entry" && ia.loadingStrategy === "lazy" && ia.memberPlacement === "separate" && ia.localeModel.uiLocale === locale, `${locale}: published reference UI adoption drifted.`);
+    const uiReport = await fetchJson(`${locale}/documentation-ui-locale-completeness.json`);
+    assert(uiReport.contract === "documentation-ui-locale-completeness" && uiReport.contractVersion === "1.0.0" && uiReport.profileId === "portal.default" && uiReport.status === "complete", `${locale}: published reference UI report is missing or incomplete.`);
+    assert(uiReport.evaluations?.length === 4 && uiReport.evaluations.every(item => item.status === "complete" && item.documentLanguage === item.uiLocale && item.summary.fallback === 0 && item.summary.missing === 0), `${locale}: published UI-language evaluations drifted.`);
+    assert(projectIndex.site.uiLocaleCompleteness?.path === "documentation-ui-locale-completeness.json" && projectIndex.site.uiLocaleCompleteness.status === uiReport.status, `${locale}: published UI report linkage drifted.`);
+    assert(/--hia-color-accent:\s*#0047AB;/i.test(await fetchText(`${locale}/assets/hia-default.css`)), `${locale}: published cobalt brand is missing.`);
     const entryIds = new Set((projectIndex.entries ?? []).map(entry => entry.id));
     for (const entryId of referenceDefinition.acceptance.requiredEntryIds) {
       assert(entryIds.has(entryId), `${locale}: published required reference entry missing: ${entryId}`);
@@ -105,6 +113,10 @@ async function checkPublication() {
     // <lang><zh-CN>新增.NET源码必须真实部署为同源纯文本，摘要与行号页均可消费。</zh-CN><en>Publish .NET source as consumable same-origin plain text with matching digests and line pages.</en></lang>
     for (const id of [sampleTypeId, sampleMemberId]) {
       const entry = projectIndex.entries.find(item => item.id === id);
+      const localizedPage = entry?.noScriptLocalePages?.find(page => page.uiLocale === locale);
+      assert(localizedPage?.path.startsWith(`pages/${locale}/`), `${locale}: published localized topic path is missing.`);
+      const topicHtml = await fetchText(`${locale}/${localizedPage.path}`);
+      assert(topicHtml.includes(`<html lang="${locale}"`) && topicHtml.includes('data-hia-ui-message="portal.section.localizedfields"') && topicHtml.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: published topic UI messages are missing.`);
       const asset = entry?.source?.publicAsset;
       assert(asset && entry.source.fetchUrl === asset.relativeUrl && entry.source.linkUrl === asset.linkUrl && /^sources\/[a-f0-9]+\.txt$/.test(asset.relativeUrl), `${locale}: published .NET source asset missing.`);
       const response = await fetchWithCacheBust(`${locale}/${asset.relativeUrl}`, "text/plain");

@@ -4545,7 +4545,7 @@ function renderProjectSemanticTopicInternal(
   const members = collectProjectEntryMembers(entry, projectInput.entries);
   const sections = [
     // <lang><zh-CN>显式IA保留既有section顺序，在正文分区内加入完整字段，避免建立第二条内容降级路径。</zh-CN><en>Explicit IA retains section order while including full fields inside the prose section, avoiding a second content-loss route.</en></lang>
-    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale) + renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry)), portalContext),
+    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale) + renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry), portalContext), portalContext),
     renderProjectTopicSection(
       "declaration",
       "portal.section.declaration",
@@ -6377,7 +6377,17 @@ function getPrimaryI18nFieldPath(owner: I18nFieldOwner): string {
  * @lang zh-CN 按原顺序遍历所有附加字段；不按.NET字段清单过滤，不修改输入或把字段文本当HTML。
  * @lang en Iterates all additional fields in input order without a .NET whitelist, input mutation, or interpreting field text as HTML.
  */
-function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description"): string {
+/**
+ * @lang zh-CN 完整呈现主字段之外的本地化正文；已采用Portal使用其独立UI语言，旧调用保留原标题。
+ * @lang en Renders all localized prose beyond the primary field, using the adopted Portal's independent UI language while retaining the legacy heading for other callers.
+ * @param symbol <lang><zh-CN>字段所有者，仅读取不修改。</zh-CN><en>Read-only field owner.</en></lang>
+ * @param locales <lang><zh-CN>实际正文语言集合。</zh-CN><en>Actual content locales.</en></lang>
+ * @param selectedLocale <lang><zh-CN>当前可见正文语言。</zh-CN><en>Currently visible content locale.</en></lang>
+ * @param primaryPath <lang><zh-CN>已显示的主字段，默认description。</zh-CN><en>Already displayed primary field, defaulting to description.</en></lang>
+ * @param portalContext <lang><zh-CN>可选已采用Portal上下文，用于标题及切换标记。</zh-CN><en>Optional adopted Portal context for the heading and switching marker.</en></lang>
+ * @returns <lang><zh-CN>完整附加字段HTML，没有可见字段则为空。</zh-CN><en>Complete additional-field HTML, or an empty string without renderable fields.</en></lang>
+ */
+function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description", portalContext?: RenderProjectPortalContext): string {
   const fields = symbol.i18n?.fields || {};
   // <lang><zh-CN>只移除已显示的主字段，允许summary与description同时完整显示。</zh-CN><en>Remove only the already-rendered primary field, allowing summary and description to coexist completely.</en></lang>
   const fieldEntries = Object.entries(fields).filter(([fieldPath]) => fieldPath !== primaryPath);
@@ -6395,7 +6405,7 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
     })
     .join("");
 
-  return items ? `<section class="hia-i18n-fields"><h3>Localized Fields</h3><dl>${items}</dl></section>` : "";
+  return items ? `<section class="hia-i18n-fields"><h3>${renderOptionalProjectUiMessage(portalContext, "portal.section.localizedfields", "Localized Fields")}</h3><dl>${items}</dl></section>` : "";
 }
 
 /**

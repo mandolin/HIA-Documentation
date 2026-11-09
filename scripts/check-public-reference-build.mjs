@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import { validateDocumentationUiLocaleCompletenessReport } from "../packages/core/dist/index.js";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -36,12 +37,43 @@ function main() {
   for (const locale of expectedLocales) {
     checkLocale(definition, outputRoot, locale);
     checkDotnetSample(outputRoot, locale);
+    checkPortalUi(outputRoot, locale);
   }
   checkSourceLinkage(definition, outputRoot, report.sourceLinkage);
   assertNoPrivateOutput(definition, outputRoot);
   assert(!existsSync(path.join(outputRoot, ".runtime")), "Public reference artifact must not retain runtime producer wrappers.");
 
   console.log(`Public reference build check passed: ${expectedLocales.length} locales, ${expectedSources.length} resolved sources, ${definition.producers.length} producers.`);
+}
+
+/**
+ * @lang zh-CN 核对本站显式信息架构、实际UI报告与静态语言路由；正文与来源另由领域门禁核验。
+ * @lang en Checks this site's explicit IA, actual UI report and static language routes, leaving prose and source checks to domain gates.
+ * @param {string} outputRoot <lang><zh-CN>公开构建根。</zh-CN><en>Public build root.</en></lang>
+ * @param {string} locale <lang><zh-CN>当前目录语言。</zh-CN><en>Current directory locale.</en></lang>
+ * @returns {void} <lang><zh-CN>缺失采用、报告或路由时抛错。</zh-CN><en>Throws when adoption, reports or routes are missing.</en></lang>
+ */
+function checkPortalUi(outputRoot, locale) {
+  const root = path.join(outputRoot, locale);
+  const index = readJson(path.join(root, 'project-index.json'));
+  const ia = index.site?.informationArchitecture;
+  assert(ia?.contentGrouping === 'entry' && ia.loadingStrategy === 'lazy' && ia.memberPlacement === 'separate' && ia.localeModel.uiLocale === locale, `${locale}: reference Portal UI adoption drifted.`);
+  // <lang><zh-CN>固定owner路径与当前契约读取器共同拒绝旧报告或伪完整状态。</zh-CN><en>The fixed owner path and current contract reader reject legacy reports or a false complete status.</en></lang>
+  const report = readJson(path.join(root, 'documentation-ui-locale-completeness.json'));
+  assert(report.contractVersion === '1.0.0' && report.status === 'complete' && validateDocumentationUiLocaleCompletenessReport(report).length === 0, `${locale}: reference UI report is invalid or incomplete.`);
+  assert(index.site.uiLocaleCompleteness?.path === 'documentation-ui-locale-completeness.json' && index.site.uiLocaleCompleteness.status === report.status, `${locale}: reference UI report linkage drifted.`);
+  const shell = readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert(shell.includes(`<html lang="${locale}"`) && shell.includes('data-hia-ui-message="portal.locale.uilabel"'), `${locale}: reference UI language markers are missing.`);
+  assert(/--hia-color-accent:\s*#0047AB;/i.test(readFileSync(path.join(root, 'assets/hia-default.css'), 'utf8')), `${locale}: reference cobalt brand is missing.`);
+  // <lang><zh-CN>每个真实条目的两语言无脚本入口均须落盘，不能仅有索引声明。</zh-CN><en>Both no-script UI-language routes must exist for every real entry, beyond index declarations.</en></lang>
+  for (const entry of index.entries) for (const uiLocale of ['zh-CN', 'en']) {
+    const page = entry.noScriptLocalePages?.find(item => item.uiLocale === uiLocale);
+    assert(page?.path.startsWith(`pages/${uiLocale}/`) && existsSync(path.join(root, page.path)), `${locale}: localized no-script entry is missing.`);
+  }
+  for (const entry of index.entries.filter(item => item.view === 'dotnet')) {
+    const topic = readFileSync(path.join(root, entry.contentPath), 'utf8');
+    assert(topic.includes('data-hia-ui-message="portal.section.localizedfields"') && topic.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: reference topic UI messages are missing.`);
+  }
 }
 
 /**

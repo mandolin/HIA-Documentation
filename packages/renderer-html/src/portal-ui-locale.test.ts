@@ -68,6 +68,21 @@ function createUiLocalePortalFixture(): RenderProjectHtmlInput {
 }
 
 describe("W-P125 Portal UI locale owner adoption", () => {
+  it.each(["zh-CN", "en"] as const)("localizes additional-field headings on interactive and no-script routes in %s", locale => {
+    // <lang><zh-CN>正文语言不控制界面标题，附加字段自身保留独立语言标记。</zh-CN><en>Content language does not control UI headings, and additional prose retains its own language markers.</en></lang>
+    const input = createUiLocalePortalFixture();
+    input.entries[0]!.i18n!.fields.remarks = {fieldPath: "remarks", kind: "remarks", defaultLocale: "zh-CN", localizedText: {"zh-CN": "公开测试备注。", en: "Public fixture remarks."}};
+    const result = renderProjectHtmlDocument(input, {locale: "zh-CN", projectSite: {uiLocale: locale, informationArchitecture: {}}});
+    const topic = result.files.find(file => file.path.startsWith("entries/"))!.contents;
+    const noScript = result.files.find(file => file.path.startsWith(`pages/${locale}/`) && !file.path.endsWith("/index.html"))!.contents;
+    for (const html of [topic, noScript]) {
+      expect(html).toContain('data-hia-ui-message="portal.section.localizedfields"');
+      expect(html).toContain(locale === "zh-CN" ? ">本地化字段</span>" : ">Localized fields</span>");
+      expect(html).toContain('data-hia-locale="zh-CN" lang="zh-CN"');
+      expect(html).toContain('data-hia-locale="en" lang="en"');
+    }
+  });
+
   it("requires caller-explicit UI locale before an explicit IA build emits files", () => {
     expect(() => renderProjectHtmlDocument(createUiLocalePortalFixture(), {
       projectSite: { informationArchitecture: {} }

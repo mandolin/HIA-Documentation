@@ -2,6 +2,12 @@
 
 The public reference build assembles first-party HIA documentation artifacts from an explicit source allowlist. The build command produces a checked artifact; Pages deployment is a separate workflow step. Private workspace materials are excluded.
 
+## Portal interface language and brand
+
+中文。每个中英文参考目录都显式采用条目分组、惰性加载及独立成员入口，界面语言初始值与该目录对应。既有语言控件可分别切换界面和正文，每个条目另有中英文界面的无脚本页面。构建使用真实消息输入生成界面语言完整性报告，上传前核验报告、静态路由和钴蓝 `#0047AB`。源码许可仍来自同一个单文件镜像配置。
+
+English. Each Chinese or English reference directory explicitly uses entry grouping, lazy loading and separate member entries, with its UI language initially matching the directory. Existing controls switch interface and content languages independently. Every entry also has Chinese-UI and English-UI no-script pages. Actual message inputs generate the UI-language completeness report. Pre-upload checks require the report, static routes and cobalt `#0047AB`. Source authorization comes from the same single-file mirror config.
+
 ## Source Boundary
 
 The canonical definition is [`reference/public-reference-build.definition.json`](../reference/public-reference-build.definition.json). It requires the `main-repo` checkout and these eight selected repositories:

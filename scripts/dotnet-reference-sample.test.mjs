@@ -9,10 +9,46 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
 import {validateHiaProjectConfig, validateHiaProjectManifest} from '../packages/config/dist/index.js';
-import {preparePublicReferenceSourceConfig} from './public-reference-source.mjs';
+import {preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig} from './public-reference-source.mjs';
 
 // <lang><zh-CN>固定公开owner的显式样本根，测试不扫描WorkZone或业务仓。</zh-CN><en>Fix the public owner's explicit sample root without scanning WorkZone or business repositories.</en></lang>
 const sample = fileURLToPath(new URL('../reference/samples/dotnet/', import.meta.url));
+
+for (const locale of ['zh-CN', 'en']) test(`derives an explicit localized reference config for ${locale}`, context => {
+  // <lang><zh-CN>派生配置与单文件镜像共享目录，继承同一读取边界。</zh-CN><en>The derived config shares the mirror directory and inherits the same read boundary.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  const sourceConfig = preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime);
+  const original = fs.readFileSync(sourceConfig, 'utf8');
+  const configPath = preparePublicReferenceLocaleConfig(sourceConfig, locale);
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  assert.deepEqual(validateHiaProjectConfig(config), []);
+  assert.equal(path.dirname(configPath), path.dirname(sourceConfig));
+  assert.equal(config.docs.renderer.uiLocale, locale);
+  assert.equal(config.docs.renderer.projectLayout, 'split-site');
+  assert.deepEqual(config.docs.renderer.informationArchitecture, {contentGrouping: 'entry', loadingStrategy: 'lazy', memberPlacement: 'separate'});
+  assert.deepEqual(config.docs.theme, {name: 'default', colors: {accent: '#0047AB'}});
+  assert.deepEqual(config.docs.source, JSON.parse(original).docs.source);
+  assert.equal(fs.readFileSync(sourceConfig, 'utf8'), original);
+});
+
+test('refuses unsupported reference UI locales before writing a config', context => {
+  // <lang><zh-CN>闭集沿用实际公开构建的两语言，不通过文件名接受任意路径。</zh-CN><en>Keep the actual build's two-locale set, excluding arbitrary path input.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  const sourceConfig = preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime);
+  const before = fs.readdirSync(fixture.runtime);
+  assert.throws(() => preparePublicReferenceLocaleConfig(sourceConfig, '../unknown'), /Unsupported public reference UI locale/);
+  assert.deepEqual(fs.readdirSync(fixture.runtime), before);
+});
+
+test('refuses an existing localized config without changing its bytes', context => {
+  // <lang><zh-CN>独占运行目录仍拒绝同名覆盖，避免部分失败被后续重试掩盖。</zh-CN><en>Even inside an exclusive runtime, refuse name reuse so retries cannot conceal partial failures.</en></lang>
+  const fixture = createSourceConfigFixture(context);
+  const sourceConfig = preparePublicReferenceSourceConfig(fixture.owner, fixture.runtime);
+  const config = preparePublicReferenceLocaleConfig(sourceConfig, 'en');
+  fs.writeFileSync(config, 'existing fixture');
+  assert.throws(() => preparePublicReferenceLocaleConfig(sourceConfig, 'en'), {code: 'EEXIST'});
+  assert.equal(fs.readFileSync(config, 'utf8'), 'existing fixture');
+});
 
 /**
  * @lang zh-CN 在主仓忽略目录创建独占测试owner，清理前核绝对目标仍在该测试根内。

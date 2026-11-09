@@ -1,6 +1,6 @@
 /** @file @lang zh-CN 为公开参考构建暂存唯一获准的自有源码文件，配置复用既有来源契约。 @lang en Stages the sole authorized first-party source file for public reference builds using the existing source configuration contract. */
 import assert from 'node:assert/strict';
-import {constants, copyFileSync, mkdirSync, realpathSync, writeFileSync} from 'node:fs';
+import {constants, copyFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 
 /**
@@ -40,6 +40,36 @@ export function preparePublicReferenceSourceConfig(mainRepoRoot, runtimeRoot) {
         localRoot: 'source-root',
         maxLines: 400
       }
+    }
+  };
+  writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', {encoding: 'utf8', flag: 'wx'});
+  return configPath;
+}
+
+/**
+ * @lang zh-CN 在同一独占目录派生本站每语言配置，复用既有信息架构、UI语言及主题能力，来源许可精确保留。
+ * @lang en Derives this site's per-locale config inside the same exclusive directory using existing IA, UI-language and theme capabilities, preserving source authorization exactly.
+ * @param {string} sourceConfigPath <lang><zh-CN>本次构建刚生成的单文件来源配置绝对路径。</zh-CN><en>Absolute source-config path just produced by this build.</en></lang>
+ * @param {'zh-CN'|'en'} locale <lang><zh-CN>显式界面语言，与本次参考正文目录对应。</zh-CN><en>Explicit UI language matching this reference content directory.</en></lang>
+ * @returns {string} <lang><zh-CN>新配置绝对路径，与来源镜像一同由调用方清理。</zh-CN><en>Absolute derived-config path, cleaned with the source mirror by the caller.</en></lang>
+ * @throws {Error} <lang><zh-CN>不支持的语言、已有文件、来源JSON或文件操作失败时拒绝；不会覆盖原文件。</zh-CN><en>Rejects unsupported locales, existing files, invalid source JSON or filesystem failures without overwriting originals.</en></lang>
+ */
+export function preparePublicReferenceLocaleConfig(sourceConfigPath, locale) {
+  assert(locale === 'zh-CN' || locale === 'en', 'Unsupported public reference UI locale.');
+  // <lang><zh-CN>相同目录保持原相对localRoot的解释，源配置来自本次受控构建。</zh-CN><en>The shared directory preserves relative localRoot resolution; the input comes from this controlled build.</en></lang>
+  const sourceConfig = JSON.parse(readFileSync(sourceConfigPath, 'utf8'));
+  const configPath = path.join(path.dirname(sourceConfigPath), `portal-${locale}.config.json`);
+  // <lang><zh-CN>只显式采用已支持的呈现选项，独立入口及惰性加载继续保留。</zh-CN><en>Adopt supported presentation options explicitly, retaining separate entries and lazy loading.</en></lang>
+  const config = {
+    ...sourceConfig,
+    docs: {
+      ...sourceConfig.docs,
+      renderer: {
+        projectLayout: 'split-site',
+        informationArchitecture: {contentGrouping: 'entry', loadingStrategy: 'lazy', memberPlacement: 'separate'},
+        uiLocale: locale
+      },
+      theme: {name: 'default', colors: {accent: '#0047AB'}}
     }
   };
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', {encoding: 'utf8', flag: 'wx'});
