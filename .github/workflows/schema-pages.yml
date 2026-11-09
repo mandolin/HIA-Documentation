@@ -167,7 +167,9 @@ jobs:
           foreach($source in $definition.sources|Where-Object {$_.workspace -eq 'source'}){
             Push-Location (Join-Path reference/sources $source.id)
             try{
-              npm ci --ignore-scripts --no-audit --no-fund
+              # 中文：将锁中既有镜像主机定向映射到npm官方源，继续校验原版本和integrity。
+              # English: Map the existing mirror host to the official npm registry while verifying locked versions and integrity.
+              npm ci --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org --replace-registry-host=registry.npmmirror.com
               if($LASTEXITCODE){throw 'Selected reference source installation failed.'}
             }finally{Pop-Location}
           }

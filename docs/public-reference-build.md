@@ -27,6 +27,10 @@ The JSDoc umbrella retains the reviewed `main` ref; its resolved commit is recor
 
 Installation iterates the definition's eight `workspace: source` records. The two archive owners are build dependencies rather than extra source producers or entries in the reference provenance inventory. When the umbrella changes its owner declarations, update both workflows to the newly declared exact owner commits and verify archive identities. The preparation helper rejects mismatching checkouts. Local checkouts need the same preparation before building; no owner manifest or lock rewrite is required.
 
+中文。两条参考构建工作流在 `npm ci` 时显式选择官方 npm registry，并用 `--replace-registry-host=registry.npmmirror.com` 定向替换旧锁中的镜像主机。npm 继续使用锁定版本并验证原 integrity，源仓库的 lockfile 保持原字节；文件归档及其它主机不属于此定向替换范围。这样，镜像服务的数据库或 HTTP 故障不会阻断这些公开依赖的安装。
+
+English. Both reference-build workflows explicitly select the official npm registry during `npm ci` and use `--replace-registry-host=registry.npmmirror.com` to replace that host in older locks. npm keeps locked versions and verifies their original integrity values. Owner lockfile bytes are retained. File archives and other hosts stay outside this targeted replacement. Mirror-service database or HTTP failures therefore do not block installation of these public dependencies.
+
 ## First-party .NET sample
 
 中文。公开构建需要稳定 .NET 10 SDK。正常 `reference:build` 入口先对本仓的 `reference/samples/dotnet/HiaDocumentationSample.csproj` 执行 Release 编译，生成 XML 后交给现有 DotNetDoc 生产器，并用同一工程取得 C# 声明来源。首次编译包含还原并写入样本 bin/obj，失败时阻断后续构建；来源快照记录主仓及 DotNetDoc 各自提交。
