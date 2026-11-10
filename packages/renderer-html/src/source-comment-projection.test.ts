@@ -67,7 +67,7 @@ describe("renderer source-comment projection", () => {
     expect(projectIndex).toContain("documentation-source-comment-projection");
     expect(projectIndex).not.toContain("安全生成");
     expect(projectIndex).not.toContain("projectedText");
-    expect(projectIndex).toContain('"projectedCommentTextIncluded": false');
+    expect(JSON.parse(projectIndex).entries[0].sourceCommentProjection.privacy.projectedCommentTextIncluded).toBe(false);
   });
 
   it("keeps metadata visible and body absent when renderer content policy is none", () => {

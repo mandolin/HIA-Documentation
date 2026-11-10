@@ -356,7 +356,8 @@ export function createPortalPresentationBundle(options: PortalPresentationBundle
 
   const profileArtifact: PortalPresentationArtifact = {
     path: PORTAL_PRESENTATION_PROFILE_PATH,
-    contents: `${JSON.stringify(profile, null, 2)}\n`,
+    // <lang><zh-CN>新生成的运行profile省去序列化缩进，保持同一已验证对象及结尾换行。</zh-CN><en>The newly generated runtime profile omits serialization indentation while retaining the same validated object and trailing newline.</en></lang>
+    contents: `${JSON.stringify(profile)}\n`,
     contentType: "application/json; charset=utf-8",
     role: "index"
   };

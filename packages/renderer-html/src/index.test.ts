@@ -877,7 +877,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(indexHtml).not.toContain("Method2999");
     expect(indexHtml).not.toContain("data-hia-project-entry=\"dotnet\"");
     expect(rootShard.length).toBeLessThan(1000);
-    expect(rootShard).toContain("\"id\": \"view:dotnet\"");
+    expect(JSON.parse(rootShard).children).toEqual(expect.arrayContaining([expect.objectContaining({ id: "view:dotnet" })]));
     expect(rootShard).not.toContain("Method2999");
   });
 
@@ -1329,7 +1329,7 @@ describe("@hia-doc/renderer-html", () => {
     expect(result.files.filter((file) => file.path.startsWith("entries/"))).toHaveLength(2951);
     expect(result.files.some((file) => file.path === "content/eager.json")).toBe(false);
     expect(rootShard.length).toBeLessThan(1000);
-    expect(rootShard).toContain('"id": "view:dotnet"');
+    expect(JSON.parse(rootShard).children).toEqual(expect.arrayContaining([expect.objectContaining({ id: "view:dotnet" })]));
     expect(rootShard).not.toContain("Method2950");
     expect(projectIndex.entries).toHaveLength(2951);
     expect(projectIndex.entries?.every((entry) => entry.sourceUsability?.resolution === "resolved")).toBe(true);

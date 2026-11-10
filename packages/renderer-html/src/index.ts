@@ -2455,7 +2455,8 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     if (localeReport) {
       yield { path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH, contents: `${localeReport.reportJson}\n`, contentType: "application/json; charset=utf-8", role: "index" };
     }
-    yield { path: "project-index.json", contents: `${JSON.stringify(navigationIndex, null, 2)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
+    // <lang><zh-CN>直接序列化既有模型时省略展示缩进，字符串数据保留；输入工件和源码快照走原复制边界。</zh-CN><en>Omit presentation indentation when serializing existing models while preserving string data; input artifacts and source snapshots retain their copy boundaries.</en></lang>
+    yield { path: "project-index.json", contents: `${JSON.stringify(navigationIndex)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
     yield* presentationBundle.artifacts;
     if (includeThemeAssets) {
       for (const asset of assets) yield { path: asset.path, contents: asset.contents, contentType: asset.contentType, role: "asset" };
@@ -3146,13 +3147,13 @@ function* createProjectSplitSiteFiles(
             : {}),
           searchText: createProjectEntrySearchText(entry)
         }))
-      }, null, 2)}\n`,
+      })}\n`,
       contentType: "application/json; charset=utf-8",
       role: "index"
     },
     {
       path: "relations/project.json",
-      contents: `${JSON.stringify(projectInput.relationGraph ?? createProjectRelationGraph(projectInput.entries), null, 2)}\n`,
+      contents: `${JSON.stringify(projectInput.relationGraph ?? createProjectRelationGraph(projectInput.entries))}\n`,
       contentType: "application/json; charset=utf-8",
       role: "index"
     }
@@ -3280,7 +3281,7 @@ function* createProjectSplitSiteFiles(
         contract: "documentation-portal-eager-fragment-index",
         contractVersion: "0.1.0-draft",
         fragments
-      }, null, 2)}\n`,
+      })}\n`,
       contentType: "application/json; charset=utf-8",
       role: "index"
     });
@@ -3304,7 +3305,7 @@ function createProjectNavigationShardFiles(
         contractVersion: "0.1.0-draft",
         nodeId: "root",
         children: nodes
-      }, null, 2)}\n`,
+      })}\n`,
       contentType: "application/json; charset=utf-8",
       role: "index"
     }];
@@ -3323,7 +3324,7 @@ function createProjectNavigationShardFiles(
         contractVersion: "0.1.0-draft",
         nodeId,
         children: children.map(toLazyProjectNavigationNode)
-      }, null, 2)}\n`,
+      })}\n`,
       contentType: "application/json; charset=utf-8",
       role: "index"
     });

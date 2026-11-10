@@ -59,6 +59,12 @@ See the [sample instructions](../reference/samples/dotnet/README.md) for standal
 
 ## Local Verification
 
+### Generated output size
+
+中文。渲染器直接生成的项目索引、导航分片、搜索/关系数据、预载索引及呈现 profile 使用紧凑 JSON 序列化。字符串内部的空白、转义和语言正文保留，消费者按 JSON 数据读取。独立源码页复用同页行样式，保留所有行、锚点和原定位。原生包工件、Schema 和源码快照仍按其原字节发布。
+
+English. Renderer-generated project indexes, navigation shards, search/relation data, eager indexes and presentation profiles use compact JSON serialization. String whitespace, escapes and localized prose are preserved for JSON consumers. Standalone source pages reuse page-level line styles while retaining every line, anchor and original location. Native package artifacts, schemas and source snapshots retain their original publication bytes.
+
 ### Exported JSON resources
 
 中文。构建定义的 `packageResources` 显式选择 `@hia-doc/plugin-sdk` 的两个 JSON 导出。构建读取 `package.json` 指向的实际 `dist` 文件，以现有 JSONdoc SDK 生产器生成每个 JSON 值、容器父项、原始词法签名和 `doc-source-map@1.1.0`。独立 AST 审核及逐 Pointer 核验在生成和上传前执行。资源内容语言显式为 `und`，`$ref` 保留为词法记录。

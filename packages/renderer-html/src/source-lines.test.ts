@@ -13,6 +13,35 @@ function fixture(): RenderProjectHtmlInput {
   return { project: { id: "synthetic:lines", name: "Source lines" }, entries: [{ id: "api:a", name: "A", kind: "dotnet-method", view: "dotnet", source: { path: "src/public.cs", range: { start: { line: 21 }, end: { line: 22 } }, preview: { content: 'return "<script>synthetic</script>";\n// 中文 😀', range: { start: { line: 21 }, end: { line: 22 } } } } }] };
 }
 describe("source line views", () => {
+  it("shares existing page CSS without changing escaped lines, anchors or the default fragment", () => {
+    // <lang><zh-CN>带特殊字符/空行的相同片段仅移除重复样式属性，语义DOM与旧默认输出逐字核同。</zh-CN><en>For identical special-character/blank-line excerpts, remove only repeated style attributes and compare semantic DOM against the legacy default byte for byte.</en></lang>
+    const content = '<img src=x onerror="unsafe()"> & 中文 😀\n\nlast';
+    const legacy = renderSourceLines(content, 21, true);
+    const compact = renderSourceLines(content, 21, true, "stylesheet");
+    expect(legacy).toContain('style="display:block;min-width:max-content"');
+    expect(compact).not.toContain(' style="');
+    expect(compact).toBe(legacy.replace(/ style="[^"]*"/gu, ""));
+    expect(compact).toContain('id="L23"');
+    expect(compact).toContain('href="#L21"');
+    expect(compact).toContain('&lt;img');
+    expect(renderSourceLines(content, 21, false)).toContain('style="display:block;min-width:max-content"');
+    expect(renderSourceLines(content, 21, true, "unknown" as never)).toBe(legacy);
+  });
+
+  it("keeps all 400 source lines while eliminating repeated styles from standalone pages", () => {
+    // <lang><zh-CN>同一400行正文和定位保留，体积门禁拒绝逐行重复样式回归。</zh-CN><en>Keep the same 400-line text and targets, with a size gate rejecting per-line repeated-style regressions.</en></lang>
+    const content = Array.from({ length: 400 }, (_, index) => `const value${index} = "中文 & <safe>";`).join('\n');
+    const legacy = renderSourceLines(content, 52, true);
+    const page = renderPublicSourcePage(content, 'public.ts', 52);
+    const fragment = page.match(/<code>([\s\S]*?)<\/code>/u)![1]!;
+    expect(fragment === legacy.replace(/ style="[^"]*"/gu, "")).toBe(true);
+    expect(fragment.match(/data-hia-source-line-number=/gu)).toHaveLength(400);
+    expect(fragment).toContain('id="L451"');
+    expect(Buffer.byteLength(fragment)).toBeLessThan(Buffer.byteLength(legacy) * 0.65);
+    expect(page).toContain('.hia-source-code-line{display:block;min-width:max-content}');
+    expect(page).not.toContain('<script');
+  });
+
   it.each([0, -1, NaN, Infinity, '1" data-untrusted-position="yes'])('normalizes malformed runtime positions %s before HTML interpolation', (value) => {
     const fragment = renderSourceLines("safe", value as number, true);
     expect(fragment).toContain('id="L1"');

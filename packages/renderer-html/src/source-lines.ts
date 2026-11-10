@@ -13,18 +13,22 @@ const LINE_STYLE = ".hia-source-code-line{display:block;min-width:max-content}.h
  * @param content <lang><zh-CN>owner已限长的源码片段。</zh-CN><en>Source excerpt already bounded by its owner.</en></lang>
  * @param startLine <lang><zh-CN>片段的一基起始行；无效运行时值回退到1，绝不插入原始行号文本。</zh-CN><en>One-based first line; invalid runtime values fall back to one and never insert raw position text.</en></lang>
  * @param anchors <lang><zh-CN>仅独立页生成L行id。</zh-CN><en>Only standalone pages emit L-line IDs.</en></lang>
+ * @param styleMode <lang><zh-CN>默认inline保留自包含片段，stylesheet要求调用方已提供同行样式；其他运行时值采用inline。</zh-CN><en>Defaults to inline for self-contained fragments; stylesheet requires the caller to provide matching line styles, and other runtime values use inline.</en></lang>
  * @returns <lang><zh-CN>仅span/a与转义文本，无脚本。</zh-CN><en>Spans/anchors and escaped text only, without scripts.</en></lang>
  */
-export function renderSourceLines(content: string, startLine = 1, anchors = false): string {
+export function renderSourceLines(content: string, startLine = 1, anchors = false, styleMode: "inline" | "stylesheet" = "inline"): string {
   // <lang><zh-CN>JS调用者可能绕过TS类型；只允许正安全整数进入HTML数字位置，拒绝把位置解释成属性。</zh-CN><en>JS callers can bypass TS types; admit only positive safe integers into HTML number positions, never interpreting positions as attributes.</en></lang>
   const firstLine = Number.isSafeInteger(startLine) && startLine > 0 ? startLine : 1;
+  // <lang><zh-CN>同页规则已存在时省去每行两份重复属性，默认片段仍保留原内联样式和字节顺序。</zh-CN><en>When page rules exist, omit two repeated attributes per line while default fragments retain their original inline styles and byte order.</en></lang>
+  const rowStyle = styleMode === "stylesheet" ? "" : ' style="display:block;min-width:max-content"';
+  // <lang><zh-CN>行号列的固定规则由同一模式控制，独立页已有等价LINE_STYLE。</zh-CN><en>The same mode controls fixed gutter rules, already provided by LINE_STYLE on standalone pages.</en></lang>
+  const numberStyle = styleMode === "stylesheet" ? "" : ' style="display:inline-block;min-width:3ch;margin-inline-end:1.25rem;text-align:right;user-select:none"';
   // <lang><zh-CN>数组只覆盖有界片段，不读取其它源码；编号只来自数值，正文永远转义。</zh-CN><en>The array covers the bounded excerpt only without other source reads; numbers derive from numeric positions and bodies are always escaped.</en></lang>
   return content.split(/\r?\n/u).map((text, index) => {
     // <lang><zh-CN>行号来自片段原始位置；固定行号列不改变源码缩进，标签仅在独立页可点击。</zh-CN><en>Numbers follow original excerpt positions; the fixed gutter preserves code indentation and is clickable only on standalone pages.</en></lang>
     const number = firstLine + index;
-    const style = "display:inline-block;min-width:3ch;margin-inline-end:1.25rem;text-align:right;user-select:none";
-    const label = anchors ? `<a class="hia-source-line-number" href="#L${number}" aria-label="L${number}" style="${style}">${number}</a>` : `<span class="hia-source-line-number" aria-hidden="true" style="${style}">${number}</span>`;
-    return `<span class="hia-source-code-line" data-hia-source-line-number="${number}"${anchors ? ` id="L${number}" tabindex="-1"` : ""} style="display:block;min-width:max-content">${label}${escape(text)}</span>`;
+    const label = anchors ? `<a class="hia-source-line-number" href="#L${number}" aria-label="L${number}"${numberStyle}>${number}</a>` : `<span class="hia-source-line-number" aria-hidden="true"${numberStyle}>${number}</span>`;
+    return `<span class="hia-source-code-line" data-hia-source-line-number="${number}"${anchors ? ` id="L${number}" tabindex="-1"` : ""}${rowStyle}>${label}${escape(text)}</span>`;
   }).join("");
 }
 
@@ -37,7 +41,7 @@ export function renderSourceLines(content: string, startLine = 1, anchors = fals
  * @returns <lang><zh-CN>完整HTML；CSP禁止脚本/外部请求，长行局部滚动。</zh-CN><en>Complete HTML with CSP blocking scripts/external requests and local scrolling for long lines.</en></lang>
  */
 export function renderPublicSourcePage(content: string, sourcePath: string, startLine: number): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escape(sourcePath)} · Source / 源码</title><link rel="icon" href="data:,"><link rel="stylesheet" href="../assets/hia-default.css"><style>${LINE_STYLE}body{margin:0;padding:clamp(1rem,3vw,2rem)}main{max-width:70rem;margin:auto;padding:1rem;background:var(--hia-bg,#fff);border:1px solid var(--hia-border,#ac9474);border-radius:.7rem}h1{font-size:1.35rem;overflow-wrap:break-word}pre{overflow:auto;padding:1rem;line-height:1.6}</style></head><body><main><h1>${escape(sourcePath)} · Source / 源码</h1><pre class="hia-source-code"><code>${renderSourceLines(content, startLine, true)}</code></pre></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escape(sourcePath)} · Source / 源码</title><link rel="icon" href="data:,"><link rel="stylesheet" href="../assets/hia-default.css"><style>${LINE_STYLE}body{margin:0;padding:clamp(1rem,3vw,2rem)}main{max-width:70rem;margin:auto;padding:1rem;background:var(--hia-bg,#fff);border:1px solid var(--hia-border,#ac9474);border-radius:.7rem}h1{font-size:1.35rem;overflow-wrap:break-word}pre{overflow:auto;padding:1rem;line-height:1.6}</style></head><body><main><h1>${escape(sourcePath)} · Source / 源码</h1><pre class="hia-source-code"><code>${renderSourceLines(content, startLine, true, "stylesheet")}</code></pre></main></body></html>`;
 }
 
 /** @lang zh-CN 转义文本/属性的HTML特殊字符，不解释源码。 @lang en Escapes HTML-special characters in text/attributes without interpreting source. */

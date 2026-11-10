@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated reference size
+
+- 独立源码页复用同页已有行样式，省去逐行重复属性。运行索引、导航/搜索/关系数据及新生成呈现 profile 采用紧凑 JSON，保留原数据、正文空白、行号和路径。
+- Standalone source pages reuse existing page-level line styles. Runtime indexes, navigation/search/relation data and newly generated presentation profiles use compact JSON while preserving data, prose whitespace, line numbers and paths.
+
 ## Unreleased — JSONdoc module reference adoption
 
 - 公开参考采用 JSONdoc 根入口的四个真实绑定，保留函数、接口、属性、泛型结构与原生双语字段，通过既有通用 TypeScript 项目生产链生成并逐项校验。
