@@ -2,6 +2,12 @@
 
 The public reference build assembles first-party HIA documentation artifacts from an explicit source allowlist. The build command produces a checked artifact; Pages deployment is a separate workflow step. Private workspace materials are excluded.
 
+## Core package module APIs
+
+中文。清单的 `packageApis` 显式选择核心包，当前包含 `@hia-doc/plugin-sdk` 的三个模块入口。构建从真实包入口独立审核公开绑定，采用通用 TypeScript 项目生产器的精确 0.4 工件，经既有项目输入汇入参考站。原单文件样本继续保留。上传前重新核对实际入口、四种工件、每个声明的字段/签名/来源、可读页面及地图文件。包的 JSON 资源和命令入口分别核验。
+
+English. The definition's `packageApis` explicitly selects core packages, currently the three module entry points of `@hia-doc/plugin-sdk`. Builds independently inspect real package exports, generate exact 0.4 artifacts through the generic TypeScript project producer, and aggregate them through existing project inputs. The original single-file sample remains available. Pre-upload checks revalidate actual entries, all four artifacts, declaration fields/signatures/sources, readable pages, and map files. JSON resources and commands have separate acceptance criteria.
+
 ## Portal interface language and brand
 
 中文。每个中英文参考目录都显式采用条目分组、惰性加载及独立成员入口，界面语言初始值与该目录对应。既有语言控件可分别切换界面和正文，每个条目另有中英文界面的无脚本页面。构建使用真实消息输入生成界面语言完整性报告，上传前核验报告、静态路由和钴蓝 `#0047AB`。源码许可仍来自同一个单文件镜像配置。

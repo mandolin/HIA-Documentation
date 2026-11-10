@@ -13,7 +13,7 @@ import { collectPackageEntries, collectModuleExports, verifyCompiledSubpathSourc
  * @lang zh-CN 按显式首方允许清单审计实际导出；编译器不执行模块、发出JS或声称注释精度。
  * @lang en Audit actual exports against an explicit first-party allowlist; the compiler neither executes modules nor emits JS or claims comment precision.
  * @param {string} workspaceRoot - 包含main-repo/HIA的容器目录。 Container holding main-repo/HIA.
- * @param {object} [options] - 显式includeMembers时附加成员审核，不改变默认清单。 Explicit includeMembers adds member inspection without changing the default inventory.
+ * @param {object} [options] - 显式成员审核及packageNames包子集；省略仍审核默认45包。 Explicit member inspection and packageNames subset; omission retains the default 45-package audit.
  * @returns {object} 仅含安全相对路径/名称/版本/摘要的审核结果。 Audit containing only safe relative paths, names, versions, and hashes.
  * @throws {Error} 允许清单、包身份、源码或资源不完整。 Incomplete allowlist, identity, source, or resource.
  */
@@ -21,8 +21,12 @@ export function auditRequiredPackages(workspaceRoot, options = {}) {
   const mainRoot=fileURLToPath(new URL("../",import.meta.url));
   const scope=JSON.parse(fs.readFileSync(path.join(mainRoot,"reference/required-package-api.inputs.json"),"utf8"));
   if(scope.packages.length!==45 || new Set(scope.packages.map(item=>item.name)).size!==45) throw new Error("Required package scope must contain 45 unique names.");
+  // <lang><zh-CN>显式子集只选择固定允许清单中的包，默认仍审核全部45包；空/重复/未知选择在读取包前拒绝。</zh-CN><en>An explicit subset selects only allowlisted packages; omission still audits all 45, and empty, duplicate or unknown selections fail before package reads.</en></lang>
+  const names=options.packageNames;
+  if(names!==undefined && (!Array.isArray(names) || names.length===0 || new Set(names).size!==names.length || names.some(name=>!scope.packages.some(item=>item.name===name)))) throw new Error("Invalid package audit selection.");
   const packages=[];
   for(const item of scope.packages) {
+    if(names && !names.includes(item.name)) continue;
     // <lang lang="zh-CN">根来自固定owner而非清单任意绝对路径；实际manifest名称必须匹配。</lang><lang lang="en">Roots come from fixed owners rather than arbitrary absolute manifest paths; actual package names must match.</lang>
     if(!["main-repo","hia-jsdoc","hia-htmdoc","hia-cssdoc","hia-dotnetdoc","jsdoc-plugin-hia-sys","jsdoc-theme-hia"].includes(item.owner) || (item.directory && !/^packages\/[a-z0-9-]+$|^apps\/cli$/.test(item.directory))) throw new Error("Unknown package API owner or directory.");
     const ownerRoot=item.owner==="main-repo" ? mainRoot : path.join(workspaceRoot,"HIA",item.owner);

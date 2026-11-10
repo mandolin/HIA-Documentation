@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
+import {preparePublicReferencePackageApis} from "./public-reference-packages.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -73,7 +74,10 @@ async function main() {
 
   rmSync(outputRoot, { force: true, recursive: true });
   try {
+    // <lang><zh-CN>独立0.4上下文先核包工件，再通过已有逐输入profile引用汇入旧项目；不替换旧生产器或规范。</zh-CN><en>Verify package artifacts in an independent 0.4 context, then aggregate through existing per-input profile references without replacing legacy producers or profiles.</en></lang>
     const projectManifest = materializeProjectManifest(definition, sourceRoots, runtime, workspaceRoot, resolvedMainRepoRoot);
+    const packageInputs = await preparePublicReferencePackageApis({packageNames:definition.packageApis,workspaceRoot,mainRoot:resolvedMainRepoRoot,toolRoot:sourceRoots.get('hia-tsdoc'),outputRoot,locales:definition.acceptance.requiredLocales});
+    if(packageInputs.length) projectManifest.inputs=packageInputs;
     writeJson(ephemeralManifestPath, projectManifest);
     // <lang><zh-CN>源码读取仅授予独占单文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive single-file mirror, cleaned with its config in finally.</en></lang>
     const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root);

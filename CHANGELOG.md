@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Plugin SDK reference adoption
+
+- 公开参考接入插件SDK三个模块入口的真实项目工件，逐绑定/声明/字段/来源与地图校验，保留原单文件样本及既有入口。具名参数的 description 字段采用参数表，数字索引异常字段采用本地化标题，原字段身份与正文保持。
+- Adopt actual project artifacts for the plugin SDK's three module entries with binding, declaration, field, source and map checks, retaining the original single-file sample and existing routes. Named description fields use parameter tables, and indexed exception fields use localized headings while preserving field identities and prose.
+
 ## Unreleased — Prose source-language preservation
 
 - 正文段落按实际解析语言标记，语言控件继续按请求语言选中。项目CLI保留各HIA工件的裸摘要默认语言，未提供来源语言的直接项目调用明确输出未知语言，修复英文原文被标中文及反向回退徽标。

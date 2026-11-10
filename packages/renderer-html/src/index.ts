@@ -6545,7 +6545,7 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
    * @lang en Recognizes existing producer named-description fields, preserving names without inferring parameter types or values.
    */
   const namedCategory = (fieldPath: string) => {
-    const match = /^(params|parameters|typeParams|typeParameters|exceptions)\.(.+)\.summary$/u.exec(fieldPath);
+    const match = /^(params|parameters|typeParams|typeParameters|exceptions)\.(.+)\.(?:summary|description)$/u.exec(fieldPath);
     return match ? { category: match[1] === "params" ? "parameters" : match[1]!.toLowerCase().replace("typeparams", "typeparameters"), name: match[2]! } : undefined;
   };
   if (portalContext?.siteNavigation) {
@@ -6577,7 +6577,7 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
         }
         // <lang><zh-CN>标准API字段用已登记的双语标题；名称和原字段身份仍保留，扩展字段继续完整可读。</zh-CN><en>Use registered bilingual headings for standard API fields, retaining names and original field identities while preserving extension fields.</en></lang>
         // <lang><zh-CN>复用各生产器已存在的字段别名，只改变阅读标题，不迁移原工件身份。</zh-CN><en>Reuse existing producer field aliases for headings without migrating artifact identities.</en></lang>
-        const category = fieldPath === "returns.summary" ? "returns" : fieldPath.toLowerCase();
+        const category = fieldPath === "returns.summary" ? "returns" : /^throws\.\d+$/u.test(fieldPath) ? "exceptions" : fieldPath.toLowerCase();
         const known = ["remarks", "parameters", "typeparameters", "returns", "exceptions"].includes(category);
         const title = known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
         const anchor = `${ownerId}--field-${stableProjectArtifactName(fieldPath)}`;

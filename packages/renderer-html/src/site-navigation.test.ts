@@ -87,7 +87,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
   it("uses readable bilingual API field labels without losing field identities or prose", () => {
     const model = JSON.parse(readFileSync(new URL("../../../fixtures/basic.hia.json", import.meta.url), "utf8")).symbols[0].i18n;
     const field = model.fields.description;
-    model.fields = Object.fromEntries(Object.entries({ summary: ["Main summary", "主要摘要"], remarks: ["Important note", "重要备注"], "parameters.value.summary": ["Input value", "输入值"], "params.label.summary": ["Label parameter", "标签参数"], "typeParams.T.summary": ["Type argument", "类型参数说明"], "returns.summary": ["Result explanation", "结果说明"], returns: ["Returned value", "返回值"] }).map(([fieldPath, values]) => [fieldPath, { ...field, fieldPath, defaultText: values[1], localizedText: { en: values[0], "zh-CN": values[1] } }]));
+    model.fields = Object.fromEntries(Object.entries({ summary: ["Main summary", "主要摘要"], remarks: ["Important note", "重要备注"], "parameters.value.summary": ["Input value", "输入值"], "params.label.summary": ["Label parameter", "标签参数"], "params.actual.description": ["Actual parameter", "实际参数"], "throws.0": ["{TypeError} Invalid input", "{TypeError} 输入无效"], "typeParams.T.summary": ["Type argument", "类型参数说明"], "returns.summary": ["Result explanation", "结果说明"], returns: ["Returned value", "返回值"] }).map(([fieldPath, values]) => [fieldPath, { ...field, fieldPath, defaultText: values[1], localizedText: { en: values[0], "zh-CN": values[1] } }]));
     const input = { ...project(), entries: [{ ...project().entries[0]!, i18n: model }] };
     const result = renderProjectHtmlDocument(input, { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const fragment = result.files.find(file => file.path.startsWith("entries/"))!.contents;
@@ -104,6 +104,8 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(fragment.match(/data-hia-reading-section="parameters"/gu)).toHaveLength(1);
     expect(fragment).toContain('<td><code>value</code></td>');
     expect(fragment).toContain('<td><code>label</code></td>');
+    expect(fragment).toContain('<td><code>actual</code></td>');
+    expect(fragment).toContain('data-hia-ui-message="site.field.exceptions"');
     expect(fragment.indexOf('data-hia-topic-section="declaration"')).toBeLessThan(fragment.indexOf('data-hia-i18n-field="parameters.value.summary"'));
   });
 
