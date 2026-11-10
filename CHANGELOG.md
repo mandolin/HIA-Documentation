@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — HTML reference fragment input
+
+- 公开参考的固定HTML片段显式采用片段模式，恢复六个真实声明。上传前要求每个显式参考生产器贡献规范化条目，并固定六个HTML身份，阻止成功状态或其它领域总数掩盖空产物。
+- Select fragment mode for the fixed public HTML sample, restoring six actual declarations. Pre-upload checks require canonical entries from each explicit reference producer and all six HTML identities, preventing success statuses or other domains' totals from concealing empty output.
+
 ## Unreleased — Generated reference reading frame
 
 - 显式站点导航输出采用钴蓝阅读框架，提供响应式目录、真实小节链接、签名复制、当前页阅读设置及本地索引检索。静态条目和源码页保留无脚本路径、原行号与内容，目录或检索故障保留当前正文。

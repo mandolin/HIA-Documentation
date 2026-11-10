@@ -53,6 +53,10 @@ See the [sample instructions](../reference/samples/dotnet/README.md) for standal
 
 ## Local Verification
 
+中文。`htmdoc-basic-html` 的固定输入是HTML片段，清单显式使用 `html-fragment`。上传前逐生产器核实际规范化条目，并要求Alert组件、属性、插槽、事件、样式钩子及可访问性说明六个身份存在。其它来源的条目总数或成功状态不能替代该来源的内容。
+
+English. The fixed `htmdoc-basic-html` input is an HTML fragment and explicitly uses `html-fragment`. Pre-upload checks require actual canonical entries from each declared reference producer and all six Alert component, attribute, slot, event, style-hook, and accessibility identities. Other sources' totals or success statuses cannot substitute for this content.
+
 From the workspace container, use the existing local satellite checkouts:
 
 ```powershell

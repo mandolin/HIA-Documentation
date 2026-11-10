@@ -175,7 +175,7 @@
       "module": "packages/htmdoc-producer/src/index.mjs",
       "inputs": [
         {
-          "kind": "html",
+          "kind": "html-fragment",
           "path": "fixtures/basic.html",
           "language": "html"
         }
@@ -303,13 +303,19 @@
   ],
   "acceptance": {
     "minimumEntryCounts": {
-      "all": 57,
+      "all": 63,
       "js": 35,
       "css": 10,
-      "html": 6,
+      "html": 12,
       "dotnet": 2
     },
     "requiredEntryIds": [
+      "hia-document:html-component-alert",
+      "hia-document:html-attr-variant",
+      "hia-document:html-slot-default",
+      "hia-document:html-event-close",
+      "hia-document:html-stylehook-alert",
+      "hia-document:html-a11y-role-status",
       "hia-document:attr-component-productcard-title",
       "hia-document:component-button",
       "hia-document:component-productcard",

@@ -1,7 +1,7 @@
 /** @file @lang zh-CN 核验公开参考来源、领域内容与隐私，.NET样本要求真实C#来源和独立语言字段。 @lang en Checks public reference provenance, domain content and privacy, requiring real C# origins and independent localized fields for the .NET sample. */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { validateDocumentationUiLocaleCompletenessReport } from "../packages/core/dist/index.js";
 import { assertPublicText } from "./check-official-web.mjs";
@@ -9,7 +9,8 @@ import { assertPublicText } from "./check-official-web.mjs";
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
 
-main();
+// <lang><zh-CN>只有正常命令入口运行磁盘检查，单元测试导入纯检查函数时没有构建或读目录副作用。</zh-CN><en>Run disk verification only at the normal command entry, leaving imports of pure assertions free of build/directory-read side effects.</en></lang>
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main();
 
 /**
  * 在上传 artifact 前复核公开 reference build 的 provenance、coverage 与隐私边界。
@@ -128,6 +129,7 @@ function checkDotnetSample(outputRoot, locale) {
 function checkLocale(definition, outputRoot, locale) {
   const localeRoot = path.join(outputRoot, locale);
   const manifest = readJson(path.join(localeRoot, "hia-manifest.json"));
+  assertProducerContributions(definition, readJson(path.join(localeRoot, "project-index.json")).entries ?? [], locale);
   assert(manifest.initialLocale === locale, `${locale}: initial locale drifted.`);
   assert(manifest.project?.entryCounts?.all >= definition.acceptance.minimumEntryCounts.all, `${locale}: all entry count regressed.`);
   for (const [view, minimum] of Object.entries(definition.acceptance.minimumEntryCounts)) {
@@ -138,6 +140,23 @@ function checkLocale(definition, outputRoot, locale) {
   assert((manifest.build?.producers?.length ?? 0) === definition.acceptance.requiredProducerCount, `${locale}: producer count drifted.`);
   for (const producer of definition.producers) {
     assert(manifest.build.producers.some((summary) => summary.id === producer.id && summary.status === "success"), `${locale}: producer ${producer.id} is not successful.`);
+  }
+}
+
+/**
+ * @lang zh-CN 固定公开参考的每个领域生产器必须贡献实际条目，成功状态与其它领域的总数不能掩盖空产物。
+ * @lang en Every producer in the fixed public reference must contribute actual entries; success status or other domains' totals cannot conceal empty output.
+ * @param {object} definition - 已验证的公开构建来源清单。 Validated public build source inventory.
+ * @param {object[]} entries - 实际规范化项目索引条目。 Actual canonical project-index entries.
+ * @param {string} locale - 当前检查语言，仅用于诊断。 Current checked locale, used only in diagnostics.
+ * @returns {void} 每个显式生产器至少对应一个原路径条目时通过。 Passes when each explicit producer has an entry under its original path.
+ * @throws {Error} 生产器没有实际条目。 A producer contributes no actual entries.
+ */
+export function assertProducerContributions(definition, entries, locale) {
+  // <lang><zh-CN>完整前缀包含末尾斜线，避免把相似生产器名或其它目录误算为当前来源。</zh-CN><en>The full prefix includes a trailing slash so similar producer names and unrelated directories cannot count as this source.</en></lang>
+  for (const producer of definition.producers) {
+    const prefix = `.hia-producers/${producer.id}/`;
+    assert(entries.some(entry => typeof entry.input?.path === "string" && entry.input.path.startsWith(prefix)), `${locale}: producer ${producer.id} contains no canonical reference entries.`);
   }
 }
 
