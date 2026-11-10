@@ -22,11 +22,13 @@ async function fixture() {
   const reference = path.join(root, "reference");
   const out = path.join(root, "official-site-output");
   await mkdir(path.join(reference, "en"), { recursive: true });
+  await mkdir(path.join(reference, "zh-CN"), { recursive: true });
   const index = {contract:"hia-reference-version-index",contractVersion:"0.1.0-draft",versioning:{strategy:"current-and-releases",current:{id:"current",path:"current/"},releases:[],compatibilityAliases:{root:"current",en:"current/en",zhCN:"current/zh-CN",sourceLinkage:"current/source-linkage"},searchPartitions:[]}};
   const bytes = JSON.stringify(index, null, 4) + "\n";
   await writeFile(path.join(reference, "versions.json"), bytes);
   await writeFile(path.join(reference, "index.html"), "<h1>Original reference root</h1>");
-  await writeFile(path.join(reference, "en/index.html"), "<h1>Original API reference</h1>");
+  await writeFile(path.join(reference, "en/index.html"), "<!doctype html><h1>Original API reference</h1>");
+  await writeFile(path.join(reference, "zh-CN/index.html"), "<!doctype html><h1>原接口参考</h1>");
   await writeFile(path.join(reference, "reference-pages.json"), JSON.stringify({contract:"hia-reference-pages",contractVersion:"0.1.0-draft",privacy:{status:"pass",sourcesContentPolicy:"none",sourcePreviewPolicy:"public-whitelisted-excerpt"}}));
   return { root, reference, out, bytes };
 }
@@ -41,17 +43,23 @@ test("missing or overlapping inputs fail before any output mutation", async () =
 test("copy legacy bytes and deep links, replace only root and machine index", async () => {
   const input = await fixture();
   const result = await composeWebsite(input);
-  assert.equal(result.preservation.originalFiles, 4);
+  assert.equal(result.preservation.originalFiles, 5);
   assert.equal(await readFile(path.join(input.out, "legacy-reference/versions.json"), "utf8"), input.bytes);
-  assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), "<h1>Original API reference</h1>");
+  assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), "<!doctype html><h1>Original API reference</h1>");
   assert((await readFile(path.join(input.out, "index.html"), "utf8")).includes("HIA-Documentation-Sys"));
   assert.equal(JSON.parse(await readFile(path.join(input.out, "versions.json"), "utf8")).contract, "hia-site-version-index");
   assert.equal(await readFile(path.join(input.reference, "versions.json"), "utf8"), input.bytes);
-  assert.equal((await checkOfficialSite(input.out)).legacyFiles, 4);
+  assert.equal((await checkOfficialSite(input.out)).legacyFiles, 5);
   await writeFile(path.join(input.out, "en/index.html"), "tampered bytes");
   await assert.rejects(checkOfficialSite(input.out), /size|digest/);
   await composeWebsite(input);
   assert((await readdir(input.root)).some(name => name.startsWith("official-site-output.previous-")));
+});
+
+test("composition verifies actual generated reference entry dependencies", async () => {
+  const input = await fixture();
+  await writeFile(path.join(input.reference, "zh-CN/index.html"), "not an HTML artifact");
+  await assert.rejects(composeWebsite(input), /not an HTML document/);
 });
 
 test("colliding favicon cannot overwrite a preserved legacy route", async () => {

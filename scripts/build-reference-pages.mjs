@@ -205,6 +205,19 @@ async function copyVisibleTree(sourceDir, targetDir) {
  */
 async function decoratePortalPage(filePath, navigation) {
   const original = await readFile(filePath, "utf8");
+  // <lang><zh-CN>宿主顶部已由HIA生成；兼容快照/模式/映射链接保留在本地化原生折叠区，避免混淆文档版本。</zh-CN><en>HIA owns the host header; retain compatibility snapshot/schema/map links in a localized native disclosure, distinguishing them from documentation versions.</en></lang>
+  if (original.includes("data-hia-site-navigation")) {
+    const chinese = original.includes('<html lang="zh-CN"');
+    const labels = chinese
+      ? { Overview: "参考概览", English: "英文参考", 中文: "中文参考", "Source linkage": "源码映射", Schemas: "契约模式", Current: "当前参考快照", Versions: "参考快照索引" }
+      : { Current: "Current reference snapshot", Versions: "Reference snapshot index" };
+    let localized = navigation;
+    for (const [before, after] of Object.entries(labels)) localized = localized.replaceAll(`>${before}<`, `>${after}<`);
+    if (chinese) localized = localized.replace('aria-label="HIA reference navigation"', 'aria-label="HIA生成信息导航"');
+    const disclosure = `<details class="hia-site-compat-links"><summary>${chinese ? "生成工件与兼容入口" : "Generated artifacts and compatibility"}</summary>${localized}</details>`;
+    await writeFile(filePath, original.replace('<aside class="hia-sidebar">', `<aside class="hia-sidebar">${disclosure}`), "utf8");
+    return;
+  }
   assert(original.includes("</head>"), `Portal page has no head terminator: ${filePath}`);
   assert(original.includes('<aside class="hia-sidebar">'), `Portal page has no sidebar insertion point: ${filePath}`);
 

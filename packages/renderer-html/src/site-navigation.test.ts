@@ -4,6 +4,8 @@
  * @lang en Version, same-origin deployment, bilingual, and cross-output navigation regressions.
  */
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { Script } from "node:vm";
 import { createDocumentationPortalUiLocaleAdoption, renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter } from "./index.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
@@ -33,6 +35,94 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it("emits parseable browser scripts with bounded ancestor restoration and stale-entry protection", () => {
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const shell = result.files.find(file => file.path === "index.html")!.contents;
+    for (const match of shell.matchAll(/<script>([\s\S]*?)<\/script>/gu)) expect(() => new Script(match[1]!)).not.toThrow();
+    const client = result.files.find(file => file.path === "assets/hia-site-reading.js")!.contents;
+    expect(() => new Script(client)).not.toThrow();
+    expect(shell).toContain("revealReadingEntry");
+    expect(shell).toContain("requestSequence !== readingEntrySequence");
+    expect(shell).toContain("while (current && treeHost.contains(current))");
+    expect(shell).toContain("if (!matchMedia('(max-width:800px)').matches)");
+    expect(shell).toContain("if (hash) return ensureSearchIndex()");
+    expect(shell).toContain("contentHost?.querySelector(':scope > .hia-project-load-error')?.remove()");
+    expect(client).toContain("document.querySelector('dialog[open]')");
+    expect(client).toContain("event.key === 'Escape'");
+    expect(client).toContain("link.addEventListener('click', event => { event.preventDefault();");
+    expect(client).not.toContain("location.hash =");
+  });
+  it("provides the confirmed reading frame, responsive directories and actual section anchors", () => {
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const page = result.files.find(file => file.path === "index.html")!.contents;
+    expect(page).toContain('class="hia-site-directory"');
+    expect(page).toContain('data-hia-reading-outline');
+    expect(page).toContain('<div data-hia-project-content>');
+    expect(page).not.toMatch(/<main[^>]*data-hia-project-content/u);
+    expect(page).toContain('data-hia-reading-dialog="search"');
+    expect(page).toContain('data-hia-reading-dialog="settings"');
+    expect(result.files.filter(file => file.path === "assets/hia-site-reading.js")).toHaveLength(1);
+    const staticPage = result.files.find(file => file.path.startsWith("pages/en/") && !file.path.endsWith("index.html"))!.contents;
+    expect(staticPage).toContain('href="#entry:one--declaration"');
+    expect(staticPage).toContain('id="entry:one--declaration"');
+  });
+
+  it("keeps source viewers script-free while providing context, honest provenance and the original line target", () => {
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const source = result.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents;
+    expect(source).toContain('data-hia-source-boundary');
+    expect(source).toContain('class="hia-site-directory"');
+    expect(source).toContain('data-hia-reading-outline');
+    expect(source).toContain('id="L18"');
+    expect(source).toContain('default-src \'none\'');
+    expect(source).not.toContain("<script");
+    expect(source).toContain("../pages/en/");
+    expect(source).toContain("one");
+    const style = result.files.find(file => file.path === "assets/hia-site-navigation.css")!.contents;
+    expect(style).toContain("background:var(--hia-surface);color:var(--hia-text)");
+    expect(style).toContain('[data-hia-source-state="denied"] [data-hia-source-fetch-status]');
+    expect(style).toContain('[data-hia-source-state]:not([data-hia-source-state="ready"]) .hia-source-code{display:none}');
+  });
+
+  it("uses readable bilingual API field labels without losing field identities or prose", () => {
+    const model = JSON.parse(readFileSync(new URL("../../../fixtures/basic.hia.json", import.meta.url), "utf8")).symbols[0].i18n;
+    const field = model.fields.description;
+    model.fields = Object.fromEntries(Object.entries({ summary: ["Main summary", "主要摘要"], remarks: ["Important note", "重要备注"], "parameters.value.summary": ["Input value", "输入值"], "params.label.summary": ["Label parameter", "标签参数"], "typeParams.T.summary": ["Type argument", "类型参数说明"], "returns.summary": ["Result explanation", "结果说明"], returns: ["Returned value", "返回值"] }).map(([fieldPath, values]) => [fieldPath, { ...field, fieldPath, defaultText: values[1], localizedText: { en: values[0], "zh-CN": values[1] } }]));
+    const input = { ...project(), entries: [{ ...project().entries[0]!, i18n: model }] };
+    const result = renderProjectHtmlDocument(input, { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const fragment = result.files.find(file => file.path.startsWith("entries/"))!.contents;
+    expect(fragment).toContain('data-hia-i18n-field="parameters.value.summary"');
+    expect(fragment).toContain('data-hia-ui-message="site.field.parameters"');
+    expect(fragment).toContain('data-hia-ui-message="site.field.typeparameters"');
+    expect(fragment).toContain('data-hia-ui-message="site.field.returns"');
+    expect(fragment).not.toContain("<code>params.label.summary</code>");
+    expect(fragment).not.toContain("<dt>parameters.value.summary</dt>");
+    expect(fragment).toContain("Important note");
+    expect(fragment).toContain("重要备注");
+    expect(fragment.indexOf('data-hia-topic-section="declaration"')).toBeLessThan(fragment.indexOf('data-hia-i18n-field="parameters.value.summary"'));
+  });
+
+  it("omits runtime-only header payloads and unavailable controls on static/source pages", () => {
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const page = result.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents;
+    const header = page.match(/<header class="hia-site-header">[\s\S]*?<\/header>/u)![0];
+    expect(header).not.toContain("data-hia-site-hrefs");
+    expect(header).not.toContain("data-hia-reading-dialog");
+    expect(header).toContain('href="/product/docs/en/"');
+    expect(page).toContain('class="hia-site-source-mobile-directory"');
+    expect(page).not.toContain('class="hia-site-source-mobile-directory" open');
+  });
+
+  it("preserves explicit host color tokens and build theme defaults in the adopted frame", () => {
+    const result = renderProjectHtmlDocument(project(), { theme: { colors: { canvas: "#123456", surface: "#abcdef", text: "#010203", codeBackground: "#345678" } }, projectSite: { uiLocale: "en", informationArchitecture: {}, theme: { skinId: "portal.graphite", scheme: "dark" }, siteNavigation: navigation() } });
+    const page = result.files.find(file => file.path === "index.html")!.contents;
+    expect(page).toContain("--hia-bg:var(--hia-color-canvas)");
+    expect(page).toContain("--hia-text:var(--hia-color-text)");
+    expect(page).toContain("background:var(--hia-code-bg)");
+    expect(page).toContain('data-hia-reading-initial-scheme="dark"');
+    expect(page).toContain('data-hia-reading-initial-skin="portal.graphite"');
+  });
+
   it("accepts explicit same-origin deployment targets and anchors", () => {
     const input = navigation();
     input.primaryNavigation[0]!.hrefByLocale.en += "#examples";

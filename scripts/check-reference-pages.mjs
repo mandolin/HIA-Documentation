@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertPublicText } from "./check-official-web.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultOutputDir = path.join(rootDir, "dist", "reference-pages");
@@ -10,8 +11,7 @@ const forbiddenMarkers = [
   "work-zone\\",
   "ai/codex/",
   "ai\\codex\\",
-  "Github_mandolin",
-  "HIA-Documentation-Sys"
+  "Github_mandolin"
 ];
 
 // <lang><zh-CN>来源数量跟随同一显式构建清单，避免新增领域后保留旧常量。</zh-CN><en>Derive provenance counts from the same explicit build allowlist when adding domains.</en></lang>
@@ -111,6 +111,7 @@ async function main() {
     const pathSegments = relativePath.split("/");
     assert(pathSegments.every((segment) => !segment.startsWith(".") || segment === ".nojekyll"), `Hidden runtime output is not allowed in Pages artifact: ${relativePath}`);
     const contents = await readFile(path.join(outputDir, relativePath), "utf8");
+    assertPublicText(contents);
     for (const marker of forbiddenMarkers) {
       assert(!contents.includes(marker), `Pages artifact leaks forbidden marker ${marker} in ${relativePath}.`);
     }

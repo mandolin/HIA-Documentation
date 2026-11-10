@@ -47,9 +47,9 @@ hia docs build --config hia.config.json --project-manifest hia.project.json --si
 
 English. Navigation files must be valid UTF-8 JSON within 512 KiB. The CLI validates labels, bilingual targets, version menus, and same-origin deployment boundaries before aggregating sources or creating output. Missing files, invalid JSON, oversized input, missing UI locale, or single-document combinations return 1 with `HIA_CLI_SITE_NAVIGATION_INPUT_INVALID`. Navigation grants no source-read authority. Verify actual target pages and anchors after building, then deploy the complete output. `--locale` continues to select content language.
 
-中文。采用导航时，`--manifest` 不能覆盖 `assets/hia-site-navigation.css` 或 `documentation-ui-locale-completeness.json`，冲突在输出创建前拒绝。
+中文。采用导航时，`--manifest` 不能覆盖 `assets/hia-site-navigation.css`、`assets/hia-site-reading.js` 或 `documentation-ui-locale-completeness.json`，冲突在输出创建前拒绝。交互入口使用同一生成根的索引提供本地检索和当前页阅读设置；静态条目与源码页保留无脚本导航。
 
-English. With navigation enabled, `--manifest` cannot overwrite `assets/hia-site-navigation.css` or `documentation-ui-locale-completeness.json`. Conflicts are rejected before output creation.
+English. With navigation enabled, `--manifest` cannot overwrite `assets/hia-site-navigation.css`, `assets/hia-site-reading.js`, or `documentation-ui-locale-completeness.json`. Conflicts are rejected before output creation. Interactive entries use the same generated root's index for local search and page-only reading settings. Static entries and source viewers retain script-free navigation.
 
 ### Unknown build options
 

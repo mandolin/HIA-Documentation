@@ -6,6 +6,7 @@
 import type { RenderedHtmlFile } from "./index.js";
 import type { DocumentationPortalUiLocale } from "./information-architecture.js";
 import { createSiteNavigationUiMessages } from "./portal-ui-locale.js";
+import { renderSiteReading, SITE_READING_SCRIPT, SITE_READING_STYLE, type SiteReadingEntry } from "./site-reading.js";
 import type { DocumentationSiteNavigation, DocumentationSiteNavigationLocalizedText } from "./site-navigation.js";
 
 /**
@@ -20,11 +21,17 @@ const STYLE_PATH = "assets/hia-site-navigation.css";
  * @param files <lang><zh-CN>原惰性文件序列。</zh-CN><en>Original lazy file sequence.</en></lang>
  * @param navigation <lang><zh-CN>已验证的不可外部变更快照。</zh-CN><en>Validated snapshot isolated from external mutation.</en></lang>
  * @param uiLocale <lang><zh-CN>调用者明确指定的默认界面语言。</zh-CN><en>Caller-explicit default UI locale.</en></lang>
+ * @param entries <lang><zh-CN>同次渲染的公开条目上下文，默认空集合。</zh-CN><en>Public entry context from the same render, defaulting to empty.</en></lang>
+ * @param customTokens <lang><zh-CN>主题owner已校验的显式颜色键，默认无覆写。</zh-CN><en>Explicit color keys validated by the theme owner, defaulting to no overrides.</en></lang>
  * @returns <lang><zh-CN>同序输出及一份共享样式，不保留全站正文。</zh-CN><en>Same-order output plus one shared stylesheet, without retaining site bodies.</en></lang>
  */
-export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigation: DocumentationSiteNavigation, uiLocale: DocumentationPortalUiLocale): Generator<RenderedHtmlFile> {
+export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigation: DocumentationSiteNavigation, uiLocale: DocumentationPortalUiLocale, entries: SiteReadingEntry[] = [], customTokens: readonly string[] = []): Generator<RenderedHtmlFile> {
   // <lang><zh-CN>两种完整顶部只生成一次，静态本地化页按已有已知路径选择，源码页采用显式默认语言。</zh-CN><en>Build each localized header once; localized static pages use existing known paths and source viewers use the explicit default locale.</en></lang>
   const headers = { "zh-CN": header(navigation, "zh-CN"), en: header(navigation, "en") };
+  // <lang><zh-CN>无脚本页保留完全相同的可见导航，省去只供运行时切换使用的双语JSON属性及不可用按钮。</zh-CN><en>Script-free pages retain identical visible navigation while omitting runtime-only bilingual JSON attributes and unavailable buttons.</en></lang>
+  const staticHeaders = Object.fromEntries(Object.entries(headers).map(([locale, html]) => [locale, html.replace(/ data-hia-(?:ui-message|ui-aria|site-hrefs)="[^"]*"/gu, "").replace(/<button\b[^>]*data-hia-reading-dialog[^>]*>[\s\S]*?<\/button>/gu, "")])) as typeof headers;
+  // <lang><zh-CN>只有实际交互入口引用增强脚本，静态和来源页只共享样式。</zh-CN><en>Only actual interactive entries reference enhancement scripts; static and source pages share styles alone.</en></lang>
+  let interactive = false;
   for (const file of files) {
     if (!file.contentType.startsWith("text/html")) { yield file; continue; }
     // <lang><zh-CN>延迟源码页的getter只读取一次，避免同一大页面被重复构造。</zh-CN><en>Read a lazy source viewer's getter once to avoid repeatedly constructing the same large page.</en></lang>
@@ -36,11 +43,13 @@ export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigatio
     const contents = originalContents
       .replace(/<html\b[^>]*>/u, opening => `${opening.replace(/\blang="[^"]*"/u, `lang="${locale}"`).slice(0, -1)} data-hia-site-navigation>`)
       .replace("</head>", `<link rel="stylesheet" href="${stylesheet}"></head>`)
-      .replace(/<body\b[^>]*>/u, opening => `${opening}${headers[locale]}`)
+      .replace(/<body\b[^>]*>/u, opening => `${opening}${originalContents.includes("data-hia-project-content") ? headers[locale] : staticHeaders[locale]}`)
       .replace(/<main\b/u, '<main id="hia-site-main" tabindex="-1"');
-    yield { path: file.path, contentType: file.contentType, role: file.role, contents };
+    interactive ||= originalContents.includes("data-hia-project-content");
+    yield { path: file.path, contentType: file.contentType, role: file.role, contents: renderSiteReading(contents, file.path, locale, entries, customTokens) };
   }
-  yield { path: STYLE_PATH, contentType: "text/css; charset=utf-8", role: "asset", contents: SITE_STYLE };
+  yield { path: STYLE_PATH, contentType: "text/css; charset=utf-8", role: "asset", contents: SITE_STYLE + SITE_READING_STYLE };
+  if (interactive) yield { path: "assets/hia-site-reading.js", contentType: "text/javascript; charset=utf-8", role: "asset", contents: SITE_READING_SCRIPT };
 }
 
 /**
@@ -68,7 +77,7 @@ function header(navigation: DocumentationSiteNavigation, locale: DocumentationPo
     `<a class="hia-site-brand" title="${escape(navigation.brand.title)}" ${href(navigation.brand.homeByLocale)}><span class="hia-site-mark" aria-hidden="true">HIA</span><span class="hia-site-title">${text("site.brand.title")}<span class="hia-site-caption">${text("site.brand.caption")}</span></span></a>`,
     `<details class="hia-site-version"><summary>${text("site.version.current")} <span aria-hidden="true">⌄</span></summary><div class="hia-site-version-menu"><p>${text("site.version.heading")}</p>${entries}${empty}${history}</div></details>`,
     `<nav class="hia-site-primary" ${aria("site.main")}>${primary}</nav>`,
-    `<div class="hia-site-tools"><span class="hia-site-language">${counterpart}</span><details class="hia-site-mobile"><summary ${aria("site.mobile")}>☰</summary><nav ${aria("site.main")}>${primary}<p>${text("site.version.heading")}</p>${entries}${empty}${history}${counterpart}</nav></details></div>`,
+    `<div class="hia-site-tools"><button type="button" class="hia-site-reading-trigger hia-site-search-trigger" data-hia-reading-dialog="search">${text("site.reading.search")} <kbd>Ctrl K</kbd></button><span class="hia-site-language">${counterpart}</span><button type="button" class="hia-site-reading-trigger" data-hia-reading-dialog="settings" ${aria("site.reading.settings")}>◐</button><details class="hia-site-mobile"><summary ${aria("site.mobile")}>☰</summary><nav ${aria("site.main")}>${primary}<p>${text("site.version.heading")}</p>${entries}${empty}${history}${counterpart}<button type="button" class="hia-site-reading-trigger" data-hia-reading-dialog="search">${text("site.reading.search")}</button></nav></details></div>`,
     '</div></header>',
     `<nav class="hia-site-tabs" ${aria("site.tabs")}><div>${tabs}</div></nav>`
   ].join("");

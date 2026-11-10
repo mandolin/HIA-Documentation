@@ -524,8 +524,8 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   if (navigationPath && (!projectManifestPath || !docsConfig.renderer?.uiLocale)) {
     buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "Site navigation requires a project manifest and an explicit docs.renderer.uiLocale.", "error", "siteNavigation"));
   }
-  if (navigationPath && ["assets/hia-site-navigation.css", "documentation-ui-locale-completeness.json"].includes(manifestPath ?? "")) {
-    buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "The output manifest cannot replace a navigation stylesheet or UI locale report.", "error", "siteNavigation"));
+  if (navigationPath && ["assets/hia-site-navigation.css", "assets/hia-site-reading.js", "documentation-ui-locale-completeness.json"].includes(manifestPath ?? "")) {
+    buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "The output manifest cannot replace navigation assets or the UI locale report.", "error", "siteNavigation"));
   }
   if (adoptionKitRelativePath && (!isSafeCallerRelativePath(adoptionKitRelativePath) || !projectManifestPath)) {
     buildOptionDiagnostics.push(createCliDiagnostic(

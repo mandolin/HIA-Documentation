@@ -83,6 +83,16 @@ English. The API accepts ordinary JSON data properties and dense arrays, rejecti
 
 English. Standalone source viewers and legacy static routes use the build-explicit UI locale, while `pages/{uiLocale}/` uses its known route locale. Runtime UI switching updates the current interactive page. Language and version entries use actual host-supplied targets. The draft does not guess same-symbol or same-line counterparts across languages or versions from file names.
 
+### Adopted reading layout
+
+中文。显式站点导航同时采用三栏阅读布局、真实小节目录和手机原生折叠目录。标准API字段及既有.NET字段别名使用可读双语标题，字段身份、签名、所有正文语言和源码字节保留。接口深链仅展开其祖先分片，快速切换时忽略过期响应；加载或失败时保留已读正文。页内目录的普通链接可直接打开现有静态对应页。
+
+English. Explicit site navigation also selects the three-column reading layout, actual-section outlines, and native mobile directories. Standard API fields and existing .NET aliases receive readable bilingual headings while retaining field identities, signatures, every prose locale, and source bytes. API deep links expand only their ancestor shards. Stale selection responses are ignored, and loading or failure retains already displayed prose. Ordinary outline links can open existing static counterparts directly.
+
+中文。交互入口额外生成一份 `assets/hia-site-reading.js`，提供当前生成项目的本地索引检索、签名复制和阅读设置。设置支持浅色/深色/系统、代码滚动/换行及源码行号，采用构建默认且仅作用于当前页。界面语言和正文语言继续独立。静态页和独立源码页保持无脚本，省去运行时专用属性和不可用工具按钮。独立源码页保留原CSP、真实行号及返回接口入口，精度仍由来源证据决定。普通浏览器中的宿主文件定位请求会显示为禁用，同源公开源码链接仍可使用。
+
+English. Interactive entries additionally emit one `assets/hia-site-reading.js` for local generated-project search, signature copying, and reading settings. Settings cover light/dark/system appearance, code scrolling/wrapping, and source line numbers, using build defaults and affecting the current page only. UI and prose locales remain independent. Static and standalone source pages remain script-free and omit runtime-only payloads and unavailable tool buttons. Source viewers preserve their CSP, real line anchors, and API-return links, with precision determined by source evidence. Host file-navigation requests are disabled in standalone browsers while public same-origin source links remain available.
+
 中文。显式信息架构的附加字段标题与元数据、源码状态共用界面语言消息目录。正文保有各自语言标记，界面与正文可分别切换；兼容入口继续使用原有标题。
 
 English. Explicit-IA additional-field headings share the UI-language catalog used by metadata and source states. Prose retains its own language markers, and UI and content languages switch independently. Compatibility entry points retain their existing headings.

@@ -69,3 +69,24 @@ The entry floors use the canonical project render input: when one producer resul
 ## Deployment Boundary
 
 The checked build is assembled with the existing `/schemas/` distribution and generated public portal pages into the single GitHub Pages artifact by `pnpm run reference:pages`. The assembler copies only runtime-facing reference files, keeps `/schemas/` byte-identical to the schema build, writes sanitized `reference-pages.json` and `public-portal-pages.json` manifests, and emits the `current/` + `releases/0.1.0-draft/` versioned layout with `versions.json`. See [Reference Pages](./reference-pages.md) for the deployed route contract and verification commands.
+
+## Compose generated references with an official website
+
+中文。构建时可显式提供由官网同一事实源生成的导航文件。下面的命令使用独立候选目录；来源checkout、依赖及.NET SDK准备沿用上面的正常构建要求。导航在写入前限长、验证并固定快照，两语言读取同一份数据，源码许可继续由原来源配置决定。
+
+English. Builds can explicitly accept navigation generated from the website's shared facts. These commands use dedicated candidate directories, retaining the normal source-checkout, dependency, and .NET SDK preparation above. Navigation is bounded, validated, and snapshotted before writes. Both locales use the same data, while existing source configuration continues governing source authority.
+
+```bash
+pnpm run site:build
+node scripts/build-public-reference.mjs --site-navigation dist/official-web-preview/documentation-site-navigation.json --out dist/official-reference
+node scripts/check-public-reference-build.mjs --out dist/official-reference
+pnpm run reference:portal:build
+node scripts/build-reference-pages.mjs --reference dist/official-reference --out dist/official-reference-pages
+node scripts/check-reference-pages.mjs --out dist/official-reference-pages
+node scripts/compose-official-web.mjs --website dist/official-web-preview --reference dist/official-reference-pages --out dist/official-site-preview
+node scripts/check-official-site.mjs --out dist/official-site-preview
+```
+
+中文。独立官网检查明确列出由HIA提供的两个参考入口依赖，装配检查必须核实际生成文件。手册使用同站参考路径；旧参考链接保留在“生成工件与兼容入口”原生折叠区，与实际文档版本菜单分别呈现。完整装配继续校验原参考深链、兼容副本、隐私和资源预算。
+
+English. Standalone website checks explicitly list the two reference-entry dependencies supplied by HIA, and composition must verify actual generated files. Manuals use site-local reference paths. Legacy reference links remain in a native “Generated artifacts and compatibility” disclosure, distinct from the actual documentation-version menu. Composition continues checking reference deep links, compatibility copies, privacy, and resource budgets.

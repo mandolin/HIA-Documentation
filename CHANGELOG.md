@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated reference reading frame
+
+- 显式站点导航输出采用钴蓝阅读框架，提供响应式目录、真实小节链接、签名复制、当前页阅读设置及本地索引检索。静态条目和源码页保留无脚本路径、原行号与内容，目录或检索故障保留当前正文。
+- Explicit site-navigation output adopts the cobalt reading frame with responsive directories, actual section links, signature copying, page-only reading settings, and local-index search. Static entries and source viewers retain script-free navigation, original lines and content. Directory or search failures preserve current prose.
+- 公开参考构建支持显式导航输入；官网独立检查列出生成入口依赖，组合检查要求对应的真实HIA文档。完整装配保留参考路径、兼容副本及隐私与体积检查。
+- Public reference builds accept explicit navigation. Standalone website checks list generated-entry dependencies, and composition requires the corresponding actual HIA documents while checking reference paths, compatibility copies, privacy, and size.
+
 ## Unreleased — Optional generated-site navigation
 
 - 项目渲染新增可选 `documentation-site-navigation@0.1.0-draft` 数据与独立CLI输入，完整页面及源码查看页共享固定顶部、真实版本菜单、栏目和手机原生菜单。导航逐页生成，资产每次输出一份，标签参与实际双语评估；非法数据在首写前拒绝。

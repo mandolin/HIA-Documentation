@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
+import { assertPublicText } from "./check-official-web.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -18,13 +19,13 @@ const requiredSatelliteSourceIds = [
   "hia-dotnetdoc"
 ];
 
-main();
+await main();
 
 /**
  * 从 public-only checkout 构建可复现的统一 reference artifact。
  * Builds a reproducible unified reference artifact from public-only checkouts.
  */
-function main() {
+async function main() {
   const options = parseArguments(process.argv.slice(2));
   const definition = readJson(definitionPath);
   validateDefinition(definition);
@@ -42,6 +43,16 @@ function main() {
   assertPathInsideOrSame(workspaceRoot, resolvedMainRepoRoot, "main-repo root must stay inside the declared workspace root.");
   assertPathInside(resolvedMainRepoRoot, outputRoot, "Public reference output must stay inside main-repo.");
   assert(existsSync(path.join(resolvedMainRepoRoot, "apps", "cli", "dist", "index.js")), "main-repo CLI is not built. Run `pnpm run build` first.");
+
+  // <lang><zh-CN>离线正式候选显式采用官网导航；在任何构建写入前限长、校验并固定一份纯数据快照。</zh-CN><en>Offline official candidates explicitly adopt host navigation, bounding, validating and snapshotting pure data before any build writes.</en></lang>
+  let siteNavigation;
+  if (options.siteNavigation) {
+    assert(statSync(options.siteNavigation).size <= 512 * 1024, "Site navigation exceeds the CLI read budget.");
+    siteNavigation = readJson(options.siteNavigation);
+    const { assertDocumentationSiteNavigation } = await import("../packages/renderer-html/dist/index.js");
+    assertDocumentationSiteNavigation(siteNavigation);
+    assertPublicText(JSON.stringify(siteNavigation));
+  }
 
   const sourceRoots = resolveSourceRoots(definition, resolvedMainRepoRoot, sourcesRoot);
   // <lang><zh-CN>只编译本构建owner内的固定公开样本；首次还原/编译写bin和obj，失败时保留上一份参考输出。</zh-CN><en>Compile only the owning repository's fixed public sample; restore/build writes bin and obj, preserving the previous reference output on failure.</en></lang>
@@ -66,6 +77,9 @@ function main() {
     writeJson(ephemeralManifestPath, projectManifest);
     // <lang><zh-CN>源码读取仅授予独占单文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive single-file mirror, cleaned with its config in finally.</en></lang>
     const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root);
+    // <lang><zh-CN>两语言读取同一已验证快照，宿主文件后续变化不影响这次构建。</zh-CN><en>Both locales read the same validated snapshot, isolating this build from later host-file changes.</en></lang>
+    const siteNavigationPath = siteNavigation ? path.join(runtime.root, "site-navigation.json") : undefined;
+    if (siteNavigationPath) writeJson(siteNavigationPath, siteNavigation);
 
     const locales = definition.acceptance.requiredLocales.map((locale) => buildLocale({
       definition,
@@ -73,6 +87,7 @@ function main() {
       outputRoot,
       projectManifestPath: ephemeralManifestPath,
       sourceConfigPath,
+      siteNavigationPath,
       resolvedMainRepoRoot
     }));
     const sourceLinkage = buildSourceLinkagePanel({
@@ -232,7 +247,7 @@ function materializeProjectManifest(definition, sourceRoots, runtime, workspaceR
   };
 }
 
-function buildLocale({ definition, locale, outputRoot, projectManifestPath, sourceConfigPath, resolvedMainRepoRoot }) {
+function buildLocale({ definition, locale, outputRoot, projectManifestPath, sourceConfigPath, siteNavigationPath, resolvedMainRepoRoot }) {
   const localeOutput = path.join(outputRoot, locale);
   // <lang><zh-CN>本站每语言显式采用既有UI/信息架构，来源相对根及许可由同目录配置保留。</zh-CN><en>Explicitly adopt existing UI/IA for each site locale, preserving source-root resolution and authorization in the same directory.</en></lang>
   const localeConfigPath = preparePublicReferenceLocaleConfig(sourceConfigPath, locale);
@@ -243,6 +258,7 @@ function buildLocale({ definition, locale, outputRoot, projectManifestPath, sour
     localeConfigPath,
     "--project-manifest",
     projectManifestPath,
+    ...(siteNavigationPath ? ["--site-navigation", siteNavigationPath] : []),
     "--out",
     localeOutput,
     "--locale",
@@ -346,6 +362,7 @@ function runGit(cwd, args) {
 function assertNoPrivateOutput(definition, root) {
   for (const filePath of listFiles(root, (file) => [".css", ".html", ".js", ".json", ".map"].includes(path.extname(file)))) {
     const content = readFileSync(filePath, "utf8");
+    assertPublicText(content);
     const normalized = content.replaceAll("\\", "/").toLowerCase();
     assert(!/(^|[^a-z0-9+.-])[a-z]:\//i.test(normalized) && !normalized.includes("//?/"), `Public reference output leaks a local absolute path: ${filePath}`);
     for (const marker of definition.privacy.forbiddenOutputMarkers) {
@@ -375,7 +392,7 @@ function parseArguments(values) {
     const value = values[index];
     if (value === "--") continue;
     if (value === "--check-definition") options.checkDefinition = true;
-    else if (["--workspace-root", "--main-repo-root", "--sources-root", "--out"].includes(value)) options[toCamelCase(value.slice(2))] = values[++index];
+    else if (["--workspace-root", "--main-repo-root", "--sources-root", "--out", "--site-navigation"].includes(value)) options[toCamelCase(value.slice(2))] = values[++index];
     else throw new Error(`Unknown argument: ${value}`);
   }
   return options;

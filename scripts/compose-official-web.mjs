@@ -90,7 +90,7 @@ export async function composeWebsite(options = {}) {
     assert(!(await lstat(input)).isSymbolicLink(), "Input root cannot be a symlink.");
   }
   assert(!inside(website, reference) && !inside(reference, website), "Input artifacts overlap.");
-  await checkWebsite(website);
+  await checkWebsite(website, reference);
   // <lang lang="zh-CN">只有精确旧身份且通过隐私标记的参考工件可参与，实际旧门禁仍需单独执行。</lang><lang lang="en">Accept only the exact legacy identity with passing privacy markers; the full legacy gate still runs independently.</lang>
   assert((await lstat(path.join(reference, "versions.json"))).size <= maxFileBytes && (await lstat(path.join(reference, "reference-pages.json"))).size <= maxFileBytes, "Legacy metadata exceeds read budget.");
   const oldIndexBytes = await readFile(path.join(reference, "versions.json"));

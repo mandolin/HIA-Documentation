@@ -19,8 +19,8 @@ API覆盖必须按包的公开导出清单和实际生成符号逐项对应。�
 
 ## 生成参考入口
 
-- [HIA统一生成参考 · 中文](https://mandolin.github.io/HIA-Documentation/zh-CN/)：现有公开工件，包含样本与工具参考，不代表所有必要包均已覆盖。
-- [HIA统一生成参考 · English](https://mandolin.github.io/HIA-Documentation/en/)：保留输入中的实际字段语言。
+- [HIA统一生成参考 · 中文](../../../zh-CN/)：现有公开工件，包含样本与工具参考，不代表所有必要包均已覆盖。
+- [HIA统一生成参考 · English](../../../en/)：保留输入中的实际字段语言。
 - [BP/bp-docs-js-cookie · 接口Portal](https://mandolin.github.io/bp-docs-js-cookie/)：首个JavaScript演示项目，独立于产品官网。
 - [JSDoc独立输出与构建说明](https://github.com/mandolin/HIA-Documentation/blob/main/docs/published-jsdoc-usage.md)：按实际运行器与主题生成；不把统一Portal视为独立主题产物。
 

@@ -2462,7 +2462,13 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     }
   }
   return {
-    files: portalContext.siteNavigation ? withSiteNavigation(produceFiles(), portalContext.siteNavigation, portalContext.uiLocale) : produceFiles(),
+    files: portalContext.siteNavigation ? withSiteNavigation(produceFiles(), portalContext.siteNavigation, portalContext.uiLocale, renderedProjectInput.entries.map(entry => ({
+      id: entry.id,
+      name: entry.name,
+      page: portalContext.uiLocaleAdoption ? createProjectLocalizedNoScriptPagePath(entry.id, portalContext.uiLocale) : createProjectNoScriptPagePath(entry.id),
+      ...(portalContext.uiLocaleAdoption ? { localePages: { "zh-CN": createProjectLocalizedNoScriptPagePath(entry.id, "zh-CN"), en: createProjectLocalizedNoScriptPagePath(entry.id, "en") } } : {}),
+      ...(entry.source?.publicAsset?.linkUrl ? { sourceUrl: entry.source.publicAsset.linkUrl } : {})
+    })), Object.keys(options.theme?.colors ?? {})) : produceFiles(),
     diagnostics: renderedProjectInput.diagnostics ?? [],
     manifest: (files) => createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle, portalContext)
   };
@@ -3772,7 +3778,7 @@ function renderProjectSplitSiteHtml(
     `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${renderProjectUiMessage(portalContext, "portal.navigation.select", {}, labels.select)}</p><noscript><p class="hia-noscript-notice"><a href="pages/index.html">${renderProjectUiMessage(portalContext, "portal.navigation.noscriptlink", {}, "No-script page index / 无脚本页面索引")}</a></p></noscript></main>`,
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
-    renderProjectSplitSiteScript(portalContext, portalContext.informationArchitecture?.loadingStrategy ?? "lazy"),
+    renderProjectSplitSiteScript(portalContext, portalContext.informationArchitecture?.loadingStrategy ?? "lazy", portalContext.siteNavigation ? collectProjectNavigationTree(projectInput.entries, portalContext.informationArchitecture) : []),
     "</body>",
     "</html>"
   ].join("");
@@ -4042,8 +4048,22 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
 
 function renderProjectSplitSiteScript(
   portalContext: RenderProjectPortalContext,
-  loadingStrategy: "lazy" | "eager"
+  loadingStrategy: "lazy" | "eager",
+  readingTree: RenderProjectNavigationTreeNode[] = []
 ): string {
+  // <lang><zh-CN>只为采用页记录已存在树的祖先路径，恢复深链选中时不遍历/抓取全部分片。</zh-CN><en>Record existing ancestor paths only for adopted pages, restoring deep-link selection without fetching every shard.</en></lang>
+  const readingPaths: Array<[string, Array<{ id: string; path: string }>]> = [];
+  /**
+   * @lang zh-CN 遍历已有中性树，记录每个条目的已知祖先分片；纯内部运行时数据，不新增工件契约。
+   * @lang en Walks the existing neutral tree to record known ancestor shards as internal runtime data without adding an artifact contract.
+   */
+  function collectReadingPaths(nodes: RenderProjectNavigationTreeNode[], ancestors: Array<{ id: string; path: string }>): void {
+    for (const node of nodes) {
+      if (node.entryId) readingPaths.push([node.entryId, ancestors]);
+      if (node.children?.length) collectReadingPaths(node.children, [...ancestors, { id: node.id, path: createProjectNavigationChildrenPath(node.id) }]);
+    }
+  }
+  if (portalContext.siteNavigation) collectReadingPaths(readingTree, []);
   // <lang><zh-CN>只有 adopted surface 嵌入 public plain-text bundle；metadata-only report 仍不含译文。</zh-CN><en>Only adopted surfaces embed the public plain-text bundle; the metadata-only report still contains no translations.</en></lang>
   const uiConfig = portalContext.uiLocaleAdoption
     ? {
@@ -4062,6 +4082,28 @@ function renderProjectSplitSiteScript(
     "<script>",
     "(() => {",
     `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json', ui: ${JSON.stringify(uiConfig)} };`,
+    ...(portalContext.siteNavigation ? [
+      `  const readingPaths = new Map(${JSON.stringify(readingPaths).replaceAll("<", "\\u003c")});`,
+      "  const readingBranches = new WeakMap();",
+      "  let readingEntrySequence = 0;",
+      "  /* <lang><zh-CN>同一分片的展开和深链恢复共享在途请求，失败允许下一次显式重试。</zh-CN><en>Disclosure and deep-link restoration share in-flight shard requests, allowing explicit retries after failure.</en></lang> */",
+      "  function loadReadingBranch(details, path) {",
+      "    if (details.dataset.loaded === 'true') return Promise.resolve();",
+      "    if (readingBranches.has(details)) return readingBranches.get(details);",
+      "    const loading = document.createElement('p'); loading.className = 'hia-project-loading'; loading.setAttribute('role', 'status'); loading.dataset.hiaUiMessage = 'portal.navigation.loading'; loading.textContent = uiMessage('portal.navigation.loading', {}, 'Loading…');",
+      "    details.querySelector(':scope > .hia-project-loading')?.remove(); details.append(loading);",
+      "    const request = readJson(path).then(shard => { loading.replaceWith(createTreeList(Array.isArray(shard.children) ? shard.children : [])); details.dataset.loaded = 'true'; }).catch(error => { loading.textContent = uiMessage('portal.navigation.loaderror', { detail: String(error?.message || error) }, 'Navigation unavailable.'); throw error; }).finally(() => readingBranches.delete(details));",
+      "    readingBranches.set(details, request); return request;",
+      "  }",
+      "  /* <lang><zh-CN>仅打开选中项实际祖先，正文加载失败或目录故障不获取无关源码。</zh-CN><en>Open only actual selected-item ancestors without fetching unrelated sources when content or directory loading fails.</en></lang> */",
+      "  async function revealReadingEntry(entryId) {",
+      "    for (const ancestor of readingPaths.get(entryId) || []) {",
+      "      const item = Array.from(treeHost?.querySelectorAll('[data-hia-project-node-id]') || []).find(item => item.dataset.hiaProjectNodeId === ancestor.id);",
+      "      const details = item?.querySelector(':scope > details'); if (!details) continue;",
+      "      details.open = true; try { await loadReadingBranch(details, ancestor.path); } catch { break; }",
+      "    }",
+      "  }"
+    ] : []),
     "  const treeHost = document.querySelector('[data-hia-project-tree]');",
     "  const contentHost = document.querySelector('[data-hia-project-content]');",
     "  const search = document.querySelector('[data-hia-project-search]');",
@@ -4104,7 +4146,10 @@ function renderProjectSplitSiteScript(
     "  function showLoadError(error) {",
     `    const detail = location.protocol === 'file:' ? ${JSON.stringify(fileProtocolMessage)} : String(error?.message || error);`,
     "    const hint = location.protocol === 'file:' ? detail : uiMessage('portal.navigation.loaderror', { detail }, detail);",
-    "    if (contentHost) contentHost.innerHTML = '';",
+    ...(portalContext.siteNavigation ? [
+      // <lang><zh-CN>目录或索引故障保留已读正文，只替换本次状态提示。</zh-CN><en>Keep the current prose on directory/index failure, replacing only the current status.</en></lang>
+      "    contentHost?.querySelector(':scope > .hia-project-load-error')?.remove();"
+    ] : ["    if (contentHost) contentHost.innerHTML = '';"]),
     "    const message = document.createElement('p');",
     "    message.className = 'hia-project-load-error';",
     "    message.setAttribute('role', 'status');",
@@ -4153,6 +4198,9 @@ function renderProjectSplitSiteScript(
     "        details.dataset.loaded = 'true';",
     "        details.append(createTreeList(inlineChildren));",
     "      } else {",
+    ...(portalContext.siteNavigation ? [
+      "        details.addEventListener('toggle', () => { if (details.open) loadReadingBranch(details, node.childrenPath).catch(() => {}); });"
+    ] : [
     "        details.addEventListener('toggle', async () => {",
     "          if (!details.open || details.dataset.loaded === 'true') return;",
     "          details.dataset.loaded = 'true';",
@@ -4168,7 +4216,8 @@ function renderProjectSplitSiteScript(
     "          } catch (error) {",
     "            loading.textContent = String(error?.message || error);",
     "          }",
-    "        });",
+    "        });"
+    ]),
     "      }",
     "      item.append(details);",
     "    } else if (node.entryId && node.contentPath) {",
@@ -4225,27 +4274,50 @@ function renderProjectSplitSiteScript(
     "    const leaf = Array.from(document.querySelectorAll('[data-hia-project-entry-id]')).find((item) => item.dataset.hiaProjectEntryId === entryId);",
     "    if (!leaf) return;",
     "    leaf.dataset.hiaActiveEntry = 'true';",
+    ...(portalContext.siteNavigation ? [
+      "    for (const control of treeHost.querySelectorAll('[aria-current]')) control.removeAttribute('aria-current');",
+      "    const currentControl = leaf.querySelector(':scope > .hia-project-entry-link, :scope > details > summary > .hia-project-entry-link'); currentControl?.setAttribute('aria-current', 'page');"
+    ] : []),
     "    for (const details of leaf.parentElement?.closest('details') ? [leaf.parentElement.closest('details')] : []) {",
     "      let current = details;",
-    "      while (current) { current.open = true; current.dataset.hiaActiveAncestor = 'true'; current = current.parentElement?.closest('details'); }",
+    ...(portalContext.siteNavigation ? [
+      // <lang><zh-CN>只展开树内祖先，不强行打开外层手机目录或改变其阅读位置。</zh-CN><en>Expand only in-tree ancestors without forcing the outer mobile directory open or moving its reading position.</en></lang>
+      "      while (current && treeHost.contains(current)) { current.open = true; current.dataset.hiaActiveAncestor = 'true'; current = current.parentElement?.closest('details'); }"
+    ] : ["      while (current) { current.open = true; current.dataset.hiaActiveAncestor = 'true'; current = current.parentElement?.closest('details'); }"]),
     "    }",
     "  }",
     "  async function loadEntry(entry, updateHash) {",
     "    if (!contentHost) return;",
-    `    contentHost.innerHTML = \`<p class="hia-project-loading" role="status" data-hia-ui-message="portal.navigation.loading">\${uiMessage('portal.navigation.loading', {}, ${JSON.stringify(portalContext.labels.loading)})}</p>\`;`,
+    ...(portalContext.siteNavigation ? [
+      "    const requestSequence = ++readingEntrySequence;",
+      "    contentHost.querySelector(':scope > .hia-project-loading')?.remove();",
+      "    const readingLoading = document.createElement('p'); readingLoading.className = 'hia-project-loading'; readingLoading.setAttribute('role', 'status'); readingLoading.dataset.hiaUiMessage = 'portal.navigation.loading'; readingLoading.textContent = uiMessage('portal.navigation.loading', {}, 'Loading…'); contentHost.prepend(readingLoading);"
+    ] : [`    contentHost.innerHTML = \`<p class="hia-project-loading" role="status" data-hia-ui-message="portal.navigation.loading">\${uiMessage('portal.navigation.loading', {}, ${JSON.stringify(portalContext.labels.loading)})}</p>\`;`]),
     "    try {",
     "      const contentPath = entry.presentationPath || entry.contentPath;",
-    "      contentHost.innerHTML = await readFragment(contentPath);",
+    ...(portalContext.siteNavigation ? [
+      "      const readingContents = await readFragment(contentPath); if (requestSequence !== readingEntrySequence) return; contentHost.innerHTML = readingContents;"
+    ] : ["      contentHost.innerHTML = await readFragment(contentPath);"]),
     "      applyContentLocale();",
     "      applyUiLocale(contentHost);",
     "      bindSourceFetch();",
+    ...(portalContext.siteNavigation ? ["      document.dispatchEvent(new Event('hia:site-content'));"] : []),
     "      const anchor = entry.memberAnchor || entry.entryId || entry.id;",
     "      const target = Array.from(contentHost.querySelectorAll('[id]')).find((item) => item.id === anchor);",
     "      target?.scrollIntoView({ block: 'start' });",
+    ...(portalContext.siteNavigation ? [
+      "      if (activeView !== 'all' && entry.view && entry.view !== activeView || search?.value) { activeView = 'all'; if (search) search.value = ''; for (const button of viewButtons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === 'all')); renderRoot(); }",
+      "      await revealReadingEntry(entry.entryId || entry.id); if (requestSequence !== readingEntrySequence) return;"
+    ] : []),
     "      markActiveEntry(entry.entryId || entry.id);",
+    ...(portalContext.siteNavigation ? [
+      "      if (!matchMedia('(max-width:800px)').matches) treeHost.querySelector('[aria-current=\"page\"]')?.scrollIntoView({block:'nearest', inline:'nearest'});"
+    ] : []),
     "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entry.entryId || entry.id)}`);",
     "    } catch (error) {",
-    "      showLoadError(error);",
+    ...(portalContext.siteNavigation ? [
+      "      if (requestSequence !== readingEntrySequence) return; const loading = contentHost.querySelector(':scope > .hia-project-loading'); if (loading) { loading.setAttribute('role', 'alert'); loading.textContent = uiMessage('portal.navigation.loaderror', { detail: String(error?.message || error) }, 'Entry unavailable.'); }"
+    ] : ["      showLoadError(error);"]),
     "    }",
     "  }",
     "  async function ensureSearchIndex() {",
@@ -4282,6 +4354,9 @@ function renderProjectSplitSiteScript(
     "    });",
     "  }",
     "  search?.addEventListener('input', runSearch);",
+    ...(portalContext.siteNavigation ? [
+      "  document.addEventListener('hia:site-entry', async (event) => { try { const entries = await ensureSearchIndex(); const entry = entries.find(candidate => candidate.id === event.detail); if (entry) await loadEntry({ ...entry, entryId: entry.id }, true); } catch (error) { showLoadError(error); } });"
+    ] : []),
     "  contentLocale?.addEventListener('change', applyContentLocale);",
     "  uiLocale?.addEventListener('change', () => applyUiLocale());",
     // <lang><zh-CN>原生菜单保留无脚本阅读，交互页Escape收起并将焦点返回原summary。</zh-CN><en>Native menus retain script-free reading; Escape on interactive pages closes the menu and returns focus to its own summary.</en></lang>
@@ -4308,7 +4383,7 @@ function renderProjectSplitSiteScript(
     "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
     "    renderRoot();",
     "    const hash = location.hash.startsWith('#entry=') ? decodeURIComponent(location.hash.slice(7)) : '';",
-    "    if (hash) ensureSearchIndex().then((entries) => {",
+    ...(portalContext.siteNavigation ? ["    if (hash) return ensureSearchIndex().then((entries) => {"] : ["    if (hash) ensureSearchIndex().then((entries) => {"]),
     "      const entry = entries.find((candidate) => candidate.id === hash);",
     "      if (entry) loadEntry({ ...entry, entryId: entry.id }, false);",
     "    });",
@@ -4591,9 +4666,20 @@ function renderProjectSemanticTopicInternal(
   const nextAncestors = new Set(ancestors);
   nextAncestors.add(entry.id);
   const members = collectProjectEntryMembers(entry, projectInput.entries);
+  // <lang><zh-CN>站点采用保留原kind/view数据，用已登记标题呈现徽标，并按确认稿将说明置于徽标之前。</zh-CN><en>Site adoption retains kind/view facts, presenting registered badge labels after the description as confirmed in the design.</en></lang>
+  const kindMessageId = `site.kind.${entry.kind.replaceAll("-", ".")}`;
+  const kindLabel = portalContext.siteNavigation && portalContext.uiLocaleAdoption?.bundles[portalContext.uiLocale][kindMessageId]
+    ? renderProjectUiMessage(portalContext, kindMessageId)
+    : escapeHtml(entry.kind);
+  const viewLabel = portalContext.siteNavigation && entry.view === "js" ? "JavaScript" : formatProjectViewLabel(entry.view);
+  const badges = `<span class="hia-kind">${kindLabel}</span><span class="hia-kind">${escapeHtml(viewLabel)}</span>`;
+  const primarySummary = renderProjectEntrySummary(entry, locales, selectedLocale);
+  const additionalFields = renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry), portalContext, entry.id);
+  const summaryBadges = portalContext.siteNavigation && primarySummary ? `<div class="hia-site-api-meta">${badges}</div>` : "";
+  const headingTag = portalContext.siteNavigation && ancestors.size === 0 ? "h1" : "h2";
   const sections = [
     // <lang><zh-CN>显式IA保留既有section顺序，在正文分区内加入完整字段，避免建立第二条内容降级路径。</zh-CN><en>Explicit IA retains section order while including full fields inside the prose section, avoiding a second content-loss route.</en></lang>
-    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, renderProjectEntrySummary(entry, locales, selectedLocale) + renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry), portalContext), portalContext),
+    renderProjectTopicSection("summary", "portal.section.summary", labels.summary, primarySummary + summaryBadges + (portalContext.siteNavigation ? "" : additionalFields), portalContext),
     renderProjectTopicSection(
       "declaration",
       "portal.section.declaration",
@@ -4601,6 +4687,7 @@ function renderProjectSemanticTopicInternal(
       entry.signature ? `<pre class="hia-signature"><code>${escapeHtml(entry.signature)}</code></pre>` : "",
       portalContext
     ),
+    portalContext.siteNavigation ? additionalFields : "",
     renderProjectTopicSection("metadata", "portal.section.metadata", labels.metadata, renderProjectTopicMetadata(entry, projectInput.project.productVersion, portalContext), portalContext),
     renderProjectTopicSection("contract", "portal.section.contract", labels.contract, renderProjectTopicContract(entry, portalContext), portalContext),
     renderProjectTopicSection("coverage", "portal.section.coverage", labels.coverage, renderProjectTopicCoverage(projectInput.documentationContinuity, projectInput.ownerAdoption, portalContext), portalContext),
@@ -4628,8 +4715,13 @@ function renderProjectSemanticTopicInternal(
 
   return [
     `<article class="hia-symbol hia-project-entry hia-project-topic" id="${escapeHtml(entry.id)}" data-hia-project-entry="${escapeHtml(entry.view)}" data-hia-project-search-text="${escapeHtml(searchText)}">`,
-    `<header class="hia-project-topic-header"><h2>${escapeHtml(entry.name)}</h2><span class="hia-kind">${escapeHtml(entry.kind)}</span><span class="hia-kind">${escapeHtml(formatProjectViewLabel(entry.view))}</span></header>`,
-    sections,
+    ...(portalContext.siteNavigation ? [
+      `<p class="hia-site-breadcrumbs">${renderProjectUiMessage(portalContext, "site.reading.directory")} / ${escapeHtml(entry.hierarchy?.namespace ?? projectInput.project.title ?? projectInput.project.name)}</p>`,
+      `<p class="hia-site-eyebrow">${renderProjectUiMessage(portalContext, "site.reading.api")} · ${escapeHtml(formatProjectViewLabel(entry.view))}</p>`
+    ] : []),
+    `<header class="hia-project-topic-header"><${headingTag}>${escapeHtml(entry.name)}</${headingTag}>${portalContext.siteNavigation && primarySummary ? "" : badges}</header>`,
+    // <lang><zh-CN>采用站点阅读布局时为实际小节建立逐条目稳定锚点，旧输出精确保留。</zh-CN><en>Create entry-specific stable section anchors for adopted reading layouts, preserving legacy output exactly.</en></lang>
+    portalContext.siteNavigation ? sections.replace(/data-hia-topic-section="([^"]+)"/gu, (_, section: string) => `id="${escapeHtml(entry.id)}--${section}" tabindex="-1" data-hia-topic-section="${section}"`) : sections,
     "</article>"
   ].join("");
 }
@@ -4645,8 +4737,11 @@ function renderProjectTopicSection(
   if (!body) {
     return "";
   }
+  if (portalContext.siteNavigation && ["summary", "declaration", "source"].includes(section)) {
+    return `<section class="hia-project-topic-section" data-hia-topic-section="${section}"><h3>${renderProjectUiMessage(portalContext, messageId, {}, label)}</h3>${body}</section>`;
+  }
   // <lang><zh-CN>首要阅读区默认展开；其余区保持原生 disclosure，可同时打开且不依赖脚本。</zh-CN><en>Primary reading sections start open; remaining sections use native disclosure, allow concurrent expansion, and require no script.</en></lang>
-  const open = section === "summary" || section === "declaration" || section === "metadata" ? " open" : "";
+  const open = section === "summary" || section === "declaration" || (section === "metadata" && !portalContext.siteNavigation) ? " open" : "";
   return `<details class="hia-project-topic-section" data-hia-topic-section="${section}"${open}><summary>${renderProjectUiMessage(portalContext, messageId, {}, label)}</summary><div class="hia-project-topic-section-body">${body}</div></details>`;
 }
 
@@ -6435,7 +6530,7 @@ function getPrimaryI18nFieldPath(owner: I18nFieldOwner): string {
  * @param portalContext <lang><zh-CN>可选已采用Portal上下文，用于标题及切换标记。</zh-CN><en>Optional adopted Portal context for the heading and switching marker.</en></lang>
  * @returns <lang><zh-CN>完整附加字段HTML，没有可见字段则为空。</zh-CN><en>Complete additional-field HTML, or an empty string without renderable fields.</en></lang>
  */
-function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description", portalContext?: RenderProjectPortalContext): string {
+function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description", portalContext?: RenderProjectPortalContext, ownerId = "entry"): string {
   const fields = symbol.i18n?.fields || {};
   // <lang><zh-CN>只移除已显示的主字段，允许summary与description同时完整显示。</zh-CN><en>Remove only the already-rendered primary field, allowing summary and description to coexist completely.</en></lang>
   const fieldEntries = Object.entries(fields).filter(([fieldPath]) => fieldPath !== primaryPath);
@@ -6447,13 +6542,25 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
   const items = fieldEntries
     .map(([fieldPath]) => {
       const renderedField = renderI18nField(symbol, fieldPath, locales, selectedLocale);
+      if (renderedField && portalContext?.siteNavigation) {
+        // <lang><zh-CN>标准API字段用已登记的双语标题；名称和原字段身份仍保留，扩展字段继续完整可读。</zh-CN><en>Use registered bilingual headings for standard API fields, retaining names and original field identities while preserving extension fields.</en></lang>
+        const named = /^(params|parameters|typeParams|typeParameters|exceptions)\.(.+)\.summary$/u.exec(fieldPath);
+        // <lang><zh-CN>复用各生产器已存在的字段别名，只改变阅读标题，不迁移原工件身份。</zh-CN><en>Reuse existing producer field aliases for headings without migrating artifact identities.</en></lang>
+        const aliases: Record<string, string> = { params: "parameters", typeParams: "typeparameters", "returns.summary": "returns" };
+        const fieldName = named?.[1] ?? fieldPath;
+        const category = aliases[fieldName] ?? fieldName.toLowerCase();
+        const known = ["remarks", "parameters", "typeparameters", "returns", "exceptions"].includes(category);
+        const title = known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
+        const anchor = `${ownerId}--field-${stableProjectArtifactName(fieldPath)}`;
+        return `<section class="hia-site-field" id="${escapeHtml(anchor)}" tabindex="-1" data-hia-reading-section="${escapeHtml(fieldPath)}"><h3>${title}${named ? ` · <code>${escapeHtml(named[2]!)}</code>` : ""}</h3>${renderedField}</section>`;
+      }
       return renderedField
         ? `<div class="hia-i18n-field"><dt>${escapeHtml(fieldPath)}</dt><dd>${renderedField}</dd></div>`
         : "";
     })
     .join("");
 
-  return items ? `<section class="hia-i18n-fields"><h3>${renderOptionalProjectUiMessage(portalContext, "portal.section.localizedfields", "Localized Fields")}</h3><dl>${items}</dl></section>` : "";
+  return items ? portalContext?.siteNavigation ? items : `<section class="hia-i18n-fields"><h3>${renderOptionalProjectUiMessage(portalContext, "portal.section.localizedfields", "Localized Fields")}</h3><dl>${items}</dl></section>` : "";
 }
 
 /**

@@ -8,6 +8,7 @@ import {
 } from "@hia-doc/core";
 import type { DocumentationPortalUiLocale } from "./information-architecture.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
+import { SITE_READING_MESSAGES } from "./site-reading.js";
 
 /**
  * @lang zh-CN Portal owner 输出的 W-P123 metadata-only 报告路径。
@@ -370,7 +371,7 @@ function createPortalUiLocaleAdoption(options: DocumentationPortalUiLocaleAdopti
       surfaceId,
       contentLocale: options.contentLocale,
       modes: [
-        { mode: interactive, channels: navigationOnly ? [visible, accessible] : [visible, accessible, status] },
+        { mode: interactive, channels: [visible, accessible, status] },
         { mode: noScript, channels: [visible, accessible] }
       ],
       languageMetadata
@@ -402,6 +403,10 @@ export function createSiteNavigationUiMessages(navigation: DocumentationSiteNavi
   const uses: Array<[PortalUiMessageUse["mode"], PortalUiMessageUse["channel"]]> = [[interactive, visible], [noScript, visible]];
   const accessibleUses: typeof uses = [[interactive, accessible], [noScript, accessible]];
   const records = [
+    ...Object.entries(SITE_READING_MESSAGES).map(([id, labels]) => message(id, labels[0], labels[1],
+      ["site.reading.loading", "site.reading.empty", "site.reading.error"].includes(id)
+        ? [[interactive, status]]
+        : id === "site.reading.settings" ? [...uses, [interactive, accessible]] : uses)),
     message("site.skip", "跳到正文", "Skip to content", uses),
     message("site.main", "主导航", "Main navigation", accessibleUses),
     message("site.mobile", "展开主导航", "Open main navigation", accessibleUses),

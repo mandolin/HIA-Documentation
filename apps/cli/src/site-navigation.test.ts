@@ -39,6 +39,7 @@ describe("docs build --site-navigation", () => {
       expect(html).toContain('>Code reference</span>');
       const manifest = JSON.parse(await readFile(path.join(input.output, "hia-manifest.json"), "utf8"));
       expect(manifest.files.filter((file: { path: string }) => file.path === "assets/hia-site-navigation.css")).toHaveLength(1);
+      expect(manifest.files.filter((file: { path: string }) => file.path === "assets/hia-site-reading.js")).toHaveLength(1);
       const report = await readFile(path.join(input.output, "documentation-ui-locale-completeness.json"), "utf8");
       expect(JSON.parse(report).status).toBe("complete");
       expect(report).toContain("site.primary.docs");
@@ -46,7 +47,7 @@ describe("docs build --site-navigation", () => {
     } finally { await rm(input.root, { recursive: true, force: true }); }
   });
 
-  it.each(["malformed", "missing-locale", "outside-base", "oversized", "invalid-utf8", "missing-file", "missing-ui-locale", "single-document", "manifest-asset-collision", "manifest-report-collision"])("rejects %s before creating the output", async scenario => {
+  it.each(["malformed", "missing-locale", "outside-base", "oversized", "invalid-utf8", "missing-file", "missing-ui-locale", "single-document", "manifest-asset-collision", "manifest-reader-collision", "manifest-report-collision"])("rejects %s before creating the output", async scenario => {
     const input = await fixture();
     try {
       const navigation = createGeneratedSiteNavigation();
@@ -59,6 +60,7 @@ describe("docs build --site-navigation", () => {
       if (scenario === "missing-ui-locale") await writeFile(input.config, JSON.stringify({ schemaVersion: "0.1.0" }));
       if (scenario === "single-document") input.args.splice(2, 2, "--input", "fixtures/basic.hia.json");
       if (scenario === "manifest-asset-collision") input.args.push("--manifest", "assets/hia-site-navigation.css");
+      if (scenario === "manifest-reader-collision") input.args.push("--manifest", "assets/hia-site-reading.js");
       if (scenario === "manifest-report-collision") input.args.push("--manifest", "documentation-ui-locale-completeness.json");
       expect(await runCli(input.args, input.io)).toBe(1);
       expect(input.messages.join("\n")).toContain("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID");

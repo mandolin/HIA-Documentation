@@ -3,7 +3,7 @@
  * @lang en Validate standalone website routes, locales, links, and public boundaries; does not replace composed-site or online acceptance.
  */
 import assert from "node:assert/strict";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { locales, kinds, manualKinds, route, href } from "../site/src/lib/routes.mjs";
@@ -61,10 +61,11 @@ async function listFiles(root) {
  * @lang zh-CN 检查实际构建，不允许零页面构建被退出码掩盖。
  * @lang en Check actual built output so an exit code cannot conceal a zero-page build.
  * @param {string} [output] - 专用预览产物目录。 Dedicated preview artifact directory.
- * @returns {Promise<object>} 数量统计，不包含本机路径。 Counts without local paths.
+ * @param {string} [generatedReferenceRoot] - 装配阶段实际生成参考根，仅解析已确认的中英入口。 Actual generated-reference root at composition, resolving only the confirmed bilingual entries.
+ * @returns {Promise<object>} 数量与明确待装配依赖，不包含本机路径。 Counts and explicit dependencies awaiting composition, without local paths.
  * @throws {Error} 页面、资源、锚点、语言或公开边界不符合。 Invalid pages, assets, anchors, languages, or public boundaries.
  */
-export async function checkWebsite(output = fileURLToPath(new URL("../dist/official-web-preview/", import.meta.url))) {
+export async function checkWebsite(output = fileURLToPath(new URL("../dist/official-web-preview/", import.meta.url)), generatedReferenceRoot) {
   // <lang lang="zh-CN">固定路由清单是完整性输入，不能从产物反推“期望页面”。</lang><lang lang="en">The fixed route inventory defines completeness rather than inferring expected pages from the output.</lang>
   const files = await listFiles(output);
   const htmlFiles = files.filter(file => file.endsWith(".html"));
@@ -82,6 +83,9 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
   // <lang><zh-CN>生成代码页的导航工件必须来自同一官网事实源，缺失或漂移不能通过手册构建验收。</zh-CN><en>Generated-code navigation must match the same website facts; missing or drifted data cannot pass manual-site acceptance.</en></lang>
   assert.deepEqual(JSON.parse(texts.get("documentation-site-navigation.json") ?? "null"), createGeneratedSiteNavigation(), "Generated navigation disagrees with website routes or documentation versions.");
   let links = 0;
+  // <lang><zh-CN>这两个已确认入口由HIA生成；单独官网明示待装配，装配时必须读取真实参考产物后通过。</zh-CN><en>These two confirmed entries belong to HIA generation; standalone checks disclose pending integration and composition must verify actual reference artifacts.</en></lang>
+  const generatedReferences = new Set();
+  const resolvedGeneratedReferences = new Set();
   for (const locale of locales) for (const kind of kinds) {
     // <lang lang="zh-CN">清单独立验证每页语言、主内容与同主题译文目标。</lang><lang lang="en">Validate each page locale, main content, and same-topic alternate independently.</lang>
     const file = route(kind, locale) + "index.html";
@@ -103,6 +107,18 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
       assert(target.pathname.startsWith("/HIA-Documentation/"), "Local link escapes the deployment base.");
       const relative = decodeURIComponent(target.pathname.slice("/HIA-Documentation/".length));
       const targetFile = !relative || relative.endsWith("/") ? relative + "index.html" : relative;
+      if (!files.includes(targetFile) && /^(?:en|zh-CN)\/index\.html$/u.test(targetFile) && !target.search && !target.hash) {
+        if (generatedReferenceRoot && !resolvedGeneratedReferences.has(targetFile)) {
+          const file = path.join(generatedReferenceRoot, targetFile);
+          assert((await stat(file)).isFile() && (await stat(file)).size <= 32 * 1024 ** 2, "Generated reference entry is missing or exceeds its read budget.");
+          const body = await readFile(file, "utf8");
+          assertPublicText(body);
+          assert(body.startsWith("<!doctype html>"), "Generated reference entry is not an HTML document.");
+          resolvedGeneratedReferences.add(targetFile);
+        }
+        generatedReferences.add(targetFile);
+        continue;
+      }
       assert(files.includes(targetFile), "Missing local page or asset: " + targetFile);
       if (target.hash) {
         const fragment = decodeURIComponent(target.hash.slice(1));
@@ -111,7 +127,7 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
       links++;
     }
   }
-  return { pages: htmlFiles.length, files: files.length, localReferences: links };
+  return { pages: htmlFiles.length, files: files.length, localReferences: links, generatedReferenceDependencies: [...generatedReferences].sort(), resolvedGeneratedReferences: [...resolvedGeneratedReferences].sort() };
 }
 
 // <lang lang="zh-CN">只有直接调用才执行磁盘检查，导入测试不触发构建或输出写入。</lang><lang lang="en">Direct invocation runs disk checks; imports for tests do not build or write output.</lang>

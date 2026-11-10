@@ -19,8 +19,8 @@ For provenance, check the revision, authority, digest and range evidence. Keep A
 
 ## Generated reference entries
 
-- [HIA unified generated reference · English](https://mandolin.github.io/HIA-Documentation/en/): existing public artifacts, including samples and tool references, without a claim of complete required-package coverage.
-- [HIA unified generated reference · Chinese](https://mandolin.github.io/HIA-Documentation/zh-CN/): retains the actual field locales in its inputs.
+- [HIA unified generated reference · English](../../../en/): existing public artifacts, including samples and tool references, without a claim of complete required-package coverage.
+- [HIA unified generated reference · Chinese](../../../zh-CN/): retains the actual field locales in its inputs.
 - [BP/bp-docs-js-cookie · API Portal](https://mandolin.github.io/bp-docs-js-cookie/): the first JavaScript demonstration project, separate from the product website.
 - [Standalone JSDoc output and build guidance](https://github.com/mandolin/HIA-Documentation/blob/main/docs/published-jsdoc-usage.md): generated with the actual runner and theme; the unified Portal is a separate output.
 

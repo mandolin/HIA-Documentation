@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { validateDocumentationUiLocaleCompletenessReport } from "../packages/core/dist/index.js";
+import { assertPublicText } from "./check-official-web.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -72,7 +73,8 @@ function checkPortalUi(outputRoot, locale) {
   }
   for (const entry of index.entries.filter(item => item.view === 'dotnet')) {
     const topic = readFileSync(path.join(root, entry.contentPath), 'utf8');
-    assert(topic.includes('data-hia-ui-message="portal.section.localizedfields"') && topic.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: reference topic UI messages are missing.`);
+    const fieldHeading = shell.includes('data-hia-site-navigation') ? 'data-hia-reading-section=' : 'data-hia-ui-message="portal.section.localizedfields"';
+    assert(topic.includes(fieldHeading) && topic.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: reference topic UI messages are missing.`);
   }
 }
 
@@ -165,6 +167,7 @@ function checkSourceLinkage(definition, outputRoot, report) {
 function assertNoPrivateOutput(definition, root) {
   for (const filePath of listFiles(root, (file) => [".css", ".html", ".js", ".json", ".map"].includes(path.extname(file)))) {
     const content = readFileSync(filePath, "utf8");
+    assertPublicText(content);
     const normalized = content.replaceAll("\\", "/").toLowerCase();
     assert(!/(^|[^a-z0-9+.-])[a-z]:\//i.test(normalized) && !normalized.includes("//?/"), `Output leaks a local absolute path: ${relative(filePath)}`);
     for (const marker of definition.privacy.forbiddenOutputMarkers) {
