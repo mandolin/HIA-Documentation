@@ -6486,7 +6486,7 @@ function renderSymbol(symbol: HiaSymbol, document: HiaDocument, locales: string[
   const signature = symbol.signature ? `<pre class="hia-signature"><code>${escapeHtml(symbol.signature)}</code></pre>` : "";
   // <lang><zh-CN>纯.NET summary与description共用主字段选择，主字段只呈现一次，附加字段全部保留。</zh-CN><en>.NET summary and description share primary-field selection, showing the primary once and retaining every additional field.</en></lang>
   const primaryPath = getPrimaryI18nFieldPath(symbol);
-  const description = renderI18nField(symbol, primaryPath, locales, selectedLocale, symbol.summary);
+  const description = renderI18nField(symbol, primaryPath, locales, selectedLocale, symbol.summary, document.defaultLocale);
   const otherFields = renderAdditionalI18nFields(symbol, locales, selectedLocale, primaryPath);
   const source = renderSource(symbol);
 
@@ -6593,15 +6593,16 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
 }
 
 /**
- * @lang zh-CN 渲染每个locale的纯文本与明确fallback；所有locale均无正文时省略空字段。
- * @lang en Renders plain text and explicit fallback per locale, omitting fields with no prose in any locale.
+ * @lang zh-CN 渲染各请求语言的纯文本和回退，lang取实际来源；裸摘要只采用模型或原文档明确声明，未知时不猜测。
+ * @lang en Renders prose and fallback for requested locales with lang from the actual source; bare summaries use only model or document declarations, never guesses for unknown provenance.
  */
 function renderI18nField(
   symbol: I18nFieldOwner,
   fieldPath: string,
   locales: string[],
   selectedLocale: string,
-  fallbackText = ""
+  fallbackText = "",
+  fallbackLocale?: string
 ): string {
   const field = getI18nField(symbol.i18n, fieldPath);
 
@@ -6611,25 +6612,34 @@ function renderI18nField(
 
   // <lang><zh-CN>缺译不等于空字段：先用现有解析规则核全部locale，保留任何可解析正文。</zh-CN><en>A missing translation is not an empty field: use existing resolution rules across all locales and retain any resolvable prose.</en></lang>
   const resolveOptions = createI18nResolveOptions(symbol);
+  // <lang><zh-CN>仅单文档调用可补其声明；混合项目不能用整站选择语言替代各来源。</zh-CN><en>Only document calls supply their declaration; mixed projects cannot substitute site selection for individual sources.</en></lang>
+  const sourceLocale = symbol.i18n?.defaultLocale || fallbackLocale;
   if (field && !fallbackText && !locales.some((locale) => resolveI18nFieldText(field, locale, resolveOptions).text.length > 0)) return "";
 
   const blocks = locales
-    .map((locale) => renderLocalizedBlock(field, locale, selectedLocale, resolveOptions, fallbackText))
+    .map((locale) => renderLocalizedBlock(field, locale, selectedLocale, resolveOptions, fallbackText, sourceLocale))
     .join("");
 
   return `<div class="hia-localized-set" data-hia-i18n-field="${escapeHtml(fieldPath)}">${blocks}</div>`;
 }
 
+/**
+ * @lang zh-CN 保留请求语言容器的选择行为，按实际解析语言标正文，未知语言显式阻断祖先继承。
+ * @lang en Preserves requested-locale selection while marking actual prose language, explicitly preventing ancestor-language inheritance when unknown.
+ */
 function renderLocalizedBlock(
   field: HiaI18nField | undefined,
   locale: string,
   selectedLocale: string,
   options: ReturnType<typeof createI18nResolveOptions>,
-  fallbackText: string
+  fallbackText: string,
+  sourceLocale?: string
 ): string {
+  // <lang><zh-CN>字段用既有回退链，裸摘要只用已声明来源，二者均不依赖初始选择推断原文。</zh-CN><en>Fields use existing fallback chains and bare summaries use declared provenance; neither infers source language from initial selection.</en></lang>
   const resolved = field
     ? resolveI18nFieldText(field, locale, options)
-    : createFallbackResolvedText(locale, selectedLocale, fallbackText);
+    : createFallbackResolvedText(locale, sourceLocale, fallbackText);
+  // <lang><zh-CN>显隐仍由请求语言控制；语义lang单独取实际解析结果，避免切换后误标。</zh-CN><en>Requested locale still controls visibility; semantic lang independently follows resolution to avoid mislabeling after switching.</en></lang>
   const hidden = locale === selectedLocale ? "" : " hidden";
   const fallbackAttrs = resolved.usedFallback
     ? ` data-hia-used-fallback="true" data-hia-fallback-from="${escapeHtml(resolved.resolvedLocale)}"`
@@ -6639,19 +6649,23 @@ function renderLocalizedBlock(
     : "";
 
   return [
-    `<p class="hia-localized-text" data-hia-locale="${escapeHtml(locale)}" lang="${escapeHtml(locale)}"${fallbackAttrs}${hidden}>`,
+    `<p class="hia-localized-text" data-hia-locale="${escapeHtml(locale)}" lang="${escapeHtml(resolved.resolvedLocale)}"${fallbackAttrs}${hidden}>`,
     escapeHtml(resolved.text),
     fallbackBadge,
     "</p>"
   ].join("");
 }
 
-function createFallbackResolvedText(locale: string, selectedLocale: string, text: string): HiaResolvedText {
+/**
+ * @lang zh-CN 裸摘要只保留已声明原文语言；未知来源不制造回退身份，正文仍逐请求语言可读。
+ * @lang en Bare summaries retain only declared source language; unknown provenance creates no fallback identity while prose stays readable for every request.
+ */
+function createFallbackResolvedText(locale: string, sourceLocale: string | undefined, text: string): HiaResolvedText {
   return {
     requestedLocale: locale,
-    resolvedLocale: selectedLocale,
-    fallbackChain: [locale, selectedLocale],
-    usedFallback: locale !== selectedLocale,
+    resolvedLocale: sourceLocale ?? "",
+    fallbackChain: [...new Set([locale, ...(sourceLocale ? [sourceLocale] : [])])],
+    usedFallback: Boolean(text && sourceLocale && locale !== sourceLocale),
     missing: !text,
     text
   };

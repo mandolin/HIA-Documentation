@@ -1,5 +1,11 @@
 # @hia-doc/renderer-html
 
+## 正文来源语言 / Prose source language
+
+正文选择语言与实际原文语言分别管理。`data-hia-locale` 保留请求语言，段落 `lang` 使用字段解析后的实际语言。普通摘要使用条目现有 `i18n.defaultLocale`，单文档渲染还可使用所属文档的 `defaultLocale`。直接项目调用没有来源声明时输出 `lang=""`，避免继承界面语言。切换语言不会生成译文。
+
+English. Content selection and source language are independent. `data-hia-locale` retains the requested locale while paragraph `lang` identifies the resolved text language. Bare summaries use an entry's existing `i18n.defaultLocale`, or the owning document's `defaultLocale` for document rendering. Direct project calls without a source declaration emit `lang=""` to prevent inheriting the UI language. Locale selection does not generate translations.
+
 ## 1.0.0 source candidate
 
 This source tree targets a coordinated 1.0.0 package candidate. It does not

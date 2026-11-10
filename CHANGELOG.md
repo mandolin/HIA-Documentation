@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Prose source-language preservation
+
+- 正文段落按实际解析语言标记，语言控件继续按请求语言选中。项目CLI保留各HIA工件的裸摘要默认语言，未提供来源语言的直接项目调用明确输出未知语言，修复英文原文被标中文及反向回退徽标。
+- Mark prose paragraphs with the resolved source language while retaining requested-locale selection. Project CLI builds preserve each HIA artifact's bare-summary default language. Direct project calls without provenance explicitly mark language as unknown, fixing English prose mislabeled as Chinese and reversed fallback badges.
+
 ## Unreleased — HTML reference fragment input
 
 - 公开参考的固定HTML片段显式采用片段模式，恢复六个真实声明。上传前要求每个显式参考生产器贡献规范化条目，并固定六个HTML身份，阻止成功状态或其它领域总数掩盖空产物。

@@ -27,6 +27,8 @@ import {
 import {
   createBasicFixtureDocument,
   createHiaDiagnostic,
+  HIA_TEXT_I18N_MODEL,
+  HIA_TEXT_I18N_MODEL_VERSION,
   validateDocumentationSourceCommentProjection,
   validateHiaDocumentDetailed,
   type DocumentationSourceCommentProjection,
@@ -2408,6 +2410,10 @@ async function readProjectJson(inputPath: string, input: ProjectManifestInput, i
   }
 }
 
+/**
+ * @lang zh-CN 将已验证core符号投影为项目条目，保留所属工件声明的裸摘要语言，不生成翻译或修改输入。
+ * @lang en Projects validated core symbols into project entries, preserving artifact-declared bare-summary language without generating translations or mutating input.
+ */
 function hiaSymbolToProjectEntry(
   symbol: HiaSymbol,
   document: HiaDocument,
@@ -2425,6 +2431,15 @@ function hiaSymbolToProjectEntry(
     semanticHierarchy
   );
   const sourceCommentProjection = readHiaSymbolSourceCommentProjection(symbol, document, diagnostics);
+  // <lang><zh-CN>空字段且disabled的既有模型只携带文档来源语言；显式符号模型优先并原样保留。</zh-CN><en>An existing disabled model with empty fields carries only document source language; explicit symbol models take precedence unchanged.</en></lang>
+  const i18n = symbol.i18n ?? (symbol.summary ? {
+    enabled: false,
+    model: HIA_TEXT_I18N_MODEL,
+    modelVersion: HIA_TEXT_I18N_MODEL_VERSION,
+    defaultLocale: document.defaultLocale,
+    locales: document.locales,
+    fields: {}
+  } : undefined);
 
   return {
     id: createProjectEntryId(input.kind ?? "hia-document", symbol.id || symbol.name, index),
@@ -2434,7 +2449,7 @@ function hiaSymbolToProjectEntry(
     view: resolveProjectEntryView(symbol.kind, input.kind, input.domain, fallbackView),
     ...(symbol.summary ? { summary: symbol.summary } : {}),
     ...(symbol.signature ? { signature: symbol.signature } : {}),
-    ...(symbol.i18n ? { i18n: symbol.i18n } : {}),
+    ...(i18n ? { i18n } : {}),
     ...(input.profile ? { profile: input.profile } : {}),
     input: {
       kind: input.kind ?? "hia-document",
