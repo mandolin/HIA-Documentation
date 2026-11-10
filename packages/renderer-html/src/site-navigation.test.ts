@@ -99,6 +99,11 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(fragment).not.toContain("<dt>parameters.value.summary</dt>");
     expect(fragment).toContain("Important note");
     expect(fragment).toContain("重要备注");
+    expect(fragment).toContain('class="hia-site-field-table"');
+    expect(fragment).toContain('<th scope="col"><span data-hia-ui-message="site.field.name">Name</span></th>');
+    expect(fragment.match(/data-hia-reading-section="parameters"/gu)).toHaveLength(1);
+    expect(fragment).toContain('<td><code>value</code></td>');
+    expect(fragment).toContain('<td><code>label</code></td>');
     expect(fragment.indexOf('data-hia-topic-section="declaration"')).toBeLessThan(fragment.indexOf('data-hia-i18n-field="parameters.value.summary"'));
   });
 

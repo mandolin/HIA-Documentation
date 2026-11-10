@@ -87,7 +87,11 @@ English. Standalone source viewers and legacy static routes use the build-explic
 
 中文。显式站点导航同时采用三栏阅读布局、真实小节目录和手机原生折叠目录。标准API字段及既有.NET字段别名使用可读双语标题，字段身份、签名、所有正文语言和源码字节保留。接口深链仅展开其祖先分片，快速切换时忽略过期响应；加载或失败时保留已读正文。页内目录的普通链接可直接打开现有静态对应页。
 
+具名参数、类型参数和异常按已有字段名称归组为“名称/说明”表格，保留逐字段锚点及所有语言正文。表格不推断输入未提供的类型、默认值或精度。
+
 English. Explicit site navigation also selects the three-column reading layout, actual-section outlines, and native mobile directories. Standard API fields and existing .NET aliases receive readable bilingual headings while retaining field identities, signatures, every prose locale, and source bytes. API deep links expand only their ancestor shards. Stale selection responses are ignored, and loading or failure retains already displayed prose. Ordinary outline links can open existing static counterparts directly.
+
+Named parameters, type parameters, and exceptions are grouped into name/description tables using existing field names, retaining per-field anchors and every prose locale. Tables infer no unprovided types, defaults, or precision.
 
 中文。交互入口额外生成一份 `assets/hia-site-reading.js`，提供当前生成项目的本地索引检索、签名复制和阅读设置。设置支持浅色/深色/系统、代码滚动/换行及源码行号，采用构建默认且仅作用于当前页。界面语言和正文语言继续独立。静态页和独立源码页保持无脚本，省去运行时专用属性和不可用工具按钮。独立源码页保留原CSP、真实行号及返回接口入口，精度仍由来源证据决定。普通浏览器中的宿主文件定位请求会显示为禁用，同源公开源码链接仍可使用。
 

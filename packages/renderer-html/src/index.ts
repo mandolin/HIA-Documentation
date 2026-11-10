@@ -6517,17 +6517,16 @@ function getPrimaryI18nFieldPath(owner: I18nFieldOwner): string {
 }
 
 /**
- * @lang zh-CN 按原顺序遍历所有附加字段；不按.NET字段清单过滤，不修改输入或把字段文本当HTML。
- * @lang en Iterates all additional fields in input order without a .NET whitelist, input mutation, or interpreting field text as HTML.
- */
-/**
  * @lang zh-CN 完整呈现主字段之外的本地化正文；已采用Portal使用其独立UI语言，旧调用保留原标题。
  * @lang en Renders all localized prose beyond the primary field, using the adopted Portal's independent UI language while retaining the legacy heading for other callers.
+ * @lang zh-CN 附加字段完整保留，具名字段按首次出现位置归组；不修改输入或把字段文本当HTML。
+ * @lang en Retains every additional field, grouping named fields at their first position without input mutation or interpreting field text as HTML.
  * @param symbol <lang><zh-CN>字段所有者，仅读取不修改。</zh-CN><en>Read-only field owner.</en></lang>
  * @param locales <lang><zh-CN>实际正文语言集合。</zh-CN><en>Actual content locales.</en></lang>
  * @param selectedLocale <lang><zh-CN>当前可见正文语言。</zh-CN><en>Currently visible content locale.</en></lang>
  * @param primaryPath <lang><zh-CN>已显示的主字段，默认description。</zh-CN><en>Already displayed primary field, defaulting to description.</en></lang>
  * @param portalContext <lang><zh-CN>可选已采用Portal上下文，用于标题及切换标记。</zh-CN><en>Optional adopted Portal context for the heading and switching marker.</en></lang>
+ * @param ownerId <lang><zh-CN>原条目身份，用于稳定字段锚点，默认entry。</zh-CN><en>Original entry identity for stable field anchors, defaulting to entry.</en></lang>
  * @returns <lang><zh-CN>完整附加字段HTML，没有可见字段则为空。</zh-CN><en>Complete additional-field HTML, or an empty string without renderable fields.</en></lang>
  */
 function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], selectedLocale: string, primaryPath = "description", portalContext?: RenderProjectPortalContext, ownerId = "entry"): string {
@@ -6539,20 +6538,50 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
     return "";
   }
 
+  // <lang><zh-CN>具名参数按首次出现位置归组为确认稿的名称/说明表；原字段锚点与双语容器仍逐项保留。</zh-CN><en>Group named parameters at their first occurrence into the confirmed name/description tables, retaining each original field anchor and bilingual container.</en></lang>
+  const namedGroups = new Map<string, Array<{ fieldPath: string; name: string }>>();
+  /**
+   * @lang zh-CN 识别已有生产器的具名说明字段，保留名称，不推断参数类型或值。
+   * @lang en Recognizes existing producer named-description fields, preserving names without inferring parameter types or values.
+   */
+  const namedCategory = (fieldPath: string) => {
+    const match = /^(params|parameters|typeParams|typeParameters|exceptions)\.(.+)\.summary$/u.exec(fieldPath);
+    return match ? { category: match[1] === "params" ? "parameters" : match[1]!.toLowerCase().replace("typeparams", "typeparameters"), name: match[2]! } : undefined;
+  };
+  if (portalContext?.siteNavigation) {
+    for (const [fieldPath] of fieldEntries) {
+      const named = namedCategory(fieldPath);
+      if (named) {
+        let group = namedGroups.get(named.category);
+        if (!group) { group = []; namedGroups.set(named.category, group); }
+        group.push({ fieldPath, name: named.name });
+      }
+    }
+  }
+  const emittedGroups = new Set<string>();
   const items = fieldEntries
     .map(([fieldPath]) => {
       const renderedField = renderI18nField(symbol, fieldPath, locales, selectedLocale);
       if (renderedField && portalContext?.siteNavigation) {
+        const group = namedCategory(fieldPath);
+        if (group) {
+          if (emittedGroups.has(group.category)) return "";
+          emittedGroups.add(group.category);
+          const rows = namedGroups.get(group.category)!.map(field => {
+            const body = renderI18nField(symbol, field.fieldPath, locales, selectedLocale);
+            const anchor = `${ownerId}--field-${stableProjectArtifactName(field.fieldPath)}`;
+            return body ? `<tr id="${escapeHtml(anchor)}" tabindex="-1"><td><code>${escapeHtml(field.name)}</code></td><td>${body}</td></tr>` : "";
+          }).join("");
+          const title = renderProjectUiMessage(portalContext, `site.field.${group.category}`);
+          return `<section class="hia-site-field" id="${escapeHtml(ownerId)}--fields-${group.category}" tabindex="-1" data-hia-reading-section="${group.category}"><h3>${title}</h3><table class="hia-site-field-table"><thead><tr><th scope="col">${renderProjectUiMessage(portalContext, "site.field.name")}</th><th scope="col">${renderProjectUiMessage(portalContext, "site.field.description")}</th></tr></thead><tbody>${rows}</tbody></table></section>`;
+        }
         // <lang><zh-CN>标准API字段用已登记的双语标题；名称和原字段身份仍保留，扩展字段继续完整可读。</zh-CN><en>Use registered bilingual headings for standard API fields, retaining names and original field identities while preserving extension fields.</en></lang>
-        const named = /^(params|parameters|typeParams|typeParameters|exceptions)\.(.+)\.summary$/u.exec(fieldPath);
         // <lang><zh-CN>复用各生产器已存在的字段别名，只改变阅读标题，不迁移原工件身份。</zh-CN><en>Reuse existing producer field aliases for headings without migrating artifact identities.</en></lang>
-        const aliases: Record<string, string> = { params: "parameters", typeParams: "typeparameters", "returns.summary": "returns" };
-        const fieldName = named?.[1] ?? fieldPath;
-        const category = aliases[fieldName] ?? fieldName.toLowerCase();
+        const category = fieldPath === "returns.summary" ? "returns" : fieldPath.toLowerCase();
         const known = ["remarks", "parameters", "typeparameters", "returns", "exceptions"].includes(category);
         const title = known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
         const anchor = `${ownerId}--field-${stableProjectArtifactName(fieldPath)}`;
-        return `<section class="hia-site-field" id="${escapeHtml(anchor)}" tabindex="-1" data-hia-reading-section="${escapeHtml(fieldPath)}"><h3>${title}${named ? ` · <code>${escapeHtml(named[2]!)}</code>` : ""}</h3>${renderedField}</section>`;
+        return `<section class="hia-site-field" id="${escapeHtml(anchor)}" tabindex="-1" data-hia-reading-section="${escapeHtml(fieldPath)}"><h3>${title}</h3>${renderedField}</section>`;
       }
       return renderedField
         ? `<div class="hia-i18n-field"><dt>${escapeHtml(fieldPath)}</dt><dd>${renderedField}</dd></div>`

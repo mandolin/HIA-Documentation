@@ -76,6 +76,8 @@ export const SITE_READING_MESSAGES = {
   "site.field.typeparameters": ["类型参数", "Type parameters"],
   "site.field.returns": ["返回值", "Returns"],
   "site.field.exceptions": ["异常", "Exceptions"],
+  "site.field.name": ["名称", "Name"],
+  "site.field.description": ["说明", "Description"],
   "site.kind.constant": ["常量", "Constant"],
   "site.kind.function": ["函数", "Function"],
   "site.kind.member": ["成员", "Member"],
@@ -397,6 +399,7 @@ export const SITE_READING_STYLE = `
 [data-hia-site-navigation] .hia-site-field{border-top:1px solid var(--hia-border);padding:22px 0;margin:18px 0}
 [data-hia-site-navigation] .hia-site-field h3{font-size:1.14rem;margin:0 0 12px}
 [data-hia-site-navigation] .hia-site-field code{font:13px Consolas,monospace}
+.hia-site-field-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid var(--hia-border);border-radius:10px;overflow:hidden;background:var(--hia-surface);font-size:.9rem}.hia-site-field-table th,.hia-site-field-table td{padding:13px 16px;vertical-align:top;text-align:left;border-bottom:1px solid var(--hia-border);overflow-wrap:break-word}.hia-site-field-table th{background:var(--hia-site-soft);font-weight:600}.hia-site-field-table th:first-child{width:27%}.hia-site-field-table tr:last-child td{border-bottom:0}.hia-site-field-table p{margin:0}
 .hia-site-toc{position:sticky;top:calc(var(--hia-site-header) + var(--hia-site-tabs) + 30px);max-height:calc(100dvh - 180px);overflow:auto;border-left:1px solid var(--hia-border);padding-left:16px;font-size:.78rem;min-width:0}
 .hia-site-toc strong{font-size:.7rem;color:var(--hia-muted)}[data-hia-reading-outline] a{display:block;padding:7px 0;color:var(--hia-muted);overflow-wrap:break-word}
 .hia-site-mobile-outline,.hia-site-source-mobile-directory{display:none}.hia-site-source-shell h1{font-size:2.35rem}.hia-site-source-path{overflow-wrap:break-word;font:13px Consolas,monospace}
