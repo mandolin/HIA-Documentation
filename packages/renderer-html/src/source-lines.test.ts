@@ -52,6 +52,18 @@ describe("source line views", () => {
     expect(noScript).not.toContain("data-hia-source-fetch=");
   });
 
+  it.each(["fetch", "link"] as const)("resolves localized %s source links to the emitted viewer", (presentation) => {
+    // <lang><zh-CN>本地化静态页有两层目录，按真实URL解析核目标，不能只匹配链接文字。</zh-CN><en>Localized static pages have two directory levels; resolve actual URLs to verify targets instead of matching labels.</en></lang>
+    const result = renderProjectHtmlDocument(fixture(), { projectSite: { uiLocale: "en", informationArchitecture: {}, source: { presentation } } });
+    const viewer = result.files.find(file => /^sources\/.*\.L21\.html$/u.test(file.path))!;
+    for (const page of result.files.filter(file => /^pages\/(?:en|zh-CN)\/[^/]+\.html$/u.test(file.path) && !file.path.endsWith("/index.html"))) {
+      // <lang><zh-CN>复制已生成的来源链接并验证相对解析及对应文件，覆盖两种界面语言。</zh-CN><en>Resolve each emitted source link and require the matching file, covering both interface languages.</en></lang>
+      const link = page.contents.match(/href="([^"]+\.L21\.html#L21)"/u)![1]!;
+      expect(new URL(link, `https://example.test/${page.path}`).pathname).toBe(`/${viewer.path}`);
+    }
+    expect(result.files.filter(file => /^pages\/(?:en|zh-CN)\/[^/]+\.html$/u.test(file.path) && !file.path.endsWith("/index.html"))).toHaveLength(2);
+  });
+
   it("retains same-origin theme routing for generated source pages", () => {
     const result = renderProjectHtmlDocument(fixture(), { themeAssets: { mode: "external", baseUrl: "../shared/assets" } });
     const viewer = result.files.find((file) => file.path.endsWith(".L21.html"))!;

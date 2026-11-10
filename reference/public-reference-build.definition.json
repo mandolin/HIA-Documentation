@@ -302,6 +302,7 @@
     }
   ],
   "packageApis": ["@hia-doc/plugin-sdk"],
+  "packageResources": ["@hia-doc/plugin-sdk"],
   "acceptance": {
     "minimumEntryCounts": {
       "all": 63,

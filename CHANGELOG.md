@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Plugin SDK JSON reference resources
+
+- 公开参考通过现有 JSONdoc 生产链接入插件 SDK 的两个实际 JSON 导出，保留全部值、签名、层级、词法引用、原始字节快照与精确源码映射。上传前独立重核逐值内容和授权源码预览。
+- Adopt both actual plugin SDK JSON exports through the existing JSONdoc producer, preserving every value, signature, parent, lexical reference, original-byte snapshot and exact source map. Pre-upload checks independently verify per-value content and authorized source previews.
+- 修复本地化无脚本页的源码相对链接，并分离参考站中同包模块与资源的导航身份。
+- Fix relative source links on localized no-script pages and separate module/resource navigation identities for the same package in the reference site.
+
 ## Unreleased — Plugin SDK reference adoption
 
 - 公开参考接入插件SDK三个模块入口的真实项目工件，逐绑定/声明/字段/来源与地图校验，保留原单文件样本及既有入口。具名参数的 description 字段采用参数表，数字索引异常字段采用本地化标题，原字段身份与正文保持。

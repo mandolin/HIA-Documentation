@@ -10,9 +10,9 @@ English. The definition's `packageApis` explicitly selects core packages, curren
 
 ## Portal interface language and brand
 
-中文。每个中英文参考目录都显式采用条目分组、惰性加载及独立成员入口，界面语言初始值与该目录对应。既有语言控件可分别切换界面和正文，每个条目另有中英文界面的无脚本页面。构建使用真实消息输入生成界面语言完整性报告，上传前核验报告、静态路由和钴蓝 `#0047AB`。源码许可仍来自同一个单文件镜像配置。
+中文。每个中英文参考目录都显式采用条目分组、惰性加载及独立成员入口，界面语言初始值与该目录对应。既有语言控件可分别切换界面和正文，每个条目另有中英文界面的无脚本页面。构建使用真实消息输入生成界面语言完整性报告，上传前核验报告、静态路由和钴蓝 `#0047AB`。源码许可来自显式文件镜像配置。
 
-English. Each Chinese or English reference directory explicitly uses entry grouping, lazy loading and separate member entries, with its UI language initially matching the directory. Existing controls switch interface and content languages independently. Every entry also has Chinese-UI and English-UI no-script pages. Actual message inputs generate the UI-language completeness report. Pre-upload checks require the report, static routes and cobalt `#0047AB`. Source authorization comes from the same single-file mirror config.
+English. Each Chinese or English reference directory explicitly uses entry grouping, lazy loading and separate member entries, with its UI language initially matching the directory. Existing controls switch interface and content languages independently. Every entry also has Chinese-UI and English-UI no-script pages. Actual message inputs generate the UI-language completeness report. Pre-upload checks require the report, static routes and cobalt `#0047AB`. Source authorization comes from an explicit file-mirror configuration.
 
 ## Source Boundary
 
@@ -58,6 +58,16 @@ English. The mixed reference build copies only this repository's `Envelope.cs` i
 See the [sample instructions](../reference/samples/dotnet/README.md) for standalone extraction and split-site rendering. The reference build uses the existing 400-line excerpt limit.
 
 ## Local Verification
+
+### Exported JSON resources
+
+中文。构建定义的 `packageResources` 显式选择 `@hia-doc/plugin-sdk` 的两个 JSON 导出。构建读取 `package.json` 指向的实际 `dist` 文件，以现有 JSONdoc SDK 生产器生成每个 JSON 值、容器父项、原始词法签名和 `doc-source-map@1.1.0`。独立 AST 审核及逐 Pointer 核验在生成和上传前执行。资源内容语言显式为 `und`，`$ref` 保留为词法记录。
+
+English. The definition's `packageResources` explicitly selects both JSON exports of `@hia-doc/plugin-sdk`. The build reads the actual `dist` targets from `package.json` and uses the existing JSONdoc SDK producer for every JSON value, container parent, original lexical signature and `doc-source-map@1.1.0`. Independent AST and per-pointer checks run during generation and before upload. Resource content explicitly uses locale `und`, with `$ref` preserved as a lexical record.
+
+中文。每个语言目录的 `package-resources/adoption.json` 列出真实导出与摘要。原生文档、地图和完整原文快照在 `package-resources/hia-doc--plugin-sdk/<导出文件名>/` 保持原字节。源码镜像显式增加 `plain-data-initialization.schema.json` 和 `artifact-derivation-evidence.schema.json` 两个公开 `dist` 文件。完整声明范围保留在地图，页面源码预览沿用最多 400 行的窗口，后续值有各自的行号入口。
+
+English. Each locale's `package-resources/adoption.json` lists actual exports and digests. Native documents, maps and complete original snapshots retain their bytes under `package-resources/hia-doc--plugin-sdk/<export-filename>/`. The explicit source mirror includes the public `dist` files `plain-data-initialization.schema.json` and `artifact-derivation-evidence.schema.json`. Maps retain complete declaration ranges. Page source previews use the existing limit of 400 lines per window, with later values retaining their own line-number links.
 
 中文。`htmdoc-basic-html` 的固定输入是HTML片段，清单显式使用 `html-fragment`。上传前逐生产器核实际规范化条目，并要求Alert组件、属性、插槽、事件、样式钩子及可访问性说明六个身份存在。其它来源的条目总数或成功状态不能替代该来源的内容。
 

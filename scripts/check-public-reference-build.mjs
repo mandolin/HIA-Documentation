@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { validateDocumentationUiLocaleCompletenessReport } from "../packages/core/dist/index.js";
 import { assertPublicText } from "./check-official-web.mjs";
 import {checkPublicReferencePackageApis} from "./public-reference-packages.mjs";
+import {checkPublicReferenceResources} from "./public-reference-resources.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -40,6 +41,7 @@ function main() {
   for (const locale of expectedLocales) {
     checkLocale(definition, outputRoot, locale);
     checkPublicReferencePackageApis(definition, outputRoot, locale);
+    checkPublicReferenceResources(definition, outputRoot, locale);
     checkDotnetSample(outputRoot, locale);
     checkPortalUi(outputRoot, locale);
   }

@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
 import {preparePublicReferencePackageApis} from "./public-reference-packages.mjs";
+import {preparePublicReferenceResources,checkPublicReferenceResources} from "./public-reference-resources.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -77,10 +78,11 @@ async function main() {
     // <lang><zh-CN>独立0.4上下文先核包工件，再通过已有逐输入profile引用汇入旧项目；不替换旧生产器或规范。</zh-CN><en>Verify package artifacts in an independent 0.4 context, then aggregate through existing per-input profile references without replacing legacy producers or profiles.</en></lang>
     const projectManifest = materializeProjectManifest(definition, sourceRoots, runtime, workspaceRoot, resolvedMainRepoRoot);
     const packageInputs = await preparePublicReferencePackageApis({packageNames:definition.packageApis,workspaceRoot,mainRoot:resolvedMainRepoRoot,toolRoot:sourceRoots.get('hia-tsdoc'),outputRoot,locales:definition.acceptance.requiredLocales});
-    if(packageInputs.length) projectManifest.inputs=packageInputs;
+    const resourceInputs = await preparePublicReferenceResources({packageNames:definition.packageResources,workspaceRoot,mainRoot:resolvedMainRepoRoot,outputRoot,locales:definition.acceptance.requiredLocales});
+    if(packageInputs.length || resourceInputs.inputs.length) projectManifest.inputs=[...packageInputs,...resourceInputs.inputs];
     writeJson(ephemeralManifestPath, projectManifest);
-    // <lang><zh-CN>源码读取仅授予独占单文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive single-file mirror, cleaned with its config in finally.</en></lang>
-    const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root);
+    // <lang><zh-CN>源码读取仅授予独占明确文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive explicit-file mirror, cleaned with its config in finally.</en></lang>
+    const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root, resourceInputs.sourcePaths);
     // <lang><zh-CN>两语言读取同一已验证快照，宿主文件后续变化不影响这次构建。</zh-CN><en>Both locales read the same validated snapshot, isolating this build from later host-file changes.</en></lang>
     const siteNavigationPath = siteNavigation ? path.join(runtime.root, "site-navigation.json") : undefined;
     if (siteNavigationPath) writeJson(siteNavigationPath, siteNavigation);
@@ -280,6 +282,7 @@ function buildLocale({ definition, locale, outputRoot, projectManifestPath, sour
   }
   assert((manifest.docSourceMaps?.length ?? 0) >= definition.acceptance.minimumDocSourceMapCount, `${locale}: doc-source-map count is below the reviewed floor.`);
   assertRequiredEntryIds(definition, localeOutput, locale);
+  checkPublicReferenceResources(definition, outputRoot, locale);
   return {
     locale,
     entryCounts: manifest.project.entryCounts,

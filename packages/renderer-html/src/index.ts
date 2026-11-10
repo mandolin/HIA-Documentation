@@ -2781,9 +2781,10 @@ function applyProjectSourcePresentationPolicy(
  * @lang en Removes fetch-runtime metadata for standalone no-script pages and adjusts build-generated links to page-relative paths.
  *
  * @param projectInput - 已应用 source policy 的 project input。Project input after source policy application.
+ * @param parentPath - 静态页面至输出根的相对前缀，默认一层。Relative prefix from the static page to the output root, defaulting to one level.
  * @returns 不含不可用 fetch control 的 page input。Page input without unavailable fetch controls.
  */
-function createProjectNoScriptProjectInput(projectInput: RenderProjectHtmlInput): RenderProjectHtmlInput {
+function createProjectNoScriptProjectInput(projectInput: RenderProjectHtmlInput, parentPath = "../"): RenderProjectHtmlInput {
   return {
     ...projectInput,
     entries: projectInput.entries.map((entry) => {
@@ -2797,7 +2798,7 @@ function createProjectNoScriptProjectInput(projectInput: RenderProjectHtmlInput)
         ...entry,
         source: {
           ...source,
-          ...(noScriptLinkUrl ? { linkUrl: `../${noScriptLinkUrl}` } : {})
+          ...(noScriptLinkUrl ? { linkUrl: `${parentPath}${noScriptLinkUrl}` } : {})
         }
       };
     })
@@ -3161,6 +3162,12 @@ function* createProjectSplitSiteFiles(
   const noScriptProjectInput = createProjectNoScriptProjectInput(projectInput);
   // <lang><zh-CN>按稳定 entry id 建立单次索引，避免大型项目为每页线性扫描全部节点。</zh-CN><en>Build a one-time stable-entry index so large projects do not scan every node for every page.</en></lang>
   const noScriptEntryById = new Map(noScriptProjectInput.entries.map((entry) => [entry.id, entry]));
+  // <lang><zh-CN>本地化页面多一层目录，单次重定位全部条目也覆盖随父项呈现的成员来源。</zh-CN><en>Localized pages add one directory level; rebasing all entries once also covers sources of members rendered with their parent.</en></lang>
+  const localizedNoScriptProjectInput = portalContext.uiLocaleAdoption
+    ? createProjectNoScriptProjectInput(projectInput, "../../")
+    : noScriptProjectInput;
+  // <lang><zh-CN>复用同一身份集合的索引，逐页读取不再扫描全部声明。</zh-CN><en>Index the same identity set so per-page lookups do not rescan all declarations.</en></lang>
+  const localizedNoScriptEntryById = new Map(localizedNoScriptProjectInput.entries.map((entry) => [entry.id, entry]));
   files.push({
     path: "pages/index.html",
     contents: renderProjectNoScriptIndexHtml(pageTitle, noScriptProjectInput, localeModel.selectedLocale, portalContext),
@@ -3235,8 +3242,8 @@ function* createProjectSplitSiteFiles(
           path: createProjectLocalizedNoScriptPagePath(entry.id, uiLocale),
           contents: renderProjectNoScriptEntryHtml(
             pageTitle,
-            noScriptEntry,
-            noScriptProjectInput,
+            localizedNoScriptEntryById.get(entry.id)!,
+            localizedNoScriptProjectInput,
             localeModel,
             localizedContext,
             true
