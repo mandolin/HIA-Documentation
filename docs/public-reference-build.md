@@ -4,9 +4,9 @@ The public reference build assembles first-party HIA documentation artifacts fro
 
 ## Core package module APIs
 
-中文。清单的 `packageApis` 显式选择核心包，当前包含 `@hia-doc/plugin-sdk` 的三个模块入口。构建从真实包入口独立审核公开绑定，采用通用 TypeScript 项目生产器的精确 0.4 工件，经既有项目输入汇入参考站。原单文件样本继续保留。上传前重新核对实际入口、四种工件、每个声明的字段/签名/来源、可读页面及地图文件。包的 JSON 资源和命令入口分别核验。
+中文。清单的 `packageApis` 显式选择核心包，当前包含 `@hia-doc/plugin-sdk` 的三个模块入口及 `@hia-doc/jsondoc` 的根入口。构建从真实包入口独立审核公开绑定，采用通用 TypeScript 项目生产器的精确 0.4 工件，经既有项目输入汇入参考站。原单文件样本继续保留。上传前重新核对实际入口、四种工件、每个声明的字段/签名/来源、可读页面及地图文件。包的 JSON 资源和命令入口分别核验。
 
-English. The definition's `packageApis` explicitly selects core packages, currently the three module entry points of `@hia-doc/plugin-sdk`. Builds independently inspect real package exports, generate exact 0.4 artifacts through the generic TypeScript project producer, and aggregate them through existing project inputs. The original single-file sample remains available. Pre-upload checks revalidate actual entries, all four artifacts, declaration fields/signatures/sources, readable pages, and map files. JSON resources and commands have separate acceptance criteria.
+English. The definition's `packageApis` explicitly selects core packages, currently the three module entry points of `@hia-doc/plugin-sdk` and the root entry point of `@hia-doc/jsondoc`. Builds independently inspect real package exports, generate exact 0.4 artifacts through the generic TypeScript project producer, and aggregate them through existing project inputs. The original single-file sample remains available. Pre-upload checks revalidate actual entries, all four artifacts, declaration fields/signatures/sources, readable pages, and map files. JSON resources and commands have separate acceptance criteria.
 
 ## Portal interface language and brand
 

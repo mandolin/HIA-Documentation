@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — JSONdoc module reference adoption
+
+- 公开参考采用 JSONdoc 根入口的四个真实绑定，保留函数、接口、属性、泛型结构与原生双语字段，通过既有通用 TypeScript 项目生产链生成并逐项校验。
+- Adopt the JSONdoc root entry's four actual bindings in the public reference, preserving functions, interfaces, properties, generic structure and original bilingual fields through the existing generic TypeScript project producer and per-item checks.
+
 ## Unreleased — Plugin SDK JSON reference resources
 
 - 公开参考通过现有 JSONdoc 生产链接入插件 SDK 的两个实际 JSON 导出，保留全部值、签名、层级、词法引用、原始字节快照与精确源码映射。上传前独立重核逐值内容和授权源码预览。

@@ -301,7 +301,7 @@
       }
     }
   ],
-  "packageApis": ["@hia-doc/plugin-sdk"],
+  "packageApis": ["@hia-doc/plugin-sdk", "@hia-doc/jsondoc"],
   "packageResources": ["@hia-doc/plugin-sdk"],
   "acceptance": {
     "minimumEntryCounts": {
