@@ -4,7 +4,24 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import ts from "typescript";
+import { fileURLToPath } from "node:url";
 import { assertSiteVersionIndex, createSiteVersionIndex, readSiteVersionIndex, readLegacyReferenceIndex, resolveDocumentationVersion } from "../src/lib/version-index.mjs";
+
+test("generated navigation has a resolvable renderer-owned return type before package builds", () => {
+  // <lang><zh-CN>官网单独CI没有主包dist，导航注释必须直接解析到同仓的独立契约源。</zh-CN><en>The standalone website CI has no main-package dist, so navigation documentation must resolve directly to the independent contract source.</en></lang>
+  const sourcePath = fileURLToPath(new URL("../src/lib/generated-navigation.mjs", import.meta.url));
+  const program = ts.createProgram([sourcePath], { allowJs: true, checkJs: true, noEmit: true, target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.NodeNext, moduleResolution: ts.ModuleResolutionKind.NodeNext, skipLibCheck: true });
+  // <lang><zh-CN>核真实导出签名的类型身份，避免错误相对路径静默退化为any。</zh-CN><en>Check the actual export signature's type identity so incorrect relative paths cannot silently degrade to any.</en></lang>
+  const checker = program.getTypeChecker();
+  const source = program.getSourceFile(sourcePath);
+  const factory = checker.getExportsOfModule(checker.getSymbolAtLocation(source)).find(symbol => symbol.name === "createGeneratedSiteNavigation");
+  const signature = checker.getTypeOfSymbolAtLocation(factory, factory.valueDeclaration).getCallSignatures()[0];
+  const returned = checker.getReturnTypeOfSignature(signature);
+  assert.equal(returned.symbol?.name, "DocumentationSiteNavigation");
+  assert(returned.symbol.declarations.some(declaration => declaration.getSourceFile().fileName.replaceAll("\\", "/").endsWith("/packages/renderer-html/src/site-navigation.ts")));
+  assert.deepEqual(program.getSemanticDiagnostics(source).map(diagnostic => diagnostic.code), []);
+});
 
 test("preview index separates website, documentation, and legacy reference", () => {
   const index = createSiteVersionIndex();
