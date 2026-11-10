@@ -7,6 +7,7 @@ import {
   type DocumentationUiLocaleRequirement
 } from "@hia-doc/core";
 import type { DocumentationPortalUiLocale } from "./information-architecture.js";
+import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 
 /**
  * @lang zh-CN Portal owner 输出的 W-P123 metadata-only 报告路径。
@@ -223,6 +224,11 @@ export const DOCUMENTATION_PORTAL_UI_MESSAGE_IDS = Object.freeze(
  */
 export interface DocumentationPortalUiLocaleAdoptionOptions {
   /**
+   * @lang zh-CN 可选的已验证导航；仅实际提供时扩充消息使用清单。
+   * @lang en Optional validated navigation, extending actual message uses only when supplied.
+   */
+  siteNavigation?: DocumentationSiteNavigation;
+  /**
    * @lang zh-CN 当前Portal界面面所呈现的正文语言。
    * @lang en Content locale presented by the current Portal surface.
    */
@@ -288,16 +294,41 @@ export interface DocumentationPortalUiLocaleAdoption {
 export function createDocumentationPortalUiLocaleAdoption(
   options: DocumentationPortalUiLocaleAdoptionOptions
 ): DocumentationPortalUiLocaleAdoption {
+  return createPortalUiLocaleAdoption(options, false);
+}
+
+/**
+ * @lang zh-CN 非显式IA的导航单独评估实际导航标签，不把旧Portal正文声称为全量双语。
+ * @lang en Evaluates actual navigation labels separately outside explicit IA, without claiming complete bilingual legacy Portal content.
+ * @param options <lang><zh-CN>显式界面语言与已验证导航。</zh-CN><en>Explicit UI locale and validated navigation.</en></lang>
+ * @returns <lang><zh-CN>只覆盖导航的真实完整性报告。</zh-CN><en>Actual completeness report covering navigation only.</en></lang>
+ */
+export function createSiteNavigationUiLocaleAdoption(options: DocumentationPortalUiLocaleAdoptionOptions): DocumentationPortalUiLocaleAdoption {
+  if (!options.siteNavigation) throw new TypeError("HIA_SITE_NAVIGATION_INVALID: Navigation-only evaluation requires navigation.");
+  return createPortalUiLocaleAdoption({ ...options, profileId: "portal.sitenavigation", surfaceId: "portal.sitenavigation" }, true);
+}
+
+/**
+ * @lang zh-CN 按真实采用范围复用评估器，导航单独范围不声明状态消息通道。
+ * @lang en Reuses the evaluator for the actual adoption scope, with navigation-only scope declaring no status-message channel.
+ */
+function createPortalUiLocaleAdoption(options: DocumentationPortalUiLocaleAdoptionOptions, navigationOnly: boolean): DocumentationPortalUiLocaleAdoption {
+  // <lang><zh-CN>该公开入口也可直接调用，不能仅依赖上层渲染器已校验导航。</zh-CN><en>This public entry point is directly callable and cannot rely solely on renderer-level navigation validation.</en></lang>
+  if (options.siteNavigation !== undefined) assertDocumentationSiteNavigation(options.siteNavigation);
   // <lang><zh-CN>profile/surface identity 必须精确匹配 owner registry，避免稳定 ID 退化为任意调用者文本。</zh-CN><en>Profile/surface identity must exactly match the owner registry so stable IDs cannot degrade into arbitrary caller text.</en></lang>
   const profileId = options.profileId ?? DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID;
   const surfaceId = options.surfaceId ?? DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID;
-  if (DOCUMENTATION_PORTAL_UI_LOCALE_SURFACES[profileId] !== surfaceId) {
+  // <lang><zh-CN>导航单独身份仅由专用范围构造，普通Portal调用不能改名冒用该范围。</zh-CN><en>The navigation-only identity is constructed only for its dedicated scope; ordinary Portal calls cannot relabel themselves into it.</en></lang>
+  const expectedSurface = navigationOnly && profileId === "portal.sitenavigation" ? "portal.sitenavigation" : DOCUMENTATION_PORTAL_UI_LOCALE_SURFACES[profileId];
+  if (expectedSurface !== surfaceId) {
     throw new TypeError(
       "HIA_PORTAL_UI_LOCALE_SURFACE_UNSUPPORTED: UI locale profile and surface must use a registered exact pair."
     );
   }
+  // <lang><zh-CN>新增标签来自本次实际导航，未采用导航的调用保留原消息和评估计数。</zh-CN><en>Additional labels come from this invocation's actual navigation; callers without navigation retain their original messages and evaluation counts.</en></lang>
+  const records = [...(navigationOnly ? [] : portalUiMessageRecords), ...(options.siteNavigation ? createSiteNavigationUiMessages(options.siteNavigation) : [])];
   // <lang><zh-CN>定义与 bundle 从同一 owner registry 投影，但 placeholder 集合仍由显式记录声明。</zh-CN><en>Definitions and bundles project from one owner registry, while placeholder sets remain explicit registry facts.</en></lang>
-  const messages: DocumentationUiLocaleMessageDefinition[] = portalUiMessageRecords.map((record) => ({
+  const messages: DocumentationUiLocaleMessageDefinition[] = records.map((record) => ({
     messageId: record.id,
     placeholderNames: [...record.placeholders],
     visibility: "public"
@@ -305,15 +336,15 @@ export function createDocumentationPortalUiLocaleAdoption(
   // <lang><zh-CN>runtime bundle 与 evaluator bundle 分开构造：前者按 id lookup，后者使用 contract entry array。</zh-CN><en>Runtime and evaluator bundles are built separately: the former is keyed by id, the latter uses contract entry arrays.</en></lang>
   const runtimeBundles = Object.freeze(Object.fromEntries(DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES.map((locale) => [
     locale,
-    Object.freeze(Object.fromEntries(portalUiMessageRecords.map((record) => [record.id, record[locale]])))
+    Object.freeze(Object.fromEntries(records.map((record) => [record.id, record[locale]])))
   ]))) as DocumentationPortalUiLocaleAdoption["bundles"];
   const bundles: DocumentationUiLocaleBundle[] = DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES.map((locale) => ({
     bundleId: `portal.${locale.toLowerCase().replaceAll("-", "")}`,
     locale,
-    entries: portalUiMessageRecords.map((record) => ({ messageId: record.id, text: record[locale] }))
+    entries: records.map((record) => ({ messageId: record.id, text: record[locale] }))
   }));
   // <lang><zh-CN>requirements 直接来自每个词条的真实 use，不根据 DOM 顺序或译文生成 identity。</zh-CN><en>Requirements come directly from real per-message uses, never from DOM order or translated text.</en></lang>
-  const requirements: DocumentationUiLocaleRequirement[] = portalUiMessageRecords.flatMap((record) => record.uses.map((use) => ({
+  const requirements: DocumentationUiLocaleRequirement[] = records.flatMap((record) => record.uses.map((use) => ({
     requirementId: `${record.id}.${use.mode === interactive ? "i" : "n"}.${use.channel === visible ? "v" : use.channel === accessible ? "a" : "s"}`,
     surfaceId,
     mode: use.mode,
@@ -339,7 +370,7 @@ export function createDocumentationPortalUiLocaleAdoption(
       surfaceId,
       contentLocale: options.contentLocale,
       modes: [
-        { mode: interactive, channels: [visible, accessible, status] },
+        { mode: interactive, channels: navigationOnly ? [visible, accessible] : [visible, accessible, status] },
         { mode: noScript, channels: [visible, accessible] }
       ],
       languageMetadata
@@ -358,6 +389,40 @@ export function createDocumentationPortalUiLocaleAdoption(
     reportJson: result.reportJson,
     summary: result.summary
   });
+}
+
+/**
+ * @lang zh-CN 为本次导航的真实可见文本与可访问名称建立双语消息，独立源码页复用同一目录。
+ * @lang en Builds bilingual messages for this navigation's actual visible text and accessible names, sharing the catalog with standalone source pages.
+ * @param navigation <lang><zh-CN>已通过独立导航契约校验的宿主数据。</zh-CN><en>Host data validated against the independent navigation contract.</en></lang>
+ * @returns <lang><zh-CN>仅实际使用的双语消息，不含源码正文。</zh-CN><en>Only actually used bilingual messages, without source bodies.</en></lang>
+ */
+export function createSiteNavigationUiMessages(navigation: DocumentationSiteNavigation): PortalUiMessageRecord[] {
+  // <lang><zh-CN>同一结构存在于交互和无脚本页面，标签评估覆盖两种模式。</zh-CN><en>The same structure exists on interactive and no-script pages, so label evaluation covers both modes.</en></lang>
+  const uses: Array<[PortalUiMessageUse["mode"], PortalUiMessageUse["channel"]]> = [[interactive, visible], [noScript, visible]];
+  const accessibleUses: typeof uses = [[interactive, accessible], [noScript, accessible]];
+  const records = [
+    message("site.skip", "跳到正文", "Skip to content", uses),
+    message("site.main", "主导航", "Main navigation", accessibleUses),
+    message("site.mobile", "展开主导航", "Open main navigation", accessibleUses),
+    message("site.tabs", "文档栏目", "Documentation sections", accessibleUses),
+    message("site.version.heading", "文档版本", "Documentation version", uses),
+    message("site.locale.other", "English", "简体中文", uses),
+    message("site.brand.title", navigation.brand.title, navigation.brand.title, uses),
+    message("site.brand.caption", navigation.brand.captionByLocale["zh-CN"], navigation.brand.captionByLocale.en, uses),
+    message("site.version.history", navigation.documentationVersion.history.labelByLocale["zh-CN"], navigation.documentationVersion.history.labelByLocale.en, uses)
+  ];
+  // <lang><zh-CN>版本状态来自明确数据；缺少历史时仅显示真实空态，不增加假版本。
+  // </zh-CN><en>Version statuses come from explicit data; absent archives show an actual empty state without fabricated versions.</en></lang>
+  const statuses = { preview: { "zh-CN": "预览", en: "preview" }, stable: { "zh-CN": "稳定版", en: "stable" }, archive: { "zh-CN": "封版", en: "archive" } };
+  const current = navigation.documentationVersion;
+  records.push(message("site.version.current", `${current.version} ${statuses[current.status]["zh-CN"]}`, `${current.version} ${statuses[current.status].en}`, uses));
+  if (!current.entries.some(entry => entry.status === "archive")) records.push(message("site.version.empty", "尚无历史大版本封版", "No archived major versions yet", uses));
+  current.entries.forEach((entry, index) => records.push(message(`site.version.entry${index}`, `${entry.version} ${statuses[entry.status]["zh-CN"]}`, `${entry.version} ${statuses[entry.status].en}`, uses)));
+  for (const [group, links] of [["primary", navigation.primaryNavigation], ["tab", navigation.documentationTabs]] as const) {
+    for (const link of links) records.push(message(`site.${group}.${link.id}`, link.labelByLocale["zh-CN"], link.labelByLocale.en, uses));
+  }
+  return records;
 }
 
 /**

@@ -19,6 +19,10 @@ The deployment base is `/HIA-Documentation/`. The Chinese product homepage is at
 
 ## Content and behavior
 
+The static build emits `documentation-site-navigation.json` from the same routes and actual documentation-version data used by the manuals. Pass this file to a matching HIA CLI project build through `--site-navigation dist/official-web-preview/documentation-site-navigation.json`, with an explicit `docs.renderer.uiLocale`. The renderer generates branded navigation on complete API and source-view pages. Confirm that all target pages exist in the composed deployment before publication.
+
+中文。官网静态构建同时输出独立导航JSON，复用手册的路由与真实文档版本，供配套HIA CLI项目构建读取。该输入不包含源码授权，官网手册与生成代码页的完整离线装配和正式部署需要分别验收。
+
 The explicit inventory contains 28 pages in Chinese and English. Nine manuals per language cover first steps, four domain workflows, projects and locales, branding and source reading, builds and retention, reference usage, extension, generated-reference scope, and reading support. Technical definitions remain with their owning packages; linked references retain their actual languages. API entry pages link to actual HIA-generated artifacts and state their coverage rather than constructing handwritten API signatures.
 
 The system is labelled **1.0.0 preview**, not a formal release. No historical major release is invented. Main documentation will track the latest stable release; each older major will retain its final edition.

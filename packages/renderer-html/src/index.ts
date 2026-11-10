@@ -1,4 +1,6 @@
 import { renderSourceLines } from "./source-lines.js";
+import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
+import { withSiteNavigation } from "./site-navigation-chrome.js";
 import {
   canonicalizeDocumentationLocale,
   getI18nField,
@@ -63,13 +65,25 @@ import {
   DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID,
   DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES,
   createDocumentationPortalUiLocaleAdoption,
+  createSiteNavigationUiLocaleAdoption,
   resolveDocumentationPortalUiMessage,
   type DocumentationPortalUiLocaleAdoption
 } from "./portal-ui-locale.js";
 
 export * from "./information-architecture.js";
-export * from "./portal-ui-locale.js";
+export {
+  DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID,
+  DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH,
+  DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID,
+  DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES,
+  DOCUMENTATION_PORTAL_UI_MESSAGE_IDS,
+  createDocumentationPortalUiLocaleAdoption,
+  resolveDocumentationPortalUiMessage,
+  type DocumentationPortalUiLocaleAdoptionOptions,
+  type DocumentationPortalUiLocaleAdoption
+} from "./portal-ui-locale.js";
 export * from "./presentation-profile.js";
+export * from "./site-navigation.js";
 export { renderThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
 
 /**
@@ -211,6 +225,11 @@ export interface RenderHtmlThemeOptions extends RenderProjectThemeOptions, HiaTh
  * @lang en Project-site layout, information architecture, locales, theme and source policy; explicit information architecture enables its projections without changing canonical entry identities.
  */
 export interface RenderProjectSiteOptions {
+  /**
+   * @lang zh-CN 可选独立0.1.0-draft站点导航；须显式uiLocale，在首写前校验/复制，覆盖完整页面且不扩大源码授权。
+   * @lang en Optional independent 0.1.0-draft site navigation, requiring explicit uiLocale and validated/snapshotted before the first write, covering complete pages without additional source authority.
+   */
+  siteNavigation?: DocumentationSiteNavigation;
   /**
    * @lang zh-CN 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。
    * @lang en Defaults to split-site; single-page is for compatibility, small docs, or snapshots.
@@ -2432,8 +2451,9 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     } else {
       yield* createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
     }
-    if (portalContext.uiLocaleAdoption) {
-      yield { path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH, contents: `${portalContext.uiLocaleAdoption.reportJson}\n`, contentType: "application/json; charset=utf-8", role: "index" };
+    const localeReport = portalContext.uiLocaleAdoption ?? portalContext.siteNavigationUiLocaleAdoption;
+    if (localeReport) {
+      yield { path: DOCUMENTATION_PORTAL_UI_LOCALE_REPORT_PATH, contents: `${localeReport.reportJson}\n`, contentType: "application/json; charset=utf-8", role: "index" };
     }
     yield { path: "project-index.json", contents: `${JSON.stringify(navigationIndex, null, 2)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
     yield* presentationBundle.artifacts;
@@ -2442,7 +2462,7 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     }
   }
   return {
-    files: produceFiles(),
+    files: portalContext.siteNavigation ? withSiteNavigation(produceFiles(), portalContext.siteNavigation, portalContext.uiLocale) : produceFiles(),
     diagnostics: renderedProjectInput.diagnostics ?? [],
     manifest: (files) => createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle, portalContext)
   };
@@ -2452,6 +2472,16 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
  * @lang en Resolved IA, locale, labels, and theme context for one render call.
  */
 interface RenderProjectPortalContext {
+  /**
+   * @lang zh-CN 与外部可变输入隔离的已验证导航快照。
+   * @lang en Validated navigation snapshot isolated from mutable external input.
+   */
+  siteNavigation?: DocumentationSiteNavigation;
+  /**
+   * @lang zh-CN 未启用显式IA时仅评估真实导航消息，不能提升为完整Portal评估。
+   * @lang en Evaluates actual navigation messages alone outside explicit IA, without upgrading the claim to a full Portal evaluation.
+   */
+  siteNavigationUiLocaleAdoption?: DocumentationPortalUiLocaleAdoption;
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   labels: DocumentationPortalLabels;
   sourceCommentProjection?: Required<RenderProjectSourceCommentProjectionOptions>;
@@ -2475,6 +2505,14 @@ function resolveProjectPortalContext(
   options: RenderHtmlOptions,
   layout: RenderProjectSiteLayout
 ): RenderProjectPortalContext {
+  // <lang><zh-CN>先核导航契约，再复制供惰性输出使用，writer等待期间的外部修改不能改变后续页面。
+  // </zh-CN><en>Validate navigation first, then snapshot it for lazy output so external mutation during writer waits cannot change later pages.</en></lang>
+  const requestedNavigation = options.projectSite?.siteNavigation;
+  if (requestedNavigation !== undefined) {
+    assertDocumentationSiteNavigation(requestedNavigation);
+    if (!options.projectSite?.uiLocale) throw new TypeError("HIA_SITE_NAVIGATION_UI_LOCALE_REQUIRED: Site navigation requires an explicit UI locale.");
+  }
+  const siteNavigation = requestedNavigation === undefined ? undefined : structuredClone(requestedNavigation);
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
   const explicitInformationArchitecture = options.projectSite?.informationArchitecture;
   if (explicitInformationArchitecture && !options.projectSite?.uiLocale) {
@@ -2556,12 +2594,15 @@ function resolveProjectPortalContext(
         contentLocale: localeModel.selectedLocale,
         contentLocales: localeModel.locales,
         defaultUiLocale: uiLocale,
+        ...(siteNavigation ? { siteNavigation } : {}),
         profileId: options.projectSite?.uiLocaleCompleteness?.profileId ?? DOCUMENTATION_PORTAL_UI_LOCALE_PROFILE_ID,
         surfaceId: options.projectSite?.uiLocaleCompleteness?.surfaceId ?? DOCUMENTATION_PORTAL_UI_LOCALE_SURFACE_ID
       })
     : undefined;
 
   return {
+    ...(siteNavigation ? { siteNavigation } : {}),
+    ...(siteNavigation && !explicitInformationArchitecture ? { siteNavigationUiLocaleAdoption: createSiteNavigationUiLocaleAdoption({ contentLocale: localeModel.selectedLocale, contentLocales: localeModel.locales, defaultUiLocale: uiLocale, siteNavigation }) } : {}),
     uiLocale,
     labels: getDocumentationPortalLabels(uiLocale),
     theme: { skinId: requestedSkin, scheme: requestedScheme },
@@ -4047,6 +4088,11 @@ function renderProjectSplitSiteScript(
     "    for (const node of root.querySelectorAll('[data-hia-ui-message]')) node.textContent = uiMessage(node.getAttribute('data-hia-ui-message'), readUiValues(node));",
     "    for (const node of root.querySelectorAll('[data-hia-ui-placeholder]')) node.setAttribute('placeholder', uiMessage(node.getAttribute('data-hia-ui-placeholder')));",
     "    for (const node of root.querySelectorAll('[data-hia-ui-aria]')) node.setAttribute('aria-label', uiMessage(node.getAttribute('data-hia-ui-aria')));",
+    // <lang><zh-CN>导航href只能来自首写前验证的两语言数据；UI切换不猜测URL或变更正文语言。</zh-CN><en>Navigation hrefs come only from bilingual data validated before output; UI switching guesses no URLs and does not change content locale.</en></lang>
+    ...(portalContext.siteNavigation ? [
+      "    for (const node of root.querySelectorAll('[data-hia-site-hrefs]')) { const targets = JSON.parse(node.getAttribute('data-hia-site-hrefs')); node.setAttribute('href', targets[selected]); }",
+      "    for (const node of root.querySelectorAll('[data-hia-site-language]')) { const other = selected === 'en' ? 'zh-CN' : 'en'; node.lang = other; node.hreflang = other; }"
+    ] : []),
     "    try { localStorage.setItem('hia-doc-portal-ui-locale', selected); } catch {}",
     "    document.dispatchEvent(new CustomEvent('hia:ui-locale-change', { detail: { uiLocale: selected } }));",
     "  }",
@@ -4238,6 +4284,8 @@ function renderProjectSplitSiteScript(
     "  search?.addEventListener('input', runSearch);",
     "  contentLocale?.addEventListener('change', applyContentLocale);",
     "  uiLocale?.addEventListener('change', () => applyUiLocale());",
+    // <lang><zh-CN>原生菜单保留无脚本阅读，交互页Escape收起并将焦点返回原summary。</zh-CN><en>Native menus retain script-free reading; Escape on interactive pages closes the menu and returns focus to its own summary.</en></lang>
+    ...(portalContext.siteNavigation ? ["  document.querySelector('.hia-site-header')?.addEventListener('keydown', (event) => { if (event.key !== 'Escape') return; const menu = event.target.closest('details[open]'); if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); event.preventDefault(); } });"] : []),
     "  document.querySelector('[data-hia-project-relations]')?.addEventListener('click', async () => {",
     "    try {",
     "      const graph = await readJson(config.relations);",

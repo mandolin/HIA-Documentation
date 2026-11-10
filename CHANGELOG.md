@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Optional generated-site navigation
+
+- 项目渲染新增可选 `documentation-site-navigation@0.1.0-draft` 数据与独立CLI输入，完整页面及源码查看页共享固定顶部、真实版本菜单、栏目和手机原生菜单。导航逐页生成，资产每次输出一份，标签参与实际双语评估；非法数据在首写前拒绝。
+- Add optional versioned project navigation and a standalone CLI input for shared fixed headers, actual version menus, tabs, and native mobile menus across complete pages and source viewers. Generation stays per-file with one shared asset and actual bilingual-message evaluation. Invalid data is rejected before output.
+
 ## Unreleased — Twelve coordinated 1.0.0 source candidates
 
 - 主仓十二必要包协调为`1.0.0`源码候选；发行清单逐项为`candidate`，尚未发布npm。独立语言服务器仍为原`0.1.0`，其余工具不自动升版；原18运行/5开发workspace依赖保持，实际归档与普通安装另验。

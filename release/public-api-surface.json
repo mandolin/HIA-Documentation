@@ -13090,6 +13090,18 @@
       "bin": {},
       "exports": [
         {
+          "name": "assertDocumentationSiteNavigation",
+          "kind": "FunctionDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [
+            "(value: unknown): asserts value is DocumentationSiteNavigation"
+          ],
+          "fields": [],
+          "declarationFingerprints": [
+            "fcabfdb17ed87b39dd7a7f8f743c065b8cb31954de534cb31f31b62d5a563dbd"
+          ]
+        },
+        {
           "name": "createDocumentationPortalUiLocaleAdoption",
           "kind": "FunctionDeclaration",
           "owner": "packages/renderer-html/src/portal-ui-locale.ts",
@@ -13098,7 +13110,7 @@
           ],
           "fields": [],
           "declarationFingerprints": [
-            "3512b8cd477e4e7c2e0e9eb1175b088e8253f46fce913eb211ee9e85e49d3bae"
+            "62506de897363dc3063045994487010c3862c887c68518ffef6fd36e0110c9f6"
           ]
         },
         {
@@ -13251,6 +13263,26 @@
           "fields": [],
           "declarationFingerprints": [
             "4212fa4db679da5bd3ed1cfe03c691cd409acee953e82086d6d984b79361ac4b"
+          ]
+        },
+        {
+          "name": "DOCUMENTATION_SITE_NAVIGATION_CONTRACT",
+          "kind": "VariableDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "e0eb113009ce1bec4d330a8899925095e152e713b9b0c0cef886fa21f38f46f1"
+          ]
+        },
+        {
+          "name": "DOCUMENTATION_SITE_NAVIGATION_CONTRACT_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "cc7c428aa45f5edbc70ae7eaa2f31f196e314e52049e3b560bd4405266707f24"
           ]
         },
         {
@@ -13585,6 +13617,11 @@
           "signatures": [],
           "fields": [
             {
+              "name": "siteNavigation",
+              "optional": true,
+              "type": "DocumentationSiteNavigation"
+            },
+            {
               "name": "contentLocale",
               "optional": false,
               "type": "string"
@@ -13611,7 +13648,130 @@
             }
           ],
           "declarationFingerprints": [
-            "1b1438e105e49fdb1bd1e2c897dea72d8ef4ed24766be413c4825e0a379edfab"
+            "9f4e9acc79efebf220d6a46cae3e6e5d9775b33a3eaa405f64e58472e5f6a06e"
+          ]
+        },
+        {
+          "name": "DocumentationSiteNavigation",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "contract",
+              "optional": false,
+              "type": "typeof DOCUMENTATION_SITE_NAVIGATION_CONTRACT"
+            },
+            {
+              "name": "contractVersion",
+              "optional": false,
+              "type": "typeof DOCUMENTATION_SITE_NAVIGATION_CONTRACT_VERSION"
+            },
+            {
+              "name": "deploymentBase",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "brand",
+              "optional": false,
+              "type": "{\n    title: string;\n    captionByLocale: DocumentationSiteNavigationLocalizedText;\n    homeByLocale: DocumentationSiteNavigationLocalizedText;\n}"
+            },
+            {
+              "name": "primaryNavigation",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLink[]"
+            },
+            {
+              "name": "documentationTabs",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLink[]"
+            },
+            {
+              "name": "activePrimaryId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "activeTabId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "documentationVersion",
+              "optional": false,
+              "type": "{\n    version: string;\n    status: DocumentationSiteNavigationVersion[\"status\"];\n    entries: DocumentationSiteNavigationVersion[];\n    history: {\n        labelByLocale: DocumentationSiteNavigationLocalizedText;\n        hrefByLocale: DocumentationSiteNavigationLocalizedText;\n    };\n}"
+            },
+            {
+              "name": "localeTargets",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLocalizedText"
+            }
+          ],
+          "declarationFingerprints": [
+            "f68e11334416546cd811f92196fe8d2311a8ebddea1d7765ac226bd82bb512c1"
+          ]
+        },
+        {
+          "name": "DocumentationSiteNavigationLink",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "labelByLocale",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLocalizedText"
+            },
+            {
+              "name": "hrefByLocale",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLocalizedText"
+            }
+          ],
+          "declarationFingerprints": [
+            "f1fb7c57e604e629b9c3b3f2ae2905f0629683897bf18eb7118f0a0fe418892f"
+          ]
+        },
+        {
+          "name": "DocumentationSiteNavigationLocalizedText",
+          "kind": "TypeAliasDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "ae1d9bb55fd250fb8b11461505d51228ecc01eae04c061ebfaeb67f31128c55f"
+          ]
+        },
+        {
+          "name": "DocumentationSiteNavigationVersion",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/site-navigation.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "version",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "status",
+              "optional": false,
+              "type": "\"preview\" | \"stable\" | \"archive\""
+            },
+            {
+              "name": "hrefByLocale",
+              "optional": false,
+              "type": "DocumentationSiteNavigationLocalizedText"
+            }
+          ],
+          "declarationFingerprints": [
+            "7b0180fbaea51428a5c176fea71e1ce4298f313bdb99c730e6d9e2946bc81828"
           ]
         },
         {
@@ -15453,6 +15613,11 @@
           "signatures": [],
           "fields": [
             {
+              "name": "siteNavigation",
+              "optional": true,
+              "type": "DocumentationSiteNavigation"
+            },
+            {
               "name": "layout",
               "optional": true,
               "type": "RenderProjectSiteLayout"
@@ -15489,7 +15654,7 @@
             }
           ],
           "declarationFingerprints": [
-            "1c266b278b68ce23d30e69c0e67e992afe735e855ccbc924ef901d6e0ce88760"
+            "3ea401783e56cd0d15816dd878a68d99056611e5e990fa1389be4dbee0e9ce74"
           ]
         },
         {

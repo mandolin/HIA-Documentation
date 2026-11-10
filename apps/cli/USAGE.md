@@ -16,6 +16,41 @@ English. Package and artifact versions are independent. Config retains `schemaVe
 
 ## Large project builds
 
+### Optional website navigation
+
+中文。项目构建可通过独立 `--site-navigation navigation.json` 读取 `documentation-site-navigation@0.1.0-draft`，同时在配置中明确指定 `docs.renderer.uiLocale`。该选项独立于原配置契约版本，仅适用于 `--project-manifest`。JSON形状与完整示例见渲染器README的“Optional website navigation”。
+
+English. Project builds can read `documentation-site-navigation@0.1.0-draft` through independent `--site-navigation navigation.json`, with an explicit `docs.renderer.uiLocale` in configuration. This option is independent of existing configuration identities and applies to `--project-manifest`. See “Optional website navigation” in the renderer README for the complete data shape and example.
+
+```json
+{
+  "schemaVersion": "0.1.0",
+  "docs": {
+    "renderer": {
+      "projectLayout": "split-site",
+      "uiLocale": "zh-CN",
+      "informationArchitecture": {
+        "contentGrouping": "entry",
+        "loadingStrategy": "lazy",
+        "memberPlacement": "separate"
+      }
+    }
+  }
+}
+```
+
+```sh
+hia docs build --config hia.config.json --project-manifest hia.project.json --site-navigation navigation.json --out review-site
+```
+
+中文。导航文件必须是有效UTF-8 JSON，最多512 KiB。CLI在聚合来源和创建输出之前校验标签、两语言目标、版本菜单及同源部署边界。缺文件、非法JSON、超限、缺界面语言或与单文档组合均退出1并报告 `HIA_CLI_SITE_NAVIGATION_INPUT_INVALID`。导航不提供源码读取许可。构建完成后仍须核对实际目标页面与锚点存在性，再部署完整输出。`--locale` 继续控制正文语言。
+
+English. Navigation files must be valid UTF-8 JSON within 512 KiB. The CLI validates labels, bilingual targets, version menus, and same-origin deployment boundaries before aggregating sources or creating output. Missing files, invalid JSON, oversized input, missing UI locale, or single-document combinations return 1 with `HIA_CLI_SITE_NAVIGATION_INPUT_INVALID`. Navigation grants no source-read authority. Verify actual target pages and anchors after building, then deploy the complete output. `--locale` continues to select content language.
+
+中文。采用导航时，`--manifest` 不能覆盖 `assets/hia-site-navigation.css` 或 `documentation-ui-locale-completeness.json`，冲突在输出创建前拒绝。
+
+English. With navigation enabled, `--manifest` cannot overwrite `assets/hia-site-navigation.css` or `documentation-ui-locale-completeness.json`. Conflicts are rejected before output creation.
+
 ### Unknown build options
 
 中文。当前 `hia docs build` 只读取已知参数，未知选项及其附带文本可能被忽略，构建仍可成功并写出文件。拼错 `--out` 时可能使用配置输出目录或默认 `dist/docs`。退出 0 只表示本次构建成功，不能证明每个传入选项均被识别。自动化脚本请逐项核对本指南的参数名称，并在独立暂存目录检查实际输出位置。

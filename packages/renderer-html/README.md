@@ -15,6 +15,74 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ## Current Scope
 
+### Optional website navigation
+
+中文。项目渲染的 `projectSite.siteNavigation` 接受独立 `documentation-site-navigation@0.1.0-draft` 数据。宿主明确提供品牌、两语言标签、部署内路由与实际文档版本，同时设置 `projectSite.uiLocale`。渲染器在交互页、静态索引/条目和独立源码页生成固定顶部、原生版本菜单、文档栏目及手机菜单，输出一份 `assets/hia-site-navigation.css`。原生菜单可在禁用脚本时使用。正文语言与界面语言分别管理。源码权限仍来自原输入和来源策略。
+
+English. Project rendering accepts independent `documentation-site-navigation@0.1.0-draft` data through `projectSite.siteNavigation`. Hosts provide branding, bilingual labels, deployment-local routes, actual documentation versions, and an explicit `projectSite.uiLocale`. The renderer adds a fixed header, native version menu, documentation tabs, and mobile menu to interactive pages, static indexes/entries, and standalone source viewers, emitting one `assets/hia-site-navigation.css`. Native menus work without scripts. UI and content languages are independent. Source authority comes from the existing inputs and source policy.
+
+```js
+import { assertDocumentationSiteNavigation, renderProjectHtmlDocumentToWriter } from "@hia-doc/renderer-html";
+
+// 中文。数据由宿主读取或构造，渲染器不读取文件。
+// English. Hosts load or construct the data. The renderer performs no file reads.
+const navigation = {
+  contract: "documentation-site-navigation",
+  contractVersion: "0.1.0-draft",
+  deploymentBase: "/product/",
+  brand: {
+    title: "Example Documentation",
+    captionByLocale: { "zh-CN": "开发文档", en: "Developer documentation" },
+    homeByLocale: { "zh-CN": "/product/", en: "/product/en/" }
+  },
+  primaryNavigation: [{
+    id: "docs",
+    labelByLocale: { "zh-CN": "文档", en: "Docs" },
+    hrefByLocale: { "zh-CN": "/product/docs/zh-CN/", en: "/product/docs/en/" }
+  }],
+  documentationTabs: [{
+    id: "code",
+    labelByLocale: { "zh-CN": "代码文档", en: "Code reference" },
+    hrefByLocale: { "zh-CN": "/product/api/zh-CN/", en: "/product/api/en/" }
+  }],
+  activePrimaryId: "docs",
+  activeTabId: "code",
+  documentationVersion: {
+    version: "1.0.0", status: "preview",
+    entries: [{ version: "1.0.0", status: "preview", hrefByLocale: { "zh-CN": "/product/api/zh-CN/", en: "/product/api/en/" } }],
+    history: {
+      labelByLocale: { "zh-CN": "历史版本", en: "Archives" },
+      hrefByLocale: { "zh-CN": "/product/versions/", en: "/product/versions/en/" }
+    }
+  },
+  localeTargets: { "zh-CN": "/product/api/zh-CN/", en: "/product/api/en/" }
+};
+assertDocumentationSiteNavigation(navigation);
+await renderProjectHtmlDocumentToWriter(projectInput, writer, {
+  projectSite: { uiLocale: "zh-CN", informationArchitecture: {}, siteNavigation: navigation }
+});
+```
+
+中文。两种语言 `zh-CN`/`en` 的标签和目标均为必填。字段采用闭集。主导航和栏目各限1–16项，组内身份使用至多32位小写字母数字且以字母起始，选中身份必须存在。版本菜单限1–64项，完整三段版本号唯一，当前版本和状态必须在菜单精确出现一次。状态为 `preview`、`stable`、`archive`。菜单只列真实存在的版本，宿主负责版本事实及链接存在性。界面语言评估采用实际输入标签；报告不包含译文正文。
+
+English. Labels and targets are required for both `zh-CN` and `en`, using closed fields. Primary navigation and tabs each contain 1–16 entries. IDs contain at most 32 lowercase alphanumeric characters, beginning with a letter, and selected IDs must exist. Version menus contain 1–64 entries with unique complete three-component versions and exactly one matching current version/status. Statuses are `preview`, `stable`, and `archive`. Hosts supply actual versions and verify target existence. UI-language evaluation uses the actual input labels, excluding translated text from reports.
+
+中文。部署根以 `/` 开始及结束；目标为部署根下的站点绝对路径，可带显式锚点。草案拒绝查询参数、协议、本机地址、反斜杠、点段、路径百分号编码及越根目标。标签非空有界，拒绝控制符、尖括号和模板花括号，其余文本在HTML中转义。标题最多128字符，其它标签最多256字符，目标最多2048字符。无效输入在写者首写前抛出 `HIA_SITE_NAVIGATION_INVALID`，缺少明确界面语言抛出 `HIA_SITE_NAVIGATION_UI_LOCALE_REQUIRED`。渲染器复制导航供惰性生成使用，写者回调期间修改外部对象不会改变后续页面。
+
+English. Deployment roots begin and end with `/`. Targets are site-absolute paths within that root and may carry explicit anchors. The draft rejects queries, schemes, local addresses, backslashes, dot segments, percent-encoded paths, and root escapes. Labels are nonblank and bounded, rejecting controls, angle brackets, and template braces, with remaining text HTML-escaped. Titles allow 128 characters, other labels 256, and targets 2048. Invalid input throws `HIA_SITE_NAVIGATION_INVALID` before the first writer call. Missing explicit UI locale throws `HIA_SITE_NAVIGATION_UI_LOCALE_REQUIRED`. Navigation is snapshotted for lazy generation, so writer-time changes to caller objects cannot change later pages.
+
+中文。没有导航输入时保留原输出。导航不会从 `project.productVersion` 推导站点版本或历史路由。单一文档的 `renderHtmlDocument` 不消费项目导航。CLI采用方式见其分发的 `USAGE.md`。
+
+English. Omitting navigation preserves existing output. Navigation does not derive documentation versions or historical routes from `project.productVersion`. Single-document `renderHtmlDocument` does not consume project navigation. CLI adoption is described in its distributed `USAGE.md`.
+
+中文。API只接受普通JSON数据属性和稠密数组，拒绝getter、隐藏字段、symbol字段及自定义数组迭代器。导航可以与旧项目布局组合；未启用显式信息架构时，语言报告使用 `portal.sitenavigation` 身份，仅评估新增导航标签。显式信息架构则把这些标签加入完整Portal消息清单。长主导航和栏目在各自容器内滚动，极长品牌保留完整可访问名称及title提示，视觉限制为两行。
+
+English. The API accepts ordinary JSON data properties and dense arrays, rejecting getters, hidden or symbol fields, and custom array iterators. Navigation also works with legacy project layouts. Without explicit information architecture, the language report uses `portal.sitenavigation` and evaluates the added navigation labels alone. Explicit information architecture adds those labels to the complete Portal message inventory. Long primary navigation and tabs scroll within their own containers. Very long brands retain their complete accessible name and title tooltip with a two-line visual limit.
+
+中文。独立源码页和原静态路径使用构建明确指定的界面语言，`pages/{uiLocale}/` 使用路径中已知的界面语言。交互页的运行时语言切换只更新当前页。语言入口和版本入口使用宿主提供的实际目标，当前草案不根据文件名猜测跨语言、跨版本的同符号或同行号对应关系。
+
+English. Standalone source viewers and legacy static routes use the build-explicit UI locale, while `pages/{uiLocale}/` uses its known route locale. Runtime UI switching updates the current interactive page. Language and version entries use actual host-supplied targets. The draft does not guess same-symbol or same-line counterparts across languages or versions from file names.
+
 中文。显式信息架构的附加字段标题与元数据、源码状态共用界面语言消息目录。正文保有各自语言标记，界面与正文可分别切换；兼容入口继续使用原有标题。
 
 English. Explicit-IA additional-field headings share the UI-language catalog used by metadata and source states. Prose retains its own language markers, and UI and content languages switch independently. Compatibility entry points retain their existing headings.

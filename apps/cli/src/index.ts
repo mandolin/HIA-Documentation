@@ -3,7 +3,7 @@ import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } fr
 
 import { createHash } from "node:crypto";
 import { realpathSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
@@ -52,10 +52,12 @@ import {
   type HiaDocumentationProfile
 } from "@hia-doc/profile";
 import {
+  assertDocumentationSiteNavigation,
   renderHtmlDocument,
   renderProjectHtmlDocumentToWriter,
   renderThemeAssets,
   type RenderHtmlOptions,
+  type DocumentationSiteNavigation,
   type RenderProjectDocSourceMapRef,
   type RenderProjectEntry,
   type RenderProjectHtmlInput,
@@ -235,7 +237,7 @@ const HELP_TEXT = `HIA Documentation CLI
 
 Usage:
   hia --help
-  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>]
+  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--site-navigation <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>]
   hia docs evidence [--docs-dir <dir>] [--out <file>]
   hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
   hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
@@ -266,6 +268,8 @@ Options:
                       JSDoc HIA Integration JSON file to convert before rendering.
   --project-manifest <file>
                       Project docs manifest that aggregates JSDoc, CSSDoc, HTMDoc and doc-source-map artifacts.
+  --site-navigation <file>
+                      Optional documentation-site-navigation@0.1.0-draft JSON for a project build with an explicit UI locale.
   --project-index <file>
                       Generated project-index.json used to attach relation graph payload data to the browser panel.
   --out <dir>         Output directory. Defaults to dist/docs.
@@ -467,7 +471,7 @@ async function runThemeAssets(argv: string[], io: CliIo): Promise<number> {
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--adoption-kit", "--business-flow-handoff", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--site-navigation", "--adoption-kit", "--business-flow-handoff", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -515,6 +519,14 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   const locale = readOption(argv, "--locale") ?? docsConfig.locale;
   const manifestPath = normalizeOutputRelativePath(readOption(argv, "--manifest") ?? docsConfig.manifest ?? OUTPUT_MANIFEST_PATH);
   const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath, projectManifestPath);
+  // <lang><zh-CN>独立导航只用于项目生成，必须在读取聚合来源和创建输出前完整校验。</zh-CN><en>Independent navigation applies only to project generation and is fully validated before aggregate-source reads or output creation.</en></lang>
+  const navigationPath = readOption(argv, "--site-navigation");
+  if (navigationPath && (!projectManifestPath || !docsConfig.renderer?.uiLocale)) {
+    buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "Site navigation requires a project manifest and an explicit docs.renderer.uiLocale.", "error", "siteNavigation"));
+  }
+  if (navigationPath && ["assets/hia-site-navigation.css", "documentation-ui-locale-completeness.json"].includes(manifestPath ?? "")) {
+    buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "The output manifest cannot replace a navigation stylesheet or UI locale report.", "error", "siteNavigation"));
+  }
   if (adoptionKitRelativePath && (!isSafeCallerRelativePath(adoptionKitRelativePath) || !projectManifestPath)) {
     buildOptionDiagnostics.push(createCliDiagnostic(
       "HIA_CLI_OWNER_ADOPTION_KIT_INPUT_INVALID",
@@ -538,6 +550,8 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   }
 
   if (projectManifestPath) {
+    const siteNavigation = navigationPath ? await loadSiteNavigation(path.resolve(io.cwd, navigationPath), io) : undefined;
+    if (navigationPath && !siteNavigation) return 1;
     return runProjectDocsBuild(
       projectManifestPath,
       outputDir,
@@ -547,6 +561,7 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
       locale,
       adoptionKitRelativePath,
       businessFlowHandoffRelativePath,
+      siteNavigation,
       io
     );
   }
@@ -715,6 +730,37 @@ async function runBrowserPanel(argv: string[], io: CliIo): Promise<number> {
   return 0;
 }
 
+/**
+ * @lang zh-CN 有界读取显式导航文件，固定错误不回显路径/正文；严格校验后才允许项目来源读取和输出。
+ * @lang en Reads an explicit navigation file within a fixed bound, reporting fixed errors without paths or bodies; project-source reads and output follow strict validation.
+ * @param filePath <lang><zh-CN>调用者明确指定的文件绝对路径。</zh-CN><en>Caller-explicit absolute file path.</en></lang>
+ * @param io <lang><zh-CN>只接收公开诊断的命令行接口。</zh-CN><en>CLI interface receiving only public diagnostics.</en></lang>
+ * @returns <lang><zh-CN>已验证数据，失败时undefined且已报告。</zh-CN><en>Validated data, or undefined after reporting failure.</en></lang>
+ */
+async function loadSiteNavigation(filePath: string, io: CliIo): Promise<DocumentationSiteNavigation | undefined> {
+  try {
+    // <lang><zh-CN>读取上限加一字节可识别超限，避免先stat再read的增长竞态和无界分配。</zh-CN><en>Reading one byte beyond the limit detects overflow without stat/read growth races or unbounded allocation.</en></lang>
+    const handle = await open(filePath, "r");
+    try {
+      const buffer = Buffer.alloc(524_289);
+      // <lang><zh-CN>文件读取可以短读，连续读至EOF或上限，不把截断输入误判为完整JSON。</zh-CN><en>File reads can be short; continue to EOF or the bound instead of mistaking a truncated prefix for complete JSON.</en></lang>
+      let bytesRead = 0;
+      while (bytesRead < buffer.length) {
+        const chunk = await handle.read(buffer, bytesRead, buffer.length - bytesRead, bytesRead);
+        if (chunk.bytesRead === 0) break;
+        bytesRead += chunk.bytesRead;
+      }
+      if (bytesRead > 524_288) throw new TypeError("navigation size");
+      const value: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, bytesRead)));
+      assertDocumentationSiteNavigation(value);
+      return value;
+    } finally { await handle.close(); }
+  } catch {
+    reportDiagnostics([createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "Site navigation must be valid UTF-8 JSON within 512 KiB and satisfy documentation-site-navigation@0.1.0-draft.", "error", "siteNavigation")], io);
+    return undefined;
+  }
+}
+
 async function runProjectDocsBuild(
   projectManifestPath: string,
   outputDir: string,
@@ -724,6 +770,7 @@ async function runProjectDocsBuild(
   locale: string | undefined,
   adoptionKitRelativePath: string | undefined,
   businessFlowHandoffRelativePath: string | undefined,
+  siteNavigation: DocumentationSiteNavigation | undefined,
   io: CliIo
 ): Promise<number> {
   const manifestResult = await loadProjectManifest(projectManifestPath, io);
@@ -764,6 +811,9 @@ async function runProjectDocsBuild(
     return 1;
   }
   // <lang><zh-CN>只把 validated portalSummary 加入 renderer input；完整 kit 的 target/trial identity 与 diagnostics 不进入 Portal。</zh-CN><en>Add only the validated portalSummary to renderer input; the full kit's target/trial identities and diagnostics never enter the Portal.</en></lang>
+  // <lang><zh-CN>新导航独立于旧配置身份，复用同一正常渲染选项工厂后显式追加。</zh-CN><en>New navigation is independent of existing configuration identities and is explicitly added after the normal render-option factory.</en></lang>
+  const renderOptions = createRenderOptions(locale, docsConfig);
+  if (siteNavigation) renderOptions.projectSite = { ...renderOptions.projectSite, siteNavigation };
   const rendered = await renderProjectHtmlDocumentToWriter({
     ...preparedProjectInput,
     ...(ownerAdoption ? { ownerAdoption } : {}),
@@ -774,7 +824,7 @@ async function runProjectDocsBuild(
     const targetPath = path.join(outputDir, file.path);
     await mkdir(path.dirname(targetPath), { recursive: true });
     await writeFile(targetPath, file.contents, "utf8");
-  }, createRenderOptions(locale, docsConfig));
+  }, renderOptions);
   reportDiagnostics(rendered.diagnostics, io);
 
   if (rendered.diagnostics.some((item) => item.severity === "error")) {

@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { locales, kinds, manualKinds, route, href } from "../site/src/lib/routes.mjs";
 import { readSearchIndex } from "../site/src/lib/search.mjs";
 import { currentDocumentation } from "../site/src/lib/version-index.mjs";
+import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
 
 /**
  * @lang zh-CN 拒绝公开文本中的本地路径与私有工作区标记，允许独立的公开产品名称。
@@ -78,6 +79,8 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
       texts.set(file, text);
     }
   }
+  // <lang><zh-CN>生成代码页的导航工件必须来自同一官网事实源，缺失或漂移不能通过手册构建验收。</zh-CN><en>Generated-code navigation must match the same website facts; missing or drifted data cannot pass manual-site acceptance.</en></lang>
+  assert.deepEqual(JSON.parse(texts.get("documentation-site-navigation.json") ?? "null"), createGeneratedSiteNavigation(), "Generated navigation disagrees with website routes or documentation versions.");
   let links = 0;
   for (const locale of locales) for (const kind of kinds) {
     // <lang lang="zh-CN">清单独立验证每页语言、主内容与同主题译文目标。</lang><lang lang="en">Validate each page locale, main content, and same-topic alternate independently.</lang>
