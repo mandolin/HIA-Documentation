@@ -19,6 +19,9 @@ For provenance, check the revision, authority, digest and range evidence. Keep A
 
 ## Generated reference entries
 
+- [JavaScript documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-JavaScript/en/) provides package interfaces for documentation runners, producers, plugins, specifications and themes, including configuration schemas and static array/descriptor data. Browse by full package name and original declaration. Search covers this site.
+- [JSDoc configuration derivation evidence](https://mandolin.github.io/HIA-Documentation-Resources-JSDoc/derivation-evidence/en/) presents configuration derivation records, sources, digests and coverage per value. Each original artifact declares whether its evidence records actual production or static inference. Search covers the evidence partition.
+
 - [HIA thirteen-core-package API · English](https://mandolin.github.io/HIA-Documentation-API/en/) · [Chinese](https://mandolin.github.io/HIA-Documentation-API/zh-CN/) provides modules from thirteen core packages and two JSON resources from the plugin development toolkit. Another 45 resources are listed by full name in [Resource reference partitions](../reference/#resource-reference-partitions), covering core and source schemas, TypeScript documentation, documentation profiles and business workflows. The reference manual also lists command paths. Satellite tool coverage follows each tool's documented scope.
 
 - [HIA unified generated reference · English](../../../en/): existing public artifacts, including samples and tool references, without a claim of complete required-package coverage.

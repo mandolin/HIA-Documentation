@@ -56,6 +56,15 @@ Resource references use separate publication sites grouped by responsibility. Ea
 
 Language and version entries retain the current partition. The Code documentation tab opens the core API directory. The plugin development toolkit's two JSON resources are published with that core API, and these four partitions cover another 45 resources. Check the system documentation version and each resource's declared contract version separately.
 
+## JavaScript documentation tools and configuration evidence
+
+| Full name | Contents and search scope |
+| --- | --- |
+| [JavaScript documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-JavaScript/en/) | Package interfaces for runners, producers, plugins, specifications and themes, including current/legacy configuration schemas and static declaration data; search within this site |
+| [JSDoc configuration derivation evidence](https://mandolin.github.io/HIA-Documentation-Resources-JSDoc/derivation-evidence/en/) | Sources, digests and coverage of configuration derivation records; search within this evidence partition |
+
+Both sites provide explicit Chinese/English entries, the current partition's system-documentation version selection and authorized source reading. Complete code-file downloads and page source excerpts are provided separately. Evidence identities come from the original artifacts.
+
 ## Find rules and contracts
 
 Consult the CLI README for input modes, configuration references for defaults and theme settings, and the manifest guide for aggregation. Omission, defaulting and explicit null are different semantics.

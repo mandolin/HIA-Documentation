@@ -8,6 +8,18 @@ import { searchDocuments, readSearchIndex } from "../src/lib/search.mjs";
 import { href, route } from "../src/lib/routes.mjs";
 import { readFile } from "node:fs/promises";
 
+test("both manual directories discover the confirmed JavaScript API and evidence sites in the current locale", async () => {
+  // <lang><zh-CN>每个正文入口按已确认发布清单核完整名称与地址，语言与内容分区分别选择。</zh-CN><en>Check complete labels and URLs in both manual entries against the confirmed publication registry, selecting locale and content partition independently.</en></lang>
+  const registry = JSON.parse(await readFile(new URL("../../reference/javascript-reference-inputs.json", import.meta.url), "utf8"));
+  for (const locale of ["zh-CN", "en"]) for (const topic of ["reference", "code-reference"]) {
+    const manual = await readFile(new URL(`../src/content/${topic}.${locale}.md`, import.meta.url), "utf8");
+    for (const site of registry.sites) {
+      const target = "https://mandolin.github.io" + site.base + site.path + locale + "/";
+      assert(manual.includes(`[${site.titleByLocale[locale]}](${target})`), `Missing ${locale} ${topic} JavaScript partition ${site.id}`);
+    }
+  }
+});
+
 // <lang lang="zh-CN">同题不同语言/版本的合成公开正文，避免仅测标题匹配。</lang><lang lang="en">Synthetic public bodies share a topic across locales/versions to exercise more than title matching.</lang>
 const entries = [
   { title: "品牌与来源", href: href("theme-source", "zh-CN"), locale: "zh-CN", version: "1.0.0", text: "共享资源只有一个写入者。accent 使用 #0047AB。" },
