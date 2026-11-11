@@ -26,6 +26,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check resource publication archive regressions
+        run: python3 -m unittest discover -s scripts -p test_resource_reference_publication.py
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:

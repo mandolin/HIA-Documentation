@@ -1,5 +1,35 @@
 # Public Reference Build
 
+## Partitioned resource references
+
+中文。`reference/resource-reference-partitions.json` 是资源参考的成员、公开来源和地址清单。文档化配置规范、TypeScript文档模式、核心文档/来源模式、业务/语言/呈现/质量模式各有独立项目索引与本地检索。源JSON保留原文语言und，界面分别生成简体中文与英文。
+
+English. `reference/resource-reference-partitions.json` defines resource membership, approved source files and publication paths. Profiles, TypeScript documentation schemas, core/source schemas, and business/localization/presentation/quality schemas have independent project indexes and local search. JSON retains its original und content locale, with Simplified Chinese and English interfaces.
+
+```sh
+pnpm build
+pnpm api:check
+pnpm reference:resources:archive:test
+pnpm reference:resources:build
+```
+
+中文。命令从主仓执行。构建要求已提交的干净源码，默认输出到 `dist/resource-reference-publication`，也接受 `--out` 指定主仓dist子目录。`sites/core/` 与 `sites/applications/` 是两个可发布根，`reports/` 保存对应逐文件摘要与源提交。运行目录和原生生产副本归构建产物管理。检查完成后替换输出，先前输出保留为独立备份。
+
+English. Run from the main repository. Builds require committed clean sources and default to `dist/resource-reference-publication`; `--out` selects another owned dist child. `sites/core/` and `sites/applications/` are the two publication roots, with per-file digests and source revisions in `reports/`. Runtime files and native production copies remain build artifacts. Checked output replaces the destination while retaining the prior output as a separate backup.
+
+| Publication repository | Partitions |
+| --- | --- |
+| mandolin/HIA-Documentation-Resources-Core | Core/source schemas and TypeScript documentation schemas |
+| mandolin/HIA-Documentation-Resources-Applications | Documentation profiles and business/localization/presentation/quality schemas |
+
+中文。各站按实际文件内容字节、文件数、最大文件/索引及增长余量检查容量。新增资源或语言时复核清单及承载组织。公共栏目连接主官网与核心API，语言/版本目标对应当前分区。资源引用按词法记录，Schema求值继续由使用方选择的验证器负责。
+
+English. Capacity checks use actual file-content bytes, file count, largest file/index and remaining growth room. Reassess registry and hosting when adding resources or locales. Public tabs link to the main website and core API, while locale/version targets select the current partition. Resource references retain lexical evidence, with schema evaluation handled by the consumer's chosen validator.
+
+中文。发布归档由 `scripts/prepare_resource_reference.py` 使用Python3.11及以上版本核验。发布仓通过固定源码提交复用此验证器和测试，核原文、原生声明、来源、预算和全部文件摘要后原子展开。正式部署还须核实际Pages工件及线上目标。
+
+English. Publication archives are checked by `scripts/prepare_resource_reference.py` on Python3.11 or later. Publication repositories reuse this validator and its tests from a pinned owner revision, verifying originals, native declarations, provenance, budgets and every file digest before atomic extraction. Deployment acceptance also checks actual Pages artifacts and live targets.
+
 The public reference build assembles first-party HIA documentation artifacts from an explicit source allowlist. The build command produces a checked artifact; Pages deployment is a separate workflow step. Private workspace materials are excluded.
 
 ## Core package module APIs

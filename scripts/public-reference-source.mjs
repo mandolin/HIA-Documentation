@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {constants, copyFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {readJsonResourceBytes} from './lib/json-resource-audit.mjs';
+import {loadResourceReferencePartitions} from './resource-reference-partitions.mjs';
 
 /**
  * @lang zh-CN 已逐文件审阅的两个公开JSON导出；其它SDK源码不在本授权范围。
@@ -13,18 +14,24 @@ export const PUBLIC_REFERENCE_JSON_RESOURCE_PATHS=Object.freeze([
   'packages/plugin-sdk/dist/artifact-derivation-evidence.schema.json'
 ]);
 
+/** @lang zh-CN 旧SDK范围与已确认资源分区清单共同给出精确公开审批，实际镜像仍由每次显式选择限定。 @lang en Legacy SDK scope and the confirmed partition registry define exact publication approval; each mirror remains bounded by explicit selection. */
+export const APPROVED_PUBLIC_REFERENCE_JSON_RESOURCE_PATHS=Object.freeze([
+  ...PUBLIC_REFERENCE_JSON_RESOURCE_PATHS,
+  ...loadResourceReferencePartitions().partitions.flatMap(part=>part.exports.map(entry=>entry.source))
+]);
+
 /**
  * @lang zh-CN 创建明确文件清单的公开镜像及相对配置；失败可能留下部分暂存内容，由调用方按runtime生命周期清理。
  * @lang en Creates a public mirror from explicit files and relative config; failures may leave partial staging for caller-managed runtime cleanup.
  * @param {string} mainRepoRoot <lang><zh-CN>自有公开主仓根，固定样本须实际位于其中。</zh-CN><en>Owning public repository root containing the actual fixed sample.</en></lang>
  * @param {string} runtimeRoot <lang><zh-CN>已存在且位于主仓内的独占运行目录。</zh-CN><en>Existing exclusive runtime directory inside the repository.</en></lang>
- * @param {string[]} [resourceSources] <lang><zh-CN>默认空，仅可选择已审核的两个JSON资源。</zh-CN><en>Defaults to empty and may select only the two reviewed JSON resources.</en></lang>
+ * @param {string[]} [resourceSources] <lang><zh-CN>默认空，仅可选择旧SDK范围及分区清单已审核的JSON资源。</zh-CN><en>Defaults to empty and selects only JSON resources approved by the legacy SDK scope and partition registry.</en></lang>
  * @param {boolean} [includeDotNetSample=true] <lang><zh-CN>是否加入原有C#样本，独立资源站可显式关闭。</zh-CN><en>Whether to include the existing C# sample; resource-only sites can explicitly omit it.</en></lang>
  * @returns {string} <lang><zh-CN>新配置的绝对路径，供CLI读取；不进入公开产物。</zh-CN><en>Absolute path of the new CLI config, excluded from public artifacts.</en></lang>
  * @throws {Error} <lang><zh-CN>越根、来源缺失、既有暂存或文件操作失败时抛错。</zh-CN><en>Throws for escaping roots, missing sources, existing staging or filesystem failures.</en></lang>
  */
 export function preparePublicReferenceSourceConfig(mainRepoRoot, runtimeRoot, resourceSources = [], includeDotNetSample = true) {
-  assert(Array.isArray(resourceSources) && new Set(resourceSources).size===resourceSources.length && resourceSources.every(source=>PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(source)), 'Public JSON source selection is invalid.');
+  assert(Array.isArray(resourceSources) && new Set(resourceSources).size===resourceSources.length && resourceSources.every(source=>APPROVED_PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(source)), 'Public JSON source selection is invalid.');
   assert(typeof includeDotNetSample==='boolean','Public sample selection must be explicit.');
   // <lang><zh-CN>先核运行根，链接不能把读取或暂存导向主仓之外。</zh-CN><en>Check the runtime root so links cannot redirect reads or staging outside the owner.</en></lang>
   const realMain = realpathSync(mainRepoRoot);

@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Partitioned resource references
+
+- 公开资源参考使用声明式分区清单，按完整包名及导出路径选择文档化配置规范和JSON Schema。正常构建生成四个双语分区及两个独立发布目录，并逐项检查原文、源码映射、静态入口和容量。
+- Public resource references use a declarative partition registry and fully qualified export selection. Normal builds generate four bilingual partitions and two publication directories, checking original bytes, source maps, static targets and capacity.
+- 发布方复用固定主仓提交中的Python归档验证器，核压缩/TAR/逐文件摘要、分区范围、实际JSON值和来源坐标。现有SDK资源选择与导航身份持续可读。
+- Publishers reuse the Python archive validator from a pinned owner revision, checking compressed/TAR/file digests, partition scope, actual JSON values and source coordinates, with legacy SDK selections and navigation identities retained.
+
 ## Unreleased — Command reference navigation
 
 - 双语参考手册增加全部十一条HIA命令的随包使用章节链接，手册正文检索可按完整命令名称定位目录，回归检查关联实际分发路径及权威标题。

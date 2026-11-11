@@ -58,11 +58,15 @@ export function assertCoreReferenceOutput(output) {
  * @lang zh-CN 逐文件检查可发布目录，拒绝工程副本、链接、越界、隐私及容量超限。
  * @lang en Inspect every publishable file, rejecting build copies, links, escaping paths, private content, and excessive size.
  * @param {string} root - 只含两语言和根入口的站点目录。 Site directory containing both locales and the root entry.
+ * @param {string[]} [localeRoots] - 显式语言输出相对根，默认en/zh-CN；分区发布方提供自己的互斥根清单。 Explicit relative locale roots, defaulting to en/zh-CN; partition publishers supply their disjoint roots.
  * @returns {{files:number, bytes:number, inventory:Array<{path:string,bytes:number,sha256:string}>}} 实际文件摘要。 Actual file digests.
  * @throws {Error} 工件路径、内容或容量不符合。 Invalid paths, contents, or capacity.
  */
-export function inspectCoreReferenceSite(root) {
+export function inspectCoreReferenceSite(root, localeRoots = locales) {
   assert(fs.lstatSync(root).isDirectory() && !fs.lstatSync(root).isSymbolicLink(), "Invalid core reference site root.");
+  assert(Array.isArray(localeRoots) && localeRoots.length && new Set(localeRoots).size === localeRoots.length && localeRoots.every(value=>typeof value === "string" && /^[A-Za-z0-9-]+(?:\/[A-Za-z0-9-]+)*$/u.test(value)), "Invalid reference locale roots.");
+  assert(localeRoots.every(value=>!localeRoots.some(other=>other!==value&&value.startsWith(other+"/"))), "Overlapping reference roots.");
+  const topDirectories=new Set(localeRoots.map(value=>value.split("/")[0]));
   const inventory = [];
   let bytes = 0;
   /**
@@ -75,10 +79,11 @@ export function inspectCoreReferenceSite(root) {
       const file = path.join(directory, entry.name);
       const state = fs.lstatSync(file);
       // <lang zh-CN>来源字节保护文件仅位于语言根，任意其他隐藏工程文件继续拒绝。</lang><lang en>Source-byte protection metadata belongs only at locale roots; other hidden development files remain rejected.</lang>
-      const sourceAttributes = locales.some(locale => relative === locale + "/.gitattributes");
+      const sourceAttributes = localeRoots.some(localeRoot => relative === localeRoot + "/.gitattributes");
       assert(!state.isSymbolicLink() && !/[\\:%?#]/u.test(relative) && (!entry.name.startsWith(".") || relative === ".nojekyll" || sourceAttributes), "Unexpected core reference path.");
       if (sourceAttributes) assert(state.isFile(), "Invalid core reference source attributes.");
-      if (!prefix) assert(["en", "zh-CN", "index.html", ".nojekyll"].includes(entry.name), "Build files cannot enter the core reference site.");
+      if (!prefix) assert(topDirectories.has(entry.name) || ["index.html", ".nojekyll"].includes(entry.name), "Build files cannot enter the core reference site.");
+      assert(["index.html",".nojekyll"].includes(relative)||localeRoots.some(localeRoot=>relative===localeRoot||relative.startsWith(localeRoot+"/")||state.isDirectory()&&localeRoot.startsWith(relative+"/")),"Unexpected core reference path.");
       if (state.isDirectory()) { visit(file, relative); continue; }
       assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2, "Invalid core reference file size or type.");
       assert(inventory.length < 100000 && bytes + state.size <= 1_000_000_000, "Core reference site exceeds its publication budget.");
@@ -93,7 +98,7 @@ export function inspectCoreReferenceSite(root) {
   }
   visit(root);
   assert(inventory.some(file => file.path === "index.html"), "Missing default core reference entry.");
-  for (const locale of locales) assert(inventory.some(file => file.path === locale + "/project-index.json"), "Missing core reference language index.");
+  for (const localeRoot of localeRoots) assert(inventory.some(file => file.path === localeRoot + "/project-index.json"), "Missing core reference language index.");
   return { files: inventory.length, bytes, inventory: inventory.sort((left, right) => left.path.localeCompare(right.path, "en")) };
 }
 

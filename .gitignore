@@ -3,6 +3,7 @@ dist/
 reference/sources/
 coverage/
 *.tsbuildinfo
+__pycache__/
 .turbo/
 .vite/
 *.log

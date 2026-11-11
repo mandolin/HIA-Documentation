@@ -1,0 +1,296 @@
+{
+  "description": "按内容族和实际容量组织资源参考，精确公开导出由同一清单驱动。 Resource references grouped by content family and measured capacity, with exact public exports driven by one registry.",
+  "sites": [
+    {
+      "id": "core",
+      "repository": "mandolin/HIA-Documentation-Resources-Core",
+      "base": "/HIA-Documentation-Resources-Core/",
+      "defaultPartition": "schema-core",
+      "partitions": [
+        "schema-core",
+        "schema-language"
+      ]
+    },
+    {
+      "id": "applications",
+      "repository": "mandolin/HIA-Documentation-Resources-Applications",
+      "base": "/HIA-Documentation-Resources-Applications/",
+      "defaultPartition": "profiles",
+      "partitions": [
+        "profiles",
+        "schema-business"
+      ]
+    }
+  ],
+  "partitions": [
+    {
+      "id": "profiles",
+      "site": "applications",
+      "path": "profiles/",
+      "titleByLocale": {
+        "zh-CN": "文档化配置规范",
+        "en": "Documentation profiles"
+      },
+      "exports": [
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./catalog.json",
+          "source": "packages/profiles/dist/catalog.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./cssdoc.profile.json",
+          "source": "packages/profiles/dist/profiles/cssdoc.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./doc-source-map.profile.json",
+          "source": "packages/profiles/dist/profiles/doc-source-map.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./htmdoc.profile.json",
+          "source": "packages/profiles/dist/profiles/htmdoc.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./jsdoc.profile.json",
+          "source": "packages/profiles/dist/profiles/jsdoc.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./pug-htmdoc-bridge.profile.json",
+          "source": "packages/profiles/dist/profiles/pug-htmdoc-bridge.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./sass-cssdoc-bridge.profile.json",
+          "source": "packages/profiles/dist/profiles/sass-cssdoc-bridge.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./ts-jsdoc-bridge.profile.json",
+          "source": "packages/profiles/dist/profiles/ts-jsdoc-bridge.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./ts-jsdoc-bridge/0.2.0-draft.profile.json",
+          "source": "packages/profiles/dist/profiles/versioned/ts-jsdoc-bridge-0.2.0-draft.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./ts-jsdoc-bridge/0.3.0-draft.profile.json",
+          "source": "packages/profiles/dist/profiles/versioned/ts-jsdoc-bridge-0.3.0-draft.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./ts-jsdoc-bridge/0.4.0-draft.profile.json",
+          "source": "packages/profiles/dist/profiles/versioned/ts-jsdoc-bridge-0.4.0-draft.profile.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./tsdoc-project/catalog.json",
+          "source": "packages/profiles/dist/tsdoc-project-catalog.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./tsdoc-project/0.3.0-draft/catalog.json",
+          "source": "packages/profiles/dist/tsdoc-structured-project-catalog.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./tsdoc-project/0.4.0-draft/catalog.json",
+          "source": "packages/profiles/dist/tsdoc-wrapped-project-catalog.json"
+        },
+        {
+          "package": "@hia-doc/profiles",
+          "subpath": "./package.json",
+          "source": "packages/profiles/package.json"
+        }
+      ]
+    },
+    {
+      "id": "schema-language",
+      "site": "core",
+      "path": "schemas/typescript-documentation/",
+      "titleByLocale": {
+        "zh-CN": "TypeScript文档提取及桥接模式",
+        "en": "TypeScript documentation extraction and bridge schemas"
+      },
+      "exports": [
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/catalog.json",
+          "source": "packages/schemas/dist/tsdoc-project-catalog.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-tsdoc-extraction-0.1.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-tsdoc-extraction-0.2.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-ts-jsdoc-bridge-0.2.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-tsdoc-extraction-0.3.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-tsdoc-extraction-0.4.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-tsdoc-extraction-0.4.0-draft.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./tsdoc-project/hia-ts-jsdoc-bridge-0.4.0-draft.json",
+          "source": "packages/schemas/dist/tsdoc-project/hia-ts-jsdoc-bridge-0.4.0-draft.json"
+        }
+      ]
+    },
+    {
+      "id": "schema-core",
+      "site": "core",
+      "path": "schemas/core-and-source/",
+      "titleByLocale": {
+        "zh-CN": "核心文档、来源与生产器模式",
+        "en": "Core document, source and producer schemas"
+      },
+      "exports": [
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./plain-data-initialization.schema.json",
+          "source": "packages/schemas/dist/schemas/plain-data-initialization.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./artifact-derivation-evidence.schema.json",
+          "source": "packages/schemas/dist/schemas/artifact-derivation-evidence.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-profile.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-profile.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-producer.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-producer.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-producer-result.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-producer-result.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./doc-source-map.schema.json",
+          "source": "packages/schemas/dist/schemas/doc-source-map.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./ordinary-source-map-coordinate-profile.schema.json",
+          "source": "packages/schemas/dist/schemas/ordinary-source-map-coordinate-profile.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-source-comment-projection.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-source-comment-projection.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./generated-documentation-binding.schema.json",
+          "source": "packages/schemas/dist/schemas/generated-documentation-binding.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./hia-document.schema.json",
+          "source": "packages/schemas/dist/schemas/hia-document.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./project-manifest.schema.json",
+          "source": "packages/schemas/dist/schemas/project-manifest.schema.json"
+        }
+      ]
+    },
+    {
+      "id": "schema-business",
+      "site": "applications",
+      "path": "schemas/business-localization-presentation-and-quality/",
+      "titleByLocale": {
+        "zh-CN": "业务流程、语言、呈现与质量模式",
+        "en": "Business flow, localization, presentation and quality schemas"
+      },
+      "exports": [
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./catalog.json",
+          "source": "packages/schemas/dist/catalog.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./business-flow-documentation.schema.json",
+          "source": "packages/schemas/dist/schemas/business-flow-documentation.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./business-flow-documentation-projection.schema.json",
+          "source": "packages/schemas/dist/schemas/business-flow-documentation-projection.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-locale-resource.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-locale-resource.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-locale-resource-declaration.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-locale-resource-declaration.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-locale-resolution.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-locale-resolution.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-terminology.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-terminology.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-quality-review.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-quality-review.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-presentation-profile.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-presentation-profile.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./documentation-ui-locale-completeness.schema.json",
+          "source": "packages/schemas/dist/schemas/documentation-ui-locale-completeness.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./package.json",
+          "source": "packages/schemas/package.json"
+        }
+      ]
+    }
+  ]
+}

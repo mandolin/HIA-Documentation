@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {jsonDocumentationProducer} from '../packages/jsondoc/dist/index.js';
 import {runDocumentationProducer,validateDocumentationProducerResult} from '../packages/plugin-sdk/dist/index.js';
@@ -14,34 +15,70 @@ import {readJsonResourceBytes,inspectJsonResource} from './lib/json-resource-aud
 import {verifyJsonResourceProjection} from './lib/json-resource-projection.mjs';
 import {assertPublicRootOmission} from './lib/core-package-api.mjs';
 import {copyPackageArtifact} from './public-reference-packages.mjs';
-import {PUBLIC_REFERENCE_JSON_RESOURCE_PATHS} from './public-reference-source.mjs';
+import {APPROVED_PUBLIC_REFERENCE_JSON_RESOURCE_PATHS} from './public-reference-source.mjs';
+
+/**
+ * @lang zh-CN 按完整包名及公开子路径精确选择资源，省略时保留旧调用的全包行为。
+ * @lang en Select exact resources by full package name and export subpath, retaining whole-package behavior when omitted.
+ * @param {object} inventory <lang><zh-CN>实际包盘点。</zh-CN><en>Actual package inventory.</en></lang>
+ * @param {object[]} [selected] <lang><zh-CN>可选完整公开身份清单。</zh-CN><en>Optional complete export identities.</en></lang>
+ * @returns {object[]} <lang><zh-CN>实际包及导出记录。</zh-CN><en>Actual package/export pairs.</en></lang>
+ */
+export function selectPublicReferenceResources(inventory,selected) {
+  const resources=inventory.packages.flatMap(pack=>pack.entries.filter(entry=>entry.kind==='json-resource').map(entry=>({pack,entry})));
+  if(selected===undefined) return resources;
+  assert(Array.isArray(selected)&&selected.length,'Resource export selection is invalid.');
+  const keys=selected.map(item=>item.package+':'+item.subpath);
+  assert.equal(new Set(keys).size,keys.length,'Duplicate resource selection.');
+  const actual=new Set(resources.map(({pack,entry})=>pack.name+':'+entry.subpath));
+  assert(keys.every(key=>actual.has(key)),'Unknown resource selection.');
+  // <lang><zh-CN>新分区清单可固定实际发行目标，别名重指向其它已审核文件也须显式更新。</zh-CN><en>New partition registries can pin actual distribution targets, requiring an explicit update when an alias points to another reviewed file.</en></lang>
+  for(const item of selected) if(item.source!==undefined) {
+    const row=resources.find(({pack,entry})=>pack.name+':'+entry.subpath===item.package+':'+item.subpath);
+    assert.equal(item.source,path.posix.join(row.pack.directory,row.entry.target),'Resource source binding changed.');
+  }
+  return resources.filter(({pack,entry})=>keys.includes(pack.name+':'+entry.subpath));
+}
+
+/**
+ * @lang zh-CN 保留两个旧SDK导航身份，其余按完整导出身份生成安全且互异的token；不授予公开权限。
+ * @lang en Retain both legacy SDK navigation identities and derive safe distinct tokens for other fully qualified exports, without granting publication authority.
+ * @param {string} packageName <lang><zh-CN>完整包名。</zh-CN><en>Full package name.</en></lang>
+ * @param {string} subpath <lang><zh-CN>公开导出子路径。</zh-CN><en>Public export subpath.</en></lang>
+ * @returns {string} <lang><zh-CN>既有语义段规则允许的身份。</zh-CN><en>Identity accepted by existing semantic-segment rules.</en></lang>
+ */
+export function publicReferenceResourceId(packageName,subpath) {
+  if(packageName==='@hia-doc/plugin-sdk'&&['./plain-data-initialization.schema.json','./artifact-derivation-evidence.schema.json'].includes(subpath)) return subpath.slice(2);
+  return 'json-resource-'+createHash('sha256').update(packageName+':'+subpath).digest('hex').slice(0,32);
+}
 
 /**
  * @lang zh-CN 宿主重定位已验证的JSON生产工件，原三工件不改字节；稳定地址与随机事务目录分离。
  * @lang en Relocates verified JSON producer artifacts without changing their bytes, separating stable publication addresses from random transaction directories.
- * @param {object} options <lang><zh-CN>显式包范围、主仓和输出根以及语言目录。</zh-CN><en>Explicit package scope, repository/output roots, and locale directories.</en></lang>
- * @returns {Promise<object>} <lang><zh-CN>既有项目输入和精确两文件来源授权清单。</zh-CN><en>Existing project inputs and the exact two-file source authorization list.</en></lang>
+ * @param {object} options <lang><zh-CN>显式包范围、可选resourceExports精确导出、主仓和输出根以及语言目录。</zh-CN><en>Explicit package scope, optional exact resourceExports, repository/output roots, and locale directories.</en></lang>
+ * @returns {Promise<object>} <lang><zh-CN>既有项目输入和本次精确来源授权清单。</zh-CN><en>Existing project inputs and this invocation's exact source authorization list.</en></lang>
  * @throws {Error} <lang><zh-CN>入口、权限、生产、原文或定位不符时拒绝。</zh-CN><en>Rejects inconsistent entries, authorization, production, original bytes or locations.</en></lang>
  */
-export async function preparePublicReferenceResources({packageNames,workspaceRoot,mainRoot,outputRoot,locales}) {
-  if(packageNames===undefined) return {inputs:[],sourcePaths:[]};
+export async function preparePublicReferenceResources({packageNames,resourceExports,workspaceRoot,mainRoot,outputRoot,locales}) {
+  if(packageNames===undefined) { assert(resourceExports===undefined,'Resource exports require explicit package selection.'); return {inputs:[],sourcePaths:[]}; }
   const inventory=auditRequiredPackages(workspaceRoot,{packageNames});
   assert(inventory.packages.every(pack=>pack.owner==='main-repo'),'Resource publication currently requires main-repo ownership.');
+  assert(inventory.packages.every(pack=>pack.entries.some(entry=>entry.kind==='json-resource')),'Selected package has no JSON resources.');
   const inputs=[];
   const rows=[];
   const sourcePaths=[];
-  for(const pack of inventory.packages) {
-    const resources=pack.entries.filter(entry=>entry.kind==='json-resource');
-    assert(resources.length,'Selected package has no JSON resources.');
-    for(const resource of resources) {
+  const selected=selectPublicReferenceResources(inventory,resourceExports);
+  assert(selected.length,'Selected package has no JSON resources.');
+  for(const {pack,entry:resource} of selected) {
       // <lang><zh-CN>真实导出目标才是公开原文与行号来源，额外路径必须先经过明确公开审核。</zh-CN><en>The actual exported target supplies public bytes and line numbers; additional paths require explicit publication review first.</en></lang>
       const source=path.posix.join(pack.directory,resource.target);
-      assert(PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(source),'Resource source is not publication-approved.');
+      assert(APPROVED_PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(source),'Resource source is not publication-approved.');
       const bytes=readJsonResourceBytes(mainRoot,source);
       const expected={source,...inspectJsonResource(bytes)};
       const token=resource.subpath.replace(/^\.\//u,'');
       const prefix=`package-resources/${pack.name.slice(1).replaceAll('/','--')}/${token}`;
-      const directory=path.join(outputRoot,'.runtime','resource-native',token);
+      const packageToken=pack.name.slice(1).replaceAll('/','--');
+      const directory=path.join(outputRoot,'.runtime','resource-native',packageToken,token);
       const result=await runDocumentationProducer(jsonDocumentationProducer,{
         workspaceRoot:mainRoot,
         outputDirectory:directory,
@@ -58,7 +95,7 @@ export async function preparePublicReferenceResources({packageNames,workspaceRoo
       // <lang><zh-CN>保持原文件名及同目录互引，只重定位结果中的工件地址，三个原生文件均按原字节复制。</zh-CN><en>Keep original filenames and sibling references, relocating only result artifact addresses and copying all three native files byte for byte.</en></lang>
       const rebased={...result,artifacts:result.artifacts.map(item=>({...item,path:`${prefix}/${path.posix.basename(item.path)}`}))};
       assert.deepEqual(validateDocumentationProducerResult(rebased,{descriptor:jsonDocumentationProducer.descriptor}),[]);
-      const inputRoot=path.join(outputRoot,'.runtime','resource-inputs',token);
+      const inputRoot=path.join(outputRoot,'.runtime','resource-inputs',packageToken,token);
       for(const [index,item] of result.artifacts.entries()) {
         for(const targetRoot of [outputRoot,...locales.map(locale=>path.join(outputRoot,locale)),inputRoot]) {
           copyPackageArtifact(path.join(directory,item.path),path.join(targetRoot,rebased.artifacts[index].path),outputRoot);
@@ -72,12 +109,11 @@ export async function preparePublicReferenceResources({packageNames,workspaceRoo
         domain:'other',
         semanticPath:[
           {kind:'package',id:`${pack.name.slice(1).replaceAll('/','--')}--resources`,label:pack.name},
-          {kind:'contract',id:token,label:resource.subpath}
+          {kind:'contract',id:publicReferenceResourceId(pack.name,resource.subpath),label:resource.subpath}
         ]
       });
       sourcePaths.push(source);
       rows.push({package:pack.name,subpath:resource.subpath,source,prefix,sha256:expected.sha256,schemaId:expected.schemaId,dialect:expected.dialect,locale:'und',...checked,artifacts:rebased.artifacts});
-    }
   }
   // <lang><zh-CN>报告沿用受控复制边界，普通重建可替换，链接/硬链接目标仍拒绝。</zh-CN><en>The report shares the controlled copy boundary, allowing regular rebuilds while rejecting linked or hard-linked targets.</en></lang>
   const reportPath=path.join(outputRoot,'.runtime','resource-adoption.json');
@@ -131,7 +167,7 @@ export function checkPublicReferenceResources(definition,outputRoot,locale) {
   const mainRoot=fileURLToPath(new URL('../',import.meta.url));
   const inventory=auditRequiredPackages(path.dirname(mainRoot),{packageNames:definition.packageResources});
   const report=read(path.join(outputRoot,'package-resources/adoption.json'));
-  const expectedResources=inventory.packages.flatMap(pack=>pack.entries.filter(entry=>entry.kind==='json-resource').map(entry=>({pack,entry})));
+  const expectedResources=selectPublicReferenceResources(inventory,definition.resourceExports);
   assert.equal(report.rows.length,expectedResources.length);
   const index=read(path.join(outputRoot,locale,'project-index.json'));
   const entries=index.entries;
@@ -144,7 +180,7 @@ export function checkPublicReferenceResources(definition,outputRoot,locale) {
     const row=report.rows.find(item=>item.package===pack.name&&item.subpath===resource.subpath);
     assert(row,'Missing resource export.');
     assert.equal(row.source,path.posix.join(pack.directory,resource.target));
-    assert(PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(row.source));
+    assert(APPROVED_PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(row.source));
     assert.equal(row.prefix,`package-resources/${pack.name.slice(1).replaceAll('/','--')}/${resource.subpath.replace(/^\.\//u,'')}`);
     const bytes=readJsonResourceBytes(mainRoot,row.source);
     const expected={source:row.source,...inspectJsonResource(bytes)};

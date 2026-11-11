@@ -66,3 +66,16 @@ test("source text attributes are accepted only at locale roots with the renderer
   fs.writeFileSync(path.join(root, "en/nested/.gitattributes"), "sources/*.txt -text\n");
   assert.throws(() => inspectCoreReferenceSite(root), /Unexpected core reference path/);
 });
+
+test("explicit partition roots retain identical archive guards and reject unplanned directories", t => {
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),"hia-resource-site-"));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const roots=["schemas/core-and-source/en","profiles/zh-CN"];
+  for(const localeRoot of roots) { fs.mkdirSync(path.join(root,localeRoot),{recursive:true}); fs.writeFileSync(path.join(root,localeRoot,"project-index.json"),"{}"); }
+  fs.writeFileSync(path.join(root,"index.html"),"Resource references");
+  fs.writeFileSync(path.join(root,roots[0],".gitattributes"),"sources/*.txt -text\n");
+  assert.equal(inspectCoreReferenceSite(root,roots).files,4);
+  fs.mkdirSync(path.join(root,"schemas/unplanned"));
+  assert.throws(()=>inspectCoreReferenceSite(root,roots),/Unexpected/);
+  for(const invalid of [[],["../outside"],["en","en"]]) assert.throws(()=>inspectCoreReferenceSite(root,invalid));
+});
