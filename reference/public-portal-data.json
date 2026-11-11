@@ -114,7 +114,8 @@
         "documentation-source-comment-projection",
         "generated-documentation-binding",
         "hia-document",
-        "project-manifest"
+        "project-manifest",
+        "project-manifest-scoped"
       ]
     },
     "docLines": [
