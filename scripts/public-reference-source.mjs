@@ -19,27 +19,35 @@ export const PUBLIC_REFERENCE_JSON_RESOURCE_PATHS=Object.freeze([
  * @param {string} mainRepoRoot <lang><zh-CN>自有公开主仓根，固定样本须实际位于其中。</zh-CN><en>Owning public repository root containing the actual fixed sample.</en></lang>
  * @param {string} runtimeRoot <lang><zh-CN>已存在且位于主仓内的独占运行目录。</zh-CN><en>Existing exclusive runtime directory inside the repository.</en></lang>
  * @param {string[]} [resourceSources] <lang><zh-CN>默认空，仅可选择已审核的两个JSON资源。</zh-CN><en>Defaults to empty and may select only the two reviewed JSON resources.</en></lang>
+ * @param {boolean} [includeDotNetSample=true] <lang><zh-CN>是否加入原有C#样本，独立资源站可显式关闭。</zh-CN><en>Whether to include the existing C# sample; resource-only sites can explicitly omit it.</en></lang>
  * @returns {string} <lang><zh-CN>新配置的绝对路径，供CLI读取；不进入公开产物。</zh-CN><en>Absolute path of the new CLI config, excluded from public artifacts.</en></lang>
  * @throws {Error} <lang><zh-CN>越根、来源缺失、既有暂存或文件操作失败时抛错。</zh-CN><en>Throws for escaping roots, missing sources, existing staging or filesystem failures.</en></lang>
  */
-export function preparePublicReferenceSourceConfig(mainRepoRoot, runtimeRoot, resourceSources = []) {
+export function preparePublicReferenceSourceConfig(mainRepoRoot, runtimeRoot, resourceSources = [], includeDotNetSample = true) {
   assert(Array.isArray(resourceSources) && new Set(resourceSources).size===resourceSources.length && resourceSources.every(source=>PUBLIC_REFERENCE_JSON_RESOURCE_PATHS.includes(source)), 'Public JSON source selection is invalid.');
-  // <lang><zh-CN>先核固定C#文件及运行根，链接不能把读取或暂存导向主仓之外。</zh-CN><en>Check the fixed C# file and runtime root first so links cannot redirect reads or staging outside the owner.</en></lang>
+  assert(typeof includeDotNetSample==='boolean','Public sample selection must be explicit.');
+  // <lang><zh-CN>先核运行根，链接不能把读取或暂存导向主仓之外。</zh-CN><en>Check the runtime root so links cannot redirect reads or staging outside the owner.</en></lang>
   const realMain = realpathSync(mainRepoRoot);
+  // <lang><zh-CN>选中样本时先验证其物理边界，拒绝重定向的过程不创建镜像。</zh-CN><en>Validate a selected sample's physical boundary before creating a mirror so rejected redirections leave no mirror.</en></lang>
   const sourcePath = 'reference/samples/dotnet/Envelope.cs';
-  const realSource = realpathSync(path.join(realMain, sourcePath));
-  const sourceRelative = path.relative(realMain, realSource);
-  assert(sourceRelative && sourceRelative !== '..' && !sourceRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(sourceRelative), 'Public sample source escapes its owner.');
+  const realSource = includeDotNetSample ? realpathSync(path.join(realMain, sourcePath)) : undefined;
+  if(realSource) {
+    const sourceRelative = path.relative(realMain, realSource);
+    assert(sourceRelative && sourceRelative !== '..' && !sourceRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(sourceRelative), 'Public sample source escapes its owner.');
+  }
   const realRuntime = realpathSync(runtimeRoot);
   const runtimeRelative = path.relative(realMain, realRuntime);
   assert(runtimeRelative && runtimeRelative !== '..' && !runtimeRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(runtimeRelative), 'Public source runtime escapes its owner.');
 
-  // <lang><zh-CN>独占新目录先放固定C#副本，下面只补已选JSON，配置读取范围严格限于该镜像。</zh-CN><en>Start the exclusive mirror with the fixed C# copy, adding only selected JSON below and bounding config reads to this mirror.</en></lang>
+  // <lang><zh-CN>独占镜像仅放本次已选择的来源，配置读取范围严格限于该镜像。</zh-CN><en>The exclusive mirror contains only selected sources and bounds all configured reads.</en></lang>
   const sourceRoot = path.join(realRuntime, 'source-root');
   mkdirSync(sourceRoot);
-  const destination = path.join(sourceRoot, sourcePath);
-  mkdirSync(path.dirname(destination), {recursive: true});
-  copyFileSync(realSource, destination, constants.COPYFILE_EXCL);
+  if(realSource) {
+    // <lang><zh-CN>默认调用保留固定C#样本，资源站显式关闭时不读取或复制此文件。</zh-CN><en>Default calls retain the fixed C# sample; resource-only calls omit its read and copy.</en></lang>
+    const destination = path.join(sourceRoot, sourcePath);
+    mkdirSync(path.dirname(destination), {recursive: true});
+    copyFileSync(realSource, destination, constants.COPYFILE_EXCL);
+  }
 
   // <lang><zh-CN>镜像仅含显式资源的实际发行字节，源守卫拒绝链接/越根；目标位于本次新建镜像中。</zh-CN><en>The mirror holds actual distribution bytes only for explicit resources; source guards reject links/escapes, and destinations belong to this fresh mirror.</en></lang>
   for(const resource of resourceSources) {

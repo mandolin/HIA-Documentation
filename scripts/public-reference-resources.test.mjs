@@ -70,7 +70,21 @@ test('the source mirror grants only the two reviewed JSON files and rejects othe
   const runtime=fs.mkdtempSync(path.join(mainRoot,'dist/json-source-test-'));
   try {
     preparePublicReferenceSourceConfig(mainRoot,runtime,[...PUBLIC_REFERENCE_JSON_RESOURCE_PATHS]);
+    assert(fs.existsSync(path.join(runtime,'source-root/reference/samples/dotnet/Envelope.cs')));
     for(const source of PUBLIC_REFERENCE_JSON_RESOURCE_PATHS) assert(fs.readFileSync(path.join(mainRoot,source)).equals(fs.readFileSync(path.join(runtime,'source-root',source))));
+    assert(!fs.existsSync(path.join(runtime,'source-root/packages/plugin-sdk/src/index.ts')));
+  } finally {fs.rmSync(runtime,{recursive:true,force:true});}
+});
+
+test('a resource-only site mirrors exactly the two JSON sources with no sample source',()=>{
+  const mainRoot=fileURLToPath(new URL('../',import.meta.url));
+  const runtime=fs.mkdtempSync(path.join(mainRoot,'dist/resource-only-source-test-'));
+  try {
+    const configPath=preparePublicReferenceSourceConfig(mainRoot,runtime,[...PUBLIC_REFERENCE_JSON_RESOURCE_PATHS],false);
+    const files=fs.readdirSync(path.join(runtime,'source-root'),{recursive:true}).filter(name=>fs.statSync(path.join(runtime,'source-root',name)).isFile()).map(name=>name.replaceAll('\\','/')).sort();
+    assert.deepEqual(files,[...PUBLIC_REFERENCE_JSON_RESOURCE_PATHS].sort());
+    assert.equal(JSON.parse(fs.readFileSync(configPath,'utf8')).docs.source.maxLines,400);
+    assert(!fs.existsSync(path.join(runtime,'source-root/reference/samples/dotnet/Envelope.cs')));
     assert(!fs.existsSync(path.join(runtime,'source-root/packages/plugin-sdk/src/index.ts')));
   } finally {fs.rmSync(runtime,{recursive:true,force:true});}
 });

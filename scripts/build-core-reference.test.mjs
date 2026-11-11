@@ -9,7 +9,12 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertCoreReferenceOutput, inspectCoreReferenceSite } from "./build-core-reference.mjs";
+import { assertCoreReferenceOutput, inspectCoreReferenceSite, CORE_REFERENCE_RESOURCE_PACKAGES } from "./build-core-reference.mjs";
+
+test("core API resource selection is the reviewed plugin SDK package", () => {
+  assert.deepEqual(CORE_REFERENCE_RESOURCE_PACKAGES, ["@hia-doc/plugin-sdk"]);
+  assert(Object.isFrozen(CORE_REFERENCE_RESOURCE_PACKAGES));
+});
 
 test("core output stays within an owned dist child", () => {
   const owner = fileURLToPath(new URL("../", import.meta.url));

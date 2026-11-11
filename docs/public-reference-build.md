@@ -4,7 +4,11 @@ The public reference build assembles first-party HIA documentation artifacts fro
 
 ## Core package module APIs
 
-The independent [core API reference](https://mandolin.github.io/HIA-Documentation-API/) publishes module documentation from thirteen core packages. Its [deployment repository](https://github.com/mandolin/HIA-Documentation-API) pins an immutable release artifact and verifies its digest before deployment. Package resources, command entries and satellite tools have separate adoption inventories.
+The independent [core API reference](https://mandolin.github.io/HIA-Documentation-API/) publishes module documentation from thirteen core packages and the two plugin SDK JSON resources. Its [deployment repository](https://github.com/mandolin/HIA-Documentation-API) pins an immutable release artifact and verifies its digest before deployment. Further package resources, command entries and satellite tools have separate adoption inventories.
+
+中文。独立站显式采用 `@hia-doc/plugin-sdk/plain-data-initialization.schema.json` 和 `@hia-doc/plugin-sdk/artifact-derivation-evidence.schema.json`。JSONdoc保留526个原始值、59处词法引用、完整JSON快照与精确源码地图，正文语言为 `und`。两语言界面和无脚本条目均可阅读。来源镜像限于这两个已审阅的实际 `dist` 文件，预览窗口为400行，完整声明范围和原文快照单独保留。构建报告列出 `resourcePackages`、逐资源核验结果和实际来源策略。
+
+English. The site explicitly adopts `@hia-doc/plugin-sdk/plain-data-initialization.schema.json` and `@hia-doc/plugin-sdk/artifact-derivation-evidence.schema.json`. JSONdoc retains 526 original values, 59 lexical reference occurrences, full JSON snapshots and exact source maps, with content locale `und`. Both interface locales and no-script entries remain available. The source mirror contains only these two reviewed distribution files, using a 400-line preview window while preserving complete declaration ranges and original snapshots. The build report records `resourcePackages`, per-resource checks and the actual source policy.
 
 中文。独立核心 API 参考站由本仓的真实模块与通用 TypeScript 生产链生成，两语言目录保留完整项目索引、静态条目与原生地图。先构建主仓与相邻 `HIA/hia-tsdoc`，再从本仓运行 `pnpm reference:core:build`。输出默认在 `dist/core-api-reference/`，仅 `site/` 子目录可用于站点发布。相邻的 `build-report.json` 记录来源提交、包选择及逐文件摘要，根级 `package-api/` 保留构建核验副本。每文件上限 32 MiB、总量上限 100,000 文件及 1,000,000,000 字节。失败保留暂存证据，成功替换已有输出时保留前一版目录。源码正文仍需单独授权。
 

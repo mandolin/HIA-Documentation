@@ -2,6 +2,9 @@
 
 ## Unreleased — Independent core API reference
 
+- 独立API参考构建采用插件SDK两份公开JSON资源，复用JSONdoc逐值生成、原文快照、精确地图和来源页，并将资源范围写入构建报告。
+- The independent API reference adopts the two public plugin SDK JSON resources through JSONdoc, retaining per-value documentation, original snapshots, exact maps and source pages, with resource scope recorded in the build report.
+
 - 新增十三核心包模块的双语参考构建命令 `pnpm reference:core:build`，逐项核验公开声明与原生工件，发布目录位于输出的 `site/` 下。
 - Add `pnpm reference:core:build` for bilingual module references from thirteen core packages, verifying declarations and native artifacts and exposing only the output's `site/` directory for publication.
 - 官网代码文档入口和显式分站导航连接 `HIA-Documentation-API`，默认导航工厂调用继续解析原站内路径。

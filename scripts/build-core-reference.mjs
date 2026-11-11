@@ -10,6 +10,8 @@ import { randomUUID, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { preparePublicReferencePackageApis, checkPublicReferencePackageApis } from "./public-reference-packages.mjs";
+import { preparePublicReferenceResources, checkPublicReferenceResources } from "./public-reference-resources.mjs";
+import { preparePublicReferenceSourceConfig, preparePublicReferenceLocaleConfig } from "./public-reference-source.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
 import { assertDocumentationSiteNavigation } from "../packages/renderer-html/dist/index.js";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
@@ -19,6 +21,12 @@ import { apiReferenceBase } from "../site/src/lib/routes.mjs";
 const owner = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)));
 const dist = path.join(owner, "dist");
 const locales = ["en", "zh-CN"];
+
+/**
+ * @lang zh-CN 本站显式采用已公开审阅的插件SDK资源包，资源与模块范围独立记录。
+ * @lang en Explicitly select the reviewed plugin SDK resource package, recording resource scope independently of modules.
+ */
+export const CORE_REFERENCE_RESOURCE_PACKAGES = Object.freeze(["@hia-doc/plugin-sdk"]);
 
 /**
  * @lang zh-CN 检查路径是否在指定目录内。
@@ -120,7 +128,10 @@ export async function buildCoreReference(options = {}) {
   try {
     staging = fs.mkdtempSync(output + ".staging-");
     const inputs = await preparePublicReferencePackageApis({ packageNames: packages, workspaceRoot: workspace, mainRoot: owner, toolRoot: tool, outputRoot: staging, locales });
-    const manifest = { schemaVersion: "0.1.0-draft", project: { id: "project:hia-core-api-reference", name: "HIA Documentation System Core Package API", defaultLocale: "zh-CN", locales: ["zh-CN", "en"] }, inputs };
+    // <lang zh-CN>资源复用正常JSONdoc准备链，实际原文、地图与逐值声明沿同一项目聚合。</lang><lang en>Resources reuse normal JSONdoc preparation, aggregating original bytes, maps and per-value declarations into the same project.</lang>
+    const resourceResult = await preparePublicReferenceResources({ packageNames: CORE_REFERENCE_RESOURCE_PACKAGES, workspaceRoot: workspace, mainRoot: owner, outputRoot: staging, locales });
+    const sourceConfigPath = preparePublicReferenceSourceConfig(owner, path.join(staging, ".runtime"), resourceResult.sourcePaths, false);
+    const manifest = { schemaVersion: "0.1.0-draft", project: { id: "project:hia-core-api-reference", name: "HIA Documentation System Core Package API", defaultLocale: "zh-CN", locales: ["zh-CN", "en"] }, inputs: [...inputs, ...resourceResult.inputs] };
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", { flag: "wx" });
     ownsManifest = true;
     const navigation = createGeneratedSiteNavigation("/HIA-Documentation/", apiReferenceBase);
@@ -128,11 +139,10 @@ export async function buildCoreReference(options = {}) {
     const navigationPath = path.join(staging, ".runtime/site-navigation.json");
     fs.writeFileSync(navigationPath, JSON.stringify(navigation, null, 2) + "\n");
     for (const locale of locales) {
-      const configPath = path.join(staging, ".runtime", "config-" + locale + ".json");
-      const config = { schemaVersion: "0.1.0", docs: { renderer: { projectLayout: "split-site", informationArchitecture: { contentGrouping: "entry", loadingStrategy: "lazy", memberPlacement: "separate" }, uiLocale: locale }, theme: { name: "default", colors: { accent: "#0047AB" } } } };
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+      const configPath = preparePublicReferenceLocaleConfig(sourceConfigPath, locale);
       execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--out", path.join(staging, locale), "--locale", locale], { cwd: workspace, stdio: "inherit" });
       checkPublicReferencePackageApis({ packageApis: packages }, staging, locale);
+      checkPublicReferenceResources({ packageResources: CORE_REFERENCE_RESOURCE_PACKAGES }, staging, locale);
     }
     const site = path.join(staging, "site");
     fs.mkdirSync(site);
@@ -145,7 +155,19 @@ export async function buildCoreReference(options = {}) {
     const producerCommit = execFileSync("git", ["-C", tool, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     assert.deepEqual([sourceCommit, producerCommit], revisions, "Source revisions changed during the build.");
     for (const repository of [owner, tool]) execFileSync("git", ["-C", repository, "diff", "--exit-code", "HEAD", "--"], { stdio: "pipe" });
-    const report = { sourceRepository: "mandolin/HIA-Documentation", sourceCommit, producerRepository: "mandolin/hia-tsdoc", producerCommit, packages, ...checked };
+    const resources = JSON.parse(fs.readFileSync(path.join(staging, "package-resources/adoption.json"), "utf8")).rows;
+    const report = {
+      sourceRepository: "mandolin/HIA-Documentation",
+      sourceCommit,
+      producerRepository: "mandolin/hia-tsdoc",
+      producerCommit,
+      packages,
+      resourcePackages: CORE_REFERENCE_RESOURCE_PACKAGES,
+      resources,
+      sourcePolicy: { paths: resourceResult.sourcePaths, maxLines: 400, presentation: "fetch" },
+      ...checked
+    };
+    assertPublicText(JSON.stringify(report));
     fs.writeFileSync(path.join(staging, "build-report.json"), JSON.stringify(report, null, 2) + "\n");
     // <lang zh-CN>清单与运行配置留在构建报告外；只删除本轮拥有的暂存运行目录。</lang><lang en>Exclude runtime configuration from publication, removing only this run's owned runtime directory.</lang>
     assert(!fs.lstatSync(path.join(staging, ".runtime")).isSymbolicLink());
