@@ -21,11 +21,12 @@ import { createDocSourceMapIndex } from "../packages/source-linkage/dist/index.j
  * @lang en Explicitly generates independently audited resources and verifies complete values, provenance and snapshots per file, with content locale declared by the caller.
  * @param {string} workspaceRoot <lang><zh-CN>本项目工作区容器。</zh-CN><en>This project's workspace container.</en></lang>
  * @param {string} locale <lang><zh-CN>实际正文语言，未分类资源可显式声明und。</zh-CN><en>Actual content locale; unclassified resources may explicitly use und.</en></lang>
+ * @param {object} [options] <lang><zh-CN>packageNames传递精确包选择，省略生成原全量资源。</zh-CN><en>packageNames carries an exact package selection, defaulting to the original full resource set.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>生成报告、输出位置、实际SDK工件/来源顺序和独立审核输入；后续语义及页面验收单列。</zh-CN><en>Production report, output location, actual SDK artifacts/source order and independent audit inputs; subsequent semantics and page acceptance remain separate.</en></lang>
  */
-export async function buildRequiredJsonResources(workspaceRoot, locale) {
+export async function buildRequiredJsonResources(workspaceRoot, locale, options = {}) {
   const root = fileURLToPath(new URL("../", import.meta.url));
-  const { report: audit } = auditRequiredJsonResources(workspaceRoot);
+  const { report: audit } = auditRequiredJsonResources(workspaceRoot, options);
   const sources = [...new Set(audit.entries.map(entry => entry.source))];
   const output = fs.mkdtempSync(path.join(root, "dist/generated-json-resources-"));
   const result = await runDocumentationProducer(jsonDocumentationProducer, { workspaceRoot, outputDirectory: output, inputs: sources.map(source => ({ kind: "json-resource", path: source, locale })) });

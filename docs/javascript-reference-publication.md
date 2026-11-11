@@ -11,7 +11,7 @@ JavaScript文档工具包API与JSDoc配置派生证据由HIA正常生产链生�
 
 ## 准备与构建
 
-在包含`main-repo/`与`HIA/`的源容器中安装并构建主仓及JSDoc生产器。当前复用的完整卫星审核器读取必要包清单中的全部卫星，因此源容器需包含`hia-jsdoc`、`hia-htmdoc`、`hia-cssdoc`、`hia-dotnetdoc`、`jsdoc-plugin-hia-sys`与`jsdoc-theme-hia`六个实际仓库，Git origin应与各自公开身份对应。JSDoc及其官方插件/主题依赖需可解析。
+在包含`main-repo/`与`HIA/`的源容器中安装并构建主仓及JSDoc生产器。源容器需包含`hia-jsdoc`、`jsdoc-plugin-hia-sys`与`jsdoc-theme-hia`三个实际仓库，Git origin应与各自公开身份对应。JSDoc及其官方插件/主题依赖需可解析。
 
 在主仓执行。
 
@@ -20,7 +20,7 @@ pnpm run build
 node scripts/build-javascript-reference.mjs --workspace-root .. --out dist/javascript-reference-publication
 ```
 
-生产器从当前原声明重新提取JSDoc、核字段/签名/地图，使用现有静态成员、配置schema、冻结数组与描述符证明。每次构建重新生成输入，来源与归属通过审核。当前完整审核读取的其它领域内容留在构建中间结果，公开站点采用清单中的十个JavaScript包。
+生产器从当前原声明重新提取JSDoc、核字段/签名/地图，使用现有静态成员、配置schema、冻结数组与描述符证明。十包选择贯穿这些审核层，每次构建重新生成输入并核对来源与归属。
 
 完整源码下载位于每种语言的`source-files/`，摘要清单为`source-files/index.json`。页面片段沿原生primaryBlock和400行上限，完整声明范围按原地图另外核验。六份生成数据快照保留各自静态推导证据。
 

@@ -15,21 +15,26 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
  * @lang zh-CN 从当前主仓所属容器读取45必要包，输出独立审核快照。
  * @lang en Reads the 45 required packages from this main repository's container and writes an independent audit snapshot.
  * @param {string} workspaceRoot - 授权工作区容器。 Authorized workspace container.
+ * @param {object} [options] - packageNames为允许清单中的非空唯一子集，省略沿原45包。 packageNames is a nonempty unique allowlisted subset, defaulting to the original 45 packages.
  * @returns {object} 实际审核报告与主仓相对输出位置。 Actual audit report and main-relative output location.
  * @throws {Error} 清单、物理边界、JSON或写入位置无效。 Invalid manifest, physical boundary, JSON or output location.
  */
-export function auditRequiredJsonResources(workspaceRoot) {
+export function auditRequiredJsonResources(workspaceRoot, options = {}) {
   // <lang><zh-CN>主仓身份和owner目录固定为本工作区，显式清单限定全部包入口。</zh-CN><en>Main-repository identity and owner directories belong to this workspace, with package entries bounded by the explicit inventory.</en></lang>
   const mainRoot = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)));
-  const container = fs.realpathSync(workspaceRoot);
-  assert.equal(fs.realpathSync(path.join(container, "main-repo")), mainRoot);
   const scope = JSON.parse(readJsonResourceBytes(mainRoot, "reference/required-package-api.inputs.json"));
   assert.equal(scope.packages.length, 45);
   assert.equal(new Set(scope.packages.map(item => item.name)).size, 45);
+  // <lang><zh-CN>读取任何包前核显式子集，空/重复/未知选择均拒绝；省略保持原范围。</zh-CN><en>Validate explicit subsets before reading any package, rejecting empty, duplicate or unknown selections; omission retains the original scope.</en></lang>
+  const names = options.packageNames;
+  assert(names === undefined || Array.isArray(names) && names.length && new Set(names).size === names.length && names.every(name => scope.packages.some(item => item.name === name)), "Invalid JSON resource package selection.");
+  const container = fs.realpathSync(workspaceRoot);
+  assert.equal(fs.realpathSync(path.join(container, "main-repo")), mainRoot);
   const owners = new Set(["main-repo", "hia-jsdoc", "hia-htmdoc", "hia-cssdoc", "hia-dotnetdoc", "jsdoc-plugin-hia-sys", "jsdoc-theme-hia"]);
   const manifests = [];
   const entries = [];
   for (const item of scope.packages) {
+    if (names && !names.includes(item.name)) continue;
     assert(owners.has(item.owner));
     assert(typeof item.directory === "string" && /^(?:packages\/[a-z0-9-]+|apps\/cli)?$/.test(item.directory));
     const ownerRoot = item.owner === "main-repo" ? mainRoot : path.join(container, "HIA", item.owner);

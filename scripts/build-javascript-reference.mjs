@@ -54,8 +54,8 @@ export async function buildJavaScriptReference(options = {}) {
     const staging = fs.mkdtempSync(output + ".staging-");
     const runtime = path.join(staging, ".runtime");
     fs.mkdirSync(runtime);
-    // <lang><zh-CN>复用完整卫星审核的实际B/A、原生与JSONdoc链，当前固定审核器读取全部已登记卫星；公开输出仅取本清单十包。</zh-CN><en>Reuse the complete satellite audit's actual B/A, native and JSONdoc chains; the current fixed auditor reads all registered satellites while public output selects this registry's ten packages only.</en></lang>
-    const native = await auditSatelliteNativeApi(workspace, {includeMembers: true, schemaResources: true, arrayResources: true, descriptorResources: true, includeDeclaredArrays: true});
+    // <lang><zh-CN>十包选择贯穿原生、schema、数组和描述符的实际B/A/JSONdoc审核，归属与读取授权继续逐源核验。</zh-CN><en>Carry the ten-package selection through actual native, schema, array and descriptor B/A/JSONdoc audits, retaining per-source ownership and access checks.</en></lang>
+    const native = await auditSatelliteNativeApi(workspace, {packageNames: registry.packages, includeMembers: true, schemaResources: true, arrayResources: true, descriptorResources: true, includeDeclaredArrays: true});
     const nativeRoot = path.join(main, native.output);
     const grouped = groupJavaScriptPublicationDeclarations(inventory, native.report.declaredArrayMemberAudit);
     const inputs = {"javascript-api": [], "derivation-evidence": []};

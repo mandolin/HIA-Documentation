@@ -2,6 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {loadJavaScriptReferenceInputs, assertJavaScriptReferenceInputs, createJavaScriptReferenceNavigation, groupJavaScriptPublicationDeclarations} from "./javascript-reference-inputs.mjs";
+import {auditRequiredJsonResources} from "./audit-required-json-resources.mjs";
 
 test("confirmed JavaScript publication selects ten packages and three resources in two sites", () => {
   const value = loadJavaScriptReferenceInputs();
@@ -58,4 +59,10 @@ test("member declarations use their physical package while schema members retain
   assert.equal(native.groups.find(group => group.source.endsWith("config.mjs")).pack.name, "runner");
   proof.rows[0].originalDeclarations = [];
   assert.throws(() => groupJavaScriptPublicationDeclarations(inventory, proof));
+});
+
+test("JSON publication selectors reject empty, duplicate and unknown packages before source-container reads", () => {
+  for (const packageNames of [[], ["@hia-doc/jsdoc-runner", "@hia-doc/jsdoc-runner"], ["@unknown/private"]]) {
+    assert.throws(() => auditRequiredJsonResources("unreadable-source-container", {packageNames}), /Invalid JSON resource package selection/u);
+  }
 });

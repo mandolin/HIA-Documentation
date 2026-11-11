@@ -13,14 +13,15 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
  * @lang zh-CN 从必要包实际清单生产纯描述符，再按公开访问路径逐声明核数组与完整子树。
  * @lang en Produces pure descriptors from the actual required-package inventory, then checks each public array declaration and complete subtree.
  * @param {string} workspaceRoot <lang><zh-CN>包含固定owner的本工作区容器。</zh-CN><en>This workspace container holding fixed owners.</en></lang>
+ * @param {object} [options] <lang><zh-CN>packageNames选择已登记包，描述符依赖仍按选中实际runner限界。</zh-CN><en>packageNames selects registered packages; descriptor dependencies remain bounded by the selected actual runner.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>五描述符等实际数量、逐路径结果与独立输出目录。</zh-CN><en>Actual descriptor counts, per-path results and an isolated output directory.</en></lang>
  * @throws {Error} <lang><zh-CN>工作区或全局输入边界无效。</zh-CN><en>Invalid workspace or global input boundaries.</en></lang>
  */
-export async function auditDescriptorResources(workspaceRoot) {
+export async function auditDescriptorResources(workspaceRoot, options = {}) {
   const main=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
   const container=fs.realpathSync(workspaceRoot);
   assert.equal(fs.realpathSync(path.join(container,"main-repo")),main);
-  const inventory=auditRequiredPackages(container,{includeMembers:true});
+  const inventory=auditRequiredPackages(container,{packageNames:options.packageNames,includeMembers:true});
   const dist=path.join(main,"dist");
   fs.mkdirSync(dist,{recursive:true});
   assert.equal(fs.realpathSync(dist),dist);

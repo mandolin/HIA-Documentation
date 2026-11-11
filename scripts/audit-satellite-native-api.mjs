@@ -26,7 +26,7 @@ import {isDeepStrictEqual} from "node:util";
  * @lang zh-CN 在既有工件协议下逐来源核验原生声明，返回实际关联与缺口；不执行目标包。
  * @lang en Verify native declarations per source under existing artifact protocols, returning actual associations and gaps without executing target packages.
  * @param {string} workspaceRoot - 本主仓所属授权容器。 Authorized container owning this main repository.
- * @param {object} [options] - includeMembers核对嵌套成员，includeDeclaredArrays另增声明槽位、双语和精确地图审核层；均默认关闭。 includeMembers checks nested members and includeDeclaredArrays adds a separate declaration-slot, locale and exact-map layer; both default off.
+ * @param {object} [options] - packageNames显式选择已登记卫星包，省略核全部32包；includeMembers与includeDeclaredArrays分别开启成员/声明槽位审核。 packageNames selects registered satellite packages, defaulting to all 32; includeMembers and includeDeclaredArrays enable member/declaration-slot auditing.
  * @returns {Promise<object>} 关联报告与主仓相对输出路径，非完整覆盖/发行许可。 Association report and main-relative output, not full coverage/release permission.
  * @throws {Error} 文件边界、工件协议、核心字段或来源无效。 Invalid file boundary, artifact protocol, core fields or sources.
  */
@@ -46,7 +46,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   const {jsdocProducer}=await import(pathToFileURL(producerPath));
   const inventory=auditRequiredPackages(container,options);
   const packages=inventory.packages.filter(item=>item.owner!=="main-repo");
-  assert.equal(packages.length,32);
+  assert.equal(packages.length,options.packageNames ? inventory.packages.length : 32);
   const dist=path.join(mainRoot,"dist");
   fs.mkdirSync(dist,{recursive:true});
   assert.equal(fs.realpathSync(dist),dist,"Output root redirected.");
@@ -145,7 +145,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   // </zh-CN><en>Undocumented historical modules, missing signatures, type entries and final pages remain separately recorded; position association is not full content acceptance.</en></lang>
   const callableSignatureGaps=rows.filter(row=>row.status==="associated" && row.declarations.some(item=>item.isCallable&&!item.hasSignature)).map(row=>({package:row.package,module:row.module,name:row.name}));
   const callableBindings=rows.filter(row=>row.declarations.some(item=>item.isCallable)).length;
-  const report={purpose:"satellite-native-declaration-association",requiredPackages:32,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,sourceMap,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
+  const report={purpose:"satellite-native-declaration-association",requiredPackages:packages.length,runtimeBindings:rows.length,associatedBindings:rows.filter(row=>row.status==="associated").length,blockedBindings:rows.filter(row=>row.status==="blocked").length,callableBindings,callableSignatureGaps,rows,sources:[...documents.values()].map(({integration,document,sourceMap,...record})=>record),pureTypeDeclarationBindings:packages.flatMap(pack=>pack.modules.flatMap(module=>module.exports.filter(binding=>binding.declarationTypeOnly).map(binding=>({package:pack.name,module:module.path,name:binding.name})))),coverageComplete:false,releaseProof:false,pending:[...(rows.some(row=>row.status==="blocked") ? ["missing-original-declarations"] : []),...(callableSignatureGaps.length ? ["callable-signature-projection"] : []),"nested-public-member-content","type-only-api-content","source-comment-and-translation-completeness","resource-and-command-content","generated-page-acceptance"]};
   if(options.includeMembers) {
     // <lang><zh-CN>已关联但缺正文/调用签名仍不算成员内容通过；数组等未展开边界保持显式未核。</zh-CN><en>Association alone cannot pass members without prose/callable signatures; unexpanded boundaries such as arrays remain explicitly unverified.</en></lang>
     const gaps=memberRows.filter(row=>row.status!=="associated"||row.declarations.some(item=>!item.hasText)||row.expectedCallable&&row.declarations.some(item=>!item.hasSignature));
@@ -153,7 +153,7 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
     report.memberAudit={accessPaths:memberRows.length,associatedPaths:memberRows.filter(row=>row.status==="associated").length,contentGaps:gaps.length,callablePaths:callableRows.length,callableContentGaps:gaps.filter(row=>row.expectedCallable).length,rows:memberRows,boundaries:memberBoundaries,complete:gaps.length===0&&memberBoundaries.length===0};
     if(options.schemaResources) {
       // <lang><zh-CN>原生结果保留原状；实际数据审核另走固定生成链，不能用外部报告或成功标志替换。</zh-CN><en>Retain native results unchanged; actual data auditing uses a separate fixed production chain without external report/success-flag substitution.</en></lang>
-      const schema=await auditSchemaResourceAssociations(container);
+      const schema=await auditSchemaResourceAssociations(container,{packageNames:options.packageNames});
       report.schemaMemberAudit=adoptSchemaResourceMembers({memberRows,boundaries:memberBoundaries,schemaReport:schema.report,sourceRecords:[...documents.values()]});
       report.schemaMemberAudit.associationReportSha256=createHash("sha256").update(JSON.stringify(schema.report,null,2)+"\n").digest("hex");
       report.schemaMemberAudit.associationOutput=schema.output;
@@ -163,13 +163,13 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
   }
   if(options.arrayResources) {
     // <lang><zh-CN>显式采用本次实际B/A/JSONdoc结果，只消解根数组边界；原生与Schema结果分别保留。</zh-CN><en>Explicitly adopt current actual B/A/JSONdoc results to resolve root-array boundaries only, retaining native and Schema results separately.</en></lang>
-    const arrays=await auditFrozenArrayResources(container);
+    const arrays=await auditFrozenArrayResources(container,{packageNames:options.packageNames});
     report.arrayMemberAudit=adoptFrozenArrayResources(report.schemaMemberAudit??report.memberAudit,arrays.report);
     report.arrayMemberAudit.arrayAssociationOutput=arrays.output;
   }
   if(options.descriptorResources) {
     // <lang><zh-CN>仅在本次B/A/JSONdoc及原声明核验后采用描述符数组，旧审核层分别保留。</zh-CN><en>Adopt descriptor arrays only after current B/A/JSONdoc and original-declaration verification, retaining previous audit layers separately.</en></lang>
-    const descriptors=await auditDescriptorResources(container);
+    const descriptors=await auditDescriptorResources(container,{packageNames:options.packageNames});
     report.descriptorMemberAudit=adoptDescriptorResources(report.arrayMemberAudit??report.schemaMemberAudit??report.memberAudit,descriptors.report);
     report.descriptorMemberAudit.descriptorAssociationOutput=descriptors.output;
   }

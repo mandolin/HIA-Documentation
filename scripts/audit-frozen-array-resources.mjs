@@ -11,14 +11,15 @@ import {assertPublicRootOmission} from "./lib/core-package-api.mjs";
  * @lang zh-CN 按真实编译器根数组边界逐条生产及验证；独立失败保留固定原因，无宽松回退。
  * @lang en Produces and verifies each real compiler root-array boundary, retaining fixed failures without permissive fallback.
  * @param {string} workspaceRoot <lang><zh-CN>包含本主仓和固定卫星仓的授权容器。</zh-CN><en>Authorized container holding this main repository and fixed satellite owners.</en></lang>
+ * @param {object} [options] <lang><zh-CN>packageNames选择已登记包，省略沿原全量审核。</zh-CN><en>packageNames selects registered packages, defaulting to the original full audit.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>逐绑定结果及实际五文件/绑定的相对输出目录；完整产品验收独立。</zh-CN><en>Per-binding results and relative output directory with five actual files per binding; full product acceptance remains separate.</en></lang>
  * @throws {Error} <lang><zh-CN>容器、清单或输出边界不合法。</zh-CN><en>Invalid container, inventory or output boundary.</en></lang>
  */
-export async function auditFrozenArrayResources(workspaceRoot) {
+export async function auditFrozenArrayResources(workspaceRoot, options = {}) {
   const main=fs.realpathSync(fileURLToPath(new URL("../",import.meta.url)));
   const container=fs.realpathSync(workspaceRoot);
   assert.equal(fs.realpathSync(path.join(container,"main-repo")),main);
-  const inventory=auditRequiredPackages(container,{includeMembers:true});
+  const inventory=auditRequiredPackages(container,{packageNames:options.packageNames,includeMembers:true});
   const dist=path.join(main,"dist");
   fs.mkdirSync(dist,{recursive:true});
   assert.equal(fs.realpathSync(dist),dist);

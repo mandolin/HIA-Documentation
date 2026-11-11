@@ -21,14 +21,15 @@ import { matchSchemaMemberDeclarations } from "./lib/schema-resource-adoption.mj
  * @lang zh-CN 审核卫星运行时schema命名导出，类型声明分支单列；未知初始化过程继续失败。
  * @lang en Audits satellite runtime schema-named exports, listing type-declaration branches separately and retaining failures for unknown initialization processes.
  * @param {string} workspaceRoot <lang><zh-CN>本项目授权容器。</zh-CN><en>This project's authorized container.</en></lang>
+ * @param {object} [options] <lang><zh-CN>packageNames选择已登记包，省略仍核全部必要包。</zh-CN><en>packageNames selects registered packages, defaulting to all required packages.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>独立关联报告、输出路径及本次资源生产的精确artifacts/sourcePaths，可供后续构建复用；完整API/产品验收独立。</zh-CN><en>Independent association report, output paths and exact artifacts/sourcePaths from this resource production for downstream reuse; full API/product acceptance remains separate.</en></lang>
  */
-export async function auditSchemaResourceAssociations(workspaceRoot) {
+export async function auditSchemaResourceAssociations(workspaceRoot, options = {}) {
   const container = fs.realpathSync(workspaceRoot);
   const mainRoot = fileURLToPath(new URL("../", import.meta.url));
   assert.equal(path.join(container, "main-repo"), mainRoot.replace(/[\\/]$/, ""));
-  const inventory = auditRequiredPackages(container, { includeMembers: true });
-  const generated = await buildRequiredJsonResources(container, "und");
+  const inventory = auditRequiredPackages(container, { packageNames: options.packageNames, includeMembers: true });
+  const generated = await buildRequiredJsonResources(container, "und", options);
   const rows = [];
   const declarationBranches = [];
   for (const pack of inventory.packages.filter(pack => pack.owner !== "main-repo")) for (const module of pack.modules) for (const binding of module.exports.filter(binding => /JSON_SCHEMA/.test(binding.name))) {
