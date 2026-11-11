@@ -30,4 +30,11 @@ node scripts/build-javascript-reference.mjs --workspace-root .. --out dist/javas
 
 构建使用独占锁，来源变更或内容/预算检查失败会停止，并保留失败暂存与上次成功输出以便诊断。完成时重核主仓、包清单、入口及全部公开源摘要，再提交新的输出目录。发布前按报告逐文件核验归档和实际上传内容，固定源提交、清单摘要、压缩包及展开TAR摘要。
 
+发布仓的固定snapshot.json选择站点及来源身份，归档与报告校验由`prepare_javascript_reference.py`执行。校验器复用现有归档路径/摘要边界，并逐节点核原字段、原生工件、地图、公开绑定及完整源码。
+
+```powershell
+python scripts/prepare_javascript_reference.py snapshot.json reference.tar.gz build-report.json <new-output-directory>
+python -m unittest discover -s scripts -p test_javascript_reference_publication.py
+```
+
 现行发布守卫按每站1,000,000,000字节、100,000文件及单文件32MiB检查。新增内容、导航或系统大版本封版时重新测量实际发布目录。原生ID和地图范围沿各自契约读取，实际站点采用、界面与线上访问按工件分别验收。

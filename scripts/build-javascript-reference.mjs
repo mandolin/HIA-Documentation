@@ -140,6 +140,7 @@ export async function buildJavaScriptReference(options = {}) {
       mirror(source, bytes);
     }
 
+    const dataValues = new Map();
     for (const association of [native.report.arrayMemberAudit.arrayAssociationOutput, native.report.descriptorMemberAudit.descriptorAssociationOutput]) {
       const root = path.join(main, association);
       for (const record of read(path.join(root, "report.json")).rows.filter(record => record.owner === "hia-jsdoc")) {
@@ -147,9 +148,12 @@ export async function buildJavaScriptReference(options = {}) {
         for (const source of record.sources) assert.equal(hash(readJsonResourceBytes(workspace, "HIA/" + record.owner + "/" + source.path)), source.sha256);
         for (const file of record.files) assert.equal(hash(fs.readFileSync(path.join(root, file.path))), file.sha256);
         const key = hash(record.definitionModule + ":" + record.name);
+        const bytes = fs.readFileSync(path.join(root, record.files[0].path));
+        // <lang><zh-CN>同一原声明可经多个公开子入口暴露，复用同一数据文档前先核实际快照相同。</zh-CN><en>The same declaration can be exposed through multiple public subpaths; verify identical actual snapshots before sharing one data document.</en></lang>
+        if (dataValues.has(key)) { assert.equal(hash(bytes), dataValues.get(key), "Conflicting public data aliases."); continue; }
+        dataValues.set(key, hash(bytes));
         const base = "generated-data/" + key;
         const source = base + "/" + (record.name.endsWith("Descriptor") ? "descriptor.json" : "array.json");
-        const bytes = fs.readFileSync(path.join(root, record.files[0].path));
         fs.mkdirSync(path.join(runtime, base), {recursive: true});
         fs.writeFileSync(path.join(runtime, source), bytes);
         const result = await runDocumentationProducer(jsonDocumentationProducer, {workspaceRoot: runtime, outputDirectory: path.join(runtime, base, "jsondoc"), inputs: [{kind: "json-resource", path: source, locale: "und"}]});
@@ -183,11 +187,12 @@ export async function buildJavaScriptReference(options = {}) {
       const navigationPath = path.join(runtime, site.id + ".navigation.json");
       fs.writeFileSync(navigationPath, JSON.stringify(createJavaScriptReferenceNavigation(registry, site.id)));
       const manifestPath = path.join(runtime, site.id + ".project.json");
-      fs.writeFileSync(manifestPath, JSON.stringify({schemaVersion: "1.1.0", project: {id: "project:hia-" + site.id, name: "HIA Documentation System · " + site.titleByLocale.en, defaultLocale: "zh-CN", locales}, inputs: inputs[site.id]}));
       const selectedRows = site.id === "javascript-api" ? [...rows, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
       const selectedSources = fullSources.filter(source => site.id === "derivation-evidence" ? source.source.includes("/evidence/hia-jsdoc-config-") : !source.source.includes("/evidence/hia-jsdoc-config-"));
       for (const locale of locales) {
         const target = path.join(root, site.path, locale);
+        // <lang><zh-CN>两语标题使用各自完整名称，项目身份与输入范围一致。</zh-CN><en>Use each locale's complete title while retaining the same project identity and input scope.</en></lang>
+        fs.writeFileSync(manifestPath, JSON.stringify({schemaVersion: "1.1.0", project: {id: "project:hia-" + site.id, name: "HIA Documentation System · " + site.titleByLocale[locale], defaultLocale: "zh-CN", locales}, inputs: inputs[site.id]}));
         const configPath = path.join(runtime, site.id + "-" + locale + ".config.json");
         fs.writeFileSync(configPath, JSON.stringify({schemaVersion: "0.1.0", docs: {source: {presentation: "fetch", publicAssetPolicy: "explicit-public", localRoot: "source-root", maxLines: 400},
           theme: {colors: {accent: "#0047AB"}}, renderer: {uiLocale: locale, projectLayout: "split-site", informationArchitecture: {contentGrouping: "entry", loadingStrategy: "lazy", memberPlacement: "separate"}}}}));
@@ -226,7 +231,9 @@ export async function buildJavaScriptReference(options = {}) {
       const report = {sourceRepository: "mandolin/HIA-Documentation", sourceCommit, registrySha256, site,
         packages: inventory.packages.map(({name, version, repository, sourceHead}) => ({name, version, repository, sourceHead})),
         rows: site.id === "javascript-api" ? rows : [], resources: resources.filter(row => row.site === site.id), dataRows: site.id === "javascript-api" ? dataRows : [],
-        memberPaths: site.id === "javascript-api" ? grouped.members.length : 0, fullSources: selectedSources, entriesPerLocale: selectedRows.reduce((sum, row) => sum + row.symbols, 0), ...checked};
+        memberPaths: site.id === "javascript-api" ? grouped.members.length : 0,
+        bindingsPerLocale: site.id === "javascript-api" ? inventory.packages.reduce((sum, pack) => sum + pack.modules.reduce((count, module) => count + module.exports.length, 0), 0) : 0,
+        fullSources: selectedSources, entriesPerLocale: selectedRows.reduce((sum, row) => sum + row.symbols, 0), ...checked};
       fs.mkdirSync(path.join(staging, "reports"), {recursive: true});
       fs.writeFileSync(path.join(staging, "reports", site.id + ".json"), JSON.stringify(report, null, 2) + "\n");
       reports.push({id: site.id, repository: site.repository, files: checked.files, bytes: checked.bytes});
