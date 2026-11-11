@@ -4,6 +4,17 @@ The public reference build assembles first-party HIA documentation artifacts fro
 
 ## Core package module APIs
 
+The independent [core API reference](https://mandolin.github.io/HIA-Documentation-API/) publishes module documentation from thirteen core packages. Its [deployment repository](https://github.com/mandolin/HIA-Documentation-API) pins an immutable release artifact and verifies its digest before deployment. Package resources, command entries and satellite tools have separate adoption inventories.
+
+中文。独立核心 API 参考站由本仓的真实模块与通用 TypeScript 生产链生成，两语言目录保留完整项目索引、静态条目与原生地图。先构建主仓与相邻 `HIA/hia-tsdoc`，再从本仓运行 `pnpm reference:core:build`。输出默认在 `dist/core-api-reference/`，仅 `site/` 子目录可用于站点发布。相邻的 `build-report.json` 记录来源提交、包选择及逐文件摘要，根级 `package-api/` 保留构建核验副本。每文件上限 32 MiB、总量上限 100,000 文件及 1,000,000,000 字节。失败保留暂存证据，成功替换已有输出时保留前一版目录。源码正文仍需单独授权。
+
+English. Build this repository and the adjacent `HIA/hia-tsdoc` producer, then run `pnpm reference:core:build` from this repository. The default output is `dist/core-api-reference/`; publish its `site/` child. The adjacent `build-report.json` records source revisions, package selection and per-file hashes, while root-level `package-api/` contains build-verification copies. The builder checks declarations, fields, signatures, source metadata, native artifacts, privacy, and publication limits of 32 MiB per file, 100,000 files and 1,000,000,000 total file bytes. Failed staging directories retain diagnostic evidence. Replacing a successful output retains its predecessor. Source-text access requires separate authorization.
+
+```sh
+pnpm build
+pnpm reference:core:build
+```
+
 中文。清单的 `packageApis` 显式选择核心包，当前包含 `@hia-doc/plugin-sdk` 的三个模块入口及 `@hia-doc/jsondoc` 的根入口。构建从真实包入口独立审核公开绑定，采用通用 TypeScript 项目生产器的精确 0.4 工件，经既有项目输入汇入参考站。原单文件样本继续保留。上传前重新核对实际入口、四种工件、每个声明的字段/签名/来源、可读页面及地图文件。包的 JSON 资源和命令入口分别核验。
 
 English. The definition's `packageApis` explicitly selects core packages, currently the three module entry points of `@hia-doc/plugin-sdk` and the root entry point of `@hia-doc/jsondoc`. Builds independently inspect real package exports, generate exact 0.4 artifacts through the generic TypeScript project producer, and aggregate them through existing project inputs. The original single-file sample remains available. Pre-upload checks revalidate actual entries, all four artifacts, declaration fields/signatures/sources, readable pages, and map files. JSON resources and commands have separate acceptance criteria.

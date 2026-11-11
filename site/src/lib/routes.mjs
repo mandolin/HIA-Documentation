@@ -3,6 +3,20 @@
  * @lang en Explicit bilingual website routes; never infers release status or historical versions.
  */
 export const locales = ["zh-CN", "en"];
+/** @lang zh-CN 已确认的核心 API 参考项目路径。 @lang en Confirmed core API reference project path. */
+export const apiReferenceBase = "/HIA-Documentation-API/";
+
+/**
+ * @lang zh-CN 返回已声明语言的公开 API 参考入口。
+ * @lang en Return the public API reference entry for a declared locale.
+ * @param {string} locale - 明确语言。 Explicit locale.
+ * @returns {string} 固定同主机项目站入口。 Fixed project-site entry on the shared host.
+ * @throws {Error} 语言未声明。 Undeclared locale.
+ */
+export function apiReferenceHref(locale) {
+  if (!locales.includes(locale)) throw new Error("Unsupported API reference locale.");
+  return "https://mandolin.github.io" + apiReferenceBase + locale + "/";
+}
 /** @lang zh-CN 有实际正文的页面种类。 @lang en Page kinds backed by actual content. */
 export const kinds = ["home", "features", "docs", "start", "domains", "project-language", "theme-source", "deployment-versions", "reference", "development", "code-reference", "reading-support", "versions", "search"];
 

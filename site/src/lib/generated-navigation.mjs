@@ -10,9 +10,10 @@ import { currentDocumentation } from "./version-index.mjs";
  * @lang zh-CN 从官网同一事实源生成HIA导航草案；首版只有实际1.0.0预览及历史总入口。
  * @lang en Produces the HIA navigation draft from the website's shared facts, initially containing only the actual 1.0.0 preview and archive directory.
  * @param {string} [base="/HIA-Documentation/"] <lang><zh-CN>已确认的站点部署根。</zh-CN><en>Confirmed deployment root.</en></lang>
+ * @param {string} [codeBase=base] <lang><zh-CN>显式代码站路径，省略时保留原站内入口。</zh-CN><en>Explicit code-site path, retaining the original site-local entries when omitted.</en></lang>
  * @returns {import("../../../packages/renderer-html/src/site-navigation.js").DocumentationSiteNavigation} <lang><zh-CN>只含可公开标签与站内路径的数据，不携带来源授权。</zh-CN><en>Data containing only public labels and site-local paths, without source authority.</en></lang>
  */
-export function createGeneratedSiteNavigation(base = "/HIA-Documentation/") {
+export function createGeneratedSiteNavigation(base = "/HIA-Documentation/", codeBase = base) {
   /**
    * @lang zh-CN 从受控主题构造双语路径，不通过URL替换猜测对应关系。
    * @lang en Builds bilingual paths from controlled topics without guessing counterparts through URL replacement.
@@ -28,7 +29,7 @@ export function createGeneratedSiteNavigation(base = "/HIA-Documentation/") {
    */
   const text = topic => ({ "zh-CN": labels["zh-CN"][topic], en: labels.en[topic] });
   // <lang><zh-CN>保留已确认的两语言代码参考深链，独立于手册的代码文档导览页。</zh-CN><en>Retain the confirmed bilingual code-reference deep links independently of the manual code-documentation landing page.</en></lang>
-  const code = { "zh-CN": `${base}zh-CN/`, en: `${base}en/` };
+  const code = { "zh-CN": `${codeBase}zh-CN/`, en: `${codeBase}en/` };
   /**
    * @lang zh-CN 官网现有主导航顺序，限制在共用标签的已知主题中。
    * @lang en Existing primary website navigation order, restricted to known shared-label topics.
@@ -38,7 +39,7 @@ export function createGeneratedSiteNavigation(base = "/HIA-Documentation/") {
   return {
     contract: "documentation-site-navigation",
     contractVersion: "0.1.0-draft",
-    deploymentBase: base,
+    deploymentBase: codeBase === base ? base : "/",
     brand: {
       title: "HIA-Documentation-Sys",
       captionByLocale: { "zh-CN": "面向人与人工智能的文档体系", en: "Documentation for people and AI" },

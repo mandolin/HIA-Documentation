@@ -19,6 +19,8 @@ API覆盖必须按包的公开导出清单和实际生成符号逐项对应。�
 
 ## 生成参考入口
 
+- [HIA 十三核心包 API · 中文](https://mandolin.github.io/HIA-Documentation-API/zh-CN/) · [English](https://mandolin.github.io/HIA-Documentation-API/en/)：独立站提供十三核心包的模块参考。资源、命令与卫星工具包按各自清单继续接入。
+
 - [HIA统一生成参考 · 中文](../../../zh-CN/)：现有公开工件，包含样本与工具参考，不代表所有必要包均已覆盖。
 - [HIA统一生成参考 · English](../../../en/)：保留输入中的实际字段语言。
 - [BP/bp-docs-js-cookie · 接口Portal](https://mandolin.github.io/bp-docs-js-cookie/)：首个JavaScript演示项目，独立于产品官网。

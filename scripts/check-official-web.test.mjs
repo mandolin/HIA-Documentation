@@ -5,7 +5,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { assertPublicText } from "./check-official-web.mjs";
-import { href, route } from "../site/src/lib/routes.mjs";
+import { href, route, apiReferenceHref, apiReferenceBase } from "../site/src/lib/routes.mjs";
+import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
+
+test("official API entry and shared navigation use the confirmed sibling paths", () => {
+  assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
+  assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");
+  assert.throws(() => apiReferenceHref("../private"));
+  const navigation = createGeneratedSiteNavigation("/HIA-Documentation/", apiReferenceBase);
+  assert.equal(navigation.deploymentBase, "/");
+  assert.equal(navigation.brand.homeByLocale["zh-CN"], "/HIA-Documentation/");
+  assert.equal(navigation.localeTargets.en, "/HIA-Documentation-API/en/");
+  assert.equal(createGeneratedSiteNavigation().localeTargets.en, "/HIA-Documentation/en/");
+});
 
 test("Public brand prose remains allowed", () => {
   assert.doesNotThrow(() => assertPublicText("HIA-Documentation-Sys · Documentation for people and AI."));

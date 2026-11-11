@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Independent core API reference
+
+- 新增十三核心包模块的双语参考构建命令 `pnpm reference:core:build`，逐项核验公开声明与原生工件，发布目录位于输出的 `site/` 下。
+- Add `pnpm reference:core:build` for bilingual module references from thirteen core packages, verifying declarations and native artifacts and exposing only the output's `site/` directory for publication.
+- 官网代码文档入口和显式分站导航连接 `HIA-Documentation-API`，默认导航工厂调用继续解析原站内路径。
+- Website code-reference links and explicit sibling-site navigation target `HIA-Documentation-API`; default navigation-factory calls retain their site-local paths.
+
 ## Unreleased — Generated reference size
 
 - 完整导航的无脚本页面和独立源码页省略运行时语言绑定，保留译文、链接、可访问名称与静态目录。

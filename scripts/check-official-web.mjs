@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { locales, kinds, manualKinds, route, href } from "../site/src/lib/routes.mjs";
+import { locales, kinds, manualKinds, route, href, apiReferenceBase } from "../site/src/lib/routes.mjs";
 import { readSearchIndex } from "../site/src/lib/search.mjs";
 import { currentDocumentation } from "../site/src/lib/version-index.mjs";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
@@ -81,7 +81,7 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
     }
   }
   // <lang><zh-CN>生成代码页的导航工件必须来自同一官网事实源，缺失或漂移不能通过手册构建验收。</zh-CN><en>Generated-code navigation must match the same website facts; missing or drifted data cannot pass manual-site acceptance.</en></lang>
-  assert.deepEqual(JSON.parse(texts.get("documentation-site-navigation.json") ?? "null"), createGeneratedSiteNavigation(), "Generated navigation disagrees with website routes or documentation versions.");
+  assert.deepEqual(JSON.parse(texts.get("documentation-site-navigation.json") ?? "null"), createGeneratedSiteNavigation("/HIA-Documentation/", apiReferenceBase), "Generated navigation disagrees with website routes or documentation versions.");
   let links = 0;
   // <lang><zh-CN>这两个已确认入口由HIA生成；单独官网明示待装配，装配时必须读取真实参考产物后通过。</zh-CN><en>These two confirmed entries belong to HIA generation; standalone checks disclose pending integration and composition must verify actual reference artifacts.</en></lang>
   const generatedReferences = new Set();
