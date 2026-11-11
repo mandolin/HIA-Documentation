@@ -9,6 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {createHash} from "node:crypto";
 import { assertCoreReferenceOutput, inspectCoreReferenceSite, CORE_REFERENCE_RESOURCE_PACKAGES } from "./build-core-reference.mjs";
 
 test("core API resource selection is the reviewed plugin SDK package", () => {
@@ -78,4 +79,75 @@ test("explicit partition roots retain identical archive guards and reject unplan
   fs.mkdirSync(path.join(root,"schemas/unplanned"));
   assert.throws(()=>inspectCoreReferenceSite(root,roots),/Unexpected/);
   for(const invalid of [[],["../outside"],["en","en"]]) assert.throws(()=>inspectCoreReferenceSite(root,invalid));
+});
+
+test("JSON source-regex text is decoded once as JSON while every private key and value is rejected", t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-json-publication-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  const artifact = path.join(root, "en/native.json");
+  // <lang><zh-CN>JSON转义的正则反斜线属于公开代码文本，不能被拼成虚构UNC主机。</zh-CN><en>JSON-escaped regex backslashes are public code text and must not become a fictitious UNC host.</en></lang>
+  fs.writeFileSync(artifact, JSON.stringify({source: 'const attribute = /([a-z]+)\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\')/g;'}));
+  assert.equal(inspectCoreReferenceSite(root).files, 4);
+  for (const value of [
+    {nested: [{source: "C:\\Users\\private\\source.js"}]},
+    {source: "\\\\server\\private\\source.js"},
+    {source: "%66ile%3A%2F%2F%2Fprivate%2Fsource.js"},
+    {source: "\\u0043\\u003a\\u002fprivate"},
+    {source: "&sol;home&sol;private&sol;source.js"},
+    {"%43%3A%2Fprivate": "value"},
+    {source: "work-zone/ai/private"}
+  ]) {
+    fs.writeFileSync(artifact, JSON.stringify(value));
+    assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  }
+  // <lang><zh-CN>重复键的旧值仍在发布字节中，每次字符串出现均要检查。</zh-CN><en>Shadowed duplicate-key values remain in published bytes, so every string occurrence requires inspection.</en></lang>
+  fs.writeFileSync(artifact, '{"source":"C:/private/source.js","source":"safe.js"}');
+  assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  fs.writeFileSync(artifact, '{"private-canary":"do-not-log",');
+  assert.throws(() => inspectCoreReferenceSite(root), error => error.message === "Invalid public JSON artifact.");
+});
+
+test("presentation digests that resemble UNC paths require verified local asset bytes", t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-digest-publication-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  const profile = JSON.parse(fs.readFileSync(new URL("../fixtures/contract-history/documentation-presentation-profile.json", import.meta.url), "utf8"));
+  const bytes = Buffer.from("Public source sample 1676");
+  const digest = createHash("sha384").update(bytes).digest("base64");
+  assert(digest.startsWith("//") && digest.slice(2).includes("/"));
+  const asset = profile.source.assets[0];
+  Object.assign(asset, {relativeUrl: "./sources/fixture.txt", byteLength: bytes.length, digest: {algorithm: "sha384", value: digest}});
+  delete asset.lineCount;
+  fs.mkdirSync(path.join(root, "en/sources"));
+  const source = path.join(root, "en/sources/fixture.txt");
+  fs.writeFileSync(source, bytes);
+  fs.writeFileSync(path.join(root, "en/profile.json"), JSON.stringify(profile));
+  assert.equal(inspectCoreReferenceSite(root).files, 5);
+  const profilePath = path.join(root, "en/profile.json");
+  for (const variant of [
+    {...profile, contract: "unknown-profile"},
+    {...profile, contractVersion: "99.0.0"},
+    {...profile, unrelated: [{value: digest}]}
+  ]) {
+    fs.writeFileSync(profilePath, JSON.stringify(variant));
+    assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  }
+  fs.writeFileSync(profilePath, JSON.stringify(profile).replace('"value":', '"value":"//server/private", "value":'));
+  assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  fs.writeFileSync(profilePath, JSON.stringify(profile));
+  // <lang><zh-CN>相同字符串在普通字段中仍按文本检查，不能借摘要值扩大例外范围。</zh-CN><en>The same string in an ordinary field remains text, preventing digest values from widening the exception scope.</en></lang>
+  fs.writeFileSync(path.join(root, "en/unrelated.json"), JSON.stringify({value: digest}));
+  assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  fs.unlinkSync(path.join(root, "en/unrelated.json"));
+  fs.writeFileSync(source, "changed source");
+  assert.throws(() => inspectCoreReferenceSite(root), /asset|digest/u);
 });

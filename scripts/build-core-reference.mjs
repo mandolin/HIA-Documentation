@@ -13,6 +13,7 @@ import { preparePublicReferencePackageApis, checkPublicReferencePackageApis } fr
 import { preparePublicReferenceResources, checkPublicReferenceResources } from "./public-reference-resources.mjs";
 import { preparePublicReferenceSourceConfig, preparePublicReferenceLocaleConfig } from "./public-reference-source.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
+import { validateDocumentationPresentationProfile } from "../packages/core/dist/index.js";
 import { assertDocumentationSiteNavigation, PORTAL_PUBLIC_SOURCE_GITATTRIBUTES } from "../packages/renderer-html/dist/index.js";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
 import { apiReferenceBase } from "../site/src/lib/routes.mjs";
@@ -38,6 +39,64 @@ export const CORE_REFERENCE_RESOURCE_PACKAGES = Object.freeze(["@hia-doc/plugin-
 function inside(root, target) {
   const relative = path.relative(root, target);
   return relative === "" || relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative);
+}
+
+/**
+ * @lang zh-CN 遍历已验证JSON的每个字符串及结构路径，保留重复键出现，不递归展开输入。
+ * @lang en Walk every string and structural path in validated JSON, retaining duplicate occurrences without recursively expanding input.
+ * @param {string} text - 已通过JSON.parse的文本。 Text accepted by JSON.parse.
+ * @yields {{value:string,path:Array<string|number>,isKey:boolean}} 每次词法字符串。 Each lexical string occurrence.
+ */
+function* jsonStrings(text) {
+  // <lang><zh-CN>栈仅保存当前容器路径与键/数组槽位，原始值由词法顺序检查。</zh-CN><en>The stack retains only current container paths and key/array slots; lexical order preserves original values.</en></lang>
+  const stack = [];
+  for (const token of text.matchAll(/"(?:[^"\\]|\\[\s\S])*"|[{}\[\],:]/gu)) {
+    const spelling = token[0];
+    const parent = stack.at(-1);
+    const location = parent ? [...parent.path, parent.kind === "array" ? parent.index : parent.key] : [];
+    if (spelling === "{" || spelling === "[") {
+      stack.push({kind: spelling === "{" ? "object" : "array", path: location, key: undefined, index: 0, expectKey: true});
+    } else if (spelling === "}" || spelling === "]") {
+      stack.pop();
+    } else if (spelling === ",") {
+      if (parent.kind === "array") parent.index += 1;
+      else parent.expectKey = true;
+    } else if (spelling.startsWith('"')) {
+      const value = JSON.parse(spelling);
+      const isKey = parent?.kind === "object" && parent.expectKey;
+      if (isKey) { parent.key = value; parent.expectKey = false; }
+      yield {value, path: isKey ? [...parent.path, value] : location, isKey};
+    }
+  }
+}
+
+/**
+ * @lang zh-CN 仅为有效呈现契约内、与站内实际字节匹配的摘要槽位建立非文本证明。
+ * @lang en Establish non-text evidence only for digest slots in valid presentation contracts that match actual local site bytes.
+ * @param {unknown} value - 已解析JSON。 Parsed JSON.
+ * @param {string} file - JSON绝对路径。 Absolute JSON path.
+ * @param {string} root - 授权发布根。 Authorized publication root.
+ * @returns {Map<string,string>} 结构路径到已验证摘要。 Structural paths to verified digests.
+ * @throws {Error} 本地资产越界、非普通文件或摘要不符。 Escaping/nonregular local assets or mismatching digests.
+ */
+function verifiedPresentationDigests(value, file, root) {
+  const verified = new Map();
+  if (value?.contract !== "documentation-presentation-profile" || validateDocumentationPresentationProfile(value).length) return verified;
+  for (const [index, asset] of (value.source?.assets ?? []).entries()) {
+    if (!asset.relativeUrl || !asset.digest) continue;
+    // <lang><zh-CN>只读取本发布根中的普通本地资产，外部URL不获得摘要例外，也不发起网络请求。</zh-CN><en>Read regular local assets within this publication root only; external URLs receive no digest exception or network request.</en></lang>
+    const url = new URL(asset.relativeUrl, pathToFileURL(file));
+    if (url.protocol !== "file:") continue;
+    const source = fileURLToPath(url);
+    assert(inside(root, source) && !url.search && !url.hash && fs.realpathSync(source) === source, "Invalid presentation asset path.");
+    const state = fs.lstatSync(source);
+    assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2, "Invalid presentation asset file.");
+    const body = fs.readFileSync(source);
+    assert(asset.byteLength === undefined || asset.byteLength === body.length, "Invalid presentation asset byte length.");
+    assert.equal(createHash(asset.digest.algorithm).update(body).digest("base64"), asset.digest.value, "Invalid presentation asset digest.");
+    verified.set(JSON.stringify(["source", "assets", index, "digest", "value"]), asset.digest.value);
+  }
+  return verified;
 }
 
 /**
@@ -91,7 +150,21 @@ export function inspectCoreReferenceSite(root, localeRoots = locales) {
       const body = fs.readFileSync(file);
       if (sourceAttributes) assert.equal(body.toString("utf8"), PORTAL_PUBLIC_SOURCE_GITATTRIBUTES, "Invalid core reference source attributes.");
       assertPublicText(relative);
-      assertPublicText(body.toString("utf8"));
+      // <lang><zh-CN>JSON的词法字符串先按JSON语法解码，避免将代码正则的转义反斜线误作UNC路径；逐token检查保留重复键旧值的隐私检测。</zh-CN><en>Decode JSON lexical strings using JSON syntax before inspection, avoiding fictitious UNC paths from escaped code regexes; per-token inspection retains privacy checks for shadowed duplicate-key values.</en></lang>
+      const text = body.toString("utf8");
+      if (relative.toLowerCase().endsWith(".json")) {
+        let value;
+        try { value = JSON.parse(text); }
+        catch { throw new Error("Invalid public JSON artifact."); }
+        const digests = verifiedPresentationDigests(value, file, root);
+        for (const token of jsonStrings(text)) {
+          // <lang><zh-CN>相同字串的其它字段仍检查隐私；重复摘要旧值也必须与实际字节相符。</zh-CN><en>Other fields containing the same string remain privacy-checked; shadowed digest values must also match actual bytes.</en></lang>
+          if (!token.isKey && digests.get(JSON.stringify(token.path)) === token.value) continue;
+          assertPublicText(token.value);
+        }
+      } else {
+        assertPublicText(text);
+      }
       bytes += body.length;
       inventory.push({ path: relative, bytes: body.length, sha256: createHash("sha256").update(body).digest("hex") });
     }
