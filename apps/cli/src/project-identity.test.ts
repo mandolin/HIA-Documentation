@@ -24,6 +24,7 @@ function document(owner:string) {
   ]});
 }
 
+// <lang><zh-CN>本例连续执行两次完整CLI构建及文件复核，按现有单次CLI十五秒预算设置三十秒总时限，覆盖Windows冷启动与并发文件I/O。</zh-CN><en>This case performs two complete CLI builds and file checks; use a thirty-second total budget aligned with the existing fifteen-second single-CLI budget for Windows cold starts and concurrent file I/O.</en></lang>
 it("retains scoped duplicate native IDs with isolated members and stable opaque entry IDs", async()=>{
   const root=await mkdtemp(path.join(os.tmpdir(),"hia-project-scopes-"));
   const messages:string[]=[];
@@ -53,7 +54,7 @@ it("retains scoped duplicate native IDs with isolated members and stable opaque 
     }
     expect(results[0]).toEqual(results[1]);
   } finally {await rm(root,{recursive:true,force:true});}
-});
+}, 30_000);
 
 it.each(["1.0.0", "1.1.0"])("retains identical canonical declarations under %s", async (schemaVersion) => {
   const root = await mkdtemp(path.join(os.tmpdir(), "hia-identical-origin-"));
