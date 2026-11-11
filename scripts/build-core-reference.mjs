@@ -13,7 +13,7 @@ import { preparePublicReferencePackageApis, checkPublicReferencePackageApis } fr
 import { preparePublicReferenceResources, checkPublicReferenceResources } from "./public-reference-resources.mjs";
 import { preparePublicReferenceSourceConfig, preparePublicReferenceLocaleConfig } from "./public-reference-source.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
-import { assertDocumentationSiteNavigation } from "../packages/renderer-html/dist/index.js";
+import { assertDocumentationSiteNavigation, PORTAL_PUBLIC_SOURCE_GITATTRIBUTES } from "../packages/renderer-html/dist/index.js";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
 import { apiReferenceBase } from "../site/src/lib/routes.mjs";
 
@@ -74,13 +74,17 @@ export function inspectCoreReferenceSite(root) {
       const relative = path.posix.join(prefix, entry.name);
       const file = path.join(directory, entry.name);
       const state = fs.lstatSync(file);
-      assert(!state.isSymbolicLink() && !/[\\:%?#]/u.test(relative) && (!entry.name.startsWith(".") || relative === ".nojekyll"), "Unexpected core reference path.");
+      // <lang zh-CN>来源字节保护文件仅位于语言根，任意其他隐藏工程文件继续拒绝。</lang><lang en>Source-byte protection metadata belongs only at locale roots; other hidden development files remain rejected.</lang>
+      const sourceAttributes = locales.some(locale => relative === locale + "/.gitattributes");
+      assert(!state.isSymbolicLink() && !/[\\:%?#]/u.test(relative) && (!entry.name.startsWith(".") || relative === ".nojekyll" || sourceAttributes), "Unexpected core reference path.");
+      if (sourceAttributes) assert(state.isFile(), "Invalid core reference source attributes.");
       if (!prefix) assert(["en", "zh-CN", "index.html", ".nojekyll"].includes(entry.name), "Build files cannot enter the core reference site.");
       if (state.isDirectory()) { visit(file, relative); continue; }
       assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2, "Invalid core reference file size or type.");
       assert(inventory.length < 100000 && bytes + state.size <= 1_000_000_000, "Core reference site exceeds its publication budget.");
       // <lang zh-CN>逐文件读取保留背压，不把整个站点留在内存中。</lang><lang en>Read one file at a time without retaining the entire site in memory.</lang>
       const body = fs.readFileSync(file);
+      if (sourceAttributes) assert.equal(body.toString("utf8"), PORTAL_PUBLIC_SOURCE_GITATTRIBUTES, "Invalid core reference source attributes.");
       assertPublicText(relative);
       assertPublicText(body.toString("utf8"));
       bytes += body.length;

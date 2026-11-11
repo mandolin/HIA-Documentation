@@ -47,3 +47,22 @@ test("site inventory hashes ordinary public files and rejects incomplete or priv
   fs.unlinkSync(path.join(root, "zh-CN/project-index.json"));
   assert.throws(() => inspectCoreReferenceSite(root), /language index/);
 });
+
+test("source text attributes are accepted only at locale roots with the renderer's fixed contents", t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-api-attributes-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  const attributes = path.join(root, "en/.gitattributes");
+  fs.writeFileSync(attributes, "sources/*.txt -text\n");
+  assert.equal(inspectCoreReferenceSite(root).files, 4);
+  fs.writeFileSync(attributes, "* text\n");
+  assert.throws(() => inspectCoreReferenceSite(root), /source attributes/);
+  fs.unlinkSync(attributes);
+  fs.mkdirSync(path.join(root, "en/nested"));
+  fs.writeFileSync(path.join(root, "en/nested/.gitattributes"), "sources/*.txt -text\n");
+  assert.throws(() => inspectCoreReferenceSite(root), /Unexpected core reference path/);
+});
