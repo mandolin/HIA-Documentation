@@ -23,6 +23,26 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 
 此命令结构需要替换占位参数并使用已安装的兼容CLI。多输入聚合使用项目清单入口，详见下列权威参考。
 
+## 命令路径
+
+`@hia-doc/cli` 提供 `hia` 命令。当前源码文档对应协调中的 1.0.0 候选，安装版本可用 `npm list @hia-doc/cli --depth=0` 核对。安装方式、参数、路径基准、默认值、输出副作用及退出码见随包使用指南的对应章节。完整指南含中英文正文。[安装与版本选择](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#installation-routes)
+
+| 命令 | 用途 |
+| --- | --- |
+| [`hia docs build`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-build) | 构建单工件或聚合项目文档 |
+| [`hia docs theme-assets`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-theme-assets) | 写出共享主题资源 |
+| [`hia docs evidence`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-evidence) | 从项目文档生成证据摘要 |
+| [`hia docs acceptance`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-acceptance) | 核验目标项目验收证据 |
+| [`hia docs continuity`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-continuity) | 比较基线与当前连续性证据 |
+| [`hia docs adoption-kit`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-adoption-kit) | 生成负责人采用套件 |
+| [`hia docs business-flow-handoff`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-business-flow-handoff) | 生成业务流程文档交接 |
+| [`hia docs enterprise-workflow`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-enterprise-workflow) | 编排企业负责人采用与连续性报告 |
+| [`hia docs html-authoring-verify`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-html-authoring-verify) | 核验HTML编写交接与来源投影 |
+| [`hia docs coordinate-verify`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-coordinate-verify) | 核验跨地图坐标与源码字节证据 |
+| [`hia browser panel`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#browser-panel) | 生成来源关联的静态浏览器面板 |
+
+可在本站手册搜索中输入完整命令名称，找到本页目录，再进入对应权威章节。各项结果状态与退出码由对应命令说明定义。
+
 ## 查找规则与契约
 
 - 命令行：查看CLI README，区分单工件、JSDoc Integration和项目清单入口。

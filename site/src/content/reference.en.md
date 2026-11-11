@@ -23,6 +23,26 @@ hia docs build --input <artifact> --out <directory> --locale <locale>
 
 Replace the placeholders and use an installed compatible CLI. Multiple inputs use the project-manifest entry described in the authoritative references below.
 
+## Command paths
+
+`@hia-doc/cli` provides the `hia` command. These source documents describe the coordinated 1.0.0 candidate. Check your installed version with `npm list @hia-doc/cli --depth=0`. Each bundled usage section defines installation, parameters, path bases, defaults, output side effects and exit codes. The complete guide includes Chinese and English prose. [Installation and version selection](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#installation-routes)
+
+| Command | Purpose |
+| --- | --- |
+| [`hia docs build`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-build) | Build documentation from an artifact or aggregated project |
+| [`hia docs theme-assets`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-theme-assets) | Write shared theme assets |
+| [`hia docs evidence`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-evidence) | Generate evidence summaries from project documentation |
+| [`hia docs acceptance`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-acceptance) | Verify target-project acceptance evidence |
+| [`hia docs continuity`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-continuity) | Compare baseline and current continuity evidence |
+| [`hia docs adoption-kit`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-adoption-kit) | Generate an owner adoption kit |
+| [`hia docs business-flow-handoff`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-business-flow-handoff) | Generate a business-flow documentation handoff |
+| [`hia docs enterprise-workflow`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-enterprise-workflow) | Coordinate enterprise-owner adoption and continuity reports |
+| [`hia docs html-authoring-verify`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-html-authoring-verify) | Verify HTML authoring handoffs and source projections |
+| [`hia docs coordinate-verify`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#docs-coordinate-verify) | Verify cross-map coordinates and source-byte evidence |
+| [`hia browser panel`](https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#browser-panel) | Generate a source-linked static browser panel |
+
+Search these manuals for a complete command name to find this directory, then follow its authoritative section. Each command's usage defines its result states and exit codes.
+
 ## Find rules and contracts
 
 Consult the CLI README for input modes, configuration references for defaults and theme settings, and the manifest guide for aggregation. Omission, defaulting and explicit null are different semantics.

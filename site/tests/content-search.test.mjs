@@ -54,3 +54,23 @@ test("English workflows retain every shared Chinese configuration and command ex
     for (const block of zh.matchAll(/~~~[^\n]*\n([\s\S]*?)\n~~~/g)) assert(en.includes(block[1]), "English shared example is missing: " + topic);
   }
 });
+
+test("reference manuals link every actual HIA command to its bundled usage section", async () => {
+  // <lang><zh-CN>从真实分发函数取路径，新增命令必须同步权威章节与两语言入口。</zh-CN><en>Read real dispatch paths so new commands require authoritative sections and both locale entries.</en></lang>
+  const source = await readFile(new URL("../../apps/cli/src/index.ts", import.meta.url), "utf8");
+  const dispatch = source.slice(source.indexOf("export async function runCli("), source.indexOf("async function runThemeAssets("));
+  const commands = [...dispatch.matchAll(/normalizedArgv\[0\] === "([^"]+)" && normalizedArgv\[1\] === "([^"]+)"/g)].map(match => `${match[1]} ${match[2]}`);
+  assert.equal(commands.length, 11);
+  assert.equal(new Set(commands).size, commands.length);
+  // <lang><zh-CN>ASCII命令标题的GitHub锚点与随包文档逐项对应，不为默认值复制第二份定义。</zh-CN><en>Match ASCII GitHub heading anchors against bundled documentation without duplicating default definitions.</en></lang>
+  const usage = await readFile(new URL("../../apps/cli/USAGE.md", import.meta.url), "utf8");
+  for (const locale of ["zh-CN", "en"]) {
+    const manual = await readFile(new URL(`../src/content/reference.${locale}.md`, import.meta.url), "utf8");
+    for (const command of commands) {
+      const anchor = command.replaceAll(" ", "-");
+      assert(usage.split(/\r?\n/u).includes(`### ${command}`), `Missing bundled usage heading: ${command}`);
+      assert(manual.includes(`https://github.com/mandolin/HIA-Documentation/blob/main/apps/cli/USAGE.md#${anchor}`), `Missing ${locale} command link: ${command}`);
+      assert(manual.includes(`\`hia ${command}\``), `Missing searchable ${locale} command name: ${command}`);
+    }
+  }
+});

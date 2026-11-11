@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Command reference navigation
+
+- 双语参考手册增加全部十一条HIA命令的随包使用章节链接，手册正文检索可按完整命令名称定位目录，回归检查关联实际分发路径及权威标题。
+- Bilingual reference manuals link all eleven HIA command paths to their bundled usage sections. Manual body search finds the directory by complete command name, with regression checks against actual dispatch paths and authoritative headings.
+
 ## Unreleased — Independent core API reference
 
 - 独立API参考构建采用插件SDK两份公开JSON资源，复用JSONdoc逐值生成、原文快照、精确地图和来源页，并将资源范围写入构建报告。
