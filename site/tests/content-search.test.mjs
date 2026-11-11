@@ -74,3 +74,17 @@ test("reference manuals link every actual HIA command to its bundled usage secti
     }
   }
 });
+
+test("reference manuals expose every declared resource partition in its own locale", async () => {
+  // <lang><zh-CN>公开目录从同一分区清单核完整名称与目标，容量拆站时两语言入口须同步。</zh-CN><en>Verify full labels and destinations against the shared partition registry so capacity splits update both locale directories.</en></lang>
+  const registry = JSON.parse(await readFile(new URL("../../reference/resource-reference-partitions.json", import.meta.url), "utf8"));
+  for (const locale of ["zh-CN", "en"]) {
+    const manual = await readFile(new URL(`../src/content/reference.${locale}.md`, import.meta.url), "utf8");
+    for (const partition of registry.partitions) {
+      // <lang><zh-CN>站点基址归对应发布仓所有，显式语言目标保持当前分区。</zh-CN><en>The owning publication repository supplies the site base while explicit locale routes retain the current partition.</en></lang>
+      const site = registry.sites.find(item => item.id === partition.site);
+      const href = "https://mandolin.github.io" + site.base + partition.path + locale + "/";
+      assert(manual.includes(`[${partition.titleByLocale[locale]}](${href})`), `Missing ${locale} resource partition: ${partition.id}`);
+    }
+  }
+});

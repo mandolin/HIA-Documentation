@@ -43,6 +43,19 @@ Replace the placeholders and use an installed compatible CLI. Multiple inputs us
 
 Search these manuals for a complete command name to find this directory, then follow its authoritative section. Each command's usage defines its result states and exit codes.
 
+## Resource reference partitions
+
+Resource references use separate publication sites grouped by responsibility. Each partition has its own directory and search scope. Choose a partition by its full name, then inspect the export and exact contract version. Interfaces support Chinese and English, while original JSON and source ranges retain their actual input content.
+
+| Resource partition | Contents |
+| --- | --- |
+| [Core document, source and producer schemas](https://mandolin.github.io/HIA-Documentation-Resources-Core/schemas/core-and-source/en/) | Eleven public JSON exports for core documents, source maps, source evidence and producers |
+| [TypeScript documentation extraction and bridge schemas](https://mandolin.github.io/HIA-Documentation-Resources-Core/schemas/typescript-documentation/en/) | Eight public JSON exports for TypeScript documentation extraction and bridges |
+| [Documentation profiles](https://mandolin.github.io/HIA-Documentation-Resources-Applications/profiles/en/) | Fifteen public JSON exports from `@hia-doc/profiles` |
+| [Business flow, localization, presentation and quality schemas](https://mandolin.github.io/HIA-Documentation-Resources-Applications/schemas/business-localization-presentation-and-quality/en/) | Eleven public JSON exports for business workflows, localization, presentation and quality |
+
+Language and version entries retain the current partition. The Code documentation tab opens the core API directory. The plugin development toolkit's two JSON resources are published with that core API, and these four partitions cover another 45 resources. Check the system documentation version and each resource's declared contract version separately.
+
 ## Find rules and contracts
 
 Consult the CLI README for input modes, configuration references for defaults and theme settings, and the manifest guide for aggregation. Omission, defaulting and explicit null are different semantics.

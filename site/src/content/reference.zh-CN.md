@@ -43,6 +43,19 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 
 可在本站手册搜索中输入完整命令名称，找到本页目录，再进入对应权威章节。各项结果状态与退出码由对应命令说明定义。
 
+## 资源参考分区
+
+资源参考按内容职责分站发布，每个分区有独立的目录和检索范围。先按完整名称选择分区，再查具体导出与精确契约版本。界面提供中英文，JSON原文及其来源范围按实际输入保留。
+
+| 资源分区 | 内容 |
+| --- | --- |
+| [核心文档、来源与生产器模式](https://mandolin.github.io/HIA-Documentation-Resources-Core/schemas/core-and-source/zh-CN/) | 核心文档、源码映射、来源证据及生产器的11项公开JSON导出 |
+| [TypeScript文档提取及桥接模式](https://mandolin.github.io/HIA-Documentation-Resources-Core/schemas/typescript-documentation/zh-CN/) | TypeScript文档提取及桥接的8项公开JSON导出 |
+| [文档化配置规范](https://mandolin.github.io/HIA-Documentation-Resources-Applications/profiles/zh-CN/) | `@hia-doc/profiles`的15项公开JSON导出 |
+| [业务流程、语言、呈现与质量模式](https://mandolin.github.io/HIA-Documentation-Resources-Applications/schemas/business-localization-presentation-and-quality/zh-CN/) | 业务流程、语言、呈现与质量的11项公开JSON导出 |
+
+各分区的语言及版本入口保留当前分区，“代码文档”栏目连接核心API总入口。插件开发工具包的两项JSON资源随核心API发布，以上四分区另覆盖45项资源。系统版本与各资源内声明的契约版本分别核对。
+
 ## 查找规则与契约
 
 - 命令行：查看CLI README，区分单工件、JSDoc Integration和项目清单入口。

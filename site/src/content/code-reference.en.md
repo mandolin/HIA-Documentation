@@ -19,7 +19,7 @@ For provenance, check the revision, authority, digest and range evidence. Keep A
 
 ## Generated reference entries
 
-- [HIA thirteen-core-package API · English](https://mandolin.github.io/HIA-Documentation-API/en/) · [Chinese](https://mandolin.github.io/HIA-Documentation-API/zh-CN/): the independent site covers modules from thirteen core packages. Resources, commands, and satellite tools have separate adoption inventories.
+- [HIA thirteen-core-package API · English](https://mandolin.github.io/HIA-Documentation-API/en/) · [Chinese](https://mandolin.github.io/HIA-Documentation-API/zh-CN/) provides modules from thirteen core packages and two JSON resources from the plugin development toolkit. Another 45 resources are listed by full name in [Resource reference partitions](../reference/#resource-reference-partitions), covering core and source schemas, TypeScript documentation, documentation profiles and business workflows. The reference manual also lists command paths. Satellite tool coverage follows each tool's documented scope.
 
 - [HIA unified generated reference · English](../../../en/): existing public artifacts, including samples and tool references, without a claim of complete required-package coverage.
 - [HIA unified generated reference · Chinese](../../../zh-CN/): retains the actual field locales in its inputs.
