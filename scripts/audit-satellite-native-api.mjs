@@ -157,6 +157,8 @@ export async function auditSatelliteNativeApi(workspaceRoot, options = {}) {
       report.schemaMemberAudit=adoptSchemaResourceMembers({memberRows,boundaries:memberBoundaries,schemaReport:schema.report,sourceRecords:[...documents.values()]});
       report.schemaMemberAudit.associationReportSha256=createHash("sha256").update(JSON.stringify(schema.report,null,2)+"\n").digest("hex");
       report.schemaMemberAudit.associationOutput=schema.output;
+      // <lang><zh-CN>保留本次真实资源生产位置与精确工件清单，发布构建可复用当前调用而无需私有缓存。</zh-CN><en>Retain this invocation's actual resource output and exact artifact list so publication builds can reuse current production without private caches.</en></lang>
+      report.schemaMemberAudit.resourceProduction={output:schema.generatedOutput,artifacts:schema.artifacts,sourcePaths:schema.sourcePaths};
     }
   }
   if(options.arrayResources) {

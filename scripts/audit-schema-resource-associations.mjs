@@ -21,7 +21,7 @@ import { matchSchemaMemberDeclarations } from "./lib/schema-resource-adoption.mj
  * @lang zh-CN 审核卫星运行时schema命名导出，类型声明分支单列；未知初始化过程继续失败。
  * @lang en Audits satellite runtime schema-named exports, listing type-declaration branches separately and retaining failures for unknown initialization processes.
  * @param {string} workspaceRoot <lang><zh-CN>本项目授权容器。</zh-CN><en>This project's authorized container.</en></lang>
- * @returns {Promise<object>} <lang><zh-CN>独立关联报告及输出路径，未宣称完整API或产品验收。</zh-CN><en>Independent association report and output path, without claiming complete API or product acceptance.</en></lang>
+ * @returns {Promise<object>} <lang><zh-CN>独立关联报告、输出路径及本次资源生产的精确artifacts/sourcePaths，可供后续构建复用；完整API/产品验收独立。</zh-CN><en>Independent association report, output paths and exact artifacts/sourcePaths from this resource production for downstream reuse; full API/product acceptance remains separate.</en></lang>
  */
 export async function auditSchemaResourceAssociations(workspaceRoot) {
   const container = fs.realpathSync(workspaceRoot);
@@ -93,7 +93,7 @@ export async function auditSchemaResourceAssociations(workspaceRoot) {
   assertPublicRootOmission(report, container);
   const output = fs.mkdtempSync(path.join(mainRoot, "dist/schema-resource-association-"));
   fs.writeFileSync(path.join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
-  return { report, output: path.relative(mainRoot, output).replaceAll("\\", "/"), generatedOutput: generated.output };
+  return { report, output: path.relative(mainRoot, output).replaceAll("\\", "/"), generatedOutput: generated.output, artifacts: generated.artifacts, sourcePaths: generated.sourcePaths };
 }
 
 // <lang><zh-CN>严格命令保留未核绑定的非零退出；inspect仅允许采集部分进展。</zh-CN><en>The strict command retains nonzero exit for unverified bindings; inspect only permits collecting partial progress.</en></lang>

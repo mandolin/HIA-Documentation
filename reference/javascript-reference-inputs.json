@@ -1,0 +1,13 @@
+{
+  "description": "JavaScript文档工具包API和JSDoc配置派生证据的已确认发布清单。 Confirmed publication inputs for JavaScript documentation tools and JSDoc configuration derivation evidence.",
+  "packages": ["@hia-doc/jsdoc-doc-source-map", "@hia-doc/jsdoc-extra-plugin-registry", "@hia-doc/jsdoc-plugin-hia-bridge", "@hia-doc/jsdoc-preset", "@hia-doc/jsdoc-producer", "@hia-doc/jsdoc-runner", "@hia-doc/jsdoc-spec", "@hia-doc/jsdoc-theme-bridge", "@mandolin/jsdoc-plugin-hia-sys", "@mandolin/jsdoc-theme-hia"],
+  "sites": [
+    {"id": "javascript-api", "repository": "mandolin/HIA-Documentation-API-JavaScript", "base": "/HIA-Documentation-API-JavaScript/", "path": "", "titleByLocale": {"zh-CN": "JavaScript文档工具包API", "en": "JavaScript documentation tool package API"}},
+    {"id": "derivation-evidence", "repository": "mandolin/HIA-Documentation-Resources-JSDoc", "base": "/HIA-Documentation-Resources-JSDoc/", "path": "derivation-evidence/", "titleByLocale": {"zh-CN": "JSDoc配置派生证据", "en": "JSDoc configuration derivation evidence"}}
+  ],
+  "resources": [
+    {"package": "@hia-doc/jsdoc-runner", "subpath": "./schemas/hia-jsdoc-config-1.0.0.schema.json", "site": "javascript-api"},
+    {"package": "@hia-doc/jsdoc-runner", "subpath": "./schemas/hia-jsdoc-config-0.1.0-draft.schema.json", "site": "javascript-api"},
+    {"package": "@hia-doc/jsdoc-runner", "subpath": "./evidence/hia-jsdoc-config-1.0.0.derivation-evidence-0.1.0-draft.json", "site": "derivation-evidence"}
+  ]
+}
