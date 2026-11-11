@@ -120,6 +120,27 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(page).not.toContain('class="hia-site-source-mobile-directory" open');
   });
 
+  it("keeps localized static text and links without runtime language bindings", () => {
+    const input = project();
+    input.entries[0]!.source.preview.content = 'export const marker = "data-hia-project-content";';
+    const result = renderProjectHtmlDocument(input, { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const staticPages = result.files.filter(file => file.path.startsWith("pages/"));
+    expect(staticPages).toHaveLength(6);
+    for (const file of staticPages) {
+      expect(file.contents).not.toMatch(/data-hia-ui-(?:message|values|aria)=/u);
+      expect(file.contents).not.toContain("<script");
+      expect(file.contents).toContain('id="hia-site-main"');
+      expect(file.contents).toContain(file.path.startsWith("pages/zh-CN/") ? ">代码文档</span>" : ">Code reference</span>");
+    }
+    const source = result.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents;
+    expect(source).toContain("&quot;data-hia-project-content&quot;");
+    expect(source).toContain('href="#L18"');
+    expect(source).not.toContain("<script");
+    expect(source).not.toMatch(/data-hia-ui-(?:message|values|aria)=/u);
+    expect(result.files.find(file => file.path === "index.html")!.contents).toContain('data-hia-ui-message="site.brand.title"');
+    expect(result.files.find(file => file.path.startsWith("entries/"))!.contents).toContain("data-hia-ui-message=");
+  });
+
   it("preserves explicit host color tokens and build theme defaults in the adopted frame", () => {
     const result = renderProjectHtmlDocument(project(), { theme: { colors: { canvas: "#123456", surface: "#abcdef", text: "#010203", codeBackground: "#345678" } }, projectSite: { uiLocale: "en", informationArchitecture: {}, theme: { skinId: "portal.graphite", scheme: "dark" }, siteNavigation: navigation() } });
     const page = result.files.find(file => file.path === "index.html")!.contents;

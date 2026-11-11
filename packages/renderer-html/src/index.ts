@@ -2489,6 +2489,11 @@ interface RenderProjectPortalContext {
    * @lang en Evaluates actual navigation messages alone outside explicit IA, without upgrading the claim to a full Portal evaluation.
    */
   siteNavigationUiLocaleAdoption?: DocumentationPortalUiLocaleAdoption;
+  /**
+   * @lang zh-CN 静态导航页面已解析界面语言，只省略运行时绑定。
+   * @lang en Static navigation pages resolve their UI language and omit only runtime bindings.
+   */
+  runtimeUiMessages?: false;
   informationArchitecture?: DocumentationPortalInformationArchitectureContract;
   labels: DocumentationPortalLabels;
   sourceCommentProjection?: Required<RenderProjectSourceCommentProjectionOptions>;
@@ -3161,6 +3166,10 @@ function* createProjectSplitSiteFiles(
 
   // <lang><zh-CN>no-script 入口与逐 topic 页面保持独立，不把数千节点重新塞回应用壳。</zh-CN><en>The no-script index and per-topic pages stay separate so thousands of nodes are not embedded back into the application shell.</en></lang>
   const noScriptProjectInput = createProjectNoScriptProjectInput(projectInput);
+  // <lang><zh-CN>静态导航仍使用完整语言目录及可见译文，交互入口和可加载片段继续携带动态绑定。</zh-CN><en>Static navigation retains its full locale catalog and visible translations. Interactive entries and loadable fragments retain dynamic bindings.</en></lang>
+  const noScriptContext: RenderProjectPortalContext = portalContext.siteNavigation
+    ? { ...portalContext, runtimeUiMessages: false }
+    : portalContext;
   // <lang><zh-CN>按稳定 entry id 建立单次索引，避免大型项目为每页线性扫描全部节点。</zh-CN><en>Build a one-time stable-entry index so large projects do not scan every node for every page.</en></lang>
   const noScriptEntryById = new Map(noScriptProjectInput.entries.map((entry) => [entry.id, entry]));
   // <lang><zh-CN>本地化页面多一层目录，单次重定位全部条目也覆盖随父项呈现的成员来源。</zh-CN><en>Localized pages add one directory level; rebasing all entries once also covers sources of members rendered with their parent.</en></lang>
@@ -3171,14 +3180,14 @@ function* createProjectSplitSiteFiles(
   const localizedNoScriptEntryById = new Map(localizedNoScriptProjectInput.entries.map((entry) => [entry.id, entry]));
   files.push({
     path: "pages/index.html",
-    contents: renderProjectNoScriptIndexHtml(pageTitle, noScriptProjectInput, localeModel.selectedLocale, portalContext),
+    contents: renderProjectNoScriptIndexHtml(pageTitle, noScriptProjectInput, localeModel.selectedLocale, noScriptContext),
     contentType: "text/html; charset=utf-8",
     role: "entry"
   });
   // <lang><zh-CN>采用 W-P123 的 surface 为每个 UI locale 生成真实静态入口；legacy 默认路径仍保留。</zh-CN><en>A W-P123-adopted surface emits a real static entry for every UI locale while retaining the legacy default path.</en></lang>
   if (portalContext.uiLocaleAdoption) {
     for (const uiLocale of DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES) {
-      const localizedContext = withProjectUiLocale(portalContext, uiLocale);
+      const localizedContext = withProjectUiLocale(noScriptContext, uiLocale);
       files.push({
         path: `pages/${uiLocale}/index.html`,
         contents: renderProjectNoScriptIndexHtml(
@@ -3231,14 +3240,14 @@ function* createProjectSplitSiteFiles(
         noScriptEntry,
         noScriptProjectInput,
         localeModel,
-        portalContext
+        noScriptContext
       ),
       contentType: "text/html; charset=utf-8",
       role: "entry"
     });
     if (portalContext.uiLocaleAdoption) {
       for (const uiLocale of DOCUMENTATION_PORTAL_UI_CATALOG_LOCALES) {
-        const localizedContext = withProjectUiLocale(portalContext, uiLocale);
+        const localizedContext = withProjectUiLocale(noScriptContext, uiLocale);
         files.push({
           path: createProjectLocalizedNoScriptPagePath(entry.id, uiLocale),
           contents: renderProjectNoScriptEntryHtml(
@@ -3628,16 +3637,8 @@ function renderProjectUiMessage(
   if (!portalContext.uiLocaleAdoption) {
     return escapeHtml(fallback);
   }
-  const valueAttribute = Object.keys(values).length > 0
-    ? ` data-hia-ui-values="${escapeHtml(JSON.stringify(values))}"`
-    : "";
-  const text = resolveDocumentationPortalUiMessage(
-    portalContext.uiLocaleAdoption,
-    portalContext.uiLocale,
-    messageId,
-    values
-  );
-  return `<span data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}>${escapeHtml(text)}</span>`;
+  const { attributes, text } = renderProjectUiMarkedText(portalContext, messageId, values);
+  return `<span${attributes}>${text}</span>`;
 }
 
 /**
@@ -3683,11 +3684,12 @@ function renderProjectUiMarkedText(
   if (!portalContext.uiLocaleAdoption) {
     return { attributes: "", text: "" };
   }
-  const valueAttribute = Object.keys(values).length > 0
+  // <lang><zh-CN>无脚本页面保留标签结构和转义后的译文，省掉仅运行时消费的消息身份与参数。</zh-CN><en>Script-free pages keep their element structure and escaped translations while omitting runtime-only message identities and values.</en></lang>
+  const valueAttribute = portalContext.runtimeUiMessages !== false && Object.keys(values).length > 0
     ? ` data-hia-ui-values="${escapeHtml(JSON.stringify(values))}"`
     : "";
   return {
-    attributes: ` data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}`,
+    attributes: portalContext.runtimeUiMessages === false ? "" : ` data-hia-ui-message="${escapeHtml(messageId)}"${valueAttribute}`,
     text: escapeHtml(resolveDocumentationPortalUiMessage(
       portalContext.uiLocaleAdoption,
       portalContext.uiLocale,
@@ -3840,7 +3842,7 @@ function renderProjectNoScriptIndexHtml(
     alternateLinks ? `<p>${alternateLinks}</p>` : "",
     `<p>${renderProjectUiMessage(portalContext, "portal.theme.skinlabel", {}, "Skin")}：${renderProjectUiMessage(portalContext, skinMessageId, {}, getPortalThemeSkinLabel(portalContext.theme.skinId))} · ${renderProjectUiMessage(portalContext, "portal.theme.schemelabel", {}, "Scheme")}：${renderProjectUiMessage(portalContext, schemeMessageId, {}, getPortalThemeSchemeLabel(portalContext.theme.scheme))}</p>`,
     `</aside><main class="hia-main hia-project-main"><h2>${renderProjectUiMessage(portalContext, "portal.noscript.pagesheading", {}, "Documentation pages / 文档页面")}</h2>`,
-    `<nav aria-label="${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.noscript.pagesaccessible", {}, "Documentation pages"))}"${portalContext.uiLocaleAdoption ? " data-hia-ui-aria=\"portal.noscript.pagesaccessible\"" : ""}><ul>${links}</ul></nav>`,
+    `<nav aria-label="${escapeHtml(resolveProjectUiPlainText(portalContext, "portal.noscript.pagesaccessible", {}, "Documentation pages"))}"${portalContext.uiLocaleAdoption && portalContext.runtimeUiMessages !== false ? " data-hia-ui-aria=\"portal.noscript.pagesaccessible\"" : ""}><ul>${links}</ul></nav>`,
     "</main></div></body></html>"
   ].join("");
 }

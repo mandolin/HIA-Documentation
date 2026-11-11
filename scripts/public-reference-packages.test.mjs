@@ -12,9 +12,9 @@ import {fileURLToPath} from 'node:url';
 import {auditRequiredPackages} from './audit-required-package-api.mjs';
 import {assertPackageApiEntries,copyPackageArtifact} from './public-reference-packages.mjs';
 
-test('the public reference explicitly adopts SDK and JSONdoc without replacing its legacy sample',()=>{
+test('the public reference explicitly adopts SDK, JSONdoc and the JSDoc parser without replacing its legacy sample',()=>{
   const definition=JSON.parse(fs.readFileSync(new URL('../reference/public-reference-build.definition.json',import.meta.url),'utf8'));
-  assert.deepEqual(definition.packageApis,['@hia-doc/plugin-sdk','@hia-doc/jsondoc']);
+  assert.deepEqual(definition.packageApis,['@hia-doc/plugin-sdk','@hia-doc/jsondoc','@hia-doc/parser-jsdoc']);
   assert.equal(definition.producers.find(item=>item.id==='main-repo-plugin-sdk-tsdoc').inputs[0].kind,'typescript-entry');
 });
 

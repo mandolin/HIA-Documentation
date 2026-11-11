@@ -105,16 +105,16 @@ export const SITE_READING_MESSAGES = {
  * @param contents - 本次生成的完整HTML。 Complete HTML from this generation.
  * @param file - owner生成的相对输出路径。 Owner-generated relative output path.
  * @param locale - 已确认的界面语言，不改变正文语言。 Confirmed UI locale, independent of prose locale.
+ * @param interactive - 生成器已确认此页承载运行时交互。 The generator identified this page as the interactive runtime host.
  * @param entries - 同次渲染公开条目，默认空上下文。 Public entries from the same render, defaulting to no context.
  * @param customTokens - 主题owner已验证的显式颜色键，默认无覆写。 Explicit color keys validated by the theme owner, with no overrides by default.
  * @returns 带阅读框架的HTML，不执行脚本或文件访问。 Reading-framed HTML, without script execution or file access.
  */
-export function renderSiteReading(contents: string, file: string, locale: DocumentationPortalUiLocale, entries: SiteReadingEntry[] = [], customTokens: readonly string[] = []): string {
+export function renderSiteReading(contents: string, file: string, locale: DocumentationPortalUiLocale, interactive: boolean, entries: SiteReadingEntry[] = [], customTokens: readonly string[] = []): string {
   // <lang><zh-CN>路径深度只来自生成器文件名，消息进入HTML前统一转义。</zh-CN><en>Depth comes only from generated file names; all messages are escaped before entering HTML.</en></lang>
   const prefix = "../".repeat(file.split("/").length - 1);
-  const text = (id: keyof typeof SITE_READING_MESSAGES) => `<span data-hia-ui-message="${id}">${escape(SITE_READING_MESSAGES[id][locale === "en" ? 1 : 0])}</span>`;
+  const text = (id: keyof typeof SITE_READING_MESSAGES) => `<span${interactive ? ` data-hia-ui-message="${id}"` : ""}>${escape(SITE_READING_MESSAGES[id][locale === "en" ? 1 : 0])}</span>`;
   const source = file.startsWith("sources/");
-  const interactive = contents.includes("data-hia-project-content");
   // <lang><zh-CN>交互替换区域只包正文，移动目录和main地标留在外层，切换条目时不被innerHTML移除。</zh-CN><en>Keep only prose inside the replaceable region, leaving the mobile outline and main landmark outside entry innerHTML replacements.</en></lang>
   if (interactive) contents = contents.replace(/<main\b([^>]*?)\sdata-hia-project-content([^>]*>)([\s\S]*?)<\/main>/u, '<main$1$2<div data-hia-project-content>$3</div></main>');
   // <lang><zh-CN>仅连接主题owner已经校验的语义变量，不把调用者颜色字符串重新拼入CSS。</zh-CN><en>Connect only semantic variables already validated by the theme owner, never interpolating caller color strings into CSS again.</en></lang>
@@ -386,7 +386,7 @@ export const SITE_READING_STYLE = `
 .hia-site-directory>summary{display:none}.hia-site-directory h1{font-size:.9rem}.hia-site-directory .hia-theme-switch{display:none}
 [data-hia-site-navigation] .hia-main{padding:7px 0;min-width:0;max-width:none;margin:0;border:0;border-radius:0;background:transparent}
 [data-hia-site-navigation] .hia-project-entry{border:0;border-radius:0;background:transparent;padding:0;margin:0}
-[data-hia-site-navigation] .hia-project-topic-header :is(h1,h2){font:700 2.35rem/1.25 Consolas,monospace;letter-spacing:-.045em;overflow-wrap:break-word;margin:16px 0 24px}
+[data-hia-site-navigation] .hia-project-topic-header :is(h1,h2){font:700 2.35rem/1.25 Consolas,monospace;letter-spacing:-.045em;min-width:0;overflow-wrap:break-word;margin:16px 0 24px}
 .hia-site-project-name{font-size:.9rem;font-weight:700}.hia-site-api-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
 .hia-site-breadcrumbs{font-size:.75rem;color:var(--hia-muted);margin:0 0 28px;overflow-wrap:break-word}.hia-site-eyebrow{font-size:.76rem;letter-spacing:.13em;color:var(--hia-muted);font-weight:750;text-transform:uppercase;margin:0 0 20px}
 [data-hia-site-navigation] .hia-kind{font-size:.75rem;border-radius:20px;border-color:var(--hia-border);padding:4px 10px;margin:0 6px 18px 0}

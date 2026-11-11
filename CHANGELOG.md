@@ -2,8 +2,17 @@
 
 ## Unreleased — Generated reference size
 
+- 完整导航的无脚本页面和独立源码页省略运行时语言绑定，保留译文、链接、可访问名称与静态目录。
+- Full-navigation no-script pages and standalone source viewers omit runtime language bindings while retaining translations, links, accessible names, and static navigation.
 - 独立源码页复用同页已有行样式，省去逐行重复属性。运行索引、导航/搜索/关系数据及新生成呈现 profile 采用紧凑 JSON，保留原数据、正文空白、行号和路径。
 - Standalone source pages reuse existing page-level line styles. Runtime indexes, navigation/search/relation data and newly generated presentation profiles use compact JSON while preserving data, prose whitespace, line numbers and paths.
+
+## Unreleased — JSDoc parser reference
+
+- 公开参考通过通用 TypeScript 生产链接入 `@hia-doc/parser-jsdoc` 的根入口，保留实际公开绑定、声明、双语字段和原生源码地图。
+- Add the `@hia-doc/parser-jsdoc` root entry to the public reference through the generic TypeScript producer, retaining actual public bindings, declarations, bilingual fields, and the native source map.
+- 完整导航的接口标题按内容栏宽度换行，长函数名可以完整阅读。
+- API headings wrap within the content column in the full-navigation layout so long function names remain readable.
 
 ## Unreleased — JSONdoc module reference adoption
 

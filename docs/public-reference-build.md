@@ -109,10 +109,14 @@ node scripts/check-public-reference-build.mjs --out dist/official-reference
 pnpm run reference:portal:build
 node scripts/build-reference-pages.mjs --reference dist/official-reference --out dist/official-reference-pages
 node scripts/check-reference-pages.mjs --out dist/official-reference-pages
-node scripts/compose-official-web.mjs --website dist/official-web-preview --reference dist/official-reference-pages --out dist/official-site-preview
-node scripts/check-official-site.mjs --out dist/official-site-preview
+node scripts/compose-official-web.mjs --website dist/official-web-preview --reference dist/official-reference-pages --legacy-mode sibling --out dist/official-site-preview
+node scripts/check-official-site.mjs --out dist/official-site-preview --legacy dist/official-reference-pages
 ```
 
 中文。独立官网检查明确列出由HIA提供的两个参考入口依赖，装配检查必须核实际生成文件。手册使用同站参考路径；旧参考链接保留在“生成工件与兼容入口”原生折叠区，与实际文档版本菜单分别呈现。完整装配继续校验原参考深链、兼容副本、隐私和资源预算。
 
 English. Standalone website checks explicitly list the two reference-entry dependencies supplied by HIA, and composition must verify actual generated files. Manuals use site-local reference paths. Legacy reference links remain in a native “Generated artifacts and compatibility” disclosure, distinct from the actual documentation-version menu. Composition continues checking reference deep links, compatibility copies, privacy, and resource budgets.
+
+中文。采用完整导航时，无脚本页和独立源码页直接写入已解析的界面文案，只在交互页与可加载正文片段写入运行时语言绑定。页面路径、来源锚点、可访问名称和本地化入口继续由生成器写入。分站装配的 `--legacy` 输入须与待发布兼容站快照核同。
+
+English. With full navigation, script-free pages and standalone source viewers emit the resolved interface text. Interactive pages and loadable content fragments carry the runtime language bindings. The renderer emits the page routes, source anchors, accessible names, and localized links. Before publishing a split composition, verify `--legacy` against the selected compatibility snapshot.
