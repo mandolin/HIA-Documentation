@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/site/contracts/site-version-index-2.0.0.schema.json",
+  "title": "HIA官网与文档版本索引 / HIA website and documentation version index",
+  "description": "新站点索引，不升级或重写旧参考索引。New site index, without upgrading or rewriting legacy reference indexes. 大版本唯一性、顺序与版本路径一致性另由语义读取器校验。The semantic reader also checks unique older majors and matching version paths.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "contract",
+    "contractVersion",
+    "basePath",
+    "defaultLocale",
+    "website",
+    "documentation",
+    "legacyReference"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://mandolin.github.io/HIA-Documentation/site/contracts/site-version-index-2.0.0.schema.json"
+    },
+    "contract": {
+      "const": "hia-site-version-index"
+    },
+    "contractVersion": {
+      "const": "2.0.0"
+    },
+    "basePath": {
+      "const": "/HIA-Documentation/"
+    },
+    "defaultLocale": {
+      "const": "zh-CN"
+    },
+    "website": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "locales"
+      ],
+      "description": "官网首页与显式语言入口。Product home and explicit language entries.",
+      "properties": {
+        "root": {
+          "const": ""
+        },
+        "locales": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "zh-CN",
+            "en"
+          ],
+          "properties": {
+            "zh-CN": {
+              "const": ""
+            },
+            "en": {
+              "const": "site/en/"
+            }
+          }
+        }
+      }
+    },
+    "documentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy",
+        "current",
+        "archives"
+      ],
+      "description": "最新稳定文档或明确预览，以及旧大版本各唯一末版。Latest stable documentation or explicit preview, plus one final edition per older major.",
+      "properties": {
+        "strategy": {
+          "const": "latest-and-final-per-major"
+        },
+        "current": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "status",
+            "locales"
+          ],
+          "properties": {
+            "version": {
+              "$ref": "#/$defs/version"
+            },
+            "status": {
+              "enum": [
+                "preview",
+                "stable"
+              ]
+            },
+            "locales": {
+              "$ref": "#/$defs/currentLocales"
+            }
+          }
+        },
+        "archives": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "version",
+              "status",
+              "locales"
+            ],
+            "properties": {
+              "version": {
+                "$ref": "#/$defs/version"
+              },
+              "status": {
+                "const": "archived"
+              },
+              "locales": {
+                "$ref": "#/$defs/archiveLocales"
+              }
+            }
+          }
+        }
+      }
+    },
+    "legacyReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root",
+        "index",
+        "contract",
+        "contractVersion"
+      ],
+      "description": "保持旧语义的独立参考命名空间。Independent reference namespace retaining legacy semantics.",
+      "properties": {
+        "root": {
+          "const": "/HIA-Documentation-Legacy/"
+        },
+        "index": {
+          "const": "/HIA-Documentation-Legacy/versions.json"
+        },
+        "contract": {
+          "const": "hia-reference-version-index"
+        },
+        "contractVersion": {
+          "const": "0.1.0-draft"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "maxLength": 64
+    },
+    "currentLocales": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "zh-CN": {
+          "const": "docs/zh-CN/"
+        },
+        "en": {
+          "const": "docs/en/"
+        }
+      },
+      "required": [
+        "zh-CN",
+        "en"
+      ]
+    },
+    "archiveLocales": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "zh-CN": {
+          "type": "string",
+          "pattern": "^docs/archive/v(0|[1-9][0-9]*)/zh-CN/$"
+        },
+        "en": {
+          "type": "string",
+          "pattern": "^docs/archive/v(0|[1-9][0-9]*)/en/$"
+        }
+      }
+    }
+  }
+}

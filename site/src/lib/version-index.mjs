@@ -1,6 +1,6 @@
 /**
- * @lang zh-CN 站点版本索引1.0.0的构造、精确读取与语言解析；不推断npm、Git或系统发行状态。
- * @lang en Construct and read site version index 1.0.0 and resolve locales without inferring npm, Git, or system release status.
+ * @lang zh-CN 构造并精确读取两版站点索引，按各自身份确定旧索引地址和文档语言。
+ * @lang en Construct and read both site index versions with their exact legacy locations and documentation locales.
  */
 import { isDeepStrictEqual } from "node:util";
 
@@ -20,6 +20,21 @@ export const currentDocumentation = Object.freeze({ version: "1.0.0", status: "p
 /** @lang zh-CN 站点索引的公开schema身份，不重用旧参考schema。 @lang en Public schema identity for the site index, separate from legacy reference schemas. */
 export const siteIndexSchema = "https://mandolin.github.io/HIA-Documentation/site/contracts/site-version-index-1.0.0.schema.json";
 const supportedLocales = ["zh-CN", "en"];
+// <lang lang="zh-CN">每版只接受对应部署目录。2.0.0 的绝对路径固定在同一主机。</lang><lang lang="en">Each version accepts its own deployment directory. The 2.0.0 absolute path stays on the same host.</lang>
+const siteIndexLocations = {
+  "1.0.0": { schema: siteIndexSchema, root: "legacy-reference/" },
+  "2.0.0": { schema: "https://mandolin.github.io/HIA-Documentation/site/contracts/site-version-index-2.0.0.schema.json", root: "/HIA-Documentation-Legacy/" }
+};
+
+/**
+ * @lang zh-CN 为已支持索引版本返回固定的旧索引定位字段。
+ * @lang en Return the fixed legacy index locator for a supported site index version.
+ * @param {string} root - 已确认部署目录。 Approved deployment directory.
+ * @returns {object} 独立定位对象。 Independent locator object.
+ */
+function legacyLocator(root) {
+  return { root, index: root + "versions.json", contract: "hia-reference-version-index", contractVersion: "0.1.0-draft" };
+}
 
 /**
  * @lang zh-CN 校验封闭对象字段；缺少字段和额外字段均失败。
@@ -76,9 +91,10 @@ function localePaths(locales, prefix, complete) {
  */
 export function assertSiteVersionIndex(value) {
   shape(value, ["$schema", "contract", "contractVersion", "basePath", "defaultLocale", "website", "documentation", "legacyReference"]);
-  assert.equal(value.$schema, siteIndexSchema, "Unknown site index schema.");
   assert.equal(value.contract, "hia-site-version-index", "Unknown site index contract.");
-  assert.equal(value.contractVersion, "1.0.0", "Unsupported site index version.");
+  assert(typeof value.contractVersion === "string" && Object.hasOwn(siteIndexLocations, value.contractVersion), "Unsupported site index version.");
+  const location = siteIndexLocations[value.contractVersion];
+  assert.equal(value.$schema, location.schema, "Unknown site index schema.");
   assert.equal(value.basePath, "/HIA-Documentation/", "Unsupported deployment base.");
   assert.equal(value.defaultLocale, "zh-CN", "Unsupported default locale.");
   shape(value.website, ["root", "locales"]);
@@ -106,23 +122,26 @@ export function assertSiteVersionIndex(value) {
     localePaths(archive.locales, "docs/archive/v" + major + "/", false);
   }
   shape(value.legacyReference, ["root", "index", "contract", "contractVersion"]);
-  assert.deepEqual(value.legacyReference, { root: "legacy-reference/", index: "legacy-reference/versions.json", contract: "hia-reference-version-index", contractVersion: "0.1.0-draft" }, "Invalid legacy namespace.");
+  assert.deepEqual(value.legacyReference, legacyLocator(location.root), "Invalid legacy namespace.");
 }
 
 /**
  * @lang zh-CN 创建当前真实预览索引；空历史是显式事实，不从目录自动枚举。
  * @lang en Create the actual preview index with explicit empty history instead of directory inference.
+ * @param {string} [version="1.0.0"] - 装配采用的索引版本。 Site index version used by the composition.
  * @returns {object} 独立可序列化对象。 Independent serializable object.
  * @throws {Error} 维护者配置与当前索引规则冲突。 Maintainer configuration conflicts with index rules.
  */
-export function createSiteVersionIndex() {
+export function createSiteVersionIndex(version = "1.0.0") {
+  assert(typeof version === "string" && Object.hasOwn(siteIndexLocations, version), "Unsupported site index version.");
+  const location = siteIndexLocations[version];
   // <lang lang="zh-CN">新对象避免调用方修改公共配置；状态由维护者管理。</lang><lang lang="en">A new object prevents caller mutation of shared configuration; publication state is maintainer-controlled.</lang>
   const value = {
-    $schema: siteIndexSchema, contract: "hia-site-version-index", contractVersion: "1.0.0",
+    $schema: location.schema, contract: "hia-site-version-index", contractVersion: version,
     basePath: "/HIA-Documentation/", defaultLocale: "zh-CN",
     website: { root: "", locales: { "zh-CN": "", en: "site/en/" } },
     documentation: { strategy: "latest-and-final-per-major", current: { ...currentDocumentation, locales: { "zh-CN": "docs/zh-CN/", en: "docs/en/" } }, archives: [] },
-    legacyReference: { root: "legacy-reference/", index: "legacy-reference/versions.json", contract: "hia-reference-version-index", contractVersion: "0.1.0-draft" },
+    legacyReference: legacyLocator(location.root),
   };
   assertSiteVersionIndex(value);
   return value;

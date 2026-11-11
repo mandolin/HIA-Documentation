@@ -12,7 +12,7 @@ The artifact also includes generated public portal pages for ecosystem discovery
 
 ## Offline product website candidate
 
-A separate offline assembler combines the product website and documentation entries with this reference artifact. It emits the distinct site version index and retains the complete old reference under `legacy-reference/`, while preserving non-root technical routes. This is not a production root cutover: the live routes described below and the existing reference commands retain their current semantics. See [the site index and migration guide](site-version-index.md).
+The offline product website assembler supports a split layout. The candidate keeps the existing non-root technical routes and uses its version index to locate the complete old snapshot on the [legacy project site](https://mandolin.github.io/HIA-Documentation-Legacy/). The live primary routes below apply until the coordinated website cutover. See [the site index and migration guide](site-version-index.md).
 
 ## Public Routes
 

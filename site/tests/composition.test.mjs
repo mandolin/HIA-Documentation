@@ -62,6 +62,21 @@ test("composition verifies actual generated reference entry dependencies", async
   await assert.rejects(composeWebsite(input), /not an HTML document/);
 });
 
+test("sibling composition retains old non-root bytes and verifies the independent snapshot", async () => {
+  const input = await fixture();
+  const result = await composeWebsite({ ...input, legacyMode: "sibling" });
+  const index = JSON.parse(await readFile(path.join(input.out, "versions.json"), "utf8"));
+  assert.equal(index.contractVersion, "2.0.0");
+  assert.equal(result.format, "hia-official-site-composition-report@0.2.0");
+  assert.equal(result.legacyIndex, "/HIA-Documentation-Legacy/versions.json");
+  assert(!result.files.some(file => file.path.startsWith("legacy-reference/")));
+  assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), await readFile(path.join(input.reference, "en/index.html"), "utf8"));
+  await assert.rejects(checkOfficialSite(input.out), /legacy artifact/);
+  assert.equal((await checkOfficialSite(input.out, input.reference)).legacyFiles, 5);
+  await writeFile(path.join(input.reference, "en/index.html"), "Changed legacy body");
+  await assert.rejects(checkOfficialSite(input.out, input.reference), /legacy artifact file/);
+});
+
 test("colliding favicon cannot overwrite a preserved legacy route", async () => {
   const input = await fixture();
   await writeFile(path.join(input.reference, "favicon.svg"), "<svg/>");

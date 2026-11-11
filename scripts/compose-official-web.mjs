@@ -69,6 +69,7 @@ async function checkOutputLocation(target) {
  * @param {string} [options.website] - 独立官网产物。 Standalone website artifact.
  * @param {string} [options.reference] - 经旧门禁校验的参考产物。 Legacy-gate-validated reference artifact.
  * @param {string} [options.out] - 主仓dist内专用目录。 Dedicated owner dist directory.
+ * @param {"embedded"|"sibling"} [options.legacyMode="embedded"] - 旧索引与参考工件的部署位置。 Deployment location of the legacy index and artifact.
  * @param {number} [options.maxBytes=1073741824] - 总输出字节上限。 Output byte budget.
  * @param {number} [options.maxFiles=100000] - 输出文件上限。 Output file budget.
  * @param {number} [options.maxFileBytes=33554432] - 单文件有界读取上限。 Bounded per-file read limit.
@@ -79,6 +80,9 @@ export async function composeWebsite(options = {}) {
   const website = path.resolve(ownerRoot, options.website ?? "dist/official-web-preview");
   const reference = path.resolve(ownerRoot, options.reference ?? "dist/reference-pages");
   const output = path.resolve(ownerRoot, options.out ?? "dist/official-site-preview");
+  const legacyMode = options.legacyMode ?? "embedded";
+  assert(["embedded", "sibling"].includes(legacyMode), "Unsupported legacy deployment mode.");
+  const sibling = legacyMode === "sibling";
   const maxBytes = options.maxBytes ?? 1024 ** 3;
   const maxFiles = options.maxFiles ?? 100000;
   const maxFileBytes = options.maxFileBytes ?? 32 * 1024 ** 2;
@@ -100,23 +104,33 @@ export async function composeWebsite(options = {}) {
   catch { throw new Error("Invalid legacy artifact metadata JSON."); }
   assert(legacyManifest.contract === "hia-reference-pages" && legacyManifest.contractVersion === "0.1.0-draft" && legacyManifest.privacy?.status === "pass", "Legacy artifact lacks its exact manifest or passing privacy state.");
   assert(legacyManifest.privacy.sourcesContentPolicy === "none" && ["none", "public-whitelisted-excerpt"].includes(legacyManifest.privacy.sourcePreviewPolicy), "Legacy source policy cannot expand during composition.");
-  const index = createSiteVersionIndex();
+  const index = createSiteVersionIndex(sibling ? "2.0.0" : "1.0.0");
   const sourceFiles = await filesIn(reference);
   const websiteFiles = await filesIn(website);
   assert(sourceFiles.includes("index.html") && sourceFiles.includes("versions.json"), "Legacy root or index is missing.");
+  let legacyRootSha256;
+  if (sibling) {
+    const home = path.join(reference, "index.html");
+    assert((await lstat(home)).size <= maxFileBytes, "Legacy home exceeds read budget.");
+    const body = await readFile(home);
+    assertPublicText(body.toString("utf8"));
+    assertPublicText(oldIndexBytes.toString("utf8"));
+    legacyRootSha256 = createHash("sha256").update(body).digest("hex");
+  }
   // <lang lang="zh-CN">先建立唯一目标计划，只有旧根首页与旧根机器索引由新身份明确取代。</lang><lang lang="en">Build a unique destination plan; only the legacy root page and root machine index are intentionally replaced.</lang>
   const plan = new Map();
   for (const file of sourceFiles) {
-    plan.set("legacy-reference/" + file, { root: reference, file, kind: "legacy-copy" });
+    assert(!file.startsWith("legacy-reference/"), "Reference source occupies the reserved legacy namespace.");
+    if (!sibling) plan.set("legacy-reference/" + file, { root: reference, file, kind: "legacy-copy" });
     if (!["index.html", "versions.json"].includes(file)) plan.set(file, { root: reference, file, kind: "preserved-deep-link" });
   }
   for (const file of websiteFiles) {
     assert(!plan.has(file) && file !== "versions.json" && file !== "official-site.json" && !file.startsWith("legacy-reference/"), "Website collides with a preserved legacy route.");
     plan.set(file, { root: website, file, kind: "website" });
   }
-  const schemaPath = "site/contracts/site-version-index-1.0.0.schema.json";
+  const schemaPath = `site/contracts/site-version-index-${index.contractVersion}.schema.json`;
   assert(!plan.has(schemaPath), "Schema route collides with input.");
-  plan.set(schemaPath, { root: ownerRoot, file: "site/contracts/site-version-index-1.0.0.schema.json", kind: "site-schema" });
+  plan.set(schemaPath, { root: ownerRoot, file: schemaPath, kind: "site-schema" });
   assert(plan.size + 2 <= maxFiles, "Composed file budget exceeded.");
   await mkdir(path.dirname(output), { recursive: true });
   // <lang lang="zh-CN">只写本次新建暂存目录；每次只保留一个文件字节，输入不执行也不做HTML后处理。</lang><lang lang="en">Write only a newly owned staging directory, retaining one file at a time without executing inputs or patching HTML.</lang>
@@ -139,9 +153,10 @@ export async function composeWebsite(options = {}) {
   }
   await writeFile(path.join(staging, "versions.json"), JSON.stringify(index, null, 2) + "\n", "utf8");
   const manifest = {
-    format: "hia-official-site-composition-report@0.1.0", siteIndex: "versions.json",
+    format: sibling ? "hia-official-site-composition-report@0.2.0" : "hia-official-site-composition-report@0.1.0", siteIndex: "versions.json",
     legacyIndex: index.legacyReference.index, sourceIdentity: { contract: legacyManifest.contract, contractVersion: legacyManifest.contractVersion },
     legacyIndexSha256: createHash("sha256").update(oldIndexBytes).digest("hex"),
+    ...(sibling ? { legacyRootSha256 } : {}),
     preservation: { rootReplacements: ["index.html", "versions.json"], originalFiles: sourceFiles.length, preservedDeepLinks: sourceFiles.length - 2 },
     privacy: { status: "pass", policy: "public-brand-with-private-path-rejection@1.0.0", sourceAuthorityExpanded: false, sourcesContentPolicy: "none", sourcePreviewPolicy: legacyManifest.privacy.sourcePreviewPolicy },
     files: inventory, copiedBytes: totalBytes,
@@ -170,7 +185,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const args = process.argv.slice(2);
   assert(args.length % 2 === 0, "Expected option/value pairs.");
   const options = {};
-  const names = { "--out": "out", "--reference": "reference", "--website": "website" };
+    const names = { "--out": "out", "--reference": "reference", "--website": "website", "--legacy-mode": "legacyMode" };
   for (let i = 0; i < args.length; i += 2) {
     assert(Object.hasOwn(names, args[i]) && !Object.hasOwn(options, names[args[i]]), "Unknown or duplicated composition option.");
     options[names[args[i]]] = args[i + 1];

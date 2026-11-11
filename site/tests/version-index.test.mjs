@@ -8,6 +8,18 @@ import ts from "typescript";
 import { fileURLToPath } from "node:url";
 import { assertSiteVersionIndex, createSiteVersionIndex, readSiteVersionIndex, readLegacyReferenceIndex, resolveDocumentationVersion } from "../src/lib/version-index.mjs";
 
+test("site index 2.0.0 locates the legacy sibling and keeps 1.0.0 exact", () => {
+  const embedded = createSiteVersionIndex();
+  const sibling = createSiteVersionIndex("2.0.0");
+  assert.equal(sibling.contractVersion, "2.0.0");
+  assert.equal(sibling.legacyReference.index, "/HIA-Documentation-Legacy/versions.json");
+  assert.deepEqual(readSiteVersionIndex(JSON.stringify(sibling)), sibling);
+  assert.deepEqual(readSiteVersionIndex(JSON.stringify(embedded)), embedded);
+  assert.throws(() => readSiteVersionIndex(JSON.stringify({ ...embedded, legacyReference: sibling.legacyReference })), /Invalid legacy namespace/);
+  assert.throws(() => readSiteVersionIndex(JSON.stringify({ ...sibling, legacyReference: embedded.legacyReference })), /Invalid legacy namespace/);
+  assert.throws(() => readSiteVersionIndex(JSON.stringify({ ...sibling, legacyReference: { ...sibling.legacyReference, index: "//example.test/versions.json" } })), /Invalid legacy namespace/);
+});
+
 test("generated navigation has a resolvable renderer-owned return type before package builds", () => {
   // <lang><zh-CN>官网单独CI没有主包dist，导航注释必须直接解析到同仓的独立契约源。</zh-CN><en>The standalone website CI has no main-package dist, so navigation documentation must resolve directly to the independent contract source.</en></lang>
   const sourcePath = fileURLToPath(new URL("../src/lib/generated-navigation.mjs", import.meta.url));
