@@ -62,6 +62,7 @@ HIA-Documentation-Sys 的中英产品页面与初始文档入口使用独立静�
 - `docs/ci.md`: GitHub Actions baseline 和失败排查入口。
 - `docs/example-fixture-governance.md`: examples、fixtures 与 generated output 治理规则。
 - `docs/published-jsdoc-usage.md`: 已发布 JSDoc plugin/theme 的 npm 使用路径。
+- [卫星包 API 生成](docs/satellite-package-api-generation.md)说明原生 JSDoc 公开声明、聚合作用域与授权源码的参考站接入。
 - `docs/release-gate.md`: 发布前检查和 JSDoc 卫星包发布流程。
 
 ## 子目录

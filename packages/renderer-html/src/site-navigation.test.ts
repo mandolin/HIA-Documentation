@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { Script } from "node:vm";
+import { Script, runInNewContext } from "node:vm";
 import { createDocumentationPortalUiLocaleAdoption, renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter } from "./index.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
@@ -35,6 +35,31 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it("resolves same-document hashes through the existing index without changing history", async () => {
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const shell = result.files.find(file => file.path === "index.html")!.contents;
+    // <lang><zh-CN>执行实际生成的监听器，隔离DOM渲染，核入口匹配、原历史模式及坏编码的错误路径。</zh-CN><en>Execute the emitted listener independently of DOM rendering, checking entry matching, unchanged history mode and malformed-encoding errors.</en></lang>
+    const listener = shell.match(/window\.addEventListener\('hashchange',[\s\S]*?  \}\);/u)![0];
+    const calls: Array<{ entry: { id: string; entryId: string }; updateHash: boolean }> = [];
+    const errors: unknown[] = [];
+    const location = { hash: "#entry=entry%3Aone" };
+    let handler!: () => Promise<void>;
+    runInNewContext(listener, {
+      window: { addEventListener(name: string, callback: () => Promise<void>) { expect(name).toBe("hashchange"); handler = callback; } },
+      location,
+      ensureSearchIndex: async () => [{ id: "entry:one" }],
+      loadEntry: async (entry: { id: string; entryId: string }, updateHash: boolean) => { calls.push({ entry, updateHash }); },
+      showLoadError: (error: unknown) => { errors.push(error); }
+    });
+    await handler();
+    expect(calls).toEqual([{ entry: { id: "entry:one", entryId: "entry:one" }, updateHash: false }]);
+    for (const hash of ["#unrelated", "#entry=unknown"]) { location.hash = hash; await handler(); }
+    expect(calls).toHaveLength(1);
+    expect(errors).toHaveLength(0);
+    location.hash = "#entry=%invalid";
+    await handler();
+    expect(errors).toHaveLength(1);
+  });
   it("emits parseable browser scripts with bounded ancestor restoration and stale-entry protection", () => {
     const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const shell = result.files.find(file => file.path === "index.html")!.contents;
@@ -46,6 +71,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(shell).toContain("while (current && treeHost.contains(current))");
     expect(shell).toContain("if (!matchMedia('(max-width:800px)').matches)");
     expect(shell).toContain("if (hash) return ensureSearchIndex()");
+    expect(shell).toContain("window.addEventListener('hashchange'");
     expect(shell).toContain("contentHost?.querySelector(':scope > .hia-project-load-error')?.remove()");
     expect(client).toContain("document.querySelector('dialog[open]')");
     expect(client).toContain("event.key === 'Escape'");
@@ -89,12 +115,18 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     const field = model.fields.description;
     model.fields = Object.fromEntries(Object.entries({ summary: ["Main summary", "主要摘要"], remarks: ["Important note", "重要备注"], "parameters.value.summary": ["Input value", "输入值"], "params.label.summary": ["Label parameter", "标签参数"], "params.actual.description": ["Actual parameter", "实际参数"], "throws.0": ["{TypeError} Invalid input", "{TypeError} 输入无效"], "typeParams.T.summary": ["Type argument", "类型参数说明"], "returns.summary": ["Result explanation", "结果说明"], returns: ["Returned value", "返回值"] }).map(([fieldPath, values]) => [fieldPath, { ...field, fieldPath, defaultText: values[1], localizedText: { en: values[0], "zh-CN": values[1] } }]));
     const input = { ...project(), entries: [{ ...project().entries[0]!, i18n: model }] };
+    model.fields["returns.0.description"] = { ...field, fieldPath: "returns.0.description", defaultText: "原生返回说明", localizedText: { en: "Native return description", "zh-CN": "原生返回说明" } };
     const result = renderProjectHtmlDocument(input, { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const fragment = result.files.find(file => file.path.startsWith("entries/"))!.contents;
     expect(fragment).toContain('data-hia-i18n-field="parameters.value.summary"');
     expect(fragment).toContain('data-hia-ui-message="site.field.parameters"');
     expect(fragment).toContain('data-hia-ui-message="site.field.typeparameters"');
     expect(fragment).toContain('data-hia-ui-message="site.field.returns"');
+    // <lang><zh-CN>真实JSDoc以编号returns字段承载正文，阅读标题使用已确认的返回值组件。</zh-CN><en>Actual JSDoc carries return prose in numbered fields, whose reading headings use the confirmed returns component.</en></lang>
+    expect(fragment).not.toContain('<code>returns.0.description</code>');
+    expect(fragment).toContain('data-hia-i18n-field="returns.0.description"');
+    expect(fragment).toContain("Native return description");
+    expect(fragment).toContain("原生返回说明");
     expect(fragment).not.toContain("<code>params.label.summary</code>");
     expect(fragment).not.toContain("<dt>parameters.value.summary</dt>");
     expect(fragment).toContain("Important note");

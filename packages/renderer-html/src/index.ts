@@ -4453,6 +4453,18 @@ function renderProjectSplitSiteScript(
     "      if (entry) loadEntry({ ...entry, entryId: entry.id }, false);",
     "    });",
     "  }).catch(showLoadError);",
+    ...(portalContext.siteNavigation ? [
+      // <lang><zh-CN>同文档深链和浏览器历史触发原有索引/加载链，保留请求序号保护与原生replaceState行为。</zh-CN><en>Same-document deep links and browser history reuse the index/loading chain, preserving request-sequence protection and native replaceState behavior.</en></lang>
+      "  window.addEventListener('hashchange', async () => {",
+      "    try {",
+      "      if (!location.hash.startsWith('#entry=')) return;",
+      "      const hash = decodeURIComponent(location.hash.slice(7));",
+      "      const entries = await ensureSearchIndex();",
+      "      const entry = entries.find(candidate => candidate.id === hash);",
+      "      if (entry) await loadEntry({ ...entry, entryId: entry.id }, false);",
+      "    } catch (error) { showLoadError(error); }",
+      "  });"
+    ] : []),
     "  if (config.ui && uiLocale) {",
     "    try {",
     "      const saved = localStorage.getItem('hia-doc-portal-ui-locale');",
@@ -6660,7 +6672,7 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
         }
         // <lang><zh-CN>标准API字段用已登记的双语标题；名称和原字段身份仍保留，扩展字段继续完整可读。</zh-CN><en>Use registered bilingual headings for standard API fields, retaining names and original field identities while preserving extension fields.</en></lang>
         // <lang><zh-CN>复用各生产器已存在的字段别名，只改变阅读标题，不迁移原工件身份。</zh-CN><en>Reuse existing producer field aliases for headings without migrating artifact identities.</en></lang>
-        const category = fieldPath === "returns.summary" ? "returns" : /^throws\.\d+$/u.test(fieldPath) ? "exceptions" : fieldPath.toLowerCase();
+        const category = /^returns(?:\.(?:summary|description)|\.\d+\.(?:summary|description))?$/u.test(fieldPath) ? "returns" : /^throws\.\d+$/u.test(fieldPath) ? "exceptions" : fieldPath.toLowerCase();
         const known = ["remarks", "parameters", "typeparameters", "returns", "exceptions"].includes(category);
         const title = known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
         const anchor = `${ownerId}--field-${stableProjectArtifactName(fieldPath)}`;
