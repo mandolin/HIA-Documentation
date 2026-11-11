@@ -9,6 +9,7 @@ import os from "node:os";
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import {resolvePackageApiOwnership, createPackageApiIdentityScope} from "./lib/package-api-ownership.mjs";
+import {auditRequiredPackages} from "./audit-required-package-api.mjs";
 
 test("ownership and scopes remain independent of versions and workspace locations", () => {
   const roots = [];
@@ -47,6 +48,20 @@ test("ownership rejects redirected repository roots", () => {
     fs.mkdirSync(path.join(root, "HIA"));
     fs.symlinkSync(path.join(root, "outside"), path.join(root, "HIA/hia-jsdoc"), "junction");
     assert.throws(() => resolvePackageApiOwnership(root, {owner: "hia-jsdoc", directory: "", name: "fixture"}), /Linked/u);
+  } finally {
+    fs.rmSync(root, {recursive: true, force: true});
+  }
+});
+
+test("main repository audit uses its own checkout independently of container naming", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-standalone-container-"));
+  try {
+    assert.equal(fs.existsSync(path.join(root, "main-repo")), false);
+    const audit = auditRequiredPackages(root, {packageNames: ["@hia-doc/jsondoc"]});
+    assert.equal(audit.summary.packages, 1);
+    assert.equal(audit.packages[0].repository, "mandolin/HIA-Documentation");
+    assert.equal(audit.packages[0].name, "@hia-doc/jsondoc");
+    assert.equal(audit.packages[0].modules.length, 1);
   } finally {
     fs.rmSync(root, {recursive: true, force: true});
   }

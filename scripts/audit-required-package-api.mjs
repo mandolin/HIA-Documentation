@@ -19,7 +19,6 @@ import { resolvePackageApiOwnership } from "./lib/package-api-ownership.mjs";
  */
 export function auditRequiredPackages(workspaceRoot, options = {}) {
   const mainRoot=fileURLToPath(new URL("../",import.meta.url));
-  if (fs.realpathSync(path.join(workspaceRoot, "main-repo")) !== fs.realpathSync(mainRoot)) throw new Error("Workspace does not own this API inventory.");
   const scope=JSON.parse(fs.readFileSync(path.join(mainRoot,"reference/required-package-api.inputs.json"),"utf8"));
   if(scope.packages.length!==45 || new Set(scope.packages.map(item=>item.name)).size!==45) throw new Error("Required package scope must contain 45 unique names.");
   // <lang><zh-CN>显式子集只选择固定允许清单中的包，默认仍审核全部45包；空/重复/未知选择在读取包前拒绝。</zh-CN><en>An explicit subset selects only allowlisted packages; omission still audits all 45, and empty, duplicate or unknown selections fail before package reads.</en></lang>

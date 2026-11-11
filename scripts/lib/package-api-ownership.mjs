@@ -7,6 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
+import {fileURLToPath} from "node:url";
 
 // <lang><zh-CN>仓库路径来自本工具固定白名单，包输入只能选择其中一项。</zh-CN><en>Repository paths come from this tool's fixed allowlist, of which package inputs may select one.</en></lang>
 const owners = new Set(["main-repo", "hia-jsdoc", "hia-htmdoc", "hia-cssdoc", "hia-dotnetdoc", "jsdoc-plugin-hia-sys", "jsdoc-theme-hia"]);
@@ -45,7 +46,10 @@ export function resolvePackageApiOwnership(workspaceRoot, item) {
     && (item.directory === "" || /^(?:packages\/[a-z0-9-]+|apps\/cli)$/u.test(item.directory)), "Unknown package API owner or directory.");
   // <lang><zh-CN>先固定调用方工作区，再检查仓库与包的每个路径组件。</zh-CN><en>Fix the caller's workspace before checking every repository/package path component.</en></lang>
   const workspace = fs.realpathSync(workspaceRoot);
-  const ownerRoot = ownedPath(workspace, item.owner === "main-repo" ? "main-repo" : "HIA/" + item.owner);
+  // <lang><zh-CN>主仓固定为本审核工具所在仓库，支持CI独立检出目录；卫星仍按授权容器和固定owner定位。</zh-CN><en>The main repository is fixed to this audit tool's own checkout, supporting standalone CI directory names; satellites retain authorized-container and fixed-owner resolution.</en></lang>
+  const ownerRoot = item.owner === "main-repo"
+    ? fs.realpathSync(fileURLToPath(new URL("../../", import.meta.url)))
+    : ownedPath(workspace, "HIA/" + item.owner);
   const packageRoot = item.directory ? ownedPath(ownerRoot, item.directory) : ownerRoot;
   const manifestPath = ownedPath(packageRoot, "package.json");
   assert(fs.statSync(manifestPath).size <= 1024 * 1024, "Package manifest exceeds audit budget.");
