@@ -6520,6 +6520,8 @@ function createProjectEntrySearchText(entry: RenderProjectEntry): string {
     entry.docSourceMap?.sourcePath,
     entry.docSourceMap?.artifactPath,
     entry.docSourceMap?.artifactSelector,
+    // <lang><zh-CN>已审语义标签参与同一检索，包名与默认导出别名可找到原规范页面。</zh-CN><en>Reviewed semantic labels participate in the same search so package names and default-export aliases locate the original canonical page.</en></lang>
+    ...(entry.semanticPath?.map(segment => segment.label) ?? []),
     ...collectProjectEntryLocalizedText(entry)
   ].filter((item): item is string => typeof item === "string" && item.length > 0).join(" ").toLowerCase();
 }

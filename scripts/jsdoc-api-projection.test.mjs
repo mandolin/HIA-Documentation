@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import {selectNativeJsdocApi, assertSatelliteApiEntries} from "./lib/jsdoc-api-projection.mjs";
-import {assertSatelliteApiRuntime, prepareSatellitePackageApis} from "./prepare-satellite-package-apis.mjs";
+import {assertSatelliteApiRuntime, prepareSatellitePackageApis, collectSatelliteModuleDeclarations} from "./prepare-satellite-package-apis.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -105,5 +105,24 @@ test("rejects unowned output and implicit package selection before writing", asy
     assert.deepEqual(fs.readdirSync(runtime), []);
   } finally {
     fs.rmdirSync(runtime);
+  }
+});
+
+test("groups aliases and reexports by original declaration while keeping resource and bin entries separate", () => {
+  const declarations = [{path: "packages/tool/src/value.mjs", line: 8}];
+  const pack = {directory: "packages/tool", entries: [{kind: "runtime-module", source: "src/index.mjs"}, {kind: "command", source: "src/cli.mjs"}, {kind: "json-resource", source: "schema.json"}],
+    modules: [{path: "packages/tool/src/index.mjs", exports: ["default", "value"].map(name => ({name, declarationName: "value", status: "resolved", declarations}))},
+      {path: "packages/tool/src/cli.mjs", exports: [{name: "internalCommand"}]}]};
+  const before = structuredClone(pack);
+  const groups = collectSatelliteModuleDeclarations(pack);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].path, declarations[0].path);
+  assert.deepEqual(groups[0].exports.map(binding => binding.name), ["default", "value"]);
+  assert(groups[0].exports.every(binding => binding.modulePath === "packages/tool/src/index.mjs"));
+  assert.deepEqual(pack, before);
+  for (const patch of [{status: "unresolved"}, {declarations: []}, {declarations: [...declarations, ...declarations]}, {declarations: [{path: "value.d.ts"}]}]) {
+    const broken = structuredClone(pack);
+    Object.assign(broken.modules[0].exports[0], patch);
+    assert.throws(() => collectSatelliteModuleDeclarations(broken));
   }
 });

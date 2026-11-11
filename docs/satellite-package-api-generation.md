@@ -6,7 +6,9 @@ English summary — This build helper runs native JSDoc for explicitly selected 
 
 ## 支持范围
 
-包必须登记于必要包输入清单，实际 Git 来源、包名、版本和物理归属通过审核。当前支持包内 `.mjs` 模块的同名直接导出声明。别名、跨模块重导出、独立类型声明、资源及命令入口应使用相应的协调生成链。
+包必须登记于必要包输入清单，实际 Git 来源、包名、版本和物理归属通过审核。支持 `.mjs`、`.cjs`、`.js` 的直接导出、包内重导出、默认导出别名和 CommonJS 入口。每条公开入口由独立静态审核解析到唯一原声明，同一物理源按作用域合并，公开绑定记录逐项保留。
+
+混合包中的模块、JSON资源和命令分别登记。`prepared.remainingEntries` 返回资源和命令清单，`prepared.rows[].publicBindings` 保留模块路径、公开名称与原声明。公开嵌套成员通过原声明关联工具及相应数据投影另行核验，静态读取的数组/描述符采用已确认的声明范围。
 
 公开绑定通过独立静态导出审核与原生 JSDoc 的名称、路径和声明行匹配。选中文档保留原生符号 ID、公开根的文档后代及必要祖先。每个保留节点必须具备完整的中英文文本，函数和类必须具备原生签名。缺失或歧义会使准备失败。
 
@@ -25,9 +27,11 @@ const prepared = await prepareSatellitePackageApis({
 });
 ```
 
-`publicSources` 必须与本次实际选中的模块来源精确对应。源码读取受真实路径、普通文件、硬链接数量、4 MiB 字节预算和严格 UTF-8 校验约束。构建会在结束时重核全部输入字节、清单与入口。
+`publicSources` 必须与本次实际选中的原声明来源精确对应，包括重导出指向的包内定义文件。源码读取受真实路径、普通文件、硬链接数量、4 MiB 字节预算和严格 UTF-8 校验约束。构建会在结束时重核全部输入字节、清单与入口。
 
 将 `prepared.inputs` 写入 `runtimeRoot` 中的 `schemaVersion: "1.1.0"` 项目清单。每个模块的 `identityScope` 来自已核包归属与原始路径。随后调用正常命令。
+
+语义导航使用既有仓库、完整包名与模块分组。默认别名列入模块标签，阅读器索引同时检索这些已审标签，发现后进入原规范条目。
 
 ```powershell
 hia docs build --project-manifest <runtimeRoot/project.json> --config <locale-config.json> --site-navigation <navigation.json> --out <site-dir> --locale zh-CN
@@ -42,5 +46,7 @@ hia docs build --project-manifest <runtimeRoot/project.json> --config <locale-co
 各工件的实际契约版本分别保留，适配生成的核心文档采用 `1.0.0`。此输入没有附加旧 JSDoc profile 的版本声明。
 
 `assertSatelliteApiEntries` 可逐项检查实际项目索引中的作用域、符号 ID、签名、全部双语字段、父项、源码预览范围和地图范围。源码预览沿用原生 `primaryBlock`，完整声明范围另在原地图中保留，两者分别校验。
+
+容量核验应同时计入交互页、静态页、导航、全部机器工件、授权源码资产和完整源文件下载。页面预览沿用实际来源范围与400行上限。完整源文件使用单独的摘要清单记录，生成数据快照标明其来源与推导证据。
 
 输出准备失败时可能留下部分运行目录，生命周期由构建调用方管理。公开站点发布须使用站点自身的容量、路由与发布校验。

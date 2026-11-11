@@ -50,8 +50,33 @@ export function assertSatelliteApiRuntime(runtimeRoot) {
 }
 
 /**
- * @lang zh-CN 运行显式普通.mjs公开模块并返回现有清单输入。只支持包内同名直接声明，别名、复杂重导出、类型与命令应由对应生产链接入。
- * @lang en Produce explicit regular .mjs public modules and return existing manifest inputs. Supports same-name direct declarations inside their owning packages; aliases, complex reexports, types and commands require their respective producer chains.
+ * @lang zh-CN 按实际runtime模块的原声明归组，保留每条默认/具名导出路径，资源与命令由各自账本处理。
+ * @lang en Group actual runtime-module exports by original declarations, preserving every default/named export path while resources and commands use their own inventories.
+ * @param {object} pack <lang><zh-CN>独立审核得到的包入口和静态模块。</zh-CN><en>Independently audited package entries and static modules.</en></lang>
+ * @returns {object[]} <lang><zh-CN>去重来源分组及完整公开绑定。</zh-CN><en>Deduplicated source groups and complete public bindings.</en></lang>
+ * @throws {Error} <lang><zh-CN>没有模块、声明歧义、未解析或非JavaScript输入。</zh-CN><en>Missing modules, ambiguous or unresolved declarations, or non-JavaScript input.</en></lang>
+ */
+export function collectSatelliteModuleDeclarations(pack) {
+  // <lang><zh-CN>同一源可同时是bin和模块，按实际runtime导出决定本次模块采用。</zh-CN><en>A source can be both a bin and a module; actual runtime exports decide module adoption.</en></lang>
+  const runtimePaths = new Set(pack.entries.filter(entry => entry.kind === "runtime-module").map(entry => path.posix.join(pack.directory, entry.source)));
+  const declarations = new Map();
+  for (const module of pack.modules.filter(module => runtimePaths.has(module.path))) {
+    assert(/\.(?:mjs|cjs|js)$/u.test(module.path) && module.exports.length, "This JSDoc chain requires explicit JavaScript declarations.");
+    for (const binding of module.exports) {
+      assert(binding.status === "resolved" && binding.declarations.length === 1, "Satellite public declaration is unresolved or ambiguous.");
+      const declaration = binding.declarations[0];
+      assert(/\.(?:mjs|cjs|js)$/u.test(declaration.path), "Satellite declaration requires a JavaScript source.");
+      if (!declarations.has(declaration.path)) declarations.set(declaration.path, []);
+      declarations.get(declaration.path).push({...binding, modulePath: module.path});
+    }
+  }
+  assert(declarations.size, "Satellite package has no runtime modules.");
+  return [...declarations].map(([source, bindings]) => ({path: source, exports: bindings}));
+}
+
+/**
+ * @lang zh-CN 按真实原声明合并JavaScript公开入口，支持包内默认别名、重导出与CommonJS，返回标准清单输入及独立资源/命令账。
+ * @lang en Group JavaScript public entries by actual declarations, supporting package-local default aliases, reexports and CommonJS, returning standard manifest inputs and a separate resource/command inventory.
  * @param {object} options <lang><zh-CN>固定包选择、授权工作区、独占runtimeRoot及明确允许公开的源码路径数组publicSources。</zh-CN><en>Fixed package selection, authorized workspace, exclusive runtimeRoot and explicit publicSources paths authorized for publication.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>inputs、rows、原文工件路径及400行来源配置，调用方负责失败暂存的生命周期。</zh-CN><en>Inputs, rows, original artifact paths and a 400-line source config; the caller owns failed-staging lifecycle.</en></lang>
  * @throws {Error} <lang><zh-CN>未覆盖、语言/签名缺失、来源变化、越界或生产失败时拒绝，不执行目标模块。</zh-CN><en>Reject incomplete coverage, missing languages/signatures, changed sources, unsafe paths or failed production without executing target modules.</en></lang>
@@ -64,15 +89,12 @@ export async function prepareSatellitePackageApis({packageNames, workspaceRoot, 
   // <lang><zh-CN>先审核全部源及授权，再创建任何生产输出；资源和bin不能计作模块采用。</zh-CN><en>Audit all sources and permissions before creating producer output; resources and bins cannot count as module adoption.</en></lang>
   const modules = inventory.packages.flatMap(pack => {
     const ownership = resolvePackageApiOwnership(workspaceRoot, pack);
-    assert(pack.modules.length && pack.entries.every(entry => entry.kind === "runtime-module"), "This JSDoc chain requires runtime-only package entries.");
-    return pack.modules.map(module => {
-      assert(module.path.endsWith(".mjs") && module.exports.length, "This JSDoc chain requires explicit .mjs declarations.");
-      assert(module.exports.every(binding => binding.status === "resolved" && binding.name === binding.declarationName && binding.declarations.length && binding.declarations.every(declaration => declaration.path === module.path)), "Satellite aliases or reexports require a coordinated declaration chain.");
-      const source = "HIA/" + pack.owner + "/" + module.path;
+    return collectSatelliteModuleDeclarations(pack).map(({path: modulePath, exports: bindings}) => {
+      const source = "HIA/" + pack.owner + "/" + modulePath;
       const bytes = readOwnedFileBytes(workspaceRoot, source);
       // <lang><zh-CN>严格UTF-8核验避免源码镜像和解释器看到不同字符。</zh-CN><en>Strict UTF-8 verification prevents the source mirror and parser from seeing different characters.</en></lang>
       new TextDecoder("utf-8", {fatal: true}).decode(bytes);
-      return {pack, module, source, bytes, identityScope: createPackageApiIdentityScope(pack, ownership, module.path)};
+      return {pack, module: {path: modulePath, exports: bindings}, source, bytes, identityScope: createPackageApiIdentityScope(pack, ownership, modulePath)};
     });
   });
   assert(Array.isArray(publicSources) && new Set(publicSources).size === publicSources.length, "Public satellite sources must be explicit and unique.");
@@ -95,7 +117,7 @@ export async function prepareSatellitePackageApis({packageNames, workspaceRoot, 
     const base = "satellite-api/" + slug;
     const directory = path.join(runtimeRoot, base);
     const result = await runDocumentationProducer(jsdocProducer, {workspaceRoot, outputDirectory: directory,
-      inputs: [{kind: "javascript-module", path: source}], profileIds: ["jsdoc"], options: {
+      inputs: [{kind: source.endsWith(".mjs") ? "javascript-module" : "javascript-source", path: source}], profileIds: ["jsdoc"], options: {
         mode: "hiaIntegration", plugin: {pluginPath: path.join(workspaceRoot, "HIA/jsdoc-plugin-hia-sys/src/index.cjs")},
         hia: {docSourceMap: {enabled: true}, i18n: {enabled: true, defaultLocale: "en", fallbackLocale: "en", locales: ["en", "zh-CN"]}}
       }});
@@ -129,12 +151,17 @@ export async function prepareSatellitePackageApis({packageNames, workspaceRoot, 
     const sourceTarget = path.join(sourceRoot, source);
     fs.mkdirSync(path.dirname(sourceTarget), {recursive: true});
     fs.writeFileSync(sourceTarget, bytes, {flag: "wx"});
+    // <lang><zh-CN>默认别名由现有语义文件标签提供发现入口，原生符号ID和正文名称保持。</zh-CN><en>Existing semantic file labels provide discovery for default aliases while preserving native IDs and prose names.</en></lang>
+    const aliases = [...new Set(module.exports.filter(binding => binding.name !== binding.declarationName).map(binding => binding.name))];
     inputs.push({kind: "documentation-producer-result", path: resultPath, domain: "js", identityScope,
       semanticPath: [{kind: "repository", id: pack.owner, label: pack.repository},
-        {kind: "package", id: slug, label: pack.name}]});
+        {kind: "package", id: pack.name.slice(1).replaceAll("/", "--"), label: pack.name},
+        {kind: "layer", id: slug, label: module.path + (aliases.length ? " · " + aliases.join(" · ") : "")}]});
     rows.push({name: pack.name, version: pack.version, repository: pack.repository, sourceHead: pack.sourceHead,
       manifestSha256: pack.manifestSha256, source, sourceSha256: digest(bytes), identityScope, documentPath,
-      mapPath: base + "/" + mapArtifact.path, bindings: selected.bindings, symbols: selected.document.symbols.length});
+      mapPath: base + "/" + mapArtifact.path, bindings: selected.bindings,
+      publicBindings: module.exports.map(binding => ({name: binding.name, declarationName: binding.declarationName, modulePath: binding.modulePath, declarations: binding.declarations})),
+      symbols: selected.document.symbols.length});
     files.push(documentPath, fullDocumentPath, base + "/" + integrationArtifact.path, base + "/" + mapArtifact.path);
     nativeResults.push(base + "/hia-jsdoc.producer-result.json");
   }
@@ -145,5 +172,6 @@ export async function prepareSatellitePackageApis({packageNames, workspaceRoot, 
   fs.writeFileSync(configPath, JSON.stringify({schemaVersion: "0.1.0", docs: {source: {
     presentation: "fetch", publicAssetPolicy: "explicit-public", localRoot: "source-root", maxLines: 400
   }}}, null, 2) + "\n", {flag: "wx"});
-  return {inputs, rows, files, nativeResults, configPath};
+  return {inputs, rows, files, nativeResults, configPath, remainingEntries: inventory.packages.flatMap(pack => pack.entries
+    .filter(entry => entry.kind !== "runtime-module").map(entry => ({package: pack.name, ...entry})))};
 }

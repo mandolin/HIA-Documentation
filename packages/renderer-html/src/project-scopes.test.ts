@@ -6,6 +6,17 @@
 import {expect, it} from "vitest";
 import {renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter, type RenderProjectEntry} from "./index.js";
 
+it("indexes reviewed package and file aliases while retaining the canonical entry", () => {
+  const entry: RenderProjectEntry = {id: "canonical", symbolId: "function:producer", identityScope: "package:one", view: "js", kind: "function", name: "producer",
+    semanticPath: [{kind: "package", id: "tool", label: "@example/documentation-tool"}, {kind: "layer", id: "module", label: "src/index.mjs · default"}]};
+  const result = renderProjectHtmlDocument({project: {name: "Fixture"}, entries: [entry]}, {projectSite: {uiLocale: "en", informationArchitecture: {}}});
+  const search = JSON.parse(result.files.find(file => file.path === "search/index.json")!.contents);
+  expect(search.entries).toHaveLength(1);
+  expect(search.entries[0].id).toBe("canonical");
+  expect(search.entries[0].searchText).toContain("@example/documentation-tool");
+  expect(search.entries[0].searchText).toContain("src/index.mjs · default");
+});
+
 it("keeps a child from borrowing another scope's parent", () => {
   const entries: RenderProjectEntry[] = [
     {id: "alpha-parent", symbolId: "class:Parent", identityScope: "owner:alpha", view: "js", kind: "class", name: "Alpha parent"},
