@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 绑定22项已审清单声明及真实类型正负例，其它配置导出不由本测试外推语义完成。
- * @lang en Pins 22 reviewed manifest declarations and actual type positive/negative cases, without inferring semantic completion for other config exports.
+ * @lang zh-CN 绑定25项已审清单声明及真实类型正负例，其它配置导出不由本测试外推语义完成。
+ * @lang en Pins 25 reviewed manifest declarations and actual type positive/negative cases, without inferring semantic completion for other config exports.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -15,7 +15,7 @@ const program = ts.createProgram({ rootNames: [entry, fixture], options: { targe
 const checker = program.getTypeChecker();
 const exported = checker.getExportsOfModule(checker.getSymbolAtLocation(program.getSourceFile(entry)!)!);
 const manifest = exported.map((item) => item.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(item) : item).filter((item) => item.declarations?.[0]?.getSourceFile().fileName.replaceAll("\\", "/").endsWith("/config/src/project-manifest.ts"));
-const expected = ["HIA_PROJECT_MANIFEST_SCHEMA_VERSION", "HIA_PROJECT_MANIFEST_SCHEMA_ID", "HIA_PROJECT_MANIFEST_INPUT_KINDS", "HIA_PROJECT_MANIFEST_DOMAINS", "HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES", "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS", "HIA_PROJECT_MANIFEST_JSON_SCHEMA", "HiaProjectManifestInputKind", "HiaProjectManifestDomain", "HiaProjectManifestArtifactPolicy", "HiaProjectManifestSemanticPathKind", "HiaProjectManifestSchemaVersion", "HiaProjectDocsManifest", "HiaProjectManifestProjectInfo", "HiaProjectManifestProfileRef", "HiaProjectManifestInputProfileRef", "HiaProjectManifestInput", "HiaProjectManifestSemanticPathSegment", "HiaProjectManifestProducerInput", "HiaProjectManifestProducerRef", "HiaProjectManifestValidationOptions", "validateHiaProjectManifest"];
+const expected = ["HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION", "HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_ID", "HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA", "HIA_PROJECT_MANIFEST_SCHEMA_VERSION", "HIA_PROJECT_MANIFEST_SCHEMA_ID", "HIA_PROJECT_MANIFEST_INPUT_KINDS", "HIA_PROJECT_MANIFEST_DOMAINS", "HIA_PROJECT_MANIFEST_ARTIFACT_POLICIES", "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS", "HIA_PROJECT_MANIFEST_JSON_SCHEMA", "HiaProjectManifestInputKind", "HiaProjectManifestDomain", "HiaProjectManifestArtifactPolicy", "HiaProjectManifestSemanticPathKind", "HiaProjectManifestSchemaVersion", "HiaProjectDocsManifest", "HiaProjectManifestProjectInfo", "HiaProjectManifestProfileRef", "HiaProjectManifestInputProfileRef", "HiaProjectManifestInput", "HiaProjectManifestSemanticPathSegment", "HiaProjectManifestProducerInput", "HiaProjectManifestProducerRef", "HiaProjectManifestValidationOptions", "validateHiaProjectManifest"];
 
 describe("project manifest public API gate", () => {
   it("pins reviewed names without exposing a private graph helper", () => {

@@ -181,6 +181,15 @@
       "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json",
       "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json",
       "stability": "stable-candidate"
+    },
+    {
+      "contractVersion": "1.1.0",
+      "key": "project-manifest-scoped",
+      "ownerPackage": "@hia-doc/config",
+      "path": "./project-manifest-scoped.schema.json",
+      "publicUrl": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.1.0.schema.json",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.1.0.schema.json",
+      "stability": "stable-candidate"
     }
   ]
 }

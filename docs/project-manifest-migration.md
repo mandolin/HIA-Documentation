@@ -1,5 +1,56 @@
 # Project Manifest Migration
 
+## Scoped aggregation
+
+中文说明。独立文档使用相同原生符号标识时，显式采用清单 `1.1.0` 并提供稳定的
+`identityScope`。同一输入展开的正文和地图继承该作用域。聚合按作用域、领域视图和
+原生符号标识关联，保留原生 ID。仓库归属、导航标签及源码公开许可分别核验。
+
+Use manifest `1.1.0` for explicit document identity scopes. The existing default
+writer and schema key `project-manifest` retain `1.0.0`. The new schema key is
+`project-manifest-scoped`, with canonical URI
+`https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.1.0.schema.json`.
+Configuration exports `HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION`,
+`HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_ID` and `HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA`.
+
+```json
+{
+  "schemaVersion": "1.1.0",
+  "project": { "name": "Combined libraries" },
+  "inputs": [
+    { "kind": "documentation-producer-result", "path": "alpha/result.json", "identityScope": "package:alpha:public-api" },
+    { "kind": "documentation-producer-result", "path": "beta/result.json", "identityScope": "package:beta:public-api" }
+  ]
+}
+```
+
+Scopes match `^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$`. Choose stable, public logical
+identifiers from audited repository/package/module ownership. Temporary paths,
+input order and display labels must not determine them. Scope assignment grants
+no permission to read or publish sources.
+
+An input's scope is inherited by its materialized documents and maps. Explicit
+scoped inputs can coexist with legacy inputs. A scoped parent joins within the
+same scope and view. .NET's explicit documentation IDs also resolve within this
+boundary. Conflicting declarations within one identity fail before rendering.
+Conflicting scoped map coordinates fail with
+`HIA_CLI_PROJECT_SOURCE_MAP_AMBIGUOUS`. Identical canonical projections still
+deduplicate. Legacy conflicting declarations fail with
+`HIA_CLI_PROJECT_SYMBOL_ID_AMBIGUOUS` so independent documents can be assigned
+explicit scopes.
+
+An index containing scoped entries uses `hia-project-navigation-index`
+`0.2.0-draft` and retains each entry's `identityScope`. Unscoped output retains
+`0.1.0-draft`. Consumers should join scoped symbols by scope, view and native ID,
+and use unique `entry.id` values for page and relation references. Colliding page
+slugs receive deterministic opaque IDs. Reordering inputs preserves those IDs.
+Rebuild indexes and presentation profiles together when adopting scopes.
+
+Legacy manifests `0.1.0-draft` and `1.0.0` retain their interpretation of unknown
+extensions. An `identityScope` extension in these versions remains inert. Upgrade
+the manifest version explicitly and review its document/map grouping before
+activation. Existing noncolliding legacy routes retain their IDs.
+
 The current project-manifest **source contract candidate** is `1.0.0`. The runtime reader also accepts exact `0.1.0-draft`. This does not publish a new `@hia-doc/config` package: the checked-in package remains `0.1.5`, and package/system release readiness is assessed separately.
 
 中文摘要：项目清单源码契约候选为1.0.0，精确读取旧0.1.0-draft，不原地迁移清单。包版本、项目配置、文档配置运行时、生产器契约和实际发布身份各自独立；旧npm版本不能据此宣称含有本候选代码。

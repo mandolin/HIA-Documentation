@@ -24,6 +24,7 @@ import documentationSourceCommentProjectionSchemaData from "./schemas/documentat
 import generatedDocumentationBindingSchemaData from "./schemas/generated-documentation-binding.schema.json" with { type: "json" };
 import hiaDocumentSchemaData from "./schemas/hia-document.schema.json" with { type: "json" };
 import projectManifestSchemaData from "./schemas/project-manifest.schema.json" with { type: "json" };
+import scopedProjectManifestSchemaData from "./schemas/project-manifest-scoped.schema.json" with { type: "json" };
 import historyIndexData from "./history/index.json" with { type: "json" };
 import historicalDocument from "./history/hia-document-0.2.0.schema.json" with { type: "json" };
 import historicalProjectManifest from "./history/hia-project-manifest-0.1.0-draft.schema.json" with { type: "json" };
@@ -71,7 +72,8 @@ export const HIA_SCHEMA_KEYS = [
   "documentation-ui-locale-completeness",
   "documentation-source-comment-projection",
   "hia-document",
-  "project-manifest"
+  "project-manifest",
+  "project-manifest-scoped"
 ] as const;
 
 /**
@@ -180,7 +182,8 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
   "documentation-ui-locale-completeness": documentationUiLocaleCompletenessSchemaData,
   "documentation-source-comment-projection": documentationSourceCommentProjectionSchemaData,
   "hia-document": hiaDocumentSchemaData,
-  "project-manifest": projectManifestSchemaData
+  "project-manifest": projectManifestSchemaData,
+  "project-manifest-scoped": scopedProjectManifestSchemaData
 };
 
 // <lang><zh-CN>历史定义按 canonical 身份独立保存，不能从会被 owner sync 覆盖的当前快照派生。</zh-CN><en>Keep historical definitions independently by canonical identity rather than deriving them from current snapshots overwritten by owner sync.</en></lang>

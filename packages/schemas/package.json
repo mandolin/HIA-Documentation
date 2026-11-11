@@ -48,6 +48,7 @@
     "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
     "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
     "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",
+    "./project-manifest-scoped.schema.json": "./dist/schemas/project-manifest-scoped.schema.json",
     "./package.json": "./package.json"
   },
   "files": ["dist", "README.md", "LICENSE"],

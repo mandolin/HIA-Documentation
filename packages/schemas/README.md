@@ -105,7 +105,7 @@ history bytes after TypeScript compilation. The current map `1.1.0` is a
 `stable-candidate`; the binding remains draft. See `docs/generated-documentation-binding-contract.md` in the repository
 for exact pairing and complete-bundle migration.
 
-The independent coordinate profile is `0.1.0-draft`. The separate artifact derivation evidence and plain-data initialization rule schemas are also `0.1.0-draft`, owned by `@hia-doc/plugin-sdk` and available through `artifact-derivation-evidence.schema.json` and `plain-data-initialization.schema.json`. The current catalog has 20 entries, including these drafts and eight reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
+The independent coordinate profile is `0.1.0-draft`. The separate artifact derivation evidence and plain-data initialization rule schemas are also `0.1.0-draft`, owned by `@hia-doc/plugin-sdk` and available through `artifact-derivation-evidence.schema.json` and `plain-data-initialization.schema.json`. The current catalog has 21 entries, including these drafts and nine reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
 
 Package versions, contract versions and registry availability are separate.
 Read each catalog entry's contract version and stability; the presence of a
@@ -117,3 +117,7 @@ release qualification must be verified for the exact package version consumed.
 The separate ./tsdoc-project/catalog.json export records seven owner-preserving snapshots with digests. Individual files are exported under ./tsdoc-project/*.json. They cover extraction 0.1 and extraction/bridge pairs 0.2, 0.3 and 0.4. The main-owner catalog and getHiaSchema() keep their existing scope. Schema Pages also serves each canonical identity and tsdoc-project-catalog.json. From a prepared workspace, run node scripts/sync-tsdoc-project-schemas.mjs --check in main-repo to compare snapshots with the authorized TypeScript owner. Schemas check structure while the owner readers additionally validate source trees and references.
 
 中文说明。卫星定义以独立目录分发并核摘要，保留原owner与旧身份，0.3/0.4迁移重新生产。不增造原来不存在的0.1桥接schema。
+
+中文。项目清单1.1.0使用独立的project-manifest-scoped.schema.json及canonical地址hia-project-manifest-1.1.0.schema.json，旧1.0.0与0.1.0-draft定义保留原字节。
+
+English. Scoped project manifest 1.1.0 is distributed as project-manifest-scoped.schema.json with canonical identity hia-project-manifest-1.1.0.schema.json, alongside the exact legacy definitions.

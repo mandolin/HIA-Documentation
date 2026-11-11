@@ -14,6 +14,16 @@ import type { HiaDiagnostic, HiaDiagnosticData, HiaDiagnosticSeverity } from "@h
  */
 export const HIA_PROJECT_MANIFEST_SCHEMA_VERSION = "1.0.0";
 /**
+ * @lang zh-CN 显式聚合作用域的新清单版本，旧默认writer身份保持独立。
+ * @lang en New manifest version for explicit aggregation scopes, independent of the legacy default writer identity.
+ */
+export const HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION = "1.1.0";
+/**
+ * @lang zh-CN 显式作用域清单的独立schema地址。
+ * @lang en Independent schema URI of the explicitly scoped manifest.
+ */
+export const HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.1.0.schema.json";
+/**
  * @lang zh-CN 当前新根的固定schema身份；旧0.1.0-draft归档不会重定向为它。
  * @lang en Fixed schema identity for the new current root; the legacy 0.1.0-draft archive never redirects to it.
  */
@@ -62,10 +72,10 @@ export type HiaProjectManifestArtifactPolicy = typeof HIA_PROJECT_MANIFEST_ARTIF
  */
 export type HiaProjectManifestSemanticPathKind = typeof HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS[number];
 /**
- * @lang zh-CN 两个准入的精确根版本，不协商未知patch/minor/预发行或build元数据。
- * @lang en The two admitted exact root versions, without negotiating unknown patches/minors/prereleases or build metadata.
+ * @lang zh-CN 三个准入的精确根版本，不协商未知patch/minor/预发行或build元数据。
+ * @lang en The three admitted exact root versions, without negotiating unknown patches/minors/prereleases or build metadata.
  */
-export type HiaProjectManifestSchemaVersion = typeof HIA_PROJECT_MANIFEST_SCHEMA_VERSION | "0.1.0-draft";
+export type HiaProjectManifestSchemaVersion = typeof HIA_PROJECT_MANIFEST_SCHEMA_VERSION | typeof HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION | "0.1.0-draft";
 
 /**
  * @lang zh-CN 未验证清单的宽松声明视图；required/JSON/路径及跨字段条件仍须纯守卫验证，数组与metadata不被克隆。
@@ -195,6 +205,11 @@ export interface HiaProjectManifestInputProfileRef {
  * @lang en Unvalidated static-artifact input view; a loose string kind can represent unknown input, while the guard still rejects kinds outside the closed set.
  */
 export interface HiaProjectManifestInput {
+  /**
+   * @lang zh-CN 1.1.0输入的发布安全逻辑作用域；声明不授权读取。旧版本按未知扩展保留而不激活。
+   * @lang en Publication-safe logical scope for 1.1.0 inputs, granting no read authority. Legacy versions retain it as an inactive unknown extension.
+   */
+  identityScope?: string;
   /**
    * @lang zh-CN wire必需输入kind，不直接解析源语言。
    * @lang en Input kind required on the wire, without direct source-language parsing.
@@ -527,6 +542,29 @@ export const HIA_PROJECT_MANIFEST_JSON_SCHEMA = {
 } as const;
 
 /**
+ * @lang zh-CN 显式作用域的新schema，旧1.0.0定义原样保留。
+ * @lang en New explicit-scope schema, retaining the original 1.0.0 definition unchanged.
+ */
+export const HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA = {
+  ...HIA_PROJECT_MANIFEST_JSON_SCHEMA,
+  $id: HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_ID,
+  properties: {
+    ...HIA_PROJECT_MANIFEST_JSON_SCHEMA.properties,
+    schemaVersion: { const: HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION }
+  },
+  $defs: {
+    ...HIA_PROJECT_MANIFEST_JSON_SCHEMA.$defs,
+    input: {
+      ...HIA_PROJECT_MANIFEST_JSON_SCHEMA.$defs.input,
+      properties: {
+        ...HIA_PROJECT_MANIFEST_JSON_SCHEMA.$defs.input.properties,
+        identityScope: { type: "string", pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$" }
+      }
+    }
+  }
+} as const;
+
+/**
  * @lang zh-CN 只读检查清单精确版本、已声明字段、JSON图、路径和既有语义；不归一化或迁移输入。
  * @lang en Read-only checks of exact versions, declared fields, JSON graphs, paths and existing semantics, without input normalization or migration.
  * @param value <lang><zh-CN>未知内存输入；循环、访问器或反射失败返回固定诊断，不执行模块或源文件I/O。</zh-CN><en>Unknown in-memory input; cycles/accessors/reflection failures return fixed diagnostics without module execution or source-file I/O.</en></lang>
@@ -548,7 +586,7 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
     ];
   }
 
-  if (!Object.hasOwn(value, "schemaVersion") || (value.schemaVersion !== HIA_PROJECT_MANIFEST_SCHEMA_VERSION && value.schemaVersion !== "0.1.0-draft")) {
+  if (!Object.hasOwn(value, "schemaVersion") || ![HIA_PROJECT_MANIFEST_SCHEMA_VERSION, HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION, "0.1.0-draft"].includes(value.schemaVersion as string)) {
     diagnostics.push(createProjectManifestDiagnostic(
       "HIA_PROJECT_MANIFEST_SCHEMA_UNSUPPORTED",
       "Project docs manifest schemaVersion is unsupported; use an admitted exact version.",
@@ -595,6 +633,19 @@ export function validateHiaProjectManifest(value: unknown, options: HiaProjectMa
 
   validateManifestPathEntries(value.profiles, "profiles", targetPrefix, diagnostics);
   validateManifestPathEntries(value.inputs, "inputs", targetPrefix, diagnostics);
+  // <lang><zh-CN>仅新版本解释作用域，旧开放扩展的读取语义不变。</zh-CN><en>Only the new version interprets scopes; legacy open-extension reading semantics remain unchanged.</en></lang>
+  if (value.schemaVersion === HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION && Array.isArray(value.inputs)) {
+    value.inputs.forEach((input, index) => {
+      if (isRecord(input) && input.identityScope !== undefined
+        && (typeof input.identityScope !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(input.identityScope))) {
+        diagnostics.push(createProjectManifestDiagnostic(
+          "HIA_PROJECT_MANIFEST_IDENTITY_SCOPE_INVALID",
+          "Project input identityScope must be a bounded logical identity.",
+          "error", joinTarget(targetPrefix, `inputs.${index}.identityScope`)
+        ));
+      }
+    });
+  }
   validateProducerEntries(value.producers, targetPrefix, diagnostics);
 
   return diagnostics;

@@ -43,7 +43,7 @@ describe("project manifest exact versions and caller ownership", () => {
     expect(HIA_PROJECT_MANIFEST_SCHEMA_ID).toBe("https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json");
     expect(HIA_PROJECT_MANIFEST_JSON_SCHEMA.properties.schemaVersion.const).toBe("1.0.0");
   });
-  it.each(["0.1.0-draft", "1.0.0"])("reads exact %s without mutation", (version) => {
+  it.each(["0.1.0-draft", "1.0.0", "1.1.0"])("reads exact %s without mutation", (version) => {
     const document = wire();
     document.schemaVersion = version;
     const before = JSON.stringify(document);
@@ -52,7 +52,7 @@ describe("project manifest exact versions and caller ownership", () => {
     expect(JSON.stringify(document)).toBe(before);
     expect(document.inputs).toBe(inputs);
   });
-  it.each(["1.0.1", "1.1.0", "2.0.0", "1.0.0-rc.1", "1.0.0+build", "^1.0.0"])("rejects unnegotiated %s without reflecting it", (version) => {
+  it.each(["1.0.1", "1.1.1", "2.0.0", "1.0.0-rc.1", "1.0.0+build", "^1.0.0"])("rejects unnegotiated %s without reflecting it", (version) => {
     const document = wire();
     document.schemaVersion = version;
     const diagnostics = validateHiaProjectManifest(document);

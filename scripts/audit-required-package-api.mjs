@@ -5,9 +5,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { collectPackageEntries, collectModuleExports, verifyCompiledSubpathSources } from "./lib/package-api-inputs.mjs";
+import { resolvePackageApiOwnership } from "./lib/package-api-ownership.mjs";
 
 /**
  * @lang zh-CN 按显式首方允许清单审计实际导出；编译器不执行模块、发出JS或声称注释精度。
@@ -19,6 +19,7 @@ import { collectPackageEntries, collectModuleExports, verifyCompiledSubpathSourc
  */
 export function auditRequiredPackages(workspaceRoot, options = {}) {
   const mainRoot=fileURLToPath(new URL("../",import.meta.url));
+  if (fs.realpathSync(path.join(workspaceRoot, "main-repo")) !== fs.realpathSync(mainRoot)) throw new Error("Workspace does not own this API inventory.");
   const scope=JSON.parse(fs.readFileSync(path.join(mainRoot,"reference/required-package-api.inputs.json"),"utf8"));
   if(scope.packages.length!==45 || new Set(scope.packages.map(item=>item.name)).size!==45) throw new Error("Required package scope must contain 45 unique names.");
   // <lang><zh-CN>显式子集只选择固定允许清单中的包，默认仍审核全部45包；空/重复/未知选择在读取包前拒绝。</zh-CN><en>An explicit subset selects only allowlisted packages; omission still audits all 45, and empty, duplicate or unknown selections fail before package reads.</en></lang>
@@ -28,18 +29,17 @@ export function auditRequiredPackages(workspaceRoot, options = {}) {
   for(const item of scope.packages) {
     if(names && !names.includes(item.name)) continue;
     // <lang lang="zh-CN">根来自固定owner而非清单任意绝对路径；实际manifest名称必须匹配。</lang><lang lang="en">Roots come from fixed owners rather than arbitrary absolute manifest paths; actual package names must match.</lang>
-    if(!["main-repo","hia-jsdoc","hia-htmdoc","hia-cssdoc","hia-dotnetdoc","jsdoc-plugin-hia-sys","jsdoc-theme-hia"].includes(item.owner) || (item.directory && !/^packages\/[a-z0-9-]+$|^apps\/cli$/.test(item.directory))) throw new Error("Unknown package API owner or directory.");
-    const ownerRoot=item.owner==="main-repo" ? mainRoot : path.join(workspaceRoot,"HIA",item.owner);
-    const packageRoot=path.join(ownerRoot,item.directory);
-    const bytes=fs.readFileSync(path.join(packageRoot,"package.json"));
-    const manifest=JSON.parse(bytes.toString("utf8"));
-    if(manifest.name!==item.name) throw new Error("Required API package identity mismatch.");
+    const {ownerRoot, packageRoot, manifest, manifestSha256} = resolvePackageApiOwnership(workspaceRoot, item);
     const entries=collectPackageEntries(packageRoot,manifest,item.sourceEntry,item.sourceEntries);
     const sourceMappings=verifyCompiledSubpathSources(ownerRoot,item.directory,entries);
     const sources=[...new Set(entries.filter(entry=>["runtime-module","type-declaration","command"].includes(entry.kind)).map(entry=>path.posix.join(item.directory,entry.source)))];
     const modules=collectModuleExports(ownerRoot,sources,options);
     const head=execFileSync("git",["-C",ownerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim();
-    packages.push({name:item.name,owner:item.owner,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256:createHash("sha256").update(bytes).digest("hex"),entries,modules,...(sourceMappings.length?{sourceMappings}:{})});
+    // <lang><zh-CN>物理归属之外核对固定首方托管身份，展示标签不能替代实际Git来源。</zh-CN><en>Check fixed first-party hosting identity in addition to physical ownership; display labels cannot substitute for the actual Git origin.</en></lang>
+    const repository = "mandolin/" + (item.owner === "main-repo" ? "HIA-Documentation" : item.owner);
+    const origin = execFileSync("git", ["-C", ownerRoot, "remote", "get-url", "origin"], {encoding: "utf8"}).trim();
+    if (!["https://github.com/" + repository + ".git", "https://github.com/" + repository, "git@github.com:" + repository + ".git"].includes(origin)) throw new Error("Required API repository identity mismatch.");
+    packages.push({name:item.name,owner:item.owner,repository,directory:item.directory,version:manifest.version,sourceHead:head,manifestSha256,entries,modules,...(sourceMappings.length?{sourceMappings}:{})});
   }
   return {description:"45必要包静态入口及编译器导出审核；不是文档生成覆盖/语义验收/发行证明。",packages,summary:{packages:packages.length,entries:packages.reduce((sum,item)=>sum+item.entries.length,0),modules:packages.reduce((sum,item)=>sum+item.modules.length,0),exports:packages.reduce((sum,item)=>sum+item.modules.reduce((total,module)=>total+module.exports.length,0),0)}};
 }

@@ -1,5 +1,9 @@
 # @hia-doc/renderer-html
 
+中文。`RenderProjectEntry.identityScope` 为可选聚合作用域。父子、成员与来源关系按作用域隔离，含作用域条目的索引使用 `0.2.0-draft`，原无作用域索引保持 `0.1.0-draft`。调用方负责稳定作用域和唯一条目标识，源码授权按来源策略核验。详见[聚合迁移](../../docs/project-manifest-migration.md#scoped-aggregation)。
+
+English. Optional `RenderProjectEntry.identityScope` isolates parent/member and provenance relations. Indexes containing scoped entries use `0.2.0-draft`, with unscoped indexes retaining `0.1.0-draft`. Callers supply stable scopes and unique entry IDs. Source authority follows the source policy.
+
 ## 正文来源语言 / Prose source language
 
 正文选择语言与实际原文语言分别管理。`data-hia-locale` 保留请求语言，段落 `lang` 使用字段解析后的实际语言。普通摘要使用条目现有 `i18n.defaultLocale`，单文档渲染还可使用所属文档的 `defaultLocale`。直接项目调用没有来源声明时输出 `lang=""`，避免继承界面语言。切换语言不会生成译文。

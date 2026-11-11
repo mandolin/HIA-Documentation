@@ -8,7 +8,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   HIA_PROJECT_MANIFEST_JSON_SCHEMA,
-  HIA_PROJECT_MANIFEST_SCHEMA_VERSION
+  HIA_PROJECT_MANIFEST_SCHEMA_VERSION,
+  HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA,
+  HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION
 } from "../../config/dist/index.js";
 import {
   BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
@@ -239,6 +241,15 @@ const definitions = [
     ownerPackage: "@hia-doc/config",
     schema: HIA_PROJECT_MANIFEST_JSON_SCHEMA,
     // <lang><zh-CN>项目清单完成独立边界/语义/类型审查后加入候选，不代表config包全部接口或正式发行已完成。</zh-CN><en>The project manifest joins the candidates after its own boundary/semantic/type review, not completion of all config APIs or formal publication.</en></lang>
+    stability: "stable-candidate"
+  },
+  // <lang><zh-CN>新作用域定义单列，旧清单schema的字节与地址保持独立。</zh-CN><en>Publish the scoped definition separately from the legacy manifest schema bytes and URI.</en></lang>
+  {
+    contractVersion: HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION,
+    fileName: "project-manifest-scoped.schema.json",
+    key: "project-manifest-scoped",
+    ownerPackage: "@hia-doc/config",
+    schema: HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA,
     stability: "stable-candidate"
   }
 ];

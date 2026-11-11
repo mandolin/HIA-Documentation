@@ -2,6 +2,7 @@
 import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } from "./project-source.js";
 
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { realpathSync } from "node:fs";
 import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -334,6 +335,11 @@ interface IndexedProjectDocSourceMap {
 }
 
 interface DotNetSourceRelationArtifact {
+  /**
+   * @lang zh-CN 宿主输入作用域，不从关系正文推断。
+   * @lang en Host input scope, never inferred from relation prose.
+   */
+  identityScope?: string;
   contract?: unknown;
   contractVersion?: unknown;
   producer?: unknown;
@@ -1616,11 +1622,15 @@ async function aggregateProjectDocs(
   diagnostics.push(...producerSummary.diagnostics);
   inputRefs.push(...producerSummary.inputRefs);
   const runtimeInputs: RuntimeProjectInput[] = [
-    ...(manifest.inputs ?? []).map((input) => ({
-      baseDir,
-      input,
-      source: "manifest" as const
-    })),
+    ...(manifest.inputs ?? []).map((input) => {
+      // <lang><zh-CN>新作用域只由1.1.0激活，旧开放扩展继续按旧语义读取。</zh-CN><en>Only 1.1.0 activates scopes; legacy open extensions retain their original interpretation.</en></lang>
+      const {identityScope, ...legacyInput} = input;
+      return {
+        baseDir,
+        input: manifest.schemaVersion === "1.1.0" && identityScope !== undefined ? {...legacyInput, identityScope} : legacyInput,
+        source: "manifest" as const
+      };
+    }),
     ...producerSummary.runtimeInputs
   ];
 
@@ -1693,7 +1703,9 @@ async function aggregateProjectDocs(
     }
 
     if (input.kind === "htmdoc-extraction" || input.kind === "cssdoc-extraction") {
-      entries.push(...extractionArtifactToProjectEntries(readResult, input));
+      entries.push(...extractionArtifactToProjectEntries(readResult, input).map((entry) => ({
+        ...entry, ...(input.identityScope ? {identityScope: input.identityScope} : {})
+      })));
       continue;
     }
 
@@ -1725,7 +1737,8 @@ async function aggregateProjectDocs(
       dotnetSourceRelations.push(...await readDotNetSourceRelationArtifacts(
         readResult as DocumentationProducerResult,
         inputPath,
-        diagnostics
+        diagnostics,
+        input.identityScope
       ));
 
       const materializedInputs = producerResultToRuntimeInputs(
@@ -1757,6 +1770,22 @@ async function aggregateProjectDocs(
     ));
   }
 
+  // <lang><zh-CN>在源码读取/首写前拒绝含糊身份，避免生成成功但内容已丢失。</zh-CN><en>Reject ambiguous identities before source reads or output writes rather than succeeding with discarded content.</en></lang>
+  const uniqueEntries = dedupeProjectEntries(entries, diagnostics);
+  if (diagnostics.some((item) => item.code === "HIA_CLI_PROJECT_SYMBOL_ID_AMBIGUOUS")) {
+    reportDiagnostics(diagnostics, io);
+    return { inputRefs, producerResults: producerSummary.results };
+  }
+  // <lang><zh-CN>地图歧义与符号歧义一样在首写前阻断，避免选取错误仓库的源码坐标。</zh-CN><en>Block ambiguous maps before the first write, just like symbol ambiguity, to avoid selecting another owner's coordinates.</en></lang>
+  const linkedEntries = linkProjectEntriesWithDocSourceMaps(
+    applyDotNetSourceRelations(disambiguateProjectEntryIds(uniqueEntries), dotnetSourceRelations, diagnostics),
+    indexedDocSourceMaps,
+    diagnostics
+  );
+  if (diagnostics.some((item) => item.code === "HIA_CLI_PROJECT_SOURCE_MAP_AMBIGUOUS" || item.code === "HIA_CLI_PROJECT_SOURCE_RELATION_AMBIGUOUS")) {
+    reportDiagnostics(diagnostics, io);
+    return { inputRefs, producerResults: producerSummary.results };
+  }
   return {
     projectInput: {
       project: {
@@ -1769,10 +1798,7 @@ async function aggregateProjectDocs(
       },
       profiles: profileRefs,
       docSourceMaps,
-      entries: linkProjectEntriesWithDocSourceMaps(
-        applyDotNetSourceRelations(disambiguateProjectEntryIds(dedupeProjectEntries(entries)), dotnetSourceRelations),
-        indexedDocSourceMaps
-      ),
+      entries: linkedEntries,
       diagnostics
     },
     inputRefs,
@@ -1781,20 +1807,29 @@ async function aggregateProjectDocs(
 }
 
 /**
- * 按领域视图和 canonical symbol id 去重，保留先出现的规范化 API 文档，避免 source-probe 辅助 document 形成第二套卡片。
- * Deduplicates by domain view and canonical symbol id, preserving the first normalized API document so source-probe helper documents do not create duplicate cards.
+ * @lang zh-CN 按作用域、领域视图和原生符号ID合并相同投影，拒绝矛盾声明，保留规范API/source-probe去重用途。
+ * @lang en Merge identical scope/view/native-ID projections, reject conflicting declarations and retain canonical API/source-probe deduplication.
  */
-function dedupeProjectEntries(entries: RenderProjectEntry[]): RenderProjectEntry[] {
-  const seenSymbolKeys = new Set<string>();
+function dedupeProjectEntries(entries: RenderProjectEntry[], diagnostics: HiaDiagnostic[]): RenderProjectEntry[] {
+  const seenSymbolKeys = new Map<string, RenderProjectEntry>();
   return entries.filter((entry) => {
     if (!entry.symbolId) {
       return true;
     }
-    const key = `${entry.view}:${entry.symbolId}`;
-    if (seenSymbolKeys.has(key)) {
+    const key = JSON.stringify([entry.identityScope ?? null, entry.view, entry.symbolId]);
+    const previous = seenSymbolKeys.get(key);
+    if (previous) {
+      // <lang><zh-CN>来源和正文都属于规范声明证据，输入路径/导航标签不决定正文优先级。</zh-CN><en>Origins and prose are canonical declaration evidence; input paths and navigation labels do not determine content precedence.</en></lang>
+      const projection = (item: RenderProjectEntry) => [item.name, item.kind, item.signature, item.summary, item.i18n, item.hierarchy, item.source, item.sourceCommentProjection];
+      // <lang><zh-CN>同一输入可重复引用；独立输入还须有相同实际来源坐标，正文相同不足以证明同一声明。</zh-CN><en>The same input can be referenced repeatedly; independent inputs additionally require identical actual source coordinates, since equal prose alone does not establish one declaration.</en></lang>
+      const sameInput = previous.input?.kind === entry.input?.kind && previous.input?.path === entry.input?.path;
+      const sameDeclaration = Boolean(previous.source?.path && previous.source.range?.start.line && isDeepStrictEqual(previous.source, entry.source));
+      if ((!sameInput && !sameDeclaration) || !isDeepStrictEqual(projection(previous), projection(entry))) {
+        diagnostics.push(createCliDiagnostic("HIA_CLI_PROJECT_SYMBOL_ID_AMBIGUOUS", "Project symbols share an unresolved identity with conflicting declaration evidence; provide distinct explicit scopes.", "error", "project.inputs"));
+      }
       return false;
     }
-    seenSymbolKeys.add(key);
+    seenSymbolKeys.set(key, entry);
     return true;
   });
 }
@@ -1816,8 +1851,8 @@ function disambiguateProjectEntryIds(entries: RenderProjectEntry[]): RenderProje
     if ((counts.get(entry.id) ?? 0) === 1) return entry;
     // <lang><zh-CN>只在内存保存原始身份；固定长 SHA-256 不向公开路由回显 Unicode、路径或长符号 ID。</zh-CN><en>Keep raw identity in memory only; fixed-length SHA-256 exposes no Unicode, path or long symbol ID in the public route.</en></lang>
     const identity = entry.symbolId
-      ? [entry.id, "symbol", entry.view, entry.symbolId]
-      : [entry.id, "fallback", entry.view, entry.kind, entry.name];
+      ? [entry.id, "symbol", ...(entry.identityScope ? [entry.identityScope] : []), entry.view, entry.symbolId]
+      : [entry.id, "fallback", ...(entry.identityScope ? [entry.identityScope] : []), entry.view, entry.kind, entry.name];
     const identityKey = JSON.stringify(identity);
     const projectedId = `project-entry~${createHash("sha256").update(identityKey, "utf8").digest("hex")}`;
     const existingIdentity = projectedIds.get(projectedId);
@@ -1834,7 +1869,8 @@ function disambiguateProjectEntryIds(entries: RenderProjectEntry[]): RenderProje
 async function readDotNetSourceRelationArtifacts(
   result: DocumentationProducerResult,
   resultPath: string,
-  diagnostics: HiaDiagnostic[]
+  diagnostics: HiaDiagnostic[],
+  identityScope?: string
 ): Promise<DotNetSourceRelationArtifact[]> {
   const resultBaseDir = path.dirname(resultPath);
   const relationArtifacts = result.artifacts.filter((artifact) => artifact.kind === "dotnetdoc-source-relation" || artifact.contract === "dotnetdoc-source-relation");
@@ -1854,7 +1890,7 @@ async function readDotNetSourceRelationArtifacts(
     try {
       const parsed = JSON.parse(await readFile(absolutePath, "utf8")) as unknown;
       if (isRecord(parsed) && Array.isArray(parsed.relations)) {
-        relations.push(parsed as DotNetSourceRelationArtifact);
+        relations.push({ ...parsed, identityScope } as DotNetSourceRelationArtifact);
       }
     } catch (error) {
       diagnostics.push(createCliDiagnostic(
@@ -2163,6 +2199,7 @@ function producerResultArtifactToRuntimeInput(
       path: artifactPath,
       ...(domain ? { domain } : {}),
       ...(profile ? { profile } : {}),
+      ...(input.identityScope ? { identityScope: input.identityScope } : {}),
       ...(input.semanticPath ? { semanticPath: input.semanticPath } : {})
     },
     producerId: result.producer.id,
@@ -2199,7 +2236,7 @@ function profileFromArtifactProfileIds(profileIds: string[] | undefined, profile
   return profileId ? profileRefs.find((profile) => profile.profileId === profileId) : undefined;
 }
 
-function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: DotNetSourceRelationArtifact[]): RenderProjectEntry[] {
+function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: DotNetSourceRelationArtifact[], diagnostics: HiaDiagnostic[]): RenderProjectEntry[] {
   if (artifacts.length === 0) {
     return entries;
   }
@@ -2213,16 +2250,24 @@ function applyDotNetSourceRelations(entries: RenderProjectEntry[], artifacts: Do
       const symbolId = stringValue(hiaSymbol.id) ?? stringValue(item.memberId);
       const declaration = isRecord(item.declaration) ? item.declaration : undefined;
       if (symbolId && declaration) {
-        const current = relationsBySymbolId.get(symbolId);
+        const key = JSON.stringify([artifact.identityScope ?? null, symbolId]);
+        const current = relationsBySymbolId.get(key);
+        // <lang><zh-CN>保留既有精度优先级；新作用域内同优先级的相异声明不得依输入顺序决定来源。</zh-CN><en>Retain existing precision preference; differing equally preferred scoped declarations must not choose origins by input order.</en></lang>
+        if (artifact.identityScope && current && compareDotNetSourceRelationPreference(item, current.relation) === 0
+          && !isDeepStrictEqual(item.declaration, current.relation.declaration)) {
+          diagnostics.push(createCliDiagnostic("HIA_CLI_PROJECT_SOURCE_RELATION_AMBIGUOUS", "Scoped source relations disagree on equally preferred declarations.", "error", "project.inputs"));
+        }
         if (!current || compareDotNetSourceRelationPreference(item, current.relation) < 0) {
-          relationsBySymbolId.set(symbolId, { artifact, relation: item });
+          relationsBySymbolId.set(key, { artifact, relation: item });
         }
       }
     }
   }
 
   return entries.map((entry) => {
-    const indexedRelation = entry.symbolId ? relationsBySymbolId.get(entry.symbolId) : undefined;
+    // <lang><zh-CN>新作用域中的.NET语义关系只接入.NET视图，原未限定投影沿用旧兼容行为。</zh-CN><en>Scoped .NET semantic relations apply only to the .NET view; unscoped projections retain legacy compatibility.</en></lang>
+    if (entry.identityScope && entry.view !== "dotnet") return entry;
+    const indexedRelation = entry.symbolId ? relationsBySymbolId.get(JSON.stringify([entry.identityScope ?? null, entry.symbolId])) : undefined;
     const relation = indexedRelation?.relation;
     const declaration = isRecord(relation?.declaration) ? relation.declaration : undefined;
     const declarationPath = stringValue(declaration?.path);
@@ -2446,6 +2491,7 @@ function hiaSymbolToProjectEntry(
     name: symbol.name || symbol.id,
     kind: symbol.kind,
     symbolId: symbol.id,
+    ...(input.identityScope ? { identityScope: input.identityScope } : {}),
     view: resolveProjectEntryView(symbol.kind, input.kind, input.domain, fallbackView),
     ...(symbol.summary ? { summary: symbol.summary } : {}),
     ...(symbol.signature ? { signature: symbol.signature } : {}),
@@ -2554,6 +2600,7 @@ function extractionArtifactToProjectEntries(artifact: unknown, input: ProjectMan
 function docSourceMapToRef(index: DocSourceMapIndex, input: ProjectManifestInput): RenderProjectDocSourceMapRef {
   return {
     path: input.path ?? "",
+    ...(input.identityScope ? { identityScope: input.identityScope } : {}),
     ...(index.contractVersion ? { contractVersion: index.contractVersion } : {}),
     ...(index.entries[0]?.artifactLinks[0]?.path ? { entryArtifact: index.entries[0].artifactLinks[0].path } : {}),
     artifactCount: index.artifactCount,
@@ -2577,7 +2624,8 @@ function docSourceMapToRef(index: DocSourceMapIndex, input: ProjectManifestInput
 
 function linkProjectEntriesWithDocSourceMaps(
   entries: RenderProjectEntry[],
-  docSourceMaps: IndexedProjectDocSourceMap[]
+  docSourceMaps: IndexedProjectDocSourceMap[],
+  diagnostics: HiaDiagnostic[]
 ): RenderProjectEntry[] {
   if (docSourceMaps.length === 0) {
     return entries;
@@ -2601,10 +2649,33 @@ function linkProjectEntriesWithDocSourceMaps(
   }
 
   return entries.map((entry) => {
-    const matches = entry.symbolId ? docMapEntriesBySymbolId.get(entry.symbolId) ?? [] : [];
+    // <lang><zh-CN>输入显式声明领域时同时核视图，未声明领域的地图由同作用域原生身份匹配。</zh-CN><en>Also check the view when an input declares a domain; domain-neutral maps match native IDs within their scope.</en></lang>
+    const matches = entry.symbolId ? (docMapEntriesBySymbolId.get(entry.symbolId) ?? []).filter((match) =>
+      match.sourceMap.input.input.identityScope === entry.identityScope
+      && (!entry.identityScope || resolveProjectEntryView(
+        entry.kind, undefined, match.sourceMap.input.input.domain, entry.view
+      ) === entry.view)
+    ) : [];
     const firstMatch = matches[0];
 
     if (!firstMatch) {
+      return entry;
+    }
+
+    // <lang><zh-CN>同作用域/原生ID存在多个视图时，中性地图没有足够证据挑选目标视图。</zh-CN><en>A neutral map cannot choose a target when one scope/native ID occurs in multiple views.</en></lang>
+    const crossesViews = entry.identityScope && matches.some((match) => !match.sourceMap.input.input.domain || match.sourceMap.input.input.domain === "other")
+      && entries.some((candidate) => candidate.identityScope === entry.identityScope && candidate.symbolId === entry.symbolId && candidate.view !== entry.view);
+    if (crossesViews) {
+      diagnostics.push(createCliDiagnostic("HIA_CLI_PROJECT_SOURCE_MAP_AMBIGUOUS", "Scoped maps require an explicit domain for symbols present in multiple views.", "error", "project.inputs"));
+      return entry;
+    }
+
+    // <lang><zh-CN>新作用域必须给出同一份来源及产物证据；旧地图保留原优先规则。</zh-CN><en>Scoped matches must agree on source and artifact evidence; legacy maps retain their original precedence.</en></lang>
+    if (entry.identityScope && matches.some((match) => !isDeepStrictEqual(
+      [match.entry.sourceLinks, match.entry.artifactLinks],
+      [firstMatch.entry.sourceLinks, firstMatch.entry.artifactLinks]
+    ))) {
+      diagnostics.push(createCliDiagnostic("HIA_CLI_PROJECT_SOURCE_MAP_AMBIGUOUS", "Scoped symbol maps disagree on declaration or artifact coordinates.", "error", "project.inputs"));
       return entry;
     }
 

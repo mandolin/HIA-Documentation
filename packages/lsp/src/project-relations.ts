@@ -72,6 +72,11 @@ export interface HiaProjectRelationProjectInfo {
  * Public project-index entry summary that can be aligned with proposals and source maps.
  */
 export interface HiaProjectRelationEntry {
+  /**
+   * @lang zh-CN 索引0.2条目的可选聚合作用域，与原生符号身份共同保留。
+   * @lang en Optional aggregate scope from index 0.2, retained alongside the native symbol identity.
+   */
+  identityScope?: string;
   artifactPath?: string;
   docSourceMapEntryId?: string;
   docSourceMapPath?: string;
@@ -204,6 +209,9 @@ function createProjectRelationEntry(value: unknown): HiaProjectRelationEntry | u
     kind,
     name
   };
+  // <lang><zh-CN>宿主投影保留已限定身份，图关联继续使用唯一entry ID。</zh-CN><en>Retain scoped identity in the host projection while graph joins continue using unique entry IDs.</en></lang>
+  const identityScope = stringValue(entry?.identityScope);
+  if (identityScope) item.identityScope = identityScope;
   const artifactPath = stringValue(docSourceMap?.artifactPath);
   const docSourceMapEntryId = stringValue(docSourceMap?.entryId);
   const docSourceMapPath = stringValue(docSourceMap?.path);

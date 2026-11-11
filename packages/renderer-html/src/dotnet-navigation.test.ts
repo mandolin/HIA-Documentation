@@ -36,6 +36,19 @@ function typeNodes(entries: RenderProjectEntry[]): RenderProjectNavigationTreeNo
   return types;
 }
 
+it("keeps equal .NET documentation IDs in separate scoped type groups", () => {
+  const entries = ["assembly:alpha", "assembly:beta"].flatMap((identityScope, index) =>
+    genericEntries().map(entry => ({...entry, id: index + ":" + entry.id, identityScope}))
+  );
+  const nodes = typeNodes(entries);
+  expect(nodes).toHaveLength(2);
+  expect(nodes.map(node => node.entryId).sort()).toEqual(["0:type:box", "1:type:box"]);
+  for (const node of nodes) {
+    const owner = node.entryId!.slice(0, 1);
+    expect(node.children?.filter(child => child.entryId).map(child => child.entryId)).toEqual([owner + ":member:run"]);
+  }
+});
+
 it.each([false, true])("joins generic type/member identities with reversed input %s", reversed => {
   // <lang><zh-CN>显示与原始名称不同，两个入口必须在同一类型组中。</zh-CN><en>Display and raw names differ, but both entries must share one type group.</en></lang>
   const entries = genericEntries();

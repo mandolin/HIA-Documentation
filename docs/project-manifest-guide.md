@@ -39,6 +39,11 @@ Profile references are explicit. `@hia-doc/profiles` distributes the official pr
 
 ## Minimal Manifest
 
+For independent documents whose native symbol IDs overlap, explicitly use manifest
+`1.1.0` and assign a stable `identityScope` to each document and its maps, or to
+their enclosing `documentation-producer-result` input. See the scoped aggregation
+section in the [migration guide](project-manifest-migration.md#scoped-aggregation).
+
 ```json
 {
   "schemaVersion": "1.0.0",

@@ -102,6 +102,11 @@ export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT = "hia-project-navigation-ind
  */
 export const HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION = "0.1.0-draft";
 /**
+ * @lang zh-CN 携带显式符号作用域的协调索引版本，旧索引writer保留。
+ * @lang en Coordinated index version carrying explicit symbol scopes, retaining the legacy index writer.
+ */
+export const HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION = "0.2.0-draft";
+/**
  * @lang zh-CN 项目级关系图的中性 contract 名称；用于表达文档入口、源码、生成物与宿主能力之间的关系。
  * @lang en Neutral project-level relation-graph contract for documentation entries, sources, generated artifacts, and host capabilities.
  */
@@ -643,6 +648,11 @@ export interface RenderProjectProfileRef {
  */
 export interface RenderProjectDocSourceMapRef {
   /**
+   * @lang zh-CN 地图所属的可选聚合作用域，不授予源码读取权限。
+   * @lang en Optional aggregate scope owning this map, granting no source-read authority.
+   */
+  identityScope?: string;
+  /**
    * @lang zh-CN 上游提供的生成工件数量摘要。
    * @lang en Upstream-provided count summary of generated artifacts.
    */
@@ -874,6 +884,11 @@ export interface RenderProjectRelation {
  * @lang en Structured project entry with optional localization, source and relation summaries; inputs own identities and body/source disclosure requires owner and presentation-policy validation.
  */
 export interface RenderProjectEntry {
+  /**
+   * @lang zh-CN 可选发布安全聚合作用域，保留原生symbolId且不授权源码读取。
+   * @lang en Optional publication-safe aggregation scope, preserving native symbolId and granting no source-read authority.
+   */
+  identityScope?: string;
   /**
    * @lang zh-CN 调用方提供的稳定条目标识，用于规范片段路由及主题身份。
    * @lang en Caller-supplied stable entry identifier used for canonical fragment routes and topic identity.
@@ -1650,7 +1665,7 @@ export interface RenderProjectNavigationIndexRef {
    * @lang zh-CN 固定的0.1.0-draft导航索引版本。
    * @lang en Fixed 0.1.0-draft navigation-index version.
    */
-  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION | typeof HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION;
   /**
    * @lang zh-CN 被引用导航索引中条目记录的数量。
    * @lang en Number of entry records in the referenced navigation index.
@@ -1821,7 +1836,7 @@ export interface RenderProjectNavigationIndex {
    * @lang zh-CN 固定的0.1.0-draft导航索引版本。
    * @lang en Fixed 0.1.0-draft navigation-index version.
    */
-  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION;
+  contractVersion: typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION | typeof HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION;
   /**
    * @lang zh-CN 本次输出解析后的项目身份、标题、正文语言及领域统计。
    * @lang en Project identity, title, content locales and domain counts resolved for this output.
@@ -2103,6 +2118,11 @@ export interface RenderProjectNavigationTreeNode {
  * @lang en Stable identity and public metadata for one navigable entry; the unified project page still renders full detail.
  */
 export interface RenderProjectNavigationEntry {
+  /**
+   * @lang zh-CN 新索引中显式保留的聚合作用域。
+   * @lang en Explicit aggregation scope retained in the new index.
+   */
+  identityScope?: string;
   /**
    * @lang zh-CN 导航条目沿用的稳定文档条目标识。
    * @lang en Stable documentation-entry identifier preserved by the navigation entry.
@@ -2399,13 +2419,35 @@ interface ProjectHtmlRenderPlan {
  * @lang en Builds/validates shared facts before output, preserving contracts, ordering and prose across ordinary and streaming APIs.
  */
 function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions): ProjectHtmlRenderPlan {
+  // <lang><zh-CN>直接API调用也必须遵守新逻辑作用域的词法边界，在首写前拒绝无效值。</zh-CN><en>Direct API calls also enforce logical-scope syntax before the first output write.</en></lang>
+  const scopedSymbols = new Set<string>();
+  for (const entry of projectInput.entries) {
+    if (entry.identityScope !== undefined && (typeof entry.identityScope !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(entry.identityScope))) {
+      throw new TypeError("HIA_RENDER_PROJECT_IDENTITY_SCOPE_INVALID");
+    }
+    if (entry.identityScope && entry.symbolId) {
+      // <lang><zh-CN>显式.NET文档别名参与相同唯一性检查，避免父类型关联覆盖另一声明。</zh-CN><en>Explicit .NET documentation aliases share the uniqueness check so parent joins cannot overwrite another declaration.</en></lang>
+      const aliases = new Set([entry.symbolId, ...(entry.hierarchy?.symbolDocumentationId ? [entry.hierarchy.symbolDocumentationId] : [])]);
+      for (const alias of aliases) {
+        const key = projectSymbolLookupKey(entry, alias);
+        if (scopedSymbols.has(key)) throw new TypeError("HIA_RENDER_PROJECT_SYMBOL_ID_AMBIGUOUS");
+        scopedSymbols.add(key);
+      }
+    }
+  }
   // <lang><zh-CN>资源路由非法时必须在第一次writer调用前拒绝。</zh-CN><en>Reject invalid asset routing before the first writer invocation.</en></lang>
   relocateDefaultThemeAssets([], options.themeAssets);
   const siteLayout = options.projectSite?.layout ?? "split-site";
   // <lang><zh-CN>仅 split-site 写独立条目及无脚本页；冲突必须在任何文件写入前拒绝。</zh-CN><en>Only split-site writes separate entry and no-script pages; reject their collisions before writing any file.</en></lang>
   if (siteLayout === "split-site") assertUniqueProjectEntryArtifactNames(projectInput.entries);
   // <lang><zh-CN>关系图先规范化，确保 presentation identity 使用最终 relation facts，而不是调用者数组顺序。</zh-CN><en>Normalize the relation graph first so presentation identity uses final relation facts rather than caller array order.</en></lang>
-  const normalizedProjectInput = normalizeProjectRelationGraphInput(projectInput);
+  // <lang><zh-CN>显式父项在本作用域/视图缺失时保留条目并报告未解析，避免向其它来源借用父项。</zh-CN><en>Retain entries and report unresolved explicit parents within their scope/view, without borrowing parents from other origins.</en></lang>
+  const parentDiagnostics: HiaDiagnostic[] = projectInput.entries
+    .filter(entry => entry.identityScope && entry.hierarchy?.parentSymbolId && !findProjectParentEntry(entry, projectInput.entries))
+    .map(() => ({code: "HIA_RENDER_PROJECT_PARENT_UNRESOLVED", message: "Scoped parent is absent from its view and identity scope.", severity: "warning", targetPath: "project.entries"}));
+  const normalizedProjectInput = normalizeProjectRelationGraphInput(parentDiagnostics.length
+    ? {...projectInput, diagnostics: [...(projectInput.diagnostics ?? []), ...parentDiagnostics]}
+    : projectInput);
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
   const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
@@ -3009,7 +3051,8 @@ function createProjectNavigationIndex(
 
   return {
     contract: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT,
-    contractVersion: HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
+    contractVersion: projectInput.entries.some((entry) => entry.identityScope !== undefined)
+      ? HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION : HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION,
     project: {
       defaultLocale: localeModel.selectedLocale,
       entryCounts: countEntriesByView(projectInput.entries),
@@ -3037,6 +3080,7 @@ function createProjectNavigationIndex(
           ? { sourceCommentProjection: selectProjectSourceCommentProjection(entry.sourceCommentProjection) }
           : {}),
         ...(entry.symbolId ? { symbolId: entry.symbolId } : {}),
+        ...(entry.identityScope ? { identityScope: entry.identityScope } : {}),
         ...(entry.hierarchy ? { hierarchy: entry.hierarchy } : {}),
         contentPath: createProjectEntryContentPath(entry.id),
         ...(options.projectSite?.layout === "single-page" ? {} : { noScriptPagePath: createProjectNoScriptPagePath(entry.id) }),
@@ -3431,7 +3475,18 @@ function createProjectSemanticContainerPath(entry: RenderProjectEntry): string {
 /** 仅按显式 parentSymbolId/symbolId 解析父入口，不执行名称或路径猜测。Resolves a parent only by explicit parentSymbolId/symbolId, with no name or path inference. */
 function findProjectParentEntry(entry: RenderProjectEntry, entries: RenderProjectEntry[]): RenderProjectEntry | undefined {
   const parentSymbolId = entry.hierarchy?.parentSymbolId;
-  return parentSymbolId ? entries.find((candidate) => candidate.symbolId === parentSymbolId) : undefined;
+  return parentSymbolId ? entries.find((candidate) => (candidate.symbolId === parentSymbolId
+    || Boolean(entry.identityScope && candidate.hierarchy?.symbolDocumentationId === parentSymbolId))
+    && candidate.identityScope === entry.identityScope
+    && (!entry.identityScope || candidate.view === entry.view)) : undefined;
+}
+
+/**
+ * @lang zh-CN 为新作用域构造层级关联键，旧未限定符号保留原键及跨视图行为。
+ * @lang en Build hierarchy join keys for new scopes, retaining original keys and cross-view behavior for legacy symbols.
+ */
+function projectSymbolLookupKey(entry: RenderProjectEntry, symbolId: string): string {
+  return entry.identityScope ? JSON.stringify([entry.identityScope, entry.view, symbolId]) : symbolId;
 }
 
 /** 把 canonical 与 presentation location 投影到 leaf node，保持 tree node identity 不变。Projects canonical and presentation locations onto leaf nodes without changing tree-node identity. */
@@ -4851,7 +4906,11 @@ function collectProjectEntryMembers(entry: RenderProjectEntry, entries: RenderPr
     return [];
   }
   return entries
-    .filter((candidate) => candidate.hierarchy?.parentSymbolId === entry.symbolId)
+    .filter((candidate) => (candidate.hierarchy?.parentSymbolId === entry.symbolId
+      || Boolean(entry.identityScope && entry.hierarchy?.symbolDocumentationId
+        && candidate.hierarchy?.parentSymbolId === entry.hierarchy.symbolDocumentationId))
+      && candidate.identityScope === entry.identityScope
+      && (!entry.identityScope || candidate.view === entry.view))
     .sort(compareProjectNavigationEntries);
 }
 
@@ -5535,7 +5594,7 @@ function addProjectSourceRelation(
   }
 
   const entryNodeId = createProjectEntryRelationNodeId(entry.id);
-  const sourceNodeId = createProjectPathRelationNodeId("source", sourcePath);
+  const sourceNodeId = createProjectPathRelationNodeId("source", sourcePath, entry.identityScope);
   addProjectRelationNode(nodes, {
     id: sourceNodeId,
     kind: "source",
@@ -5565,7 +5624,7 @@ function addProjectArtifactRelation(
   }
 
   const entryNodeId = createProjectEntryRelationNodeId(entry.id);
-  const artifactNodeId = createProjectPathRelationNodeId("artifact", entry.docSourceMap.artifactPath);
+  const artifactNodeId = createProjectPathRelationNodeId("artifact", entry.docSourceMap.artifactPath, entry.identityScope);
   addProjectRelationNode(nodes, {
     id: artifactNodeId,
     kind: "artifact",
@@ -5656,8 +5715,10 @@ function createProjectEntryRelationNodeId(entryId: string): string {
   return `entry:${entryId}`;
 }
 
-function createProjectPathRelationNodeId(kind: "source" | "artifact", path: string): string {
-  return `${kind}:${path.replaceAll("\\", "/")}`;
+function createProjectPathRelationNodeId(kind: "source" | "artifact", path: string, identityScope?: string): string {
+  // <lang><zh-CN>相同相对路径在不同源归属中保持独立关系节点，旧路径身份保留。</zh-CN><en>Equal relative paths retain distinct relation nodes across source scopes while legacy path identities remain unchanged.</en></lang>
+  const normalized = path.replaceAll("\\", "/");
+  return identityScope ? `scoped-${kind}:${JSON.stringify([identityScope, normalized])}` : `${kind}:${normalized}`;
 }
 
 function createProjectRelationId(kind: RenderProjectRelationKind, from: string, to: string): string {
@@ -5751,7 +5812,9 @@ function collectDotNetNavigationTree(
     const parts = getDotNetNavigationParts(entry);
     const assemblyNode = getOrCreateProjectTreeChild(
       roots,
-      `dotnet:${parts.rootKind}:${slugProjectGroupLabel(parts.assemblyLabel)}`,
+      entry.identityScope
+        ? `scoped-dotnet:${JSON.stringify([entry.identityScope, parts.rootKind, parts.assemblyLabel])}`
+        : `dotnet:${parts.rootKind}:${slugProjectGroupLabel(parts.assemblyLabel)}`,
       parts.rootKind,
       parts.assemblyLabel
     );
@@ -5875,7 +5938,11 @@ function collectSymbolContainmentNavigationTree(entries: RenderProjectEntry[]): 
 
   for (const entry of entries) {
     if (entry.symbolId) {
-      entriesBySymbolId.set(entry.symbolId, entry);
+      entriesBySymbolId.set(projectSymbolLookupKey(entry, entry.symbolId), entry);
+      // <lang><zh-CN>新作用域同时登记.NET显式文档身份，成员的原始父ID保持不改写。</zh-CN><en>Also index explicit .NET documentation identities in new scopes without rewriting native parent IDs.</en></lang>
+      if (entry.identityScope && entry.hierarchy?.symbolDocumentationId) {
+        entriesBySymbolId.set(projectSymbolLookupKey(entry, entry.hierarchy.symbolDocumentationId), entry);
+      }
     }
     const entryNode = getOrCreateProjectTreeChild(
       nodesByEntryId,
@@ -5891,7 +5958,7 @@ function collectSymbolContainmentNavigationTree(entries: RenderProjectEntry[]): 
   for (const entry of entries) {
     const entryNode = nodesByEntryId.get(`entry:${entry.id}`);
     const parentEntry = entry.hierarchy?.parentSymbolId
-      ? entriesBySymbolId.get(entry.hierarchy.parentSymbolId)
+      ? entriesBySymbolId.get(projectSymbolLookupKey(entry, entry.hierarchy.parentSymbolId))
       : undefined;
     const parentNode = parentEntry ? nodesByEntryId.get(`entry:${parentEntry.id}`) : undefined;
     if (entryNode && parentEntry && parentNode && parentNode !== entryNode) {
@@ -5987,7 +6054,11 @@ function collectSemanticSourceNavigationTree(entries: RenderProjectEntry[]): Ren
 
   for (const entry of entries) {
     if (entry.symbolId) {
-      entriesBySymbolId.set(entry.symbolId, entry);
+      entriesBySymbolId.set(projectSymbolLookupKey(entry, entry.symbolId), entry);
+      // <lang><zh-CN>新作用域同时登记.NET显式文档身份，成员的原始父ID保持不改写。</zh-CN><en>Also index explicit .NET documentation identities in new scopes without rewriting native parent IDs.</en></lang>
+      if (entry.identityScope && entry.hierarchy?.symbolDocumentationId) {
+        entriesBySymbolId.set(projectSymbolLookupKey(entry, entry.hierarchy.symbolDocumentationId), entry);
+      }
     }
     const entryNode = getOrCreateProjectTreeChild(
       nodesByEntryId,
@@ -6003,7 +6074,9 @@ function collectSemanticSourceNavigationTree(entries: RenderProjectEntry[]): Ren
     const sourcePathLabel = entry.source?.path?.replaceAll("\\", "/") || "unknown-source";
     const rootNode = getOrCreateProjectTreeChild(
       roots,
-      `source-root:${slugProjectGroupLabel(sourceRootLabel)}`,
+      entry.identityScope
+        ? `scoped-source-root:${JSON.stringify([entry.identityScope, sourceRootLabel])}`
+        : `source-root:${slugProjectGroupLabel(sourceRootLabel)}`,
       "source-root",
       sourceRootLabel
     );
@@ -6024,7 +6097,7 @@ function collectSemanticSourceNavigationTree(entries: RenderProjectEntry[]): Ren
   for (const entry of entries) {
     const entryNode = nodesByEntryId.get(`entry:${entry.id}`);
     const parentEntry = entry.hierarchy?.parentSymbolId
-      ? entriesBySymbolId.get(entry.hierarchy.parentSymbolId)
+      ? entriesBySymbolId.get(projectSymbolLookupKey(entry, entry.hierarchy.parentSymbolId))
       : undefined;
     const parentNode = parentEntry
       ? nodesByEntryId.get(`entry:${parentEntry.id}`)
@@ -6060,7 +6133,7 @@ function incrementProjectNavigationAncestorCounts(
       node.entryCount += 1;
     }
     current = current.hierarchy?.parentSymbolId
-      ? entriesBySymbolId.get(current.hierarchy.parentSymbolId)
+      ? entriesBySymbolId.get(projectSymbolLookupKey(current, current.hierarchy.parentSymbolId))
       : undefined;
   }
 }

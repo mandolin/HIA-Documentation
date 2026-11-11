@@ -2864,6 +2864,36 @@
           ]
         },
         {
+          "name": "HIA_PROJECT_MANIFEST_SCOPED_JSON_SCHEMA",
+          "kind": "VariableDeclaration",
+          "owner": "packages/config/src/project-manifest.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "f9a94ec6b7382eb68c779df0a34d2d893e788dc7f9ec723881f1be0e47d1d51c"
+          ]
+        },
+        {
+          "name": "HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_ID",
+          "kind": "VariableDeclaration",
+          "owner": "packages/config/src/project-manifest.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "065203d5da68236b74c1040fa8abbdecdba5b27fc601edd487d3a525f827081d"
+          ]
+        },
+        {
+          "name": "HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/config/src/project-manifest.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "ac493fa886d394b7590d0ecbdcd14722ef8d8d9f30ab2c9bcba681cd49227577"
+          ]
+        },
+        {
           "name": "HIA_PROJECT_MANIFEST_SEMANTIC_PATH_KINDS",
           "kind": "VariableDeclaration",
           "owner": "packages/config/src/project-manifest.ts",
@@ -3137,6 +3167,11 @@
           "signatures": [],
           "fields": [
             {
+              "name": "identityScope",
+              "optional": true,
+              "type": "string"
+            },
+            {
               "name": "kind",
               "optional": true,
               "type": "HiaProjectManifestInputKind | string"
@@ -3173,7 +3208,7 @@
             }
           ],
           "declarationFingerprints": [
-            "5357a130ded3e5bd06715b5813b8d284124020d4cafe3ba4f68052a5b8f1c2c0"
+            "9948e88aa414ecffbbbf8ad93a55f612a72d46e5a7c612340eec33b593aeccfd"
           ]
         },
         {
@@ -3377,7 +3412,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "049f89454e6c6a79fff04824ffa2b2117e8747844a2943de7f387c2c8d553c09"
+            "f29571b63e44b4003b2cac6aca471728d5f0b41b29c28d922a45693d1f7c9dd7"
           ]
         },
         {
@@ -3670,7 +3705,7 @@
           ],
           "fields": [],
           "declarationFingerprints": [
-            "977928073123b187902b4339455f78cfe4b5a39fc3c29083b04744ce294f4d3a"
+            "337ef5528bb3b3ad4fa70e8ab549c43f01148d66bc62b2c9953708fa08564883"
           ]
         }
       ]
@@ -13827,6 +13862,16 @@
           ]
         },
         {
+          "name": "HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/renderer-html/src/index.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "d987dea312a882ff287b9e08a442c9025d96bd485acac9a2b83c1144793913a7"
+          ]
+        },
+        {
           "name": "HIA_RENDER_HTML_MANIFEST_SCHEMA_VERSION",
           "kind": "VariableDeclaration",
           "owner": "packages/renderer-html/src/index.ts",
@@ -14393,6 +14438,11 @@
           "signatures": [],
           "fields": [
             {
+              "name": "identityScope",
+              "optional": true,
+              "type": "string"
+            },
+            {
               "name": "artifactCount",
               "optional": true,
               "type": "number"
@@ -14454,7 +14504,7 @@
             }
           ],
           "declarationFingerprints": [
-            "7b972cb7c450aef71bf7bdd9ae4aade5dbb119ed86e51ddfca7966e6b81c9fc7"
+            "513bef7fa15a11b74594f6c92860352556fee2209e595dd04d67772b1c2ca626"
           ]
         },
         {
@@ -14504,6 +14554,11 @@
           "owner": "packages/renderer-html/src/index.ts",
           "signatures": [],
           "fields": [
+            {
+              "name": "identityScope",
+              "optional": true,
+              "type": "string"
+            },
             {
               "name": "id",
               "optional": false,
@@ -14591,7 +14646,7 @@
             }
           ],
           "declarationFingerprints": [
-            "06d08761265c2f3f1f3d532fc7293ca96b86f3eba76430e90dc2da38c17a97ba"
+            "ee8e4b855f4cb19a6590a5421dcac6d0d2e47e68c83a12263becb2be59096c7d"
           ]
         },
         {
@@ -14916,6 +14971,11 @@
           "signatures": [],
           "fields": [
             {
+              "name": "identityScope",
+              "optional": true,
+              "type": "string"
+            },
+            {
               "name": "id",
               "optional": false,
               "type": "string"
@@ -15037,7 +15097,7 @@
             }
           ],
           "declarationFingerprints": [
-            "3f61366436addb7897d39fda7a636978715e200f8b890b39a1b76e38004a30b4"
+            "85c7f424f791bfb09f5a9e11ac43f3c587c2a96e38b3830b7dbb7f22ea856ca9"
           ]
         },
         {
@@ -15100,7 +15160,7 @@
             {
               "name": "contractVersion",
               "optional": false,
-              "type": "typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION"
+              "type": "typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION | typeof HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION"
             },
             {
               "name": "project",
@@ -15164,7 +15224,7 @@
             }
           ],
           "declarationFingerprints": [
-            "9dbcab26cabe911b7c1572d5071000602d666bfa4f8f5c2d559cfa0ed8776f88"
+            "7a1b9185734fa2e129f84820dc359088642bd54f1ca0098cb0cc4f5bc80ffe44"
           ]
         },
         {
@@ -15181,7 +15241,7 @@
             {
               "name": "contractVersion",
               "optional": false,
-              "type": "typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION"
+              "type": "typeof HIA_PROJECT_NAVIGATION_INDEX_CONTRACT_VERSION | typeof HIA_PROJECT_SCOPED_NAVIGATION_INDEX_CONTRACT_VERSION"
             },
             {
               "name": "entryCount",
@@ -15195,7 +15255,7 @@
             }
           ],
           "declarationFingerprints": [
-            "5105df9668ba2f836409bf20497ddc95781577911987b9f8554582170a78b45f"
+            "1c231577a3cec58409589d94c458fd985243aaec43d71d53e053a3687d85b1ef"
           ]
         },
         {
@@ -16166,6 +16226,7 @@
         "./generated-documentation-binding.schema.json": "./dist/schemas/generated-documentation-binding.schema.json",
         "./hia-document.schema.json": "./dist/schemas/hia-document.schema.json",
         "./project-manifest.schema.json": "./dist/schemas/project-manifest.schema.json",
+        "./project-manifest-scoped.schema.json": "./dist/schemas/project-manifest-scoped.schema.json",
         "./package.json": "./package.json"
       },
       "bin": {},
@@ -16209,7 +16270,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "3b012280cd8dcaad834bab0741341a3a7d7bc1caf6ec01410ffa96f963102d39"
+            "d9485ef488588b7a89e09e8a9072e23ed84bbf55687b890d0958c7be94ef2971"
           ]
         },
         {

@@ -16,6 +16,10 @@ HIA 文档工具共享的配置 contract 与 loader。
 
 ## Project Manifest Source Candidate
 
+中文。清单 `1.1.0` 显式支持 `inputs[].identityScope`，通过生产器结果向文档和地图传递，保持原生符号标识。新独立 schema 使用 `project-manifest-scoped`，原 `project-manifest` 默认仍为 `1.0.0`。采用方法见[清单迁移](../../docs/project-manifest-migration.md#scoped-aggregation)。
+
+English. Manifest `1.1.0` explicitly supports `inputs[].identityScope`, inherited by documents and maps materialized from producer results while retaining native IDs. Its independent schema key is `project-manifest-scoped`. The original `project-manifest` default remains `1.0.0`.
+
 The project-manifest contract is a `1.0.0` source candidate with exact `0.1.0-draft` runtime compatibility. It is separate from the project-config schema and documentation-profile runtime. Package `0.1.5` and registry availability are not promoted by a source contract change.
 
 中文：项目清单纯守卫检查已声明字段、普通JSON图、路径与既有跨字段约束，不读取文件或执行生产器；输入与metadata引用不被改写。顶层profile引用可只含元信息，无path时不要求文件或自动下载。详见[清单迁移与边界](../../docs/project-manifest-migration.md)。
