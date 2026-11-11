@@ -6,6 +6,8 @@
 - Add `pnpm reference:core:build` for bilingual module references from thirteen core packages, verifying declarations and native artifacts and exposing only the output's `site/` directory for publication.
 - 官网代码文档入口和显式分站导航连接 `HIA-Documentation-API`，默认导航工厂调用继续解析原站内路径。
 - Website code-reference links and explicit sibling-site navigation target `HIA-Documentation-API`; default navigation-factory calls retain their site-local paths.
+- 为分站导航附加发布官网手册深链，逐项检查冲突并保留旧根入口与版本索引。
+- Publish website manual deep links for sibling-site navigation, checking collisions and preserving the existing root entry and version index.
 
 ## Unreleased — Generated reference size
 

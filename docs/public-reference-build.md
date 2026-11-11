@@ -15,6 +15,10 @@ pnpm build
 pnpm reference:core:build
 ```
 
+The main reference Pages workflow also builds and appends the confirmed website deep-link pages under `docs/` and `site/`, plus their assets. This provides live manual targets for the API site's navigation. The original root reference page and `versions.json` retain their existing identities until the formal website-root migration. Preflight rejects conflicting paths before copying, and retries accept byte-identical files.
+
+中文。主参考 Pages 流程同时构建并附加已确认的 `docs/`、`site/` 页面及其资产，为 API 站导航提供真实手册目标。旧根参考和 `versions.json` 保持既有身份，正式官网切根独立验收。附加操作先核全部路径冲突，重试接受完全相同的文件。
+
 中文。清单的 `packageApis` 显式选择核心包，当前包含 `@hia-doc/plugin-sdk` 的三个模块入口及 `@hia-doc/jsondoc` 的根入口。构建从真实包入口独立审核公开绑定，采用通用 TypeScript 项目生产器的精确 0.4 工件，经既有项目输入汇入参考站。原单文件样本继续保留。上传前重新核对实际入口、四种工件、每个声明的字段/签名/来源、可读页面及地图文件。包的 JSON 资源和命令入口分别核验。
 
 English. The definition's `packageApis` explicitly selects core packages, currently the three module entry points of `@hia-doc/plugin-sdk` and the root entry point of `@hia-doc/jsondoc`. Builds independently inspect real package exports, generate exact 0.4 artifacts through the generic TypeScript project producer, and aggregate them through existing project inputs. The original single-file sample remains available. Pre-upload checks revalidate actual entries, all four artifacts, declaration fields/signatures/sources, readable pages, and map files. JSON resources and commands have separate acceptance criteria.

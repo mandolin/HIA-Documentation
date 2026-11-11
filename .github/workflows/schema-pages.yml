@@ -186,6 +186,17 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      # 中文：先附加已确认官网深链，让API分站导航有实际目标；旧根及版本索引继续原语义。
+      # English: Append confirmed website deep links for API-site navigation while retaining the existing root and version index.
+      - name: Append checked website deep links
+        run: |
+          pnpm site:build
+          pnpm site:check
+          pnpm site:test
+          pnpm site:licenses
+          node scripts/append-official-web.mjs
+          pnpm reference:pages:check
+
       - name: Upload public reference Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
