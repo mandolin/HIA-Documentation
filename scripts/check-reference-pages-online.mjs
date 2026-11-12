@@ -67,6 +67,8 @@ async function checkPublication() {
     ["zh-CN/", "HIA Documentation System Reference", "hia-reference-site-nav"],
     ["source-linkage/", "HIA Public Reference Source Linkage", "hia-reference-site-nav"]
   ];
+  // <lang><zh-CN>独立主题直接入口须与同一正常发布一并在线可读。</zh-CN><en>Direct standalone-theme entries must be readable online as part of the same normal publication.</en></lang>
+  for (const locale of ["zh-CN", "en"]) routeExpectations.push([`jsdoc/index.${locale}.html`, "ThemeRenderer", "data-hia-site-navigation"]);
   if (siteManifest.versioning?.strategy === "current-and-releases") {
     const release = siteManifest.versioning.releases?.[0];
     assert(siteManifest.versioning.current?.path === "current/", "Published current reference path drifted.");

@@ -1,6 +1,7 @@
 import { copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {checkStandaloneJsdocReference} from "./standalone-reference.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultReferenceDir = path.join(rootDir, "dist", "public-reference-build");
@@ -57,6 +58,10 @@ async function main() {
   await writeReferenceSnapshot(referenceDir, outputDir, currentDirectory);
   await writeReferenceSnapshot(referenceDir, outputDir, releaseDirectory);
   await mergePublicPortalPages(portalPagesDir, outputDir);
+
+  // <lang><zh-CN>独立JSDoc保留同次生成的原生路径、语言和源码，作为唯一目录发布，避免随参考快照重复。</zh-CN><en>Publish standalone JSDoc once as its native directory, retaining same-generation routes, locales and sources without snapshot duplication.</en></lang>
+  checkStandaloneJsdocReference(path.join(referenceDir, "jsdoc"));
+  await copyVisibleTree(path.join(referenceDir, "jsdoc"), path.join(outputDir, "jsdoc"));
   await copyVisibleTree(path.join(schemaSiteDir, "schemas"), path.join(outputDir, "schemas"));
   await copyFile(path.join(referenceDir, "reference-build.json"), path.join(outputDir, "reference-build.json"));
   await writeFile(path.join(outputDir, ".nojekyll"), "", "utf8");

@@ -6,6 +6,10 @@
 
 English. Normal `pnpm reference:build` derives navigation from the website's shared facts and includes the fixed header, versions, tabs and reading enhancements. `--site-navigation <json>` accepts explicit data for the same contract, limited to 512 KiB and validated for contract and public-text safety before production writes. The underlying `hia docs build` command retains the optional navigation behavior documented for that command.
 
+中文。同一次构建还生成 `jsdoc/` 独立主题目录，由 Pages 原样发布。它通过实际安装的固定插件/主题归档与当前渲染器运行正常 JSDoc，输入为对应主题提交的 `examples/basic/src/demo.js`。中文入口为 `jsdoc/index.zh-CN.html`，英文为 `jsdoc/index.en.html`。该目录展示主题模块、类和方法示例；完整包接口仍由各 API 参考分站提供。`publication.json` 记录样本/owner/渲染器来源及生成有效负载的容量，原生工件、双语页、相对链接与源文本摘要在上传前核验。
+
+English. The same build also generates the native `jsdoc/` standalone theme directory for Pages publication. Normal JSDoc uses installed pinned plugin/theme archives and the current renderer, reading `examples/basic/src/demo.js` from the matching theme revision. Entries are `jsdoc/index.zh-CN.html` and `jsdoc/index.en.html`. This directory demonstrates the theme module, class and methods; API reference sites provide complete package interfaces. `publication.json` records sample/owner/renderer provenance and generated payload capacity. Native artifacts, locale pages, relative links and source digests are checked before upload.
+
 ## DotNetDoc tool reference
 
 中文。`reference/dotnet-reference-inputs.json` 固定六个DotNetDoc工具包、十六个原JSON导出和独立站点 `/HIA-Documentation-API-DotNetDoc/`。在包含对应HIA源仓的容器内运行主仓工具，运行时使用JSDoc链，声明文件使用已有TSdoc 0.4项目链。原ID、双语字段、签名和地图进入同一有作用域的索引，声明源路径与实际owner归属分别保存，完整下载核原字节。

@@ -7,6 +7,13 @@ This guide shows the first published HIA adapter path using the public npm packa
 
 It covers both normal JSDoc standalone rendering and the HIA Integration artifact that can be consumed by the HIA CLI.
 
+## Generated example
+
+The website provides a standalone theme module/class example with fixed site navigation, native language pages and admitted source readers. The example uses pinned source candidates. Package versions available on npm are verified separately during release coordination.
+
+- [English example](https://mandolin.github.io/HIA-Documentation/jsdoc/index.en.html)
+- [简体中文示例](https://mandolin.github.io/HIA-Documentation/jsdoc/index.zh-CN.html)
+
 ## Install
 
 Install JSDoc, the HIA plugin and the HIA theme from the npm registry:

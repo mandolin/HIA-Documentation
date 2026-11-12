@@ -107,7 +107,7 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
       assert(target.pathname.startsWith("/HIA-Documentation/"), "Local link escapes the deployment base.");
       const relative = decodeURIComponent(target.pathname.slice("/HIA-Documentation/".length));
       const targetFile = !relative || relative.endsWith("/") ? relative + "index.html" : relative;
-      if (!files.includes(targetFile) && /^(?:en|zh-CN)\/index\.html$/u.test(targetFile) && !target.search && !target.hash) {
+      if (!files.includes(targetFile) && /^(?:(?:en|zh-CN)\/index\.html|jsdoc\/index\.(?:en|zh-CN)\.html)$/u.test(targetFile) && !target.search && !target.hash) {
         if (generatedReferenceRoot && !resolvedGeneratedReferences.has(targetFile)) {
           const file = path.join(generatedReferenceRoot, targetFile);
           assert((await stat(file)).isFile() && (await stat(file)).size <= 32 * 1024 ** 2, "Generated reference entry is missing or exceeds its read budget.");

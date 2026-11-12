@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {checkStandaloneJsdocReference} from "./standalone-reference.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -93,6 +94,7 @@ async function main() {
   }
   await assertFile(path.join(outputDir, "assets", "hia-reference-site.css"), "Reference Pages navigation stylesheet is missing.");
   await assertFile(path.join(outputDir, ".nojekyll"), "Reference Pages .nojekyll marker is missing.");
+  checkStandaloneJsdocReference(path.join(outputDir, "jsdoc"));
   const versionIndex = await readJson(path.join(outputDir, "versions.json"));
   assert(versionIndex.contract === "hia-reference-version-index", "Reference version index contract drifted.");
   assert(versionIndex.versioning?.searchPartitions?.length === 4, "Reference version search partition inventory drifted.");

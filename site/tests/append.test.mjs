@@ -26,6 +26,9 @@ function fixture(t) {
     fs.mkdirSync(path.join(directory, locale));
     fs.writeFileSync(path.join(directory, locale, "index.html"), "<!doctype html><h1>Original reference</h1>");
   }
+  // <lang><zh-CN>已确认的独立输出是官网的实际生成依赖，夹具也须提供精确双语入口。</zh-CN><en>The confirmed standalone output is an actual generated website dependency, so fixtures supply its exact locale entries.</en></lang>
+  fs.mkdirSync(path.join(directory, "jsdoc"));
+  for (const locale of ["en", "zh-CN"]) fs.writeFileSync(path.join(directory, "jsdoc", `index.${locale}.html`), "<!doctype html><h1>Standalone JSDoc</h1>");
   return directory;
 }
 

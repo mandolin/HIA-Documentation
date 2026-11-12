@@ -4,6 +4,8 @@
 
 - 正常公开参考构建默认采用官网导航，显式输入继续在生产前核契约、大小与隐私；两个发布工作流协调采用当前JSDoc主题来源锁。
 - Normal public reference builds adopt website navigation by default, validating explicit input contracts, size and privacy before production. Both publication workflows use the current JSDoc theme provenance pin.
+- 正常构建及Pages装配纳入`jsdoc/`原生独立输出，官网提供直接双语入口；固定owner示例的来源、页面、链接及源文本摘要随发布核验。
+- Normal builds and Pages assembly include native standalone output under `jsdoc/`, with direct bilingual website entries and publication checks for pinned-owner sample provenance, pages, links and source digests.
 
 ## Unreleased — Shared site chrome
 

@@ -7,6 +7,7 @@ import { validateDocumentationUiLocaleCompletenessReport } from "../packages/cor
 import { assertPublicText } from "./check-official-web.mjs";
 import {checkPublicReferencePackageApis} from "./public-reference-packages.mjs";
 import {checkPublicReferenceResources} from "./public-reference-resources.mjs";
+import {checkStandaloneJsdocReference} from "./standalone-reference.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -46,6 +47,7 @@ function main() {
     checkPortalUi(outputRoot, locale);
   }
   checkSourceLinkage(definition, outputRoot, report.sourceLinkage);
+  checkStandaloneJsdocReference(path.join(outputRoot, "jsdoc"));
   assertNoPrivateOutput(definition, outputRoot);
   assert(!existsSync(path.join(outputRoot, ".runtime")), "Public reference artifact must not retain runtime producer wrappers.");
 

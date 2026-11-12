@@ -11,6 +11,7 @@ import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig,
 import { assertPublicText } from "./check-official-web.mjs";
 import {preparePublicReferencePackageApis} from "./public-reference-packages.mjs";
 import {preparePublicReferenceResources,checkPublicReferenceResources} from "./public-reference-resources.mjs";
+import {buildStandaloneJsdocReference} from "./standalone-reference.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -100,6 +101,9 @@ async function main() {
       resolvedMainRepoRoot,
       locale: definition.project.defaultLocale
     });
+
+    // <lang><zh-CN>同一正常构建产出独立主题示例，使用已锁owner与正式共享入口；随后由Pages按原生目录发布。</zh-CN><en>The same normal build produces the standalone theme example using pinned owners and the formal shared entry, published as its native directory by Pages.</en></lang>
+    buildStandaloneJsdocReference({mainRepoRoot:resolvedMainRepoRoot, sourcesRoot, outputRoot, navigation:siteNavigation});
 
     const report = {
       contract: "hia-public-reference-build",

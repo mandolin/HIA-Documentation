@@ -29,6 +29,9 @@ async function fixture() {
   await writeFile(path.join(reference, "index.html"), "<h1>Original reference root</h1>");
   await writeFile(path.join(reference, "en/index.html"), "<!doctype html><h1>Original API reference</h1>");
   await writeFile(path.join(reference, "zh-CN/index.html"), "<!doctype html><h1>原接口参考</h1>");
+  // <lang><zh-CN>装配逐项核官网链接的独立主题语言页。</zh-CN><en>Composition checks the standalone locale pages linked by the website.</en></lang>
+  await mkdir(path.join(reference, "jsdoc"));
+  for (const locale of ["en", "zh-CN"]) await writeFile(path.join(reference, "jsdoc", `index.${locale}.html`), "<!doctype html><h1>Standalone JSDoc</h1>");
   await writeFile(path.join(reference, "reference-pages.json"), JSON.stringify({contract:"hia-reference-pages",contractVersion:"0.1.0-draft",privacy:{status:"pass",sourcesContentPolicy:"none",sourcePreviewPolicy:"public-whitelisted-excerpt"}}));
   return { root, reference, out, bytes };
 }
@@ -43,13 +46,13 @@ test("missing or overlapping inputs fail before any output mutation", async () =
 test("copy legacy bytes and deep links, replace only root and machine index", async () => {
   const input = await fixture();
   const result = await composeWebsite(input);
-  assert.equal(result.preservation.originalFiles, 5);
+  assert.equal(result.preservation.originalFiles, 7);
   assert.equal(await readFile(path.join(input.out, "legacy-reference/versions.json"), "utf8"), input.bytes);
   assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), "<!doctype html><h1>Original API reference</h1>");
   assert((await readFile(path.join(input.out, "index.html"), "utf8")).includes("HIA-Documentation-Sys"));
   assert.equal(JSON.parse(await readFile(path.join(input.out, "versions.json"), "utf8")).contract, "hia-site-version-index");
   assert.equal(await readFile(path.join(input.reference, "versions.json"), "utf8"), input.bytes);
-  assert.equal((await checkOfficialSite(input.out)).legacyFiles, 5);
+  assert.equal((await checkOfficialSite(input.out)).legacyFiles, 7);
   await writeFile(path.join(input.out, "en/index.html"), "tampered bytes");
   await assert.rejects(checkOfficialSite(input.out), /size|digest/);
   await composeWebsite(input);
@@ -59,6 +62,12 @@ test("copy legacy bytes and deep links, replace only root and machine index", as
 test("composition verifies actual generated reference entry dependencies", async () => {
   const input = await fixture();
   await writeFile(path.join(input.reference, "zh-CN/index.html"), "not an HTML artifact");
+  await assert.rejects(composeWebsite(input), /not an HTML document/);
+});
+
+test("composition verifies the actual standalone language entry before copying", async () => {
+  const input = await fixture();
+  await writeFile(path.join(input.reference, "jsdoc/index.en.html"), "not an HTML artifact");
   await assert.rejects(composeWebsite(input), /not an HTML document/);
 });
 
@@ -72,7 +81,7 @@ test("sibling composition retains old non-root bytes and verifies the independen
   assert(!result.files.some(file => file.path.startsWith("legacy-reference/")));
   assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), await readFile(path.join(input.reference, "en/index.html"), "utf8"));
   await assert.rejects(checkOfficialSite(input.out), /legacy artifact/);
-  assert.equal((await checkOfficialSite(input.out, input.reference)).legacyFiles, 5);
+  assert.equal((await checkOfficialSite(input.out, input.reference)).legacyFiles, 7);
   await writeFile(path.join(input.reference, "en/index.html"), "Changed legacy body");
   await assert.rejects(checkOfficialSite(input.out, input.reference), /legacy artifact file/);
 });
