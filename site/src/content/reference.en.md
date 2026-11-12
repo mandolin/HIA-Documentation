@@ -56,6 +56,12 @@ Resource references use separate publication sites grouped by responsibility. Ea
 
 Language and version entries retain the current partition. The Code documentation tab opens the core API directory. The plugin development toolkit's two JSON resources are published with that core API, and these four partitions cover another 45 resources. Check the system documentation version and each resource's declared contract version separately.
 
+## HTML documentation tools
+
+| Entry | Reading scope |
+| --- | --- |
+| [HTML documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-HTML/en/) | HTML parsing, documentation extraction, adaptation, source maps, Custom Elements Manifest conversion and runner/producer/specification interfaces, including current and legacy schemas, static declaration data and complete sources. Search covers this site |
+
 ## JavaScript documentation tools and configuration evidence
 
 | Full name | Contents and search scope |

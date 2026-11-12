@@ -20,6 +20,18 @@ test("both manual directories discover the confirmed JavaScript API and evidence
   }
 });
 
+test("both manual directories discover the independent HTML tool API in their current locale", async () => {
+  // <lang><zh-CN>HTML完整名称与目标来自同一正常生产清单，两正文和两语言同时覆盖。</zh-CN><en>HTML labels and targets come from the production registry, covering both manual topics and locales together.</en></lang>
+  const registry = JSON.parse(await readFile(new URL("../../reference/html-reference-inputs.json", import.meta.url), "utf8"));
+  for (const locale of ["zh-CN", "en"]) for (const topic of ["reference", "code-reference"]) {
+    const manual = await readFile(new URL(`../src/content/${topic}.${locale}.md`, import.meta.url), "utf8");
+    for (const site of registry.sites) {
+      const target = "https://mandolin.github.io" + site.base + site.path + locale + "/";
+      assert(manual.includes(`[${site.titleByLocale[locale]}](${target})`), `Missing ${locale} ${topic} HTML partition ${site.id}`);
+    }
+  }
+});
+
 // <lang lang="zh-CN">同题不同语言/版本的合成公开正文，避免仅测标题匹配。</lang><lang lang="en">Synthetic public bodies share a topic across locales/versions to exercise more than title matching.</lang>
 const entries = [
   { title: "品牌与来源", href: href("theme-source", "zh-CN"), locale: "zh-CN", version: "1.0.0", text: "共享资源只有一个写入者。accent 使用 #0047AB。" },

@@ -20,6 +20,7 @@ API覆盖必须按包的公开导出清单和实际生成符号逐项对应。�
 ## 生成参考入口
 
 - [JavaScript文档工具包API](https://mandolin.github.io/HIA-Documentation-API-JavaScript/zh-CN/)提供文档运行器、生产器、插件、规范与主题的包接口，包含配置schema及静态数组/描述符数据。目录按完整包名和原声明分组，检索范围为本站。
+- [HTML文档工具包API](https://mandolin.github.io/HIA-Documentation-API-HTML/zh-CN/)提供HTML解析、注释提取、适配、源码映射、Custom Elements Manifest转换及运行器/生产器/规范接口，包含当前与旧版schema、静态声明数据和完整源码。按完整包名及原声明检索，范围为本站。
 - [JSDoc配置派生证据](https://mandolin.github.io/HIA-Documentation-Resources-JSDoc/derivation-evidence/zh-CN/)逐值呈现配置派生记录、来源、摘要与覆盖信息。记录的实际生产或静态推导身份由原工件声明，检索范围为证据分区。
 
 - [HIA 十三核心包 API · 中文](https://mandolin.github.io/HIA-Documentation-API/zh-CN/) · [English](https://mandolin.github.io/HIA-Documentation-API/en/)提供十三核心包的模块参考及插件开发工具包的两项JSON资源。另45项资源按完整名称列于[资源参考分区](../reference/#资源参考分区)，覆盖核心与来源、TypeScript文档、文档化配置规范以及业务流程等四个分区。命令路径也在参考手册中列出，卫星工具包按各自范围接入。

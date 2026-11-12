@@ -56,6 +56,12 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 
 各分区的语言及版本入口保留当前分区，“代码文档”栏目连接核心API总入口。插件开发工具包的两项JSON资源随核心API发布，以上四分区另覆盖45项资源。系统版本与各资源内声明的契约版本分别核对。
 
+## HTML文档工具
+
+| 入口 | 阅读范围 |
+| --- | --- |
+| [HTML文档工具包API](https://mandolin.github.io/HIA-Documentation-API-HTML/zh-CN/) | HTML解析、注释提取、适配、源码映射、Custom Elements Manifest转换及运行器/生产器/规范接口，包含当前与旧版schema、静态声明数据及完整源码，检索范围为本站 |
+
 ## JavaScript文档工具与配置证据
 
 | 完整名称 | 内容与检索范围 |
