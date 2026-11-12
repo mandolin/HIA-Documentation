@@ -5132,6 +5132,46 @@
           ]
         },
         {
+          "name": "COMMAND_DOCUMENTATION_CONTRACT",
+          "kind": "VariableDeclaration",
+          "owner": "packages/core/src/command-documentation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "85ab1f28b14cb82c91bfcc7b413890cb4952638185a636bd9ade0f61fbfa2343"
+          ]
+        },
+        {
+          "name": "COMMAND_DOCUMENTATION_CONTRACT_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/core/src/command-documentation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "d7b7931077d5a0220affba8abe05959a0f0446579668039d18a4773958683389"
+          ]
+        },
+        {
+          "name": "COMMAND_DOCUMENTATION_JSON_SCHEMA",
+          "kind": "VariableDeclaration",
+          "owner": "packages/core/src/command-documentation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "9ee4f3a2497af28b51738ae502b36c10d1cbc18933775c0121a6039ea15b7eae"
+          ]
+        },
+        {
+          "name": "COMMAND_DOCUMENTATION_SCHEMA_ID",
+          "kind": "VariableDeclaration",
+          "owner": "packages/core/src/command-documentation.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "9320e6e9f13efdff67b18ef2b42ec0b17fbf2c5b01480b77c8f0aa0dac41a0d5"
+          ]
+        },
+        {
           "name": "compareDocumentationPresentationIdentity",
           "kind": "FunctionDeclaration",
           "owner": "packages/core/src/documentation-presentation-profile.ts",
@@ -16211,6 +16251,7 @@
         "./tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.3.0-draft.json",
         "./tsdoc-project/hia-tsdoc-extraction-0.4.0-draft.json": "./dist/tsdoc-project/hia-tsdoc-extraction-0.4.0-draft.json",
         "./tsdoc-project/hia-ts-jsdoc-bridge-0.4.0-draft.json": "./dist/tsdoc-project/hia-ts-jsdoc-bridge-0.4.0-draft.json",
+        "./command-documentation.schema.json": "./dist/schemas/command-documentation.schema.json",
         "./plain-data-initialization.schema.json": "./dist/schemas/plain-data-initialization.schema.json",
         "./artifact-derivation-evidence.schema.json": "./dist/schemas/artifact-derivation-evidence.schema.json",
         "./business-flow-documentation.schema.json": "./dist/schemas/business-flow-documentation.schema.json",
@@ -16275,7 +16316,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "d9485ef488588b7a89e09e8a9072e23ed84bbf55687b890d0958c7be94ef2971"
+            "d129d1c953a84255b53f23f4ec366116c6e170e64ec7debc3e0e44d14d82520e"
           ]
         },
         {

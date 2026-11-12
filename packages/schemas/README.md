@@ -1,5 +1,9 @@
 # @hia-doc/schemas
 
+The `command-documentation` catalog entry distributes core's independent `0.1.0-draft` command-description schema. See the [contract guide](../../docs/command-documentation-contract.md).
+
+中文。命令描述schema由core拥有，目录以独立草案身份分发，语义关系及实际来源由消费层核验。
+
 ## 1.0.0 source candidate
 
 This source tree targets a coordinated 1.0.0 package candidate. It does not

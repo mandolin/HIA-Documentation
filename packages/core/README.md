@@ -1,5 +1,11 @@
 # @hia-doc/core
 
+## Command documentation schema
+
+中文。独立 `command-documentation@0.1.0-draft` 结构定义描述命令、参数、中英字段、默认规则与逐字段来源。实际来源及语义关系由消费层核验。
+
+The independent draft schema describes commands, arguments, bilingual fields, defaults and provenance. See the [contract guide](../../docs/command-documentation-contract.md).
+
 ## 1.0.0 source candidate
 
 This source tree targets a coordinated 1.0.0 package candidate. It does not

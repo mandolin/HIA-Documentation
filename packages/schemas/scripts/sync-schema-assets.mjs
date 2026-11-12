@@ -13,6 +13,8 @@ import {
   HIA_PROJECT_MANIFEST_SCOPED_SCHEMA_VERSION
 } from "../../config/dist/index.js";
 import {
+  COMMAND_DOCUMENTATION_CONTRACT_VERSION,
+  COMMAND_DOCUMENTATION_JSON_SCHEMA,
   BUSINESS_FLOW_DOCUMENTATION_CONTRACT_VERSION,
   BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA,
   BUSINESS_FLOW_DOCUMENTATION_PROJECTION_CONTRACT_VERSION,
@@ -67,6 +69,15 @@ const checkOnly = process.argv.includes("--check");
 const publicBaseUrl = "https://mandolin.github.io/HIA-Documentation/schemas/";
 
 const definitions = [
+  // <lang><zh-CN>命令描述是独立草案；结构分发不提升终端或命令生产验收。</zh-CN><en>Command descriptions are an independent draft; structural distribution does not promote terminal or command-production acceptance.</en></lang>
+  {
+    contractVersion: COMMAND_DOCUMENTATION_CONTRACT_VERSION,
+    fileName: "command-documentation.schema.json",
+    key: "command-documentation",
+    ownerPackage: "@hia-doc/core",
+    schema: COMMAND_DOCUMENTATION_JSON_SCHEMA,
+    stability: "draft"
+  },
   // <lang><zh-CN>规则身份与通用证据侧车分开，明确保留draft状态。</zh-CN><en>Rule identity is separate from the generic evidence sidecar and explicitly retains draft status.</en></lang>
   {
     contractVersion: PLAIN_DATA_INITIALIZATION_CONTRACT_VERSION,

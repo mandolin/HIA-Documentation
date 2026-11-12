@@ -4,6 +4,7 @@
  * @lang en Distributes current owner JSON Schema snapshots and fixed historical identities; source-linkage still owns coordinate evidence, and this module does not infer compatible versions.
  */
 import catalogData from "./catalog.json" with { type: "json" };
+import commandDocumentationSchemaData from "./schemas/command-documentation.schema.json" with { type: "json" };
 import plainDataInitializationSchemaData from "./schemas/plain-data-initialization.schema.json" with { type: "json" };
 import artifactDerivationEvidenceSchemaData from "./schemas/artifact-derivation-evidence.schema.json" with { type: "json" };
 import businessFlowDocumentationSchemaData from "./schemas/business-flow-documentation.schema.json" with { type: "json" };
@@ -53,6 +54,7 @@ export const HIA_SCHEMA_PUBLIC_BASE_URL = "https://mandolin.github.io/HIA-Docume
  * @lang en Current schema keys in generated-catalog order, excluding historical snapshots.
  */
 export const HIA_SCHEMA_KEYS = [
+  "command-documentation",
   "plain-data-initialization",
   "artifact-derivation-evidence",
   "business-flow-documentation",
@@ -163,6 +165,7 @@ export interface HiaSchemaCatalog {
 }
 
 const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
+  "command-documentation": commandDocumentationSchemaData,
   "plain-data-initialization": plainDataInitializationSchemaData,
   "artifact-derivation-evidence": artifactDerivationEvidenceSchemaData,
   "business-flow-documentation": businessFlowDocumentationSchemaData,

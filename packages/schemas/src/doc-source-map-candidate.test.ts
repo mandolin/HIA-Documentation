@@ -43,7 +43,7 @@ describe("documentation source-map 1.1.0 candidate distribution", () => {
     for (const key of ["generated-documentation-binding", "ordinary-source-map-coordinate-profile"]) {
       expect(HIA_SCHEMA_CATALOG.schemas.find((entry) => entry.key === key)?.stability).toBe("draft");
     }
-    expect(listHiaSchemas()).toHaveLength(21);
+    expect(listHiaSchemas()).toHaveLength(22);
     expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(9);
   });
 });

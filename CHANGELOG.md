@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Command documentation schema
+
+- core新增独立`command-documentation@0.1.0-draft`自包含结构schema，复用字段级i18n和一基来源范围，schemas目录同步分发。来源字节、别名关联及执行语义由消费层复核。
+- Add the self-contained draft command-documentation schema to core and the schema catalog, reusing field localization and one-based provenance ranges. Consumers separately verify source bytes, aliases and execution semantics.
+
 ## Unreleased — Public reference navigation adoption
 
 - 正常公开参考构建默认采用官网导航，显式输入继续在生产前核契约、大小与隐私；两个发布工作流协调采用当前JSDoc主题来源锁。

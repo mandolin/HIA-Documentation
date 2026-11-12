@@ -6,6 +6,12 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  COMMAND_DOCUMENTATION_CONTRACT,
+  COMMAND_DOCUMENTATION_CONTRACT_VERSION,
+  COMMAND_DOCUMENTATION_SCHEMA_ID,
+  COMMAND_DOCUMENTATION_JSON_SCHEMA
+} from "../packages/core/dist/command-documentation.js";
 import { PLAIN_DATA_INITIALIZATION_SCHEMA_ID, PLAIN_DATA_INITIALIZATION_JSON_SCHEMA } from "../packages/plugin-sdk/dist/plain-data-initialization.js";
 import { ARTIFACT_DERIVATION_EVIDENCE_SCHEMA_ID, ARTIFACT_DERIVATION_EVIDENCE_JSON_SCHEMA } from "../packages/plugin-sdk/dist/derivation-evidence.js";
 import {
@@ -346,7 +352,16 @@ assert(
   "Documentation UI-locale completeness schema or privacy/fallback boundary drifted."
 );
 
+// <lang><zh-CN>独立命令描述仍是结构草案，版本和闭合外层不能被包升级改写。</zh-CN><en>The independent command description remains a structural draft; package upgrades must not rewrite its version or closed outer shape.</en></lang>
+assert(
+  COMMAND_DOCUMENTATION_JSON_SCHEMA.$id === COMMAND_DOCUMENTATION_SCHEMA_ID
+    && COMMAND_DOCUMENTATION_JSON_SCHEMA.properties.contract.const === COMMAND_DOCUMENTATION_CONTRACT
+    && COMMAND_DOCUMENTATION_JSON_SCHEMA.properties.contractVersion.const === COMMAND_DOCUMENTATION_CONTRACT_VERSION
+    && COMMAND_DOCUMENTATION_JSON_SCHEMA.additionalProperties === false,
+  "Command-documentation schema identity or outer shape drifted."
+);
 const ownerSchemas = new Map([
+  [COMMAND_DOCUMENTATION_SCHEMA_ID, COMMAND_DOCUMENTATION_JSON_SCHEMA],
   [BUSINESS_FLOW_DOCUMENTATION_SCHEMA_ID, BUSINESS_FLOW_DOCUMENTATION_JSON_SCHEMA],
   [BUSINESS_FLOW_DOCUMENTATION_PROJECTION_SCHEMA_ID, BUSINESS_FLOW_DOCUMENTATION_PROJECTION_JSON_SCHEMA],
   [HIA_DOCUMENT_SCHEMA_ID, HIA_DOCUMENT_SCHEMA],

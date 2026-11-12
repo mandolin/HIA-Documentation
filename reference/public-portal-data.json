@@ -1,7 +1,7 @@
 {
   "contract": "hia-public-portal-data",
   "contractVersion": "0.1.0-draft",
-  "updated": "2026-11-06",
+  "updated": "2026-11-12",
   "project": {
     "id": "project:hia-public-reference",
     "title": "HIA Documentation System Reference",
@@ -95,6 +95,7 @@
     "schemas": {
       "minimumCount": 12,
       "keys": [
+        "command-documentation",
         "plain-data-initialization",
         "artifact-derivation-evidence",
         "business-flow-documentation",
