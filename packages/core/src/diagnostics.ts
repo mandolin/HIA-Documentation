@@ -44,6 +44,10 @@ export interface HiaDiagnosticCodeDefinition {
  * @lang en Catalog of known codes under a read-only convention; arrays/entries are not runtime-frozen and consumers must not mutate shared facts.
  */
 export const HIA_DIAGNOSTIC_CODE_REGISTRY = [
+  // <lang><zh-CN>命令结构/引用无效、缺证据及实际观察冲突分开，消息不拼接原始输入。</zh-CN><en>Separate invalid command structure/references, missing evidence and actual-observation conflicts without interpolating raw input.</en></lang>
+  { code: "COMMAND_DOCUMENTATION_INVALID", defaultSeverity: "error", layer: "core", description: "命令描述结构或关联无效。 / Command-description structure or relationships are invalid." },
+  { code: "COMMAND_DOCUMENTATION_INCOMPLETE", defaultSeverity: "warning", layer: "core", description: "命令描述缺少字段证据或宿主观察。 / Command descriptions lack field evidence or host observations." },
+  { code: "COMMAND_DOCUMENTATION_EVIDENCE_MISMATCH", defaultSeverity: "error", layer: "core", description: "命令描述来源或解析观察冲突。 / Command-description sources or parser observations conflict." },
   { code: "HIA_DOCUMENT_INVALID", defaultSeverity: "error", layer: "core", description: "Core document payload is not an object." },
   // <lang><zh-CN>普通wire数据先验失败，不包含异常原文或不可信动态键。</zh-CN><en>Ordinary-wire data preflight failure, without exception text or untrusted dynamic keys.</en></lang>
   { code: "HIA_DOCUMENT_JSON_INVALID", defaultSeverity: "error", layer: "core", description: "Core document must be ordinary finite acyclic JSON data without accessors or custom serialization hooks." },

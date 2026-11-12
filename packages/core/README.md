@@ -1,10 +1,10 @@
 # @hia-doc/core
 
-## Command documentation schema
+## Command documentation
 
-中文。独立 `command-documentation@0.1.0-draft` 结构定义描述命令、参数、中英字段、默认规则与逐字段来源。实际来源及语义关系由消费层核验。
+中文。独立 `command-documentation@0.1.0-draft` 描述命令、参数、中英字段、默认规则与逐字段来源。`validateCommandDocumentation`核语义关系，`produceCommandDocumentation`比较宿主提供的来源原字节及解析声明观察，生成标准HiaDocument。来源读取授权、观察提取与实际运行行为由宿主核验。
 
-The independent draft schema describes commands, arguments, bilingual fields, defaults and provenance. See the [contract guide](../../docs/command-documentation-contract.md).
+The independent draft includes a structural schema, semantic reader and asynchronous pure HiaDocument producer. Missing evidence remains incomplete and conflicts are refused. Host observations and authorized in-memory source bytes are compared before projection. See the [contract guide](../../docs/command-documentation-contract.md).
 
 ## 1.0.0 source candidate
 

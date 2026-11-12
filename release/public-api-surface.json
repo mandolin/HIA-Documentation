@@ -5172,6 +5172,355 @@
           ]
         },
         {
+          "name": "CommandDocumentation",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "contract",
+              "optional": false,
+              "type": "\"command-documentation\""
+            },
+            {
+              "name": "contractVersion",
+              "optional": false,
+              "type": "\"0.1.0-draft\""
+            },
+            {
+              "name": "owner",
+              "optional": false,
+              "type": "{\n    packageName: string;\n    packageVersion: string;\n}"
+            },
+            {
+              "name": "sources",
+              "optional": false,
+              "type": "Array<{\n    id: string;\n    path: string;\n    sha256: string;\n    language: string;\n}>"
+            },
+            {
+              "name": "commands",
+              "optional": false,
+              "type": "CommandDocumentationCommand[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "0cab831ddf8d7683e4be612d49ad0f4081a21dc779c1147ccc930d0a406cb17a"
+          ]
+        },
+        {
+          "name": "CommandDocumentationCommand",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "executable",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "path",
+              "optional": false,
+              "type": "string[]"
+            },
+            {
+              "name": "kind",
+              "optional": false,
+              "type": "\"group\" | \"command\""
+            },
+            {
+              "name": "aliasOf",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "name": "signature",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "i18n",
+              "optional": false,
+              "type": "HiaI18nModel"
+            },
+            {
+              "name": "displayVersion",
+              "optional": false,
+              "type": "{\n    kind: \"package\" | \"artifact\" | \"runner\" | \"none\";\n    value: string;\n}"
+            },
+            {
+              "name": "parsing",
+              "optional": false,
+              "type": "{\n    helpOrder: \"before-dispatch\" | \"after-argument-validation\";\n    unknownOptions: \"reject\" | \"ignore\" | \"command-specific\";\n}"
+            },
+            {
+              "name": "options",
+              "optional": false,
+              "type": "CommandDocumentationParameter[]"
+            },
+            {
+              "name": "positionals",
+              "optional": false,
+              "type": "CommandDocumentationParameter[]"
+            },
+            {
+              "name": "examples",
+              "optional": false,
+              "type": "string[]"
+            },
+            {
+              "name": "effects",
+              "optional": false,
+              "type": "{\n    filesystem: \"none\" | \"read\" | \"write\" | \"read-write\";\n    network: \"none\" | \"explicit\";\n}"
+            },
+            {
+              "name": "exitCodes",
+              "optional": false,
+              "type": "Array<{\n    code: number;\n    i18n: HiaI18nModel;\n}>"
+            },
+            {
+              "name": "evidence",
+              "optional": false,
+              "type": "CommandDocumentationEvidence[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "0b9a2a67f36a25949a8255b06922f0e6406f0d17f95c99b80de89e1fcfcdbbd4"
+          ]
+        },
+        {
+          "name": "CommandDocumentationDeclarationObservation",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "commandId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "sourceDigests",
+              "optional": false,
+              "type": "Record<string, string>"
+            },
+            {
+              "name": "options",
+              "optional": false,
+              "type": "CommandDocumentationObservedParameter[]"
+            },
+            {
+              "name": "positionals",
+              "optional": false,
+              "type": "CommandDocumentationObservedParameter[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "72f96659ff28faf50f36135fed205a4d794a843b0fa6fd3a08ab9c0797232c60"
+          ]
+        },
+        {
+          "name": "CommandDocumentationDefaultRule",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "kind",
+              "optional": false,
+              "type": "\"literal\" | \"conditional\" | \"runtime\" | \"not-applicable\""
+            },
+            {
+              "name": "value",
+              "optional": true,
+              "type": "unknown"
+            },
+            {
+              "name": "conditions",
+              "optional": true,
+              "type": "string[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "3bd25b09f3b30b39de4a6ef63a0c3b30f652c6968faa605d825e1f6020bb3038"
+          ]
+        },
+        {
+          "name": "CommandDocumentationEvidence",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "fieldPath",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "sourceId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "range",
+              "optional": true,
+              "type": "HiaSourceRange"
+            },
+            {
+              "name": "rangeConvention",
+              "optional": true,
+              "type": "{\n    endBoundary: \"inclusive\" | \"exclusive\" | \"unknown\";\n    columnUnit: \"utf16-code-unit\" | \"unicode-code-point\" | \"byte\" | \"unknown\";\n}"
+            }
+          ],
+          "declarationFingerprints": [
+            "b4fef3adc3a2c971317e55fa1eedae143b9a4dbc3cfc53d2f4a05e3e2b9fbabd"
+          ]
+        },
+        {
+          "name": "CommandDocumentationObservedParameter",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "valueType",
+              "optional": false,
+              "type": "CommandDocumentationParameter[\"valueType\"]"
+            },
+            {
+              "name": "short",
+              "optional": true,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "770fb1bce29330f27acd3de4e252ecb284b61d2b8e5030857b6ae802dbbb819e"
+          ]
+        },
+        {
+          "name": "CommandDocumentationParameter",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "kind",
+              "optional": false,
+              "type": "\"option\" | \"positional\""
+            },
+            {
+              "name": "name",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "short",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "name": "valueType",
+              "optional": false,
+              "type": "\"string\" | \"boolean\" | \"number\" | \"integer\""
+            },
+            {
+              "name": "required",
+              "optional": false,
+              "type": "boolean"
+            },
+            {
+              "name": "multiple",
+              "optional": false,
+              "type": "boolean"
+            },
+            {
+              "name": "choices",
+              "optional": true,
+              "type": "string[]"
+            },
+            {
+              "name": "defaultRule",
+              "optional": false,
+              "type": "CommandDocumentationDefaultRule"
+            },
+            {
+              "name": "i18n",
+              "optional": false,
+              "type": "HiaI18nModel"
+            },
+            {
+              "name": "evidence",
+              "optional": false,
+              "type": "CommandDocumentationEvidence[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "affb2e05cefb2c7803cc634136fca7e4af46ada5bb1b0b8e2e033ff894f8d60d"
+          ]
+        },
+        {
+          "name": "CommandDocumentationProjectionOptions",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "sourceBytes",
+              "optional": true,
+              "type": "ReadonlyMap<string, Uint8Array>"
+            },
+            {
+              "name": "declarations",
+              "optional": true,
+              "type": "readonly CommandDocumentationDeclarationObservation[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "c291ccd10d682984b714beb88ad110e42c87d443e2d22b3c5acfbd6b276052ea"
+          ]
+        },
+        {
+          "name": "CommandDocumentationProjectionResult",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/core/src/command-documentation-model.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "status",
+              "optional": false,
+              "type": "\"ready\" | \"incomplete\" | \"refused\""
+            },
+            {
+              "name": "diagnostics",
+              "optional": false,
+              "type": "HiaDiagnostic[]"
+            },
+            {
+              "name": "document",
+              "optional": true,
+              "type": "HiaDocument"
+            }
+          ],
+          "declarationFingerprints": [
+            "289fe2fca864b73111148d25f185dc3a6be3de5997acb499125f92efc37ecbfc"
+          ]
+        },
+        {
           "name": "compareDocumentationPresentationIdentity",
           "kind": "FunctionDeclaration",
           "owner": "packages/core/src/documentation-presentation-profile.ts",
@@ -9365,7 +9714,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "d4696773c968e34baffce501515f74703e1fd5dc558f501866179c0e9e06ce58"
+            "d3fdfcf945b4ce36cb788fcc792f7554ba9b5f2f8dcf75f1dde21f0d54ebbe78"
           ]
         },
         {
@@ -10974,6 +11323,18 @@
           ]
         },
         {
+          "name": "produceCommandDocumentation",
+          "kind": "FunctionDeclaration",
+          "owner": "packages/core/src/command-documentation-producer.ts",
+          "signatures": [
+            "(value: unknown, options?: CommandDocumentationProjectionOptions): Promise<CommandDocumentationProjectionResult>"
+          ],
+          "fields": [],
+          "declarationFingerprints": [
+            "ed6deb00b28c5bf25c34d52d888995db2756f9187591e7f2daaf05c4eaa686e8"
+          ]
+        },
+        {
           "name": "resolveDocumentationLocaleResource",
           "kind": "FunctionDeclaration",
           "owner": "packages/core/src/locale-resource.ts",
@@ -11052,6 +11413,18 @@
           "fields": [],
           "declarationFingerprints": [
             "43b3687e2d3bac99de4ce02d104e4df6a4065f1aa896bd416e6196b0ca815e4a"
+          ]
+        },
+        {
+          "name": "validateCommandDocumentation",
+          "kind": "FunctionDeclaration",
+          "owner": "packages/core/src/command-documentation-reader.ts",
+          "signatures": [
+            "(value: unknown): HiaDiagnostic[]"
+          ],
+          "fields": [],
+          "declarationFingerprints": [
+            "ae9f978b8cf9e8ac57e92bd05f4dc3e5592ecdcaecbc3b158b3607f60d576ed7"
           ]
         },
         {

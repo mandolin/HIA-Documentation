@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Command documentation semantic projection
+
+- core新增命令描述内存类型、语义读取及异步纯HiaDocument投影，核身份、别名、逐字段语言来源、原字节摘要及宿主参数声明观察。缺项保留incomplete，冲突拒绝，异步前复制输入，完整原描述及范围约定保留于元数据。
+- Add command-description types, semantic reading and asynchronous pure HiaDocument projection, checking identities, aliases, field provenance, source-byte digests and host parameter observations. Missing evidence remains incomplete, conflicts are refused, inputs are copied before awaiting, and original descriptions and range conventions remain in metadata.
+- 观察提取、实际行为及精确源码坐标由宿主继续核验。命令专用终端/网页采用按实际入口后续接入，结构草案身份及schema保持。
+- Hosts verify observation extraction, runtime behavior and precise source coordinates. Dedicated terminal and web adoption follows actual entry points, with the structural draft identity and schema retained.
+
 ## Unreleased — Command documentation schema
 
 - core新增独立`command-documentation@0.1.0-draft`自包含结构schema，复用字段级i18n和一基来源范围，schemas目录同步分发。来源字节、别名关联及执行语义由消费层复核。
