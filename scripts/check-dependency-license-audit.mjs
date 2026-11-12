@@ -16,6 +16,8 @@ const generatedDependencyDirectories = new Set([
 ]);
 
 const directDependencyAudit = [
+  // <lang><zh-CN>官网显式配置当前Sätteri处理器的表格HAST插件，固定MIT开发依赖用于静态构建与真实处理器回归。</zh-CN><en>The website explicitly configures its current Sätteri processor with a table HAST plugin; the pinned MIT development dependency supports static builds and real-processor regressions.</en></lang>
+  { name: "@astrojs/markdown-satteri", dependencyType: "devDependencies", versionRange: "0.4.6", license: "MIT", purpose: "Current Astro Markdown processor configuration and static accessible table wrappers." },
   // <lang><zh-CN>派生证据测试用独立2020-12引擎核对Schema，精确MIT开发依赖不进入SDK运行包。</zh-CN><en>Derivation-evidence tests cross-check schemas with an independent 2020-12 engine; the exact MIT development dependency is excluded from SDK runtimes.</en></lang>
   { name: "ajv", dependencyType: "devDependencies", versionRange: "8.20.0", license: "MIT", purpose: "Independent JSON Schema 2020-12 conformance checks in tests." },
   // <lang><zh-CN>通用JSON生产使用原始值树和偏移，MIT精确版本已完成许可审查。</zh-CN><en>Generic JSON production uses original value trees and offsets from an exact MIT version reviewed for licensing.</en></lang>

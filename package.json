@@ -242,6 +242,7 @@
     "test:unit": "vitest run --exclude tests/**/*.test.ts"
   },
   "devDependencies": {
+    "@astrojs/markdown-satteri": "0.4.6",
     "@types/node": "^20.19.43",
     "ajv": "8.20.0",
     "astro": "7.4.5",

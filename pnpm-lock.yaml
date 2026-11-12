@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@astrojs/markdown-satteri':
+        specifier: 0.4.6
+        version: 0.4.6
       '@types/node':
         specifier: ^20.19.43
         version: 20.19.43

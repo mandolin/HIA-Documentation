@@ -32,3 +32,13 @@ VS Code extension-shell dependencies are limited to `apps/vscode-extension`; cor
 ## Release Gate
 
 `pnpm run license:audit` checks the direct external dependency audit and is included in `pnpm run release:gate`.
+
+## @astrojs/markdown-satteri 0.4.6
+
+Purpose and runtime impact. Configure the existing Astro7.4.5 Markdown processor through its documented `markdown.processor` and `hastPlugins` API for static, keyboard-reachable table wrappers. The dependency is development-only, MIT, and pinned to the version already present in the current Astro tree.
+
+Maintenance and security. This is the Astro-maintained processor. Inputs are repository Markdown. The table visitor queues a native `wrapNode` operation and preserves existing nodes, attributes and text. Configuration and real processor rendering have regression tests, followed by script-free browser checks.
+
+Alternatives reviewed. Legacy rehype configuration requires an additional processor. The selected integration follows the current default processor and its documented native plugin API. [Official processor API](https://docs.astro.build/en/reference/markdown-processors/satteri/).
+
+中文说明。采用当前Astro处理器的标准HAST接口，固定MIT开发依赖0.4.6用于构建及回归。输入为仓库文档，表格访问器保留原节点和内容，通过正常构建与无脚本浏览器验收。

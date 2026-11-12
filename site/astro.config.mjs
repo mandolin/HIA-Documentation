@@ -4,6 +4,8 @@
  */
 import { defineConfig } from "astro/config";
 import { fileURLToPath } from "node:url";
+import {satteri} from "@astrojs/markdown-satteri";
+import {markdownTableWrappers} from "./src/lib/markdown-tables.mjs";
 
 export default defineConfig({
   root: fileURLToPath(new URL("./", import.meta.url)),
@@ -15,6 +17,8 @@ export default defineConfig({
   base: "/HIA-Documentation/",
   trailingSlash: "always",
   output: "static",
+  // <lang><zh-CN>构建时生成已有表格滚动容器，无脚本时同样保持正文宽度和键盘可达性。</zh-CN><en>Generate existing table-scroll containers at build time, preserving content width and keyboard access without scripts.</en></lang>
+  markdown: {processor: satteri({hastPlugins: [markdownTableWrappers()]})},
   image: { service: { entrypoint: "astro/assets/services/passthrough" } },
   build: { format: "directory" },
   vite: { build: { sourcemap: false } },

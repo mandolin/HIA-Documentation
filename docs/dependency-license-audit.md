@@ -115,3 +115,9 @@ Before adding a new external dependency:
 5. Run `pnpm run license:audit` and `pnpm run release:gate`.
 
 Do not add dependencies only for release automation if an official platform mechanism covers the same need. For npm publication automation, prefer npm Trusted Publishing over long-lived npm token storage.
+
+## Static Markdown processor
+
+`@astrojs/markdown-satteri` is pinned to `0.4.6` as an MIT development dependency. It configures the current Astro Markdown processor with build-time HAST table wrappers and supports real-processor regression tests. The same version already belongs to the pinned Astro dependency tree. The processor consumes repository Markdown during static builds. The wrappers preserve native table elements and existing content.
+
+中文说明。本直接开发依赖用于官网静态构建期表格滚动容器与真实处理器回归，固定0.4.6、MIT。当前版本与Astro7.4.5依赖树一致。

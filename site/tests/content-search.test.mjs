@@ -7,6 +7,8 @@ import assert from "node:assert/strict";
 import { searchDocuments, readSearchIndex } from "../src/lib/search.mjs";
 import { href, route } from "../src/lib/routes.mjs";
 import { readFile } from "node:fs/promises";
+import {markdownTableWrappers} from "../src/lib/markdown-tables.mjs";
+import {createSatteriMarkdownProcessor} from "@astrojs/markdown-satteri";
 
 test("both manual directories discover the confirmed JavaScript API and evidence sites in the current locale", async () => {
   // <lang><zh-CN>每个正文入口按已确认发布清单核完整名称与地址，语言与内容分区分别选择。</zh-CN><en>Check complete labels and URLs in both manual entries against the confirmed publication registry, selecting locale and content partition independently.</en></lang>
@@ -111,4 +113,39 @@ test("reference manuals expose every declared resource partition in its own loca
       assert(manual.includes(`[${partition.titleByLocale[locale]}](${href})`), `Missing ${locale} resource partition: ${partition.id}`);
     }
   }
+});
+
+test("Markdown table wrappers preserve read-only native nodes and request keyboard-reachable containers", () => {
+  const table = Object.freeze({type:"element", tagName:"table", properties:Object.freeze({id:"public-table"}), children:Object.freeze([])});
+  const wraps = [];
+  markdownTableWrappers().element.visit(table, {parent: () => ({type:"root"}), wrapNode: (node, wrapper) => wraps.push({node, wrapper})});
+  assert.equal(wraps.length, 1);
+  assert.equal(wraps[0].node, table);
+  assert.deepEqual(wraps[0].wrapper, {type:"element", tagName:"div", properties:{className:["table-wrap"], tabIndex:0}, children:[]});
+  assert.equal(table.properties.id, "public-table");
+});
+
+test("existing Markdown table containers remain idempotent with a specific table visitor filter", () => {
+  const table = {type:"element", tagName:"table", properties:{}, children:[]};
+  const wrapper = {type:"element", tagName:"div", properties:{className:["table-wrap", "custom"]}, children:[table]};
+  const plugin = markdownTableWrappers();
+  const context = {parent: () => wrapper, wrapNode: () => assert.fail("Existing table wrapper changed")};
+  plugin.element.visit(table, context);
+  plugin.element.visit(table, context);
+  assert.deepEqual(plugin.element.filter, ["table"]);
+  assert.equal(wrapper.children[0], table);
+});
+
+test("the actual Satteri processor renders scroll wrappers around native Markdown table markup", async () => {
+  const processor = await createSatteriMarkdownProcessor({hastPlugins:[markdownTableWrappers()]});
+  const result = await processor.render("| Entry | Scope |\n| --- | --- |\n| [HTML](https://example.test/) | runner/producer/specification |\n");
+  assert.match(result.code, /<div class="table-wrap" tabindex="0"><table>/u);
+  assert(result.code.includes('<a href="https://example.test/">HTML</a>'));
+  assert(result.code.includes('runner/producer/specification'));
+  assert.equal((result.code.match(/<table>/gu) ?? []).length, 1);
+});
+
+test("the actual Astro build uses the current processor's native HAST table plugin", async () => {
+  const config = await readFile(new URL("../astro.config.mjs", import.meta.url), "utf8");
+  assert(config.includes('processor: satteri({hastPlugins: [markdownTableWrappers()]})'));
 });
