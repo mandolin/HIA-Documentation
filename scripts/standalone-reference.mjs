@@ -132,9 +132,14 @@ export function buildStandaloneJsdocReference({mainRepoRoot, sourcesRoot, output
   const configPath = path.join(outputRoot, '.runtime/standalone-config.json');
   fs.mkdirSync(path.dirname(configPath), {recursive:true});
   fs.writeFileSync(configPath, JSON.stringify(config));
-  execFileSync(process.execPath, [ownerRequire.resolve('jsdoc/jsdoc.js'), '-c', configPath], {
-    cwd:main, stdio:'inherit', env:{...process.env, NODE_PATH:path.join(main, 'apps/cli/node_modules')}
-  });
+  try {
+    execFileSync(process.execPath, [ownerRequire.resolve('jsdoc/jsdoc.js'), '-c', configPath], {
+      cwd:main, stdio:'inherit', env:{...process.env, NODE_PATH:path.join(main, 'apps/cli/node_modules')}
+    });
+  } finally {
+    // <lang><zh-CN>调用配置包含本机绝对路径，成功和失败后都移除，不能进入公开文本扫描或发布目录。</zh-CN><en>The invocation config contains local absolute paths and is removed after success or failure, before public-text scanning or publication.</en></lang>
+    fs.rmSync(configPath, {force:true});
+  }
   const result = checkStandaloneJsdocReference(output);
   const publication = {purpose:'Standalone JSDoc theme example', source:{repository:'mandolin/jsdoc-theme-hia', commit:themeHead, path:sourcePath, sha256:createHash('sha256').update(committed).digest('hex')},
     owners:owners.map(owner => ({name:owner.name, version:owner.version, commit:owner.commit, integrity:owner.integrity})),
