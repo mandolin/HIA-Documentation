@@ -47,6 +47,13 @@ describe("public site-chrome shared entry", () => {
     expect(chrome.assets[2]!.contents).not.toContain("Changed");
   });
 
+  it("retains native module fragment colons without admitting external schemes in paths", () => {
+    const target = "module-theme.html#module-module:theme-4fdfe5845b";
+    const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [{ id: "module-module:theme-4fdfe5845b", name: "module:theme", kind: "module", page: target, searchText: "theme" }] });
+    expect(chrome.assets[2]!.contents).toContain(target);
+    expect(() => createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [{ id: "invalid", name: "invalid", kind: "module", page: "https://private.invalid/page#module:theme", searchText: "invalid" }] })).toThrow("HIA_SITE_CHROME_INVALID");
+  });
+
   it.each(["../outside.html", "/outside.html", "https://private.invalid/", "a/%2e%2e/out.html", "a\\out.html", "a.html?secret=1"])("rejects unsafe output %s with a fixed public error", outputPath => {
     const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });
     expect(() => chrome.renderPage({ ...page(), outputPath })).toThrow("HIA_SITE_CHROME_INVALID");

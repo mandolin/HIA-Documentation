@@ -194,9 +194,15 @@ function copyLocalePages(value: SiteChromeLocalePages): SiteChromeLocalePages {
 
 /** @lang zh-CN 校验生成根相对路径，拒绝编码分隔符、逃逸、查询和外部协议。 @lang en Validates root-relative output paths, rejecting encoded separators, traversal, queries, and external protocols. */
 function relative(value: unknown, fragment = false): asserts value is string {
-  if (typeof value !== "string" || !value || /[\\:?\u0000-\u0020<>"']/u.test(value) || value.startsWith("/")) invalid();
+  if (typeof value !== "string" || !value || /[\\\u0000-\u0020<>"']/u.test(value) || value.startsWith("/")) invalid();
   const [pathname, ...hashes] = value.split("#");
   if (hashes.length && (!fragment || hashes.length > 1 || !hashes[0])) invalid();
+  // <lang><zh-CN>冒号和问号可属于原生不透明片段，但文件路径中的协议/查询仍拒绝。</zh-CN><en>Colons and question marks may belong to native opaque fragments, while path protocols and queries remain forbidden.</en></lang>
+  if (/[:?]/u.test(pathname!)) invalid();
+  if (hashes.length) {
+    try { if (/[\u0000-\u001f\u007f]/u.test(decodeURIComponent(hashes[0]!))) invalid(); }
+    catch { invalid(); }
+  }
   for (const part of pathname!.split("/")) {
     let decoded: string;
     try { decoded = decodeURIComponent(part); } catch { invalid(); }
