@@ -30,22 +30,26 @@ const hash = bytes => createHash("sha256").update(bytes).digest("hex");
 const toolVersion = read(path.join(main, "package.json")).version;
 
 /**
- * @lang zh-CN 在已确认边界内生成两个可发布站点，保留失败暂存及旧成功输出，拒绝并发覆盖。
- * @lang en Build two publishable sites within confirmed boundaries, retaining failed staging and prior successful outputs while rejecting concurrent overwrites.
+ * @lang zh-CN 按已验证清单生成JavaScript源码工具包的原生API站点，保留失败暂存及旧成功输出，拒绝并发覆盖。
+ * @lang en Build native API sites for JavaScript-source tool packages from validated inputs, retaining failed staging and prior successful outputs while rejecting concurrent overwrites.
  * @param {object} [options] - workspaceRoot为固定源容器，out为主仓dist子目录。 workspaceRoot is the fixed source container; out is a child of main dist.
- * @returns {Promise<object>} 两站实际内容、容量及源提交。 Actual site contents, sizes and source commit.
+ * @param {object} publication - 入口已验证的registry、registryPath、apiSiteId、resourceOwner、createNavigation与includeCommandSources，使用既有核心/资源契约。 Entry-validated registry, registryPath, apiSiteId, resourceOwner, createNavigation and includeCommandSources under existing core/resource contracts.
+ * @returns {Promise<object>} 各站实际内容、容量及源提交。 Actual contents, size and source commit for each site.
  * @throws {Error} 来源、声明、字段、范围、授权、容量或生产不符合。 Invalid source, declarations, fields, ranges, grants, budgets or production.
  */
-export async function buildJavaScriptReference(options = {}) {
+export async function buildJavaScriptPackageReference(options = {}, publication) {
   const workspace = fs.realpathSync(options.workspaceRoot ?? path.dirname(main));
   assert.equal(fs.realpathSync(path.join(workspace, "main-repo")), main);
-  const registry = loadJavaScriptReferenceInputs();
+  // <lang><zh-CN>入口只选择两个已登记正常生产清单，包/路由由对应读取器核验，来源摘要固定实际清单原字节。</zh-CN><en>Entries select only two registered production manifests. Their readers validate packages/routes and the source digest pins actual registry bytes.</en></lang>
+  assert(["reference/javascript-reference-inputs.json", "reference/html-reference-inputs.json"].includes(publication.registryPath));
+  const {registry, apiSiteId, resourceOwner, createNavigation, includeCommandSources} = publication;
+  assert(registry.sites.some(site => site.id === apiSiteId));
   const output = path.resolve(main, options.out ?? "dist/javascript-reference-publication");
   assertCoreReferenceOutput(output);
   // <lang><zh-CN>来源身份固定为当前已提交主仓，发布清单和所有被核源在结束时再次比对。</zh-CN><en>Pin source identity to the committed main checkout, rechecking the registry and all audited sources at completion.</en></lang>
   execFileSync("git", ["-C", main, "diff", "--exit-code", "HEAD", "--"], {stdio: "pipe"});
   const sourceCommit = execFileSync("git", ["-C", main, "rev-parse", "HEAD"], {encoding: "utf8"}).trim();
-  const registrySha256 = hash(fs.readFileSync(path.join(main, "reference/javascript-reference-inputs.json")));
+  const registrySha256 = hash(fs.readFileSync(path.join(main, publication.registryPath)));
   const inventory = auditRequiredPackages(workspace, {packageNames: registry.packages, includeMembers: true, includeDeclaredArrays: true});
   fs.mkdirSync(path.dirname(output), {recursive: true});
   const lockPath = output + ".lock";
@@ -54,13 +58,13 @@ export async function buildJavaScriptReference(options = {}) {
     const staging = fs.mkdtempSync(output + ".staging-");
     const runtime = path.join(staging, ".runtime");
     fs.mkdirSync(runtime);
-    // <lang><zh-CN>十包选择贯穿原生、schema、数组和描述符的实际B/A/JSONdoc审核，归属与读取授权继续逐源核验。</zh-CN><en>Carry the ten-package selection through actual native, schema, array and descriptor B/A/JSONdoc audits, retaining per-source ownership and access checks.</en></lang>
+    // <lang><zh-CN>入口包选择贯穿原生、schema、数组和描述符的实际B/A/JSONdoc审核，归属与读取授权继续逐源核验。</zh-CN><en>Carry the entry package selection through actual native, schema, array and descriptor B/A/JSONdoc audits, retaining per-source ownership and access checks.</en></lang>
     const native = await auditSatelliteNativeApi(workspace, {packageNames: registry.packages, includeMembers: true, schemaResources: true, arrayResources: true, descriptorResources: true, includeDeclaredArrays: true});
     const nativeRoot = path.join(main, native.output);
     const grouped = groupJavaScriptPublicationDeclarations(inventory, native.report.declaredArrayMemberAudit);
-    const inputs = {"javascript-api": [], "derivation-evidence": []};
+    const inputs = Object.fromEntries(registry.sites.map(site => [site.id, []]));
     const rows = [], resources = [], dataRows = [];
-    const files = {"javascript-api": new Set(), "derivation-evidence": new Set()};
+    const files = Object.fromEntries(registry.sites.map(site => [site.id, new Set()]));
     const sources = new Map();
 
     /** @lang zh-CN 将实际公开来源加入独占镜像，重复来源必须原字节相同。 @lang en Add actual public sources to an exclusive mirror, requiring identical original bytes for repeats. */
@@ -77,7 +81,7 @@ export async function buildJavaScriptReference(options = {}) {
       const resultPath = key + ".result.json";
       fs.writeFileSync(path.join(runtime, resultPath), JSON.stringify({contract: "documentation-producer-result", contractVersion: "1.0.0",
         producer: {id: "javascript-reference-projection", version: toolVersion}, status: "success", diagnostics: [], artifacts}), {flag: "wx"});
-      inputs[partition].push({kind: "documentation-producer-result", path: resultPath, identityScope: scope, domain: partition === "javascript-api" ? "js" : "other", semanticPath});
+      inputs[partition].push({kind: "documentation-producer-result", path: resultPath, identityScope: scope, domain: partition === apiSiteId ? "js" : "other", semanticPath});
       for (const artifact of artifacts) files[partition].add(artifact.path);
     }
 
@@ -103,12 +107,12 @@ export async function buildJavaScriptReference(options = {}) {
       copyPackageArtifact(path.join(nativeRoot, mapArtifact.path), path.join(runtime, mapPath), runtime);
       // <lang><zh-CN>模块标签同时保留实际路径与默认别名，原规范节点名称和身份由原生工件提供。</zh-CN><en>Module labels retain actual paths and default aliases; native artifacts supply canonical names and identities.</en></lang>
       const aliases = [...new Set(group.bindings.filter(binding => binding.name !== binding.declarationName).map(binding => binding.name))];
-      addInput("javascript-api", key, identityScope, [
+      addInput(apiSiteId, key, identityScope, [
         {id: "api", kind: "hia-document", path: documentPath, contract: "hia-core-document", contractVersion: selected.document.schemaVersion},
         {id: "map", kind: "doc-source-map", path: mapPath, contract: map.contract, contractVersion: map.contractVersion}
       ], [{kind: "repository", id: group.pack.owner, label: group.pack.repository}, {kind: "package", id: group.pack.name.slice(1).replaceAll("/", "--"), label: group.pack.name},
         {kind: "layer", id: key, label: group.declarationPath + (aliases.length ? " · " + aliases.join(" · ") : "")}]);
-      files["javascript-api"].add(base + "/native.hia.json").add(base + "/hia-integration.json");
+      files[apiSiteId].add(base + "/native.hia.json").add(base + "/hia-integration.json");
       rows.push({name: group.pack.name, version: group.pack.version, sourceHead: group.pack.sourceHead, repository: group.pack.repository,
         source: group.source, sourceSha256: cached.sha256, identityScope, documentPath, mapPath, bindings: selected.bindings, symbols: selected.document.symbols.length});
       mirror(group.source, readJsonResourceBytes(workspace, group.source));
@@ -143,7 +147,7 @@ export async function buildJavaScriptReference(options = {}) {
     const dataValues = new Map();
     for (const association of [native.report.arrayMemberAudit.arrayAssociationOutput, native.report.descriptorMemberAudit.descriptorAssociationOutput]) {
       const root = path.join(main, association);
-      for (const record of read(path.join(root, "report.json")).rows.filter(record => record.owner === "hia-jsdoc")) {
+      for (const record of read(path.join(root, "report.json")).rows.filter(record => record.owner === resourceOwner)) {
         assert.equal(record.status, "verified");
         for (const source of record.sources) assert.equal(hash(readJsonResourceBytes(workspace, "HIA/" + record.owner + "/" + source.path)), source.sha256);
         for (const file of record.files) assert.equal(hash(fs.readFileSync(path.join(root, file.path))), file.sha256);
@@ -165,9 +169,9 @@ export async function buildJavaScriptReference(options = {}) {
         });
         const document = read(path.join(runtime, artifacts[0].path));
         verifyJsonResourceProjection({...inspectJsonResource(bytes), source}, document, read(path.join(runtime, artifacts[1].path)), bytes);
-        addInput("javascript-api", key, "data:" + key, artifacts, [{kind: "package", id: record.package.slice(1).replaceAll("/", "--"), label: record.package}, {kind: "layer", id: key, label: record.name}]);
+        addInput(apiSiteId, key, "data:" + key, artifacts, [{kind: "package", id: record.package.slice(1).replaceAll("/", "--"), label: record.package}, {kind: "layer", id: key, label: record.name}]);
         copyPackageArtifact(path.join(root, record.files[1].path), path.join(runtime, base, "derivation-evidence.json"), runtime);
-        files["javascript-api"].add(source).add(base + "/derivation-evidence.json");
+        files[apiSiteId].add(source).add(base + "/derivation-evidence.json");
         dataRows.push({package: record.package, name: record.name, source, identityScope: "data:" + key, documentPath: artifacts[0].path, mapPath: artifacts[1].path, symbols: document.symbols.length});
         mirror(source, bytes);
       }
@@ -176,7 +180,8 @@ export async function buildJavaScriptReference(options = {}) {
     // <lang><zh-CN>完整下载另取公开模块与schema依赖；来源镜像与页面片段分别保留原字节/范围。</zh-CN><en>Full downloads also include public modules and schema dependencies, retaining original bytes separately from page-preview ranges.</en></lang>
     const schemaRows = read(path.join(main, native.report.schemaMemberAudit.associationOutput, "report.json")).rows.filter(row => registry.packages.includes(row.package));
     for (const row of schemaRows) for (const source of row.sources) mirror(source.path, readJsonResourceBytes(workspace, source.path));
-    for (const pack of inventory.packages) for (const module of pack.modules) {
+    // <lang><zh-CN>各正常入口明确是否交付独立命令源；模块接入与命令采用继续分账。</zh-CN><en>Each production entry explicitly chooses whether to deliver independent command sources; module and command adoption remain separately accounted.</en></lang>
+    for (const pack of inventory.packages) for (const module of pack.modules.filter(module => includeCommandSources || module.exports.length)) {
       const source = "HIA/" + pack.owner + "/" + module.path;
       mirror(source, readJsonResourceBytes(workspace, source));
     }
@@ -185,9 +190,9 @@ export async function buildJavaScriptReference(options = {}) {
     for (const site of registry.sites) {
       const root = path.join(staging, "sites", site.id);
       const navigationPath = path.join(runtime, site.id + ".navigation.json");
-      fs.writeFileSync(navigationPath, JSON.stringify(createJavaScriptReferenceNavigation(registry, site.id)));
+      fs.writeFileSync(navigationPath, JSON.stringify(createNavigation(registry, site.id)));
       const manifestPath = path.join(runtime, site.id + ".project.json");
-      const selectedRows = site.id === "javascript-api" ? [...rows, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
+      const selectedRows = site.id === apiSiteId ? [...rows, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
       const selectedSources = fullSources.filter(source => site.id === "derivation-evidence" ? source.source.includes("/evidence/hia-jsdoc-config-") : !source.source.includes("/evidence/hia-jsdoc-config-"));
       for (const locale of locales) {
         const target = path.join(root, site.path, locale);
@@ -200,7 +205,7 @@ export async function buildJavaScriptReference(options = {}) {
         for (const file of files[site.id]) copyPackageArtifact(path.join(runtime, file), path.join(target, file), staging);
         const index = read(path.join(target, "project-index.json"));
         assert.equal(index.entries.length, selectedRows.reduce((sum, row) => sum + row.symbols, 0));
-        if (site.id === "javascript-api") {
+        if (site.id === apiSiteId) {
           for (const row of rows) assertSatelliteApiEntries({row, document: read(path.join(runtime, row.documentPath)), map: read(path.join(runtime, row.mapPath)), entries: index.entries});
           const outputs = rows.map(row => ({...row, status: "success", artifact: row.documentPath.replace("api.hia.json", "hia-integration.json"), integration: read(path.join(runtime, row.documentPath.replace("api.hia.json", "hia-integration.json"))), document: read(path.join(runtime, row.documentPath))}));
           const bindings = inventory.packages.flatMap(pack => pack.modules.flatMap(module => module.exports.map(binding => {
@@ -230,9 +235,9 @@ export async function buildJavaScriptReference(options = {}) {
       const checked = inspectCoreReferenceSite(root, locales.map(locale => site.path + locale));
       const report = {sourceRepository: "mandolin/HIA-Documentation", sourceCommit, registrySha256, site,
         packages: inventory.packages.map(({name, version, repository, sourceHead}) => ({name, version, repository, sourceHead})),
-        rows: site.id === "javascript-api" ? rows : [], resources: resources.filter(row => row.site === site.id), dataRows: site.id === "javascript-api" ? dataRows : [],
-        memberPaths: site.id === "javascript-api" ? grouped.members.length : 0,
-        bindingsPerLocale: site.id === "javascript-api" ? inventory.packages.reduce((sum, pack) => sum + pack.modules.reduce((count, module) => count + module.exports.length, 0), 0) : 0,
+        rows: site.id === apiSiteId ? rows : [], resources: resources.filter(row => row.site === site.id), dataRows: site.id === apiSiteId ? dataRows : [],
+        memberPaths: site.id === apiSiteId ? grouped.members.length : 0,
+        bindingsPerLocale: site.id === apiSiteId ? inventory.packages.reduce((sum, pack) => sum + pack.modules.reduce((count, module) => count + module.exports.length, 0), 0) : 0,
         fullSources: selectedSources, entriesPerLocale: selectedRows.reduce((sum, row) => sum + row.symbols, 0), ...checked};
       fs.mkdirSync(path.join(staging, "reports"), {recursive: true});
       fs.writeFileSync(path.join(staging, "reports", site.id + ".json"), JSON.stringify(report, null, 2) + "\n");
@@ -249,6 +254,21 @@ export async function buildJavaScriptReference(options = {}) {
     catch (error) { if (backup) fs.renameSync(backup, output); throw error; }
     return {sourceCommit, sites: reports};
   } finally { fs.closeSync(lock); fs.unlinkSync(lockPath); }
+}
+
+/**
+ * @lang zh-CN 保留JavaScript工具API与JSDoc派生证据的既有正常入口、默认输出及源交付范围。
+ * @lang en Preserve the existing production entry, default output and source-delivery scope for JavaScript tool APIs and JSDoc derivation evidence.
+ * @param {object} [options] - 明确的workspaceRoot与dist内out。 Explicit workspaceRoot and an out inside dist.
+ * @returns {Promise<object>} 两站完整报告。 Complete reports for both sites.
+ * @throws {Error} 来源、内容、授权或发布预算检查失败。 Failed source, content, authorization or publication-budget checks.
+ */
+export async function buildJavaScriptReference(options = {}) {
+  return buildJavaScriptPackageReference(options, {
+    registry: loadJavaScriptReferenceInputs(), registryPath: "reference/javascript-reference-inputs.json",
+    apiSiteId: "javascript-api", resourceOwner: "hia-jsdoc", createNavigation: createJavaScriptReferenceNavigation,
+    includeCommandSources: true
+  });
 }
 
 // <lang><zh-CN>导入不执行构建，正常CLI仅接受明确源容器和自有输出。</zh-CN><en>Imports never execute builds; the normal CLI accepts only an explicit source container and owned output.</en></lang>

@@ -1,4 +1,4 @@
-"""核验固定JavaScript参考发布归档及原生/资源/完整源码内容。 Verify pinned JavaScript reference archives and native/resource/full-source contents."""
+"""核验JavaScript源码工具包（含HTML工具）的固定原生API归档、资源和完整源码。 Verify pinned native API archives, resources and complete sources for JavaScript-source tool packages, including HTML tools."""
 import gzip
 import json
 from pathlib import Path
@@ -24,9 +24,9 @@ def check_site(site, report, definition):
         prefix = definition['path'] + locale + '/'
         index = read(root / 'project-index.json')
         require(index['contract'] == 'hia-project-navigation-index' and index['contractVersion'] == '0.2.0-draft'
-                and index['project']['id'] == 'project:hia-' + definition['id'], 'Unexpected JavaScript project identity.')
+                and index['project']['id'] == 'project:hia-' + definition['id'], 'Unexpected native API project identity.')
         entries = {(entry.get('identityScope'), entry['symbolId']): entry for entry in index['entries']}
-        require(len(entries) == len(index['entries']) == report['entriesPerLocale'], 'Incomplete or duplicate JavaScript entries.')
+        require(len(entries) == len(index['entries']) == report['entriesPerLocale'], 'Incomplete or duplicate native API entries.')
         require(read(root / 'documentation-ui-locale-completeness.json')['status'] == 'complete', 'Incomplete interface messages.')
         # 中文。原字段、原生工件和映射逐节点匹配，语义核对与归档摘要分别保留。 English. Match original fields, native artifacts and maps per node, retaining semantic checks separately from archive hashes.
         covered = set()
@@ -66,7 +66,7 @@ def check_site(site, report, definition):
         for source in expected_sources:
             require(valid_path(prefix + source['path'], roots) and (root / source['path']).stat().st_size == source['byteLength']
                     and digest(root / source['path']) == source['sha256'], 'Complete-source bytes changed.')
-        if definition['id'] == 'javascript-api':
+        if definition['id'] in ('javascript-api', 'html-api'):
             bindings = read(root / 'package-api-bindings.json')['bindings']
             require(len(bindings) == report['bindingsPerLocale']
                     and {binding['package'] for binding in bindings} == {pack['name'] for pack in report['packages']}, 'Incomplete public package bindings.')
@@ -78,13 +78,15 @@ def check_site(site, report, definition):
 
 def prepare(snapshot, archive, report_path, output, registry=None):
     """固定来源和全部摘要后逐文件展开，任何失败保留先前输出。 Pin source and all digests before per-file extraction, retaining prior output on any failure."""
-    registry_path = Path(__file__).resolve().parent.parent / 'reference/javascript-reference-inputs.json'
+    # 中文。HTML选择已确认独立清单，既有JavaScript/证据入口继续读取原清单；实际原字节必须匹配固定摘要。 English. HTML selects its confirmed independent registry; existing JavaScript/evidence entries retain their registry, with exact bytes pinned by digest.
+    registry_name = 'html-reference-inputs.json' if snapshot['site'] == 'html-api' else 'javascript-reference-inputs.json'
+    registry_path = Path(__file__).resolve().parent.parent / 'reference' / registry_name
     if registry is None:
         registry = read(registry_path)
-        require(digest(registry_path) == snapshot['registrySha256'], 'Unexpected JavaScript registry revision.')
+        require(digest(registry_path) == snapshot['registrySha256'], 'Unexpected native API registry revision.')
     definition = next((site for site in registry['sites'] if site['id'] == snapshot['site']), None)
     require(definition and definition['repository'] == snapshot['publicationRepository'], 'Unexpected publication repository.')
-    require(definition['path'] == ('' if definition['id'] == 'javascript-api' else 'derivation-evidence/'), 'Unexpected publication route.')
+    require(definition['path'] == ('' if definition['id'] in ('javascript-api', 'html-api') else 'derivation-evidence/'), 'Unexpected publication route.')
     roots = [definition['path'] + locale for locale in ('zh-CN', 'en')]
     require(not output.exists() and not output.is_symlink(), 'Output already exists.')
     require(0 < snapshot['tarBytes'] <= 2 * 1024**3 and 0 < snapshot['bytes'] <= 1_000_000_000
@@ -133,7 +135,7 @@ def prepare(snapshot, archive, report_path, output, registry=None):
         require(seen == expected.keys() and total == snapshot['bytes'], 'Incomplete snapshot.')
         check_site(stage, report, definition)
         stage.rename(output)
-    print(f'Validated {len(seen)} JavaScript reference files and {total} bytes at {snapshot["commit"]}.')
+    print(f'Validated {len(seen)} native API reference files and {total} bytes at {snapshot["commit"]}.')
 
 
 if __name__ == '__main__':

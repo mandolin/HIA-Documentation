@@ -13,12 +13,15 @@ from prepare_javascript_reference import prepare, digest
 class JavaScriptPublicationTests(unittest.TestCase):
     """固定工件身份、完整字段/来源和安全展开边界。 Pin artifact identity, full fields/sources and safe extraction boundaries."""
 
-    def fixture(self, change=None, linked=False):
+    def fixture(self, change=None, linked=False, html=False):
         """生成真实双语TAR与完整回执，修改器可构造语义冲突。 Produce a real bilingual TAR and full receipt, with mutations for semantic conflicts."""
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         root = Path(scratch.name)
-        definition = {'id': 'javascript-api', 'repository': 'mandolin/HIA-Documentation-API-JavaScript', 'base': '/HIA-Documentation-API-JavaScript/', 'path': ''}
+        # 中文。HTML与既有JavaScript使用同一归档/阅读契约，只选择各自固定站点身份。 English. HTML and existing JavaScript share archive/reading contracts while selecting their respective fixed site identities.
+        site_id = 'html-api' if html else 'javascript-api'
+        repository = 'mandolin/HIA-Documentation-API-HTML' if html else 'mandolin/HIA-Documentation-API-JavaScript'
+        definition = {'id': site_id, 'repository': repository, 'base': '/' + repository.split('/')[1] + '/', 'path': ''}
         registry = {'packages': ['@hia-doc/demo'], 'sites': [definition]}
         symbol = {'id': 'visible', 'name': 'visible', 'kind': 'function', 'signature': 'visible()', 'i18n': {'fields': {'description': {'localizedText': {'en': 'Public.', 'zh-CN': '公开。'}}}}}
         row = {'identityScope': 'package:demo', 'documentPath': 'native/api.hia.json', 'mapPath': 'native/map.json', 'symbols': 1}
@@ -31,7 +34,7 @@ class JavaScriptPublicationTests(unittest.TestCase):
         for locale in ('zh-CN', 'en'):
             entry = {**symbol, 'identityScope': 'package:demo', 'symbolId': 'visible', 'input': {'path': row['documentPath']}, 'contentPath': 'entry.html', 'noScriptPagePath': 'entry.html', 'noScriptLocalePages': [{'path': 'entry.html'}],
                      'docSourceMap': {'path': row['mapPath'], 'entryId': 'map', 'sourceRange': coordinates}}
-            index = {'contract': 'hia-project-navigation-index', 'contractVersion': '0.2.0-draft', 'project': {'id': 'project:hia-javascript-api'}, 'entries': [entry]}
+            index = {'contract': 'hia-project-navigation-index', 'contractVersion': '0.2.0-draft', 'project': {'id': 'project:hia-' + site_id}, 'entries': [entry]}
             payload = {'project-index.json': index, 'native/api.hia.json': {'symbols': [symbol]}, 'native/native.hia.json': {'symbols': [symbol]},
                        'native/hia-integration.json': {'contract': 'hia-jsdoc-integration', 'contractVersion': '0.1.0', 'ir': {'nodes': [symbol]}},
                        'native/map.json': {'entries': [{'id': 'map', 'symbolId': 'visible', 'sourceRefs': [{'range': coordinates}]}]},
@@ -106,6 +109,25 @@ class JavaScriptPublicationTests(unittest.TestCase):
             args[0][key] = value
             with self.assertRaises(ValueError):
                 prepare(*args)
+
+    def test_html_archive(self):
+        """HTML固定站点沿同一原生契约完整展开。 Expand the pinned HTML site under the same native contracts."""
+        args = self.fixture(html=True)
+        prepare(*args)
+        self.assertTrue((args[3] / 'en/package-api-bindings.json').is_file())
+
+    def test_html_binding_omission(self):
+        """HTML公开绑定同样逐项拒绝遗漏。 Reject omitted HTML public bindings individually."""
+        args = self.fixture(lambda payload, report: payload['package-api-bindings.json'].update(bindings=[]), html=True)
+        with self.assertRaisesRegex(ValueError, 'package bindings'):
+            prepare(*args)
+
+    def test_html_unconfirmed_route(self):
+        """HTML固定路径不能替换成任意子分区。 Reject replacing HTML's fixed route with an arbitrary partition."""
+        args = self.fixture(html=True)
+        args[4]['sites'][0]['path'] = 'html/'
+        with self.assertRaisesRegex(ValueError, 'publication route'):
+            prepare(*args)
 
     def test_existing_output(self):
         """现有输出不被失败校验覆盖。 Existing output survives failed validation."""

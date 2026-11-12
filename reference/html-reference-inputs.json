@@ -1,0 +1,47 @@
+{
+  "description": "HTML文档工具八包正常生产与独立参考站。 Production inputs for the eight HTML documentation tool packages and their independent reference site.",
+  "packages": [
+    "@hia-doc/cem-adapter",
+    "@hia-doc/htmdoc-producer",
+    "@hia-doc/htmdoc-runner",
+    "@hia-doc/htmdoc-spec",
+    "@hia-doc/html-doc-adapter",
+    "@hia-doc/html-doc-extractor",
+    "@hia-doc/html-doc-source-map",
+    "@hia-doc/html-parser"
+  ],
+  "sites": [
+    {
+      "id": "html-api",
+      "repository": "mandolin/HIA-Documentation-API-HTML",
+      "base": "/HIA-Documentation-API-HTML/",
+      "path": "",
+      "titleByLocale": {
+        "zh-CN": "HTML文档工具包API",
+        "en": "HTML documentation tool package API"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "package": "@hia-doc/htmdoc-runner",
+      "subpath": "./schemas/htmdoc-config-1.0.0.schema.json",
+      "site": "html-api"
+    },
+    {
+      "package": "@hia-doc/htmdoc-runner",
+      "subpath": "./schemas/htmdoc-config-0.1.0-draft.schema.json",
+      "site": "html-api"
+    },
+    {
+      "package": "@hia-doc/htmdoc-spec",
+      "subpath": "./schemas/hia-htmdoc-extraction-1.0.0.schema.json",
+      "site": "html-api"
+    },
+    {
+      "package": "@hia-doc/htmdoc-spec",
+      "subpath": "./schemas/hia-htmdoc-extraction-0.1.0-draft.schema.json",
+      "site": "html-api"
+    }
+  ]
+}
