@@ -1,4 +1,4 @@
-/** @file @lang zh-CN DotNetDoc八包发布清单及分区导航的先行回归。 @lang en Up-front regressions for the eight DotNetDoc tool packages and partition navigation. */
+/** @file @lang zh-CN DotNetDoc六包发布清单及分区导航的先行回归。 @lang en Up-front regressions for the six DotNetDoc tool packages and partition navigation. */
 import test from "node:test";
 import assert from "node:assert/strict";
 import {loadDotNetReferenceInputs, assertDotNetReferenceInputs, createDotNetReferenceNavigation} from "./dotnet-reference-inputs.mjs";

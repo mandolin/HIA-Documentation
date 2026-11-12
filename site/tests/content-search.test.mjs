@@ -173,3 +173,17 @@ test("the shared HTML and CSS reference section names both domains and retains t
     assert(manual.includes(`<div id="${anchor}"></div>`));
   }
 });
+
+test("both official directories expose the complete DotNetDoc tool reference at its registered locale roots", async () => {
+  // <lang><zh-CN>两个正文目录从已确认清单核完整站名及对应语言入口，并说明声明文件语言。</zh-CN><en>Both prose directories match the confirmed registry's full site title and locale roots while identifying declaration-file language.</en></lang>
+  const registry = JSON.parse(await readFile(new URL("../../reference/dotnet-reference-inputs.json", import.meta.url), "utf8"));
+  const site = registry.sites[0];
+  for (const locale of ["zh-CN", "en"]) {
+    const destination = "https://mandolin.github.io" + site.base + locale + "/";
+    for (const name of ["reference", "code-reference"]) {
+      const manual = await readFile(new URL(`../src/content/${name}.${locale}.md`, import.meta.url), "utf8");
+      assert(manual.includes(`[${site.titleByLocale[locale]}](${destination})`));
+      assert(manual.includes("TypeScript"));
+    }
+  }
+});

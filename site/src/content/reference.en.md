@@ -65,6 +65,12 @@ Language and version entries retain the current partition. The Code documentatio
 | [HTML documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-HTML/en/) | HTML parsing, documentation extraction, adaptation, source maps, Custom Elements Manifest conversion and runner/producer/specification interfaces, including current and legacy schemas, static declaration data and complete sources. Search covers this site |
 | [CSS documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-CSS/en/) | CSS parsing, documentation extraction, adaptation, source maps, design-token conversion and runner/producer/specification interfaces, including current and legacy schemas, static declaration data and complete sources. Browse by full package name and original declaration. Search covers this site. |
 
+## DotNetDoc documentation tools
+
+| Entry | Reading scope |
+| --- | --- |
+| [DotNetDoc documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-DotNetDoc/en/) | JavaScript runtime and TypeScript declaration interfaces for six DotNetDoc documentation tool packages, covering C# source extraction, XML documentation extraction, adapters, runners, producers and specifications. Includes original bilingual documentation, signatures, sixteen current/legacy JSON resources, static declaration data, native maps and complete sources. Browse by full package name and original declaration. Search covers this site. |
+
 ## JavaScript documentation tools and configuration evidence
 
 | Full name | Contents and search scope |
