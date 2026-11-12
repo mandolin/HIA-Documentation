@@ -27,6 +27,10 @@ The renderer consumes `@hia-doc/core` data and returns file payloads. It does no
 
 ### Optional website navigation
 
+中文。站点阅读页的 JS 领域徽标在 `entry.source.language` 明确为 `typescript` 时显示 TypeScript，其余情况沿用 JavaScript。原领域分组、索引身份和源码数据保持各自职责。
+
+English. Adopted reading pages label JS-domain entries as TypeScript when `entry.source.language` explicitly equals `typescript`, retaining JavaScript otherwise. Domain grouping, index identity and source metadata retain their respective roles.
+
 中文。项目渲染的 `projectSite.siteNavigation` 接受独立 `documentation-site-navigation@0.1.0-draft` 数据。宿主明确提供品牌、两语言标签、部署内路由与实际文档版本，同时设置 `projectSite.uiLocale`。渲染器在交互页、静态索引/条目和独立源码页生成固定顶部、原生版本菜单、文档栏目及手机菜单，输出一份 `assets/hia-site-navigation.css`。原生菜单可在禁用脚本时使用。正文语言与界面语言分别管理。源码权限仍来自原输入和来源策略。
 
 English. Project rendering accepts independent `documentation-site-navigation@0.1.0-draft` data through `projectSite.siteNavigation`. Hosts provide branding, bilingual labels, deployment-local routes, actual documentation versions, and an explicit `projectSite.uiLocale`. The renderer adds a fixed header, native version menu, documentation tabs, and mobile menu to interactive pages, static indexes/entries, and standalone source viewers, emitting one `assets/hia-site-navigation.css`. Native menus work without scripts. UI and content languages are independent. Source authority comes from the existing inputs and source policy.

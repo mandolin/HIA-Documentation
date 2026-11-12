@@ -4748,7 +4748,9 @@ function renderProjectSemanticTopicInternal(
   const kindLabel = portalContext.siteNavigation && portalContext.uiLocaleAdoption?.bundles[portalContext.uiLocale][kindMessageId]
     ? renderProjectUiMessage(portalContext, kindMessageId)
     : escapeHtml(entry.kind);
-  const viewLabel = portalContext.siteNavigation && entry.view === "js" ? "JavaScript" : formatProjectViewLabel(entry.view);
+  // <lang><zh-CN>JS领域中的显式TypeScript原源使用真实语言徽标，缺语言时保留既有JavaScript回退。</zh-CN><en>Explicit TypeScript sources in the JS domain use their actual language badge, retaining the existing JavaScript fallback when unspecified.</en></lang>
+  const scriptLanguage = entry.source?.language === "typescript" ? "TypeScript" : "JavaScript";
+  const viewLabel = portalContext.siteNavigation && entry.view === "js" ? scriptLanguage : formatProjectViewLabel(entry.view);
   const badges = `<span class="hia-kind">${kindLabel}</span><span class="hia-kind">${escapeHtml(viewLabel)}</span>`;
   const primarySummary = renderProjectEntrySummary(entry, locales, selectedLocale);
   const additionalFields = renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry), portalContext, entry.id);

@@ -35,6 +35,29 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it.each([
+    ["typescript", "TypeScript"],
+    ["javascript", "JavaScript"],
+    [undefined, "JavaScript"]
+  ])("labels explicit source language %s without changing the JS domain group", (language, label) => {
+    // <lang><zh-CN>源码语言控制阅读徽标，原领域分组与无声明时的既有回退分别保持。</zh-CN><en>Source language controls the reading badge while retaining the domain group and the existing fallback when unspecified.</en></lang>
+    const fixture = project();
+    const input = { ...fixture, entries: [{ ...fixture.entries[0]!, source: { ...fixture.entries[0]!.source, language } }] };
+    for (const uiLocale of ["en", "zh-CN"]) {
+      const result = renderProjectHtmlDocument(input, { projectSite: { uiLocale, informationArchitecture: {}, siteNavigation: navigation() } });
+      const fragment = result.files.find(file => file.path.startsWith("entries/"))!.contents;
+      expect(fragment).toContain(`<span class="hia-kind">${label}</span>`);
+      for (const page of result.files.filter(file => file.path.startsWith("pages/") && file.path.endsWith(".html") && !file.path.endsWith("index.html"))) {
+        expect(page.contents).toContain(`<span class="hia-kind">${label}</span>`);
+      }
+      const index = JSON.parse(result.files.find(file => file.path === "project-index.json")!.contents);
+      expect(index.entries[0].view).toBe("js");
+      expect(index.entries[0].source.language).toBe(language);
+    }
+    const legacy = renderProjectHtmlDocument(input, { projectSite: { uiLocale: "en", informationArchitecture: {} } });
+    expect(legacy.files.find(file => file.path.startsWith("entries/"))!.contents).toContain('<span class="hia-kind">JS</span>');
+  });
+
   it("resolves same-document hashes through the existing index without changing history", async () => {
     const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const shell = result.files.find(file => file.path === "index.html")!.contents;
