@@ -40,8 +40,8 @@ const toolVersion = read(path.join(main, "package.json")).version;
 export async function buildJavaScriptPackageReference(options = {}, publication) {
   const workspace = fs.realpathSync(options.workspaceRoot ?? path.dirname(main));
   assert.equal(fs.realpathSync(path.join(workspace, "main-repo")), main);
-  // <lang><zh-CN>入口只选择两个已登记正常生产清单，包/路由由对应读取器核验，来源摘要固定实际清单原字节。</zh-CN><en>Entries select only two registered production manifests. Their readers validate packages/routes and the source digest pins actual registry bytes.</en></lang>
-  assert(["reference/javascript-reference-inputs.json", "reference/html-reference-inputs.json"].includes(publication.registryPath));
+  // <lang><zh-CN>入口只选择三个已登记正常生产清单，包/路由由对应读取器核验，来源摘要固定实际清单原字节。</zh-CN><en>Entries select only three registered production manifests. Their readers validate packages/routes and the source digest pins actual registry bytes.</en></lang>
+  assert(["reference/javascript-reference-inputs.json", "reference/html-reference-inputs.json", "reference/css-reference-inputs.json"].includes(publication.registryPath));
   const {registry, apiSiteId, resourceOwner, createNavigation, includeCommandSources} = publication;
   assert(registry.sites.some(site => site.id === apiSiteId));
   const output = path.resolve(main, options.out ?? "dist/javascript-reference-publication");
@@ -247,7 +247,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
     for (const source of fullSources.filter(source => source.source.startsWith("HIA/"))) assert.equal(hash(readJsonResourceBytes(workspace, source.source)), source.sha256);
     execFileSync("git", ["-C", main, "diff", "--exit-code", "HEAD", "--"], {stdio: "pipe"});
     assert.equal(execFileSync("git", ["-C", main, "rev-parse", "HEAD"], {encoding: "utf8"}).trim(), sourceCommit);
-    // <lang><zh-CN>仅最终两个site目录可发布，运行目录与审核中间件留在装配根；失败时保留旧成功输出。</zh-CN><en>Only the two final site directories are publishable; runtime and audit intermediates stay at the assembly root, with prior successful output retained on failure.</en></lang>
+    // <lang><zh-CN>仅最终site目录可发布，运行目录与审核中间件留在装配根；失败时保留旧成功输出。</zh-CN><en>Only the final site directories are publishable; runtime and audit intermediates stay at the assembly root, with prior successful output retained on failure.</en></lang>
     let backup;
     if (fs.existsSync(output)) { backup = output + ".previous-" + randomUUID(); assertCoreReferenceOutput(backup); fs.renameSync(output, backup); }
     try { fs.renameSync(staging, output); }

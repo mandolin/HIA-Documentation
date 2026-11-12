@@ -1,4 +1,4 @@
-"""核验JavaScript源码工具包（含HTML工具）的固定原生API归档、资源和完整源码。 Verify pinned native API archives, resources and complete sources for JavaScript-source tool packages, including HTML tools."""
+"""核验JavaScript源码工具包（含HTML与CSS工具）的固定原生API归档、资源和完整源码。 Verify pinned native API archives, resources and complete sources for JavaScript-source tool packages, including HTML and CSS tools."""
 import gzip
 import json
 from pathlib import Path
@@ -66,7 +66,7 @@ def check_site(site, report, definition):
         for source in expected_sources:
             require(valid_path(prefix + source['path'], roots) and (root / source['path']).stat().st_size == source['byteLength']
                     and digest(root / source['path']) == source['sha256'], 'Complete-source bytes changed.')
-        if definition['id'] in ('javascript-api', 'html-api'):
+        if definition['id'] in ('javascript-api', 'html-api', 'css-api'):
             bindings = read(root / 'package-api-bindings.json')['bindings']
             require(len(bindings) == report['bindingsPerLocale']
                     and {binding['package'] for binding in bindings} == {pack['name'] for pack in report['packages']}, 'Incomplete public package bindings.')
@@ -78,15 +78,15 @@ def check_site(site, report, definition):
 
 def prepare(snapshot, archive, report_path, output, registry=None):
     """固定来源和全部摘要后逐文件展开，任何失败保留先前输出。 Pin source and all digests before per-file extraction, retaining prior output on any failure."""
-    # 中文。HTML选择已确认独立清单，既有JavaScript/证据入口继续读取原清单；实际原字节必须匹配固定摘要。 English. HTML selects its confirmed independent registry; existing JavaScript/evidence entries retain their registry, with exact bytes pinned by digest.
-    registry_name = 'html-reference-inputs.json' if snapshot['site'] == 'html-api' else 'javascript-reference-inputs.json'
+    # 中文。HTML/CSS选择各自已确认独立清单，既有JavaScript/证据入口继续读取原清单；实际原字节必须匹配固定摘要。 English. HTML/CSS select their confirmed independent registries; existing JavaScript/evidence entries retain their registry, with exact bytes pinned by digest.
+    registry_name = {'html-api': 'html-reference-inputs.json', 'css-api': 'css-reference-inputs.json'}.get(snapshot['site'], 'javascript-reference-inputs.json')
     registry_path = Path(__file__).resolve().parent.parent / 'reference' / registry_name
     if registry is None:
         registry = read(registry_path)
         require(digest(registry_path) == snapshot['registrySha256'], 'Unexpected native API registry revision.')
     definition = next((site for site in registry['sites'] if site['id'] == snapshot['site']), None)
     require(definition and definition['repository'] == snapshot['publicationRepository'], 'Unexpected publication repository.')
-    require(definition['path'] == ('' if definition['id'] in ('javascript-api', 'html-api') else 'derivation-evidence/'), 'Unexpected publication route.')
+    require(definition['path'] == ('' if definition['id'] in ('javascript-api', 'html-api', 'css-api') else 'derivation-evidence/'), 'Unexpected publication route.')
     roots = [definition['path'] + locale for locale in ('zh-CN', 'en')]
     require(not output.exists() and not output.is_symlink(), 'Output already exists.')
     require(0 < snapshot['tarBytes'] <= 2 * 1024**3 and 0 < snapshot['bytes'] <= 1_000_000_000

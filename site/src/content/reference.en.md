@@ -61,6 +61,7 @@ Language and version entries retain the current partition. The Code documentatio
 | Entry | Reading scope |
 | --- | --- |
 | [HTML documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-HTML/en/) | HTML parsing, documentation extraction, adaptation, source maps, Custom Elements Manifest conversion and runner/producer/specification interfaces, including current and legacy schemas, static declaration data and complete sources. Search covers this site |
+| [CSS documentation tool package API](https://mandolin.github.io/HIA-Documentation-API-CSS/en/) | CSS parsing, documentation extraction, adaptation, source maps, design-token conversion and runner/producer/specification interfaces, including current and legacy schemas, static declaration data and complete sources. Browse by full package name and original declaration. Search covers this site. |
 
 ## JavaScript documentation tools and configuration evidence
 

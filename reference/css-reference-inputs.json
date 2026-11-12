@@ -1,0 +1,47 @@
+{
+  "description": "CSS文档工具八包正常生产与独立参考站。 Production inputs for the eight CSS documentation tool packages and their independent reference site.",
+  "packages": [
+    "@hia-doc/css-doc-adapter",
+    "@hia-doc/css-doc-extractor",
+    "@hia-doc/css-doc-source-map",
+    "@hia-doc/css-parser",
+    "@hia-doc/cssdoc-producer",
+    "@hia-doc/cssdoc-runner",
+    "@hia-doc/cssdoc-spec",
+    "@hia-doc/design-token-bridge"
+  ],
+  "sites": [
+    {
+      "id": "css-api",
+      "repository": "mandolin/HIA-Documentation-API-CSS",
+      "base": "/HIA-Documentation-API-CSS/",
+      "path": "",
+      "titleByLocale": {
+        "zh-CN": "CSS文档工具包API",
+        "en": "CSS documentation tool package API"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "package": "@hia-doc/cssdoc-runner",
+      "subpath": "./schemas/cssdoc-config-1.0.0.schema.json",
+      "site": "css-api"
+    },
+    {
+      "package": "@hia-doc/cssdoc-runner",
+      "subpath": "./schemas/cssdoc-config-0.1.0-draft.schema.json",
+      "site": "css-api"
+    },
+    {
+      "package": "@hia-doc/cssdoc-spec",
+      "subpath": "./schemas/hia-cssdoc-extraction-1.0.0.schema.json",
+      "site": "css-api"
+    },
+    {
+      "package": "@hia-doc/cssdoc-spec",
+      "subpath": "./schemas/hia-cssdoc-extraction-0.1.0-draft.schema.json",
+      "site": "css-api"
+    }
+  ]
+}

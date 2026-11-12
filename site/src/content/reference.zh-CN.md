@@ -61,6 +61,7 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 | 入口 | 阅读范围 |
 | --- | --- |
 | [HTML文档工具包API](https://mandolin.github.io/HIA-Documentation-API-HTML/zh-CN/) | HTML解析、注释提取、适配、源码映射、Custom Elements Manifest转换及运行器/生产器/规范接口，包含当前与旧版schema、静态声明数据及完整源码，检索范围为本站 |
+| [CSS文档工具包API](https://mandolin.github.io/HIA-Documentation-API-CSS/zh-CN/) | CSS解析、注释提取、适配、源码映射、设计令牌转换及运行器/生产器/规范接口，包含当前与旧版schema、静态声明数据和完整源码。按完整包名及原声明检索，范围为本站。 |
 
 ## JavaScript文档工具与配置证据
 

@@ -13,14 +13,14 @@ from prepare_javascript_reference import prepare, digest
 class JavaScriptPublicationTests(unittest.TestCase):
     """固定工件身份、完整字段/来源和安全展开边界。 Pin artifact identity, full fields/sources and safe extraction boundaries."""
 
-    def fixture(self, change=None, linked=False, html=False):
+    def fixture(self, change=None, linked=False, html=False, site_id=None):
         """生成真实双语TAR与完整回执，修改器可构造语义冲突。 Produce a real bilingual TAR and full receipt, with mutations for semantic conflicts."""
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         root = Path(scratch.name)
         # 中文。HTML与既有JavaScript使用同一归档/阅读契约，只选择各自固定站点身份。 English. HTML and existing JavaScript share archive/reading contracts while selecting their respective fixed site identities.
-        site_id = 'html-api' if html else 'javascript-api'
-        repository = 'mandolin/HIA-Documentation-API-HTML' if html else 'mandolin/HIA-Documentation-API-JavaScript'
+        site_id = site_id or ('html-api' if html else 'javascript-api')
+        repository = {'css-api': 'mandolin/HIA-Documentation-API-CSS', 'html-api': 'mandolin/HIA-Documentation-API-HTML', 'javascript-api': 'mandolin/HIA-Documentation-API-JavaScript'}[site_id]
         definition = {'id': site_id, 'repository': repository, 'base': '/' + repository.split('/')[1] + '/', 'path': ''}
         registry = {'packages': ['@hia-doc/demo'], 'sites': [definition]}
         symbol = {'id': 'visible', 'name': 'visible', 'kind': 'function', 'signature': 'visible()', 'i18n': {'fields': {'description': {'localizedText': {'en': 'Public.', 'zh-CN': '公开。'}}}}}
@@ -135,6 +135,26 @@ class JavaScriptPublicationTests(unittest.TestCase):
         args[3].mkdir()
         with self.assertRaisesRegex(ValueError, 'already exists'):
             prepare(*args)
+
+    def test_css_archive(self):
+        """CSS固定站点沿同一原生契约完整展开。 Expand the pinned CSS site under the same native contracts."""
+        args = self.fixture(site_id='css-api')
+        prepare(*args)
+        self.assertTrue((args[3] / 'en/package-api-bindings.json').is_file())
+
+    def test_css_binding_omission(self):
+        """CSS公开绑定同样逐项拒绝遗漏。 Reject omitted CSS public bindings individually."""
+        args = self.fixture(lambda payload, report: payload['package-api-bindings.json'].update(bindings=[]), site_id='css-api')
+        with self.assertRaisesRegex(ValueError, 'package bindings'):
+            prepare(*args)
+
+    def test_css_unconfirmed_route(self):
+        """CSS固定路径不能替换成任意子分区。 Reject replacing CSS's fixed route with an arbitrary partition."""
+        args = self.fixture(site_id='css-api')
+        args[4]['sites'][0]['path'] = 'css/'
+        with self.assertRaisesRegex(ValueError, 'publication route'):
+            prepare(*args)
+
 
 
 if __name__ == '__main__':
