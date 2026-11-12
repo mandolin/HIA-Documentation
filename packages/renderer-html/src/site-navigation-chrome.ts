@@ -58,7 +58,7 @@ export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigatio
  * @lang zh-CN 用纯文本双语消息及显式目标生成原生菜单，源码页不需要脚本。
  * @lang en Generates native menus from bilingual plain-text messages and explicit targets, requiring no scripts on source viewers.
  */
-function header(navigation: DocumentationSiteNavigation, locale: DocumentationPortalUiLocale): string {
+export function header(navigation: DocumentationSiteNavigation, locale: DocumentationPortalUiLocale, localeTargets?: Partial<DocumentationSiteNavigationLocalizedText>): string {
   // <lang><zh-CN>消息身份与完整性评估共享工厂，译文只在最终HTML中转义，不进入报告。
   // </zh-CN><en>Message identities share their factory with completeness evaluation; translations are escaped only in final HTML and stay out of reports.</en></lang>
   const messages = new Map(createSiteNavigationUiMessages(navigation).map(record => [record.id, record[locale]]));
@@ -72,7 +72,12 @@ function header(navigation: DocumentationSiteNavigation, locale: DocumentationPo
   const empty = versions.entries.some(entry => entry.status === "archive") ? "" : `<p>${text("site.version.empty")}</p>`;
   const history = `<a ${href(versions.history.hrefByLocale)}>${text("site.version.history")}</a>`;
   const other = locale === "en" ? "zh-CN" : "en";
-  const counterpart = `<a ${href({ "zh-CN": navigation.localeTargets.en, en: navigation.localeTargets["zh-CN"] })} data-hia-site-language lang="${other}" hreflang="${other}">${text("site.locale.other")}</a>`;
+  // <lang><zh-CN>独立生成器显式给出实际同页目标；缺页保留禁用状态，默认调用保留原部署入口。</zh-CN><en>Independent generators supply actual same-page targets; absent pages remain disabled while default calls retain deployment entries.</en></lang>
+  const counterpart = localeTargets
+    ? localeTargets[other]
+      ? `<a href="${escape(localeTargets[other]!)}" data-hia-site-language lang="${other}" hreflang="${other}">${text("site.locale.other")}</a>`
+      : `<span aria-disabled="true" lang="${other}">${text("site.locale.other")}</span>`
+    : `<a ${href({ "zh-CN": navigation.localeTargets.en, en: navigation.localeTargets["zh-CN"] })} data-hia-site-language lang="${other}" hreflang="${other}">${text("site.locale.other")}</a>`;
   return [
     `<a class="hia-site-skip" href="#hia-site-main">${text("site.skip")}</a>`,
     '<header class="hia-site-header"><div class="hia-site-header-inner">',
@@ -97,7 +102,7 @@ function escape(value: string): string {
  * @lang zh-CN 已确认76px桌面/68px手机固定顶部、栏目及原生菜单样式；变量复用主题owner，长内容局部滚动。
  * @lang en Confirmed fixed 76px desktop/68px mobile header, tabs, and native menus; variables reuse the theme owner and long content scrolls locally.
  */
-const SITE_STYLE = `
+export const SITE_STYLE = `
 html[data-hia-site-navigation] {
   --hia-site-header:76px;
   --hia-site-tabs:52px;

@@ -1,5 +1,43 @@
 # @hia-doc/renderer-html
 
+## Shared site chrome
+
+The `@hia-doc/renderer-html/site-chrome` subpath provides synchronous ESM and
+CommonJS access to `createSiteChrome`, the existing navigation validator and
+`renderSourceLines` on the documented Node.js runtime baseline.
+
+中文说明。共享子入口接收显式页面角色、界面语言、实际同页语言路径和生成器已安全处理的正文/目录HTML。`createSiteChrome({ navigation, entries })`返回独立快照、一次生成一份的`assets`和同步`renderPage(page)`。调用方负责写文件和源码公开许可。
+
+```js
+const { createSiteChrome } = require("@hia-doc/renderer-html/site-chrome");
+const site = createSiteChrome({ navigation, entries: [] });
+const html = site.renderPage({
+  role: "entry",
+  outputPath: "greet.en.html",
+  uiLocale: "en",
+  localePages: { en: "greet.en.html", "zh-CN": "greet.zh-CN.html" },
+  title: "greet",
+  bodyHtml: '<article><h1>greet</h1></article>',
+  directoryHtml: '<a href="greet.en.html">greet</a>',
+  sections: []
+});
+```
+
+`navigation` must satisfy `documentation-site-navigation@0.1.0-draft`.
+Entry `page` and `localePages` targets are relative to the generation root.
+Page `outputPath` is an HTML path, `uiLocale` is explicitly `en` or `zh-CN`,
+and every section ID must exist in `bodyHtml`. Missing locale counterparts
+remain disabled. Optional `stylesheets`/`scripts` use generation-root-relative
+paths. HTML slots belong to a trusted generator and require its sanitization.
+
+The service performs no I/O. It emits shared CSS, progressive-enhancement JS
+and a body-free search index once per generation. Source-role pages are
+script-free with a restrictive CSP. Invalid input throws a public `TypeError`
+with `HIA_SITE_CHROME_INVALID` or the existing navigation diagnostic, without
+echoing rejected values. Read-only asset lists can be reused across pages.
+
+中文说明。搜索按实际静态页面跳转，搜索及设置只在当前页面运行，设置不持久化。源码正文、文件归属、语言/版本和坐标精度由各生产方及现有契约负责，导航数据只提供公开站点目标。
+
 中文。`RenderProjectEntry.identityScope` 为可选聚合作用域。父子、成员与来源关系按作用域隔离，含作用域条目的索引使用 `0.2.0-draft`，原无作用域索引保持 `0.1.0-draft`。调用方负责稳定作用域和唯一条目标识，源码授权按来源策略核验。详见[聚合迁移](../../docs/project-manifest-migration.md#scoped-aggregation)。
 
 English. Optional `RenderProjectEntry.identityScope` isolates parent/member and provenance relations. Indexes containing scoped entries use `0.2.0-draft`, with unscoped indexes retaining `0.1.0-draft`. Callers supply stable scopes and unique entry IDs. Source authority follows the source policy.

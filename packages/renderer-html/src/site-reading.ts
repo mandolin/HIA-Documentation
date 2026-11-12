@@ -166,7 +166,7 @@ export function renderSiteReading(contents: string, file: string, locale: Docume
     const pages = escape(JSON.stringify(entries.map(({ id, page, localePages }) => ({ id, page, localePages }))));
     const scheme = /data-hia-scheme="(light|dark|system)"/u.exec(contents)?.[1] ?? "system";
     const skin = /data-hia-skin="([^"]+)"/u.exec(contents)?.[1] ?? "portal.classic";
-    contents = contents.replace("</body>", `${dialogs(text)}<script src="${prefix}assets/hia-site-reading.js" data-hia-reading-messages="${config}" data-hia-reading-pages="${pages}" data-hia-reading-initial-scheme="${scheme}" data-hia-reading-initial-skin="${skin}" defer></script></body>`);
+    contents = contents.replace("</body>", `${renderSiteReadingDialogs(text)}<script src="${prefix}assets/hia-site-reading.js" data-hia-reading-messages="${config}" data-hia-reading-pages="${pages}" data-hia-reading-initial-scheme="${scheme}" data-hia-reading-initial-skin="${skin}" defer></script></body>`);
   }
   return contents;
 }
@@ -178,7 +178,7 @@ export function renderSiteReading(contents: string, file: string, locale: Docume
  * @lang en Generates confirmed native dialogs and closed setting choices.
 
  */
-function dialogs(text: (id: keyof typeof SITE_READING_MESSAGES) => string): string {
+export function renderSiteReadingDialogs(text: (id: keyof typeof SITE_READING_MESSAGES) => string): string {
   const close = `<button type="button" data-hia-reading-close>${text("site.reading.close")}</button>`;
   const select = (name: string, id: keyof typeof SITE_READING_MESSAGES, options: Array<[string, keyof typeof SITE_READING_MESSAGES]>) => `<label>${text(id)}<select data-hia-reading-${name}>${options.map(([value, label]) => `<option value="${value}" data-hia-ui-message="${label}">${text(label).replace(/<[^>]*>/gu, "")}</option>`).join("")}</select></label>`;
   return `<dialog id="hia-reading-search" aria-labelledby="hia-reading-search-title"><header><h2 id="hia-reading-search-title">${text("site.reading.search")}</h2>${close}</header><div class="hia-site-dialog-body"><label for="hia-reading-query">${text("site.reading.searchscope")}</label><input id="hia-reading-query" type="search" autofocus><div data-hia-reading-results aria-live="polite"></div><a href="#hia-site-directory" data-hia-reading-directory>${text("site.reading.directory")}</a></div></dialog><dialog id="hia-reading-settings" aria-labelledby="hia-reading-settings-title"><header><h2 id="hia-reading-settings-title">${text("site.reading.settings")}</h2>${close}</header><div class="hia-site-dialog-body">${select("scheme", "site.reading.scheme", [["light", "site.reading.light"], ["dark", "site.reading.dark"], ["system", "site.reading.system"]])}${select("wrap", "site.reading.wrap", [["scroll", "site.reading.scroll"], ["wrap", "site.reading.wrapped"]])}${select("lines", "site.reading.lines", [["show", "site.reading.show"], ["hide", "site.reading.hide"]])}<p>${text("site.reading.scope")}</p></div></dialog>`;
@@ -284,7 +284,7 @@ export const SITE_READING_SCRIPT = String.raw`/**
         results.textContent = text('site.reading.loading');
         try {
             if (!indexPromise)
-                indexPromise = fetch('search/index.json', { credentials: 'omit', signal: AbortSignal.timeout(10000) }).then(response => {
+                indexPromise = fetch(script.dataset.hiaReadingStatic || 'search/index.json', { credentials: 'omit', signal: AbortSignal.timeout(10000) }).then(response => {
                     if (!response.ok)
                         throw new Error('index');
                     return response.json();
@@ -298,10 +298,17 @@ export const SITE_READING_SCRIPT = String.raw`/**
             results.replaceChildren();
             for (const entry of matches) {
                 const link = document.createElement('a');
-                link.href = '#entry=' + encodeURIComponent(entry.id);
+                // <lang><zh-CN>静态生成器按真实页面跳转，通用Portal继续沿原条目事件路径。</zh-CN><en>Static generators navigate to actual pages; the generic Portal retains its original entry-event path.</en></lang>
+                if (script.dataset.hiaReadingStatic) {
+                    const base = new URL(script.dataset.hiaReadingBase || './', location.href);
+                    const target = new URL(entry.localePages?.[root.lang] || entry.page, base);
+                    if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname))
+                        throw new Error('index');
+                    link.href = target.href;
+                } else link.href = '#entry=' + encodeURIComponent(entry.id);
                 link.textContent = entry.name + ' · ' + entry.kind;
                 // <lang><zh-CN>选择沿用树的成功后replaceState；普通href保留复制/新窗口路径，不额外制造无法恢复的历史项。</zh-CN><en>Selection reuses the tree's post-success replaceState; ordinary hrefs retain copy/new-window paths without creating unrestorable history entries.</en></lang>
-                link.addEventListener('click', event => { event.preventDefault(); document.getElementById('hia-reading-search').close(); document.dispatchEvent(new CustomEvent('hia:site-entry', { detail: entry.id })); });
+                link.addEventListener('click', event => { document.getElementById('hia-reading-search').close(); if (!script.dataset.hiaReadingStatic) { event.preventDefault(); document.dispatchEvent(new CustomEvent('hia:site-entry', { detail: entry.id })); } });
                 results.append(link);
             }
             if (!matches.length)
@@ -329,7 +336,7 @@ export const SITE_READING_SCRIPT = String.raw`/**
                 button.title = text('site.reading.host');
             }
         const entry = pages.get(article?.querySelector('article[id]')?.id);
-        const staticPage = entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
+        const staticPage = script.dataset.hiaReadingStatic ? '' : entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
         const sections = article?.querySelectorAll('[data-hia-topic-section][id], [data-hia-reading-section][id]') || [];
         for (const nav of document.querySelectorAll('[data-hia-reading-outline]')) {
             nav.replaceChildren();

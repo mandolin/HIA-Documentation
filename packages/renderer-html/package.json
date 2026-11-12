@@ -18,6 +18,11 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./site-chrome": {
+      "types": "./dist/site-chrome.d.ts",
+      "import": "./dist/site-chrome.js",
+      "require": "./dist/site-chrome.js"
     }
   },
   "files": ["dist", "README.md", "LICENSE"],

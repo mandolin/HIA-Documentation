@@ -57,7 +57,10 @@
       "name": "@hia-doc/renderer-html",
       "owner": "main-repo",
       "directory": "packages/renderer-html",
-      "sourceEntry": "src/index.ts"
+      "sourceEntry": "src/index.ts",
+      "sourceEntries": {
+        "./site-chrome": "src/site-chrome.ts"
+      }
     },
     {
       "name": "@hia-doc/schemas",

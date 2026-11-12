@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Shared site chrome
+
+- 新增`@hia-doc/renderer-html/site-chrome`正式子入口，支持目标Node.js两条版本线的同步require/import。显式页面/语言/真实对应路径和可信HTML slot复用固定顶部、版本/栏目、目录、检索与阅读设置，并共享静态资产。
+- Add the `@hia-doc/renderer-html/site-chrome` public subpath with synchronous require/import on both supported Node.js lines. Explicit page/locale/counterpart context and trusted HTML slots reuse fixed navigation, versions/tabs, directory, search and reading settings with shared assets.
+- 公开API采用清单登记真实子路径源码，新资产清单与原生页映射分工明确；源码角色保留无脚本及现有行投影行为。
+- The API inventory maps the actual subpath source. Shared assets retain separate ownership from native page maps, and source-role pages remain script-free with existing line projection.
+
 ## Unreleased — Partitioned resource references
 
 - 公开资源参考使用声明式分区清单，按完整包名及导出路径选择文档化配置规范和JSON Schema。正常构建生成四个双语分区及两个独立发布目录，并逐项检查原文、源码映射、静态入口和容量。
