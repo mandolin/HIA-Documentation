@@ -11,72 +11,159 @@ import type { DocumentationPortalUiLocale } from "./information-architecture.js"
 export { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 export { renderSourceLines } from "./source-lines.js";
 
-/** @lang zh-CN 实际生成的本页语言对应路径，缺语言时保持缺页。 @lang en Actual generated locale counterparts, preserving absent locales. */
+/**
+ * @lang zh-CN 实际生成的本页语言对应路径，缺语言时保持缺页。
+ * @lang en Actual generated locale counterparts, preserving absent locales.
+ */
 export type SiteChromeLocalePages = Partial<Record<DocumentationPortalUiLocale, string>>;
 
-/** @lang zh-CN 同次生成的公开检索条目，不含源码正文或读取权限。 @lang en Public search entry from this generation, without source bodies or read authority. */
+/**
+ * @lang zh-CN 同次生成的公开检索条目，不含源码正文或读取权限。
+ * @lang en Public search entry from this generation, without source bodies or read authority.
+ */
 export interface SiteChromeEntry {
-  /** @lang zh-CN 原生稳定身份，站内唯一。 @lang en Native stable identity, unique within this site. */
+  /**
+   * @lang zh-CN 原生稳定身份，站内唯一。
+   * @lang en Native stable identity, unique within this site.
+   */
   id: string;
-  /** @lang zh-CN 可公开名称。 @lang en Public name. */
+  /**
+   * @lang zh-CN 可公开名称。
+   * @lang en Public name.
+   */
   name: string;
-  /** @lang zh-CN 可公开条目类别。 @lang en Public entry kind. */
+  /**
+   * @lang zh-CN 可公开条目类别。
+   * @lang en Public entry kind.
+   */
   kind: string;
-  /** @lang zh-CN 生成根相对的真实页面及可选锚点。 @lang en Actual generation-root-relative page and optional fragment. */
+  /**
+   * @lang zh-CN 生成根相对的真实页面及可选锚点。
+   * @lang en Actual generation-root-relative page and optional fragment.
+   */
   page: string;
-  /** @lang zh-CN 公开检索文字，不由框架反读正文。 @lang en Public search text, never derived by rereading bodies. */
+  /**
+   * @lang zh-CN 公开检索文字，不由框架反读正文。
+   * @lang en Public search text, never derived by rereading bodies.
+   */
   searchText: string;
-  /** @lang zh-CN 已存在语言页，缺失语言不推测。 @lang en Existing locale pages, without inferred counterparts. */
+  /**
+   * @lang zh-CN 已存在语言页，缺失语言不推测。
+   * @lang en Existing locale pages, without inferred counterparts.
+   */
   localePages?: SiteChromeLocalePages;
 }
 
-/** @lang zh-CN 真实正文小节，身份必须出现在本页可信slot中。 @lang en Actual prose section whose identity must exist in this page's trusted slot. */
+/**
+ * @lang zh-CN 真实正文小节，身份必须出现在本页可信slot中。
+ * @lang en Actual prose section whose identity must exist in this page's trusted slot.
+ */
 export interface SiteChromeSection {
-  /** @lang zh-CN 原生小节锚点。 @lang en Native section anchor. */
+  /**
+   * @lang zh-CN 原生小节锚点。
+   * @lang en Native section anchor.
+   */
   id: string;
-  /** @lang zh-CN 当前界面语言的纯文本标题。 @lang en Plain-text heading in the current UI locale. */
+  /**
+   * @lang zh-CN 当前界面语言的纯文本标题。
+   * @lang en Plain-text heading in the current UI locale.
+   */
   label: string;
 }
 
-/** @lang zh-CN 单页显式上下文及生成器负责安全处理的HTML slot。 @lang en Explicit page context and generator-owned sanitized HTML slots. */
+/**
+ * @lang zh-CN 单页显式上下文及生成器负责安全处理的HTML slot。
+ * @lang en Explicit page context and generator-owned sanitized HTML slots.
+ */
 export interface SiteChromePage {
-  /** @lang zh-CN 目录、条目或源码页角色，源码页保持无脚本。 @lang en Index, entry, or source role, with source pages remaining script-free. */
+  /**
+   * @lang zh-CN 目录、条目或源码页角色，源码页保持无脚本。
+   * @lang en Index, entry, or source role, with source pages remaining script-free.
+   */
   role: "index" | "entry" | "source";
-  /** @lang zh-CN 生成根相对HTML路径。 @lang en Generation-root-relative HTML path. */
+  /**
+   * @lang zh-CN 生成根相对HTML路径。
+   * @lang en Generation-root-relative HTML path.
+   */
   outputPath: string;
-  /** @lang zh-CN 显式界面语言。 @lang en Explicit UI locale. */
+  /**
+   * @lang zh-CN 显式界面语言。
+   * @lang en Explicit UI locale.
+   */
   uiLocale: DocumentationPortalUiLocale;
-  /** @lang zh-CN 实际同页语言对应路径。 @lang en Actual same-page locale counterparts. */
+  /**
+   * @lang zh-CN 实际同页语言对应路径。
+   * @lang en Actual same-page locale counterparts.
+   */
   localePages: SiteChromeLocalePages;
-  /** @lang zh-CN HTML标题的纯文本。 @lang en Plain-text document title. */
+  /**
+   * @lang zh-CN HTML标题的纯文本。
+   * @lang en Plain-text document title.
+   */
   title: string;
-  /** @lang zh-CN 原生生成器已安全处理的正文，框架不重写其身份与字段。 @lang en Native generator's sanitized prose, retaining original identities and fields. */
+  /**
+   * @lang zh-CN 原生生成器已安全处理的正文，框架不重写其身份与字段。
+   * @lang en Native generator's sanitized prose, retaining original identities and fields.
+   */
   bodyHtml: string;
-  /** @lang zh-CN 原生生成器的可信目录HTML，链接相对此页。 @lang en Native generator's trusted directory HTML, with page-relative links. */
+  /**
+   * @lang zh-CN 原生生成器的可信目录HTML，链接相对此页。
+   * @lang en Native generator's trusted directory HTML, with page-relative links.
+   */
   directoryHtml: string;
-  /** @lang zh-CN 本页实际小节。 @lang en Actual sections of this page. */
+  /**
+   * @lang zh-CN 本页实际小节。
+   * @lang en Actual sections of this page.
+   */
   sections: readonly SiteChromeSection[];
-  /** @lang zh-CN 原生生成器静态样式路径，相对生成根。 @lang en Native generator stylesheets relative to the generation root. */
+  /**
+   * @lang zh-CN 原生生成器静态样式路径，相对生成根。
+   * @lang en Native generator stylesheets relative to the generation root.
+   */
   stylesheets?: readonly string[];
-  /** @lang zh-CN 原生生成器脚本路径，相对生成根；源码角色不接受。 @lang en Native generator scripts relative to the generation root, forbidden for the source role. */
+  /**
+   * @lang zh-CN 原生生成器脚本路径，相对生成根；源码角色不接受。
+   * @lang en Native generator scripts relative to the generation root, forbidden for the source role.
+   */
   scripts?: readonly string[];
-  /** @lang zh-CN 原生生成器可信JSON数据slot，仅用于非源码页。 @lang en Native generator's trusted JSON-data slot, for non-source pages only. */
+  /**
+   * @lang zh-CN 原生生成器可信JSON数据slot，仅用于非源码页。
+   * @lang en Native generator's trusted JSON-data slot, for non-source pages only.
+   */
   dataHtml?: string;
-  /** @lang zh-CN 本页初始外观，默认system且偏好不持久化。 @lang en Initial appearance, defaulting to system without persistent preferences. */
+  /**
+   * @lang zh-CN 本页初始外观，默认system且偏好不持久化。
+   * @lang en Initial appearance, defaulting to system without persistent preferences.
+   */
   scheme?: "system" | "light" | "dark";
 }
 
-/** @lang zh-CN 一次生成只写一份的确定性资产。 @lang en Deterministic asset written once per generation. */
+/**
+ * @lang zh-CN 一次生成只写一份的确定性资产。
+ * @lang en Deterministic asset written once per generation.
+ */
 export interface SiteChromeAsset {
-  /** @lang zh-CN 固定生成根相对路径。 @lang en Fixed generation-root-relative path. */
+  /**
+   * @lang zh-CN 固定生成根相对路径。
+   * @lang en Fixed generation-root-relative path.
+   */
   readonly path: string;
-  /** @lang zh-CN UTF-8资产正文。 @lang en UTF-8 asset contents. */
+  /**
+   * @lang zh-CN UTF-8资产正文。
+   * @lang en UTF-8 asset contents.
+   */
   readonly contents: string;
 }
 
-/** @lang zh-CN 无I/O的站点快照与同步页面渲染服务。 @lang en I/O-free site snapshot and synchronous page-rendering service. */
+/**
+ * @lang zh-CN 无I/O的站点快照与同步页面渲染服务。
+ * @lang en I/O-free site snapshot and synchronous page-rendering service.
+ */
 export interface SiteChrome {
-  /** @lang zh-CN 共享资产只读清单。 @lang en Read-only shared asset list. */
+  /**
+   * @lang zh-CN 共享资产只读清单。
+   * @lang en Read-only shared asset list.
+   */
   readonly assets: readonly SiteChromeAsset[];
   /**
    * @lang zh-CN 验证显式页面并返回完整HTML，不写文件或改变输入。
@@ -118,7 +205,10 @@ export function createSiteChrome(options: { navigation: unknown; entries: readon
   return Object.freeze({ assets, renderPage: (page: SiteChromePage) => renderPage(navigation, page) });
 }
 
-/** @lang zh-CN 根据显式页面上下文组合共享框架与可信slot。 @lang en Combines shared chrome and trusted slots using explicit page context. */
+/**
+ * @lang zh-CN 根据显式页面上下文组合共享框架与可信slot。
+ * @lang en Combines shared chrome and trusted slots using explicit page context.
+ */
 function renderPage(navigation: DocumentationSiteNavigation, page: SiteChromePage): string {
   if (!page || !["index", "entry", "source"].includes(page.role) || !["zh-CN", "en"].includes(page.uiLocale)) invalid();
   relative(page.outputPath);
@@ -180,7 +270,10 @@ function renderPage(navigation: DocumentationSiteNavigation, page: SiteChromePag
 </html>`;
 }
 
-/** @lang zh-CN 复制实际存在的语言路径，拒绝未知语言及不安全目标。 @lang en Copies existing locale paths, rejecting unknown locales and unsafe targets. */
+/**
+ * @lang zh-CN 复制实际存在的语言路径，拒绝未知语言及不安全目标。
+ * @lang en Copies existing locale paths, rejecting unknown locales and unsafe targets.
+ */
 function copyLocalePages(value: SiteChromeLocalePages): SiteChromeLocalePages {
   if (!value || typeof value !== "object" || Array.isArray(value)) invalid();
   const result: SiteChromeLocalePages = {};
@@ -192,7 +285,10 @@ function copyLocalePages(value: SiteChromeLocalePages): SiteChromeLocalePages {
   return result;
 }
 
-/** @lang zh-CN 校验生成根相对路径，拒绝编码分隔符、逃逸、查询和外部协议。 @lang en Validates root-relative output paths, rejecting encoded separators, traversal, queries, and external protocols. */
+/**
+ * @lang zh-CN 校验生成根相对路径，拒绝编码分隔符、逃逸、查询和外部协议。
+ * @lang en Validates root-relative output paths, rejecting encoded separators, traversal, queries, and external protocols.
+ */
 function relative(value: unknown, fragment = false): asserts value is string {
   if (typeof value !== "string" || !value || /[\\\u0000-\u0020<>"']/u.test(value) || value.startsWith("/")) invalid();
   const [pathname, ...hashes] = value.split("#");
@@ -210,15 +306,24 @@ function relative(value: unknown, fragment = false): asserts value is string {
   }
 }
 
-/** @lang zh-CN 统一转义纯文本，不处理可信HTML slot。 @lang en Escapes plain text while leaving trusted HTML slots to their generator. */
+/**
+ * @lang zh-CN 统一转义纯文本，不处理可信HTML slot。
+ * @lang en Escapes plain text while leaving trusted HTML slots to their generator.
+ */
 function escape(value: string): string {
   return value.replace(/[&<>"']/gu, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
-/** @lang zh-CN 拒绝消息不包含路径或调用者输入。 @lang en Refusal messages contain no paths or caller values. */
+/**
+ * @lang zh-CN 拒绝消息不包含路径或调用者输入。
+ * @lang en Refusal messages contain no paths or caller values.
+ */
 function invalid(): never { throw new TypeError("HIA_SITE_CHROME_INVALID: Invalid site page context."); }
 
-/** @lang zh-CN 独立页面的基础布局，不依赖通用文档主题的隐式CSS前置条件。 @lang en Base layout for independent pages without implicit generic-document theme CSS prerequisites. */
+/**
+ * @lang zh-CN 独立页面的基础布局，不依赖通用文档主题的隐式CSS前置条件。
+ * @lang en Base layout for independent pages without implicit generic-document theme CSS prerequisites.
+ */
 const SITE_CHROME_STYLE = `
 [data-hia-site-chrome]{--hia-accent:#0047ab}
 [data-hia-site-chrome] *,[data-hia-site-chrome] *::before,[data-hia-site-chrome] *::after{box-sizing:border-box}

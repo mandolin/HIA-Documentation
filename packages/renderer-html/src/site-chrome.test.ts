@@ -8,7 +8,10 @@ import { Script } from "node:vm";
 import { createSiteChrome, type SiteChromePage } from "./site-chrome.js";
 import { createGeneratedSiteNavigation } from "../../../site/src/lib/generated-navigation.mjs";
 
-/** @lang zh-CN 当前真实双语页面上下文。 @lang en Actual bilingual page context. */
+/**
+ * @lang zh-CN 当前真实双语页面上下文。
+ * @lang en Actual bilingual page context.
+ */
 function page(): SiteChromePage {
   return {
     role: "entry", outputPath: "api/greet.zh-CN.html", uiLocale: "zh-CN",

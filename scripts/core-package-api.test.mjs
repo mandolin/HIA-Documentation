@@ -125,8 +125,8 @@ test("core model existing bilingual comments retain canonical description locale
 });
 
 test("renderer and CLI explicit bilingual comments retain canonical locale lines", () => {
-  // <lang><zh-CN>固定十份真实源，已有两语标签进入格式门禁，混合正文与缺描述另列。</zh-CN><en>Fix ten actual sources and gate existing bilingual tags; mixed prose and absent descriptions remain separate.</en></lang>
-  const files = ["apps/cli/src/business-flow-documentation-handoff.ts", "apps/cli/src/enterprise-owner-workflow.ts", "apps/cli/src/html-authoring-source-comment-integration.ts", "apps/cli/src/index.ts", "apps/cli/src/owner-adoption-kit.ts", "apps/cli/src/target-continuity.ts", "packages/renderer-html/src/index.ts", "packages/renderer-html/src/portal-ui-locale.ts", "packages/renderer-html/src/presentation-profile.ts", "packages/renderer-html/src/theme-assets.ts"];
+  // <lang><zh-CN>固定十一份真实源，含新增共享子入口，已有两语标签进入格式门禁，混合正文与缺描述另列。</zh-CN><en>Fix eleven actual sources including the shared subpath and gate existing bilingual tags; mixed prose and absent descriptions remain separate.</en></lang>
+  const files = ["apps/cli/src/business-flow-documentation-handoff.ts", "apps/cli/src/enterprise-owner-workflow.ts", "apps/cli/src/html-authoring-source-comment-integration.ts", "apps/cli/src/index.ts", "apps/cli/src/owner-adoption-kit.ts", "apps/cli/src/target-continuity.ts", "packages/renderer-html/src/index.ts", "packages/renderer-html/src/portal-ui-locale.ts", "packages/renderer-html/src/presentation-profile.ts", "packages/renderer-html/src/theme-assets.ts", "packages/renderer-html/src/site-chrome.ts"];
   for (const relative of files) {
     // <lang><zh-CN>语法树只返回附着注释，不将HTML/JavaScript模板中的文本作为源码注释。</zh-CN><en>The syntax tree yields attached comments, excluding text inside HTML/JavaScript templates.</en></lang>
     const file = fileURLToPath(new URL(`../${relative}`, import.meta.url));
