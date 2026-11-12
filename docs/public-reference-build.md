@@ -1,5 +1,15 @@
 # Public Reference Build
 
+## Complete source validation
+
+中文。可发布目录检查对完整源码下载区的 JavaScript/TypeScript 文件使用现有编译器静态识别正则字面量。模式正文、恢复字面斜线/反斜线后的正文及 flags 分别执行原公开路径检查；字符串、模板、注释及其它源码字符继续检查。语法错误拒绝发布，检查过程只读内存文本。源码原字节及所有来源摘要仍需匹配，文件名、JSON 字段和其它文本继续各自原验证。
+
+English. Publication inspection statically identifies regexp literals in complete JavaScript/TypeScript source downloads through the existing compiler. It checks the original pattern, restored literal slash/backslash pattern and flags separately with the public-path predicate, retaining checks for strings, templates, comments and all other source characters. Syntax errors fail publication. Validation reads in-memory text, while original source bytes and source digests must still match. File names, JSON fields and other text retain their existing validation.
+
+中文。JSON 内嵌代码仅在既有 `hia-source@1.0.0`、兼容 `hia-source@0.2.0` 或 `hia-jsdoc-source@0.2.0` 主块与当前语言完整源清单对应时使用源码语法证明。检查原文件长度/SHA256、精确行/UTF-16列和原内容后，分别核主块及预览。其它字段、未知模型及重复键中的旧值继续逐词法验证。
+
+English. Embedded JSON code receives syntax evidence only when an existing `hia-source@1.0.0`, compatible `hia-source@0.2.0` or `hia-jsdoc-source@0.2.0` primary block matches the current locale's complete-source manifest. Verification checks original file length/SHA256, exact line/UTF-16 positions and original text for blocks and previews. Other fields, unknown models and shadowed duplicate-key values retain per-token validation.
+
 ## Partitioned resource references
 
 中文。`reference/resource-reference-partitions.json` 是资源参考的成员、公开来源和地址清单。文档化配置规范、TypeScript文档模式、核心文档/来源模式、业务/语言/呈现/质量模式各有独立项目索引与本地检索。源JSON保留原文语言und，界面分别生成简体中文与英文。

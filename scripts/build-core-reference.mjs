@@ -6,6 +6,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
+import ts from "typescript";
+import {HIA_SOURCE_MODEL, HIA_SOURCE_MODEL_VERSION} from "../packages/core/dist/index.js";
 import { randomUUID, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -114,6 +116,131 @@ export function assertCoreReferenceOutput(output) {
 }
 
 /**
+ * @lang zh-CN 按实际源码语法分离正则分隔符与模式正文，全部内容继续执行原公开路径判据。
+ * @lang en Separate regexp delimiters from pattern bodies using actual source syntax, retaining the original public-path predicate for all content.
+ * @param {string} text - 原字节解码后的完整源码，只用于只读验证。 Complete decoded source, used only for read-only verification.
+ * @param {string} filename - 已核站点内相对源码名，用于选择语法种类。 Validated site-relative source name, used to select syntax kind.
+ * @returns {import("typescript").SourceFile} 已验证的只读语法树，供同一源码的精确范围核对。 Validated read-only syntax tree for exact ranges in the same source.
+ * @throws {Error} 语法不受支持或任一区域含禁止路径。 Unsupported syntax or a forbidden path in any region.
+ */
+function assertPublicCodeSource(text, filename) {
+  // <lang><zh-CN>编译器仅解析当前内存文本，解析错误阻断；不创建程序或读取导入依赖。</zh-CN><en>The compiler parses only this in-memory text, rejecting parse errors without creating a program or reading imports.</en></lang>
+  const source = ts.createSourceFile(filename, text, ts.ScriptTarget.Latest, true);
+  assert.equal(source.parseDiagnostics.length, 0, "Invalid public source syntax.");
+  // <lang><zh-CN>按语法节点记录正则的UTF-16文本区间，便于其它源码区域保留原有检查。</zh-CN><en>Record regexp UTF-16 spans from syntax nodes so all other source regions retain their existing checks.</en></lang>
+  const ranges = [];
+
+  /** @lang zh-CN 正则原模式及字面斜线恢复后的模式均核隐私，递归访问其它节点。 @lang en Check both original patterns and restored literal slashes for privacy while recursively visiting other nodes. */
+  function visit(node) {
+    if (ts.isRegularExpressionLiteral(node)) {
+      // <lang><zh-CN>最后的斜线是语法结束分隔符，正文中的转义斜线保持在模式内。</zh-CN><en>The final slash is the syntax delimiter; escaped slashes inside the body remain part of the pattern.</en></lang>
+      const delimiter = node.text.lastIndexOf("/");
+      assert(delimiter > 0, "Invalid public regexp syntax.");
+      const pattern = node.text.slice(1, delimiter);
+      assertPublicText(pattern);
+      assertPublicText(node.text.slice(delimiter + 1));
+      // <lang><zh-CN>只恢复正则中明确的字面斜线/反斜线，确保UNC及转义盘符路径仍被原判据拒绝。</zh-CN><en>Restore only explicit literal slash/backslash escapes so UNC and escaped drive paths remain rejected by the original predicate.</en></lang>
+      const literalPattern = pattern.replace(/\\([\\/])/gu, "$1");
+      assertPublicText(literalPattern);
+      ranges.push({start: node.getStart(source), end: node.getEnd()});
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  // <lang><zh-CN>中性分隔文本隔开已核正则，其余字符原样保留，字符串、模板、注释及编码路径继续检查。</zh-CN><en>Neutral text separates checked regexps while preserving every other character for string, template, comment and encoded-path checks.</en></lang>
+  const parts = [];
+  let end = 0;
+  for (const range of ranges.sort((left, right) => left.start - right.start)) {
+    assert(range.start >= end && range.end > range.start);
+    parts.push(text.slice(end, range.start), " REGEXP ");
+    end = range.end;
+  }
+  parts.push(text.slice(end));
+  assertPublicText(parts.join(""));
+  return source;
+}
+
+/**
+ * @lang zh-CN 仅为与已验证完整源及精确UTF-16范围一致的HIA源码块记录代码文本证明。
+ * @lang en Record code-text evidence only for HIA source blocks matching validated complete sources and exact UTF-16 ranges.
+ * @param {unknown} value - 已解析JSON。 Parsed JSON.
+ * @param {string} file - 当前JSON文件。 Current JSON file.
+ * @param {string} root - 发布根。 Publication root.
+ * @param {string[]} localeRoots - 已核语言根。 Validated locale roots.
+ * @param {Map<string,object>} cache - 本次检查独占的完整源缓存。 Complete-source cache owned by this inspection.
+ * @returns {Map<string,string>} 结构路径到已验证原内容；其它字段继续文本检查。 Structural paths to validated original contents, with other fields retaining text checks.
+ * @throws {Error} 已声明的来源身份、摘要或范围不符。 Mismatching declared source identity, digest or range.
+ */
+function verifiedSourceCodeContents(value, file, root, localeRoots, cache) {
+  // <lang><zh-CN>证明只使用当前语言发布根内的完整源清单，缺清单时沿原文本检查。
+  // </zh-CN><en>Evidence uses only the current locale's complete-source manifest, retaining ordinary text checks when no manifest exists.</en></lang>
+  const verified = new Map();
+  const localeRoot = localeRoots.map(locale => path.join(root, locale)).find(directory => inside(directory, file));
+  const manifestPath = localeRoot && path.join(localeRoot, "source-files/index.json");
+  if (!manifestPath || !fs.existsSync(manifestPath)) return verified;
+  // <lang><zh-CN>清单也必须为发布根内的普通原文件，本次缓存避免每个代码片段重复读取相同清单。</zh-CN><en>The manifest must also be an ordinary original file inside the publication root; this invocation's cache avoids repeated reads for every code fragment.</en></lang>
+  const manifestKey = "manifest:" + path.resolve(manifestPath);
+  if (!cache.has(manifestKey)) {
+    assert(fs.realpathSync(manifestPath) === path.resolve(manifestPath), "Invalid public code manifest path.");
+    const state = fs.lstatSync(manifestPath);
+    assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2, "Invalid public code manifest.");
+    const parsed = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    assert(Array.isArray(parsed.sources), "Invalid public code manifest.");
+    cache.set(manifestKey, parsed);
+  }
+  const manifest = cache.get(manifestKey);
+  // <lang><zh-CN>显式栈逐节点查看，避免因任意JSON深度增加递归调用栈。</zh-CN><en>Inspect nodes with an explicit stack rather than recursive calls driven by arbitrary JSON depth.</en></lang>
+  const pending = [{value, location: []}];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current.value || typeof current.value !== "object") continue;
+    if (current.value.model === HIA_SOURCE_MODEL && [HIA_SOURCE_MODEL_VERSION, "0.2.0"].includes(current.value.modelVersion)
+      || current.value.model === "hia-jsdoc-source" && current.value.modelVersion === "0.2.0") {
+      // <lang><zh-CN>只识别原模型的主块，预览内容须由同一原源范围证明。</zh-CN><en>Recognize only the model's primary block; preview contents require evidence from the same original source range.</en></lang>
+      const block = current.value.primaryBlock;
+      if (block?.kind === "primary-block" && ["javascript", "typescript"].includes(block.language) && typeof block.content === "string") {
+        const matches = manifest.sources?.filter(source => source.source === block.relativePath) ?? [];
+        assert(matches.length <= 1, "Ambiguous public code source.");
+        if (matches.length === 1) {
+          const declared = matches[0];
+          assert(/\.[cm]?[jt]sx?$/iu.test(block.relativePath), "Unsupported public code source.");
+          assert(declared.path === "source-files/" + block.relativePath && !/[\\:%?#]/u.test(declared.path) && !declared.path.split("/").some(part => !part || part === "." || part === ".."), "Invalid public code asset path.");
+          const sourcePath = path.resolve(localeRoot, declared.path);
+          assert(inside(localeRoot, sourcePath) && fs.realpathSync(sourcePath) === sourcePath, "Invalid public code asset path.");
+          // <lang><zh-CN>每个完整源按清单原字节核验，再复用只读语法及隐私检查。</zh-CN><en>Verify each complete source's original bytes against its manifest before reusing read-only syntax and privacy checks.</en></lang>
+          const cacheKey = sourcePath + ":" + declared.sha256;
+          if (!cache.has(cacheKey)) {
+            const state = fs.lstatSync(sourcePath);
+            assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2 && state.size === declared.byteLength, "Invalid public code asset.");
+            const bytes = fs.readFileSync(sourcePath);
+            assert.equal(createHash("sha256").update(bytes).digest("hex"), declared.sha256, "Public code source digest mismatch.");
+            cache.set(cacheKey, assertPublicCodeSource(bytes.toString("utf8"), block.relativePath));
+          }
+          const source = cache.get(cacheKey);
+          for (const item of [{content: block.content, range: block.range, location: [...current.location, "primaryBlock", "content"]},
+            {content: block.preview?.content, range: block.preview?.range ?? block.range, location: [...current.location, "primaryBlock", "preview", "content"]}]) {
+            if (typeof item.content !== "string") continue;
+            // <lang><zh-CN>范围使用同一语法树的行/UTF-16列，往返核验后与原源码片段逐字符比较。</zh-CN><en>Use the same syntax tree's line/UTF-16 columns, round-trip positions and compare the original slice character by character.</en></lang>
+            const offsets = [item.range?.start, item.range?.end].map(position => {
+              assert(Number.isInteger(position?.line) && position.line > 0 && position.line <= source.getLineStarts().length && Number.isInteger(position.column) && position.column > 0, "Invalid embedded source range.");
+              const offset = source.getPositionOfLineAndCharacter(position.line - 1, position.column - 1);
+              const actual = source.getLineAndCharacterOfPosition(offset);
+              assert(actual.line === position.line - 1 && actual.character === position.column - 1, "Invalid embedded source range.");
+              return offset;
+            });
+            assert(offsets[1] >= offsets[0], "Invalid embedded source range.");
+            assert.equal(source.text.slice(...offsets).replace(/\r\n?/gu, "\n"), item.content.replace(/\r\n?/gu, "\n"), "Embedded source content mismatch.");
+            verified.set(JSON.stringify(item.location), item.content);
+          }
+        }
+      }
+    }
+    for (const [key, child] of Object.entries(current.value)) pending.push({value: child, location: [...current.location, Array.isArray(current.value) ? Number(key) : key]});
+  }
+  return verified;
+}
+
+/**
  * @lang zh-CN 逐文件检查可发布目录，拒绝工程副本、链接、越界、隐私及容量超限。
  * @lang en Inspect every publishable file, rejecting build copies, links, escaping paths, private content, and excessive size.
  * @param {string} root - 只含两语言和根入口的站点目录。 Site directory containing both locales and the root entry.
@@ -127,6 +254,8 @@ export function inspectCoreReferenceSite(root, localeRoots = locales) {
   assert(localeRoots.every(value=>!localeRoots.some(other=>other!==value&&value.startsWith(other+"/"))), "Overlapping reference roots.");
   const topDirectories=new Set(localeRoots.map(value=>value.split("/")[0]));
   const inventory = [];
+  // <lang><zh-CN>缓存只在本次站点检查内复用已核完整源，工件字段仍逐次按路径和值核对。</zh-CN><en>Reuse validated complete sources only within this inspection while checking artifact fields by path and value each time.</en></lang>
+  const sourceCodeCache = new Map();
   let bytes = 0;
   /**
    * @lang zh-CN 只遍历已选站点目录，逐文件累计摘要和容量。
@@ -157,11 +286,15 @@ export function inspectCoreReferenceSite(root, localeRoots = locales) {
         try { value = JSON.parse(text); }
         catch { throw new Error("Invalid public JSON artifact."); }
         const digests = verifiedPresentationDigests(value, file, root);
+        const codeContents = verifiedSourceCodeContents(value, file, root, localeRoots, sourceCodeCache);
         for (const token of jsonStrings(text)) {
           // <lang><zh-CN>相同字串的其它字段仍检查隐私；重复摘要旧值也必须与实际字节相符。</zh-CN><en>Other fields containing the same string remain privacy-checked; shadowed digest values must also match actual bytes.</en></lang>
           if (!token.isKey && digests.get(JSON.stringify(token.path)) === token.value) continue;
+          if (!token.isKey && codeContents.get(JSON.stringify(token.path)) === token.value) continue;
           assertPublicText(token.value);
         }
+      } else if (relative.includes("/source-files/") && /\.[cm]?[jt]sx?$/iu.test(relative)) {
+        assertPublicCodeSource(text, relative);
       } else {
         assertPublicText(text);
       }

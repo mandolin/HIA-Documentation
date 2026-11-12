@@ -12,9 +12,98 @@ import { fileURLToPath } from "node:url";
 import {createHash} from "node:crypto";
 import { assertCoreReferenceOutput, inspectCoreReferenceSite, CORE_REFERENCE_RESOURCE_PACKAGES } from "./build-core-reference.mjs";
 
+test("complete JavaScript sources retain regexp delimiters and word-boundary syntax without fictitious path matches", t => {
+  // <lang><zh-CN>固定合成源覆盖实际DotNetDoc四类正则形态，文件原字节由正常清单摘要约束。</zh-CN><en>Fixed synthetic source covers the four observed DotNetDoc regexp forms, with original bytes constrained by normal inventory hashes.</en></lang>
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-source-regexp-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  fs.mkdirSync(path.join(root, "en/source-files"));
+  const original = String.raw`export const patterns = [/\b(?:public|protected)\s+/, /^T:/u, /\.cs$/iu, /\{([^{}]+)\}/];`;
+  fs.writeFileSync(path.join(root, "en/source-files/original.mjs"), original);
+  assert.equal(inspectCoreReferenceSite(root).files, 4);
+  assert.equal(fs.readFileSync(path.join(root, "en/source-files/original.mjs"), "utf8"), original);
+});
+
+test("source regexp bodies, strings, templates and comments still reject actual private path markers", t => {
+  // <lang><zh-CN>合成私有路径分别置于模式正文和其它源码区域，禁止通过语法识别绕过原隐私判据。</zh-CN><en>Place synthetic private paths in regexp bodies and other source regions so syntax recognition cannot bypass the original privacy predicate.</en></lang>
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-source-private-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  fs.mkdirSync(path.join(root, "en/source-files"));
+  const file = path.join(root, "en/source-files/original.mjs");
+  for (const source of [
+    String.raw`const pattern = /C:\\Users\\private/;`,
+    String.raw`const pattern = /\\\\server\\private/;`,
+    String.raw`const pattern = /\/home\/private\//;`,
+    String.raw`const pattern = /work-zone\//;`,
+    String.raw`const pattern = /\x43:\\private/;`,
+    String.raw`const value = "C:\\private\\source.js";`,
+    'const value = `file:///private/source.js`;',
+    '// /home/private/source.js\nconst safe = /\\bword/;',
+    'const value = "%43%3A%2Fprivate%2Fsource.js";'
+  ]) {
+    fs.writeFileSync(file, source);
+    assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  }
+  fs.writeFileSync(file, "const incomplete = /unterminated");
+  assert.throws(() => inspectCoreReferenceSite(root), /Invalid public source syntax/u);
+});
+
 test("core API resource selection is the reviewed plugin SDK package", () => {
   assert.deepEqual(CORE_REFERENCE_RESOURCE_PACKAGES, ["@hia-doc/plugin-sdk"]);
   assert(Object.isFrozen(CORE_REFERENCE_RESOURCE_PACKAGES));
+});
+
+test("embedded HIA code requires matching complete-source bytes, exact UTF-16 ranges and lexical duplicate-key checks", t => {
+  // <lang><zh-CN>源码含正则与非BMP字符，工件主块和预览均须对上同一完整原文件。</zh-CN><en>The source contains a regexp and a non-BMP character; artifact blocks and previews must match the same complete original file.</en></lang>
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-embedded-code-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const locale of ["en", "zh-CN"]) {
+    fs.mkdirSync(path.join(root, locale));
+    fs.writeFileSync(path.join(root, locale, "project-index.json"), "{}");
+  }
+  fs.writeFileSync(path.join(root, "index.html"), "API");
+  fs.mkdirSync(path.join(root, "en/source-files"));
+  const original = String.raw`export const pattern = /\bpublic/u; const label = "😀";`;
+  const range = {start: {line: 1, column: 1}, end: {line: 1, column: original.length + 1}};
+  const sourceFile = path.join(root, "en/source-files/original.mjs");
+  fs.writeFileSync(sourceFile, original);
+  const manifestFile = path.join(root, "en/source-files/index.json");
+  const manifest = {sources: [{source: "original.mjs", path: "source-files/original.mjs", byteLength: Buffer.byteLength(original), sha256: createHash("sha256").update(original).digest("hex")}]};
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest));
+  const artifact = path.join(root, "en/native.json");
+  const payload = {source: {model: "hia-source", modelVersion: "0.2.0", primaryBlock: {
+    kind: "primary-block", relativePath: "original.mjs", language: "javascript", range,
+    content: original, preview: {content: original, range}
+  }}};
+  fs.writeFileSync(artifact, JSON.stringify(payload));
+  assert.equal(inspectCoreReferenceSite(root).files, 6);
+  for (const [model, modelVersion] of [["hia-source", "1.0.0"], ["hia-jsdoc-source", "0.2.0"]]) {
+    payload.source.model = model;
+    payload.source.modelVersion = modelVersion;
+    fs.writeFileSync(artifact, JSON.stringify(payload));
+    assert.equal(inspectCoreReferenceSite(root).files, 6);
+  }
+  // <lang><zh-CN>重复键旧值不能借最新有效内容的证明跳过原隐私检查。</zh-CN><en>A shadowed duplicate key cannot borrow evidence for the current valid content to skip its privacy check.</en></lang>
+  fs.writeFileSync(artifact, JSON.stringify(payload).replace('"content":', '"content":"C:/private/leak","content":'));
+  assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  fs.writeFileSync(artifact, JSON.stringify({...payload, unrelated: "C:/private/leak"}));
+  assert.throws(() => inspectCoreReferenceSite(root), /private path/u);
+  fs.writeFileSync(artifact, JSON.stringify(payload));
+  fs.writeFileSync(manifestFile, JSON.stringify({sources: [{...manifest.sources[0], sha256: "0".repeat(64)}]}));
+  assert.throws(() => inspectCoreReferenceSite(root), /digest/u);
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest));
+  payload.source.primaryBlock.preview.content = 'const value = "C:/private/leak";';
+  fs.writeFileSync(artifact, JSON.stringify(payload));
+  assert.throws(() => inspectCoreReferenceSite(root), /content mismatch/u);
 });
 
 test("core output stays within an owned dist child", () => {
