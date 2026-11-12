@@ -1,9 +1,33 @@
-/** @file @lang zh-CN 为公开参考暂存明确获准的自有文件，配置复用既有来源契约。 @lang en Stages explicitly authorized first-party files using the existing source configuration contract. */
+/**
+ * @file
+ * @lang zh-CN 为公开参考暂存明确获准的自有文件，并校验同一官网事实源生成的站点导航。
+ * @lang en Stages explicitly approved first-party reference files and validates site navigation from the shared website facts.
+ */
 import assert from 'node:assert/strict';
-import {constants, copyFileSync, mkdirSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
+import {constants, copyFileSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {readJsonResourceBytes} from './lib/json-resource-audit.mjs';
 import {loadResourceReferencePartitions} from './resource-reference-partitions.mjs';
+import {createGeneratedSiteNavigation} from '../site/src/lib/generated-navigation.mjs';
+import {assertPublicText} from './check-official-web.mjs';
+
+/**
+ * @lang zh-CN 正常公开参考构建默认采用官网导航，显式输入沿既有限长、契约及公开文本检查。
+ * @lang en Adopts website navigation for normal public reference builds, retaining existing size, contract and public-text checks for explicit input.
+ * @param {string} [inputPath] <lang><zh-CN>可选导航JSON文件；省略时从官网路由及真实版本生成。</zh-CN><en>Optional navigation JSON file, generated from website routes and actual versions when omitted.</en></lang>
+ * @returns {Promise<import('../packages/renderer-html/src/site-navigation.js').DocumentationSiteNavigation>} <lang><zh-CN>通过校验的独立导航数据，不携带文件读取授权。</zh-CN><en>Validated independent navigation data without file-read authority.</en></lang>
+ * @throws {Error} <lang><zh-CN>文件不可读、超过512KiB、JSON/契约错误或包含私有文本时失败，发生在生产写出前。</zh-CN><en>Fails before production writes for unreadable files, more than 512 KiB, invalid JSON/contracts or private text.</en></lang>
+ */
+export async function preparePublicReferenceSiteNavigation(inputPath) {
+  if (inputPath) assert(statSync(inputPath).size <= 512 * 1024, 'Site navigation exceeds the CLI read budget.');
+  // <lang><zh-CN>只在调用时加载已编译校验器，保留纯定义检查不依赖构建的入口。</zh-CN><en>Load the compiled validator only when called so definition-only checks retain their build-independent entry point.</en></lang>
+  const {assertDocumentationSiteNavigation} = await import('../packages/renderer-html/dist/site-navigation.js');
+  // <lang><zh-CN>显式文件和默认官网数据共用同一校验链，防止正常发布遗漏增强。</zh-CN><en>Explicit files and default website data share the same checks, preventing normal publication from omitting navigation.</en></lang>
+  const navigation = inputPath ? JSON.parse(readFileSync(inputPath, 'utf8')) : createGeneratedSiteNavigation();
+  assertDocumentationSiteNavigation(navigation);
+  assertPublicText(JSON.stringify(navigation));
+  return navigation;
+}
 
 /**
  * @lang zh-CN 已逐文件审阅的两个公开JSON导出；其它SDK源码不在本授权范围。

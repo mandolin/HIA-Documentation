@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Public reference navigation adoption
+
+- 正常公开参考构建默认采用官网导航，显式输入继续在生产前核契约、大小与隐私；两个发布工作流协调采用当前JSDoc主题来源锁。
+- Normal public reference builds adopt website navigation by default, validating explicit input contracts, size and privacy before production. Both publication workflows use the current JSDoc theme provenance pin.
+
 ## Unreleased — Shared site chrome
 
 - 新增`@hia-doc/renderer-html/site-chrome`正式子入口，支持目标Node.js两条版本线的同步require/import。显式页面/语言/真实对应路径和可信HTML slot复用固定顶部、版本/栏目、目录、检索与阅读设置，并共享静态资产。

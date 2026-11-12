@@ -1,10 +1,13 @@
-/** @file @lang zh-CN 从显式公开来源构建参考站；只编译自有.NET样本，生产器输出须通过来源和隐私门禁。 @lang en Builds reference output from explicit public sources, compiling only the first-party .NET sample and checking producer provenance and privacy. */
+/**
+ * @file
+ * @lang zh-CN 从显式公开来源构建带官网导航的参考站，只编译自有.NET样本，生产器输出通过来源和隐私门禁。
+ * @lang en Builds reference output with website navigation from explicit public sources, compiling only the first-party .NET sample and checking provenance and privacy.
+ */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig } from "./public-reference-source.mjs";
-import { assertPublicText } from "./check-official-web.mjs";
+import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig, preparePublicReferenceSiteNavigation } from "./public-reference-source.mjs";
 import {preparePublicReferencePackageApis} from "./public-reference-packages.mjs";
 import {preparePublicReferenceResources,checkPublicReferenceResources} from "./public-reference-resources.mjs";
 
@@ -46,15 +49,8 @@ async function main() {
   assertPathInside(resolvedMainRepoRoot, outputRoot, "Public reference output must stay inside main-repo.");
   assert(existsSync(path.join(resolvedMainRepoRoot, "apps", "cli", "dist", "index.js")), "main-repo CLI is not built. Run `pnpm run build` first.");
 
-  // <lang><zh-CN>离线正式候选显式采用官网导航；在任何构建写入前限长、校验并固定一份纯数据快照。</zh-CN><en>Offline official candidates explicitly adopt host navigation, bounding, validating and snapshotting pure data before any build writes.</en></lang>
-  let siteNavigation;
-  if (options.siteNavigation) {
-    assert(statSync(options.siteNavigation).size <= 512 * 1024, "Site navigation exceeds the CLI read budget.");
-    siteNavigation = readJson(options.siteNavigation);
-    const { assertDocumentationSiteNavigation } = await import("../packages/renderer-html/dist/index.js");
-    assertDocumentationSiteNavigation(siteNavigation);
-    assertPublicText(JSON.stringify(siteNavigation));
-  }
+  // <lang><zh-CN>正常发布默认采用已确认官网导航，显式覆盖也须在生产写入前通过同一契约/隐私检查。</zh-CN><en>Normal publication adopts confirmed website navigation by default; explicit overrides pass the same contract/privacy checks before production writes.</en></lang>
+  const siteNavigation = await preparePublicReferenceSiteNavigation(options.siteNavigation);
 
   const sourceRoots = resolveSourceRoots(definition, resolvedMainRepoRoot, sourcesRoot);
   // <lang><zh-CN>只编译本构建owner内的固定公开样本；首次还原/编译写bin和obj，失败时保留上一份参考输出。</zh-CN><en>Compile only the owning repository's fixed public sample; restore/build writes bin and obj, preserving the previous reference output on failure.</en></lang>
@@ -84,8 +80,8 @@ async function main() {
     // <lang><zh-CN>源码读取仅授予独占明确文件镜像，配置和镜像统一由finally清理。</zh-CN><en>Authorize source reads only from the exclusive explicit-file mirror, cleaned with its config in finally.</en></lang>
     const sourceConfigPath = preparePublicReferenceSourceConfig(resolvedMainRepoRoot, runtime.root, resourceInputs.sourcePaths);
     // <lang><zh-CN>两语言读取同一已验证快照，宿主文件后续变化不影响这次构建。</zh-CN><en>Both locales read the same validated snapshot, isolating this build from later host-file changes.</en></lang>
-    const siteNavigationPath = siteNavigation ? path.join(runtime.root, "site-navigation.json") : undefined;
-    if (siteNavigationPath) writeJson(siteNavigationPath, siteNavigation);
+    const siteNavigationPath = path.join(runtime.root, "site-navigation.json");
+    writeJson(siteNavigationPath, siteNavigation);
 
     const locales = definition.acceptance.requiredLocales.map((locale) => buildLocale({
       definition,

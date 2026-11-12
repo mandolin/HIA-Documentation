@@ -6,7 +6,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {assertProducerContributions} from './check-public-reference-build.mjs';
+import {preparePublicReferenceSiteNavigation} from './public-reference-source.mjs';
+import {createGeneratedSiteNavigation} from '../site/src/lib/generated-navigation.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../reference/public-reference-build.definition.json',import.meta.url),'utf8'));
 const htmlEntries=['html-component-alert','html-attr-variant','html-slot-default','html-event-close','html-stylehook-alert','html-a11y-role-status'].map(id=>'hia-document:'+id);
@@ -32,5 +36,36 @@ test('similar prefixes and body-free source probes cannot conceal an empty produ
   const scope={producers:[{id:'html'}]};
   for(const entries of [[],[{}],[{input:{path:'.hia-producers/html-other/input.hia.json'}}],[{input:{path:'other/.hia-producers/html/input.hia.json'}}]]) {
     assert.throws(()=>assertProducerContributions(scope,entries,'zh-CN'),/producer html contains no canonical/u);
+  }
+});
+
+test('normal public reference builds adopt the confirmed website navigation by default', async () => {
+  assert.deepEqual(await preparePublicReferenceSiteNavigation(), createGeneratedSiteNavigation());
+});
+
+test('explicit navigation is bounded and validated before production starts', async t => {
+  // <lang><zh-CN>隔离输入文件仅属于本用例，结束时清理；不触及真实公开产物。</zh-CN><en>Isolate input files within this test and clean them afterwards without touching real public artifacts.</en></lang>
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'hia-reference-navigation-'));
+  assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+  t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
+  const input = path.join(directory, 'navigation.json');
+  const navigation = createGeneratedSiteNavigation('/HIA-Documentation/', '/HIA-Documentation-API-JavaScript/');
+  fs.writeFileSync(input, JSON.stringify(navigation));
+  assert.deepEqual(await preparePublicReferenceSiteNavigation(input), navigation);
+  navigation.brand.title = 'K:/private-navigation';
+  fs.writeFileSync(input, JSON.stringify(navigation));
+  await assert.rejects(preparePublicReferenceSiteNavigation(input));
+  fs.writeFileSync(input, '{}');
+  await assert.rejects(preparePublicReferenceSiteNavigation(input));
+  fs.writeFileSync(input, ' '.repeat(512 * 1024 + 1));
+  await assert.rejects(preparePublicReferenceSiteNavigation(input), /read budget/u);
+});
+
+test('both publication workflows check out the theme revision required by the current owner lock', () => {
+  // <lang><zh-CN>实际发布锁是固定来源；两个主站构建须使用同一主题，防止新归档来源不可得。</zh-CN><en>The actual release lock pins provenance, so both main-site builds must use that same theme revision.</en></lang>
+  for (const name of ['schema-pages.yml', 'public-reference-build.yml']) {
+    const workflow = fs.readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8');
+    const block = workflow.split(/\n\s+- name:/u).find(step => step.includes('repository: mandolin/jsdoc-theme-hia\n'));
+    assert.match(block, /ref: ef3933b0f7a05961d2c88bf412996dfcae6098aa/u);
   }
 });

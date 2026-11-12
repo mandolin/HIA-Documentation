@@ -1,5 +1,11 @@
 # Public Reference Build
 
+## Website navigation
+
+中文。正常 `pnpm reference:build` 从官网同一事实源生成站点导航，默认带固定顶部、版本、栏目及阅读增强。`--site-navigation <json>` 可显式提供同一契约的数据，文件须在512KiB以内并通过契约及公开文本检查，校验在生产写出前完成。底层 `hia docs build` 的可选导航行为由其命令文档定义。
+
+English. Normal `pnpm reference:build` derives navigation from the website's shared facts and includes the fixed header, versions, tabs and reading enhancements. `--site-navigation <json>` accepts explicit data for the same contract, limited to 512 KiB and validated for contract and public-text safety before production writes. The underlying `hia docs build` command retains the optional navigation behavior documented for that command.
+
 ## DotNetDoc tool reference
 
 中文。`reference/dotnet-reference-inputs.json` 固定六个DotNetDoc工具包、十六个原JSON导出和独立站点 `/HIA-Documentation-API-DotNetDoc/`。在包含对应HIA源仓的容器内运行主仓工具，运行时使用JSDoc链，声明文件使用已有TSdoc 0.4项目链。原ID、双语字段、签名和地图进入同一有作用域的索引，声明源路径与实际owner归属分别保存，完整下载核原字节。
