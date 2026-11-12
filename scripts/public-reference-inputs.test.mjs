@@ -11,6 +11,7 @@ import path from 'node:path';
 import {assertProducerContributions} from './check-public-reference-build.mjs';
 import {preparePublicReferenceSiteNavigation} from './public-reference-source.mjs';
 import {createGeneratedSiteNavigation} from '../site/src/lib/generated-navigation.mjs';
+import {assertPublicReferenceTopicUi} from './public-reference-ui.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../reference/public-reference-build.definition.json',import.meta.url),'utf8'));
 const htmlEntries=['html-component-alert','html-attr-variant','html-slot-default','html-event-close','html-stylehook-alert','html-a11y-role-status'].map(id=>'hia-document:'+id);
@@ -67,5 +68,21 @@ test('both publication workflows check out the theme revision required by the cu
     const workflow = fs.readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8');
     const block = workflow.split(/\n\s+- name:/u).find(step => step.includes('repository: mandolin/jsdoc-theme-hia\n'));
     assert.match(block, /ref: ef3933b0f7a05961d2c88bf412996dfcae6098aa/u);
+  }
+});
+
+test('online and offline topic gates require the actual renderer heading and assembly metadata', () => {
+  const assembly = '<dt data-hia-ui-message="portal.metadata.assembly">Assembly</dt>';
+  const legacy = '<h2 data-hia-ui-message="portal.section.localizedfields">Fields</h2>';
+  const shared = '<section data-hia-reading-section="fields">Fields</section>';
+  assert.doesNotThrow(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', shared+assembly, 'en'));
+  assert.doesNotThrow(() => assertPublicReferenceTopicUi('<html>', legacy+assembly, 'en'));
+  assert.throws(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', shared, 'en'));
+  assert.throws(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', assembly, 'en'));
+  assert.throws(() => assertPublicReferenceTopicUi('<html>', shared+assembly, 'en'));
+  for (const [locale,label] of [['en','Assembly'],['zh-CN','程序集']]) {
+    assert.doesNotThrow(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', shared+`<dt><span>${label}</span></dt><dd>HiaDocumentationSample</dd>`, locale));
+    assert.throws(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', shared+`<p>${label} HiaDocumentationSample</p>`, locale));
+    assert.throws(() => assertPublicReferenceTopicUi('<html data-hia-site-navigation>', shared+`<dt><span>${label}</span></dt><dd></dd>`, locale));
   }
 });

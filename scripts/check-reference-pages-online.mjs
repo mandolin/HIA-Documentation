@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import {assertPublicReferenceTopicUi} from "./public-reference-ui.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // <lang><zh-CN>发布来源数量由同一显式构建清单决定，与离线装配和上传前检查一致。</zh-CN><en>Use the same explicit build allowlist for published provenance counts, matching assembly and pre-upload checks.</en></lang>
@@ -93,6 +94,8 @@ async function checkPublication() {
   for (const locale of siteManifest.locales) {
     // <lang><zh-CN>线上索引必须含显式关键条目，包括.NET类型与方法，避免只部署了新的来源计数。</zh-CN><en>The published index must contain canonical required entries, including the .NET type and method, beyond updated provenance counts.</en></lang>
     const projectIndex = await fetchJson(`${locale}/project-index.json`);
+    // <lang><zh-CN>从实际索引HTML确认当前框架，供同一语言的静态主题使用相同UI判据。</zh-CN><en>Identify the current shell from actual index HTML so static topics in this locale use the same UI criteria.</en></lang>
+    const shell = await fetchText(`${locale}/`);
     // <lang><zh-CN>运维检查无需构建本地包；核实际部署的owner报告、两种语言模式和钴蓝资产。</zh-CN><en>Operations requires no local package build; check the deployed owner report, both UI-language modes and cobalt asset.</en></lang>
     const ia = projectIndex.site?.informationArchitecture;
     assert(ia?.contentGrouping === "entry" && ia.loadingStrategy === "lazy" && ia.memberPlacement === "separate" && ia.localeModel.uiLocale === locale, `${locale}: published reference UI adoption drifted.`);
@@ -118,7 +121,8 @@ async function checkPublication() {
       const localizedPage = entry?.noScriptLocalePages?.find(page => page.uiLocale === locale);
       assert(localizedPage?.path.startsWith(`pages/${locale}/`), `${locale}: published localized topic path is missing.`);
       const topicHtml = await fetchText(`${locale}/${localizedPage.path}`);
-      assert(topicHtml.includes(`<html lang="${locale}"`) && topicHtml.includes('data-hia-ui-message="portal.section.localizedfields"') && topicHtml.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: published topic UI messages are missing.`);
+      assert(topicHtml.includes(`<html lang="${locale}"`), `${locale}: published topic UI language is missing.`);
+      assertPublicReferenceTopicUi(shell, topicHtml, locale);
       const asset = entry?.source?.publicAsset;
       assert(asset && entry.source.fetchUrl === asset.relativeUrl && entry.source.linkUrl === asset.linkUrl && /^sources\/[a-f0-9]+\.txt$/.test(asset.relativeUrl), `${locale}: published .NET source asset missing.`);
       const response = await fetchWithCacheBust(`${locale}/${asset.relativeUrl}`, "text/plain");

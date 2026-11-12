@@ -8,6 +8,7 @@ import { assertPublicText } from "./check-official-web.mjs";
 import {checkPublicReferencePackageApis} from "./public-reference-packages.mjs";
 import {checkPublicReferenceResources} from "./public-reference-resources.mjs";
 import {checkStandaloneJsdocReference} from "./standalone-reference.mjs";
+import {assertPublicReferenceTopicUi} from "./public-reference-ui.mjs";
 
 const mainRepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const definitionPath = path.join(mainRepoRoot, "reference", "public-reference-build.definition.json");
@@ -80,8 +81,7 @@ function checkPortalUi(outputRoot, locale) {
   }
   for (const entry of index.entries.filter(item => item.view === 'dotnet')) {
     const topic = readFileSync(path.join(root, entry.contentPath), 'utf8');
-    const fieldHeading = shell.includes('data-hia-site-navigation') ? 'data-hia-reading-section=' : 'data-hia-ui-message="portal.section.localizedfields"';
-    assert(topic.includes(fieldHeading) && topic.includes('data-hia-ui-message="portal.metadata.assembly"'), `${locale}: reference topic UI messages are missing.`);
+    assertPublicReferenceTopicUi(shell, topic, locale);
   }
 }
 
