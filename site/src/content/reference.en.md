@@ -56,7 +56,9 @@ Resource references use separate publication sites grouped by responsibility. Ea
 
 Language and version entries retain the current partition. The Code documentation tab opens the core API directory. The plugin development toolkit's two JSON resources are published with that core API, and these four partitions cover another 45 resources. Check the system documentation version and each resource's declared contract version separately.
 
-## HTML documentation tools
+<div id="html-documentation-tools"></div>
+
+## HTML and CSS documentation tools
 
 | Entry | Reading scope |
 | --- | --- |

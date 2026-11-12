@@ -161,3 +161,15 @@ test("the actual Astro build uses the current processor's native HAST table plug
   const config = await readFile(new URL("../astro.config.mjs", import.meta.url), "utf8");
   assert(config.includes('processor: satteri({hastPlugins: [markdownTableWrappers()]})'));
 });
+
+
+test("the shared HTML and CSS reference section names both domains and retains the original HTML anchor", async () => {
+  // <lang><zh-CN>双领域目录用完整标题说明内容，原HTML小节锚点继续承接已有链接。</zh-CN><en>The two-domain directory names both scopes while the original HTML section anchor continues to serve existing links.</en></lang>
+  for (const locale of ["zh-CN", "en"]) {
+    const manual = await readFile(new URL(`../src/content/reference.${locale}.md`, import.meta.url), "utf8");
+    const heading = locale === "zh-CN" ? "## HTML与CSS文档工具" : "## HTML and CSS documentation tools";
+    const anchor = locale === "zh-CN" ? "html文档工具" : "html-documentation-tools";
+    assert(manual.includes(heading));
+    assert(manual.includes(`<div id="${anchor}"></div>`));
+  }
+});
