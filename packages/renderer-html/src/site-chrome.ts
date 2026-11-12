@@ -78,7 +78,13 @@ export interface SiteChromeAsset {
 export interface SiteChrome {
   /** @lang zh-CN 共享资产只读清单。 @lang en Read-only shared asset list. */
   readonly assets: readonly SiteChromeAsset[];
-  /** @lang zh-CN 验证显式页面并返回完整HTML，失败抛固定公开TypeError。 @lang en Validates an explicit page and returns complete HTML, throwing fixed public TypeErrors on refusal. */
+  /**
+   * @lang zh-CN 验证显式页面并返回完整HTML，不写文件或改变输入。
+   * @lang en Validates an explicit page and returns complete HTML without file writes or input mutation.
+   * @param page <lang><zh-CN>本次实际页面、可信slot及语言对应。</zh-CN><en>Actual page, trusted slots and locale counterparts.</en></lang>
+   * @returns <lang><zh-CN>UTF-8完整HTML字符串，资产由服务清单另行写出。</zh-CN><en>Complete UTF-8 HTML string, with assets written separately from the service inventory.</en></lang>
+   * @throws {TypeError} <lang><zh-CN>无效页面上下文，公开错误省略输入正文。</zh-CN><en>Invalid page context, omitting input contents from public errors.</en></lang>
+   */
   renderPage(page: SiteChromePage): string;
 }
 

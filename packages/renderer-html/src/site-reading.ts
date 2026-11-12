@@ -176,6 +176,8 @@ export function renderSiteReading(contents: string, file: string, locale: Docume
  * @lang zh-CN 生成已确认的原生模态与封闭设置选项。
 
  * @lang en Generates confirmed native dialogs and closed setting choices.
+ * @param text <lang><zh-CN>只接受已知消息身份的可信标签工厂。</zh-CN><en>Trusted label factory accepting known message identities only.</en></lang>
+ * @returns <lang><zh-CN>两个原生dialog的完整HTML。</zh-CN><en>Complete HTML for two native dialogs.</en></lang>
 
  */
 export function renderSiteReadingDialogs(text: (id: keyof typeof SITE_READING_MESSAGES) => string): string {

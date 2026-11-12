@@ -57,6 +57,10 @@ export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigatio
 /**
  * @lang zh-CN 用纯文本双语消息及显式目标生成原生菜单，源码页不需要脚本。
  * @lang en Generates native menus from bilingual plain-text messages and explicit targets, requiring no scripts on source viewers.
+ * @param navigation <lang><zh-CN>调用方已校验的导航快照。</zh-CN><en>Navigation snapshot already validated by its caller.</en></lang>
+ * @param locale <lang><zh-CN>明确的界面语言。</zh-CN><en>Explicit UI locale.</en></lang>
+ * @param localeTargets <lang><zh-CN>独立页面的实际语言目标，省略时采用站点目标。</zh-CN><en>Actual independent-page locale targets, using site targets when omitted.</en></lang>
+ * @returns <lang><zh-CN>纯文本已转义的顶部及栏目HTML。</zh-CN><en>Header and tab HTML with plain text escaped.</en></lang>
  */
 export function header(navigation: DocumentationSiteNavigation, locale: DocumentationPortalUiLocale, localeTargets?: Partial<DocumentationSiteNavigationLocalizedText>): string {
   // <lang><zh-CN>消息身份与完整性评估共享工厂，译文只在最终HTML中转义，不进入报告。
