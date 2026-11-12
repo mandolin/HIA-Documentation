@@ -14,6 +14,24 @@ The command writes an isolated `dist/satellite-type-api-*` directory containing 
 
 Append `--inspect` to inspect a partial result without treating coverage gaps as a failing process status. Always inspect `complete`, `rootGaps`, and `memberGaps` in the report. Inspection preserves the same coverage results.
 
+### Programmatic package selection
+
+`auditSatelliteTypeApi(workspaceRoot, options)` accepts an optional `packageNames` array of registered package names. An explicit selection is passed to the same required-package inventory and ownership checks. Empty, duplicate and unknown selections fail before tool loading or package reads. Omitting the option retains the complete required-package selection. The command-line arguments above retain their documented scope.
+
+```js
+import path from "node:path";
+import {auditSatelliteTypeApi} from "./scripts/audit-satellite-type-api.mjs";
+
+// <lang><zh-CN>从主仓选择容器及已登记的DotNetDoc包，同时核类型与声明值。</zh-CN><en>From the main checkout, select its container and registered DotNetDoc package, auditing types and declared values together.</en></lang>
+const result = await auditSatelliteTypeApi(path.resolve(".."), {
+  packageNames: ["@hia-doc/dotnet-source-extractor"],
+  includeDeclarationValues: true
+});
+console.log(result.report);
+```
+
+中文说明。程序接口可用 `packageNames` 选择已登记包，范围选择贯穿同一归属及链接检查。空、重复和未知包名在加载工具和读取包之前拒绝；省略时继续原完整选择。命令入口沿上文参数范围。
+
 ## Verification boundaries
 
 The independent TypeScript compiler inventory resolves public aliases to original declarations. Each physical member enters the expected inventory, including members in anonymous union and intersection branches. Inherited members are outside this inventory. The actual producer is separately responsible for extraction, bridge, HIA core, and direct documentation source-map artifacts.

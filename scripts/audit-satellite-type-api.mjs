@@ -20,7 +20,7 @@ import {collectDeclarationValueExpectations,verifyDeclarationValueProjection} fr
  * @lang zh-CN 逐owner在授权根内执行真实项目生产器，将本次四工件复制到主仓独立审核目录。
  * @lang en Runs the actual project producer within each authorized owner and copies the four current artifacts into an isolated main-repository audit directory.
  * @param {string} workspaceRoot <lang><zh-CN>当前main-repo所属容器。</zh-CN><en>Container owning this main repository.</en></lang>
- * @param {object} [options] <lang><zh-CN>includeDeclarationValues显式增加声明值根审核并选0.4，省略保留原0.3纯类型范围。</zh-CN><en>includeDeclarationValues explicitly adds declaration-value root auditing with 0.4, retaining the original 0.3 pure-type scope when omitted.</en></lang>
+ * @param {object} [options] <lang><zh-CN>packageNames显式选择已登记包，省略审核全部必要包；includeDeclarationValues增加声明值根审核并选0.4，省略保留原0.3纯类型范围。</zh-CN><en>packageNames explicitly selects registered packages, defaulting to all required packages; includeDeclarationValues adds declaration-value roots with 0.4, otherwise retaining the original 0.3 pure-type scope.</en></lang>
  * @returns {Promise<object>} <lang><zh-CN>逐绑定与成员结果，完整状态只在无缺口时为true。</zh-CN><en>Per-binding/member results, complete only when no gaps remain.</en></lang>
  * @throws {Error} <lang><zh-CN>来源、生产、协议或源字节不一致。</zh-CN><en>Inconsistent sources, production, protocols or source bytes.</en></lang>
  */
@@ -29,13 +29,14 @@ export async function auditSatelliteTypeApi(workspaceRoot, options = {}) {
     const main = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)));
     const container = fs.realpathSync(workspaceRoot);
     assert.equal(fs.realpathSync(path.join(container, "main-repo")), main);
+    // <lang><zh-CN>包选择贯穿原清单读取，当前owner之外的仓库仍受同一链接及归属保护。</zh-CN><en>Carry package selection into the original inventory read, retaining the same link and ownership protection for every repository.</en></lang>
+    const inventory = auditRequiredPackages(container, {packageNames: options.packageNames});
     const producerFile = path.join(container, "HIA/hia-tsdoc/packages/tsdoc-producer/src/index.mjs");
     assert.equal(fs.realpathSync(producerFile), producerFile);
     const { tsdocProjectProducer } = await import(pathToFileURL(producerFile));
     // <lang><zh-CN>新增维度须显式选择，旧调用方继续原0.3身份及纯类型判据。</zh-CN><en>The additional dimension is explicit; legacy callers retain 0.3 identities and pure-type criteria.</en></lang>
     const version = options.includeDeclarationValues ? "0.4.0-draft" : "0.3.0-draft";
     const profile = getOfficialTsDocProjectProfile(version);
-    const inventory = auditRequiredPackages(container);
     const selected = module => options.includeDeclarationValues ? /\.d\.[cm]?ts$/.test(module.path) : module.exports.some(binding => binding.declarationTypeOnly);
     const packages = inventory.packages.filter(pack => pack.owner !== "main-repo" && pack.modules.some(selected));
     const dist = path.join(main, "dist");

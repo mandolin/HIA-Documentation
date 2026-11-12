@@ -11,6 +11,20 @@ import { fileURLToPath } from "node:url";
 import { collectModuleExports } from "./lib/package-api-inputs.mjs";
 import { collectTypeApiExpectations, verifyTypeApiProjection } from "./lib/type-api-projection.mjs";
 import {collectDeclarationValueExpectations,verifyDeclarationValueProjection} from "./lib/declaration-value-projection.mjs";
+import {auditSatelliteTypeApi} from "./audit-satellite-type-api.mjs";
+
+test("satellite declaration audit rejects invalid explicit subsets before tool or package reads", async t => {
+    // <lang><zh-CN>独占夹具只连接当前主仓，确认无卫星仓时也能先拒绝无效包选择。</zh-CN><en>The owned fixture links only this checkout, proving invalid selections fail before requiring satellite repositories.</en></lang>
+    const workspace = fs.mkdtempSync(path.join(dist, "type-selection-workspace-"));
+    // <lang><zh-CN>固定主仓入口用于核既有容器身份，清理时只移除本次链接和空目录。</zh-CN><en>The fixed main entry verifies the existing container identity; cleanup removes only this invocation's link and empty directory.</en></lang>
+    const mainEntry = path.join(workspace, "main-repo");
+    fs.symlinkSync(fileURLToPath(new URL("../", import.meta.url)), mainEntry, process.platform === "win32" ? "junction" : "dir");
+    t.after(() => { fs.unlinkSync(mainEntry); fs.rmdirSync(workspace); });
+    for (const packageNames of [[], ["@hia-doc/unknown"], ["@hia-doc/dotnet-source-extractor", "@hia-doc/dotnet-source-extractor"]]) {
+        await assert.rejects(auditSatelliteTypeApi(workspace, {packageNames, includeDeclarationValues: true}), /Invalid package audit selection/);
+    }
+});
+
 // <lang><zh-CN>夹具独占本owner忽略目录，真实TypeScript只读源码且不会执行顶层抛错。</zh-CN><en>Fixtures own an ignored directory; actual TypeScript reads sources without executing top-level throws.</en></lang>
 const dist = fileURLToPath(new URL("../dist/", import.meta.url));
 fs.mkdirSync(dist, { recursive: true });
