@@ -8,6 +8,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { preparePublicReferenceLocaleConfig, preparePublicReferenceSourceConfig, preparePublicReferenceSiteNavigation } from "./public-reference-source.mjs";
+import { assertPublicText } from "./check-official-web.mjs";
 import {preparePublicReferencePackageApis} from "./public-reference-packages.mjs";
 import {preparePublicReferenceResources,checkPublicReferenceResources} from "./public-reference-resources.mjs";
 
