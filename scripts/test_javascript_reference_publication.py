@@ -13,33 +13,45 @@ from prepare_javascript_reference import prepare, digest
 class JavaScriptPublicationTests(unittest.TestCase):
     """固定工件身份、完整字段/来源和安全展开边界。 Pin artifact identity, full fields/sources and safe extraction boundaries."""
 
-    def fixture(self, change=None, linked=False, html=False, site_id=None):
+    def fixture(self, change=None, linked=False, html=False, site_id=None, declared=False):
         """生成真实双语TAR与完整回执，修改器可构造语义冲突。 Produce a real bilingual TAR and full receipt, with mutations for semantic conflicts."""
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
         root = Path(scratch.name)
         # 中文。HTML与既有JavaScript使用同一归档/阅读契约，只选择各自固定站点身份。 English. HTML and existing JavaScript share archive/reading contracts while selecting their respective fixed site identities.
         site_id = site_id or ('html-api' if html else 'javascript-api')
-        repository = {'css-api': 'mandolin/HIA-Documentation-API-CSS', 'html-api': 'mandolin/HIA-Documentation-API-HTML', 'javascript-api': 'mandolin/HIA-Documentation-API-JavaScript'}[site_id]
+        repository = {'dotnet-api': 'mandolin/HIA-Documentation-API-DotNetDoc', 'css-api': 'mandolin/HIA-Documentation-API-CSS', 'html-api': 'mandolin/HIA-Documentation-API-HTML', 'javascript-api': 'mandolin/HIA-Documentation-API-JavaScript'}[site_id]
         definition = {'id': site_id, 'repository': repository, 'base': '/' + repository.split('/')[1] + '/', 'path': ''}
         registry = {'packages': ['@hia-doc/demo'], 'sites': [definition]}
         symbol = {'id': 'visible', 'name': 'visible', 'kind': 'function', 'signature': 'visible()', 'i18n': {'fields': {'description': {'localizedText': {'en': 'Public.', 'zh-CN': '公开。'}}}}}
         row = {'identityScope': 'package:demo', 'documentPath': 'native/api.hia.json', 'mapPath': 'native/map.json', 'symbols': 1}
         coordinates = {'start': {'line': 1}, 'end': {'line': 1}}
-        source_bytes = b'public source'
-        source = {'source': 'HIA/demo/index.mjs', 'sha256': hashlib.sha256(source_bytes).hexdigest(), 'byteLength': len(source_bytes)}
+        source_bytes = b'export declare function visible(): void;' if declared else b'public source'
+        source = {'source': 'index.d.mts' if declared else 'HIA/demo/index.mjs', 'sha256': hashlib.sha256(source_bytes).hexdigest(), 'byteLength': len(source_bytes)}
         report = {'sourceRepository': 'mandolin/HIA-Documentation', 'sourceCommit': 'a' * 40, 'registrySha256': 'registry', 'site': definition,
                   'packages': [{'name': '@hia-doc/demo'}], 'rows': [row], 'resources': [], 'dataRows': [], 'fullSources': [source], 'entriesPerLocale': 1, 'bindingsPerLocale': 1}
+        if declared:
+            # 中文。声明夹具保留独立的原生0.4工件及逻辑/物理来源归属。 English. Declaration fixtures retain independent native 0.4 artifacts and logical/physical source ownership.
+            row = {**row, 'owner': 'demo', 'identityScope': 'declarations:demo', 'extractionPath': 'native/extraction.json', 'bridgePath': 'native/bridge.json'}
+            report['rows'] = []
+            report['declarations'] = [row]
+            report['sourceOrigins'] = {'index.d.mts': 'HIA/demo/index.d.mts'}
         files = {'index.html': b'API'}
         for locale in ('zh-CN', 'en'):
-            entry = {**symbol, 'identityScope': 'package:demo', 'symbolId': 'visible', 'input': {'path': row['documentPath']}, 'contentPath': 'entry.html', 'noScriptPagePath': 'entry.html', 'noScriptLocalePages': [{'path': 'entry.html'}],
+            entry = {**symbol, 'identityScope': row['identityScope'], 'symbolId': 'visible', 'input': {'path': row['documentPath']}, 'contentPath': 'entry.html', 'noScriptPagePath': 'entry.html', 'noScriptLocalePages': [{'path': 'entry.html'}],
                      'docSourceMap': {'path': row['mapPath'], 'entryId': 'map', 'sourceRange': coordinates}}
             index = {'contract': 'hia-project-navigation-index', 'contractVersion': '0.2.0-draft', 'project': {'id': 'project:hia-' + site_id}, 'entries': [entry]}
             payload = {'project-index.json': index, 'native/api.hia.json': {'symbols': [symbol]}, 'native/native.hia.json': {'symbols': [symbol]},
                        'native/hia-integration.json': {'contract': 'hia-jsdoc-integration', 'contractVersion': '0.1.0', 'ir': {'nodes': [symbol]}},
                        'native/map.json': {'entries': [{'id': 'map', 'symbolId': 'visible', 'sourceRefs': [{'range': coordinates}]}]},
                        'documentation-ui-locale-completeness.json': {'status': 'complete'}, 'source-files/index.json': {'sources': [{**source, 'path': 'source-files/' + source['source']}]},
-                       'package-api-bindings.json': {'bindings': [{'package': '@hia-doc/demo', 'destinations': [{'identityScope': 'package:demo', 'symbolId': 'visible', 'content': 'entry.html', 'page': 'entry.html'}]}]}}
+                       'package-api-bindings.json': {'bindings': [{'package': '@hia-doc/demo', 'destinations': [{'identityScope': row['identityScope'], 'symbolId': 'visible', 'content': 'entry.html', 'page': 'entry.html'}]}]}}
+            if declared:
+                payload['native/api.hia.json']['schemaVersion'] = '0.2.0'
+                payload['native/map.json'].update(contract='doc-source-map', contractVersion='1.1.0')
+                payload['native/extraction.json'] = {'contract': 'hia-tsdoc-extraction', 'contractVersion': '0.4.0-draft', 'modules': [{'path': 'index.d.mts', 'exports': [{'name': 'visible', 'symbolIds': ['visible']}]}]}
+                payload['native/bridge.json'] = {'contract': 'hia-ts-jsdoc-bridge', 'contractVersion': '0.4.0-draft'}
+                payload['package-api-bindings.json']['bindings'][0].update(module='index.d.mts', exportName='visible')
             if change:
                 change(payload, report)
             files.update({locale + '/' + name: json.dumps(value).encode() for name, value in payload.items()})
@@ -154,6 +166,30 @@ class JavaScriptPublicationTests(unittest.TestCase):
         args[4]['sites'][0]['path'] = 'css/'
         with self.assertRaisesRegex(ValueError, 'publication route'):
             prepare(*args)
+
+
+    def test_dotnet_declaration_archive(self):
+        """DotNetDoc保留原声明工件、导出目标及来源。 Preserve original DotNetDoc declaration artifacts, export destinations and source ownership."""
+        args = self.fixture(site_id='dotnet-api', declared=True)
+        prepare(*args)
+        self.assertTrue((args[3] / 'en/source-files/index.d.mts').is_file())
+
+    def test_dotnet_declaration_rejections(self):
+        """声明原生身份、绑定及来源冲突全部阻断。 Block declaration native-identity, binding and source conflicts."""
+        for change, message in [
+            (lambda payload, report: payload['native/extraction.json'].update(contractVersion='0.3.0-draft'), 'declaration artifact'),
+            (lambda payload, report: payload['native/bridge.json'].update(contractVersion='0.3.0-draft'), 'declaration artifact'),
+            (lambda payload, report: payload['package-api-bindings.json']['bindings'][0].update(destinations=[]), 'binding'),
+            (lambda payload, report: payload['package-api-bindings.json']['bindings'][0].update(exportName='wrong'), 'declaration binding'),
+            (lambda payload, report: report.update(sourceOrigins={'index.d.mts': 'HIA/other/index.d.mts'}), 'declaration source'),
+            (lambda payload, report: report.update(sourceOrigins={}), 'declaration source')
+        ]:
+            with self.subTest(message=message):
+                args = self.fixture(change, site_id='dotnet-api', declared=True)
+                with self.assertRaisesRegex(ValueError, message):
+                    prepare(*args)
+                self.assertFalse(args[3].exists())
+
 
 
 

@@ -11,6 +11,7 @@ import {execFileSync} from "node:child_process";
 import {fileURLToPath, pathToFileURL} from "node:url";
 import {auditRequiredPackages} from "./audit-required-package-api.mjs";
 import {auditSatelliteNativeApi} from "./audit-satellite-native-api.mjs";
+import {auditSatelliteTypeApi} from "./audit-satellite-type-api.mjs";
 import {resolvePackageApiOwnership, createPackageApiIdentityScope} from "./lib/package-api-ownership.mjs";
 import {selectNativeJsdocApi, assertSatelliteApiEntries} from "./lib/jsdoc-api-projection.mjs";
 import {associateNativeJsdocBinding} from "./lib/jsdoc-api-bindings.mjs";
@@ -40,8 +41,8 @@ const toolVersion = read(path.join(main, "package.json")).version;
 export async function buildJavaScriptPackageReference(options = {}, publication) {
   const workspace = fs.realpathSync(options.workspaceRoot ?? path.dirname(main));
   assert.equal(fs.realpathSync(path.join(workspace, "main-repo")), main);
-  // <lang><zh-CN>入口只选择三个已登记正常生产清单，包/路由由对应读取器核验，来源摘要固定实际清单原字节。</zh-CN><en>Entries select only three registered production manifests. Their readers validate packages/routes and the source digest pins actual registry bytes.</en></lang>
-  assert(["reference/javascript-reference-inputs.json", "reference/html-reference-inputs.json", "reference/css-reference-inputs.json"].includes(publication.registryPath));
+  // <lang><zh-CN>入口只选择四个已登记正常生产清单，包/路由由对应读取器核验，来源摘要固定实际清单原字节。</zh-CN><en>Entries select only four registered production manifests. Their readers validate packages/routes and the source digest pins actual registry bytes.</en></lang>
+  assert(["reference/javascript-reference-inputs.json", "reference/html-reference-inputs.json", "reference/css-reference-inputs.json", "reference/dotnet-reference-inputs.json"].includes(publication.registryPath));
   const {registry, apiSiteId, resourceOwner, createNavigation, includeCommandSources} = publication;
   assert(registry.sites.some(site => site.id === apiSiteId));
   const output = path.resolve(main, options.out ?? "dist/javascript-reference-publication");
@@ -61,9 +62,14 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
     // <lang><zh-CN>入口包选择贯穿原生、schema、数组和描述符的实际B/A/JSONdoc审核，归属与读取授权继续逐源核验。</zh-CN><en>Carry the entry package selection through actual native, schema, array and descriptor B/A/JSONdoc audits, retaining per-source ownership and access checks.</en></lang>
     const native = await auditSatelliteNativeApi(workspace, {packageNames: registry.packages, includeMembers: true, schemaResources: true, arrayResources: true, descriptorResources: true, includeDeclaredArrays: true});
     const nativeRoot = path.join(main, native.output);
-    const grouped = groupJavaScriptPublicationDeclarations(inventory, native.report.declaredArrayMemberAudit);
+    // <lang><zh-CN>声明文件交原TSdoc0.4链，运行时模块继续原JSDoc链，完整入口清单用于最后逐绑定核验。</zh-CN><en>Declaration files use the original TSdoc 0.4 chain while runtime modules retain JSDoc; the complete inventory remains authoritative for final per-binding checks.</en></lang>
+    const nativeInventory = {...inventory, packages: inventory.packages.map(pack => ({...pack, modules: pack.modules.filter(module => !/\.d\.[cm]?ts$/.test(module.path))}))};
+    const grouped = groupJavaScriptPublicationDeclarations(nativeInventory, native.report.declaredArrayMemberAudit);
     const inputs = Object.fromEntries(registry.sites.map(site => [site.id, []]));
-    const rows = [], resources = [], dataRows = [];
+    const rows = [], resources = [], dataRows = [], declarations = [];
+    // <lang><zh-CN>声明绑定按实际owner/模块/导出关联，逻辑源路径另保留物理授权归属。</zh-CN><en>Associate declaration bindings by actual owner/module/export and separately retain physical authorized ownership for logical source paths.</en></lang>
+    const declarationBindings = new Map();
+    const sourceOrigins = new Map();
     const files = Object.fromEntries(registry.sites.map(site => [site.id, new Set()]));
     const sources = new Map();
 
@@ -177,11 +183,58 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
       }
     }
 
+    // <lang><zh-CN>实际声明模块触发原TSdoc0.4生产，逐工件/原源重核摘要并保留类型与声明值覆盖。</zh-CN><en>Actual declaration modules trigger original TSdoc 0.4 production, rechecking artifact/source digests and retaining type and declaration-value coverage.</en></lang>
+    if (inventory.packages.some(pack => pack.modules.some(module => /\.d\.[cm]?ts$/.test(module.path)))) {
+      const typeReceipt = await auditSatelliteTypeApi(workspace, {packageNames: registry.packages, includeDeclarationValues: true});
+      for (const typeGroup of typeReceipt.report.groups) {
+        assert(typeGroup.complete && typeGroup.packages.every(pack => registry.packages.includes(pack.name)), "Declaration coverage is incomplete.");
+        const typeScope = "declarations:" + typeGroup.owner;
+        const typeBase = "declaration-api/" + hash(typeScope);
+        const typeArtifacts = typeGroup.files.map(file => {
+          const original = path.join(main, typeReceipt.output, file.path);
+          assert.equal(hash(fs.readFileSync(original)), file.sha256);
+          const value = read(original);
+          const destination = typeBase + "/" + path.posix.basename(file.path);
+          copyPackageArtifact(original, path.join(runtime, destination), runtime);
+          return {id: file.kind, kind: file.kind, path: destination,
+            contract: file.kind === "hia-document" ? "hia-core-document" : value.contract,
+            contractVersion: value.schemaVersion ?? value.contractVersion};
+        });
+        const typeDocumentPath = typeArtifacts.find(file => file.kind === "hia-document").path;
+        const typeMapPath = typeArtifacts.find(file => file.kind === "doc-source-map").path;
+        const extractionPath = typeArtifacts.find(file => file.kind === "tsdoc-extraction").path;
+        const bridgePath = typeArtifacts.find(file => file.kind === "ts-jsdoc-bridge").path;
+        const typeDocument = read(path.join(runtime, typeDocumentPath));
+        const extraction = read(path.join(runtime, extractionPath));
+        addInput(apiSiteId, hash(typeScope), typeScope, typeArtifacts,
+          [{kind: "repository", id: typeGroup.owner, label: "mandolin/" + typeGroup.owner}, {kind: "layer", id: "typescript-declarations", label: typeGroup.owner + " · TypeScript"}]);
+        declarations.push({owner: typeGroup.owner, repository: "mandolin/" + typeGroup.owner,
+          identityScope: typeScope, documentPath: typeDocumentPath, mapPath: typeMapPath,
+          extractionPath, bridgePath, symbols: typeDocument.symbols.length,
+          typeBindings: typeGroup.bindings, typeMembers: typeGroup.members,
+          declaredValueBindings: typeGroup.valueAudit.bindings});
+        for (const module of extraction.modules) for (const binding of module.exports) {
+          const key = typeGroup.owner + ":" + module.path + ":" + binding.name;
+          assert(!declarationBindings.has(key) && binding.symbolIds.length);
+          declarationBindings.set(key, binding.symbolIds.map(symbolId => ({identityScope: typeScope, symbolId})));
+        }
+        // <lang><zh-CN>原声明路径相对于源owner，镜像保留该逻辑路径；原始物理归属单独记录并再次核SHA。</zh-CN><en>Original declaration paths are owner-relative; the mirror retains those logical paths while physical ownership is recorded and SHA-checked separately.</en></lang>
+        for (const source of [...typeGroup.sources, ...typeGroup.valueSources]) {
+          const originalPath = "HIA/" + typeGroup.owner + "/" + source.path;
+          const bytes = readJsonResourceBytes(workspace, originalPath);
+          assert.equal(hash(bytes), source.sha256);
+          assert(!sourceOrigins.has(source.path) || sourceOrigins.get(source.path) === originalPath, "Ambiguous declaration source ownership.");
+          mirror(source.path, bytes);
+          sourceOrigins.set(source.path, originalPath);
+        }
+      }
+    }
+
     // <lang><zh-CN>完整下载另取公开模块与schema依赖；来源镜像与页面片段分别保留原字节/范围。</zh-CN><en>Full downloads also include public modules and schema dependencies, retaining original bytes separately from page-preview ranges.</en></lang>
     const schemaRows = read(path.join(main, native.report.schemaMemberAudit.associationOutput, "report.json")).rows.filter(row => registry.packages.includes(row.package));
     for (const row of schemaRows) for (const source of row.sources) mirror(source.path, readJsonResourceBytes(workspace, source.path));
     // <lang><zh-CN>各正常入口明确是否交付独立命令源；模块接入与命令采用继续分账。</zh-CN><en>Each production entry explicitly chooses whether to deliver independent command sources; module and command adoption remain separately accounted.</en></lang>
-    for (const pack of inventory.packages) for (const module of pack.modules.filter(module => includeCommandSources || module.exports.length)) {
+    for (const pack of nativeInventory.packages) for (const module of pack.modules.filter(module => includeCommandSources || module.exports.length)) {
       const source = "HIA/" + pack.owner + "/" + module.path;
       mirror(source, readJsonResourceBytes(workspace, source));
     }
@@ -192,7 +245,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
       const navigationPath = path.join(runtime, site.id + ".navigation.json");
       fs.writeFileSync(navigationPath, JSON.stringify(createNavigation(registry, site.id)));
       const manifestPath = path.join(runtime, site.id + ".project.json");
-      const selectedRows = site.id === apiSiteId ? [...rows, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
+      const selectedRows = site.id === apiSiteId ? [...rows, ...declarations, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
       const selectedSources = fullSources.filter(source => site.id === "derivation-evidence" ? source.source.includes("/evidence/hia-jsdoc-config-") : !source.source.includes("/evidence/hia-jsdoc-config-"));
       for (const locale of locales) {
         const target = path.join(root, site.path, locale);
@@ -209,6 +262,16 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
           for (const row of rows) assertSatelliteApiEntries({row, document: read(path.join(runtime, row.documentPath)), map: read(path.join(runtime, row.mapPath)), entries: index.entries});
           const outputs = rows.map(row => ({...row, status: "success", artifact: row.documentPath.replace("api.hia.json", "hia-integration.json"), integration: read(path.join(runtime, row.documentPath.replace("api.hia.json", "hia-integration.json"))), document: read(path.join(runtime, row.documentPath))}));
           const bindings = inventory.packages.flatMap(pack => pack.modules.flatMap(module => module.exports.map(binding => {
+            // <lang><zh-CN>声明文件的原导出关联TSdoc节点，运行时继续原JSDoc关联，均须命中实际发布索引。</zh-CN><en>Original declaration exports associate with TSdoc nodes while runtime exports retain JSDoc association, both requiring actual published-index targets.</en></lang>
+            if (/\.d\.[cm]?ts$/.test(module.path)) {
+              const expected = declarationBindings.get(pack.owner + ":" + module.path + ":" + binding.name);
+              assert(expected?.length, "Declaration export is absent from its original extraction.");
+              return {package: pack.name, module: module.path, exportName: binding.name, destinations: expected.map(destination => {
+                const entry = index.entries.find(entry => entry.identityScope === destination.identityScope && entry.symbolId === destination.symbolId);
+                assert(entry, "Declaration export is absent from the published index.");
+                return {...destination, page: entry.noScriptPagePath, content: entry.contentPath};
+              })};
+            }
             const associated = associateNativeJsdocBinding({binding, owner: pack.owner, outputs});
             assert.equal(associated.status, "associated");
             return {package: pack.name, module: module.path, exportName: binding.name, destinations: associated.declarations.map(declaration => {
@@ -235,6 +298,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
       const checked = inspectCoreReferenceSite(root, locales.map(locale => site.path + locale));
       const report = {sourceRepository: "mandolin/HIA-Documentation", sourceCommit, registrySha256, site,
         packages: inventory.packages.map(({name, version, repository, sourceHead}) => ({name, version, repository, sourceHead})),
+        ...(declarations.length && site.id === apiSiteId ? {declarations, sourceOrigins: Object.fromEntries(sourceOrigins)} : {}),
         rows: site.id === apiSiteId ? rows : [], resources: resources.filter(row => row.site === site.id), dataRows: site.id === apiSiteId ? dataRows : [],
         memberPaths: site.id === apiSiteId ? grouped.members.length : 0,
         bindingsPerLocale: site.id === apiSiteId ? inventory.packages.reduce((sum, pack) => sum + pack.modules.reduce((count, module) => count + module.exports.length, 0), 0) : 0,
@@ -245,6 +309,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
     }
     assert.deepEqual(auditRequiredPackages(workspace, {packageNames: registry.packages, includeMembers: true, includeDeclaredArrays: true}), inventory);
     for (const source of fullSources.filter(source => source.source.startsWith("HIA/"))) assert.equal(hash(readJsonResourceBytes(workspace, source.source)), source.sha256);
+    for (const [alias, original] of sourceOrigins) assert.equal(hash(readJsonResourceBytes(workspace, original)), sources.get(alias).sha256);
     execFileSync("git", ["-C", main, "diff", "--exit-code", "HEAD", "--"], {stdio: "pipe"});
     assert.equal(execFileSync("git", ["-C", main, "rev-parse", "HEAD"], {encoding: "utf8"}).trim(), sourceCommit);
     // <lang><zh-CN>仅最终site目录可发布，运行目录与审核中间件留在装配根；失败时保留旧成功输出。</zh-CN><en>Only the final site directories are publishable; runtime and audit intermediates stay at the assembly root, with prior successful output retained on failure.</en></lang>

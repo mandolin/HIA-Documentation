@@ -1,4 +1,4 @@
-"""核验JavaScript源码工具包（含HTML与CSS工具）的固定原生API归档、资源和完整源码。 Verify pinned native API archives, resources and complete sources for JavaScript-source tool packages, including HTML and CSS tools."""
+"""核验JavaScript源码工具包（含HTML、CSS与DotNetDoc工具）的固定原生API归档、资源和完整源码。 Verify pinned native API archives, resources and complete sources for JavaScript-source tool packages, including HTML, CSS and DotNetDoc tools."""
 import gzip
 import json
 from pathlib import Path
@@ -18,7 +18,8 @@ def read(file):
 def check_site(site, report, definition):
     """核两语原字段、原生地图、目标及完整源；容量由外层归档门禁核对。 Check both locales' original fields, native maps, targets and complete sources; outer archive guards verify capacity."""
     roots = [definition['path'] + locale for locale in ('zh-CN', 'en')]
-    rows = report['rows'] + report['resources'] + report['dataRows']
+    declarations = report.get('declarations', [])
+    rows = report['rows'] + report['resources'] + report['dataRows'] + declarations
     for locale in ('zh-CN', 'en'):
         root = site / definition['path'] / locale
         prefix = definition['path'] + locale + '/'
@@ -30,6 +31,9 @@ def check_site(site, report, definition):
         require(read(root / 'documentation-ui-locale-completeness.json')['status'] == 'complete', 'Incomplete interface messages.')
         # 中文。原字段、原生工件和映射逐节点匹配，语义核对与归档摘要分别保留。 English. Match original fields, native artifacts and maps per node, retaining semantic checks separately from archive hashes.
         covered = set()
+        # 中文。原声明导出单独关联到其作用域和模块，防止只核条目数量而丢失类型入口。 English. Associate original declaration exports by scope/module so entry counts cannot conceal missing type entry points.
+        declaration_exports = {}
+        origins = report.get('sourceOrigins', {})
         for row in rows:
             require(valid_path(prefix + row['documentPath'], roots) and valid_path(prefix + row['mapPath'], roots), 'Unsafe native artifact path.')
             document = read(root / row['documentPath'])
@@ -41,6 +45,22 @@ def check_site(site, report, definition):
                 require((native_root / 'native.hia.json').is_file(), 'Missing original core document.')
                 integration = read(native_root / 'hia-integration.json')
                 require(integration['contract'] == 'hia-jsdoc-integration' and integration['contractVersion'] == '0.1.0', 'Missing native JSDoc integration.')
+            if row in declarations:
+                for key in ('extractionPath', 'bridgePath'):
+                    require(valid_path(prefix + row[key], roots), 'Unsafe declaration artifact path.')
+                extraction = read(root / row['extractionPath'])
+                bridge = read(root / row['bridgePath'])
+                require(extraction.get('contract') == 'hia-tsdoc-extraction' and extraction.get('contractVersion') == '0.4.0-draft'
+                        and bridge.get('contract') == 'hia-ts-jsdoc-bridge' and bridge.get('contractVersion') == '0.4.0-draft'
+                        and document.get('schemaVersion') == '0.2.0' and source_map.get('contract') == 'doc-source-map'
+                        and source_map.get('contractVersion') == '1.1.0', 'Unexpected declaration artifact identity.')
+                symbols = {symbol['id'] for symbol in document['symbols']}
+                for module in extraction['modules']:
+                    require(origins.get(module['path']) == 'HIA/' + row['owner'] + '/' + module['path'], 'Unexpected declaration source ownership.')
+                    for binding in module['exports']:
+                        key = (row['identityScope'], module['path'], binding['name'])
+                        require(key not in declaration_exports and binding['symbolIds'] and set(binding['symbolIds']) <= symbols, 'Invalid original declaration binding.')
+                        declaration_exports[key] = set(binding['symbolIds'])
             for symbol in document['symbols']:
                 key = (row['identityScope'], symbol['id'])
                 entry = entries.get(key)
@@ -52,6 +72,8 @@ def check_site(site, report, definition):
                 require(mapping and entry['docSourceMap']['entryId'] == mapping['id'], 'Original mapping changed.')
                 if mapping['sourceRefs']:
                     require(entry['docSourceMap']['sourceRange'] == mapping['sourceRefs'][0]['range'], 'Original source range changed.')
+                if row in declarations and entry.get('source', {}).get('path'):
+                    require(origins.get(entry['source']['path']) == 'HIA/' + row['owner'] + '/' + entry['source']['path'], 'Unexpected declaration source ownership.')
                 covered.add(key)
         require(covered == entries.keys(), 'Unaccounted project entries.')
         for entry in entries.values():
@@ -66,27 +88,40 @@ def check_site(site, report, definition):
         for source in expected_sources:
             require(valid_path(prefix + source['path'], roots) and (root / source['path']).stat().st_size == source['byteLength']
                     and digest(root / source['path']) == source['sha256'], 'Complete-source bytes changed.')
-        if definition['id'] in ('javascript-api', 'html-api', 'css-api'):
+        # 中文。逻辑源码别名必须在已核完整源清单中，并准确属于本声明owner。 English. Logical source aliases must occur in the verified complete-source manifest and exactly belong to a declaration owner.
+        source_names = {source['source'] for source in report['fullSources']}
+        for alias, original in origins.items():
+            require(alias in source_names and valid_path(prefix + 'source-files/' + alias, roots)
+                    and any(original == 'HIA/' + row['owner'] + '/' + alias for row in declarations), 'Unexpected declaration source ownership.')
+        if definition['id'] in ('javascript-api', 'html-api', 'css-api', 'dotnet-api'):
             bindings = read(root / 'package-api-bindings.json')['bindings']
             require(len(bindings) == report['bindingsPerLocale']
                     and {binding['package'] for binding in bindings} == {pack['name'] for pack in report['packages']}, 'Incomplete public package bindings.')
+            covered_exports = set()
             for binding in bindings:
+                require(binding['destinations'], 'Empty public binding destinations.')
                 for destination in binding['destinations']:
                     entry = entries.get((destination['identityScope'], destination['symbolId']))
                     require(entry and entry['contentPath'] == destination['content'] and entry['noScriptPagePath'] == destination['page'], 'Public binding destination changed.')
+                for scope in {destination['identityScope'] for destination in binding['destinations']} & {row['identityScope'] for row in declarations}:
+                    key = (scope, binding.get('module'), binding.get('exportName'))
+                    actual = [destination['symbolId'] for destination in binding['destinations'] if destination['identityScope'] == scope]
+                    require(key in declaration_exports and len(actual) == len(set(actual)) and set(actual) == declaration_exports[key], 'Original declaration binding changed.')
+                    covered_exports.add(key)
+            require(covered_exports == declaration_exports.keys(), 'Incomplete original declaration bindings.')
 
 
 def prepare(snapshot, archive, report_path, output, registry=None):
     """固定来源和全部摘要后逐文件展开，任何失败保留先前输出。 Pin source and all digests before per-file extraction, retaining prior output on any failure."""
     # 中文。HTML/CSS选择各自已确认独立清单，既有JavaScript/证据入口继续读取原清单；实际原字节必须匹配固定摘要。 English. HTML/CSS select their confirmed independent registries; existing JavaScript/evidence entries retain their registry, with exact bytes pinned by digest.
-    registry_name = {'html-api': 'html-reference-inputs.json', 'css-api': 'css-reference-inputs.json'}.get(snapshot['site'], 'javascript-reference-inputs.json')
+    registry_name = {'html-api': 'html-reference-inputs.json', 'css-api': 'css-reference-inputs.json', 'dotnet-api': 'dotnet-reference-inputs.json'}.get(snapshot['site'], 'javascript-reference-inputs.json')
     registry_path = Path(__file__).resolve().parent.parent / 'reference' / registry_name
     if registry is None:
         registry = read(registry_path)
         require(digest(registry_path) == snapshot['registrySha256'], 'Unexpected native API registry revision.')
     definition = next((site for site in registry['sites'] if site['id'] == snapshot['site']), None)
     require(definition and definition['repository'] == snapshot['publicationRepository'], 'Unexpected publication repository.')
-    require(definition['path'] == ('' if definition['id'] in ('javascript-api', 'html-api', 'css-api') else 'derivation-evidence/'), 'Unexpected publication route.')
+    require(definition['path'] == ('' if definition['id'] in ('javascript-api', 'html-api', 'css-api', 'dotnet-api') else 'derivation-evidence/'), 'Unexpected publication route.')
     roots = [definition['path'] + locale for locale in ('zh-CN', 'en')]
     require(not output.exists() and not output.is_symlink(), 'Output already exists.')
     require(0 < snapshot['tarBytes'] <= 2 * 1024**3 and 0 < snapshot['bytes'] <= 1_000_000_000

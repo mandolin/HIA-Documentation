@@ -1,0 +1,105 @@
+{
+  "description": "DotNetDoc文档工具六包正常生产及独立双语参考站。 Production inputs for six DotNetDoc documentation tool packages and their independent bilingual reference site.",
+  "packages": [
+    "@hia-doc/dotnet-source-extractor",
+    "@hia-doc/dotnet-xml-doc-extractor",
+    "@hia-doc/dotnetdoc-adapter",
+    "@hia-doc/dotnetdoc-producer",
+    "@hia-doc/dotnetdoc-runner",
+    "@hia-doc/dotnetdoc-spec"
+  ],
+  "sites": [
+    {
+      "id": "dotnet-api",
+      "repository": "mandolin/HIA-Documentation-API-DotNetDoc",
+      "base": "/HIA-Documentation-API-DotNetDoc/",
+      "path": "",
+      "titleByLocale": {
+        "zh-CN": "DotNetDoc文档工具包API",
+        "en": "DotNetDoc documentation tool package API"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "package": "@hia-doc/dotnetdoc-runner",
+      "subpath": "./schemas/dotnetdoc-config-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-runner",
+      "subpath": "./schemas/dotnetdoc-config-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-aspnet-endpoint-extraction-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-aspnet-endpoint-extraction-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-build-warning-classification-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-build-warning-classification-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-csharp-source-extraction-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-csharp-source-extraction-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-markup-comment-extraction-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-markup-comment-extraction-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-project-discovery-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-project-discovery-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-source-relation-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-source-relation-1.0.0.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-xml-doc-extraction-0.1.0-draft.schema.json",
+      "site": "dotnet-api"
+    },
+    {
+      "package": "@hia-doc/dotnetdoc-spec",
+      "subpath": "./schemas/dotnetdoc-xml-doc-extraction-1.0.0.schema.json",
+      "site": "dotnet-api"
+    }
+  ]
+}

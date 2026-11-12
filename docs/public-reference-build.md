@@ -1,5 +1,21 @@
 # Public Reference Build
 
+## DotNetDoc tool reference
+
+中文。`reference/dotnet-reference-inputs.json` 固定六个DotNetDoc工具包、十六个原JSON导出和独立站点 `/HIA-Documentation-API-DotNetDoc/`。在包含对应HIA源仓的容器内运行主仓工具，运行时使用JSDoc链，声明文件使用已有TSdoc 0.4项目链。原ID、双语字段、签名和地图进入同一有作用域的索引，声明源路径与实际owner归属分别保存，完整下载核原字节。
+
+English. `reference/dotnet-reference-inputs.json` pins six DotNetDoc tool packages, sixteen original JSON exports, and the independent `/HIA-Documentation-API-DotNetDoc/` site. Run the main-checkout tools within the container holding the corresponding HIA source repositories. Runtime modules use JSDoc and declaration files use the existing TSdoc 0.4 project producer. Original IDs, bilingual fields, signatures and maps enter one scoped index. Declaration source paths retain separate physical-owner records and complete downloads preserve original bytes.
+
+```sh
+pnpm build
+node scripts/build-dotnet-reference.mjs --workspace-root .. --out dist/dotnet-reference-publication
+python scripts/test_javascript_reference_publication.py
+```
+
+中文。默认输出为 `dist/dotnet-reference-publication`，可发布根为 `sites/dotnet-api/`，`reports/dotnet-api.json` 保存固定主仓与owner提交、原生/声明/资源计数、来源和逐文件摘要。完整源归档读取器核原生工件身份、声明导出与索引目的地、完整来源及逻辑/物理归属。先前JavaScript、HTML、CSS入口继续按各自清单构建。
+
+English. The default output is `dist/dotnet-reference-publication`, with `sites/dotnet-api/` as its publishable root. `reports/dotnet-api.json` records pinned main/owner commits, native/declaration/resource counts, sources and per-file digests. The archive reader verifies native artifact identities, original declaration exports and index destinations, complete sources, and logical/physical ownership. Existing JavaScript, HTML and CSS entry points retain their respective input registries.
+
 ## Complete source validation
 
 中文。可发布目录检查对完整源码下载区的 JavaScript/TypeScript 文件使用现有编译器静态识别正则字面量。模式正文、恢复字面斜线/反斜线后的正文及 flags 分别执行原公开路径检查；字符串、模板、注释及其它源码字符继续检查。语法错误拒绝发布，检查过程只读内存文本。源码原字节及所有来源摘要仍需匹配，文件名、JSON 字段和其它文本继续各自原验证。
