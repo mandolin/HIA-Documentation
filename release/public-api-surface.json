@@ -1234,6 +1234,11 @@
               "type": "string"
             },
             {
+              "name": "columns",
+              "optional": true,
+              "type": "number"
+            },
+            {
               "name": "stdout",
               "optional": false,
               "type": "(message: string) => void"
@@ -1245,7 +1250,7 @@
             }
           ],
           "declarationFingerprints": [
-            "ebe8948fa7dad4de67846eb13e99131b1da8089d230b543b537466d161aa170e"
+            "3427548033bfefe0ca862727958a1aa22fe913569e87070577c8cbc73db51d86"
           ]
         },
         {
@@ -1859,7 +1864,7 @@
           ],
           "fields": [],
           "declarationFingerprints": [
-            "7bd51981a78ec992b7b10139a82aee7e8f4cad63b4319f85ba042c40630e375b"
+            "53c0cbdfbef3f831f2d9a5a0513ea3affe858e35cefccf49eb8936dd5d5273c9"
           ]
         },
         {

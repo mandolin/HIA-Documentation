@@ -129,9 +129,13 @@ English. Invoke `hia` from an installed project's npm script or use `npm exec --
 
 ## Command reference
 
-中文。下列 11 条路径使用 `--name value` 格式，文件名为调用者已准备的输入。`--help/-h` 当前显示同一根帮助；这里提供逐命令使用层次。各命令的输出权限、错误码和元数据状态须分别核对。
+中文。下列11条路径使用`--name value`格式，文件名为调用者已准备的输入。`hia docs --help`、`hia browser --help`显示本组索引，各叶的`--help/-h`显示专用双语帮助。无参数及未知路径带help显示根帮助，帮助在配置/输入读取及参数执行校验前退出0。各命令的输出权限、错误码和元数据状态分别核对。
 
-English. These eleven paths use `--name value` arguments and caller-prepared input files. `--help/-h` currently displays the same root help. This reference provides per-command usage. Check each command's output authority, exit codes, and metadata states independently.
+English. These eleven paths use `--name value` arguments and caller-prepared input files. Group help lists its own leaves, and leaf `--help/-h` shows dedicated bilingual help. No arguments and unknown help paths show root help. Help exits 0 before configuration/input reads and executable argument validation. Check each command's output authority, exit codes and metadata states independently.
+
+中文。TTY按显示列选择已定义的80/120列布局，重定向缺省80列，两者均为纯文本。已编译包的dist/command-documentation目录同时包含命令描述JSON、实际声明观察JSON和标准HiaDocument JSON。源码正常构建从真实TypeScript路由/参数读取语句重建观察，核摘要并严格投影；修改命令描述或解析声明后重新构建即可检查漂移。
+
+English. TTY output selects the defined 80/120-column layout from terminal columns, while redirected output defaults to 80. Both are plain text. Compiled packages include command-description JSON, actual declaration-observation JSON and standard HiaDocument JSON in dist/command-documentation. Normal source builds reconstruct observations from actual TypeScript routes and option reads, verify digests and perform strict projection, checking drift after content or parser changes.
 
 ### docs build
 

@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Main CLI command descriptions and help
+
+- 主hia的根、两组和十一叶共享双语命令描述，专用帮助按80/120列输出。帮助优先、未知路径help回根及原执行解析行为沿用既有规则。
+- Root, two groups and eleven main hia leaves share bilingual command descriptions with dedicated 80/120-column help, retaining help precedence, unknown-path help fallback and existing executable parsing.
+- 正常构建从真实TypeScript路由、参数读取及闭集声明提取独立观察，绑定来源字节并经core严格投影，描述/观察/HiaDocument三工件随CLI分发。
+- Normal builds extract independent observations from actual TypeScript routes, option reads and closed declarations, bind source bytes and perform strict core projection. Description, observation and HiaDocument artifacts ship with the CLI.
+
 ## Unreleased — Command documentation semantic projection
 
 - core新增命令描述内存类型、语义读取及异步纯HiaDocument投影，核身份、别名、逐字段语言来源、原字节摘要及宿主参数声明观察。缺项保留incomplete，冲突拒绝，异步前复制输入，完整原描述及范围约定保留于元数据。

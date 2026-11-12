@@ -1,5 +1,15 @@
 # @hia-doc/cli
 
+## Command help and documentation
+
+中文。`hia docs --help`、`hia browser --help`提供分组帮助，十一条叶命令的`--help/-h`提供各自参数、默认条件、路径、效果、退出码和例子。帮助优先于配置/输入读取，未知路径带help回根帮助。终端使用80/120列纯文本，重定向缺省80列。
+
+English. Group and leaf help share bilingual command descriptions. Each leaf documents its options, default conditions, paths, effects, exit codes and examples. Help precedes configuration/input reads, and unknown help paths fall back to root. Terminals use 80/120-column plain text, with redirected output defaulting to 80 columns.
+
+Normal source builds include `dist/command-documentation/description.json`, `declaration-observations.json` and `document.hia.json`. The build observes actual TypeScript routes and parameter declarations and verifies source-byte digests before projecting a standard HiaDocument. See the [bundled command reference](USAGE.md#command-reference).
+
+中文。正常构建绑定真实解析声明与来源原字节，三份工件随包分发。观察核名称、原生值类型及短名，命令运行行为由既有执行器和回归测试核验。
+
 ## 1.0.0 source candidate
 
 This source tree targets a coordinated 1.0.0 package candidate. It does not

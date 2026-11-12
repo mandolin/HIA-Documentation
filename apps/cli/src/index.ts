@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/**
+ * @file
+ * @lang zh-CN 主HIA命令行分发、文档构建及显式元数据操作，帮助使用共享双语命令事实。
+ * @lang en Main HIA command dispatch, documentation builds and explicit metadata operations, with help using shared bilingual command facts.
+ */
+import { renderCliHelp } from "./command-help.js";
 import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } from "./project-source.js";
 
 import { createHash } from "node:crypto";
@@ -236,62 +242,7 @@ export {
 
 const OUTPUT_MANIFEST_PATH = "hia-manifest.json";
 
-const HELP_TEXT = `HIA Documentation CLI
 
-Usage:
-  hia --help
-  hia docs build [--config <file>] [--input <file>] [--jsdoc-integration <file>] [--project-manifest <file>] [--site-navigation <file>] [--adoption-kit <file>] [--business-flow-handoff <file>] [--out <dir>] [--locale <locale>]
-  hia docs evidence [--docs-dir <dir>] [--out <file>]
-  hia docs acceptance --evidence <file> --target-id <id> --target-family <family> [--out <file>]
-  hia docs continuity --baseline <file> --current <file> --target-id <id> --target-family enterprise-business [--out <file>]
-  hia docs adoption-kit --request <file> [--out <file>]
-  hia docs business-flow-handoff --projection <file> [--out <file>]
-  hia docs enterprise-workflow --adoption-request <file> [--baseline <file> --current <file>] [--out <file>]
-  hia docs html-authoring-verify --request <file> [--out <file>]
-  hia docs coordinate-verify --coordinate-profile <file> --ordinary-map <file> --doc-source-map <file> [--source <file>] --source-id <id> --source-index <n> [--section-index <n>] --entry-id <id> --line <n> --column <n> --column-unit <unit>
-  hia browser panel [--config <file>] [--project-manifest <file>] [--project-index <file>] [--out <dir>]
-
-Commands:
-  docs build      Generate HTML documentation from a HIA document fixture.
-  docs theme-assets Write one CSS/JS pair under explicit --out for shared-site ownership.
-  docs evidence   Summarize generated project documentation outputs without reading source bodies.
-  docs acceptance Evaluate existing public-safe documentation evidence for one target portfolio family.
-  docs continuity Compare two public-safe documentation evidence summaries without reading target state.
-  docs adoption-kit Compose an owner-operated review kit from explicit public-safe metadata.
-  docs business-flow-handoff Package an exact public business-flow projection for owner review.
-  docs enterprise-workflow Compose enterprise owner input with an optional public-safe baseline/current pair.
-  docs html-authoring-verify Verify an exact HTML-authoring handoff, source-comment projection and explicit binding.
-  docs coordinate-verify Verify one actual ordinary-map/documentation-map source anchor from explicit local bytes.
-  browser panel   Generate a static source-linked browser panel.
-
-Options:
-  --config <file>     HIA config JSON file. Defaults to hia.config.json when present.
-  --input <file>      HIA document JSON file. Defaults to the built-in basic fixture.
-  --jsdoc-integration <file>
-                      JSDoc HIA Integration JSON file to convert before rendering.
-  --project-manifest <file>
-                      Project docs manifest that aggregates JSDoc, CSSDoc, HTMDoc and doc-source-map artifacts.
-  --site-navigation <file>
-                      Optional documentation-site-navigation@0.1.0-draft JSON for a project build with an explicit UI locale.
-  --project-index <file>
-                      Generated project-index.json used to attach relation graph payload data to the browser panel.
-  --out <dir>         Output directory. Defaults to dist/docs.
-  --docs-dir <dir>    Existing generated docs directory for docs evidence. Defaults to dist/docs.
-  --evidence <file>   Existing generated documentation evidence summary for docs acceptance.
-  --baseline <file>   Earlier generated documentation evidence summary for docs continuity.
-  --current <file>    Later generated documentation evidence summary for docs continuity.
-  --adoption-request <file>
-                      Explicit target-owner adoption request for docs enterprise-workflow.
-  --business-flow-handoff <file>
-                      Exact ready business-flow handoff consumed by an explicit-IA project build.
-  --target-id <id>    Stable public target identifier for docs acceptance or continuity.
-  --target-family <family>
-                      Acceptance supports four portfolio families; continuity currently requires enterprise-business.
-  --locale <locale>   Initial rendered locale. Defaults to the document defaultLocale.
-  --manifest <file>   Output manifest path inside --out. Defaults to hia-manifest.json.
-  --coordinate-profile <file>
-                      Explicit safe-relative ordinary source-map coordinate sidecar for docs coordinate-verify.
-`;
 
 /**
  * @lang zh-CN 命令行宿主注入的工作目录与输出回调；调用方负责回调副作用和最终消息去向。
@@ -303,6 +254,11 @@ export interface CliIo {
    * @lang en Host working directory for relative input/output paths, without automatic authority over arbitrary repositories.
    */
   cwd: string;
+  /**
+   * @lang zh-CN 可选终端显示列，缺省80列，帮助使用已确认80/120画布。
+   * @lang en Optional terminal display columns, defaulting to 80 for the confirmed 80/120 help canvases.
+   */
+  columns?: number;
   /**
    * @lang zh-CN 普通输出消息回调，最终流/文件去向及副作用由宿主负责。
    * @lang en Normal-output callback; the host owns stream/file destinations and side effects.
@@ -373,21 +329,21 @@ interface ProducerRunSummary {
 }
 
 /**
- * Dispatch HIA CLI commands without granting target-repository mutation or implicit source access.
- *
- * 中文：分发 HIA CLI commands，但不授予 target-repository mutation 或 implicit source access。
- * English: Dispatch HIA CLI commands without granting target-repository mutation or implicit source access.
- *
- * @param argv - raw process arguments or test-supplied command arguments. 原始 process arguments 或 test-supplied command arguments。
- * @param io - controlled CLI IO adapter. 受控 CLI IO adapter。
- * @returns process-style exit code. process-style exit code。
- * @lang zh-CN command routing 只决定 HIA owner CLI 行为；任何 target workflow 仍由其 owner 单独选择和执行。
+ * @lang zh-CN 分发主CLI并优先处理根/组/叶帮助，帮助在任何配置或输入读取前stdout/0返回。非帮助路径由原处理器裁决；分发本身不授予来源或目标操作权限。
+ * @lang en Dispatch the main CLI with root/group/leaf help handled first, returning help through stdout/0 before configuration or input reads. Original handlers govern non-help paths, and dispatch grants no source or target-operation authority.
+ * @param argv <lang><zh-CN>原始命令参数，缺省取process argv，保留首个--兼容。</zh-CN><en>Raw command arguments, defaulting to process argv and retaining leading -- compatibility.</en></lang>
+ * @param io <lang><zh-CN>工作目录、输出及可选显示列，由宿主负责读取授权与消息去向。</zh-CN><en>Working directory, output and optional display columns, with host-owned read authority and message destinations.</en></lang>
+ * @returns <lang><zh-CN>处理器退出码，帮助0、未知执行路径1。</zh-CN><en>Handler exit code, 0 for help and 1 for unknown executable paths.</en></lang>
  */
 export async function runCli(argv: string[] = process.argv.slice(2), io: CliIo = createDefaultIo()): Promise<number> {
+  // <lang><zh-CN>只剥离已有首个参数分隔符，原命令与选项解析继续由原处理器决定。</zh-CN><en>Strip only the existing leading argument separator, leaving executable and option parsing to original handlers.</en></lang>
   const normalizedArgv = argv[0] === "--" ? argv.slice(1) : argv;
 
   if (normalizedArgv.length === 0 || normalizedArgv.includes("--help") || normalizedArgv.includes("-h")) {
-    io.stdout(HELP_TEXT);
+    // <lang><zh-CN>帮助先于配置/文件/执行；首个开关之前的完整命令路径用于精确选择，未知路径回根。</zh-CN><en>Help precedes configuration, files and execution; select the exact command path before the first switch, falling back to root for unknown paths.</en></lang>
+    const optionIndex = normalizedArgv.findIndex((argument) => argument.startsWith("-"));
+    const route = optionIndex < 0 ? normalizedArgv : normalizedArgv.slice(0, optionIndex);
+    io.stdout(renderCliHelp(route, io.columns));
     return 0;
   }
 
@@ -3209,9 +3165,15 @@ function createCliDiagnostic(
   return createHiaDiagnostic(code, message, severity, options);
 }
 
+/**
+
+ * @lang zh-CN 读取进程目录与TTY宽度，不读取项目配置，重定向固定80列。
+ * @lang en Read the process directory and TTY width without project configuration, fixing redirected output to 80 columns.
+ */
 function createDefaultIo(): CliIo {
   return {
     cwd: process.cwd(),
+    columns: process.stdout.isTTY ? process.stdout.columns : 80,
     stdout: (message) => console.log(message),
     stderr: (message) => console.error(message)
   };

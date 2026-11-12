@@ -35,11 +35,12 @@ describe("@hia-doc/cli", () => {
 
     expect(exitCode).toBe(0);
     expect(messages.join("\n")).toContain("hia docs build");
-    expect(messages.join("\n")).toContain("hia docs evidence");
-    expect(messages.join("\n")).toContain("hia docs adoption-kit");
-    expect(messages.join("\n")).toContain("hia docs html-authoring-verify");
-    expect(messages.join("\n")).toContain("hia docs coordinate-verify");
-    expect(messages.join("\n")).toContain("hia browser panel");
+    expect(messages.join("\n")).toContain("evidence");
+    expect(messages.join("\n")).toContain("adoption-kit");
+    expect(messages.join("\n")).toContain("html-authoring-verify");
+    expect(messages.join("\n")).toContain("coordinate-verify");
+    expect(messages.join("\n")).toContain("browser");
+    expect(messages.join("\n")).toContain("panel");
   });
 
   it("builds the shared fixture document", async () => {
