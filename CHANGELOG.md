@@ -2,6 +2,8 @@
 
 ## Unreleased — Generated command web reference
 
+- 完整源码发布检查正确识别正则中的转义字面星号，块注释匹配模式按语法校验，原始源码字节保持，真实盘符与UNC路径继续拒绝。
+- Complete-source publication checks recognize escaped literal asterisks in regexps, validating block-comment patterns syntactically while retaining original source bytes and rejecting actual drive and UNC paths.
 - 五个既有API参考站按维护包归属接入七个命令入口的126个命令/参数符号，包含主hia根、两组与十一叶。实际解析声明、原始来源摘要、双语字段及原生工件在构建和上传前逐项复核。
 - The five existing API reference sites adopt 126 command/parameter symbols from seven entries under their owning packages, including the main hia root, two groups and eleven leaves. Actual parser declarations, original source digests, localized fields and native artifacts are checked during builds and before upload.
 - 网页保留原生工件，独立投影owner限定源码路径，并将已有版本、参数规则、示例和退出码展开为可见字段。官网两语言目录链接实际生成条目，源码沿声明行锚点精度。

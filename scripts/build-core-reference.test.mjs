@@ -13,7 +13,7 @@ import {createHash} from "node:crypto";
 import { assertCoreReferenceOutput, inspectCoreReferenceSite, CORE_REFERENCE_RESOURCE_PACKAGES } from "./build-core-reference.mjs";
 
 test("complete JavaScript sources retain regexp delimiters and word-boundary syntax without fictitious path matches", t => {
-  // <lang><zh-CN>固定合成源覆盖实际DotNetDoc四类正则形态，文件原字节由正常清单摘要约束。</zh-CN><en>Fixed synthetic source covers the four observed DotNetDoc regexp forms, with original bytes constrained by normal inventory hashes.</en></lang>
+  // <lang><zh-CN>固定合成源覆盖DotNetDoc及JSDoc注释标记正则，文件原字节由正常清单摘要约束。</zh-CN><en>Fixed synthetic source covers DotNetDoc and JSDoc comment-marker regexps, with original bytes constrained by normal inventory hashes.</en></lang>
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "hia-source-regexp-"));
   t.after(() => fs.rmSync(root, {recursive: true, force: true}));
   for (const locale of ["en", "zh-CN"]) {
@@ -22,7 +22,7 @@ test("complete JavaScript sources retain regexp delimiters and word-boundary syn
   }
   fs.writeFileSync(path.join(root, "index.html"), "API");
   fs.mkdirSync(path.join(root, "en/source-files"));
-  const original = String.raw`export const patterns = [/\b(?:public|protected)\s+/, /^T:/u, /\.cs$/iu, /\{([^{}]+)\}/];`;
+  const original = String.raw`export const patterns = [/\b(?:public|protected)\s+/, /^T:/u, /\.cs$/iu, /\{([^{}]+)\}/, /\/\*+\s*@(codeblock|codeblockend)\b([^*]*?)\*\//g];`;
   fs.writeFileSync(path.join(root, "en/source-files/original.mjs"), original);
   assert.equal(inspectCoreReferenceSite(root).files, 4);
   assert.equal(fs.readFileSync(path.join(root, "en/source-files/original.mjs"), "utf8"), original);
@@ -45,6 +45,8 @@ test("source regexp bodies, strings, templates and comments still reject actual 
     String.raw`const pattern = /\/home\/private\//;`,
     String.raw`const pattern = /work-zone\//;`,
     String.raw`const pattern = /\x43:\\private/;`,
+    String.raw`const pattern = /\\\\server\\private\*/;`,
+    String.raw`const pattern = /C:\\Users\\private\*/;`,
     String.raw`const value = "C:\\private\\source.js";`,
     'const value = `file:///private/source.js`;',
     '// /home/private/source.js\nconst safe = /\\bword/;',

@@ -140,8 +140,8 @@ function assertPublicCodeSource(text, filename) {
       const pattern = node.text.slice(1, delimiter);
       assertPublicText(pattern);
       assertPublicText(node.text.slice(delimiter + 1));
-      // <lang><zh-CN>只恢复正则中明确的字面斜线/反斜线，确保UNC及转义盘符路径仍被原判据拒绝。</zh-CN><en>Restore only explicit literal slash/backslash escapes so UNC and escaped drive paths remain rejected by the original predicate.</en></lang>
-      const literalPattern = pattern.replace(/\\([\\/])/gu, "$1");
+      // <lang><zh-CN>按原词法顺序恢复字面斜线、反斜线和星号，避免注释起始标记的转义星号被当成第二个路径分隔符；原模式及真实UNC/盘符仍逐项检查。</zh-CN><en>Restore literal slash, backslash and asterisk escapes in lexical order so an escaped comment-marker asterisk cannot become a second path separator; original patterns and actual UNC/drive paths remain checked.</en></lang>
+      const literalPattern = pattern.replace(/\\([\\/*])/gu, "$1");
       assertPublicText(literalPattern);
       ranges.push({start: node.getStart(source), end: node.getEnd()});
     }
