@@ -4,7 +4,7 @@ on:
   # 中文：按成功部署事件衔接健康检查，不依赖GitHub两条定时任务的实际先后顺序。
   # English: Chain health checks to successful deployment events rather than relying on the execution order of two GitHub schedules.
   workflow_run:
-    workflows: ["HIA Reference Pages"]
+    workflows: ["HIA Reference Pages", "Restore HIA Pages"]
     branches: [main]
     types: [completed]
   schedule:

@@ -44,10 +44,11 @@ async function actualFiles(root, prefix = "") {
  * @lang en Verify actual bytes in the composed artifact; a manifest alone is never accepted as verification.
  * @param {string} [output] - 工件目录。 Artifact directory.
  * @param {string} [legacyOutput] - 2.0.0模式的独立旧参考工件目录。 Independent legacy reference directory for 2.0.0.
+ * @param {string} [referenceOutput] - 当前原参考目录，省略时沿用旧同目录调用。 Current original reference directory, defaulting to the legacy same-directory call.
  * @returns {Promise<object>} 无本机路径的统计。 Statistics without local paths.
  * @throws {Error} 清单、字节、路径、来源政策或索引目标不符。 Invalid inventory, bytes, paths, source policy, or index destinations.
  */
-export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/official-site-preview/", import.meta.url)), legacyOutput) {
+export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/official-site-preview/", import.meta.url)), legacyOutput, referenceOutput) {
   assert(!(await lstat(output)).isSymbolicLink(), "Artifact root cannot be a symlink.");
   for (const name of ["official-site.json", "versions.json"]) assert((await lstat(path.join(output, name))).size <= 32 * 1024 ** 2, "Artifact metadata exceeds read budget.");
   const reportText = await readFile(path.join(output, "official-site.json"), "utf8");
@@ -64,6 +65,9 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
   assert((report.format === reportFormat || sibling && report.format === "hia-official-site-composition-report@0.3.0") && report.siteIndex === "versions.json" && report.legacyIndex === index.legacyReference.index, "Unexpected composition report.");
   if (sibling) assert(typeof legacyOutput === "string" && (await lstat(legacyOutput)).isDirectory(), "Independent legacy artifact directory is required.");
   const legacyRoot = sibling ? legacyOutput : path.join(output, "legacy-reference");
+  // <lang><zh-CN>原深链与当前参考逐字节对应，兼容站根/旧索引另按其固定输入核验。</zh-CN><en>Match preserved routes to the current reference byte-for-byte, verifying the compatibility root and index against their independent pinned input.</en></lang>
+  const referenceRoot=sibling ? referenceOutput ?? legacyRoot : legacyRoot;
+  assert((await lstat(referenceRoot)).isDirectory() && !(await lstat(referenceRoot)).isSymbolicLink(),"Original reference directory is invalid.");
   assert(report.privacy?.status === "pass" && report.privacy.sourceAuthorityExpanded === false && report.privacy.policy === "public-brand-with-private-path-rejection@1.0.0", "Invalid composed privacy boundary.");
   const reportFiles = compositionFiles(report);
   assert(Array.isArray(reportFiles) && reportFiles.length > 0 && reportFiles.length <= 100000, "Invalid file inventory.");
@@ -90,14 +94,14 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
   // <lang><zh-CN>新表示把自身清单及索引计入十进制发布预算，旧版继续各自原读取语义。</zh-CN><en>The new representation counts its own inventory and index in the decimal publication budget, while existing formats retain their reading semantics.</en></lang>
   if (report.format === "hia-official-site-composition-report@0.3.0") assert(copiedBytes + Buffer.byteLength(reportText) + Buffer.byteLength(indexText) <= 1_000_000_000, "Complete official site exceeds publication budget.");
   // <lang lang="zh-CN">旧根与旧机器索引之外，每个旧文件必须与保留深链对应。分站模式从独立目录读取实际字节。</lang><lang lang="en">Every legacy file beyond the old root and index must match a retained deep link. Split mode reads the actual independent directory.</lang>
-  const legacyFiles = await actualFiles(legacyRoot);
+  const legacyFiles = await actualFiles(referenceRoot);
   for (const file of legacyFiles) {
     safeFile(file);
     if (["index.html", "versions.json"].includes(file)) continue;
     const preserved = hashes.get(file);
     assert(preserved?.kind === "preserved-deep-link", "A legacy deep link was lost or changed.");
     if (sibling) {
-      const legacyFile = path.join(legacyRoot, file);
+      const legacyFile = path.join(referenceRoot, file);
       const stats = await lstat(legacyFile);
       assert(stats.isFile() && stats.nlink === 1 && stats.size === preserved.bytes, "A legacy artifact file has an unexpected size or type.");
       assert(createHash("sha256").update(await readFile(legacyFile)).digest("hex") === preserved.digest, "A legacy artifact file has an unexpected digest.");
@@ -120,7 +124,10 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
   assertPublicText(oldText);
   readLegacyReferenceIndex(oldText);
   const legacyManifest = JSON.parse(await readFile(path.join(legacyRoot, "reference-pages.json"), "utf8"));
-  assert(legacyManifest.privacy?.sourcesContentPolicy === "none" && ["none", "public-whitelisted-excerpt"].includes(legacyManifest.privacy.sourcePreviewPolicy) && report.privacy.sourcesContentPolicy === "none" && report.privacy.sourcePreviewPolicy === legacyManifest.privacy.sourcePreviewPolicy, "Composed source policy drifted.");
+  assert(legacyManifest.privacy?.sourcesContentPolicy === "none" && ["none", "public-whitelisted-excerpt"].includes(legacyManifest.privacy.sourcePreviewPolicy), "Composed compatibility policy drifted.");
+  assert((await lstat(path.join(referenceRoot,"reference-pages.json"))).size<=32*1024**2,"Reference metadata exceeds read budget.");
+  const referenceManifest=JSON.parse(await readFile(path.join(referenceRoot,"reference-pages.json"),"utf8"));
+  assert(referenceManifest.contract===report.sourceIdentity?.contract && referenceManifest.contractVersion===report.sourceIdentity.contractVersion && referenceManifest.privacy?.status==="pass" && referenceManifest.privacy.sourcesContentPolicy==="none" && report.privacy.sourcesContentPolicy==="none" && report.privacy.sourcePreviewPolicy===referenceManifest.privacy.sourcePreviewPolicy,"Composed source policy drifted.");
   assert(createHash("sha256").update(oldText).digest("hex") === report.legacyIndexSha256, "Legacy index bytes changed.");
   assert(hashes.get("index.html")?.kind === "website" && (sibling || hashes.get("legacy-reference/index.html")?.kind === "legacy-copy"), "Website root did not replace the reference root explicitly.");
   for (const target of [...Object.values(index.website.locales), ...Object.values(index.documentation.current.locales), ...index.documentation.archives.flatMap(entry => Object.values(entry.locales))]) assert(actual.has(target + "index.html"), "Version index points to missing content.");
@@ -132,7 +139,12 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
 // <lang lang="zh-CN">分站验收通过显式目录读取两个本地工件。</lang><lang lang="en">Split-mode verification reads two artifacts from explicit local directories.</lang>
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const args = process.argv.slice(2);
-  assert(args.length === 0 || args.length === 2 && args[0] === "--out" || args.length === 4 && args[0] === "--out" && args[2] === "--legacy", "Use --out and optional --legacy.");
+  assert(args.length%2===0 && args.length<=6,"Use --out, --legacy and optional --reference.");
+  const options={};
+  for (let index=0;index<args.length;index+=2) {
+    assert(["--out","--legacy","--reference"].includes(args[index]) && !Object.hasOwn(options,args[index]),"Unknown or duplicate checking option.");
+    options[args[index]]=args[index+1];
+  }
   const owner = fileURLToPath(new URL("../", import.meta.url));
-  console.log(JSON.stringify(await checkOfficialSite(args[1] ? path.resolve(owner, args[1]) : undefined, args[3] ? path.resolve(owner, args[3]) : undefined)));
+  console.log(JSON.stringify(await checkOfficialSite(options["--out"] ? path.resolve(owner,options["--out"]) : undefined,options["--legacy"] ? path.resolve(owner,options["--legacy"]) : undefined,options["--reference"] ? path.resolve(owner,options["--reference"]) : undefined)));
 }

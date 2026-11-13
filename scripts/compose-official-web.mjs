@@ -64,11 +64,34 @@ async function checkOutputLocation(target) {
 }
 
 /**
+ * @lang zh-CN 有界读取精确旧身份的参考元数据，来源政策由每个实际输入分别提供。
+ * @lang en Read exact legacy-reference metadata with bounded I/O, checking the source policy of each actual input separately.
+ * @param {string} root - 已核主仓工件目录。 Validated owner artifact directory.
+ * @param {number} limit - 单文件读取上限。 Per-file read limit.
+ * @returns {Promise<object>} 索引原字节及解析后的manifest。 Original index bytes and parsed manifest.
+ */
+async function readReferenceMetadata(root,limit) {
+  for (const name of ["versions.json","reference-pages.json"]) {
+    const stats=await lstat(path.join(root,name));
+    assert(stats.isFile() && !stats.isSymbolicLink() && stats.size<=limit,"Legacy metadata exceeds read budget or file boundary.");
+  }
+  const indexBytes=await readFile(path.join(root,"versions.json"));
+  readLegacyReferenceIndex(indexBytes.toString("utf8"));
+  let manifest;
+  try {manifest=JSON.parse(await readFile(path.join(root,"reference-pages.json"),"utf8"));}
+  catch {throw new Error("Invalid legacy artifact metadata JSON.");}
+  assert(manifest.contract==="hia-reference-pages" && manifest.contractVersion==="0.1.0-draft" && manifest.privacy?.status==="pass","Legacy artifact lacks its exact manifest or passing privacy state.");
+  assert(manifest.privacy.sourcesContentPolicy==="none" && ["none","public-whitelisted-excerpt"].includes(manifest.privacy.sourcePreviewPolicy),"Legacy source policy cannot expand during composition.");
+  return {indexBytes,manifest};
+}
+
+/**
  * @lang zh-CN 组装独立离线候选，冲突或隐私失败时不替换已存在的输出；旧输出作为完整备份保留。
  * @lang en Assemble an offline candidate without replacing existing output on collision or privacy failure; retain previous output as a complete backup.
  * @param {object} [options] - 受控主仓输入/输出目录与预算。 Owner-controlled artifact paths and budgets.
  * @param {string} [options.website] - 独立官网产物。 Standalone website artifact.
  * @param {string} [options.reference] - 经旧门禁校验的参考产物。 Legacy-gate-validated reference artifact.
+ * @param {string} [options.legacyReference] - 分站实际选择的兼容工件，默认使用reference。 Actual selected compatibility artifact for sibling mode, defaulting to reference.
  * @param {string} [options.out] - 主仓dist内专用目录。 Dedicated owner dist directory.
  * @param {"embedded"|"sibling"} [options.legacyMode="embedded"] - 旧索引与参考工件的部署位置。 Deployment location of the legacy index and artifact.
  * @param {number} [options.maxBytes] - 分站模式默认1000000000，旧嵌入模式默认1073741824。 Defaults to 1000000000 for sibling mode and 1073741824 for legacy embedded mode.
@@ -84,35 +107,35 @@ export async function composeWebsite(options = {}) {
   const legacyMode = options.legacyMode ?? "embedded";
   assert(["embedded", "sibling"].includes(legacyMode), "Unsupported legacy deployment mode.");
   const sibling = legacyMode === "sibling";
+  const compatibility = path.resolve(ownerRoot,options.legacyReference ?? reference);
+  assert(sibling || compatibility===reference,"Separate compatibility input requires sibling mode.");
   const maxBytes = options.maxBytes ?? (sibling ? 1_000_000_000 : 1024 ** 3);
   const maxFiles = options.maxFiles ?? 100000;
   const maxFileBytes = options.maxFileBytes ?? 32 * 1024 ** 2;
   assert(Number.isSafeInteger(maxBytes) && maxBytes > 0 && maxBytes <= (sibling ? 1_000_000_000 : 1024 ** 3) && Number.isSafeInteger(maxFiles) && maxFiles > 0 && maxFiles <= 100000 && Number.isSafeInteger(maxFileBytes) && maxFileBytes > 0 && maxFileBytes <= 32 * 1024 ** 2, "Invalid composition budget.");
   await checkOutputLocation(output);
-  for (const input of [website, reference]) {
+  for (const input of new Set([website, reference, compatibility])) {
     assert(inside(distRoot, input) && inside(await realpath(distRoot), await realpath(input)), "Inputs must remain in the owner's artifact directory.");
     assert(!inside(input, output) && !inside(output, input), "Output overlaps an input artifact.");
     assert(!(await lstat(input)).isSymbolicLink(), "Input root cannot be a symlink.");
   }
   assert(!inside(website, reference) && !inside(reference, website), "Input artifacts overlap.");
+  assert(!inside(website,compatibility) && !inside(compatibility,website),"Website overlaps compatibility input.");
   await checkWebsite(website, reference);
   // <lang lang="zh-CN">只有精确旧身份且通过隐私标记的参考工件可参与，实际旧门禁仍需单独执行。</lang><lang lang="en">Accept only the exact legacy identity with passing privacy markers; the full legacy gate still runs independently.</lang>
-  assert((await lstat(path.join(reference, "versions.json"))).size <= maxFileBytes && (await lstat(path.join(reference, "reference-pages.json"))).size <= maxFileBytes, "Legacy metadata exceeds read budget.");
-  const oldIndexBytes = await readFile(path.join(reference, "versions.json"));
-  readLegacyReferenceIndex(oldIndexBytes.toString("utf8"));
-  let legacyManifest;
-  try { legacyManifest = JSON.parse(await readFile(path.join(reference, "reference-pages.json"), "utf8")); }
-  catch { throw new Error("Invalid legacy artifact metadata JSON."); }
-  assert(legacyManifest.contract === "hia-reference-pages" && legacyManifest.contractVersion === "0.1.0-draft" && legacyManifest.privacy?.status === "pass", "Legacy artifact lacks its exact manifest or passing privacy state.");
-  assert(legacyManifest.privacy.sourcesContentPolicy === "none" && ["none", "public-whitelisted-excerpt"].includes(legacyManifest.privacy.sourcePreviewPolicy), "Legacy source policy cannot expand during composition.");
+  const currentMetadata=await readReferenceMetadata(reference,maxFileBytes);
+  const compatibilityMetadata=compatibility===reference ? currentMetadata : await readReferenceMetadata(compatibility,maxFileBytes);
+  const legacyManifest=currentMetadata.manifest;
+  const oldIndexBytes=compatibilityMetadata.indexBytes;
   const index = createSiteVersionIndex(sibling ? "2.0.0" : "1.0.0");
   const sourceFiles = await filesIn(reference);
   const websiteFiles = await filesIn(website);
   assert(sourceFiles.includes("index.html") && sourceFiles.includes("versions.json"), "Legacy root or index is missing.");
   let legacyRootSha256;
   if (sibling) {
-    const home = path.join(reference, "index.html");
-    assert((await lstat(home)).size <= maxFileBytes, "Legacy home exceeds read budget.");
+    const home = path.join(compatibility, "index.html");
+    const homeStats=await lstat(home);
+    assert(homeStats.isFile() && !homeStats.isSymbolicLink() && homeStats.size <= maxFileBytes, "Legacy home exceeds read budget.");
     const body = await readFile(home);
     assertPublicText(body.toString("utf8"));
     assertPublicText(oldIndexBytes.toString("utf8"));
@@ -198,7 +221,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const args = process.argv.slice(2);
   assert(args.length % 2 === 0, "Expected option/value pairs.");
   const options = {};
-    const names = { "--out": "out", "--reference": "reference", "--website": "website", "--legacy-mode": "legacyMode" };
+    const names = { "--out": "out", "--reference": "reference", "--legacy-reference":"legacyReference", "--website": "website", "--legacy-mode": "legacyMode" };
   for (let i = 0; i < args.length; i += 2) {
     assert(Object.hasOwn(names, args[i]) && !Object.hasOwn(options, names[args[i]]), "Unknown or duplicated composition option.");
     options[names[args[i]]] = args[i + 1];

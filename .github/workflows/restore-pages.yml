@@ -1,0 +1,81 @@
+name: Restore HIA Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      source-run-id:
+        description: Successful HIA Reference Pages run whose complete artifact will be restored.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# 中文：与正常发布共用互斥组，恢复和正常发布按顺序执行。
+# English: Share the normal publication lock so restoration and regular publication run sequentially.
+concurrency:
+  group: hia-reference-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+      - name: Verify recovery regressions
+        run: python3 -m unittest discover -s scripts -p test_pages_recovery.py
+      - name: Download and verify the complete successful artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source-run-id }}
+        run: |
+          python3 -c 'import os; assert os.environ["SOURCE_RUN_ID"].isascii() and os.environ["SOURCE_RUN_ID"].isdigit()'
+          mkdir -p dist/restore-input
+          gh api "repos/mandolin/HIA-Documentation/actions/runs/$SOURCE_RUN_ID" > dist/restore-input/run.json
+          gh api "repos/mandolin/HIA-Documentation/actions/runs/$SOURCE_RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "github-pages")' > dist/restore-input/artifact.json
+          artifact_id=$(python3 -c 'import json; print(int(json.load(open("dist/restore-input/artifact.json"))["id"]))')
+          gh api "repos/mandolin/HIA-Documentation/actions/artifacts/$artifact_id/zip" > dist/restore-input/artifact.zip
+          python3 scripts/prepare_pages_recovery.py dist/restore-input/run.json dist/restore-input/artifact.json dist/restore-input/artifact.zip dist/restore-input/artifact.tar dist/restored-site > dist/restore-input/verification.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-pages
+          path: dist/restore-input/artifact.tar
+          compression-level: 9
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovery-verification
+          path: dist/restore-input/verification.json
+          retention-days: 7
+
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+      - uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify the restored publication
+        env:
+          HIA_REFERENCE_PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/check-reference-pages-online.mjs

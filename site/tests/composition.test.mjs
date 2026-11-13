@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, writeFile, readFile, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import {createHash} from "node:crypto";
 import { composeWebsite } from "../../scripts/compose-official-web.mjs";
 import { checkOfficialSite } from "../../scripts/check-official-site.mjs";
 import {compositionFiles} from "../src/lib/composition-report.mjs";
@@ -91,6 +92,20 @@ test("colliding favicon cannot overwrite a preserved legacy route", async () => 
   const input = await fixture();
   await writeFile(path.join(input.reference, "favicon.svg"), "<svg/>");
   await assert.rejects(composeWebsite(input), /collides/);
+});
+
+test("fresh reference and pinned compatibility snapshot retain independent byte identities", async () => {
+  // <lang><zh-CN>主站正常参考继续更新，兼容快照独立固定；两个来源都须按实际角色复核。</zh-CN><en>The main reference keeps updating while compatibility stays independently pinned; verify both sources in their actual roles.</en></lang>
+  const current=await fixture();
+  const compatibility=await fixture();
+  await writeFile(path.join(current.reference,"en/index.html"),"<!doctype html><h1>Fresh API reference</h1>");
+  await writeFile(path.join(compatibility.reference,"index.html"),"<h1>Pinned compatibility root</h1>");
+  const result=await composeWebsite({...current,legacyMode:"sibling",legacyReference:compatibility.reference});
+  assert.equal(result.legacyRootSha256,createHash("sha256").update(await readFile(path.join(compatibility.reference,"index.html"))).digest("hex"));
+  assert.equal(await readFile(path.join(current.out,"en/index.html"),"utf8"),"<!doctype html><h1>Fresh API reference</h1>");
+  assert.equal((await checkOfficialSite(current.out,compatibility.reference,current.reference)).preservedDeepLinks,5);
+  await writeFile(path.join(compatibility.reference,"index.html"),"<h1>Changed pinned root</h1>");
+  await assert.rejects(checkOfficialSite(current.out,compatibility.reference,current.reference),/Legacy home/);
 });
 
 test("the formal checker still reads the original sibling object report", async () => {

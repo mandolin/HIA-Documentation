@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import {assertPublicReferenceTopicUi} from "./public-reference-ui.mjs";
+import {readReferenceSiteContext} from "./reference-site-context.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // <lang><zh-CN>发布来源数量由同一显式构建清单决定，与离线装配和上传前检查一致。</zh-CN><en>Use the same explicit build allowlist for published provenance counts, matching assembly and pre-upload checks.</en></lang>
@@ -43,6 +44,7 @@ throw lastError;
  * Verifies published portal routes, provenance, and existing schema canonical identity.
  */
 async function checkPublication() {
+  const context=await readReferenceSiteContext(publicBaseUrl,fetchText);
   const siteManifest = await fetchJson("reference-pages.json");
   assert(siteManifest.contract === "hia-reference-pages", "Published Reference Pages contract drifted.");
   assert(siteManifest.defaultLocale === "en", "Published Reference Pages default locale drifted.");
@@ -63,7 +65,7 @@ async function checkPublication() {
   assert(portalSearchIndex.contract === "hia-public-portal-search-index", "Published public portal search index contract drifted.");
 
   const routeExpectations = [
-    ["", "HIA Documentation System Reference", "hia-reference-site-nav"],
+    ["", context.rootMarker, context.navigationMarker],
     ["en/", "HIA Documentation System Reference", "hia-reference-site-nav"],
     ["zh-CN/", "HIA Documentation System Reference", "hia-reference-site-nav"],
     ["source-linkage/", "HIA Public Reference Source Linkage", "hia-reference-site-nav"]
@@ -86,7 +88,7 @@ async function checkPublication() {
       ["versions/", "HIA Reference Versions", "hia-reference-site-nav"]
     );
 
-    const versionIndex = await fetchJson("versions.json");
+    const versionIndex = context.versionIndex;
     assert(versionIndex.contract === "hia-reference-version-index", "Published version index contract drifted.");
     assert(versionIndex.versioning?.current?.path === "current/", "Published version index current path drifted.");
   }

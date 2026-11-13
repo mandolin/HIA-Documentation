@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readReferenceText } from "./reference-http.mjs";
+import {readReferenceSiteContext} from "./reference-site-context.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const defaultBaseUrl = process.env.HIA_REFERENCE_PAGES_URL ?? "https://mandolin.github.io/HIA-Documentation/";
@@ -104,8 +105,9 @@ function checkReferenceBuild(referenceBuild) {
  * Checks that user-facing routes still return expected page markers.
  */
 async function checkRoutes(siteManifest) {
+  const context=await readReferenceSiteContext(publicBaseUrl,fetchText);
   const routes = [
-    ["", "HIA Documentation System Reference"],
+    ["", context.rootMarker],
     ["en/", "HIA Documentation System Reference"],
     ["zh-CN/", "HIA Documentation System Reference"],
     ["source-linkage/", "HIA Public Reference Source Linkage"]
@@ -131,7 +133,7 @@ async function checkRoutes(siteManifest) {
   for (const [route, marker] of routes) {
     const page = await fetchText(route);
     record(page.includes(marker), `ROUTE_${route || "root"}`, `Route ${route || "/"} contains expected marker.`, `Route ${route || "/"} is missing expected marker.`);
-    record(page.includes("hia-reference-site-nav"), `ROUTE_NAV_${route || "root"}`, `Route ${route || "/"} contains reference navigation.`, `Route ${route || "/"} is missing reference navigation.`);
+    record(page.includes(route==="" ? context.navigationMarker : "hia-reference-site-nav"), `ROUTE_NAV_${route || "root"}`, `Route ${route || "/"} contains expected navigation.`, `Route ${route || "/"} is missing expected navigation.`);
   }
 }
 

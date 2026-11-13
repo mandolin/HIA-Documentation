@@ -52,4 +52,26 @@ Run `pnpm site:test` for boundary regression checks. The artifact checker reject
 
 ## Site index and reference composition
 
-An offline composed candidate combines this website with the existing reference artifact, retains a complete `legacy-reference/` namespace, and emits the distinct `hia-site-version-index@1.0.0` root index. See [the index and migration guide](../docs/site-version-index.md). `pnpm site:compose` and `pnpm site:compose:check` do not deploy or change the existing reference build workflow.
+The normal Pages workflow composes the website at the root with freshly built reference deep links. Its `hia-site-version-index@2.0.0` index locates the separately published compatibility snapshot. The compatibility selection is pinned in `reference/legacy-reference.snapshot.json` and verified against the live compatibility site's root and index before upload. See [the index and migration guide](../docs/site-version-index.md).
+
+For a sibling composition with independently selected reference inputs, run the following commands after building the website and validating both reference artifacts.
+
+~~~sh
+node scripts/compose-official-web.mjs --reference dist/reference-pages --legacy-reference dist/legacy-reference-pinned --legacy-mode sibling --out dist/official-site-current
+node scripts/check-official-site.mjs --out dist/official-site-current --legacy dist/legacy-reference-pinned --reference dist/reference-pages
+node scripts/check-official-site-pairing.mjs dist/official-site-current
+~~~
+
+The current reference input supplies retained deep links and source identity. The pinned compatibility input supplies compatibility root/index digests. Embedded composition retains its original 1.0.0 index behavior. Local composition commands write artifacts. The normal Pages workflow performs deployment.
+
+## Restore a complete publication
+
+The **Restore HIA Pages** workflow accepts `source-run-id` from a successful **HIA Reference Pages** run on this repository's `main` branch. Select a run whose `github-pages` artifact remains available. The normal publication retains these artifacts for seven days.
+
+~~~sh
+gh workflow run restore-pages.yml --repo mandolin/HIA-Documentation --ref main -f source-run-id=SUCCESSFUL_RUN_ID
+~~~
+
+Recovery verifies the selected repository, workflow, branch, source commit, platform ZIP digest, CRC, complete TAR paths and expansion budget. It uploads the original TAR unchanged and checks the restored site using its exact root-index identity. The `recovery-verification` artifact records the selected source and TAR digest. Normal and recovery deployments share a serialization group. To finish a rollback drill, restore the successful official-site run and verify its root, index, compatibility pairing and retained reference routes.
+
+中文。正常发布分别核当前参考产物和固定兼容快照。恢复时选择本仓 main 的成功正常发布运行，校验完整工件并原样重传 TAR，随后按实际新旧根身份复核。演练结束后需恢复指定官网版本并再次验证线上来源。

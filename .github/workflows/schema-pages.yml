@@ -186,22 +186,49 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      # 中文：先附加已确认官网深链，让API分站导航有实际目标；旧根及版本索引继续原语义。
-      # English: Append confirmed website deep links for API-site navigation while retaining the existing root and version index.
-      - name: Append checked website deep links
+      # 中文：兼容发布器代码固定到已配对提交，实际快照由同一选定清单约束。
+      # English: Pin the compatibility publisher to its paired revision and bind its snapshot through the same selected manifest.
+      - name: Check out pinned compatibility publisher
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/HIA-Documentation-Legacy
+          ref: 348a477737260d10395cebaea27e77d9dcc6447b
+          path: reference/sources/hia-legacy-publication
+          persist-credentials: false
+
+      - name: Verify recovery regressions
+        run: python3 -m unittest discover -s scripts -p test_pages_recovery.py
+
+      - name: Prepare paired compatibility artifact
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $snapshot=Get-Content reference/legacy-reference.snapshot.json -Raw|ConvertFrom-Json
+          if($snapshot.tag -notmatch '^reference-[0-9a-f]{7,40}$' -or $snapshot.asset -notmatch '^reference-pages-[0-9a-f]{7,40}\.tar\.gz$'){throw 'Invalid compatibility snapshot locator.'}
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';assert.deepEqual(JSON.parse(fs.readFileSync('reference/legacy-reference.snapshot.json')),JSON.parse(fs.readFileSync('reference/sources/hia-legacy-publication/snapshot.json')));"
+          if($LASTEXITCODE){throw 'Compatibility selection differs from its pinned publisher.'}
+          New-Item -ItemType Directory -Path dist -Force|Out-Null
+          curl --fail --silent --show-error --location --proto '=https' --max-time 180 --output dist/legacy-reference.tar.gz "https://github.com/mandolin/HIA-Documentation-Legacy/releases/download/$($snapshot.tag)/$($snapshot.asset)"
+          if($LASTEXITCODE){throw 'Compatibility archive download failed.'}
+          python3 reference/sources/hia-legacy-publication/scripts/prepare.py reference/legacy-reference.snapshot.json dist/legacy-reference.tar.gz dist/legacy-reference-pinned
+          if($LASTEXITCODE){throw 'Compatibility archive validation failed.'}
+
+      - name: Compose and verify the official website
         run: |
           pnpm site:build
           pnpm site:check
           pnpm site:test
           pnpm site:licenses
-          node scripts/append-official-web.mjs
-          pnpm reference:pages:check
+          node scripts/compose-official-web.mjs --reference dist/reference-pages --legacy-reference dist/legacy-reference-pinned --legacy-mode sibling --out dist/official-site-current
+          node scripts/check-official-site.mjs --out dist/official-site-current --legacy dist/legacy-reference-pinned --reference dist/reference-pages
+          node scripts/check-official-site-pairing.mjs dist/official-site-current
 
       - name: Upload public reference Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist/reference-pages
+          path: dist/official-site-current
           include-hidden-files: true
+          retention-days: 7
 
   deploy:
     name: Deploy and verify public reference Pages
