@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — JavaScript first-run guidance
+
+- 独立JSDoc指南提供匹配源码归档的安装步骤、实际资源文件及完整摘要/参数/返回双语示例，四域入门两语言正文连接该生成路径。
+- The standalone JSDoc guide includes matching source-archive installation, a resource-file example and complete bilingual summaries, parameters and returns. Both domain manuals link this generation path.
+
 ## Unreleased — Product and version guidance
 
 - 官网参考手册补齐系统预览、45个必要包与独立语言服务器的版本辨识入口，候选指南按当前13个必要主仓包及14个主仓npm包核对数量。

@@ -84,6 +84,23 @@ test("build manuals identify the published website root and compatibility index"
   }
 });
 
+test("JavaScript first-run guide distinguishes source archives and localizes complete fields", async () => {
+  // <lang><zh-CN>首次使用者应能准备匹配源码归档并复制完整双语字段，不能只在摘要中出现翻译。</zh-CN><en>First-time readers must be able to prepare matching source archives and copy fully localized fields, with translation extending beyond the summary.</en></lang>
+  const guide = await readFile(new URL("../docs/published-jsdoc-usage.md", import.meta.url), "utf8");
+  assert(guide.includes("npm pack <plugin-checkout> --ignore-scripts"));
+  assert(guide.includes("npm pack <theme-checkout> --ignore-scripts"));
+  assert(guide.includes("1.0.0 source candidates"));
+  assert.equal((guide.match(/```json\n/g) ?? []).length, 2, "Configured resources must have a copyable input example.");
+  assert(guide.includes("@param {string} name <lang><zh-CN>用户名称。</zh-CN><en>User name.</en></lang>"));
+  assert(guide.includes("@returns {string} <lang><zh-CN>问候文本。</zh-CN><en>Greeting text.</en></lang>"));
+  for (const locale of ["zh-CN", "en"]) {
+    // <lang><zh-CN>实际正文必须连接同一安装和生成指南。</zh-CN><en>Both actual manuals must link the same installation and generation guide.</en></lang>
+    const article = await readFile(new URL(`../site/src/content/domains.${locale}.md`, import.meta.url), "utf8");
+    const javascript = article.split("## JavaScript")[1].split("\n## ")[0];
+    assert(javascript.includes("docs/published-jsdoc-usage.md"));
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");

@@ -13,6 +13,8 @@ These configurations target the current source candidates. Prepare a matching de
 
 The hia-jsdoc runner consumes explicit source inputs. The plugin interprets JSDoc comments, while the theme produces standalone pages. Use canonical @lang and inline `<lang>` for localized fields. Check the standalone output and its Integration artifact; the CLI can consume the latter through --jsdoc-integration. Standalone-theme and HIA-renderer outputs need separate acceptance.
 
+For the first plugin and theme setup, follow the [standalone JSDoc and Integration guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/published-jsdoc-usage.md). Select an available release cohort or matching source archives and install them in an isolated sample project. The guide includes complete configuration and canonical bilingual summaries, parameters and returns. Check every field in both generated languages.
+
 ## HTML and CSS
 
 Use the HTML or CSS configuration below with the matching htmdoc or cssdoc command. Declared input kinds do not authorize arbitrary template execution. Review the extraction, HIA document, documentation map and producer-result artifacts. Source embedding is not a default. Map and result options retain domain-specific defaults.

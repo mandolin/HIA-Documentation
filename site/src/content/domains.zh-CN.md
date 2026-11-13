@@ -23,6 +23,8 @@ hia-jsdoc --config hia-jsdoc.config.json
 
 使用普通JSDoc配合canonical @lang和inline `<lang>`表达字段双语。检查独立页及生成的Integration工件；进入统一Portal时通过CLI的--jsdoc-integration入口消费。独立主题产物和HIA渲染器产物分别验证。
 
+首次准备插件和主题时，按[独立JSDoc与Integration生成指南](https://github.com/mandolin/HIA-Documentation/blob/main/docs/published-jsdoc-usage.md)选择实际可用发行版本或匹配源码归档，在独立样本项目安装。指南包含完整配置和摘要、参数、返回的canonical双语示例；输出后逐字段核对两个语言。
+
 ## HTML与CSS
 
 HTML运行器接受html等已声明输入；CSS运行器接受css、postcss-css与design-token等已声明输入，不执行任意模板或浏览器代码。最小当前配置分别为：
