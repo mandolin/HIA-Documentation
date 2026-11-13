@@ -81,3 +81,34 @@ export function loadResourceReferencePartitions() {
   assertResourceReferencePartitions(value);
   return value;
 }
+
+/**
+ * @lang zh-CN 将当前包资源与明确发布分区及独立承载包双向对账，拒绝遗漏、额外项、来源替换和重复归属。
+ * @lang en Reconcile current package resources bidirectionally with explicit partitions and separately hosted packages, rejecting omissions, extras, source substitutions and overlapping ownership.
+ * @param {object} registry <lang><zh-CN>已声明的分区清单。</zh-CN><en>Declared partition registry.</en></lang>
+ * @param {object} inventory <lang><zh-CN>实际包清单产生的资源入口，函数不读取正文或执行模块。</zh-CN><en>Resource entries from actual package manifests, without body reads or module execution by this function.</en></lang>
+ * @param {string[]} separatePackages <lang><zh-CN>由其它现有构建器完整承载的明确包名。</zh-CN><en>Explicit package names fully hosted by other existing builders.</en></lang>
+ * @returns {void} <lang><zh-CN>完整且互斥时返回。</zh-CN><en>Returns when coverage is complete and disjoint.</en></lang>
+ * @throws {Error} <lang><zh-CN>资源范围或发布归属不一致。</zh-CN><en>Resource scope or publication ownership differs.</en></lang>
+ */
+export function assertResourceReferenceCoverage(registry, inventory, separatePackages) {
+  assertResourceReferencePartitions(registry);
+  // <lang><zh-CN>独立承载范围必须来自本次实际盘点，包名重复或未知均拒绝。</zh-CN><en>Separate hosting must come from this actual inventory, rejecting duplicate or unknown package names.</en></lang>
+  assert(Array.isArray(separatePackages) && new Set(separatePackages).size===separatePackages.length);
+  assert(separatePackages.every(name=>inventory.packages.some(pack=>pack.name===name)));
+  const expected=new Map();
+  for(const pack of inventory.packages){
+    for(const entry of pack.entries.filter(entry=>entry.kind==="json-resource")){
+      const identity=pack.name+":"+entry.subpath;
+      assert(!expected.has(identity),"Duplicate inventoried resource identity.");
+      expected.set(identity,{source:pack.directory+"/"+entry.target,separate:separatePackages.includes(pack.name)});
+    }
+  }
+  // <lang><zh-CN>已声明项逐一匹配实际目标，独立承载包不得在本分区重复声明。</zh-CN><en>Match every declared item to its actual target, preventing separately hosted packages from being redeclared here.</en></lang>
+  const selected=registry.partitions.flatMap(part=>part.exports);
+  for(const entry of selected){
+    const actual=expected.get(entry.package+":"+entry.subpath);
+    assert(actual && !actual.separate && actual.source===entry.source,"Resource publication target mismatch.");
+  }
+  assert.deepEqual(selected.map(entry=>entry.package+":"+entry.subpath).sort(),[...expected].filter(([,entry])=>!entry.separate).map(([identity])=>identity).sort(),"Incomplete resource publication coverage.");
+}

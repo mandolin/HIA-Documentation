@@ -8,13 +8,45 @@ import { loadResourceReferencePartitions, assertResourceReferencePartitions } fr
 import { selectPublicReferenceResources, publicReferenceResourceId, preparePublicReferenceResources } from "./public-reference-resources.mjs";
 import { assertCoreReferenceOutput } from "./build-core-reference.mjs";
 import { createResourceReferenceNavigation } from "./build-resource-reference.mjs";
+import { collectPackageEntries } from "./lib/package-api-inputs.mjs";
+import { assertResourceReferenceCoverage } from "./resource-reference-partitions.mjs";
 
-test("the confirmed four partitions cover exactly 45 exports in two sites", () => {
+test("the confirmed four partitions cover exactly 47 exports in two sites", () => {
   const registry = loadResourceReferencePartitions();
   assert.equal(registry.sites.length, 2);
   assert.equal(registry.partitions.length, 4);
-  assert.equal(registry.partitions.flatMap(part => part.exports).length, 45);
+  assert.equal(registry.partitions.flatMap(part => part.exports).length, 47);
   assert.deepEqual(registry.sites.map(site => site.repository), ["mandolin/HIA-Documentation-Resources-Core", "mandolin/HIA-Documentation-Resources-Applications"]);
+});
+
+test("every current core JSON export has one explicit publication owner", () => {
+  // <lang><zh-CN>从真实包清单盘点当前资源，新增公开导出必须同步站点选择，SDK由现有核心API站承载。</zh-CN><en>Inventory current resources from real manifests so newly public exports require matching site selection, with SDK resources hosted by the existing core API site.</en></lang>
+  const root=fileURLToPath(new URL("../",import.meta.url));
+  const selection=JSON.parse(fs.readFileSync(path.join(root,"reference/required-package-api.inputs.json"),"utf8"));
+  const packages=selection.packages.filter(item=>item.owner==="main-repo").map(item=>{
+    const packageRoot=path.join(root,item.directory);
+    const manifest=JSON.parse(fs.readFileSync(path.join(packageRoot,"package.json"),"utf8"));
+    return {...item,entries:collectPackageEntries(packageRoot,manifest,item.sourceEntry,item.sourceEntries)};
+  });
+  assertResourceReferenceCoverage(loadResourceReferencePartitions(),{packages},["@hia-doc/plugin-sdk"]);
+});
+
+test("publication coverage rejects missing, extra, substituted and multiply owned resources", () => {
+  const registry=loadResourceReferencePartitions();
+  const rows=registry.partitions.flatMap(part=>part.exports);
+  const packages=[...new Set(rows.map(row=>row.package))].map(name=>({name,directory:"packages/"+name.split("/")[1],entries:rows.filter(row=>row.package===name).map(row=>({kind:"json-resource",subpath:row.subpath,target:row.source.slice(("packages/"+name.split("/")[1]+"/").length)}))}));
+  assertResourceReferenceCoverage(registry,{packages},[]);
+  for(const change of [
+    value=>value.partitions[0].exports.pop(),
+    value=>value.partitions[0].exports[0].source="packages/profiles/dist/absent.json",
+    value=>value.partitions[0].exports.push({package:"@hia-doc/profiles",subpath:"./absent.json",source:"packages/profiles/dist/absent.json"})
+  ]){
+    const candidate=structuredClone(registry);
+    change(candidate);
+    assert.throws(()=>assertResourceReferenceCoverage(candidate,{packages},[]));
+  }
+  assert.throws(()=>assertResourceReferenceCoverage(registry,{packages},["@hia-doc/profiles"]));
+  assert.throws(()=>assertResourceReferenceCoverage(registry,{packages},["@hia-doc/missing"]));
 });
 
 test("invalid paths, duplicate members, overlapping roots and unknown site ownership fail", () => {

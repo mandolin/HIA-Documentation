@@ -9,10 +9,11 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { loadResourceReferencePartitions } from "./resource-reference-partitions.mjs";
+import { loadResourceReferencePartitions, assertResourceReferenceCoverage } from "./resource-reference-partitions.mjs";
+import { auditRequiredPackages } from "./audit-required-package-api.mjs";
 import { preparePublicReferenceResources, checkPublicReferenceResources } from "./public-reference-resources.mjs";
 import { preparePublicReferenceSourceConfig, preparePublicReferenceLocaleConfig } from "./public-reference-source.mjs";
-import { assertCoreReferenceOutput, inspectCoreReferenceSite } from "./build-core-reference.mjs";
+import { assertCoreReferenceOutput, inspectCoreReferenceSite, CORE_REFERENCE_RESOURCE_PACKAGES } from "./build-core-reference.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
 import { assertDocumentationSiteNavigation } from "../packages/renderer-html/dist/index.js";
@@ -51,6 +52,10 @@ export function createResourceReferenceNavigation(registry,partitionId) {
  */
 export async function buildResourceReference(options={}) {
   const registry=loadResourceReferencePartitions();
+  // <lang><zh-CN>从固定允许清单核全部核心包，新增JSON导出须有明确分区或现有SDK承载归属。</zh-CN><en>Audit all core packages from the fixed allowlist so new JSON exports require an explicit partition or existing SDK hosting owner.</en></lang>
+  const packageNames=JSON.parse(fs.readFileSync(path.join(owner,"reference/required-package-api.inputs.json"),"utf8")).packages.filter(item=>item.owner==="main-repo").map(item=>item.name);
+  const inventory=auditRequiredPackages(workspace,{packageNames});
+  assertResourceReferenceCoverage(registry,inventory,CORE_REFERENCE_RESOURCE_PACKAGES);
   const output=path.resolve(owner,options.out??"dist/resource-reference-publication");
   assertCoreReferenceOutput(output);
   // <lang><zh-CN>固定已提交来源，避免生成过程中提交与工件事实分离。</zh-CN><en>Pin committed sources to keep revision metadata aligned with generated artifacts.</en></lang>

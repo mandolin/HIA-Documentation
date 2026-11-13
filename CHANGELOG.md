@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Resource publication coverage
+
+- 命令描述和聚合作用域项目清单模式加入既有资源分区，生产与门禁按当前核心包实际导出核完整且互斥的发布归属。
+- Adopt the command-documentation and scoped project-manifest schemas in existing resource partitions. Production and regression gates reconcile complete, disjoint publication ownership against actual current core-package exports.
+
 ## Unreleased — Generated command web reference
 
 - 生成参考页的顶部语言切换保留当前条目，无脚本静态页直接连接实际生成的同主题语言页，缺对应页时禁用。

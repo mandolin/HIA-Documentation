@@ -1,5 +1,11 @@
 # Public Reference Build
 
+## Resource publication coverage
+
+中文。`pnpm reference:resources:build` 在生产前将全部核心包当前公开 JSON 导出与发布分区双向对账。插件开发工具包资源由现有核心 API 站完整承载，其余资源必须精确列入分区，缺项、额外项、来源替换和重复归属均会阻止构建。命令描述模式归应用模式分区，含聚合作用域的项目清单模式归核心及来源分区。
+
+English. Before production, `pnpm reference:resources:build` reconciles every current core-package JSON export with its publication partition. Plugin SDK resources are fully hosted by the existing core API site. Other resources require exact partition entries, with missing, extra, substituted or multiply owned resources blocking the build. The command-documentation schema belongs to the application-schema partition, and the scoped project-manifest schema belongs to the core-and-source partition.
+
 
 ## Generated command reference
 

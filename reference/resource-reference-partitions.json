@@ -223,6 +223,11 @@
           "package": "@hia-doc/schemas",
           "subpath": "./project-manifest.schema.json",
           "source": "packages/schemas/dist/schemas/project-manifest.schema.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./project-manifest-scoped.schema.json",
+          "source": "packages/schemas/dist/schemas/project-manifest-scoped.schema.json"
         }
       ]
     },
@@ -289,6 +294,11 @@
           "package": "@hia-doc/schemas",
           "subpath": "./package.json",
           "source": "packages/schemas/package.json"
+        },
+        {
+          "package": "@hia-doc/schemas",
+          "subpath": "./command-documentation.schema.json",
+          "source": "packages/schemas/dist/schemas/command-documentation.schema.json"
         }
       ]
     }
