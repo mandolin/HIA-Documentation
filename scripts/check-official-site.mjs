@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { readSiteVersionIndex, readLegacyReferenceIndex } from "../site/src/lib/version-index.mjs";
 import { assertPublicText } from "./check-official-web.mjs";
+import {compositionFiles} from "../site/src/lib/composition-report.mjs";
 
 /**
  * @lang zh-CN 只接受规范的工件相对文件名，避免清单驱动越界读取。
@@ -60,16 +61,17 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
   // <lang lang="zh-CN">新版索引的主机路径只用于HTTP，本地验收必须单独提供旧工件根。</lang><lang lang="en">The new index's host path is for HTTP. Offline verification requires the separate legacy root.</lang>
   const sibling = index.contractVersion === "2.0.0";
   const reportFormat = sibling ? "hia-official-site-composition-report@0.2.0" : "hia-official-site-composition-report@0.1.0";
-  assert(report.format === reportFormat && report.siteIndex === "versions.json" && report.legacyIndex === index.legacyReference.index, "Unexpected composition report.");
+  assert((report.format === reportFormat || sibling && report.format === "hia-official-site-composition-report@0.3.0") && report.siteIndex === "versions.json" && report.legacyIndex === index.legacyReference.index, "Unexpected composition report.");
   if (sibling) assert(typeof legacyOutput === "string" && (await lstat(legacyOutput)).isDirectory(), "Independent legacy artifact directory is required.");
   const legacyRoot = sibling ? legacyOutput : path.join(output, "legacy-reference");
   assert(report.privacy?.status === "pass" && report.privacy.sourceAuthorityExpanded === false && report.privacy.policy === "public-brand-with-private-path-rejection@1.0.0", "Invalid composed privacy boundary.");
-  assert(Array.isArray(report.files) && report.files.length > 0 && report.files.length <= 100000, "Invalid file inventory.");
+  const reportFiles = compositionFiles(report);
+  assert(Array.isArray(reportFiles) && reportFiles.length > 0 && reportFiles.length <= 100000, "Invalid file inventory.");
   const actual = new Set(await actualFiles(output));
-  assert(actual.size === report.files.length + 2 && actual.has("versions.json") && actual.has("official-site.json"), "Actual output inventory disagrees with its report.");
+  assert(actual.size === reportFiles.length + 2 && actual.has("versions.json") && actual.has("official-site.json"), "Actual output inventory disagrees with its report.");
   const hashes = new Map();
   let copiedBytes = 0;
-  for (const entry of report.files) {
+  for (const entry of reportFiles) {
     safeFile(entry.path);
     assert(actual.has(entry.path) && !hashes.has(entry.path), "Missing or duplicated artifact file.");
     assert(Number.isSafeInteger(entry.bytes) && entry.bytes >= 0 && /^[a-f0-9]{64}$/.test(entry.sha256), "Invalid file digest metadata.");
@@ -85,6 +87,8 @@ export async function checkOfficialSite(output = fileURLToPath(new URL("../dist/
     copiedBytes += bytes.length;
   }
   assert(copiedBytes === report.copiedBytes, "Copied byte total disagrees.");
+  // <lang><zh-CN>新表示把自身清单及索引计入十进制发布预算，旧版继续各自原读取语义。</zh-CN><en>The new representation counts its own inventory and index in the decimal publication budget, while existing formats retain their reading semantics.</en></lang>
+  if (report.format === "hia-official-site-composition-report@0.3.0") assert(copiedBytes + Buffer.byteLength(reportText) + Buffer.byteLength(indexText) <= 1_000_000_000, "Complete official site exceeds publication budget.");
   // <lang lang="zh-CN">旧根与旧机器索引之外，每个旧文件必须与保留深链对应。分站模式从独立目录读取实际字节。</lang><lang lang="en">Every legacy file beyond the old root and index must match a retained deep link. Split mode reads the actual independent directory.</lang>
   const legacyFiles = await actualFiles(legacyRoot);
   for (const file of legacyFiles) {

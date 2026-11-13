@@ -4,9 +4,16 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import {readFile} from "node:fs/promises";
 import { assertPublicText } from "./check-official-web.mjs";
 import { href, route, apiReferenceHref, apiReferenceBase } from "../site/src/lib/routes.mjs";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
+
+test("default documentation entry serves the complete explicit Chinese page without scripts", async () => {
+  // <lang><zh-CN>已确认无语言入口默认中文，直接返回同一正文和显式语言链接，避免依赖重定向脚本。</zh-CN><en>The approved language-free entry defaults to Chinese, directly serving the same body and explicit locale links without redirect scripts.</en></lang>
+  const root = new URL("../dist/official-web-preview/",import.meta.url);
+  assert.deepEqual(await readFile(new URL("docs/index.html",root)),await readFile(new URL("docs/zh-CN/index.html",root)));
+});
 
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");

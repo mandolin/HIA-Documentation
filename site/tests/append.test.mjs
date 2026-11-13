@@ -35,7 +35,7 @@ function fixture(t) {
 test("append actual manuals without replacing existing identities and allow retry", async t => {
   const directory = fixture(t);
   const first = await appendOfficialWeb(directory);
-  assert.equal(first.addedFiles, 31);
+  assert.equal(first.addedFiles, 32);
   assert.equal(fs.readFileSync(path.join(directory, "index.html"), "utf8"), "Original root");
   assert.equal(fs.readFileSync(path.join(directory, "versions.json"), "utf8"), "Original machine index");
   assert(fs.existsSync(path.join(directory, "docs/en/code/index.html")));

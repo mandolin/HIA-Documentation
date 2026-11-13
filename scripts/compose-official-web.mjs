@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createSiteVersionIndex, readLegacyReferenceIndex } from "../site/src/lib/version-index.mjs";
 import { assertPublicText, checkWebsite } from "./check-official-web.mjs";
+import {encodeCompositionReport, compositionFiles} from "../site/src/lib/composition-report.mjs";
 
 // <lang lang="zh-CN">所有写入固定留在主仓dist，生产工作流尚未接入此脚本。</lang><lang lang="en">All writes stay in the owning repository dist; production workflows do not call this script yet.</lang>
 const ownerRoot = fileURLToPath(new URL("../", import.meta.url));
@@ -70,7 +71,7 @@ async function checkOutputLocation(target) {
  * @param {string} [options.reference] - 经旧门禁校验的参考产物。 Legacy-gate-validated reference artifact.
  * @param {string} [options.out] - 主仓dist内专用目录。 Dedicated owner dist directory.
  * @param {"embedded"|"sibling"} [options.legacyMode="embedded"] - 旧索引与参考工件的部署位置。 Deployment location of the legacy index and artifact.
- * @param {number} [options.maxBytes=1073741824] - 总输出字节上限。 Output byte budget.
+ * @param {number} [options.maxBytes] - 分站模式默认1000000000，旧嵌入模式默认1073741824。 Defaults to 1000000000 for sibling mode and 1073741824 for legacy embedded mode.
  * @param {number} [options.maxFiles=100000] - 输出文件上限。 Output file budget.
  * @param {number} [options.maxFileBytes=33554432] - 单文件有界读取上限。 Bounded per-file read limit.
  * @returns {Promise<object>} 可公开的来源摘要与文件清单；不含本机路径。 Public source digests and file inventory without local paths.
@@ -83,10 +84,10 @@ export async function composeWebsite(options = {}) {
   const legacyMode = options.legacyMode ?? "embedded";
   assert(["embedded", "sibling"].includes(legacyMode), "Unsupported legacy deployment mode.");
   const sibling = legacyMode === "sibling";
-  const maxBytes = options.maxBytes ?? 1024 ** 3;
+  const maxBytes = options.maxBytes ?? (sibling ? 1_000_000_000 : 1024 ** 3);
   const maxFiles = options.maxFiles ?? 100000;
   const maxFileBytes = options.maxFileBytes ?? 32 * 1024 ** 2;
-  assert(Number.isSafeInteger(maxBytes) && maxBytes > 0 && maxBytes <= 1024 ** 3 && Number.isSafeInteger(maxFiles) && maxFiles > 0 && maxFiles <= 100000 && Number.isSafeInteger(maxFileBytes) && maxFileBytes > 0 && maxFileBytes <= 32 * 1024 ** 2, "Invalid composition budget.");
+  assert(Number.isSafeInteger(maxBytes) && maxBytes > 0 && maxBytes <= (sibling ? 1_000_000_000 : 1024 ** 3) && Number.isSafeInteger(maxFiles) && maxFiles > 0 && maxFiles <= 100000 && Number.isSafeInteger(maxFileBytes) && maxFileBytes > 0 && maxFileBytes <= 32 * 1024 ** 2, "Invalid composition budget.");
   await checkOutputLocation(output);
   for (const input of [website, reference]) {
     assert(inside(distRoot, input) && inside(await realpath(distRoot), await realpath(input)), "Inputs must remain in the owner's artifact directory.");
@@ -125,7 +126,18 @@ export async function composeWebsite(options = {}) {
     if (!["index.html", "versions.json"].includes(file)) plan.set(file, { root: reference, file, kind: "preserved-deep-link" });
   }
   for (const file of websiteFiles) {
-    assert(!plan.has(file) && file !== "versions.json" && file !== "official-site.json" && !file.startsWith("legacy-reference/"), "Website collides with a preserved legacy route.");
+    assert(file !== "versions.json" && file !== "official-site.json" && !file.startsWith("legacy-reference/"), "Website collides with a preserved legacy route.");
+    // <lang><zh-CN>旧生产入口已附加官网深链。相同原件沿保留路径写一次，任何字节差异仍阻断覆盖。</zh-CN><en>The prior production entry already appends website deep links. Keep identical files once as preserved routes, while blocking every byte difference.</en></lang>
+    if (plan.has(file)) {
+      // <lang><zh-CN>两来源均为上方已核的普通文件，读前同时核大小与预算。</zh-CN><en>Both sources are regular files checked above. Verify their sizes and read budget before allocation.</en></lang>
+      const retained = path.join(reference, file);
+      const authored = path.join(website, file);
+      const retainedSize = (await lstat(retained)).size;
+      const authoredSize = (await lstat(authored)).size;
+      assert(retainedSize === authoredSize && authoredSize <= maxFileBytes, "Website collides with a preserved legacy route.");
+      assert((await readFile(retained)).equals(await readFile(authored)), "Website collides with a preserved legacy route.");
+      continue;
+    }
     plan.set(file, { root: website, file, kind: "website" });
   }
   const schemaPath = `site/contracts/site-version-index-${index.contractVersion}.schema.json`;
@@ -162,7 +174,8 @@ export async function composeWebsite(options = {}) {
     files: inventory, copiedBytes: totalBytes,
   };
   // <lang lang="zh-CN">生成清单也计入预算，失败时旧输出仍在原位；不把临时路径写入公开清单。</lang><lang lang="en">Count generated manifests in the budget; failures leave existing output intact and temporary paths stay private.</lang>
-  const manifestBytes = JSON.stringify(manifest, null, 2) + "\n";
+  const wireReport = encodeCompositionReport(manifest);
+  const manifestBytes = JSON.stringify(wireReport, null, sibling ? 0 : 2) + "\n";
   const indexBytes = JSON.stringify(index, null, 2) + "\n";
   assertPublicText(manifestBytes);
   assertPublicText(indexBytes);
@@ -177,7 +190,7 @@ export async function composeWebsite(options = {}) {
     if (backup) await rename(backup, output);
     throw error;
   }
-  return manifest;
+  return wireReport;
 }
 
 // <lang lang="zh-CN">只有直接调用才写产物；导入测试无副作用，生产CI仍由旧脚本管理。</lang><lang lang="en">Only direct invocation writes artifacts; test imports are inert and production CI still uses the legacy assembler.</lang>
@@ -191,5 +204,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     options[names[args[i]]] = args[i + 1];
   }
   const manifest = await composeWebsite(options);
-  console.log(JSON.stringify({ files: manifest.files.length + 2, copiedBytes: manifest.copiedBytes, legacyFiles: manifest.preservation.originalFiles, privacy: manifest.privacy.status }));
+  console.log(JSON.stringify({ files: compositionFiles(manifest).length + 2, copiedBytes: manifest.copiedBytes, legacyFiles: manifest.preservation.originalFiles, privacy: manifest.privacy.status }));
 }

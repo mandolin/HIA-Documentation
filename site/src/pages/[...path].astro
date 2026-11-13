@@ -14,15 +14,20 @@ import { manual } from "../lib/content.mjs";
 import { locales, kinds, manualKinds, route, href, labels } from "../lib/routes.mjs";
 import { currentDocumentation } from "../lib/version-index.mjs";
 /**
- * @lang zh-CN 仅为已有双语正文枚举构建路径；根页面使用undefined参数。
- * @lang en Enumerate only existing bilingual content; the root page uses an undefined parameter.
+ * @lang zh-CN 为已有双语正文及中文默认文档入口枚举路径；根页面使用undefined参数。
+ * @lang en Enumerate existing bilingual content and the Chinese default documentation entry; the root page uses an undefined parameter.
  * @returns {Array} Astro静态路径与页面参数。 Static Astro paths and props.
  */
 export function getStaticPaths() {
-  return locales.flatMap(locale => kinds.map(kind => ({
+  // <lang><zh-CN>显式语言主题沿原清单生成，默认文档入口复用中文页面属性。</zh-CN><en>Generate explicit-language topics from the existing inventory and reuse Chinese page props for the default documentation entry.</en></lang>
+  const contentPaths = locales.flatMap(locale => kinds.map(kind => ({
     params: { path: route(kind, locale).replace(/\/$/, "") || undefined },
     props: { locale, kind },
   })));
+  return [...contentPaths, {
+    params: {path: "docs"},
+    props: {locale: "zh-CN", kind: "docs"},
+  }];
 }
 // <lang lang="zh-CN">构建属性来自上方固定清单，不接受请求参数或远程内容。</lang><lang lang="en">Build props come from the fixed inventory, never request parameters or remote content.</lang>
 const { locale, kind } = Astro.props;

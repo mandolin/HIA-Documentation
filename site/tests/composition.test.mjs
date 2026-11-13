@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { composeWebsite } from "../../scripts/compose-official-web.mjs";
 import { checkOfficialSite } from "../../scripts/check-official-site.mjs";
+import {compositionFiles} from "../src/lib/composition-report.mjs";
 
 /**
  * @lang zh-CN 创建独立最小旧工件，只用于测试原字节/冲突/拒绝流程，不冒充完整生产参考。
@@ -76,9 +77,9 @@ test("sibling composition retains old non-root bytes and verifies the independen
   const result = await composeWebsite({ ...input, legacyMode: "sibling" });
   const index = JSON.parse(await readFile(path.join(input.out, "versions.json"), "utf8"));
   assert.equal(index.contractVersion, "2.0.0");
-  assert.equal(result.format, "hia-official-site-composition-report@0.2.0");
+  assert.equal(result.format, "hia-official-site-composition-report@0.3.0");
   assert.equal(result.legacyIndex, "/HIA-Documentation-Legacy/versions.json");
-  assert(!result.files.some(file => file.path.startsWith("legacy-reference/")));
+  assert(!compositionFiles(result).some(file => file.path.startsWith("legacy-reference/")));
   assert.equal(await readFile(path.join(input.out, "en/index.html"), "utf8"), await readFile(path.join(input.reference, "en/index.html"), "utf8"));
   await assert.rejects(checkOfficialSite(input.out), /legacy artifact/);
   assert.equal((await checkOfficialSite(input.out, input.reference)).legacyFiles, 7);
@@ -90,6 +91,37 @@ test("colliding favicon cannot overwrite a preserved legacy route", async () => 
   const input = await fixture();
   await writeFile(path.join(input.reference, "favicon.svg"), "<svg/>");
   await assert.rejects(composeWebsite(input), /collides/);
+});
+
+test("the formal checker still reads the original sibling object report", async () => {
+  // <lang><zh-CN>把同一已验记录按原0.2交换对象保存，正式读者须按旧语义复核同一工件。</zh-CN><en>Persist the verified records in the original 0.2 interchange representation and verify the same artifact through legacy reading semantics.</en></lang>
+  const input = await fixture();
+  const current = await composeWebsite({...input,legacyMode:"sibling"});
+  const {fileTable,...metadata} = current;
+  const original = {...metadata,format:"hia-official-site-composition-report@0.2.0",files:compositionFiles(current)};
+  await writeFile(path.join(input.out,"official-site.json"),JSON.stringify(original));
+  assert.equal((await checkOfficialSite(input.out,input.reference)).legacyFiles,7);
+});
+
+test("already appended identical website files keep their original deep-link identity", async () => {
+  // <lang><zh-CN>真实已发布参考站已有官网深链，相同原件只保留一次，仍计为受保护旧路径。</zh-CN><en>The real published reference already has website deep links. Keep identical files once and retain their protected-route classification.</en></lang>
+  const input = await fixture();
+  const website = fileURLToPath(new URL("../../dist/official-web-preview/", import.meta.url));
+  const relative = "docs/zh-CN/index.html";
+  const original = await readFile(path.join(website, relative));
+  await mkdir(path.dirname(path.join(input.reference, relative)), {recursive:true});
+  await writeFile(path.join(input.reference, relative), original);
+  const result = await composeWebsite({...input, legacyMode:"sibling"});
+  assert.equal(compositionFiles(result).filter(item=>item.path===relative).length,1);
+  assert.equal(compositionFiles(result).find(item=>item.path===relative).kind,"preserved-deep-link");
+  assert.deepEqual(await readFile(path.join(input.out,relative)),original);
+  assert.equal((await checkOfficialSite(input.out,input.reference)).legacyFiles,8);
+  // <lang><zh-CN>相同长度的一字节变更仍是冲突，失败后先前完整输出保持原字节。</zh-CN><en>A same-length one-byte mutation still conflicts, leaving the previous complete output byte-identical.</en></lang>
+  const changed = Buffer.from(original);
+  changed[0] ^= 1;
+  await writeFile(path.join(input.reference,relative),changed);
+  await assert.rejects(composeWebsite({...input,legacyMode:"sibling"}),/collides/);
+  assert.deepEqual(await readFile(path.join(input.out,relative)),original);
 });
 
 test("privacy and byte-budget failures keep previous output intact", async () => {

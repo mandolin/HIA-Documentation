@@ -69,7 +69,7 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
   // <lang lang="zh-CN">固定路由清单是完整性输入，不能从产物反推“期望页面”。</lang><lang lang="en">The fixed route inventory defines completeness rather than inferring expected pages from the output.</lang>
   const files = await listFiles(output);
   const htmlFiles = files.filter(file => file.endsWith(".html"));
-  assert.equal(htmlFiles.length, locales.length * kinds.length, "Website page inventory is incomplete.");
+  assert.equal(htmlFiles.length, locales.length * kinds.length + 1, "Website page inventory is incomplete.");
   assert(!files.some(file => file.endsWith(".map")), "Public source maps are not allowed.");
   const texts = new Map();
   for (const file of files) {
@@ -80,6 +80,8 @@ export async function checkWebsite(output = fileURLToPath(new URL("../dist/offic
       texts.set(file, text);
     }
   }
+  // <lang><zh-CN>无语言入口须直接提供已确认中文正文，完整字节核同确保无脚本也可阅读。</zh-CN><en>The language-free entry directly serves the approved Chinese page. Exact bytes ensure reading also works without scripts.</en></lang>
+  assert.equal(texts.get("docs/index.html"), texts.get("docs/zh-CN/index.html"), "Default documentation entry differs from its Chinese page.");
   // <lang><zh-CN>生成代码页的导航工件必须来自同一官网事实源，缺失或漂移不能通过手册构建验收。</zh-CN><en>Generated-code navigation must match the same website facts; missing or drifted data cannot pass manual-site acceptance.</en></lang>
   assert.deepEqual(JSON.parse(texts.get("documentation-site-navigation.json") ?? "null"), createGeneratedSiteNavigation("/HIA-Documentation/", apiReferenceBase), "Generated navigation disagrees with website routes or documentation versions.");
   let links = 0;
