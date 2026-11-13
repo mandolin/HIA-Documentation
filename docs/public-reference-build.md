@@ -1,5 +1,16 @@
 # Public Reference Build
 
+
+## Generated command reference
+
+中文。网站副本还将原契约的版本身份、参数默认规则、解析与副作用、示例和退出码逐项展开为标准语言字段，参数说明使用既有名称/说明表。原有语言字段逐项保持，附加字段的机器值原样保留，嵌套说明继续使用原中英文。构建门禁按原契约重建网页副本，并逐字段核对实际HTML、静态页和源码资产。
+
+English. Website copies also expose version identities, parameter defaults, parsing and effects, examples and exit codes through standard locale fields, using the existing name/description table for parameters. Original locale fields remain intact, machine values retain their literals, and nested descriptions retain their original Chinese and English. Build gates reconstruct each website copy from the native contract and check every field against actual HTML, static pages and source assets.
+
+中文。五个既有API参考站的正常构建按维护包归属接入七个命令入口，主 `hia` 包含根、两组和十一叶，.NET两个调用名保留别名关系。共有20个命令节点和106个参数节点。每组先核实际解析声明和原始来源摘要，再经core严格重投影。原始描述、观察与文档位于各语言的 `commands/` 目录，网站文档是单独的owner限定来源路径投影，双语字段、签名和原生ID保持。来源镜像只包括逐文件明确选择且摘要匹配的公开文件，定位仍为原声明行锚点。
+
+English. Normal builds of the five existing API reference sites adopt seven command entries under their owning packages. The main `hia` includes its root, two groups and eleven leaves, while the two .NET invocation names retain their alias relationship. The output contains 20 command nodes and 106 parameter nodes. Each group rechecks actual parser declarations and original source digests before strict core reprojection. Native descriptions, observations and documents live under each locale's `commands/` directory. Website documents separately project owner-qualified source paths while retaining localized fields, signatures and native IDs. The source mirror includes only explicitly selected public files with matching digests, and locations retain their declared line-anchor precision.
+
 ## Website navigation
 
 中文。正常 `pnpm reference:build` 从官网同一事实源生成站点导航，默认带固定顶部、版本、栏目及阅读增强。`--site-navigation <json>` 可显式提供同一契约的数据，文件须在512KiB以内并通过契约及公开文本检查，校验在生产写出前完成。底层 `hia docs build` 的可选导航行为由其命令文档定义。

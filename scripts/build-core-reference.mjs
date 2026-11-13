@@ -18,6 +18,7 @@ import { assertPublicText } from "./check-official-web.mjs";
 import { validateDocumentationPresentationProfile } from "../packages/core/dist/index.js";
 import { assertDocumentationSiteNavigation, PORTAL_PUBLIC_SOURCE_GITATTRIBUTES } from "../packages/renderer-html/dist/index.js";
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
+import {preparePublicReferenceCommands, checkPublicReferenceCommands} from './public-reference-commands.mjs';
 import { apiReferenceBase } from "../site/src/lib/routes.mjs";
 
 // <lang zh-CN>输出归主仓 dist 所有，来源只允许当前主仓所属容器。</lang><lang en>Outputs belong to this repository's dist directory, and sources must belong to its workspace container.</lang>
@@ -346,7 +347,14 @@ export async function buildCoreReference(options = {}) {
     // <lang zh-CN>资源复用正常JSONdoc准备链，实际原文、地图与逐值声明沿同一项目聚合。</lang><lang en>Resources reuse normal JSONdoc preparation, aggregating original bytes, maps and per-value declarations into the same project.</lang>
     const resourceResult = await preparePublicReferenceResources({ packageNames: CORE_REFERENCE_RESOURCE_PACKAGES, workspaceRoot: workspace, mainRoot: owner, outputRoot: staging, locales });
     const sourceConfigPath = preparePublicReferenceSourceConfig(owner, path.join(staging, ".runtime"), resourceResult.sourcePaths, false);
-    const manifest = { schemaVersion: "0.1.0-draft", project: { id: "project:hia-core-api-reference", name: "HIA Documentation System Core Package API", defaultLocale: "zh-CN", locales: ["zh-CN", "en"] }, inputs: [...inputs, ...resourceResult.inputs] };
+    // <lang><zh-CN>主命令归核心包参考站，避免在主站兼容快照中多份复制。</zh-CN><en>The main command belongs to the core-package reference, avoiding repeated copies in the main site's compatibility snapshots.</en></lang>
+    const commands = await preparePublicReferenceCommands({workspaceRoot:workspace, mainRoot:owner, sourceRoots:new Map(), outputRoot:staging, locales, ownerIds:['main-repo']});
+    for (const [source, bytes] of commands.sources) {
+      const target = path.join(staging, '.runtime/source-root', source);
+      fs.mkdirSync(path.dirname(target), {recursive:true});
+      fs.writeFileSync(target, bytes, {flag:'wx'});
+    }
+    const manifest = { schemaVersion: "0.1.0-draft", project: { id: "project:hia-core-api-reference", name: "HIA Documentation System Core Package API", defaultLocale: "zh-CN", locales: ["zh-CN", "en"] }, inputs: [...inputs, ...resourceResult.inputs, ...commands.inputs] };
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", { flag: "wx" });
     ownsManifest = true;
     const navigation = createGeneratedSiteNavigation("/HIA-Documentation/", apiReferenceBase);
@@ -358,6 +366,7 @@ export async function buildCoreReference(options = {}) {
       execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--out", path.join(staging, locale), "--locale", locale], { cwd: workspace, stdio: "inherit" });
       checkPublicReferencePackageApis({ packageApis: packages }, staging, locale);
       checkPublicReferenceResources({ packageResources: CORE_REFERENCE_RESOURCE_PACKAGES }, staging, locale);
+      checkPublicReferenceCommands(staging, locale);
     }
     const site = path.join(staging, "site");
     fs.mkdirSync(site);

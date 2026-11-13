@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Generated command web reference
+
+- 五个既有API参考站按维护包归属接入七个命令入口的126个命令/参数符号，包含主hia根、两组与十一叶。实际解析声明、原始来源摘要、双语字段及原生工件在构建和上传前逐项复核。
+- The five existing API reference sites adopt 126 command/parameter symbols from seven entries under their owning packages, including the main hia root, two groups and eleven leaves. Actual parser declarations, original source digests, localized fields and native artifacts are checked during builds and before upload.
+- 网页保留原生工件，独立投影owner限定源码路径，并将已有版本、参数规则、示例和退出码展开为可见字段。官网两语言目录链接实际生成条目，源码沿声明行锚点精度。
+- Web output retains native artifacts, separately projects owner-qualified source paths, and exposes existing versions, parameter rules, examples and exit codes as visible fields. Both website locales link actual generated entries, retaining declared line-anchor source precision.
+
 ## Unreleased — Main CLI command descriptions and help
 
 - 主hia的根、两组和十一叶共享双语命令描述，专用帮助按80/120列输出。帮助优先、未知路径help回根及原执行解析行为沿用既有规则。

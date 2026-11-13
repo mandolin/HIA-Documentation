@@ -9,6 +9,23 @@ title: "参考资料的使用方式"
 
 先确定所用包、配置与工件的精确版本，再查对应权威参考。CLI参数、默认值、诊断代码和Schema分别由原维护包负责，本页提供入口而不手写第二份完整定义。
 
+
+<div id="generated-command-reference"></div>
+
+## 生成式命令参考
+
+七个命令入口由各维护包的同一描述生成，涵盖参数、默认规则、输出、退出码、示例和实际来源。打开完整命令后可在页内搜索与侧栏选择参数，并切换正文语言。原始描述、解析观察和原生文档随站保留，精确包版本与交接工件版本分别展示。
+
+| 命令入口 | 所属包 |
+| --- | --- |
+| [`hia`](https://mandolin.github.io/HIA-Documentation-API/zh-CN/#entry=hia-document%3Acommand-hia-doc-cli-hia) | `@hia-doc/cli` |
+| [`cssdoc`](https://mandolin.github.io/HIA-Documentation-API-CSS/zh-CN/#entry=hia-document%3Acommand-hia-doc-cssdoc-runner-cssdoc) | `@hia-doc/cssdoc-runner` |
+| [`hia-jsdoc`](https://mandolin.github.io/HIA-Documentation-API-JavaScript/zh-CN/#entry=hia-document%3Acommand-hia-doc-jsdoc-runner-hia-jsdoc) | `@hia-doc/jsdoc-runner` |
+| [`hia-dotnetdoc`](https://mandolin.github.io/HIA-Documentation-API-DotNetDoc/zh-CN/#entry=hia-document%3Acommand-hia-doc-dotnetdoc-runner-hia-dotnetdoc) | `@hia-doc/dotnetdoc-runner` |
+| [`dotnetdoc`](https://mandolin.github.io/HIA-Documentation-API-DotNetDoc/zh-CN/#entry=hia-document%3Acommand-hia-doc-dotnetdoc-runner-dotnetdoc) | `@hia-doc/dotnetdoc-runner` |
+| [`htmdoc`](https://mandolin.github.io/HIA-Documentation-API-HTML/zh-CN/#entry=hia-document%3Acommand-hia-doc-htmdoc-runner-htmdoc) | `@hia-doc/htmdoc-runner` |
+| [`htmdoc-handoff`](https://mandolin.github.io/HIA-Documentation-API-HTML/zh-CN/#entry=hia-document%3Acommand-hia-doc-htmdoc-runner-htmdoc-handoff) | `@hia-doc/htmdoc-runner` |
+
 ## 文档构建
 
 ```sh

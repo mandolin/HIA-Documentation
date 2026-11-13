@@ -23,6 +23,7 @@ import {loadJavaScriptReferenceInputs, createJavaScriptReferenceNavigation, grou
 import {convertJSDocIntegrationToHiaDocumentDetailed} from "../packages/parser-jsdoc/dist/index.js";
 import {runDocumentationProducer} from "../packages/plugin-sdk/dist/index.js";
 import {jsonDocumentationProducer} from "../packages/jsondoc/dist/index.js";
+import {preparePublicReferenceCommands, checkPublicReferenceCommands} from './public-reference-commands.mjs';
 
 const main = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)));
 const locales = ["zh-CN", "en"];
@@ -238,6 +239,13 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
       const source = "HIA/" + pack.owner + "/" + module.path;
       mirror(source, readJsonResourceBytes(workspace, source));
     }
+    // <lang><zh-CN>各工具命令跟随已确认的owner API站，原生工件和明确源码沿同一装配链分发。</zh-CN><en>Tool commands follow their confirmed owner API site, distributing native artifacts and explicit sources through the same assembly chain.</en></lang>
+    const commands = await preparePublicReferenceCommands({workspaceRoot:runtime, mainRoot:main, sourceRoots:new Map([[resourceOwner, path.join(workspace, 'HIA', resourceOwner)]]), outputRoot:runtime, locales:[], ownerIds:[resourceOwner]});
+    inputs[apiSiteId].push(...commands.inputs);
+    const commandReport = read(path.join(runtime, 'commands/adoption.json'));
+    files[apiSiteId].add('commands/adoption.json');
+    for (const row of commandReport.rows) for (const artifact of row.artifacts) files[apiSiteId].add(artifact.path);
+    for (const [source, bytes] of commands.sources) mirror(source, bytes);
     const fullSources = [...sources.values()].sort((left, right) => left.source.localeCompare(right.source));
     const reports = [];
     for (const site of registry.sites) {
@@ -256,6 +264,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
           theme: {colors: {accent: "#0047AB"}}, renderer: {uiLocale: locale, projectLayout: "split-site", informationArchitecture: {contentGrouping: "entry", loadingStrategy: "lazy", memberPlacement: "separate"}}}}));
         execFileSync(process.execPath, [path.join(main, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--out", target, "--locale", locale], {cwd: workspace, stdio: "inherit"});
         for (const file of files[site.id]) copyPackageArtifact(path.join(runtime, file), path.join(target, file), staging);
+        if (site.id === apiSiteId) checkPublicReferenceCommands(path.join(staging, 'sites', site.id, site.path), locale);
         const index = read(path.join(target, "project-index.json"));
         assert.equal(index.entries.length, selectedRows.reduce((sum, row) => sum + row.symbols, 0));
         if (site.id === apiSiteId) {

@@ -9,6 +9,23 @@ title: "Using the reference"
 
 Identify the exact package, configuration and artifact versions before selecting the authoritative reference. Owners define CLI parameters, defaults, diagnostics and schemas; this page is a guide to those references, not a competing definition.
 
+
+<div id="generated-command-reference"></div>
+
+## Generated command reference
+
+The seven command entries are generated from shared descriptions maintained by their owning packages, including parameters, default rules, effects, exit codes, examples and actual sources. Select parameters through search or the sidebar and switch content locale. Native descriptions, parser observations and documents are retained, with package and handoff-artifact versions displayed separately.
+
+| Command entry | Owning package |
+| --- | --- |
+| [`hia`](https://mandolin.github.io/HIA-Documentation-API/en/#entry=hia-document%3Acommand-hia-doc-cli-hia) | `@hia-doc/cli` |
+| [`cssdoc`](https://mandolin.github.io/HIA-Documentation-API-CSS/en/#entry=hia-document%3Acommand-hia-doc-cssdoc-runner-cssdoc) | `@hia-doc/cssdoc-runner` |
+| [`hia-jsdoc`](https://mandolin.github.io/HIA-Documentation-API-JavaScript/en/#entry=hia-document%3Acommand-hia-doc-jsdoc-runner-hia-jsdoc) | `@hia-doc/jsdoc-runner` |
+| [`hia-dotnetdoc`](https://mandolin.github.io/HIA-Documentation-API-DotNetDoc/en/#entry=hia-document%3Acommand-hia-doc-dotnetdoc-runner-hia-dotnetdoc) | `@hia-doc/dotnetdoc-runner` |
+| [`dotnetdoc`](https://mandolin.github.io/HIA-Documentation-API-DotNetDoc/en/#entry=hia-document%3Acommand-hia-doc-dotnetdoc-runner-dotnetdoc) | `@hia-doc/dotnetdoc-runner` |
+| [`htmdoc`](https://mandolin.github.io/HIA-Documentation-API-HTML/en/#entry=hia-document%3Acommand-hia-doc-htmdoc-runner-htmdoc) | `@hia-doc/htmdoc-runner` |
+| [`htmdoc-handoff`](https://mandolin.github.io/HIA-Documentation-API-HTML/en/#entry=hia-document%3Acommand-hia-doc-htmdoc-runner-htmdoc-handoff) | `@hia-doc/htmdoc-runner` |
+
 ## Build documentation
 
 ```sh

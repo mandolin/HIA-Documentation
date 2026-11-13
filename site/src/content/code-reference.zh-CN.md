@@ -33,6 +33,8 @@ API覆盖必须按包的公开导出清单和实际生成符号逐项对应。�
 - [JSDoc独立主题实际输出](../../../jsdoc/index.zh-CN.html)展示正常JSDoc生成的公开主题模块、类与方法示例，包含原生双语页及获准源码片段。工具包的完整接口由上述各参考分站提供。
 - [JSDoc独立输出构建说明](https://github.com/mandolin/HIA-Documentation/blob/main/docs/published-jsdoc-usage.md)介绍运行器、插件、主题及配置。
 
+- [七个命令入口的生成式参考](../reference/#generated-command-reference)涵盖 `hia`、`cssdoc`、`hia-jsdoc`、`hia-dotnetdoc`、`dotnetdoc`、`htmdoc` 和 `htmdoc-handoff`，参数、执行边界与源码来自同一维护包描述。
+
 ## 权威参考
 
 下列技术参考保留其实际语言；本页译文不表示所有链接正文均已有对应译文。
