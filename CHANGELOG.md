@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — HTML first-run guidance
+
+- HTML入门衔接片段解析、实际HIA/源码地图工件及项目输出，明确英文样本与界面语言；统一示例按当前多页默认值和实际清单说明产物。
+- HTML first-run guidance connects fragment parsing, actual HIA/source-map artifacts and project output, distinguishing English sample content from UI language. The unified demo documents the current multi-page default and actual output inventory.
+
 ## Unreleased — Narrow JSDoc table adoption
 
 - 中文：固定采用已验证的JSDoc主题源码修复，参数表在窄屏正文内可局部横向滚动；同步归档摘要、锁及CI来源。

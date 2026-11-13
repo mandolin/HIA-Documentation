@@ -101,6 +101,24 @@ test("JavaScript first-run guide distinguishes source archives and localizes com
   }
 });
 
+test("HTML first-run guidance preserves fragment parsing and current site output", async () => {
+  // <lang><zh-CN>片段样本必须选择正确解析上下文，指南还需衔接实际HIA/地图输入及多页默认值。</zh-CN><en>Fragment samples need the correct parsing context, and the guide must connect actual HIA/map inputs with the multi-page default.</en></lang>
+  const guide = await readFile(new URL("../docs/unified-html-demo.md", import.meta.url), "utf8");
+  assert(guide.includes('"kind": "html-fragment"'));
+  assert(guide.includes("alert.fragment.html-fragment-1.hia.json"));
+  assert(guide.includes("alert.fragment.html-fragment-1.docmap.json"));
+  assert(guide.includes('"presentation": "none"'));
+  assert(guide.includes("English-only"));
+  assert(guide.includes("split-site"));
+  assert(!guide.includes("Generated 5 file(s)"));
+  for (const locale of ["zh-CN", "en"]) {
+    // <lang><zh-CN>两语言正文的HTML段落都直接连接可执行的首次生成路径。</zh-CN><en>The HTML section in both manual languages links directly to an executable first-run workflow.</en></lang>
+    const article = await readFile(new URL(`../site/src/content/domains.${locale}.md`, import.meta.url), "utf8");
+    const section = article.split(locale === "en" ? "## HTML and CSS" : "## HTML与CSS")[1].split("\n## ")[0];
+    assert(section.includes("docs/unified-html-demo.md#generate-from-html-source"));
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");

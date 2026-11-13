@@ -19,6 +19,8 @@ For the first plugin and theme setup, follow the [standalone JSDoc and Integrati
 
 Use the HTML or CSS configuration below with the matching htmdoc or cssdoc command. Declared input kinds do not authorize arbitrary template execution. Review the extraction, HIA document, documentation map and producer-result artifacts. Source embedding is not a default. Map and result options retain domain-specific defaults.
 
+Use `html-fragment` for HTML fragments and `html` for complete documents. Follow the [HTML source generation and project-output guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/unified-html-demo.md#generate-from-html-source) for a complete first run. The original Alert fragment has English descriptions. UI or project-language declarations do not supply translations.
+
 ## C#/.NET/ASP.NET
 
 Compiler XML documentation is the baseline. Add C# source, project structure or ASP.NET surface inputs when required. Roslyn-based source features use the current .NET 10 toolchain; XML intake does not require running a legacy application.

@@ -44,6 +44,8 @@ cssdoc --config cssdoc.config.json
 
 核对提取工件、HIA文档、源码映射及生产器结果。默认不嵌入源码；HTML/CSS的地图和结果选项以各运行器参考为准，不把一种领域的默认值套到另一种领域。
 
+HTML片段应选择`html-fragment`；完整文档使用`html`。首次提取与聚合按[HTML源码生成及项目输出指南](https://github.com/mandolin/HIA-Documentation/blob/main/docs/unified-html-demo.md#generate-from-html-source)执行，原Alert片段的英文说明按实际输入显示。声明中文界面或项目语言不会自动补出译文。
+
 ## C#/.NET/ASP.NET
 
 编译器生成的XML文档是基础输入；C#源码、项目结构与ASP.NET表面输入按需追加。需要Roslyn源码能力时使用当前.NET 10工具链；不要求为了读取XML而运行旧业务工程。

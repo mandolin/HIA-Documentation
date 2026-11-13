@@ -1,6 +1,6 @@
 # Project Manifest Guide
 
-A project docs manifest lets the HIA CLI aggregate several documentation artifacts into one rendered project page.
+A project docs manifest lets the HIA CLI aggregate several documentation artifacts into one rendered documentation project.
 
 Use it when a project has multiple documentation sources, such as:
 
