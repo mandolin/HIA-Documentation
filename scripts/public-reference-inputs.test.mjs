@@ -65,9 +65,10 @@ test('explicit navigation is bounded and validated before production starts', as
 test('both publication workflows check out the theme revision required by the current owner lock', () => {
   // <lang><zh-CN>实际发布锁是固定来源；两个主站构建须使用同一主题，防止新归档来源不可得。</zh-CN><en>The actual release lock pins provenance, so both main-site builds must use that same theme revision.</en></lang>
   for (const name of ['schema-pages.yml', 'public-reference-build.yml']) {
-    const workflow = fs.readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8');
+    // <lang><zh-CN>换行归一后核同一Git来源，兼容Windows工作树的CRLF表示。</zh-CN><en>Normalize line endings before checking Git provenance, accommodating CRLF Windows worktrees.</en></lang>
+    const workflow = fs.readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8').replaceAll('\r\n', '\n');
     const block = workflow.split(/\n\s+- name:/u).find(step => step.includes('repository: mandolin/jsdoc-theme-hia\n'));
-    assert.match(block, /ref: ef3933b0f7a05961d2c88bf412996dfcae6098aa/u);
+    assert.match(block, /ref: ed91857ad6e2182ce283c5c695a37741b1b22597/u);
   }
 });
 
