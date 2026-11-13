@@ -4,6 +4,8 @@
 
 - 官网分站装配使用0.3.0无损字典清单，保留每文件原路径、长度、SHA-256及归属，正式检查器继续按原身份读取0.1.0/0.2.0报告；新装配把自身清单和索引纳入1,000,000,000字节预算。
 - Sibling website composition uses the lossless 0.3.0 dictionary inventory, retaining every file path, size, SHA-256 and ownership category. Production verification retains exact 0.1.0/0.2.0 report reading and counts the new inventory and index in its 1,000,000,000-byte budget.
+- 字典数组数量在属性枚举前检查，原文件数组中的访问器在迭代前拒绝。
+- Dictionary array counts are checked before property enumeration, and accessors in original file arrays are rejected before iteration.
 - 已附加的官网深链仅在原字节相同时复用，内容冲突继续拒绝；无语言文档入口直接提供完整中文页面，支持无脚本阅读。
 - Already appended website deep links are reused only when their original bytes match. Conflicting content remains rejected. The language-free documentation entry directly serves the complete Chinese page, including script-free reading.
 

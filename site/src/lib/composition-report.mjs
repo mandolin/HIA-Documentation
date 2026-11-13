@@ -19,6 +19,8 @@ const fileKinds = ["legacy-copy", "preserved-deep-link", "website", "site-schema
 function dataObject(value, array=false) {
   assert(value && typeof value==="object" && Array.isArray(value)===array,"Invalid composition data object.");
   assert(array ? Object.getPrototypeOf(value)===Array.prototype : [Object.prototype,null].includes(Object.getPrototypeOf(value)),"Invalid composition data prototype.");
+  // <lang><zh-CN>数组数量先于属性枚举检查，超大或稀疏输入不能触发描述符的大量分配。</zh-CN><en>Check array counts before property enumeration so oversized or sparse input cannot allocate a large descriptor inventory.</en></lang>
+  if (array) assert(Number.isSafeInteger(value.length) && value.length>=0 && value.length<=100000,"Composition array count exceeds budget.");
   assert(Object.getOwnPropertySymbols(value).length===0,"Composition symbol properties are forbidden.");
   // <lang><zh-CN>先查看描述符再读取字段，防止校验执行输入访问器。</zh-CN><en>Inspect descriptors before reading fields so validation never invokes input accessors.</en></lang>
   const descriptors=Object.getOwnPropertyDescriptors(value);
@@ -115,6 +117,7 @@ export function encodeCompositionReport(report) {
   dataObject(report);
   if (report.format===legacyFormats[0]) return report;
   assert(report.format===legacyFormats[1] && !Object.hasOwn(report,"fileTable"),"Only an explicit original sibling report can be encoded.");
+  dataObject(report.files,true);
   assert(Array.isArray(report.files) && report.files.length>0 && report.files.length<=100000,"Invalid original composition file count.");
   // <lang><zh-CN>四字典分别复用目录、文件名、摘要和分类，行中长度与原顺序直接保留。</zh-CN><en>Four dictionaries reuse directories, names, digests, and kinds, while rows directly retain sizes and original order.</en></lang>
   const fileTable={directories:[],names:[],digests:[],kinds:[],rows:[]};

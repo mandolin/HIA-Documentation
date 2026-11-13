@@ -86,3 +86,21 @@ test("only an explicit old sibling report can be encoded to the new identity", (
   const compact=encodeCompositionReport(report());
   assert.throws(()=>encodeCompositionReport(compact));
 });
+
+test("reject oversized arrays before enumerating input properties", () => {
+  // <lang><zh-CN>仅用稀疏长度模拟超预算，不分配大量实际记录；任何属性枚举都会被计数。</zh-CN><en>Use sparse length to simulate excess input without allocating records, counting any property enumeration.</en></lang>
+  let enumerations=0;
+  const encoded=encodeCompositionReport(report());
+  encoded.fileTable.rows=new Proxy(new Array(100001),{ownKeys(target){enumerations++;return Reflect.ownKeys(target);}});
+  assert.throws(()=>compositionFiles(encoded));
+  assert.equal(enumerations,0);
+});
+
+test("encoding rejects accessor-backed file arrays before iteration", () => {
+  let calls=0;
+  const original=report();
+  const entry=original.files[0];
+  Object.defineProperty(original.files,"0",{get(){calls++;return entry;}});
+  assert.throws(()=>encodeCompositionReport(original));
+  assert.equal(calls,0);
+});
