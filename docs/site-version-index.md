@@ -2,7 +2,7 @@
 
 The product website and documentation use `hia-site-version-index`. The site index version describes the format and deployment layout. The technical reference has its own index, `hia-reference-version-index@0.1.0-draft`.
 
-The new identity is currently implemented in an **offline composition candidate**. Production root replacement is a separate deployment step. Existing reference build and deployment commands keep their original behavior until that coordinated change is applied.
+The normal Pages workflow publishes the product website at the root using the 2.0.0 site index. It builds current reference deep links and verifies them independently from the separately pinned compatibility snapshot. Local composition commands also support offline verification.
 
 ## New index
 
@@ -33,8 +33,9 @@ From the repository root, build and check the standalone website and validate th
 ~~~sh
 pnpm site:build
 pnpm site:test
-pnpm site:compose --reference dist/reference-pages --legacy-mode sibling
-pnpm site:compose:check --out dist/official-site-preview --legacy dist/reference-pages
+pnpm site:compose --reference dist/reference-pages --legacy-reference dist/legacy-reference-pinned --legacy-mode sibling
+pnpm site:compose:check --out dist/official-site-preview --legacy dist/legacy-reference-pinned --reference dist/reference-pages
+node scripts/check-official-site-pairing.mjs dist/official-site-preview
 ~~~
 
 Inputs and outputs must stay inside `dist/` in the owning repository. The assembler writes `dist/official-site-preview/` and never edits its inputs or deploys. It rejects collisions with preserved reference routes. Writes occur in a new staging directory; replacement retains the previous complete output in an adjacent `.previous-*` directory. Privacy or budget failures leave the selected output unchanged. Failed staging directories remain under ignored `dist/` for diagnosis.
@@ -43,7 +44,7 @@ Sibling composition budgets are 1,000,000,000 total bytes, 100,000 files, and 32
 
 Sibling output uses `hia-official-site-composition-report@0.3.0`. Its `fileTable` contains `directories`, `names`, `digests`, `kinds`, and `rows`. Each row stores directory index, filename index, original byte length, digest index, and ownership-kind index in that order. Expanding the table restores every original file record and its order. The reader rejects malformed dictionaries, invalid indices, unsafe or duplicate paths, unknown kinds, invalid digests and out-of-budget input. The formal checker then verifies every actual file byte and the existing privacy and provenance rules. It also retains exact reading of the original 0.1.0 and 0.2.0 object inventories.
 
-In sibling mode the checker compares the separate reference artifact with the preserved routes and verifies the original home page and index digests. Use the sibling deployment's selected snapshot as `--legacy` before cutover. The default `embedded` mode retains the 1.0.0 site-index layout and 0.1.0 object report.
+In sibling mode the checker compares `--reference` with retained current routes. It verifies the original compatibility home page and index digests against `--legacy`, the sibling deployment's selected snapshot. If both inputs are the same, `--reference` may be omitted. The normal workflow pins its selection in `reference/legacy-reference.snapshot.json` and checks the actual live compatibility digests before upload. The default `embedded` mode retains the 1.0.0 site-index layout and 0.1.0 object report.
 
 中文。分站模式采用0.3.0无损字典报告，并把清单、新索引与全部正文资源计入十进制十亿字节预算；原嵌入模式保留原预算。新读者恢复每条路径、长度、摘要及分类后继续逐原件复核，旧0.1/0.2报告按各自原格式读取。同字节官网深链只保留一次，内容差异继续拒绝。
 

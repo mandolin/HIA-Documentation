@@ -48,7 +48,7 @@ describe("public reference deployment automation", () => {
    */
   it("observes completed Pages workflows on main", () => {
     const operations = read(".github/workflows/reference-operations.yml");
-    expect(operations).toMatch(/^  workflow_run:\r?\n    workflows: \["HIA Reference Pages"\]\r?\n    branches: \[main\]\r?\n    types: \[completed\]$/m);
+    expect(operations).toMatch(/^  workflow_run:\r?\n    workflows: \["HIA Reference Pages", "Restore HIA Pages"\]\r?\n    branches: \[main\]\r?\n    types: \[completed\]$/m);
   });
 
   /** @lang zh-CN 失败或取消的部署不能被作为成功部署后复核；独立定时健康检查仍运行。
@@ -97,5 +97,22 @@ describe("public reference deployment automation", () => {
   it("serializes monitoring without cancelling earlier checks", () => {
     const operations = read(".github/workflows/reference-operations.yml");
     expect(operations).toMatch(/concurrency:\r?\n  group: reference-operations\r?\n  cancel-in-progress: false/);
+  });
+
+  /** @lang zh-CN 恢复与正常发布共用串行部署锁，并核原始工件后上传原TAR。
+   * @lang en Restoration shares the normal serialized deployment lock and verifies the original artifact before uploading its TAR.
+   */
+  it("restores verified original artifacts under the normal publication lock", () => {
+    // <lang><zh-CN>同时核两个发布者，防止日后只改其中一方造成并发覆盖。</zh-CN><en>Check both publishers to prevent future one-sided changes from causing concurrent replacement.</en></lang>
+    const pages = read(".github/workflows/schema-pages.yml");
+    const restore = read(".github/workflows/restore-pages.yml");
+    for (const workflow of [pages, restore]) {
+      expect(workflow).toMatch(/concurrency:\r?\n  group: hia-reference-pages\r?\n  cancel-in-progress: false/);
+    }
+    expect(restore).toContain("python3 scripts/prepare_pages_recovery.py");
+    expect(restore).toContain("path: dist/restore-input/artifact.tar");
+    expect(restore).toContain("run: node scripts/check-reference-pages-online.mjs");
+    expect(pages).toContain("path: dist/official-site-current");
+    expect(pages).toContain("--legacy-reference dist/legacy-reference-pinned");
   });
 });
