@@ -1,0 +1,37 @@
+---
+/**
+ * @lang zh-CN 文档首页与正文共享的五栏目导航，采用已确认布局和显式语言/主题路由，静态输出即可导航。
+ * @lang en Five-category navigation shared by documentation home and articles, using the confirmed layout and explicit locale/topic routes with script-free navigation.
+ */
+import { href } from "../lib/routes.mjs";
+
+// <lang><zh-CN>读取页面已确定的正文语言和主题，选中态只描述本页所属栏目。</zh-CN><en>Read the page's resolved content locale and topic, using selection only for its owning category.</en></lang>
+const { locale, kind } = Astro.props;
+const en = locale === "en";
+
+/**
+ * @lang zh-CN 选择当前页面语言的栏目短标签。
+ * @lang en Select a short category label in the current page language.
+ * @param zh - 中文标签。 Chinese label.
+ * @param english - 英文标签。 English label.
+ * @returns 当前页面语言标签。 Label in the current page language.
+ */
+const text = (zh: string, english: string) => en ? english : zh;
+
+// <lang><zh-CN>学习子主题沿正文既有归属；版本/搜索等没有对应栏目时不创建选中项。</zh-CN><en>Learning subtopics retain existing article ownership, leaving version/search pages without an invented selected category.</en></lang>
+const category = ["domains", "project-language", "theme-source", "deployment-versions"].includes(kind) ? "start" : kind;
+const tabs = [
+  ["docs", text("文档首页", "Documentation home")],
+  ["start", text("学习", "Learn")],
+  ["reference", text("参考", "Reference")],
+  ["development", text("开发文档", "Development")],
+  ["code-reference", text("代码文档", "Code documentation")],
+];
+---
+<nav class="tabs" aria-label={text("文档栏目", "Documentation categories")}>
+  <div class="container tabs-inner">
+    {tabs.map(([topic, title]) => (
+      <a href={href(topic, locale, import.meta.env.BASE_URL)} aria-current={category === topic ? "page" : undefined}>{title}</a>
+    ))}
+  </div>
+</nav>

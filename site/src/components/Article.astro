@@ -1,6 +1,7 @@
 ---
 /** @lang zh-CN 已确认三栏阅读布局，目录与移动折叠入口共享同一组实际锚点。 @lang en Confirmed three-column reading layout; desktop and mobile outlines share real anchors. */
 import { href, labels, manualKinds } from "../lib/routes.mjs";
+import DocumentationCategories from "./DocumentationCategories.astro";
 const { locale, kind, headings = [] } = Astro.props;
 const en = locale === "en";
 const text = (zh: string, english: string) => en ? english : zh;
@@ -12,10 +13,8 @@ const outline = headings.length ? headings.filter((heading: { depth: number }) =
     ? [["current", text("当前文档", "Current documentation")], ["archives", text("历史封版", "Archives")], ["policy", text("保留与切换规则", "Retention and switching")]]
     : [["directory", text("当前语言目录", "Current language directory")]];
 const sidebar = [...manualKinds, "versions", "search"];
-const category = ["domains", "project-language", "theme-source", "deployment-versions"].includes(kind) ? "start" : kind;
-const tabs = [["docs", text("文档首页", "Documentation home")], ["start", text("学习", "Learn")], ["reference", text("参考", "Reference")], ["development", text("开发文档", "Development")], ["code-reference", text("代码文档", "Code documentation")]];
 ---
-<nav class="tabs" aria-label={text("文档栏目", "Documentation categories")}><div class="container tabs-inner">{tabs.map(([topic, title]) => <a href={url(topic)} aria-current={category === topic ? "page" : undefined}>{title}</a>)}</div></nav>
+<DocumentationCategories locale={locale} kind={kind} />
 <div class="container docs-layout"><aside class="sidebar" aria-label={text("文档目录", "Documentation directory")}><span class="sidebar-label">{text("开始阅读", "Start reading")}</span>{sidebar.map(topic => <a href={url(topic)} aria-current={kind === topic ? "page" : undefined}>{labels[locale][topic as keyof typeof labels.en]}</a>)}</aside><main id="main" class="doc-body">
   <details class="mobile-outline"><summary>{text("文档目录", "Documentation directory")}</summary><nav aria-label={text("手机文档目录", "Mobile documentation directory")}>{sidebar.map(topic => <a href={url(topic)} aria-current={kind === topic ? "page" : undefined}>{labels[locale][topic as keyof typeof labels.en]}</a>)}</nav></details>
   <details class="mobile-outline"><summary>{text("本页内容", "On this page")}</summary><nav aria-label={text("手机本页内容", "Mobile page outline")}>{outline.map(([id, title]) => <a href={"#" + id}>{title}</a>)}</nav></details>

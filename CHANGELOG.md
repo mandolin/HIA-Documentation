@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation navigation
+
+- 文档首页和正文共享五栏目导航，首页提供文档首页选中态，中英文及无脚本路径使用相同显式主题路由。
+- Documentation home and articles share five-category navigation, with the home category selected on the landing page and explicit topic routes for both languages and script-free reading.
+
 ## Unreleased — Complete website composition
 
 - 正常 Pages 发布采用官网根与站点索引2.0.0，当前参考深链与固定兼容快照分别校验。线上和运维检查读取精确新旧身份并核兼容摘要，完整工件恢复工作流保留原始 TAR 字节及来源记录。
