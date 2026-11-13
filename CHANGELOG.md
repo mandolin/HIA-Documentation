@@ -2,6 +2,9 @@
 
 ## Unreleased — Generated command web reference
 
+- 生成参考页的顶部语言切换保留当前条目，无脚本静态页直接连接实际生成的同主题语言页，缺对应页时禁用。
+- Generated reference header language switches retain the current entry. Script-free pages link directly to actual same-topic locale counterparts, disabling absent counterparts.
+
 - 命令字段和类型标签采用完整中英文阅读标题，正文、字段身份与深链锚点保持可追溯，未知扩展字段继续显示原名。
 - Command fields and kind badges use complete Chinese and English reading labels, retaining traceable prose, field identities and deep-link anchors while preserving names of unknown extensions.
 - 完整源码发布检查正确识别正则中的转义字面星号，块注释匹配模式按语法校验，原始源码字节保持，真实盘符与UNC路径继续拒绝。

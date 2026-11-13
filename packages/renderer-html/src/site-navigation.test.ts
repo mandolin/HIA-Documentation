@@ -9,6 +9,7 @@ import { Script, runInNewContext } from "node:vm";
 import { createDocumentationPortalUiLocaleAdoption, renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter } from "./index.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
+import { SITE_READING_SCRIPT } from "./site-reading.js";
 
 /**
  * @lang zh-CN 两语言、一个真实预览版的公开导航夹具。
@@ -35,6 +36,34 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it("keeps static language links on the generated entry counterpart", () => {
+    // <lang><zh-CN>从同次生成的实际语言页确定对应关系，无脚本路径同样保留当前主题。</zh-CN><en>Use actual locale pages from the same render so script-free navigation retains the current topic.</en></lang>
+    const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const index = JSON.parse(result.files.find(file => file.path === "project-index.json")!.contents);
+    const entry = index.entries[0];
+    for (const page of entry.noScriptLocalePages) {
+      const counterpart = entry.noScriptLocalePages.find((target: { uiLocale: string }) => target.uiLocale !== page.uiLocale);
+      const html = result.files.find(file => file.path === page.path)!.contents;
+      expect(html).toContain(`href="../../${counterpart.path}" data-hia-site-language`);
+      expect(html).not.toContain("<script");
+    }
+  });
+
+  it("qualifies interactive language roots with only actual generated entry identities", () => {
+    // <lang><zh-CN>执行真实发出的同步函数，验证切换、缺译禁用及首页恢复不累积片段。</zh-CN><en>Execute the emitted synchronizer to verify switching, absent-counterpart disabling, and root restoration without accumulating fragments.</en></lang>
+    const attributes = new Map<string, string>([["data-hia-site-hrefs", JSON.stringify({ "zh-CN": "/product/en/", en: "/product/zh-CN/" })]]);
+    const link = { dataset: { hiaSiteHrefs: attributes.get("data-hia-site-hrefs")! }, href: "", setAttribute(key: string, value: string) { attributes.set(key, value); }, removeAttribute(key: string) { attributes.delete(key); } };
+    const context = { document: { querySelectorAll() { return [link]; } }, ui: { value: "zh-CN" }, root: { lang: "zh-CN" }, JSON, encodeURIComponent };
+    const source = SITE_READING_SCRIPT.match(/function synchronizeLocaleLinks\(entry\) \{[\s\S]*?\n    \}/u)![0];
+    const synchronize = runInNewContext(`(${source})`, context);
+    synchronize({ id: "entry:&one", localePages: { en: "pages/en/one.html", "zh-CN": "pages/zh-CN/one.html" } });
+    expect(link.href).toBe("/product/en/#entry=entry%3A%26one");
+    synchronize({ id: "missing", localePages: { "zh-CN": "pages/zh-CN/missing.html" } });
+    expect(attributes.get("aria-disabled")).toBe("true");
+    synchronize(undefined);
+    expect(link.href).toBe("/product/en/");
+    expect(attributes.has("aria-disabled")).toBe(false);
+  });
   it.each([
     ["typescript", "TypeScript"],
     ["javascript", "JavaScript"],

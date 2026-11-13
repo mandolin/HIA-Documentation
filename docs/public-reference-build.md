@@ -3,6 +3,10 @@
 
 ## Generated command reference
 
+中文。生成Portal的顶部语言入口仅在实际生成对应页存在时保留当前条目，无脚本条目直接连接同主题语言页。缺对应页时禁用入口。
+
+English. Generated Portal header language links retain the current entry when its generated counterpart exists. Script-free entry pages link directly to their same-topic counterparts. Missing counterparts disable the link.
+
 中文。采用站点导航的命令页将已知契约字段映射为完整中英文标题，包含包版本、版本输出身份、路径、默认规则、调用示例和退出码。字段正文及其原始身份、锚点分别保留，未知扩展使用原字段名。
 
 English. Navigation-adopted command pages map known contract fields to complete Chinese and English headings, including package versions, version-output identity, paths, defaults, invocation examples and exit codes. Field prose, original identities and anchors remain traceable, while unknown extensions retain their native field names.

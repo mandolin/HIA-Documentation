@@ -363,6 +363,27 @@ export const SITE_READING_SCRIPT = String.raw`/**
         }
     }
     query.addEventListener('input', search);
+    /**
+     * @lang zh-CN 顶部语言切换仅在实际生成对应页存在时携带当前条目；首页恢复原始目标，缺对应语言禁用链接。
+     * @lang en Header language switching carries the current entry only when its generated counterpart exists, restoring original roots on the index and disabling absent counterparts.
+     */
+    function synchronizeLocaleLinks(entry) {
+        // <lang><zh-CN>原根目标独立缓存，避免条目或界面语言连续切换累积片段；独立宿主的静态链接保持原职责。</zh-CN><en>Cache original roots separately to prevent fragment accumulation across entry or UI-language changes; independent hosts retain their static-link responsibilities.</en></lang>
+        for (const link of document.querySelectorAll('[data-hia-site-language][data-hia-site-hrefs]')) {
+            const roots = JSON.parse(link.dataset.hiaSiteLocaleRoots || (link.dataset.hiaSiteLocaleRoots = link.dataset.hiaSiteHrefs));
+            // <lang><zh-CN>实际页面目录是对应关系证据，不根据文件名猜译文；目标根始终来自已验证的导航输入。</zh-CN><en>The actual page directory proves counterparts without inferring translations from names; target roots always come from validated navigation input.</en></lang>
+            const targets = Object.fromEntries(Object.entries(roots).map(([locale, target]) => [locale, entry && entry.localePages?.[locale === 'zh-CN' ? 'en' : 'zh-CN'] ? target + '#entry=' + encodeURIComponent(entry.id) : target]));
+            link.dataset.hiaSiteHrefs = JSON.stringify(targets);
+            const locale = ui?.value || root.lang;
+            if (entry && !entry.localePages?.[locale === 'zh-CN' ? 'en' : 'zh-CN']) {
+                link.removeAttribute('href');
+                link.setAttribute('aria-disabled', 'true');
+            } else {
+                link.removeAttribute('aria-disabled');
+                link.href = targets[locale];
+            }
+        }
+    }
     // <lang><zh-CN>每次实际条目切换后只建立真实锚点；目录位于正文外，避免改变正文语言块。</zh-CN><en>After actual entry changes, build real anchors outside prose, preserving content-language blocks.</en></lang>
     /**
      * @lang zh-CN 从当前真实小节建立页内目录，其普通链接保留可直接打开的静态对应页。
@@ -377,6 +398,7 @@ export const SITE_READING_SCRIPT = String.raw`/**
                 button.title = text('site.reading.host');
             }
         const entry = pages.get(article?.querySelector('article[id]')?.id);
+        synchronizeLocaleLinks(entry);
         const staticPage = script.dataset.hiaReadingStatic ? '' : entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
         const sections = article?.querySelectorAll('[data-hia-topic-section][id], [data-hia-reading-section][id]') || [];
         for (const nav of document.querySelectorAll('[data-hia-reading-outline]')) {
