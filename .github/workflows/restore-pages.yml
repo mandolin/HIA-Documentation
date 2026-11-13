@@ -20,6 +20,9 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-24.04
+    outputs:
+      source-commit: ${{ steps.verified.outputs.source-commit }}
+      root-kind: ${{ steps.verified.outputs.root-kind }}
     permissions:
       contents: read
       actions: read
@@ -33,6 +36,7 @@ jobs:
       - name: Verify recovery regressions
         run: python3 -m unittest discover -s scripts -p test_pages_recovery.py
       - name: Download and verify the complete successful artifact
+        id: verified
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ inputs.source-run-id }}
@@ -44,6 +48,7 @@ jobs:
           artifact_id=$(python3 -c 'import json; print(int(json.load(open("dist/restore-input/artifact.json"))["id"]))')
           gh api "repos/mandolin/HIA-Documentation/actions/artifacts/$artifact_id/zip" > dist/restore-input/artifact.zip
           python3 scripts/prepare_pages_recovery.py dist/restore-input/run.json dist/restore-input/artifact.json dist/restore-input/artifact.zip dist/restore-input/artifact.tar dist/restored-site > dist/restore-input/verification.json
+          python3 -c 'import json,os; v=json.load(open("dist/restore-input/verification.json")); f=open(os.environ["GITHUB_OUTPUT"],"a"); print("source-commit="+v["sourceCommit"],file=f); print("root-kind="+("official" if v["rootContract"]=="hia-site-version-index" else "reference"),file=f); f.close()'
       - uses: actions/upload-artifact@v4
         with:
           name: github-pages
@@ -78,4 +83,6 @@ jobs:
       - name: Verify the restored publication
         env:
           HIA_REFERENCE_PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+          HIA_REFERENCE_EXPECTED_COMMIT: ${{ needs.prepare.outputs.source-commit }}
+          HIA_REFERENCE_EXPECTED_ROOT: ${{ needs.prepare.outputs.root-kind }}
         run: node scripts/check-reference-pages-online.mjs

@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import {assertPublicReferenceTopicUi} from "./public-reference-ui.mjs";
-import {readReferenceSiteContext} from "./reference-site-context.mjs";
+import {readReferenceSiteContext,assertReferencePublicationTarget} from "./reference-site-context.mjs";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // <lang><zh-CN>发布来源数量由同一显式构建清单决定，与离线装配和上传前检查一致。</zh-CN><en>Use the same explicit build allowlist for published provenance counts, matching assembly and pre-upload checks.</en></lang>
@@ -14,7 +14,10 @@ const schemaHistory = JSON.parse(await readFile(path.join(rootDir, "packages", "
 const configuredBaseUrl = process.env.HIA_REFERENCE_PAGES_URL ?? "https://mandolin.github.io/HIA-Documentation/";
 const publicBaseUrl = new URL(configuredBaseUrl.endsWith("/") ? configuredBaseUrl : `${configuredBaseUrl}/`);
 const reportOnly = process.argv.includes("--report-only");
-const maxAttempts = 12;
+// <lang><zh-CN>指定发布目标时给CDN两分钟有界传播窗口，独立健康检查保留原重试次数。</zh-CN><en>Give explicit publication targets a bounded two-minute CDN propagation window, retaining the original retry count for independent health checks.</en></lang>
+const expectedCommit=process.env.HIA_REFERENCE_EXPECTED_COMMIT;
+const expectedRoot=process.env.HIA_REFERENCE_EXPECTED_ROOT;
+const maxAttempts = expectedCommit || expectedRoot ? 24 : 12;
 const retryDelayMs = 5_000;
 
 let lastError;
@@ -57,6 +60,7 @@ async function checkPublication() {
   assert(referenceBuild.contract === "hia-public-reference-build", "Published public reference build contract drifted.");
   assert(referenceBuild.privacy?.status === "pass", "Published public reference privacy status drifted.");
   assert(Array.isArray(referenceBuild.sources) && referenceBuild.sources.length === referenceDefinition.sources.length, "Published public reference source provenance drifted.");
+  assertReferencePublicationTarget(context,referenceBuild,expectedCommit,expectedRoot);
 
   const portalPages = await fetchJson("public-portal-pages.json");
   assert(portalPages.contract === "hia-public-portal-pages", "Published public portal pages contract drifted.");

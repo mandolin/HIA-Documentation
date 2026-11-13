@@ -112,7 +112,10 @@ describe("public reference deployment automation", () => {
     expect(restore).toContain("python3 scripts/prepare_pages_recovery.py");
     expect(restore).toContain("path: dist/restore-input/artifact.tar");
     expect(restore).toContain("run: node scripts/check-reference-pages-online.mjs");
+    expect(restore).toContain("HIA_REFERENCE_EXPECTED_COMMIT: ${{ needs.prepare.outputs.source-commit }}");
+    expect(restore).toContain("HIA_REFERENCE_EXPECTED_ROOT: ${{ needs.prepare.outputs.root-kind }}");
     expect(pages).toContain("path: dist/official-site-current");
+    expect(pages).toContain("HIA_REFERENCE_EXPECTED_COMMIT: ${{ github.sha }}");
     expect(pages).toContain("--legacy-reference dist/legacy-reference-pinned");
   });
 });

@@ -4,10 +4,22 @@ import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
 import {createSiteVersionIndex} from "../site/src/lib/version-index.mjs";
 import {encodeCompositionReport} from "../site/src/lib/composition-report.mjs";
-import {readReferenceSiteContext} from "./reference-site-context.mjs";
+import {readReferenceSiteContext,assertReferencePublicationTarget} from "./reference-site-context.mjs";
 
 /** @lang zh-CN 独立旧索引夹具，字段身份沿既有精确读取。 @lang en Independent legacy index fixture using the existing exact reader identity. */
 const oldIndex=JSON.stringify({contract:"hia-reference-version-index",contractVersion:"0.1.0-draft",versioning:{strategy:"current-and-releases",current:{id:"current",path:"current/"},releases:[],compatibilityAliases:{root:"current",en:"current/en",zhCN:"current/zh-CN",sourceLinkage:"current/source-linkage"},searchPartitions:[]}});
+
+test("an explicit publication target rejects a healthy previous CDN revision", () => {
+  // <lang><zh-CN>健康状态相同仍须核所选实际提交和根类型，不能以旧缓存替代目标。</zh-CN><en>Equal health still requires the selected actual commit and root kind, excluding stale healthy cache entries.</en></lang>
+  const build={sources:[{repository:"mandolin/HIA-Documentation",commit:"a".repeat(40)}]};
+  assert.doesNotThrow(()=>assertReferencePublicationTarget({kind:"official"},build,"a".repeat(40),"official"));
+  assert.doesNotThrow(()=>assertReferencePublicationTarget({kind:"reference"},build,undefined,undefined));
+  assert.throws(()=>assertReferencePublicationTarget({kind:"official"},build,"b".repeat(40),"official"),/selected source/);
+  assert.throws(()=>assertReferencePublicationTarget({kind:"reference"},build,"a".repeat(40),"official"),/selected root/);
+  assert.throws(()=>assertReferencePublicationTarget({kind:"official"},build,"invalid","official"),/Invalid expected/);
+  assert.throws(()=>assertReferencePublicationTarget({kind:"official"},build,"a".repeat(40),"other"),/Invalid expected/);
+  assert.throws(()=>assertReferencePublicationTarget({kind:"official"},{sources:[...build.sources,...build.sources]},"a".repeat(40),"official"),/selected source/);
+});
 
 /**
  * @lang zh-CN 创建固定同源映射，任何额外网络读取均失败。

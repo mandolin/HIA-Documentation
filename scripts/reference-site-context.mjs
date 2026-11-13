@@ -24,6 +24,27 @@ function parse(text) {
 }
 
 /**
+ * @lang zh-CN 校验显式发布目标，防止CDN仍返回健康旧版时提前验收；未指定目标时保留独立健康检查。
+ * @lang en Check explicit publication targets to prevent accepting healthy stale CDN revisions, preserving independent health checks when no target is specified.
+ * @param {object} context - 已核根上下文。 Validated root context.
+ * @param {object} build - 实际来源报告。 Actual provenance report.
+ * @param {string} [commit] - 所选主仓40位提交。 Selected 40-character owner revision.
+ * @param {"official"|"reference"} [kind] - 所选根身份。 Selected root identity.
+ * @returns {void} 目标一致时返回。 Returns when the target matches.
+ * @throws {Error} 目标无效、来源重复或实际发布尚未匹配。 Invalid target, duplicate source or publication not yet matching.
+ */
+export function assertReferencePublicationTarget(context,build,commit,kind) {
+  require(commit===undefined || /^[0-9a-f]{40}$/.test(commit),"Invalid expected publication commit.");
+  require(kind===undefined || ["official","reference"].includes(kind),"Invalid expected publication root.");
+  if (kind!==undefined) require(context.kind===kind,"Publication has not reached the selected root identity.");
+  if (commit!==undefined) {
+    // <lang><zh-CN>只核主仓唯一来源槽位，重复声明也不能掩盖目标不一致。</zh-CN><en>Check the unique owner-source slot, rejecting duplicates that could conceal target mismatches.</en></lang>
+    const owners=build.sources?.filter(source=>source.repository==="mandolin/HIA-Documentation") ?? [];
+    require(owners.length===1 && owners[0].commit===commit,"Publication has not reached the selected source commit.");
+  }
+}
+
+/**
  * @lang zh-CN 先核根索引身份，再精确读取其同源旧索引和根摘要。
  * @lang en Check the root identity first, then read its exact same-origin legacy index and root digests.
  * @param {URL} base - 选定主站根地址。 Selected main-site base URL.

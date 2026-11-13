@@ -258,4 +258,6 @@ jobs:
       - name: Verify published reference Pages
         env:
           HIA_REFERENCE_PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+          HIA_REFERENCE_EXPECTED_COMMIT: ${{ github.sha }}
+          HIA_REFERENCE_EXPECTED_ROOT: official
         run: node scripts/check-reference-pages-online.mjs
