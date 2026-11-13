@@ -21,6 +21,8 @@ Use the HTML or CSS configuration below with the matching htmdoc or cssdoc comma
 
 Use `html-fragment` for HTML fragments and `html` for complete documents. Follow the [HTML source generation and project-output guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/unified-html-demo.md#generate-from-html-source) for a complete first run. The original Alert fragment has English descriptions. UI or project-language declarations do not supply translations.
 
+For a CSS first run, follow the [CSS extraction and unified-output guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/cssdoc-quickstart.md) to prepare the matching eight packages, original CSS and HIA/map inputs. Inspect components, selectors, custom properties, modifiers, token descriptions and source locations. The sample descriptions are English. When source fragments are needed, explicitly configure extraction and presentation and confirm publication permission.
+
 ## C#/.NET/ASP.NET
 
 Compiler XML documentation is the baseline. Add C# source, project structure or ASP.NET surface inputs when required. Roslyn-based source features use the current .NET 10 toolchain; XML intake does not require running a legacy application.

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — CSS first-run guidance
+
+- CSS入门补齐匹配八包、提取与源码地图到统一输出的完整步骤，说明英文原样本、令牌注释及授权片段策略。
+- CSS first-run guidance covers matching package cohorts, extraction, source maps and unified output, including original English descriptions, token annotations and authorized fragment policies.
+
 ## Unreleased — HTML first-run guidance
 
 - HTML入门衔接片段解析、实际HIA/源码地图工件及项目输出，明确英文样本与界面语言；统一示例按当前多页默认值和实际清单说明产物。

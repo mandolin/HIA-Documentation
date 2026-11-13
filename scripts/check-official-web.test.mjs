@@ -119,6 +119,21 @@ test("HTML first-run guidance preserves fragment parsing and current site output
   }
 });
 
+test("CSS first-run guide preserves original fields and explicit source policy", async () => {
+  // <lang><zh-CN>首次生成需可复制的真实CSS工件路径，并说明原英文、令牌注释和片段授权。</zh-CN><en>A first run needs copyable real CSS artifact paths and explicit original-language, token-annotation and fragment-authorization guidance.</en></lang>
+  const guide = await readFile(new URL("../docs/cssdoc-quickstart.md", import.meta.url), "utf8");
+  assert.equal((guide.match(/```json\n/g) ?? []).length, 3);
+  for (const required of ['"kind": "css"', "components.css-1.hia.json", "components.css-1.docmap.json", '"presentation": "none"', "English-only", ".alert--warning", "--alert-color", "color.alert.text", "sourcesContentPolicy", "explicit-public", "split-site", "1.0.0 source candidates"]) {
+    // <lang><zh-CN>逐项核稳定输入及呈现边界，防止安装/映射步骤从指南消失。</zh-CN><en>Check stable inputs and rendering boundaries individually so installation and mapping steps cannot disappear from the guide.</en></lang>
+    assert(guide.includes(required), `Missing CSS first-run fact ${required}`);
+  }
+  for (const locale of ["zh-CN", "en"]) {
+    // <lang><zh-CN>两语言入门正文须连接同一首次生成指南。</zh-CN><en>Both localized introductions must link the same first-run guide.</en></lang>
+    const article = await readFile(new URL(`../site/src/content/domains.${locale}.md`, import.meta.url), "utf8");
+    assert(article.includes("docs/cssdoc-quickstart.md"));
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");
