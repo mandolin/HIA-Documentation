@@ -66,6 +66,8 @@ export function compositionFiles(report) {
     dataObject(table[field],true);
     assert(table[field].length>0 && table[field].length<=100000,"Composition table count exceeds budget.");
   }
+  // <lang><zh-CN>清单行不包含自身报告和站点索引，两件元数据也占总文件预算。</zh-CN><en>Inventory rows exclude the report itself and site index, so both metadata files count toward the total file budget.</en></lang>
+  assert(table.rows.length+2<=100000,"Composition metadata exceeds the complete file-count budget.");
   for (const field of fields.slice(0,4)) assert(new Set(table[field]).size===table[field].length,"Duplicate composition dictionary value.");
   assert(table.directories.every(value=>pathComponent(value,true)) && table.names.every(value=>pathComponent(value,false)),"Unsafe composition path component.");
   assert(table.digests.every(value=>typeof value==="string" && /^[a-f0-9]{64}$/.test(value)),"Invalid composition digest.");

@@ -104,3 +104,9 @@ test("encoding rejects accessor-backed file arrays before iteration", () => {
   assert.throws(()=>encodeCompositionReport(original));
   assert.equal(calls,0);
 });
+
+test("both generated metadata files count toward the complete file budget", () => {
+  const encoded=encodeCompositionReport(report());
+  encoded.fileTable.rows=Array(99999).fill(encoded.fileTable.rows[0]);
+  assert.throws(()=>compositionFiles(encoded),/metadata.*file-count budget/);
+});
