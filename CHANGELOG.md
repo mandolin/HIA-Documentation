@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Narrow JSDoc table adoption
+
+- 中文：固定采用已验证的JSDoc主题源码修复，参数表在窄屏正文内可局部横向滚动；同步归档摘要、锁及CI来源。
+- English: Pin the verified JSDoc theme fix for locally scrollable parameter tables on narrow screens, coordinating archive digests, locks and CI sources.
+
 ## Unreleased — JavaScript first-run guidance
 
 - 独立JSDoc指南提供匹配源码归档的安装步骤、实际资源文件及完整摘要/参数/返回双语示例，四域入门两语言正文连接该生成路径。
