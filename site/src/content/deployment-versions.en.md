@@ -9,7 +9,9 @@ title: "Builds and version retention"
 
 Build into a dedicated staging directory. Review content, locales, source policy and manifests before publishing a complete site artifact. Retain source revisions, generator/theme identities, files and digests without exposing temporary paths or credentials.
 
-The main repository provides reference:build, reference:pages and matching checks for the existing reference deployment. Its current root and current/releases layout do not establish that the new product website is deployed. Root replacement requires coordinated machine-index aliases and consumers.
+Normal publication builds current technical references through the core repository's reference:build, reference:pages and matching checks, then builds and composes the complete website. The main root serves the Chinese product homepage, and root versions.json uses `hia-site-version-index@2.0.0`. The compatibility site's [original technical index](https://mandolin.github.io/HIA-Documentation-Legacy/versions.json) retains its original identity. Resolve its relative paths against that index response URL. The main site's current/ and releases/ technical deep links remain available.
+
+Normal composition verifies current references and the selected compatibility snapshot against their own provenance, indices and digests. See [Website builds and restoration](https://github.com/mandolin/HIA-Documentation/blob/main/site/README.md) for complete commands, target-revision checks and restoration of successful artifacts.
 
 Keep the latest stable documentation and one final edition for each older major. Use the brand-adjacent selector with a history page, exact versions and maintenance status. Show an empty history when no archive exists. Package and artifact-contract versions are separate from system documentation versions.
 

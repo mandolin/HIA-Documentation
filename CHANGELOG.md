@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Product and version guidance
+
+- 官网参考手册补齐系统预览、45个必要包与独立语言服务器的版本辨识入口，候选指南按当前13个必要主仓包及14个主仓npm包核对数量。
+- Reference manuals provide version-reading paths for the system preview, 45 required packages and the independent language server. Candidate guidance reconciles 13 required core packages and 14 npm packages in the core repository.
+- 构建手册同步已发布的官网根、站点索引2.0.0及兼容参考索引，提供实际构建与恢复说明。
+- Build manuals describe the published website root, site index 2.0.0, compatibility reference index and operational build/restoration instructions.
+
 ## Unreleased — Documentation navigation
 
 - 深色屏幕进入打印时恢复完整浅色纸面调色板，保证辅助文字、卡片和提示框使用既有打印颜色。

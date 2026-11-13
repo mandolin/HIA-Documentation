@@ -110,6 +110,22 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 
 原参考中的旧配置或旧quickstart可以继续用于对应旧包，但不能成为当前源码候选的默认指南。Schema校验不代替路径/权限/版本或运行时语义检查。
 
+## 版本与兼容
+
+系统文档当前为1.0.0预览。当前接入清单覆盖45个必要包，其中13个来自主仓、32个来自卫星仓库；每个软件包使用各自的版本和运行要求。独立语言服务器`@hia-doc/lsp`在主仓发布清单中单列，源码版本为`0.1.0`。
+
+从[包候选与归档](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-candidates.md)读取源码状态和版本表，用[主仓发布清单](https://github.com/mandolin/HIA-Documentation/blob/main/release/public-packages.json)及[完整必要包清单](https://github.com/mandolin/HIA-Documentation/blob/main/reference/required-package-api.inputs.json)核对范围，再查[运行时与兼容性](https://github.com/mandolin/HIA-Documentation/blob/main/docs/compatibility-matrix.md)。系统版本、软件包版本和工件契约版本分别核对。
+
+查询实际安装或npm归档时使用完整包名与精确版本。例如主仓命令行包可按下列命令检查，目标版本由所选发行说明确定：
+
+```sh
+npm list @hia-doc/cli --depth=0
+npm view @hia-doc/cli version
+npm view @hia-doc/cli@<精确版本> version engines dist.integrity
+```
+
+`latest`是registry标签，源码清单的`candidate`是源码状态。读取对应版本的实际归档及其运行要求后再安装。
+
 ## 品牌颜色
 
 主题通过文档配置传入。钴蓝用于HIA-Documentation-Sys品牌，其它宿主可指定自己的颜色：

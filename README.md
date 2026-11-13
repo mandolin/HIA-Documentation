@@ -1,8 +1,8 @@
-# HIA Main Repo
+# HIA-Documentation-Sys
 
-`main-repo/` 是 HIA 文档工程化系统的核心 monorepo，包含语言无关 core model、documentation profile runtime、共享配置、HTML renderer、CLI、LSP、VS Code 插件壳和 JSDoc adapter bridge。
+HIA-Documentation-Sys 面向开发者与人工智能，将源码注释、领域语义、双语字段和来源关系组织为可阅读、可追溯的文档。JavaScript、HTML、CSS与.NET的领域工具链由各维护仓库提供，本仓库承载共享核心体系。
 
-外层工作区只是 VS Code 容器。包管理器、lockfile、构建工具和后续 CI 入口都限制在本目录内部。
+核心 monorepo 包含语言无关文档模型、文档化配置规范运行时、共享配置、HTML渲染器、命令行工具、语言服务器协议、VS Code接入和JSDoc适配桥接。安装、构建与持续集成命令均在本仓库根目录执行，依赖及锁文件由本仓库管理。
 
 ## 快速命令
 
@@ -33,7 +33,7 @@ HIA-Documentation-Sys 的中英产品页面与初始文档入口使用独立静�
 
 当前 core document schema 为 `1.0.0`，text i18n、source 子模型与 protocol envelope 同为 `1.0.0` 源码候选；精确保留文档/子模型 `0.2.0` 与 envelope `0.1.0` 的旧版读取。config、renderer manifest 和 JSDoc adapter bridge 仍为 `0.1.0`。包版本、工件契约版本和系统正式发行分别管理。
 
-十二个必要主仓包目前为 `1.0.0` 源码候选，独立语言服务器仍为 `0.1.0`，VS Code 开发壳仍为私有 `0.0.0`。源码候选不表示已发布到 npm；当前身份及原发布版本见[候选安装指南](docs/package-candidates.md)。
+13个必要主仓包目前为 `1.0.0` 源码候选，独立语言服务器的源码版本为 `0.1.0`，VS Code开发壳为私有 `0.0.0`。当前源码身份、原发布计划身份及实际归档的核对方法见[候选安装指南](docs/package-candidates.md)。系统正式发行按独立验收管理。
 
 开发者入口：
 

@@ -10,12 +10,12 @@ This is an **unreleased source change**. Existing npm tarballs retain their own
 engine declarations and contents. Package versions and release statuses below
 are checked-in identities, not approval to republish them or a system 1.0.0 release.
 
-中文：源码候选的主仓根与十三包统一到已实测的Node.js22/24补丁下限；旧npm包不随源码变更。
+中文：源码候选的主仓根与包含独立语言服务器的14个npm包统一到已实测的Node.js22/24补丁下限；旧npm包不随源码变更。
 包版本、契约版本、系统正式版及发行资格分别管理；通常安装只告警，严格检查须显式启用。
 
 ## Checked-in identities
 
-The machine-readable owner is [the release manifest](../release/public-packages.json). Twelve necessary packages have completed source-candidate qualification and now carry `candidate` status with `1.0.0` targets. The independent language server remains separately versioned. A status of `candidate` is not publication readiness: publish preflight, registry/provenance, consumer verification and release approval are separate gates.
+The machine-readable owner is [the release manifest](../release/public-packages.json). The 13 required core packages have completed source-candidate qualification and carry `candidate` status with `1.0.0` targets. The independent language server is separately versioned. Publish preflight, registry/provenance, consumer verification and release approval have their own gates.
 
 The previous column records the plan's prior published identity, not a fresh registry query or permission to replace that archive.
 
@@ -36,7 +36,7 @@ The previous column records the plan's prior published identity, not a fresh reg
 | `@hia-doc/lsp` | `0.1.0` | published | Separately versioned tooling |
 | `@hia-doc/cli` | `1.0.0` | candidate | `0.1.11` |
 
-中文：十二包1.0.0是已审源码候选；不得继续将旧0.x写作当前源码身份，也不得据此宣称npm发布、正式系统发行或允许重发旧包。
+中文：13个必要主仓包的1.0.0是已审源码候选。实际npm身份、系统正式发行及发布资格按对应清单、registry查询和发行验收分别核对。
 
 ## Reproduce candidate checks
 

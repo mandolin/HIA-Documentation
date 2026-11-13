@@ -109,6 +109,22 @@ Use the compatibility matrix and each package's migration guide. Persist only an
 
 Historical quickstarts remain applicable to their historical packages. They are not automatically current-source instructions. Schema validation does not replace runtime path, authority, identity or semantic checks.
 
+## Versions and compatibility
+
+System documentation currently shows the 1.0.0 preview. The current integration inventory covers 45 required packages, with 13 from the core repository and 32 from satellite repositories. Each package has its own version and runtime requirements. The independently versioned language server, `@hia-doc/lsp`, is listed separately in the core release manifest with source version `0.1.0`.
+
+Read source status and identities in [Package candidates and archives](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-candidates.md). Reconcile scope against the [core release manifest](https://github.com/mandolin/HIA-Documentation/blob/main/release/public-packages.json) and [complete required-package inventory](https://github.com/mandolin/HIA-Documentation/blob/main/reference/required-package-api.inputs.json), then consult [Runtime and compatibility](https://github.com/mandolin/HIA-Documentation/blob/main/docs/compatibility-matrix.md). Check system, package and artifact-contract versions independently.
+
+Use full package names and exact versions to inspect installed packages or npm archives. For example, inspect the core command-line package with the following commands, taking the target version from the selected release's instructions.
+
+```sh
+npm list @hia-doc/cli --depth=0
+npm view @hia-doc/cli version
+npm view @hia-doc/cli@<exact-version> version engines dist.integrity
+```
+
+`latest` is a registry tag, while `candidate` in the source manifest records source status. Inspect the selected archive and its own runtime requirements before installation.
+
 ## Brand colors
 
 Pass theme colors through document configuration. HIA-Documentation-Sys uses cobalt, while other hosts can choose their own color:

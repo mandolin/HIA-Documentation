@@ -9,7 +9,9 @@ title: "构建与版本保留"
 
 先在专用暂存目录构建，再核内容、语言、源码策略与产物清单，最后发布完整站点工件。保留构建来源、生成器/主题版本、实际文件与摘要；不要把本机临时目录或凭据放入公开工件。
 
-当前参考站构建入口是主仓reference:build、reference:pages及对应检查命令。当前线上参考根、current/和releases/布局属于既有参考部署；它们不等同于新产品官网已上线。官网切根前仍需协调旧机器版本索引的root别名和所有消费者。
+正常发布先用主仓reference:build、reference:pages及对应检查生成当前技术参考，再构建官网并装配完整站点。主站根目录提供中文官网，根versions.json采用`hia-site-version-index@2.0.0`。兼容参考站的[原技术索引](https://mandolin.github.io/HIA-Documentation-Legacy/versions.json)保留旧身份，相对地址按该索引的响应URL解析；主站current/与releases/技术深链继续可用。
+
+正常装配分别核当前参考和选定兼容快照的来源、索引及摘要。完整操作、目标提交检查和成功工件恢复流程见[官网构建与恢复说明](https://github.com/mandolin/HIA-Documentation/blob/main/site/README.md)。
 
 产品文档保留最新稳定版，旧大版本各保留最后一版封版。顶部版本下拉是主入口，历史总页辅助；显示精确版本与维护状态。尚无旧大版本时明确空状态，不捏造历史条目。package版本和工件契约不能直接充当系统文档版本。
 

@@ -47,6 +47,43 @@ test("printing a dark screen restores the complete light paper palette", async (
   assert.deepEqual(declarations(paper[1]),Object.fromEntries(Object.keys(dark).map(name=>[name,light[name]])));
 });
 
+test("candidate summaries agree with source manifests and required-package scope", async () => {
+  // <lang><zh-CN>数量取机器清单，逐包核候选表，防止加入新包后人读摘要继续停留在旧数量。</zh-CN><en>Derive counts from machine inventories and check every candidate-table row, preventing prose summaries from retaining old package totals.</en></lang>
+  const plan = JSON.parse(await readFile(new URL("../release/public-packages.json",import.meta.url),"utf8"));
+  const inputs = JSON.parse(await readFile(new URL("../reference/required-package-api.inputs.json",import.meta.url),"utf8"));
+  const guide = await readFile(new URL("../docs/package-candidates.md",import.meta.url),"utf8");
+  const readme = await readFile(new URL("../README.md",import.meta.url),"utf8");
+  const candidates = plan.packages.filter(entry=>entry.releaseStatus==="candidate");
+  assert.equal(candidates.length,inputs.packages.filter(entry=>entry.owner==="main-repo").length);
+  assert(guide.includes(`${candidates.length} required core packages`),"Candidate guide summary has a stale required-package count.");
+  assert(guide.includes(`${plan.packages.length}个npm包`),"Chinese runtime summary must include independently versioned tooling.");
+  assert(readme.includes(`${candidates.length}个必要主仓包`),"Repository introduction has a stale candidate count.");
+  for (const entry of plan.packages) {
+    assert(guide.includes(`| \`${entry.name}\` | \`${entry.targetVersion}\` | ${entry.releaseStatus} |`),entry.name+": documented identity differs from the release plan.");
+  }
+});
+
+test("reference pages expose preview, package scope and authoritative version inputs", async () => {
+  const inputs = JSON.parse(await readFile(new URL("../reference/required-package-api.inputs.json",import.meta.url),"utf8"));
+  for (const locale of ["zh-CN","en"]) {
+    const html = await readFile(new URL(`../dist/official-web-preview/docs/${locale}/reference/index.html`,import.meta.url),"utf8");
+    assert(html.includes(locale==="en" ? `${inputs.packages.length} required packages` : `${inputs.packages.length}个必要包`),"Reference page must explain the current package scope.");
+    for (const file of ["docs/package-candidates.md","release/public-packages.json","reference/required-package-api.inputs.json","docs/compatibility-matrix.md"]) {
+      assert(html.includes("https://github.com/mandolin/HIA-Documentation/blob/main/"+file),"Missing authoritative version input: "+file);
+    }
+  }
+});
+
+test("build manuals identify the published website root and compatibility index", async () => {
+  // <lang><zh-CN>直接核实际构建正文，防止正常切根后手册继续把部署写成待办。</zh-CN><en>Check rendered manuals directly so completed root publication is not described as pending work.</en></lang>
+  for (const locale of ["zh-CN","en"]) {
+    const html = await readFile(new URL(`../dist/official-web-preview/docs/${locale}/learn/deployment-versions/index.html`,import.meta.url),"utf8");
+    assert(html.includes("hia-site-version-index@2.0.0"),"Published root-index identity is missing from the build manual.");
+    assert(html.includes("https://mandolin.github.io/HIA-Documentation-Legacy/versions.json"),"Exact compatibility-index locator is missing.");
+    assert(html.includes("https://github.com/mandolin/HIA-Documentation/blob/main/site/README.md"),"Normal composition and recovery guide is missing.");
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");
