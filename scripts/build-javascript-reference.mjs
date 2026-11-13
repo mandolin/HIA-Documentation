@@ -254,6 +254,9 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
       fs.writeFileSync(navigationPath, JSON.stringify(createNavigation(registry, site.id)));
       const manifestPath = path.join(runtime, site.id + ".project.json");
       const selectedRows = site.id === apiSiteId ? [...rows, ...declarations, ...resources.filter(row => row.site === site.id), ...dataRows] : resources.filter(row => row.site === site.id);
+      // <lang><zh-CN>命令节点独立计量，不能把它们算作编程绑定或隐藏在原API总数中。</zh-CN><en>Count command nodes separately without treating them as programming bindings or hiding them in the original API total.</en></lang>
+      const commandRows = site.id === apiSiteId ? commandReport.rows : [];
+      const entriesPerLocale = selectedRows.reduce((sum, row) => sum + row.symbols, 0) + commandRows.reduce((sum, row) => sum + row.symbols, 0);
       const selectedSources = fullSources.filter(source => site.id === "derivation-evidence" ? source.source.includes("/evidence/hia-jsdoc-config-") : !source.source.includes("/evidence/hia-jsdoc-config-"));
       for (const locale of locales) {
         const target = path.join(root, site.path, locale);
@@ -266,7 +269,7 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
         for (const file of files[site.id]) copyPackageArtifact(path.join(runtime, file), path.join(target, file), staging);
         if (site.id === apiSiteId) checkPublicReferenceCommands(path.join(staging, 'sites', site.id, site.path), locale);
         const index = read(path.join(target, "project-index.json"));
-        assert.equal(index.entries.length, selectedRows.reduce((sum, row) => sum + row.symbols, 0));
+        assert.equal(index.entries.length, entriesPerLocale);
         if (site.id === apiSiteId) {
           for (const row of rows) assertSatelliteApiEntries({row, document: read(path.join(runtime, row.documentPath)), map: read(path.join(runtime, row.mapPath)), entries: index.entries});
           const outputs = rows.map(row => ({...row, status: "success", artifact: row.documentPath.replace("api.hia.json", "hia-integration.json"), integration: read(path.join(runtime, row.documentPath.replace("api.hia.json", "hia-integration.json"))), document: read(path.join(runtime, row.documentPath))}));
@@ -309,9 +312,10 @@ export async function buildJavaScriptPackageReference(options = {}, publication)
         packages: inventory.packages.map(({name, version, repository, sourceHead}) => ({name, version, repository, sourceHead})),
         ...(declarations.length && site.id === apiSiteId ? {declarations, sourceOrigins: Object.fromEntries(sourceOrigins)} : {}),
         rows: site.id === apiSiteId ? rows : [], resources: resources.filter(row => row.site === site.id), dataRows: site.id === apiSiteId ? dataRows : [],
+        ...(commandRows.length ? {commandRows} : {}),
         memberPaths: site.id === apiSiteId ? grouped.members.length : 0,
         bindingsPerLocale: site.id === apiSiteId ? inventory.packages.reduce((sum, pack) => sum + pack.modules.reduce((count, module) => count + module.exports.length, 0), 0) : 0,
-        fullSources: selectedSources, entriesPerLocale: selectedRows.reduce((sum, row) => sum + row.symbols, 0), ...checked};
+        fullSources: selectedSources, entriesPerLocale, ...checked};
       fs.mkdirSync(path.join(staging, "reports"), {recursive: true});
       fs.writeFileSync(path.join(staging, "reports", site.id + ".json"), JSON.stringify(report, null, 2) + "\n");
       reports.push({id: site.id, repository: site.repository, files: checked.files, bytes: checked.bytes});

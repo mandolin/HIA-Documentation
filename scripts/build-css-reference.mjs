@@ -6,8 +6,8 @@ import {buildJavaScriptPackageReference} from "./build-javascript-reference.mjs"
 import {loadCssReferenceInputs, createCssReferenceNavigation} from "./css-reference-inputs.mjs";
 
 /**
- * @lang zh-CN 选择已确认CSS清单，复用正常原生/资源装配，独立cssdoc命令按命令账本处理。
- * @lang en Select confirmed CSS inputs and reuse normal native/resource assembly, leaving the standalone cssdoc command to its command inventory.
+ * @lang zh-CN 选择已确认CSS清单，正常装配原生/资源及cssdoc命令文档。
+ * @lang en Select confirmed CSS inputs and assemble native APIs, resources and the cssdoc command reference.
  * @param {object} [options] - workspaceRoot为真实源容器，out限主仓dist；默认dist/css-reference-publication。 workspaceRoot is the real source container and out stays inside main dist, defaulting to dist/css-reference-publication.
  * @returns {Promise<object>} 完整双语内容、容量与固定源提交。 Complete bilingual contents, size and pinned source commit.
  * @throws {Error} 来源、字段、映射、授权、预算或正常生产失败。 Failed source, field, mapping, authorization, budget or production checks.

@@ -7,13 +7,13 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
-from prepare_javascript_reference import prepare, digest
+from prepare_javascript_reference import prepare, digest, project_command_document
 
 
 class JavaScriptPublicationTests(unittest.TestCase):
     """固定工件身份、完整字段/来源和安全展开边界。 Pin artifact identity, full fields/sources and safe extraction boundaries."""
 
-    def fixture(self, change=None, linked=False, html=False, site_id=None, declared=False):
+    def fixture(self, change=None, linked=False, html=False, site_id=None, declared=False, command=False):
         """生成真实双语TAR与完整回执，修改器可构造语义冲突。 Produce a real bilingual TAR and full receipt, with mutations for semantic conflicts."""
         scratch = tempfile.TemporaryDirectory()
         self.addCleanup(scratch.cleanup)
@@ -30,6 +30,25 @@ class JavaScriptPublicationTests(unittest.TestCase):
         source = {'source': 'index.d.mts' if declared else 'HIA/demo/index.mjs', 'sha256': hashlib.sha256(source_bytes).hexdigest(), 'byteLength': len(source_bytes)}
         report = {'sourceRepository': 'mandolin/HIA-Documentation', 'sourceCommit': 'a' * 40, 'registrySha256': 'registry', 'site': definition,
                   'packages': [{'name': '@hia-doc/demo'}], 'rows': [row], 'resources': [], 'dataRows': [], 'fullSources': [source], 'entriesPerLocale': 1, 'bindingsPerLocale': 1}
+        if command:
+            # 中文。单命令与普通API同站，保留独立原件、公开源字节及宿主投影。 English. Keep a command beside ordinary API content with separate native artifacts, public source bytes and host projection.
+            self.assertEqual(site_id, 'css-api')
+            command_prefix = 'HIA/hia-cssdoc/packages/cssdoc-runner'
+            command_source = {'source': command_prefix + '/src/cli.mjs', 'sha256': source['sha256'], 'byteLength': len(source_bytes)}
+            model = {'enabled': True, 'model': 'hia-text-i18n', 'modelVersion': '1.0.0', 'defaultLocale': 'zh-CN', 'locales': ['zh-CN', 'en'], 'fields': {
+                'description': {'fieldPath': 'description', 'kind': 'text', 'defaultLocale': 'zh-CN', 'localizedText': {'zh-CN': '构建文档。', 'en': 'Build documentation.'}}}}
+            declaration = {'id': 'cssdoc', 'executable': 'cssdoc', 'path': [], 'kind': 'command', 'signature': 'cssdoc [options]', 'i18n': model, 'options': [], 'positionals': [], 'displayVersion': {'kind': 'runner', 'value': '1.0.0'}, 'examples': ['cssdoc --help'], 'effects': {'network': 'none'}}
+            description = {'contract': 'command-documentation', 'contractVersion': '0.1.0-draft', 'owner': {'packageName': '@hia-doc/cssdoc-runner', 'packageVersion': '1.0.0'}, 'commands': [declaration],
+                           'sources': [{'id': 'src/cli.mjs', 'path': 'src/cli.mjs', 'sha256': source['sha256'], 'language': 'javascript'}]}
+            command_symbol = {'id': 'command:["@hia-doc/cssdoc-runner","cssdoc"]', 'name': 'cssdoc', 'kind': 'command', 'signature': declaration['signature'], 'i18n': model,
+                              'metadata': {'commandDocumentation': {'nativeId': 'cssdoc'}}, 'source': {'definedIn': {'relativePath': 'src/cli.mjs', 'position': {'line': 1}}}}
+            # 中文。真实JSON工件没有对象别名，夹具同样经序列化消除共享模型引用。 English. Real JSON artifacts have no object aliases; serialize this fixture to eliminate shared model references as well.
+            native_command = json.loads(json.dumps({'schemaVersion': '1.0.0', 'symbols': [command_symbol], 'metadata': {'commandDocumentation': {'artifact': description}}}))
+            web_command = project_command_document(native_command, description, command_prefix)
+            command_row = {'owner': 'hia-cssdoc', 'package': '@hia-doc/cssdoc-runner', 'version': '1.0.0', 'bins': ['cssdoc'], 'sourcePrefix': command_prefix, 'commands': 1, 'symbols': 1,
+                           'documentPath': 'commands/cssdoc/document.hia.json', 'artifacts': [{'path': 'commands/cssdoc/' + name, 'sha256': ''} for name in ('description.json', 'observations.json', 'document.native.hia.json', 'document.hia.json')]}
+            report.update(commandRows=[command_row], entriesPerLocale=2)
+            report['fullSources'].append(command_source)
         if declared:
             # 中文。声明夹具保留独立的原生0.4工件及逻辑/物理来源归属。 English. Declaration fixtures retain independent native 0.4 artifacts and logical/physical source ownership.
             row = {**row, 'owner': 'demo', 'identityScope': 'declarations:demo', 'extractionPath': 'native/extraction.json', 'bridgePath': 'native/bridge.json'}
@@ -52,11 +71,24 @@ class JavaScriptPublicationTests(unittest.TestCase):
                 payload['native/extraction.json'] = {'contract': 'hia-tsdoc-extraction', 'contractVersion': '0.4.0-draft', 'modules': [{'path': 'index.d.mts', 'exports': [{'name': 'visible', 'symbolIds': ['visible']}]}]}
                 payload['native/bridge.json'] = {'contract': 'hia-ts-jsdoc-bridge', 'contractVersion': '0.4.0-draft'}
                 payload['package-api-bindings.json']['bindings'][0].update(module='index.d.mts', exportName='visible')
+            if command:
+                payload.update({'commands/adoption.json': {'rows': [command_row]}, 'commands/cssdoc/description.json': description, 'commands/cssdoc/observations.json': [],
+                                'commands/cssdoc/document.native.hia.json': native_command, 'commands/cssdoc/document.hia.json': web_command})
+                projected_symbol = web_command['symbols'][0]
+                payload['project-index.json']['entries'].append({**projected_symbol, 'symbolId': projected_symbol['id'], 'input': {'path': command_row['documentPath']}, 'contentPath': 'entry.html', 'noScriptPagePath': 'entry.html', 'noScriptLocalePages': [{'path': 'entry.html'}],
+                                                               'source': {'path': command_prefix + '/src/cli.mjs', 'range': coordinates}})
+                payload['source-files/index.json']['sources'].append({**command_source, 'path': 'source-files/' + command_source['source']})
             if change:
                 change(payload, report)
+            if command:
+                for artifact in command_row['artifacts']:
+                    if artifact['path'] in payload:
+                        artifact['sha256'] = hashlib.sha256(json.dumps(payload[artifact['path']]).encode()).hexdigest()
             files.update({locale + '/' + name: json.dumps(value).encode() for name, value in payload.items()})
             files[locale + '/entry.html'] = b'Public entry'
             files[locale + '/source-files/' + source['source']] = source_bytes
+            if command:
+                files[locale + '/source-files/' + command_source['source']] = source_bytes
         report['inventory'] = [{'path': name, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()} for name, data in files.items()]
         report['files'] = len(files)
         report['bytes'] = sum(len(data) for data in files.values())
@@ -83,6 +115,27 @@ class JavaScriptPublicationTests(unittest.TestCase):
         args = self.fixture()
         prepare(*args)
         self.assertTrue((args[3] / 'en/source-files/HIA/demo/index.mjs').is_file())
+
+    def test_command_archive(self):
+        """命令与旧API原件在同一真实归档完整消费。 / Consume commands and legacy API originals together in a real archive."""
+        args = self.fixture(site_id='css-api', command=True)
+        prepare(*args)
+        self.assertTrue((args[3] / 'en/commands/cssdoc/document.native.hia.json').is_file())
+
+    def test_command_projection_rejections(self):
+        """命令缺项、正文、来源和默认规则漂移均阻断。 / Block missing commands, prose, ownership and rule drift."""
+        for change, message in [
+            (lambda payload, report: payload['project-index.json']['entries'].pop(), 'Incomplete or duplicate'),
+            (lambda payload, report: payload['commands/cssdoc/document.hia.json']['symbols'][0]['i18n']['fields']['command.displayVersion.value']['localizedText'].update(en='9.0.0'), 'website projection'),
+            (lambda payload, report: report['commandRows'][0].update(sourcePrefix='HIA/other'), 'source ownership'),
+            (lambda payload, report: payload['project-index.json']['entries'][-1].update(signature='wrong()'), 'Command field'),
+            (lambda payload, report: payload['commands/cssdoc/document.hia.json']['symbols'][0]['source']['definedIn'].update(relativePath='../private'), 'website projection')
+        ]:
+            with self.subTest(message=message):
+                args = self.fixture(change, site_id='css-api', command=True)
+                with self.assertRaisesRegex(ValueError, message):
+                    prepare(*args)
+                self.assertFalse(args[3].exists())
 
     def test_field_mismatch(self):
         """摘要一致的错误正文仍被语义检查拒绝。 Reject semantically incorrect fields even with matching archive hashes."""

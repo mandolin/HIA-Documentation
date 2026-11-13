@@ -1,5 +1,12 @@
 # JavaScript文档工具参考站构建
 
+## Generated command entries
+
+中文。同站按运行器包归属接入 `hia-jsdoc` 的命令及参数参考。命令描述、解析声明观察、原生文档与独立网页投影位于各语言的 `commands/`，版本身份、默认规则、示例和退出码由同一维护包生成，来源只读取逐摘要匹配的明确文件。归档门禁核命令投影和原API的联合覆盖。
+
+English. The same site adopts command and parameter references for `hia-jsdoc` under their runner package. Each locale retains descriptions, parser observations, native documents and separate web projections under `commands/`. Versions, default rules, examples and exit codes come from the same owner, with source reads limited to explicit digest-matched files. Archive gates verify joint command and native-API coverage.
+
+
 JavaScript文档工具包API与JSDoc配置派生证据由HIA正常生产链生成。两个站点的包选择、公开资源、路径和完整名称统一记录于`reference/javascript-reference-inputs.json`。
 
 | 内容 | 公开站点根 |

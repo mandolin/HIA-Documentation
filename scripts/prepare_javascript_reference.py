@@ -7,12 +7,99 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import copy
 from prepare_resource_reference import require, digest, valid_path
 
 
 def read(file):
     """按UTF-8读取发布JSON。 Read publication JSON as UTF-8."""
     return json.loads(file.read_text(encoding='utf-8'))
+
+
+def command_facts(model, prefix, value):
+    """独立重建命令事实字段，原本地化正文保持。 / Independently reconstruct command fact fields, retaining localized prose."""
+    if isinstance(value, (dict, list)):
+        root = prefix in ('command', 'parameter')
+        if not root and isinstance(value, dict) and value.get('i18n'):
+            for name, field in value['i18n']['fields'].items():
+                key = prefix + '.' + name
+                require(key not in model['fields'], 'Command field collision.')
+                model['fields'][key] = {**copy.deepcopy(field), 'fieldPath': key}
+        for name, item in (value.items() if isinstance(value, dict) else enumerate(value)):
+            if name in ('i18n', 'evidence') or (root and name in ('id', 'executable', 'path', 'kind', 'signature', 'options', 'positionals')):
+                continue
+            command_facts(model, prefix + '.' + str(name), item)
+        return
+    require(prefix not in model['fields'], 'Command field collision.')
+    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+    model['fields'][prefix] = {'fieldPath': prefix, 'kind': 'text', 'defaultLocale': model['defaultLocale'], 'localizedText': {locale: text for locale in model['locales']}}
+
+
+def project_command_document(native, description, source_prefix):
+    """独立核宿主投影仅限定路径并附加原契约事实。 / Independently check that host projection qualifies paths and adds existing contract facts."""
+    document = copy.deepcopy(native)
+    for symbol in document['symbols']:
+        source = symbol['source']['definedIn']
+        source['relativePath'] = source_prefix + '/' + source['relativePath']
+        identity = symbol['metadata']['commandDocumentation']
+        command = next((item for item in description['commands'] if item['id'] == identity.get('commandId', identity['nativeId'])), None)
+        require(command is not None, 'Unknown native command identity.')
+        parameter = next((item for item in command['options'] + command['positionals'] if item['id'] == identity['nativeId'] and item['kind'] == identity['kind']), None) if 'commandId' in identity else None
+        require('commandId' not in identity or parameter is not None, 'Unknown command parameter identity.')
+        command_facts(symbol['i18n'], 'command.owner', description['owner'])
+        command_facts(symbol['i18n'], 'parameter' if parameter is not None else 'command', parameter if parameter is not None else command)
+        if parameter is None:
+            for item in command['options'] + command['positionals']:
+                key = 'parameters.' + ('--' if item['kind'] == 'option' else '') + item['name'] + '.summary'
+                require(key not in symbol['i18n']['fields'], 'Command parameter field collision.')
+                symbol['i18n']['fields'][key] = {**copy.deepcopy(item['i18n']['fields']['description']), 'fieldPath': key}
+    return document
+
+
+def check_command_rows(root, report, definition, entries):
+    """按已确认owner站核命令原件、来源、投影及覆盖，旧报告缺省为空。 / Check native commands, sources, projections and coverage under confirmed owner sites, defaulting to empty for legacy reports."""
+    rows = report.get('commandRows', [])
+    if not rows:
+        return set()
+    owners = {'javascript-api': ('hia-jsdoc', 'jsdoc-runner', ['hia-jsdoc']), 'html-api': ('hia-htmdoc', 'htmdoc-runner', ['htmdoc', 'htmdoc-handoff']), 'css-api': ('hia-cssdoc', 'cssdoc-runner', ['cssdoc']), 'dotnet-api': ('hia-dotnetdoc', 'dotnetdoc-runner', ['hia-dotnetdoc', 'dotnetdoc'])}
+    require(definition['id'] in owners and len(rows) == 1, 'Unexpected command publication owner.')
+    owner, runner, bins = owners[definition['id']]
+    require(read(root / 'commands/adoption.json')['rows'] == rows, 'Command adoption record changed.')
+    row = rows[0]
+    source_prefix = 'HIA/' + owner + '/packages/' + runner
+    require(row['owner'] == owner and row['package'] == '@hia-doc/' + runner and row['sourcePrefix'] == source_prefix and row['bins'] == bins, 'Command source ownership changed.')
+    token = {'javascript-api': 'hia-jsdoc', 'html-api': 'htmdoc', 'css-api': 'cssdoc', 'dotnet-api': 'dotnetdoc'}[definition['id']]
+    base = 'commands/' + token
+    require(row['documentPath'] == base + '/document.hia.json'
+            and sorted(artifact['path'] for artifact in row['artifacts']) == sorted(base + '/' + name for name in ('description.json', 'observations.json', 'document.native.hia.json', 'document.hia.json')), 'Unsafe command artifact selection.')
+    # 中文。原工件通过明确清单和归档摘要绑定，命令不使用伪造的普通地图。 English. Explicit inventories and archive digests bind native artifacts; commands do not invent ordinary source maps.
+    for artifact in row['artifacts']:
+        file = root / artifact['path']
+        require(file.is_file() and digest(file) == artifact['sha256'], 'Command artifact bytes changed.')
+    directory = (root / row['documentPath']).parent
+    description = read(directory / 'description.json')
+    native = read(directory / 'document.native.hia.json')
+    document = read(root / row['documentPath'])
+    require(description['contract'] == 'command-documentation' and description['contractVersion'] == '0.1.0-draft' and description['owner'] == {'packageName': row['package'], 'packageVersion': row['version']}, 'Unexpected command description identity.')
+    require(native['metadata']['commandDocumentation']['artifact'] == description, 'Native command description changed.')
+    require(native['schemaVersion'] == '1.0.0', 'Unexpected native command document version.')
+    require(len(description['commands']) == row['commands'] and len(document['symbols']) == row['symbols'], 'Incomplete command coverage.')
+    require(sorted({command['executable'] for command in description['commands']}) == sorted(bins), 'Command invocation inventory changed.')
+    for source in description['sources']:
+        require(valid_path('en/' + source_prefix + '/' + source['path'], ['en']), 'Unsafe command source path.')
+        require(any(item['source'] == source_prefix + '/' + source['path'] and item['sha256'] == source['sha256'] for item in report['fullSources']), 'Command source digest is missing.')
+    require(project_command_document(native, description, source_prefix) == document, 'Command website projection changed.')
+    covered = set()
+    for symbol in document['symbols']:
+        key = (None, symbol['id'])
+        entry = entries.get(key)
+        require(entry is not None and key not in covered and entry['input']['path'] == row['documentPath'], 'Missing or duplicate command entry.')
+        for field in ('name', 'kind', 'signature', 'summary', 'i18n'):
+            require(entry.get(field) == symbol.get(field), 'Command field changed.')
+        require(entry.get('hierarchy', {}).get('parentSymbolId') == symbol.get('parentId'), 'Command hierarchy changed.')
+        require(entry['source']['path'] == symbol['source']['definedIn']['relativePath'] and entry['source']['range']['start']['line'] == symbol['source']['definedIn']['position']['line'], 'Command source anchor changed.')
+        covered.add(key)
+    return covered
 
 
 def check_site(site, report, definition):
@@ -75,6 +162,9 @@ def check_site(site, report, definition):
                 if row in declarations and entry.get('source', {}).get('path'):
                     require(origins.get(entry['source']['path']) == 'HIA/' + row['owner'] + '/' + entry['source']['path'], 'Unexpected declaration source ownership.')
                 covered.add(key)
+        command_entries = check_command_rows(root, report, definition, entries)
+        require(not covered.intersection(command_entries), 'Duplicate command coverage.')
+        covered.update(command_entries)
         require(covered == entries.keys(), 'Unaccounted project entries.')
         for entry in entries.values():
             targets = [entry['contentPath'], entry['noScriptPagePath'], *[page['path'] for page in entry['noScriptLocalePages']]]

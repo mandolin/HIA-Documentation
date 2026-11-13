@@ -1,5 +1,12 @@
 # HTML文档工具包参考站构建
 
+## Generated command entries
+
+中文。同站按运行器包归属接入 `htmdoc / htmdoc-handoff` 的命令及参数参考。命令描述、解析声明观察、原生文档与独立网页投影位于各语言的 `commands/`，版本身份、默认规则、示例和退出码由同一维护包生成，来源只读取逐摘要匹配的明确文件。归档门禁核命令投影和原API的联合覆盖。
+
+English. The same site adopts command and parameter references for `htmdoc / htmdoc-handoff` under their runner package. Each locale retains descriptions, parser observations, native documents and separate web projections under `commands/`. Versions, default rules, examples and exit codes come from the same owner, with source reads limited to explicit digest-matched files. Archive gates verify joint command and native-API coverage.
+
+
 HTML文档工具包API由HIA自身正常生成，包含八包公开绑定、原生注释/签名、schema逐值内容、静态声明数据和授权完整源码。清单位于`reference/html-reference-inputs.json`，使用独立站点`/HIA-Documentation-API-HTML/{locale}/`，支持zh-CN与en。
 
 ## 准备与构建

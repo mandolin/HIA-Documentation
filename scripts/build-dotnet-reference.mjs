@@ -6,8 +6,8 @@ import {buildJavaScriptPackageReference} from "./build-javascript-reference.mjs"
 import {loadDotNetReferenceInputs, createDotNetReferenceNavigation} from "./dotnet-reference-inputs.mjs";
 
 /**
- * @lang zh-CN 选择已确认DotNetDoc清单，复用正常原生/资源装配，独立dotnetdoc命令按命令账本处理。
- * @lang en Select confirmed DotNetDoc inputs and reuse normal native/resource assembly, leaving the standalone dotnetdoc command to its command inventory.
+ * @lang zh-CN 选择已确认DotNetDoc清单，正常装配原生/资源及保留别名关系的两个命令入口。
+ * @lang en Select confirmed DotNetDoc inputs and assemble native APIs, resources and both command entries retaining their alias relationship.
  * @param {object} [options] - workspaceRoot为真实源容器，out限主仓dist；默认dist/dotnet-reference-publication。 workspaceRoot is the real source container and out stays inside main dist, defaulting to dist/dotnet-reference-publication.
  * @returns {Promise<object>} 完整双语内容、容量与固定源提交。 Complete bilingual contents, size and pinned source commit.
  * @throws {Error} 来源、字段、映射、授权、预算或正常生产失败。 Failed source, field, mapping, authorization, budget or production checks.

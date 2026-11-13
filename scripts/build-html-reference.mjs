@@ -6,8 +6,8 @@ import {buildJavaScriptPackageReference} from "./build-javascript-reference.mjs"
 import {loadHtmlReferenceInputs, createHtmlReferenceNavigation} from "./html-reference-inputs.mjs";
 
 /**
- * @lang zh-CN 选择已确认HTML清单，复用正常原生/资源装配，两个独立bin按命令账本处理。
- * @lang en Select confirmed HTML inputs and reuse normal native/resource assembly, leaving the two standalone bins to their command inventory.
+ * @lang zh-CN 选择已确认HTML清单，正常装配原生/资源及两个独立命令入口的文档。
+ * @lang en Select confirmed HTML inputs and assemble native APIs, resources and both independent command references.
  * @param {object} [options] - workspaceRoot为真实源容器，out限主仓dist；默认dist/html-reference-publication。 workspaceRoot is the real source container and out stays inside main dist, defaulting to dist/html-reference-publication.
  * @returns {Promise<object>} 完整双语内容、容量与固定源提交。 Complete bilingual contents, size and pinned source commit.
  * @throws {Error} 来源、字段、映射、授权、预算或正常生产失败。 Failed source, field, mapping, authorization, budget or production checks.
