@@ -32,6 +32,8 @@ export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigatio
   const staticHeaders = Object.fromEntries(Object.entries(headers).map(([locale, html]) => [locale, html.replace(/ data-hia-(?:ui-message|ui-aria|site-hrefs)="[^"]*"/gu, "").replace(/<button\b[^>]*data-hia-reading-dialog[^>]*>[\s\S]*?<\/button>/gu, "")])) as typeof headers;
   // <lang><zh-CN>静态对应路径预建单次索引，避免完整参考站逐文件扫描全部条目；只纳入本次真实生成的页面。</zh-CN><en>Index static counterparts once to avoid scanning all entries for every file in a complete reference site; include only pages generated in this render.</en></lang>
   const entryLocales = new Map(entries.flatMap(entry => Object.values(entry.localePages ?? {}).map(page => [page, entry.localePages!] as const)));
+  // <lang><zh-CN>旧静态别名按实际生成article身份关联同一语言目录，不根据文件名猜测身份或译文。</zh-CN><en>Associate legacy static aliases with the same locale directory through their actual generated article identity, without inferring identities or translations from file names.</en></lang>
+  const localesByIdentity = new Map(entries.map(entry => [escape(entry.id), entry.localePages]));
   // <lang><zh-CN>只有实际交互入口引用增强脚本，静态和来源页只共享样式。</zh-CN><en>Only actual interactive entries reference enhancement scripts; static and source pages share styles alone.</en></lang>
   let interactive = false;
   for (const file of files) {
@@ -44,7 +46,7 @@ export function* withSiteNavigation(files: Iterable<RenderedHtmlFile>, navigatio
     const locale = file.path.startsWith("pages/zh-CN/") ? "zh-CN" : file.path.startsWith("pages/en/") ? "en" : uiLocale;
     const stylesheet = `${"../".repeat(file.path.split("/").length - 1)}${STYLE_PATH}`;
     // <lang><zh-CN>无脚本条目语言入口指向同主题实际页面，所有权未知的目录和源码页继续采用原站点目标。</zh-CN><en>Script-free entry language links target the actual same-topic page, while unowned directories and source viewers retain site-level targets.</en></lang>
-    const counterparts = entryLocales.get(file.path);
+    const counterparts = entryLocales.get(file.path) ?? (file.path.startsWith("pages/") ? localesByIdentity.get(originalContents.match(/<article\b[^>]*\bid="([^"]*)"/u)?.[1] ?? "") : undefined);
     const pageHeader = counterparts
       ? header(navigation, locale, Object.fromEntries(Object.entries(counterparts).map(([language, target]) => [language, "../".repeat(file.path.split("/").length - 1) + target])))
         .replace(/ data-hia-(?:ui-message|ui-aria|site-hrefs)="[^"]*"/gu, "").replace(/<button\b[^>]*data-hia-reading-dialog[^>]*>[\s\S]*?<\/button>/gu, "")

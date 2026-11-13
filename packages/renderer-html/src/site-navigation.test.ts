@@ -47,6 +47,10 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
       expect(html).toContain(`href="../../${counterpart.path}" data-hia-site-language`);
       expect(html).not.toContain("<script");
     }
+    // <lang><zh-CN>索引保留的旧静态别名也必须按实际条目连接同主题，别名的相对深度独立计算。</zh-CN><en>The legacy static alias retained in the index must also link by actual entry identity, computing its own relative depth.</en></lang>
+    const legacy = result.files.find(file => file.path === entry.noScriptPagePath)!.contents;
+    const chinese = entry.noScriptLocalePages.find((page: { uiLocale: string }) => page.uiLocale === "zh-CN");
+    expect(legacy).toContain(`href="../${chinese.path}" data-hia-site-language`);
   });
 
   it("qualifies interactive language roots with only actual generated entry identities", () => {
