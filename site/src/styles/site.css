@@ -208,7 +208,15 @@ html[data-js] .search-form{display:block!important}.results a,.doc-body li{overf
 }
 @media(max-width:370px) { .brand-title{font-size:.7rem}.header-tools{gap:6px}.header-inner{gap:7px}.tool{padding:4px 6px}.hero h1{font-size:2.25rem}.grid{grid-template-columns:1fr}.header .settings-label{display:none}.hero .actions .button{padding:9px 12px}.tabs-inner{gap:18px}.container{width:calc(100% - 32px)} }
 /* 中文：打印和强制颜色保持正文/边界，不依赖装饰。 English: print and forced colors preserve content and boundaries. */
-@media print { .header,.tabs,.sidebar,.toc,.mobile-outline,.footer,dialog,.js-only{display:none!important}.page{padding:0}.docs-layout,.hero,.feature-row{display:block}.container{width:100%}body{background:white;color:black}.code-scroll,.source-lines{overflow:visible;white-space:pre-wrap}.review-note{display:block}.card{break-inside:avoid} }
+/* 中文：打印始终复用已确认浅色纸面调色板，屏幕深色设置不会残留到纸面。 English: print always reuses the confirmed light paper palette, independent of dark screen preferences. */
+@media print {
+  html[data-theme="dark"] {
+    --canvas:#f6f8fc; --surface:#fff; --soft:#edf3ff;
+    --ink:#17253a; --muted:#526177; --line:#dce4ef; --link:#0047ab;
+    color-scheme:light;
+  }
+  .header,.tabs,.sidebar,.toc,.mobile-outline,.footer,dialog,.js-only{display:none!important}.page{padding:0}.docs-layout,.hero,.feature-row{display:block}.container{width:100%}body{background:white;color:black}.code-scroll,.source-lines{overflow:visible;white-space:pre-wrap}.review-note{display:block}.card{break-inside:avoid}
+}
 @media(forced-colors:active) { .button,.card,.notice,.header,.code-box,dialog{border:1px solid CanvasText}.brand-mark{background:Highlight;color:HighlightText}a{color:LinkText}.source-line:target{outline:2px solid Highlight} }
 /* 中文：强制颜色下保留品牌文字与选中边界，不只靠颜色传达当前位置。 English: retain wordmark text and a non-color current-item boundary in forced colors. */
 @media(forced-colors:active) { .brand-mark{forced-color-adjust:none}a[aria-current]{outline:1px solid Highlight;outline-offset:3px;font-weight:800} }

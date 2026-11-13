@@ -36,6 +36,17 @@ test("documentation home and articles share all five categories with the correct
   }
 });
 
+test("printing a dark screen restores the complete light paper palette", async () => {
+  // <lang><zh-CN>打印采用已确认浅色纸面，暗色覆盖的每个色值均须恢复，防止白纸上残留浅字/深卡。</zh-CN><en>Printing uses the confirmed light paper surface, restoring every dark override to prevent pale text and dark cards on white paper.</en></lang>
+  const css = await readFile(new URL("../site/src/styles/site.css",import.meta.url),"utf8");
+  const declarations = body => Object.fromEntries([...body.matchAll(/(--[\w-]+|color-scheme)\s*:\s*([^;{}]+)/g)].map(match=>[match[1],match[2].trim()]));
+  const light = declarations(css.match(/:root\s*\{([^}]+)\}/)[1]);
+  const dark = declarations(css.match(/^html\[data-theme="dark"\]\s*\{([^}]+)\}/m)[1]);
+  const paper = css.match(/@media print\s*\{\s*html\[data-theme="dark"\]\s*\{([^}]+)\}/);
+  assert(paper,"Dark screen preferences must explicitly restore the paper palette.");
+  assert.deepEqual(declarations(paper[1]),Object.fromEntries(Object.keys(dark).map(name=>[name,light[name]])));
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");

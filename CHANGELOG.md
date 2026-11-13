@@ -2,6 +2,9 @@
 
 ## Unreleased — Documentation navigation
 
+- 深色屏幕进入打印时恢复完整浅色纸面调色板，保证辅助文字、卡片和提示框使用既有打印颜色。
+- Printing from a dark screen restores the complete light paper palette for supporting text, cards and notices.
+
 - 文档首页和正文共享五栏目导航，首页提供文档首页选中态，中英文及无脚本路径使用相同显式主题路由。
 - Documentation home and articles share five-category navigation, with the home category selected on the landing page and explicit topic routes for both languages and script-free reading.
 
