@@ -6605,7 +6605,7 @@ function renderSymbol(symbol: HiaSymbol, document: HiaDocument, locales: string[
  * @lang zh-CN 正文formatter只依赖i18n；项目entry和core symbol不需要伪造彼此的字段。
  * @lang en Prose formatting depends only on i18n, so project entries and core symbols never fabricate each other's fields.
  */
-type I18nFieldOwner = Pick<HiaSymbol, "i18n">;
+type I18nFieldOwner = Pick<HiaSymbol, "i18n"> & Partial<Pick<HiaSymbol, "kind">>;
 
 /**
  * @lang zh-CN description优先，其次summary，无模型时仍用description承载普通摘要回退。
@@ -6678,7 +6678,9 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
         // <lang><zh-CN>复用各生产器已存在的字段别名，只改变阅读标题，不迁移原工件身份。</zh-CN><en>Reuse existing producer field aliases for headings without migrating artifact identities.</en></lang>
         const category = /^returns(?:\.(?:summary|description)|\.\d+\.(?:summary|description))?$/u.test(fieldPath) ? "returns" : /^throws\.\d+$/u.test(fieldPath) ? "exceptions" : fieldPath.toLowerCase();
         const known = ["remarks", "parameters", "typeparameters", "returns", "exceptions"].includes(category);
-        const title = known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
+        // <lang><zh-CN>命令契约字段保留原身份和锚点，只把已知标题映射为正式双语消息；扩展字段继续显示原名。</zh-CN><en>Keep command field identities and anchors while mapping known headings to formal bilingual messages, retaining original names for extensions.</en></lang>
+        const commandMessage = ["command", "command-group", "command-option", "command-argument"].includes(symbol.kind ?? "") ? commandFieldMessage(fieldPath) : undefined;
+        const title = commandMessage ? renderProjectUiMessage(portalContext, commandMessage) : known ? renderProjectUiMessage(portalContext, `site.field.${category}`) : `<code>${escapeHtml(fieldPath)}</code>`;
         const anchor = `${ownerId}--field-${stableProjectArtifactName(fieldPath)}`;
         return `<section class="hia-site-field" id="${escapeHtml(anchor)}" tabindex="-1" data-hia-reading-section="${escapeHtml(fieldPath)}"><h3>${title}</h3>${renderedField}</section>`;
       }
@@ -6689,6 +6691,64 @@ function renderAdditionalI18nFields(symbol: I18nFieldOwner, locales: string[], s
     .join("");
 
   return items ? portalContext?.siteNavigation ? items : `<section class="hia-i18n-fields"><h3>${renderOptionalProjectUiMessage(portalContext, "portal.section.localizedfields", "Localized Fields")}</h3><dl>${items}</dl></section>` : "";
+}
+
+/**
+ * @lang zh-CN 命令字段的固定标题别名表，只初始化一次，消息身份由同包双语目录类型约束。
+ * @lang en Fixed heading aliases for command fields, initialized once and constrained by the same package's bilingual catalog type.
+ */
+const COMMAND_FIELD_MESSAGE_IDS: Readonly<Record<string, keyof typeof import("./site-reading.js").SITE_READING_MESSAGES>> = Object.freeze({
+  summary: "site.field.command.summary",
+  indexlabel: "site.field.command.purpose",
+  paths: "site.field.command.paths",
+  effects: "site.field.command.effects",
+  writes: "site.field.command.effects",
+  offline: "site.field.command.offline",
+  parsing: "site.field.command.parsing",
+  parsingrules: "site.field.command.parsing",
+  configusage: "site.field.command.configusage",
+  configoverrides: "site.field.command.configoverrides",
+  directonly: "site.field.command.directonly",
+  versionidentity: "site.field.command.versionidentity",
+  defaults: "site.field.command.defaults",
+  metavar: "site.field.command.metavar",
+  aliases: "site.field.command.aliases",
+  prerequisites: "site.field.command.prerequisites",
+  section: "site.field.command.section",
+  "command.owner.packagename": "site.field.command.package",
+  "command.owner.packageversion": "site.field.command.packageversion",
+  "command.displayversion.kind": "site.field.command.versionidentity",
+  "command.displayversion.value": "site.field.command.displayversion",
+  "command.aliasof": "site.field.command.aliases",
+  "command.parsing.helporder": "site.field.command.helporder",
+  "command.parsing.unknownoptions": "site.field.command.unknownoptions",
+  "command.effects.filesystem": "site.field.command.filesystem",
+  "command.effects.network": "site.field.command.network",
+  "command.examples.*": "site.field.command.examples",
+  "command.exitcodes.*.code": "site.field.command.exitcode",
+  "command.exitcodes.*.summary": "site.field.command.exitsummary",
+  "command.exitcodes.*.description": "site.field.command.exitdescription",
+  "parameter.choices.*": "site.field.command.choices",
+  "parameter.defaultrule.conditions.*": "site.field.command.defaultconditions",
+  "parameter.defaultrule.kind": "site.field.command.defaultkind",
+  "parameter.defaultrule.value": "site.field.command.defaultvalue",
+  "parameter.multiple": "site.field.command.multiple",
+  "parameter.name": "site.field.command.parametername",
+  "parameter.required": "site.field.command.required",
+  "parameter.short": "site.field.command.short",
+  "parameter.valuetype": "site.field.command.valuetype"
+});
+
+/**
+ * @lang zh-CN 对已知命令字段选择完整阅读标题，编号槽位只影响身份，未知字段不猜语义。
+ * @lang en Select complete reading headings for known command fields, retaining numbered identities and avoiding inferred meanings for unknown fields.
+ * @param fieldPath - 原生或网页投影的精确字段路径。Exact native or web-projection field path.
+ * @returns 正式消息身份，未知字段为undefined。Formal message identity, or undefined for unknown fields.
+ */
+function commandFieldMessage(fieldPath: string): string | undefined {
+  // <lang><zh-CN>只归一化数值数组下标用于固定表查找，原路径继续用于字段内容和链接。</zh-CN><en>Normalize numeric array indices only for fixed-table lookup, retaining original paths for field content and links.</en></lang>
+  const key = fieldPath.toLowerCase().replace(/\.\d+(?=\.|$)/gu, ".*");
+  return Object.hasOwn(COMMAND_FIELD_MESSAGE_IDS, key) ? COMMAND_FIELD_MESSAGE_IDS[key] : undefined;
 }
 
 /**

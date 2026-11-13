@@ -3,6 +3,9 @@
 
 ## Generated command reference
 
+中文。采用站点导航的命令页将已知契约字段映射为完整中英文标题，包含包版本、版本输出身份、路径、默认规则、调用示例和退出码。字段正文及其原始身份、锚点分别保留，未知扩展使用原字段名。
+
+English. Navigation-adopted command pages map known contract fields to complete Chinese and English headings, including package versions, version-output identity, paths, defaults, invocation examples and exit codes. Field prose, original identities and anchors remain traceable, while unknown extensions retain their native field names.
 中文。网站副本还将原契约的版本身份、参数默认规则、解析与副作用、示例和退出码逐项展开为标准语言字段，参数说明使用既有名称/说明表。原有语言字段逐项保持，附加字段的机器值原样保留，嵌套说明继续使用原中英文。构建门禁按原契约重建网页副本，并逐字段核对实际HTML、静态页和源码资产。
 
 English. Website copies also expose version identities, parameter defaults, parsing and effects, examples and exit codes through standard locale fields, using the existing name/description table for parameters. Original locale fields remain intact, machine values retain their literals, and nested descriptions retain their original Chinese and English. Build gates reconstruct each website copy from the native contract and check every field against actual HTML, static pages and source assets.

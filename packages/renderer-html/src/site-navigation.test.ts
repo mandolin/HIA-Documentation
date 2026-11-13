@@ -164,6 +164,40 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(fragment.indexOf('data-hia-topic-section="declaration"')).toBeLessThan(fragment.indexOf('data-hia-i18n-field="parameters.value.summary"'));
   });
 
+  it("uses localized command headings while preserving native fields, anchors and extension names", () => {
+    // <lang><zh-CN>原字段身份保持；两个语言画布只改阅读标题，未知扩展不猜标签。</zh-CN><en>Retain original field identities; change only reading headings in both locales without guessing labels for extensions.</en></lang>
+    const model = JSON.parse(readFileSync(new URL("../../../fixtures/basic.hia.json", import.meta.url), "utf8")).symbols[0].i18n;
+    const field = model.fields.description;
+    const headings = {
+      "command.owner.packageName": ["所属文档包", "Owning documentation package"],
+      "command.owner.packageVersion": ["文档包版本", "Documentation package version"],
+      "command.examples.0": ["调用示例", "Invocation example"],
+      "command.exitCodes.1.code": ["退出码", "Exit code"],
+      "parameter.defaultRule.kind": ["默认值规则类型", "Default-rule kind"]
+    };
+    model.fields = Object.fromEntries([...Object.keys(headings), "native.extension"].map(fieldPath => [fieldPath, {...field, fieldPath, localizedText: {"zh-CN": "原中文正文", en: "Original English prose"}}]));
+    const input = {...project(), entries: [{...project().entries[0]!, kind: "command", i18n: model}]};
+    for (const locale of ["zh-CN", "en"] as const) {
+      const result = renderProjectHtmlDocument(input, {projectSite: {uiLocale: locale, informationArchitecture: {}, siteNavigation: navigation()}});
+      const fragment = result.files.find(file => file.path.startsWith("entries/"))!.contents;
+      for (const [fieldPath, labels] of Object.entries(headings)) {
+        expect(fragment).toContain(`data-hia-i18n-field="${fieldPath}"`);
+        expect(fragment).toContain(`data-hia-reading-section="${fieldPath}"`);
+        expect(fragment).toContain(`>${labels[locale === "zh-CN" ? 0 : 1]}</span>`);
+        expect(fragment).not.toContain(`<code>${fieldPath}</code>`);
+      }
+      expect(fragment).toContain("原中文正文");
+      expect(fragment).toContain("Original English prose");
+      expect(fragment).toContain("<code>native.extension</code>");
+    }
+    // <lang><zh-CN>相同字段在其它领域和旧无导航调用中继续保留原标题。</zh-CN><en>The same fields retain original headings in other domains and legacy calls without navigation.</en></lang>
+    const other = {...input, entries: [{...input.entries[0]!, kind: "function"}]};
+    const unchanged = renderProjectHtmlDocument(other, {projectSite: {uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation()}});
+    expect(unchanged.files.find(file => file.path.startsWith("entries/"))!.contents).toContain("<code>command.owner.packageName</code>");
+    const legacy = renderProjectHtmlDocument(input, {projectSite: {uiLocale: "en", informationArchitecture: {}}});
+    expect(legacy.files.find(file => file.path.startsWith("entries/"))!.contents).toContain("command.owner.packageName");
+  });
+
   it("omits runtime-only header payloads and unavailable controls on static/source pages", () => {
     const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const page = result.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents;
