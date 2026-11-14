@@ -9,7 +9,7 @@ import {renderProjectHtmlDocument,type RenderProjectHtmlInput} from "./index.js"
 describe("source availability feedback",()=>{
   it("uses fixed public HTTP and network feedback from the actual generated reader",async()=>{
     // <lang><zh-CN>从真实入口HTML抽取未改写的reader，宿主替身只提供失败前必要的DOM与网络边界。</zh-CN><en>Extract the unchanged reader from actual entry HTML; host doubles supply only the DOM and network boundaries needed before failure.</en></lang>
-    const rendered=renderProjectHtmlDocument({project:{name:"Source failures"},entries:[{id:"public:failure",name:"Failure probe",kind:"function",view:"javascript"}]});
+    const rendered=renderProjectHtmlDocument({project:{name:"Source failures"},entries:[{id:"public:failure",name:"Failure probe",kind:"function",view:"js"}]});
     const html=rendered.files.find(file=>file.path==="index.html")!.contents;
     const reader=html.slice(html.indexOf("  const sourceControllers ="),html.indexOf("  function bindSourceFetch("));
     expect(reader).toContain("async function loadSourceFetch");
