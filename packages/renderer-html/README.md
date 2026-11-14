@@ -233,6 +233,6 @@ Renderer output is separate from CLI filesystem output. See `docs/contract-index
 English. With scripts enabled, declared same-page locale counterparts in independent-generator chrome retain symbol or section anchors that actually exist on the current page. Explicit target fragments take precedence, unknown or malformed fragments are excluded, and fragment changes recalculate targets. Script-free links retain the generated counterpart page, whose directory provides symbol navigation.
 
 
-项目Portal的侧栏检索共享在途索引读取，查询与领域过滤以最新操作为准。缺失或非法索引给出明确失败反馈，清空查询恢复静态层级，修复索引后再次输入可重试。索引读取错误采用固定公开文案，读取失败期间已读正文仍可继续阅读。
+项目Portal的侧栏检索共享在途索引读取，查询与领域过滤以最新操作为准。缺失或非法索引给出明确失败反馈，清空查询恢复静态层级，修复索引后再次输入可重试。索引读取错误采用固定公开文案。启用站点导航时，读取失败期间已读正文仍可继续阅读。
 
-English. Project-Portal sidebar searches share in-flight index reads and apply the latest query and domain filter. Missing or invalid indexes produce explicit failure feedback. Clearing restores the hierarchy, and another input retries after the index is repaired. Index-read failures use fixed public text while the current prose remains readable.
+English. Project-Portal sidebar searches share in-flight index reads and apply the latest query and domain filter. Missing or invalid indexes produce explicit failure feedback. Clearing restores the hierarchy, and another input retries after the index is repaired. Index-read failures use fixed public text. With site navigation enabled, the current prose remains readable during these failures.

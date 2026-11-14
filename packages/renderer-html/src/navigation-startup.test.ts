@@ -48,6 +48,9 @@ function host() {
     }
   };
   const context = {
+    // <lang><zh-CN>隔离宿主提供真实运行时的查询代次与可选正文区域。</zh-CN><en>The isolated host supplies the real runtime's query generation and optional prose region.</en></lang>
+    searchSequence: 0,
+    contentHost: null,
     search: { value: "alpha" },
     activeView: "all",
     treeHost: tree,
