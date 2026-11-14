@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Documentation section outlines
+
+- 官网手册中的HTML标题与Markdown标题共同进入实际小节目录，保留明确锚点与原始顺序，支持桌面、手机和无脚本阅读。
+- Include HTML and Markdown headings together in manual section outlines, preserving explicit anchors and source order for desktop, mobile and script-free reading.
+
 ## Unreleased — Standalone dark and print appearance
 
 - 独立JSDoc示例采用可读的深色签名、标题与来源表面，以及浅色打印调色板和代码换行。

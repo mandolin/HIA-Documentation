@@ -159,7 +159,37 @@ test("the actual Satteri processor renders scroll wrappers around native Markdow
 
 test("the actual Astro build uses the current processor's native HAST table plugin", async () => {
   const config = await readFile(new URL("../astro.config.mjs", import.meta.url), "utf8");
-  assert(config.includes('processor: satteri({hastPlugins: [markdownTableWrappers()]})'));
+  assert(config.includes('hastPlugins: [markdownTableWrappers()]'));
+});
+
+test("the configured Markdown processor collects explicit HTML headings alongside Markdown headings", async () => {
+  // <lang><zh-CN>采用正式Astro配置，真实HTML标题及原ID进入目录，代码块中的标题文本仍为示例。</zh-CN><en>Use production Astro options so real HTML headings and original IDs enter the outline while headings inside code blocks remain examples.</en></lang>
+  const {default: config} = await import("../astro.config.mjs");
+  const processor = await createSatteriMarkdownProcessor(config.markdown.processor.options);
+  const result = await processor.render('# Manual\n\n<h2 id="stable-section"><em>Visible</em> <code>a&amp;b</code></h2>\n\n## Markdown section\n\n~~~html\n<h2 id="code-only">Example</h2>\n~~~\n');
+  assert.deepEqual(result.metadata.headings.filter(heading => heading.depth === 2), [
+    {depth: 2, slug: "stable-section", text: "Visible a&b"},
+    {depth: 2, slug: "markdown-section", text: "Markdown section"}
+  ]);
+  assert(result.code.includes('<h2 id="stable-section">'));
+  assert(!result.metadata.headings.some(heading => heading.slug === "code-only"));
+});
+
+test("every actual manual section is represented in its generated heading metadata", async () => {
+  // <lang><zh-CN>九篇双语手册的实际渲染H2与目录元数据逐ID顺序核对，捕获空目录和混合语法遗漏。</zh-CN><en>Compare rendered H2 IDs with outline metadata in order across all nine bilingual manuals, catching empty outlines and mixed-syntax omissions.</en></lang>
+  const {default: config} = await import("../astro.config.mjs");
+  const {manualKinds} = await import("../src/lib/routes.mjs");
+  const processor = await createSatteriMarkdownProcessor(config.markdown.processor.options);
+  for (const locale of ["zh-CN", "en"]) for (const kind of manualKinds) {
+    // <lang><zh-CN>只读取已登记公开手册，同一编译结果提供正文节点与对应目录身份。</zh-CN><en>Read only registered public manuals, using the same compilation for body nodes and their outline identities.</en></lang>
+    const input = await readFile(new URL(`../src/content/${kind}.${locale}.md`, import.meta.url), "utf8");
+    const result = await processor.render(input);
+    const actualIds = [...result.code.matchAll(/<h2\b[^>]*\bid="([^"]+)"[^>]*>/gu)].map(match => match[1]);
+    const headings = result.metadata.headings.filter(heading => heading.depth === 2);
+    assert(actualIds.length > 0, `${locale}/${kind} needs its actual sections.`);
+    assert.deepEqual(headings.map(heading => heading.slug), actualIds, `${locale}/${kind} outline covers every section in order.`);
+    assert(headings.every(heading => heading.text.trim().length > 0));
+  }
 });
 
 

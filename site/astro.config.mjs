@@ -17,8 +17,8 @@ export default defineConfig({
   base: "/HIA-Documentation/",
   trailingSlash: "always",
   output: "static",
-  // <lang><zh-CN>构建时生成已有表格滚动容器，无脚本时同样保持正文宽度和键盘可达性。</zh-CN><en>Generate existing table-scroll containers at build time, preserving content width and keyboard access without scripts.</en></lang>
-  markdown: {processor: satteri({hastPlugins: [markdownTableWrappers()]})},
+  // <lang><zh-CN>原始HTML标题进入同一HAST，正式标题插件据实际ID生成小节目录；表格包装同时支持无脚本键盘阅读。</zh-CN><en>Parse raw HTML headings into the same HAST so the standard heading plugin collects real section IDs; table wrappers also support script-free keyboard reading.</en></lang>
+  markdown: {processor: satteri({hastPlugins: [markdownTableWrappers()], features: {rawHtml: true}})},
   image: { service: { entrypoint: "astro/assets/services/passthrough" } },
   build: { format: "directory" },
   vite: { build: { sourcemap: false } },
