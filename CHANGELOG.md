@@ -6,6 +6,8 @@
 - Project source preparation distinguishes denied local publication authority, missing sources and read failures through existing entry diagnostics. The reading layout adds absent-excerpt feedback while retaining prose and script-free reading.
 - HTTP拒绝、资产缺失及网络失败采用固定双语文案，避免回显服务端状态文本或原始异常。重置后重新展开会重走原摘要校验。
 - HTTP denial, missing assets and network failures use fixed bilingual feedback without reflecting server status text or original exceptions. Resetting and reopening repeats the original integrity checks.
+- 相同来源事实只在来源区呈现一次，公开诊断代码保留在结构化状态元数据，其它诊断继续完整显示。
+- Source facts appear once in the source section, public diagnostic codes remain in structured status metadata, and other diagnostics retain their full display.
 
 ## Unreleased — Public API inventory guidance
 

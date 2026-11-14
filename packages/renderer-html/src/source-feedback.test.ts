@@ -32,7 +32,7 @@ describe("source availability feedback",()=>{
   it.each([
     ["HIA_CLI_SOURCE_NOT_AUTHORIZED","denied","源码请求被拒绝。","Source request denied."],
     ["HIA_CLI_SOURCE_NOT_FOUND","not-found","源码资源不存在。","Source asset was not found."],
-    ["HIA_CLI_SOURCE_READ_FAILED","network-error","源码暂时无法读取，请重置后重试。","Source is temporarily unavailable. Reset and retry."],
+    ["HIA_CLI_SOURCE_READ_FAILED","network-error","源码暂时无法读取。","Source is temporarily unavailable."],
     [undefined,"unavailable","此条目未提供可公开的源码。","This entry has no public source excerpt."]
   ])("renders the %s state in both locales without fetching or losing prose",(code,state,chinese,english)=>{
     // <lang><zh-CN>输入诊断仅用既有开放诊断字段，renderer不据诊断授予读文件或网络权限。</zh-CN><en>Input diagnostics use existing open diagnostic fields; diagnostics grant the renderer no file or network authority.</en></lang>
@@ -45,9 +45,21 @@ describe("source availability feedback",()=>{
       for(const page of pages.filter(file=>!file.path.startsWith("pages/zh-CN/")&&!file.path.startsWith("pages/en/"))) {
         expect(page.contents).toContain(`data-hia-source-state="${state}"`);
         expect(page.contents).toContain(message);
+        if(code) {
+          expect(page.contents).toContain(`data-hia-source-diagnostic="${code}"`);
+          expect(page.contents).not.toContain("Public diagnostic.");
+        }
         expect(page.contents).toContain("Readable public documentation.");
         expect(page.contents).not.toContain("data-hia-source-fetch=");
       }
     }
+  });
+  it("retains independent diagnostics while displaying source feedback once",()=>{
+    // <lang><zh-CN>来源提示已承载拒绝事实及公开代码，独立业务诊断仍须显示完整正文。</zh-CN><en>The source notice carries refusal facts and the public code; independent domain diagnostics must still show complete prose.</en></lang>
+    const result=renderProjectHtmlDocument({project:{name:"Independent diagnostics"},entries:[{id:"public:diagnostics",name:"Alert",kind:"html-component",view:"html",source:{path:"public.html"},diagnostics:[{code:"HIA_CLI_SOURCE_NOT_AUTHORIZED",message:"Repeated source detail.",severity:"info"},{code:"PUBLIC_OTHER",message:"Independent public diagnostic.",severity:"warning"}]}]},{projectSite:{uiLocale:"en",informationArchitecture:{contentGrouping:"entry",loadingStrategy:"lazy",memberPlacement:"separate"}}});
+    const entry=result.files.find(file=>file.path.startsWith("entries/"))!.contents;
+    expect(entry).toContain('data-hia-source-diagnostic="HIA_CLI_SOURCE_NOT_AUTHORIZED"');
+    expect(entry).not.toContain("Repeated source detail.");
+    expect(entry).toContain("Independent public diagnostic.");
   });
 });

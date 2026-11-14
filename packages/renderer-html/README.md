@@ -10,7 +10,11 @@ The explicit reading layout distinguishes an absent public excerpt, denied local
 
 After restoring the original asset bytes or read authority, select **Reset** and reopen the source panel to repeat the original integrity checks. During loading, the same control cancels the request. Static pages show build-time availability feedback and support ordinary reading with scripts disabled. Source mode `none` retains its visibility policy, and failures remain within the selected mode.
 
+构建时的来源失败需要修正文件或配置后重新构建，浏览器读取器的重置只重新请求已发布的资产。Build-time source failures require correcting files or configuration and rebuilding. A browser reader reset only requests assets already published.
+
 CLI通过已有条目diagnostics传递以下固定信息类别，重复准备会重算这些瞬时结果，其它生产者诊断保持。These fixed informational codes use existing entry diagnostics. Repeated preparation recomputes these transient outcomes and preserves other producer diagnostics.
+
+已显示来源提示的同一诊断以`data-hia-source-diagnostic`保留公开代码，其它诊断继续在诊断区显示。The same diagnostic already represented by a source notice retains its public code in `data-hia-source-diagnostic`, while other diagnostics remain in the diagnostics section.
 
 | Code | Meaning |
 | --- | --- |

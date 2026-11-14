@@ -4028,7 +4028,7 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "      if (!response.ok) {",
     "        const state = sourceFailureState(response);",
     "        /* <lang><zh-CN>按已知HTTP结果给固定公开反馈，禁止回显服务端statusText或响应正文。</zh-CN><en>Use fixed public feedback for known HTTP outcomes without reflecting server statusText or response bodies.</en></lang> */",
-    "        const message = state === 'denied' ? ['portal.source.status.denied', 'Source request denied.'] : state === 'not-found' ? ['portal.source.status.notfound', 'Source asset was not found.'] : ['portal.source.status.network', 'Source is temporarily unavailable. Reset and retry.'];",
+    "        const message = state === 'denied' ? ['portal.source.status.denied', 'Source request denied.'] : state === 'not-found' ? ['portal.source.status.notfound', 'Source asset was not found.'] : ['portal.source.status.network', 'Source is temporarily unavailable.'];",
     "        setSourceState(details, state, message[0], message[1]);",
     "        return;",
     "      }",
@@ -4085,7 +4085,7 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "    } catch (error) {",
     "      const aborted = error?.name === 'AbortError';",
     "      /* <lang><zh-CN>网络异常仅映射为固定状态，原异常可能携带主机路径或端点细节。</zh-CN><en>Map network exceptions to fixed states only; original exceptions may carry host paths or endpoint details.</en></lang> */",
-    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'portal.source.status.aborted' : 'portal.source.status.network', aborted ? 'Source load aborted.' : 'Source is temporarily unavailable. Reset and retry.');",
+    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'portal.source.status.aborted' : 'portal.source.status.network', aborted ? 'Source load aborted.' : 'Source is temporarily unavailable.');",
     "    } finally {",
     "      clearTimeout(timeout);",
     "      sourceControllers.delete(details);",
@@ -4764,6 +4764,9 @@ function renderProjectSemanticTopicInternal(
   const additionalFields = renderAdditionalI18nFields(entry, locales, selectedLocale, getPrimaryI18nFieldPath(entry), portalContext, entry.id);
   const summaryBadges = portalContext.siteNavigation && primarySummary ? `<div class="hia-site-api-meta">${badges}</div>` : "";
   const headingTag = portalContext.siteNavigation && ancestors.size === 0 ? "h1" : "h2";
+  // <lang><zh-CN>同一来源事实在来源区显示一次，原公开代码保留在提示元数据中，其它诊断继续独立呈现。</zh-CN><en>Show each source fact once in its source section, retain public codes in notice metadata, and present other diagnostics independently.</en></lang>
+  const sourceFeedback = renderProjectSourceAvailabilityFeedback(entry, portalContext);
+  const topicDiagnostics = sourceFeedback ? (entry.diagnostics ?? []).filter(item => !["HIA_CLI_SOURCE_NOT_AUTHORIZED", "HIA_CLI_SOURCE_NOT_FOUND", "HIA_CLI_SOURCE_READ_FAILED", "HIA_CLI_SOURCE_NOT_PROVIDED"].includes(item.code)) : entry.diagnostics ?? [];
   const sections = [
     // <lang><zh-CN>显式IA保留既有section顺序，在正文分区内加入完整字段，避免建立第二条内容降级路径。</zh-CN><en>Explicit IA retains section order while including full fields inside the prose section, avoiding a second content-loss route.</en></lang>
     renderProjectTopicSection("summary", "portal.section.summary", labels.summary, primarySummary + summaryBadges + (portalContext.siteNavigation ? "" : additionalFields), portalContext),
@@ -4795,8 +4798,8 @@ function renderProjectSemanticTopicInternal(
       portalContext
     ),
     renderProjectTopicSection("relations", "portal.section.relations", labels.relations, renderProjectTopicRelations(entry, projectInput.relationGraph, portalContext), portalContext),
-    renderProjectTopicSection("source", "portal.section.source", labels.source, renderProjectTopicSource(entry, portalContext), portalContext),
-    renderProjectTopicSection("diagnostics", "portal.section.diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(entry.diagnostics ?? []), portalContext)
+    renderProjectTopicSection("source", "portal.section.source", labels.source, renderProjectTopicSource(entry, portalContext, sourceFeedback), portalContext),
+    renderProjectTopicSection("diagnostics", "portal.section.diagnostics", labels.diagnostics, renderProjectTopicDiagnostics(topicDiagnostics), portalContext)
   ].join("");
   const searchText = createProjectEntrySearchText(entry);
 
@@ -4993,13 +4996,21 @@ function renderProjectTopicRelations(
   return items ? `<ul class="hia-project-relation-list">${items}</ul>` : "";
 }
 
-/** source 与 doc-source-map 保持既有 privacy policy；本函数不新增 source body。Source and doc-source-map retain the existing privacy policy; this function adds no source body. */
+/**
+ * @lang zh-CN 来源区组合一次性状态反馈及既有白名单元数据，保持文档正文独立可读。
+ * @lang en The source section combines one availability notice with existing allowlisted metadata while keeping documentation prose independently readable.
+ * @param entry <lang><zh-CN>当前语义条目。</zh-CN><en>Current semantic entry.</en></lang>
+ * @param portalContext <lang><zh-CN>已确认的阅读及双语呈现选择。</zh-CN><en>Confirmed reading and bilingual presentation choices.</en></lang>
+ * @param sourceFeedback <lang><zh-CN>同次渲染已生成的安全反馈HTML。</zh-CN><en>Safe feedback HTML prepared in the same render.</en></lang>
+ * @returns <lang><zh-CN>来源区正文，不进行文件或网络读取。</zh-CN><en>Source-section body without file or network reading.</en></lang>
+ */
 function renderProjectTopicSource(
   entry: RenderProjectEntry,
-  portalContext: RenderProjectPortalContext
+  portalContext: RenderProjectPortalContext,
+  sourceFeedback: string
 ): string {
   return [
-    renderProjectSourceAvailabilityFeedback(entry, portalContext),
+    sourceFeedback,
     entry.source ? renderProjectEntrySource(entry.source, false, portalContext) : "",
     entry.sourceUsability ? renderProjectEntrySourceUsability(entry.sourceUsability, false, portalContext) : "",
     entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false, portalContext) : "",
@@ -5022,12 +5033,15 @@ function renderProjectSourceAvailabilityFeedback(entry: RenderProjectEntry, cont
   const known = {
     HIA_CLI_SOURCE_NOT_AUTHORIZED: ["denied", "portal.source.status.denied", "Source request denied."],
     HIA_CLI_SOURCE_NOT_FOUND: ["not-found", "portal.source.status.notfound", "Source asset was not found."],
-    HIA_CLI_SOURCE_READ_FAILED: ["network-error", "portal.source.status.network", "Source is temporarily unavailable. Reset and retry."]
+    HIA_CLI_SOURCE_READ_FAILED: ["network-error", "portal.source.status.network", "Source is temporarily unavailable."],
+    HIA_CLI_SOURCE_NOT_PROVIDED: ["unavailable", "portal.source.status.notprovided", "This entry has no public source excerpt."]
   } as const;
   // <lang><zh-CN>有公开原因才区分失败，缺少证据保持未提供；正文入口与普通阅读不受影响。</zh-CN><en>Distinguish failures only with a public reason; missing evidence remains an absent excerpt and ordinary prose stays readable.</en></lang>
   const diagnostic = entry.diagnostics?.find(item => Object.hasOwn(known, item.code));
   const [state, messageId, fallback] = diagnostic ? known[diagnostic.code as keyof typeof known] : ["unavailable", "portal.source.status.notprovided", "This entry has no public source excerpt."] as const;
-  return `<div data-hia-source-state="${state}"><p class="hia-project-loading" data-hia-source-fetch-status role="status">${renderOptionalProjectUiMessage(context, messageId, fallback)}</p></div>`;
+  // <lang><zh-CN>公开代码只作为已转义的状态元数据，原诊断消息不重复进入视觉正文。</zh-CN><en>The public code remains escaped status metadata; original diagnostic messages are not repeated in visual prose.</en></lang>
+  const code = diagnostic ? ` data-hia-source-diagnostic="${escapeHtml(diagnostic.code)}"` : "";
+  return `<div data-hia-source-state="${state}"${code}><p class="hia-project-loading" data-hia-source-fetch-status role="status">${renderOptionalProjectUiMessage(context, messageId, fallback)}</p></div>`;
 }
 
 /**
