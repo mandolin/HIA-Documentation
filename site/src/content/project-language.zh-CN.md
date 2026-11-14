@@ -25,6 +25,8 @@ hia docs build --project-manifest hia-project.json --out dist/site --locale zh-C
 
 生产器执行会加载声明的模块并可能写出工件；清单/请求校验不是沙箱或执行授权。使用明确输入与专用输出目录，按[来源安全](/HIA-Documentation/docs/zh-CN/learn/theme-source/)审查可公开材料。
 
+按[兼容读取、显式迁移与四域聚合实操](https://github.com/mandolin/HIA-Documentation/blob/main/docs/project-manifest-guide.md#reproduce-compatibility-and-four-domain-aggregation)保留旧清单，先校验原输入，再深复制并按当前规则校验，比较完整索引与字段。静态工件和直接producer分别核输出；接入.NET时明确选择一份逻辑文档及其匹配地图。界面与正文字段语言分别设置，源码正文使用独立公开策略。
+
 ## 权威参考
 
 下列技术参考保留其实际语言；本页译文不表示所有链接正文均已有对应译文。

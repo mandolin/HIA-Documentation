@@ -17,6 +17,8 @@ Content-field locales, interface locales and locale resources are separate conce
 
 Producer execution loads declared modules and may write artifacts. Validation is neither sandboxing nor execution authority. Use explicit inputs and dedicated outputs, and review publication boundaries before building a public site.
 
+Follow the [compatibility, explicit-migration and four-domain aggregation workflow](https://github.com/mandolin/HIA-Documentation/blob/main/docs/project-manifest-guide.md#reproduce-compatibility-and-four-domain-aggregation). Preserve legacy manifests, validate originals, deep-copy and validate current rules, then compare complete indexes and fields. Verify static artifacts and direct producers separately. Select one logical .NET document with its matching map, configure UI and content locales independently, and apply a separate source-publication policy.
+
 ## Configuration and command examples
 
 These shared examples use the same configuration identities, inputs and commands as the Chinese guide. Run them only after preparing the matching tools and inputs.

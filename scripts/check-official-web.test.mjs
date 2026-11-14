@@ -163,6 +163,23 @@ test("the public .NET sample compiles only its declared first-party source", asy
   }
 });
 
+test("project aggregation guidance validates migration and selects unique .NET artifacts", async () => {
+  // <lang><zh-CN>迁移前后都需真实校验，公开四域清单与已安装模块入口应可复现。</zh-CN><en>Migration needs actual validation before and after copying, with reproducible four-domain manifests and installed module entries.</en></lang>
+  const guide = await readFile(new URL("../docs/project-manifest-guide.md", import.meta.url), "utf8");
+  for (const value of ["## Reproduce compatibility and four-domain aggregation", "structuredClone", "validateHiaProjectManifest(legacy)", "validateHiaProjectManifest(current)", "HiaDocumentationSample.doc-source-map.json", "one logical document"]) {
+    assert(guide.includes(value), `Missing aggregation fact ${value}`);
+  }
+  assert(guide.includes('"module": "node_modules/@hia-doc/htmdoc-producer/src/index.mjs"'));
+  assert(!guide.includes('"module": "node_modules/@hia-doc/htmdoc-producer/dist/index.js"'));
+  const migration = await readFile(new URL("../docs/project-manifest-migration.md", import.meta.url), "utf8");
+  const pkg = JSON.parse(await readFile(new URL("../packages/config/package.json", import.meta.url), "utf8"));
+  assert(migration.includes(`source candidate \`${pkg.version}\``));
+  for (const locale of ["zh-CN", "en"]) {
+    const article = await readFile(new URL(`../site/src/content/project-language.${locale}.md`, import.meta.url), "utf8");
+    assert(article.includes("docs/project-manifest-guide.md#reproduce-compatibility-and-four-domain-aggregation"));
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");

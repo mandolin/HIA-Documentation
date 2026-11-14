@@ -37,6 +37,116 @@ fixtures/project-producer.hia-project.json
 
 Profile references are explicit. `@hia-doc/profiles` distributes the official profile set, while project manifests continue to reference a safe local artifact path when profile data is required. The CLI does not silently fetch remote profiles. See `docs/profile-distribution.md`.
 
+## Reproduce compatibility and four-domain aggregation
+
+Prepare a matching built HIA CLI and config package. Use a fresh sample
+directory containing the explicit fixture files, profile files, producer
+module and producer sources with their original relative layout. Keep
+`fixtures/project-mixed.hia-project.json` and
+`fixtures/project-producer.hia-project.json` at their original
+`0.1.0-draft` identity. Run them through the compatible reader first.
+
+```sh
+hia docs build --project-manifest fixtures/project-mixed.hia-project.json --out dist/legacy-static --locale en
+hia docs build --project-manifest fixtures/project-producer.hia-project.json --out dist/legacy-producer --locale en
+```
+
+For a built source checkout, replace `hia` with
+`node <built-core-checkout>/apps/cli/dist/index.js`. The static fixture
+contains six entries across JavaScript, HTML and CSS. The fixture producer
+emits two entries, one HTML component and one CSS component style. Its
+coverage is defined by that fixture module.
+
+An explicit migration can validate both inputs and preserve the originals.
+With a matching `@hia-doc/config` available to the script, write a new
+manifest alongside each copied fixture.
+
+```js
+import assert from "node:assert/strict";
+import { readFile, writeFile } from "node:fs/promises";
+import { HIA_PROJECT_MANIFEST_SCHEMA_VERSION, validateHiaProjectManifest } from "@hia-doc/config";
+
+for (const name of ["project-mixed", "project-producer"]) {
+  // <lang><zh-CN>旧清单只读，复制拥有自己的嵌套数据。</zh-CN><en>The old manifest is read-only; the copy owns its nested data.</en></lang>
+  const path = `fixtures/${name}.hia-project.json`;
+  const original = await readFile(path, "utf8");
+  const legacy = JSON.parse(original);
+  assert.deepEqual(validateHiaProjectManifest(legacy), []);
+  const current = structuredClone(legacy);
+  current.schemaVersion = HIA_PROJECT_MANIFEST_SCHEMA_VERSION;
+  assert.deepEqual(validateHiaProjectManifest(current), []);
+  assert.deepEqual({ ...current, schemaVersion: legacy.schemaVersion }, legacy);
+  assert.equal(await readFile(path, "utf8"), original);
+  await writeFile(`fixtures/${name}.current.json`, JSON.stringify(current, null, 2) + "\n");
+}
+```
+
+Build the two new manifests and compare their project indexes, entry IDs,
+fields, profiles, maps and relations with the corresponding legacy output.
+Domain artifacts retain their own existing versions throughout this step.
+Changing a root identity alone provides no compatibility evidence.
+
+For four-domain reading, first prepare the real .NET artifacts from the
+[compiled sample](../reference/samples/dotnet/). Keep its relative layout
+under `reference/samples/dotnet/` in the sample workspace. Use the
+[.NET first-run guide](dotnetdoc-quickstart.md#current-source-first-run)
+for matching tools, compilation and extraction.
+
+Save this current manifest at the sample root as `four-domain.static.json`.
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "id": "project:four-domain-static",
+    "name": "Four-domain Static Project",
+    "defaultLocale": "en",
+    "locales": ["en", "zh-CN"]
+  },
+  "profiles": [
+    {"profileId": "jsdoc", "path": "fixtures/project-mixed-profiles/jsdoc.profile.json"},
+    {"profileId": "htmdoc", "path": "fixtures/project-mixed-profiles/htmdoc.profile.json"},
+    {"profileId": "cssdoc", "path": "fixtures/project-mixed-profiles/cssdoc.profile.json"},
+    {"profileId": "doc-source-map", "path": "fixtures/project-mixed-profiles/doc-source-map.profile.json"}
+  ],
+  "inputs": [
+    {"kind": "jsdoc-integration", "path": "fixtures/jsdoc-integration.basic.json", "domain": "js", "profile": {"profileId": "jsdoc", "profileVersion": "0.1.0-draft"}},
+    {"kind": "htmdoc-extraction", "path": "fixtures/project-mixed-alert.htmdoc.json", "domain": "html", "profile": {"profileId": "htmdoc", "profileVersion": "0.1.0-draft"}},
+    {"kind": "cssdoc-extraction", "path": "fixtures/project-mixed-alert.cssdoc.json", "domain": "css", "profile": {"profileId": "cssdoc", "profileVersion": "0.1.0-draft"}},
+    {"kind": "doc-source-map", "path": "fixtures/project-mixed-alert.docmap.json", "profile": {"profileId": "doc-source-map", "profileVersion": "0.1.0-draft"}},
+    {"kind": "hia-document", "path": "reference/samples/dotnet/dist/dotnetdoc/bin/Release/net10.0/HiaDocumentationSample.hia.json", "domain": "dotnet"},
+    {"kind": "doc-source-map", "path": "reference/samples/dotnet/dist/dotnetdoc/bin/Release/net10.0/HiaDocumentationSample.doc-source-map.json", "domain": "dotnet"}
+  ]
+}
+```
+
+Select one logical document and its matching map for each .NET API input.
+When a result contains both XML-derived and C#-derived HIA copies of the same
+members, inspect both domain artifacts, then explicitly select the intended
+document/map pair for aggregation. For a producer bridge that needs only the
+XML-derived document with real source locations, declare an XML input with
+its actual `projectPath`. Independent libraries with overlapping native IDs
+use the existing reviewed identity scopes described in the migration guide.
+
+Use a separate HIA reading config for each UI locale. To inspect metadata
+without publishing source bodies, choose `docs.source.presentation: "none"`.
+
+```sh
+hia docs build --project-manifest four-domain.static.json --config hia.config.json --out dist/four-domain/zh-CN --locale zh-CN
+hia docs build --project-manifest four-domain.static.json --config hia.en.config.json --out dist/four-domain/en --locale en
+```
+
+The four-domain static example contains eight entries, with two per domain.
+A project that combines the fixture producer, the two JSDoc entries and the
+real .NET producer contains six entries. Inspect actual producer outputs and
+`hia-manifest.json` for their exact counts, domains and source links.
+Unknown static kinds and unsafe declared paths fail validation. Correct them
+and build into a fresh directory, retaining the failure diagnostics.
+
+中文说明。旧清单先按原版本实际读取，再独立校验/深复制/校验当前规则，比较完整索引及字段。
+四域静态清单显式加入真实.NET文档和地图，producer路径按实际模块覆盖核数量。
+输入归属、字段语言与源码公开许可分别核验，原领域工件版本保持。
+
 ## Minimal Manifest
 
 For independent documents whose native symbol IDs overlap, explicitly use manifest
@@ -124,7 +234,7 @@ Use `producers` when source files should be converted to documentation artifacts
   "producers": [
     {
       "id": "htmdoc",
-      "module": "node_modules/@hia-doc/htmdoc-producer/dist/index.js",
+      "module": "node_modules/@hia-doc/htmdoc-producer/src/index.mjs",
       "workspaceRoot": ".",
       "inputs": [
         {

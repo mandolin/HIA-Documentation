@@ -51,7 +51,7 @@ extensions. An `identityScope` extension in these versions remains inert. Upgrad
 the manifest version explicitly and review its document/map grouping before
 activation. Existing noncolliding legacy routes retain their IDs.
 
-The current project-manifest **source contract candidate** is `1.0.0`. The runtime reader also accepts exact `0.1.0-draft`. This does not publish a new `@hia-doc/config` package: the checked-in package remains `0.1.5`, and package/system release readiness is assessed separately.
+The default project-manifest **source contract candidate** is `1.0.0`, with the explicit scoped identity described above at `1.1.0`. The runtime reader also accepts exact `0.1.0-draft`. The checked-in `@hia-doc/config` package has source candidate `1.0.0`; registry availability and system release readiness are assessed separately.
 
 中文摘要：项目清单源码契约候选为1.0.0，精确读取旧0.1.0-draft，不原地迁移清单。包版本、项目配置、文档配置运行时、生产器契约和实际发布身份各自独立；旧npm版本不能据此宣称含有本候选代码。
 

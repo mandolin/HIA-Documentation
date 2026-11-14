@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Four-domain project aggregation guidance
+
+- 项目聚合指南衔接旧清单兼容读取、显式校验迁移和真实.NET文档/地图接入，校正当前配置包与HTMDoc模块入口。
+- Project guidance connects legacy reads, explicitly validated migration and real .NET document/map adoption, correcting the current config-package and HTMDoc module references.
+
 ## Unreleased — .NET first-run workflow
 
 - 公开原生para泛型样本衔接真实编译、完整字段与授权源码阅读；两类自有样本显式声明编译集合，避免收集npm工具源文件。
