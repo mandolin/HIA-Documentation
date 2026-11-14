@@ -30,12 +30,14 @@ describe("public site-chrome shared entry", () => {
     expect(source).toBeDefined();
     const link = { dataset: {} as Record<string, string>, href: "https://public.example/api/greet.en.html", getAttribute() { return "greet.en.html"; } };
     const explicit = { dataset: {} as Record<string, string>, href: "https://public.example/api/greet.en.html#fixed", getAttribute() { return "greet.en.html#fixed"; } };
+    const current = { dataset: {} as Record<string, string>, href: "https://public.example/api/greet.zh-CN.html", getAttribute() { return ""; } };
     const location = { hash: "#greet" };
-    const context = { URL, decodeURIComponent, location, document: { baseURI: "https://public.example/api/greet.zh-CN.html", querySelectorAll() { return [link, explicit]; }, getElementById(id: string) { return ["greet", "parameters"].includes(id) ? {} : null; } } };
+    const context = { URL, decodeURIComponent, location, document: { baseURI: "https://public.example/api/greet.zh-CN.html", querySelectorAll() { return [link, explicit, current]; }, getElementById(id: string) { return ["greet", "parameters"].includes(id) ? {} : null; } } };
     const synchronize = runInNewContext(`(${source})`, context);
     synchronize();
     expect(link.href).toBe("https://public.example/api/greet.en.html#greet");
     expect(explicit.href).toBe("https://public.example/api/greet.en.html#fixed");
+    expect(current.href).toBe("https://public.example/api/greet.zh-CN.html#greet");
     location.hash = "#parameters";
     synchronize();
     expect(link.href).toBe("https://public.example/api/greet.en.html#parameters");
@@ -51,7 +53,7 @@ describe("public site-chrome shared entry", () => {
     const html = chrome.renderPage(page());
     expect(html).toContain('data-hia-site-navigation');
     expect(html).toContain('href="../api/greet.en.html"');
-    expect(html).toContain('href="../api/greet.zh-CN.html" data-hia-site-current aria-current="true"');
+    expect(html).toContain('href="" data-hia-site-current aria-current="true"');
     expect(html).toContain('href="../assets/hia-site-navigation.css"');
     expect(html).toContain('<title>greet &lt;public&gt;</title>');
     expect(html).toContain('参数 &lt;required&gt;');

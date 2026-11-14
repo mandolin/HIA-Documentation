@@ -2,6 +2,9 @@
 
 ## Unreleased — Language and fragment navigation
 
+- 静态当前版本使用所在页的空相对引用，减少完整参考站逐页重复的长路径。
+- Static current-version links use an empty relative reference to the same page, reducing repeated long paths across complete reference sites.
+
 - 当前文档版本链接保留已生成条目或独立页面，静态链接同样沿实际对应页；历史入口继续采用宿主显式地址。
 - Current-documentation-version links retain the generated entry or independent page, including static links through actual counterparts. Historical entries retain explicit host destinations.
 

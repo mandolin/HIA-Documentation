@@ -84,9 +84,9 @@ export function header(navigation: DocumentationSiteNavigation, locale: Document
   const versions = navigation.documentationVersion;
   // <lang><zh-CN>当前版本采用本次实际同页路径，静态和独立输出可保留主题；其它版本保持宿主目标。</zh-CN><en>The current version uses the actual same-page path for static and independent output, retaining host targets for other versions.</en></lang>
   const entries = versions.entries.map((entry, index) => {
-    // <lang><zh-CN>仅匹配当前版本且已提供对应页时使用原生链接，避免复制冗余跨语言目标。</zh-CN><en>Use a native link only for the current version with an actual counterpart, avoiding redundant cross-locale target copies.</en></lang>
+    // <lang><zh-CN>仅当前版本且已有对应页时使用空相对引用保留所在页，避免逐页重复长路径。</zh-CN><en>For the current version with a known counterpart, use an empty relative reference to retain this page without repeating long paths.</en></lang>
     const current = entry.version === versions.version;
-    const target = current && localeTargets?.[locale] ? `href="${escape(localeTargets[locale]!)}" data-hia-site-current` : href(entry.hrefByLocale);
+    const target = current && localeTargets?.[locale] ? 'href="" data-hia-site-current' : href(entry.hrefByLocale);
     return `<a ${target}${current ? ' aria-current="true"' : ""}>${text(`site.version.entry${index}`)}</a>`;
   }).join("");
   const empty = versions.entries.some(entry => entry.status === "archive") ? "" : `<p>${text("site.version.empty")}</p>`;
