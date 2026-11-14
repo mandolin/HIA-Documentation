@@ -192,6 +192,24 @@ test("every actual manual section is represented in its generated heading metada
   }
 });
 
+test("focused documentation categories reveal their full label without moving focus", async () => {
+  // <lang><zh-CN>执行正式焦点处理器，已聚焦链接只请求最近滚动定位，其它目标保持可用。</zh-CN><en>Execute the production focus handler, asking the focused link for nearest scrolling while preserving other targets.</en></lang>
+  const {runInNewContext} = await import("node:vm");
+  const client = await readFile(new URL("../src/scripts/client.js", import.meta.url), "utf8");
+  const source = client.match(/function revealFocusedCategory\(event\) \{[\s\S]*?\n\}/u)?.[0];
+  assert(source, "Documentation categories need a focus-reveal handler.");
+  const calls = [];
+  class Anchor {
+    scrollIntoView(options) { calls.push({...options}); }
+    focus() { assert.fail("Scrolling must retain the browser's existing focus."); }
+  }
+  const handler = runInNewContext(source + "\nrevealFocusedCategory;", {HTMLAnchorElement: Anchor});
+  handler({target: new Anchor()});
+  handler({target: {}});
+  assert.deepEqual(calls, [{block: "nearest", inline: "nearest"}]);
+  assert(client.includes('document.querySelector(".tabs")?.addEventListener("focusin", revealFocusedCategory)'));
+});
+
 
 test("the shared HTML and CSS reference section names both domains and retains the original HTML anchor", async () => {
   // <lang><zh-CN>双领域目录用完整标题说明内容，原HTML小节锚点继续承接已有链接。</zh-CN><en>The two-domain directory names both scopes while the original HTML section anchor continues to serve existing links.</en></lang>

@@ -22,6 +22,19 @@ function openDialog(id) {
 for (const button of document.querySelectorAll("[data-dialog]")) button.addEventListener("click", () => openDialog(button.dataset.dialog));
 for (const button of document.querySelectorAll("[data-close]")) button.addEventListener("click", () => button.closest("dialog")?.close());
 
+/**
+ * @lang zh-CN 将已聚焦栏目的完整标签滚入现有导航容器，保留浏览器焦点与正文位置。
+ * @lang en Reveal the focused category's full label in the existing navigation container, retaining browser focus and the article position.
+ * @param {FocusEvent} event - 现有栏目导航的冒泡焦点事件。 Bubbling focus event from the existing category navigation.
+ * @returns {void} 仅请求最近的原生滚动定位。 Requests only nearest native scrolling.
+ */
+function revealFocusedCategory(event) {
+  // <lang><zh-CN>目标来自当前导航的实际焦点事件，普通链接由浏览器负责定位与焦点顺序。</zh-CN><en>The target comes from an actual focus event in this navigation; the browser retains link focus and sequential order.</en></lang>
+  const link = event.target;
+  if (link instanceof HTMLAnchorElement) link.scrollIntoView({block: "nearest", inline: "nearest"});
+}
+document.querySelector(".tabs")?.addEventListener("focusin", revealFocusedCategory);
+
 // <lang lang="zh-CN">主题只影响当前页；系统选择同时响应系统主题变化。</lang><lang lang="en">Theme affects this page only; system choice also follows system-theme changes.</lang>
 const media = matchMedia("(prefers-color-scheme: dark)");
 const themeSelect = document.querySelector("[data-theme-select]");

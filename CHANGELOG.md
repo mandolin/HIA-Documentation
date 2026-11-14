@@ -4,6 +4,8 @@
 
 - 官网手册中的HTML标题与Markdown标题共同进入实际小节目录，保留明确锚点与原始顺序，支持桌面、手机和无脚本阅读。
 - Include HTML and Markdown headings together in manual section outlines, preserving explicit anchors and source order for desktop, mobile and script-free reading.
+- 窄屏栏目聚焦后将完整标签滚入导航容器，键盘焦点沿原生顺序继续。
+- Reveal complete focused category labels in the narrow navigation container while continuing native keyboard focus order.
 
 ## Unreleased — Standalone dark and print appearance
 
