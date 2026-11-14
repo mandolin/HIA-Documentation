@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Portal directory focus
+
+- 手机目录打开条目后，焦点跟随正文阅读位置，迟到响应尊重用户已移走的焦点。
+- Mobile directory entry activation follows the prose reading position, respecting focus moved by the user while content loads.
+- 检索面板返回目录时聚焦当前可见节点，保留条目地址，并在普通目录中采用实际可见控件。
+- Returning from search to the directory focuses its visible current node, retains the entry address and uses a visible control in ordinary directories.
+
 ## Unreleased — Documentation section outlines
 
 - 官网手册中的HTML标题与Markdown标题共同进入实际小节目录，保留明确锚点与原始顺序，支持桌面、手机和无脚本阅读。

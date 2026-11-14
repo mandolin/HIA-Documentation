@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { Script, runInNewContext } from "node:vm";
+import ts from "typescript";
 import { createDocumentationPortalUiLocaleAdoption, renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter } from "./index.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
@@ -36,6 +37,62 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it.each([
+    [true, true, false, true],
+    [false, true, false, false],
+    [true, true, true, false],
+    [true, false, false, false]
+  ])("transfers mobile entry focus only while its initiating tree control owns focus (%s/%s/%s)", async (mobile, fromTree, moved, expected) => {
+    // <lang><zh-CN>执行真实生成函数，以迟到响应检查用户已移走的焦点不会被夺回。</zh-CN><en>Execute the emitted function with a delayed response so focus already moved by the user is never reclaimed.</en></lang>
+    const output = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
+    const html = output.files.find(file => file.path === "index.html")!.contents;
+    const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gu)].map(match => match[1]).join("\n");
+    const parsed = ts.createSourceFile("portal.js", script, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    let source = "";
+    // <lang><zh-CN>通过语法树提取真实函数，不依赖宿主重新缩进后的文本格式。</zh-CN><en>Extract the actual function by syntax nodes independently of host reindentation.</en></lang>
+    function visit(node: ts.Node): void {
+      if (ts.isFunctionDeclaration(node) && node.name?.text === "loadEntry") source = node.getText(parsed);
+      ts.forEachChild(node, visit);
+    }
+    visit(parsed);
+    expect(source).not.toBe("");
+    let complete!: (html: string) => void;
+    const fragment = new Promise<string>(resolve => { complete = resolve; });
+    const trigger = {};
+    const document = { activeElement: trigger, createElement: () => ({ setAttribute() {}, dataset: {} }), dispatchEvent() {} };
+    const focus = { count: 0 };
+    const main = { focus() { focus.count++; } };
+    const contentHost = { querySelector: () => null, prepend() {}, innerHTML: "", querySelectorAll: () => [], closest: () => main };
+    const load = runInNewContext(`(${source})`, {
+      document, contentHost, treeHost: { contains: () => fromTree, querySelector: () => null }, readingEntrySequence: 0,
+      readFragment: () => fragment, applyContentLocale() {}, applyUiLocale() {}, bindSourceFetch() {},
+      uiMessage: () => "Loading", Event, activeView: "all", search: { value: "" }, revealReadingEntry: async () => {},
+      markActiveEntry() {}, matchMedia: () => ({ matches: mobile }), history: { replaceState() {} }
+    });
+    const pending = load({ id: "entry:one", contentPath: "entries/one.html" }, true);
+    if (moved) document.activeElement = {};
+    complete("<article>one</article>");
+    await pending;
+    expect(contentHost.innerHTML).toBe("<article>one</article>");
+    expect(focus.count).toBe(expected ? 1 : 0);
+  });
+
+  it.each([true, false])("returns directory focus to a visible current node or first visible control (%s)", (selected) => {
+    // <lang><zh-CN>桌面摘要被隐藏时，仍应有真实可聚焦目标，并取消覆盖焦点的原生片段跳转。</zh-CN><en>Provide a real focus destination when the desktop summary is hidden, cancelling the native fragment navigation that would overwrite focus.</en></lang>
+    const focused: string[] = [];
+    const control = (name: string, visible = true) => ({ getClientRects: () => visible ? [{}] : [], focus: () => focused.push(name), scrollIntoView() {} });
+    const current = control("current");
+    const first = control("first");
+    const directory = { open: false, querySelector: () => selected ? current : null, querySelectorAll: () => [control("hidden-summary", false), first] };
+    let prevented = false;
+    const source = SITE_READING_SCRIPT.match(/function focusReadingDirectory\(event\) \{[\s\S]*?\n    \}/u)?.[0];
+    expect(source).toBeDefined();
+    runInNewContext(`(${source})`, { directory, document: { getElementById: () => ({ close() {} }) } })({ preventDefault() { prevented = true; } });
+    expect(prevented).toBe(true);
+    expect(directory.open).toBe(true);
+    expect(focused).toEqual([selected ? "current" : "first"]);
+  });
+
   it("keeps static language links on the generated entry counterpart", () => {
     // <lang><zh-CN>从同次生成的实际语言页确定对应关系，无脚本路径同样保留当前主题。</zh-CN><en>Use actual locale pages from the same render so script-free navigation retains the current topic.</en></lang>
     const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });

@@ -319,11 +319,22 @@ export const SITE_READING_SCRIPT = String.raw`/**
             search();
         }
     });
-    document.querySelector('[data-hia-reading-directory]').addEventListener('click', () => {
+    /**
+     * @lang zh-CN 返回当前可见目录节点，缺少选中节点时复用首个可见控件，避免隐藏桌面摘要吞掉焦点。
+     * @lang en Return to the visible current directory node, falling back to its first visible control instead of the hidden desktop summary.
+     */
+    function focusReadingDirectory(event) {
+        // <lang><zh-CN>取消原生片段跳转，防止随后覆盖显式焦点或丢失当前条目地址。</zh-CN><en>Cancel native fragment navigation so it cannot overwrite explicit focus or discard the current entry address.</en></lang>
+        event.preventDefault();
         document.getElementById('hia-reading-search').close();
         directory.open = true;
-        directory.querySelector('summary').focus();
-    });
+        // <lang><zh-CN>当前真实树节点优先，回退遍历保留普通目录与独立输出的可用控件。</zh-CN><en>Prefer the actual current tree node, with visible ordinary controls supporting other directory outputs.</en></lang>
+        const current = directory.querySelector('[data-hia-project-tree] [aria-current="page"]');
+        const target = current?.getClientRects().length ? current : Array.from(directory.querySelectorAll('summary,button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled)')).find(control => control.getClientRects().length);
+        target?.scrollIntoView({block:'nearest', inline:'nearest'});
+        target?.focus({preventScroll:true});
+    }
+    document.querySelector('[data-hia-reading-directory]').addEventListener('click', focusReadingDirectory);
     for (const name of ['scheme', 'wrap', 'lines'])
         document.querySelector('[data-hia-reading-' + name + ']').addEventListener('change', event => {
             if (name === 'scheme')

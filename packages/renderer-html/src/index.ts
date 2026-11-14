@@ -4366,6 +4366,8 @@ function renderProjectSplitSiteScript(
     "  async function loadEntry(entry, updateHash) {",
     "    if (!contentHost) return;",
     ...(portalContext.siteNavigation ? [
+      // <lang><zh-CN>记录发起树控件；迟到响应只能转移仍由它持有的手机焦点。</zh-CN><en>Remember the initiating tree control so a late response only transfers mobile focus it still owns.</en></lang>
+      "    const readingTrigger = treeHost.contains(document.activeElement) ? document.activeElement : null;",
       "    const requestSequence = ++readingEntrySequence;",
       "    contentHost.querySelector(':scope > .hia-project-loading')?.remove();",
       "    const readingLoading = document.createElement('p'); readingLoading.className = 'hia-project-loading'; readingLoading.setAttribute('role', 'status'); readingLoading.dataset.hiaUiMessage = 'portal.navigation.loading'; readingLoading.textContent = uiMessage('portal.navigation.loading', {}, 'Loading…'); contentHost.prepend(readingLoading);"
@@ -4388,6 +4390,8 @@ function renderProjectSplitSiteScript(
     ] : []),
     "      markActiveEntry(entry.entryId || entry.id);",
     ...(portalContext.siteNavigation ? [
+      // <lang><zh-CN>手机正文滚动后复用既有正文焦点目标，用户已移走焦点则保留其选择。</zh-CN><en>After mobile prose scrolling, reuse its existing focus destination while respecting focus already moved by the user.</en></lang>
+      "      if (matchMedia('(max-width:800px)').matches && readingTrigger && document.activeElement === readingTrigger) contentHost.closest('main')?.focus({preventScroll:true});",
       "      if (!matchMedia('(max-width:800px)').matches) treeHost.querySelector('[aria-current=\"page\"]')?.scrollIntoView({block:'nearest', inline:'nearest'});"
     ] : []),
     "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entry.entryId || entry.id)}`);",
