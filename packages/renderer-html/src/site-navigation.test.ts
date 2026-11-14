@@ -38,11 +38,13 @@ function project() {
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
   it.each([
-    [true, true, false, true],
-    [false, true, false, false],
-    [true, true, true, false],
-    [true, false, false, false]
-  ])("transfers mobile entry focus only while its initiating tree control owns focus (%s/%s/%s)", async (mobile, fromTree, moved, expected) => {
+    [true, true, false, true, false],
+    [false, true, false, false, false],
+    [true, true, true, false, false],
+    [true, false, false, false, false],
+    [true, true, false, true, true],
+    [false, true, false, true, true]
+  ])("transfers mobile entry focus only while its initiating tree control owns focus (%s/%s/%s => %s, filtered %s)", async (mobile, fromTree, moved, expected, filtered) => {
     // <lang><zh-CN>执行真实生成函数，以迟到响应检查用户已移走的焦点不会被夺回。</zh-CN><en>Execute the emitted function with a delayed response so focus already moved by the user is never reclaimed.</en></lang>
     const output = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const html = output.files.find(file => file.path === "index.html")!.contents;
@@ -61,12 +63,14 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     const trigger = {};
     const document = { activeElement: trigger, createElement: () => ({ setAttribute() {}, dataset: {} }), dispatchEvent() {} };
     const focus = { count: 0 };
-    const main = { focus() { focus.count++; } };
+    const main = { focus() { focus.count++; document.activeElement = main; } };
     const contentHost = { querySelector: () => null, prepend() {}, innerHTML: "", querySelectorAll: () => [], closest: () => main };
     const load = runInNewContext(`(${source})`, {
       document, contentHost, treeHost: { contains: () => fromTree, querySelector: () => null }, readingEntrySequence: 0,
       readFragment: () => fragment, applyContentLocale() {}, applyUiLocale() {}, bindSourceFetch() {},
-      uiMessage: () => "Loading", Event, activeView: "all", search: { value: "" }, revealReadingEntry: async () => {},
+      uiMessage: () => "Loading", Event, activeView: "all", search: { value: filtered ? "one" : "" }, revealReadingEntry: async () => {},
+      // <lang><zh-CN>筛选恢复会移除旧控件并使浏览器失去该焦点，正文应在重建前接管。</zh-CN><en>Resetting a filter removes the old control and loses its browser focus, so prose must take focus before that rebuild.</en></lang>
+      viewButtons: [], renderRoot() { if (document.activeElement === trigger) document.activeElement = {}; },
       markActiveEntry() {}, matchMedia: () => ({ matches: mobile }), history: { replaceState() {} }
     });
     const pending = load({ id: "entry:one", contentPath: "entries/one.html" }, true);
@@ -75,6 +79,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     await pending;
     expect(contentHost.innerHTML).toBe("<article>one</article>");
     expect(focus.count).toBe(expected ? 1 : 0);
+    if (expected) expect(document.activeElement).toBe(main);
   });
 
   it.each([true, false])("returns directory focus to a visible current node or first visible control (%s)", (selected) => {

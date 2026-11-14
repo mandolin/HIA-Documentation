@@ -4,6 +4,8 @@
 
 - 手机目录打开条目后，焦点跟随正文阅读位置，迟到响应尊重用户已移走的焦点。
 - Mobile directory entry activation follows the prose reading position, respecting focus moved by the user while content loads.
+- 焦点转移在筛选清空重建目录之前完成，筛选结果入口同样保持正文焦点。
+- Transfer focus before clearing a filter rebuilds the directory, preserving prose focus when entering through filtered results.
 - 检索面板返回目录时聚焦当前可见节点，保留条目地址，并在普通目录中采用实际可见控件。
 - Returning from search to the directory focuses its visible current node, retains the entry address and uses a visible control in ordinary directories.
 

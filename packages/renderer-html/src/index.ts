@@ -4385,13 +4385,15 @@ function renderProjectSplitSiteScript(
     "      const target = Array.from(contentHost.querySelectorAll('[id]')).find((item) => item.id === anchor);",
     "      target?.scrollIntoView({ block: 'start' });",
     ...(portalContext.siteNavigation ? [
-      "      if (activeView !== 'all' && entry.view && entry.view !== activeView || search?.value) { activeView = 'all'; if (search) search.value = ''; for (const button of viewButtons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === 'all')); renderRoot(); }",
+      // <lang><zh-CN>在清空检索前记录目录重建条件，避免删除当前控件后才尝试转移焦点。</zh-CN><en>Record the directory-reset condition before clearing search, avoiding focus transfer after its control is removed.</en></lang>
+      "      const readingResetsTree = Boolean(search?.value || (activeView !== 'all' && entry.view && entry.view !== activeView));",
+      // <lang><zh-CN>手机或即将重建的目录先将仍属发起控件的焦点移到已装入的正文。</zh-CN><en>On mobile or before rebuilding the directory, transfer focus still owned by its trigger to the loaded prose.</en></lang>
+      "      if ((matchMedia('(max-width:800px)').matches || readingResetsTree) && readingTrigger && document.activeElement === readingTrigger) contentHost.closest('main')?.focus({preventScroll:true});",
+      "      if (readingResetsTree) { activeView = 'all'; if (search) search.value = ''; for (const button of viewButtons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === 'all')); renderRoot(); }",
       "      await revealReadingEntry(entry.entryId || entry.id); if (requestSequence !== readingEntrySequence) return;"
     ] : []),
     "      markActiveEntry(entry.entryId || entry.id);",
     ...(portalContext.siteNavigation ? [
-      // <lang><zh-CN>手机正文滚动后复用既有正文焦点目标，用户已移走焦点则保留其选择。</zh-CN><en>After mobile prose scrolling, reuse its existing focus destination while respecting focus already moved by the user.</en></lang>
-      "      if (matchMedia('(max-width:800px)').matches && readingTrigger && document.activeElement === readingTrigger) contentHost.closest('main')?.focus({preventScroll:true});",
       "      if (!matchMedia('(max-width:800px)').matches) treeHost.querySelector('[aria-current=\"page\"]')?.scrollIntoView({block:'nearest', inline:'nearest'});"
     ] : []),
     "      if (updateHash) history.replaceState(null, '', `#entry=${encodeURIComponent(entry.entryId || entry.id)}`);",
