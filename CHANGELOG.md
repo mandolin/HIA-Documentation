@@ -6,6 +6,8 @@
 - Adopt readable dark signatures, headings and source surfaces, with a light print palette and wrapping code for the standalone JSDoc example.
 - 纸面同步适配注释、关键字与行号的语法颜色。
 - Printed comments, keywords and line numbers use readable syntax colors.
+- 目录中未选中的条目采用当前外观的辅助前景。
+- Unselected directory entries use the current appearance's muted foreground.
 
 ## Unreleased — Standalone parameter table reading
 
