@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Standalone dark and print appearance
+
+- 独立JSDoc示例采用可读的深色签名、标题与来源表面，以及浅色打印调色板和代码换行。
+- Adopt readable dark signatures, headings and source surfaces, with a light print palette and wrapping code for the standalone JSDoc example.
+
 ## Unreleased — Standalone parameter table reading
 
 - 独立JSDoc公开样本固定采用共享导航下的参数表修复，窄屏保留完整名称和类型，宽表在自身容器内横滚。
