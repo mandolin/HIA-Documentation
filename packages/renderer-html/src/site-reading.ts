@@ -453,8 +453,14 @@ export const SITE_READING_SCRIPT = String.raw`/**
                 const link = document.createElement('a');
                 link.href = staticPage + '#' + encodeURIComponent(section.id);
                 link.textContent = heading.textContent;
-                link.addEventListener('click', event => { event.preventDefault(); if (section.tagName === 'DETAILS')
-                    section.open = true; section.scrollIntoView({ block: 'start' }); section.focus({ preventScroll: true }); });
+                link.addEventListener('click', event => {
+                    event.preventDefault();
+                    // <lang><zh-CN>原生details由summary承担焦点，details不加负tabindex，保留展开内容的顺序键盘访问。</zh-CN><en>Native details delegate focus to their summary without negative tabindex on details, preserving sequential keyboard access to expanded contents.</en></lang>
+                    if (section.tagName === 'DETAILS') section.open = true;
+                    const focusTarget = section.tagName === 'DETAILS' ? section.querySelector(':scope > summary') : section;
+                    section.scrollIntoView({ block: 'start' });
+                    focusTarget?.focus({ preventScroll: true });
+                });
                 nav.append(link);
             }
         }

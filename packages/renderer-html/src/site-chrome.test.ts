@@ -23,6 +23,25 @@ function page(): SiteChromePage {
 }
 
 describe("public site-chrome shared entry", () => {
+  it("opens native outline details and focuses their summary while ordinary sections retain their focus target", () => {
+    // <lang><zh-CN>执行实际发出的点击处理器，同时核原生details与通用section，避免只检查HTML而遗漏顺序焦点范围。</zh-CN><en>Execute the emitted click handler for native details and ordinary sections, avoiding HTML-only checks that miss sequential focus scopes.</en></lang>
+    const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });
+    const script = chrome.assets[1]!.contents;
+    const start = script.indexOf("link.addEventListener('click', event =>", script.indexOf("function outline()"));
+    const handler = script.slice(start, script.indexOf("nav.append(link)", start));
+    for (const tagName of ["DETAILS", "SECTION"]) {
+      // <lang><zh-CN>顺序记录焦点、滚动与展开，summary只作为details的原生入口存在。</zh-CN><en>Record focus, scrolling and expansion in order, exposing a summary only as the native details entrance.</en></lang>
+      const actions: string[] = [];
+      const summary = { focus() { actions.push("summary"); } };
+      const section = { tagName, open: false, querySelector() { return tagName === "DETAILS" ? summary : null; }, scrollIntoView() { actions.push("scroll"); }, focus() { actions.push("section"); } };
+      let callback: (event: { preventDefault(): void }) => void = () => { throw new Error("Outline callback missing"); };
+      runInNewContext(handler, { section, link: { addEventListener(_name: string, listener: typeof callback) { callback = listener; } } });
+      callback({ preventDefault() { actions.push("prevent"); } });
+      expect(actions).toEqual(["prevent", "scroll", tagName === "DETAILS" ? "summary" : "section"]);
+      expect(section.open).toBe(tagName === "DETAILS");
+    }
+  });
+
   it("preserves only real native fragments on actual locale counterparts without accumulating stale anchors", () => {
     // <lang><zh-CN>执行实际共享资产，核真实符号、片段变化、显式目标、非法编码及根恢复。</zh-CN><en>Execute the actual shared asset for real symbols, fragment changes, explicit targets, malformed encoding and root restoration.</en></lang>
     const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });

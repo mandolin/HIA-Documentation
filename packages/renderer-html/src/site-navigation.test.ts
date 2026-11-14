@@ -204,7 +204,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(shell).toContain("contentHost?.querySelector(':scope > .hia-project-load-error')?.remove()");
     expect(client).toContain("document.querySelector('dialog[open]')");
     expect(client).toContain("event.key === 'Escape'");
-    expect(client).toContain("link.addEventListener('click', event => { event.preventDefault();");
+    expect(client).toMatch(/link.addEventListener\('click', event => \{\s*event.preventDefault\(\);/u);
     expect(client).not.toContain("location.hash =");
   });
   it("provides the confirmed reading frame, responsive directories and actual section anchors", () => {
