@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Standalone parameter table reading
+
+- 独立JSDoc公开样本固定采用共享导航下的参数表修复，窄屏保留完整名称和类型，宽表在自身容器内横滚。
+- Pin the standalone JSDoc sample to the shared-navigation parameter-table fix, keeping names and types readable and wide tables locally scrollable on narrow screens.
+
 ## Unreleased — Project search recovery
 
 - 通用Portal拒绝非法索引集合，采用固定公开错误并允许重试。连续查询共享索引在途请求，迟到的结果与失败不会覆盖新查询或清空后的目录。
