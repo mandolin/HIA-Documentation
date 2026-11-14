@@ -1,0 +1,15 @@
+<!-- 中文：自有最小文档样本项目，编译时生成XML文档；无第三方依赖。 English: first-party documentation sample emitting XML at build time, with no third-party dependencies. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- 中文：固定已确认的.NET 10目标与可识别的输出名。 English: use the confirmed .NET 10 target and a stable output name. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>HiaDocumentationSample</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+    <!-- 中文：仅编译本样本显式源码，避免将npm依赖中的工具C#源码纳入项目。 English: compile only this sample's explicit source, excluding helper C# sources carried by npm dependencies. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Envelope.cs" />
+  </ItemGroup>
+</Project>

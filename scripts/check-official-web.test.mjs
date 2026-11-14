@@ -134,6 +134,35 @@ test("CSS first-run guide preserves original fields and explicit source policy",
   }
 });
 
+test("current .NET first run connects a public compiled sample with honest source evidence", async () => {
+  // <lang><zh-CN>当前源码采用须有可取得的公开样本和真实编译/地图步骤，历史指南继续保留其版本范围。</zh-CN><en>Current-source adoption needs an accessible public sample and actual build/map steps, while historical guidance retains its version scope.</en></lang>
+  const guide = await readFile(new URL("../docs/dotnetdoc-quickstart.md", import.meta.url), "utf8");
+  assert(guide.includes("## Current source first run"));
+  for (const value of ["examples/dotnet-first-run", "dotnet build -c Release", "writeDocSourceMapArtifact", "XML-only", "native para", "explicit-public"]) {
+    // <lang><zh-CN>逐项核编译链及语言/权限边界，避免XML文档出处冒充真实代码位置。</zh-CN><en>Check compilation, language and authorization boundaries individually so XML documentation origins cannot masquerade as code locations.</en></lang>
+    assert(guide.includes(value), `Missing .NET first-run fact ${value}`);
+  }
+  const sample = await readFile(new URL("../examples/dotnet-first-run/Envelope.cs", import.meta.url), "utf8");
+  assert(sample.includes("public sealed class Envelope<T>"));
+  assert(sample.includes("<remarks>") && sample.includes('<param name="label">') && sample.includes('<exception cref="System.ArgumentNullException">'));
+  const config = JSON.parse(await readFile(new URL("../examples/dotnet-first-run/dotnetdoc.config.json", import.meta.url), "utf8"));
+  assert.equal(config.schemaVersion, "1.0.0");
+  assert.equal(config.options.writeDocSourceMapArtifact, true);
+  for (const locale of ["zh-CN", "en"]) {
+    const article = await readFile(new URL(`../site/src/content/domains.${locale}.md`, import.meta.url), "utf8");
+    assert(article.includes("docs/dotnetdoc-quickstart.md#current-source-first-run"));
+  }
+});
+
+test("the public .NET sample compiles only its declared first-party source", async () => {
+  // <lang><zh-CN>npm包携带工具C#源文件，默认递归编译会将其误纳入样本；项目必须声明自己的编译集合。</zh-CN><en>npm packages carry helper C# sources that recursive compilation would include, so the project must declare its own compilation set.</en></lang>
+  for (const directory of ["examples/dotnet-first-run", "reference/samples/dotnet"]) {
+    const project = await readFile(new URL(`../${directory}/HiaDocumentationSample.csproj`, import.meta.url), "utf8");
+    assert(project.includes("<EnableDefaultCompileItems>false</EnableDefaultCompileItems>"));
+    assert(project.includes('<Compile Include="Envelope.cs"'));
+  }
+});
+
 test("official API entry and shared navigation use the confirmed sibling paths", () => {
   assert.equal(apiReferenceHref("en"), "https://mandolin.github.io/HIA-Documentation-API/en/");
   assert.equal(apiReferenceHref("zh-CN"), "https://mandolin.github.io/HIA-Documentation-API/zh-CN/");

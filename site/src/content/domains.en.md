@@ -62,6 +62,8 @@ cssdoc --config cssdoc.config.json
 hia-dotnetdoc --config dotnetdoc.config.json
 ~~~
 
+Follow the [current .NET first-run guide](https://github.com/mandolin/HIA-Documentation/blob/main/docs/dotnetdoc-quickstart.md#current-source-first-run) to prepare the six matching packages and public generic Envelope sample. Compile real XML, check complete fields and actual C# ranges, then open unified pages and authorized source views. Verify native paragraph pairs and structured-language fields separately, preserving the unresolved source status of XML-only input.
+
 ## Authoritative references
 
 The linked technical references retain their actual languages; this English guide does not imply that every linked reference is translated.

@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — .NET first-run workflow
+
+- 公开原生para泛型样本衔接真实编译、完整字段与授权源码阅读；两类自有样本显式声明编译集合，避免收集npm工具源文件。
+- A public native-paragraph generic sample connects real compilation, complete fields and authorized source reading. Both first-party samples explicitly declare their compilation inputs, excluding npm helper sources.
+
 ## Unreleased — CSS first-run guidance
 
 - CSS入门补齐匹配八包、提取与源码地图到统一输出的完整步骤，说明英文原样本、令牌注释及授权片段策略。

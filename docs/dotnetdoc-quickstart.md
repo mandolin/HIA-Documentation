@@ -5,6 +5,68 @@ For the coordinated source candidate, use the [runner reference and installation
 
 This guide shows the minimum public path for using `@hia-doc/dotnetdoc-runner` with compiler-generated .NET XML documentation. XML documentation is the stable baseline; source relation and ASP.NET surface inputs can be added progressively.
 
+## Current source first run
+
+The current `1.0.0` source candidates have a complete first-party sample at
+[examples/dotnet-first-run](../examples/dotnet-first-run/). Use a stable .NET 10
+SDK and a matching six-package DotNetDoc cohort from the
+[release plan](https://github.com/mandolin/hia-dotnetdoc/blob/main/release-plan.json).
+Verify registry availability separately. For a source trial, pack each listed
+package directory and install all six matching archives in a fresh copy of
+the sample.
+
+```sh
+npm pack <package-directory> --ignore-scripts --pack-destination <archive-directory>
+npm install --save-dev --ignore-scripts <six-matching-archive-paths>
+dotnet build -c Release
+hia-dotnetdoc --config dotnetdoc.config.json
+```
+
+The sample project sets `EnableDefaultCompileItems` to `false` and declares
+`Compile Include="Envelope.cs"`. This bounds compilation to the sample's own
+source when installed npm packages also contain C# helper files. Compilation
+creates the actual `bin/Release/net10.0/HiaDocumentationSample.xml` file.
+
+The sample's `dotnetdoc.config.json` uses `schemaVersion: "1.0.0"`, consumes
+that XML and `Envelope.cs`, and declares their `projectPath`. Its
+`writeDocSourceMapArtifact` option is explicitly enabled. The current default
+for this option is false. Read `dist/dotnetdoc/dotnetdoc.producer-result.json`
+for actual extraction, HIA, map and source-relation paths.
+
+Check the type parameter and each method's summary, remarks, parameter,
+return, exception and readable signature. XML members are matched to exact
+Roslyn declaration identities in the configured project. The native C# HIA
+document is available separately; the sample's project manifest selects the
+compiler-XML HIA document and its map once for unified reading.
+
+```sh
+hia docs build --project-manifest hia.project.json --config hia.config.json --out dist/site/zh-CN --locale zh-CN
+```
+
+For a built source checkout, replace `hia` with
+`node <built-core-checkout>/apps/cli/dist/index.js`. Serve the output over HTTP.
+The render config uses `publicAssetPolicy: "explicit-public"` and
+`localRoot: "."` to permit source publication inside this first-party sample.
+Check the actual C# range, fetch preview and same-origin source page.
+UI and content locales are independent; change both `uiLocale` and the
+`--locale` argument to `en` for an English reading build.
+
+This sample uses native para pairs containing Chinese and English. Both
+paragraphs remain available in either content-locale request. For independently
+localized fields, follow the existing
+[structured-language sample](../reference/samples/dotnet/).
+
+The historical `Portal.Components.xml` fixture is also useful for XML-only
+intake. Its language markers provide localized fields; its standalone XML
+input has no verified C# location. Inspect the source-map diagnostics and
+documentation origins separately. Add a real matching project to establish
+code locations. Invalid configuration and failed inputs exit with code 1;
+save diagnostics and retry corrected inputs in a fresh output directory.
+
+中文说明。当前首次生成可从公开自有泛型样本开始，实际编译XML再核字段、签名与源码匹配。
+原生para中英双段按原文保留，独立语言切换使用已有结构化语言样本。纯XML样本保持未定位边界，
+源码公开必须由样本配置显式授权。下列历史安装/配置步骤继续对应其原0.1.x版本范围。
+
 ## Install
 
 Install the published runner in the target project:

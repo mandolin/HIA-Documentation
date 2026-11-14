@@ -6,5 +6,10 @@
     <AssemblyName>HiaDocumentationSample</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
+    <!-- 中文：仅编译显式样本，避免本地npm依赖所带C#工具源文件进入项目。 English: compile the explicit sample, excluding C# helper sources carried by local npm dependencies. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Envelope.cs" />
+  </ItemGroup>
 </Project>

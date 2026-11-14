@@ -62,6 +62,8 @@ hia-dotnetdoc --config dotnetdoc.config.json
 
 检查summary、remarks、参数、类型参数、返回、异常及签名。XML单独输入不提供真实C#位置证明；只有唯一匹配的成员和经核对的声明范围才可呈现相应源码关系。源码映射选项当前默认false，这里的true是显式启用；没有来源许可时不公开源码。
 
+按[当前.NET首次生成指南](https://github.com/mandolin/HIA-Documentation/blob/main/docs/dotnetdoc-quickstart.md#current-source-first-run)准备匹配六包和公开Envelope泛型样本，实际编译XML、核对完整字段与真实C#范围，再进入统一页和授权源码阅读。原生para双段与结构化语言字段分别核验，旧XML-only输入保留未定位事实。
+
 ## 权威参考
 
 下列技术参考保留其实际语言；本页译文不表示所有链接正文均已有对应译文。

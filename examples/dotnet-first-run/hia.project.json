@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "id": "project:dotnet-native-para-first-run",
+    "name": ".NET Native Paragraph First Run",
+    "defaultLocale": "en",
+    "locales": ["en", "zh-CN"]
+  },
+  "inputs": [
+    {"kind": "hia-document", "path": "dist/dotnetdoc/bin/Release/net10.0/HiaDocumentationSample.hia.json", "domain": "dotnet"},
+    {"kind": "doc-source-map", "path": "dist/dotnetdoc/bin/Release/net10.0/HiaDocumentationSample.doc-source-map.json", "domain": "dotnet"}
+  ]
+}

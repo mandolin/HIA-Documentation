@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "workspaceRoot": ".",
+  "outputDirectory": "dist/dotnetdoc",
+  "inputs": [
+    {
+      "kind": "dotnet-xml-doc",
+      "path": "bin/Release/net10.0/HiaDocumentationSample.xml",
+      "projectPath": "HiaDocumentationSample.csproj"
+    },
+    {
+      "kind": "dotnet-csharp-source",
+      "path": "Envelope.cs",
+      "projectPath": "HiaDocumentationSample.csproj"
+    }
+  ],
+  "options": {
+    "writeDocSourceMapArtifact": true
+  }
+}
