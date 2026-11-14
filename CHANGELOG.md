@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Public API inventory guidance
+
+- 公开API清单说明校正为十三个主仓必要包，并通过回归检查与实际清单核对。
+- Correct the public API inventory guide to identify the thirteen required main-repository packages and verify its scope against the actual inventory.
+
 ## Unreleased — Four-domain project aggregation guidance
 
 - 项目聚合指南衔接旧清单兼容读取、显式校验迁移和真实.NET文档/地图接入，校正当前配置包与HTMDoc模块入口。

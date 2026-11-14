@@ -1,7 +1,7 @@
 # Public API candidate inventory
 
-The [versioned inventory](../release/public-api-surface.json) records the twelve
-required packages' root exports, owner modules, call signatures, direct interface
+The [versioned inventory](../release/public-api-surface.json) records the thirteen
+required main-repository packages' root exports, owner modules, call signatures, direct interface
 fields, package subpaths and command-line bins for a `1.0.0` package candidate.
 Comment-free declaration fingerprints also detect changes to aliases, readonly
 modifiers, default expressions and exported constant initializers. A changed

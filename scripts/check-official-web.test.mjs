@@ -191,6 +191,15 @@ test("official API entry and shared navigation use the confirmed sibling paths",
   assert.equal(createGeneratedSiteNavigation().localeTargets.en, "/HIA-Documentation/en/");
 });
 
+test("public API guidance follows the required main-repository package inventory", async () => {
+  // <lang><zh-CN>清单是包范围事实源，正文须明确当前十三包与各自版本。</zh-CN><en>The inventory owns package scope; the prose must identify the current thirteen packages and their independent versions.</en></lang>
+  const inventory = JSON.parse(await readFile(new URL("../release/public-api-surface.json", import.meta.url), "utf8"));
+  const guide = await readFile(new URL("../docs/public-api-surface.md", import.meta.url), "utf8");
+  assert.equal(inventory.packages.length, 13);
+  assert.match(guide, /thirteen\s+required main-repository packages/);
+  assert.doesNotMatch(guide, /twelve\s+required packages/);
+});
+
 test("Public brand prose remains allowed", () => {
   assert.doesNotThrow(() => assertPublicText("HIA-Documentation-Sys · Documentation for people and AI."));
 });
