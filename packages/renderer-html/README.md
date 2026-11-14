@@ -1,5 +1,24 @@
 # @hia-doc/renderer-html
 
+## Source availability and recovery
+
+显式阅读信息架构会区分未提供公开片段、未获本地公开读取许可、文件或资产缺失、摘要不符及读取失败。文档正文在这些状态下保持可读。固定双语反馈使用已有公开诊断代码与实际请求结果，远端响应正文、statusText和原始网络异常均不会成为状态文案。
+
+The explicit reading layout distinguishes an absent public excerpt, denied local publication authority, missing files or assets, integrity failures and read failures. Documentation prose remains readable. Fixed bilingual feedback uses existing public diagnostic fields and actual request outcomes. Response bodies, server status text and original network exceptions stay outside feedback copy.
+
+恢复源资产原字节或读取许可后，点击“重置”并重新展开源码即可重新经过原摘要校验。加载期间同一按钮用于取消。静态页面会显示构建时已知的可用性反馈，禁用脚本时使用普通阅读路径。源码模式`none`继续按该模式隐藏，读取失败沿当前模式呈现。
+
+After restoring the original asset bytes or read authority, select **Reset** and reopen the source panel to repeat the original integrity checks. During loading, the same control cancels the request. Static pages show build-time availability feedback and support ordinary reading with scripts disabled. Source mode `none` retains its visibility policy, and failures remain within the selected mode.
+
+CLI通过已有条目diagnostics传递以下固定信息类别，重复准备会重算这些瞬时结果，其它生产者诊断保持。These fixed informational codes use existing entry diagnostics. Repeated preparation recomputes these transient outcomes and preserves other producer diagnostics.
+
+| Code | Meaning |
+| --- | --- |
+| `HIA_CLI_SOURCE_NOT_AUTHORIZED` | 本地公开读取未授权 / Local public-source reading was not authorized. |
+| `HIA_CLI_SOURCE_NOT_FOUND` | 来源文件或路径不存在 / The source file or path was not found. |
+| `HIA_CLI_SOURCE_READ_FAILED` | 其它本地读取失败 / Another local read failure occurred. |
+| `HIA_CLI_SOURCE_NOT_PROVIDED` | 未取得可公开片段，原因按已有证据保留 / No public excerpt was obtained, with the cause limited to available evidence. |
+
 ## Shared site chrome
 
 The `@hia-doc/renderer-html/site-chrome` subpath provides synchronous ESM and

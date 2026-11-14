@@ -30,6 +30,33 @@ function input(file = "source.cs", count = 1): RenderProjectHtmlInput {
   return { project: { name: "Synthetic" }, entries: Array.from({ length: count }, (_, i) => ({ id: `entry:${i}`, name: `Method${i}`, kind: "dotnet-method", view: "dotnet", source: { path: file, range: { start: { line: 2 }, end: { line: 4 } } } })) };
 }
 describe("bounded project source preparation", () => {
+  it("distinguishes publication refusal, missing source and a restored source without exposing filesystem errors", async () => {
+    // <lang><zh-CN>同一定位器先撤公开许可，再核物理缺失，最后恢复原文；每步均保留独立文档字段。</zh-CN><en>Revoke publication authority, check physical absence, then restore the same locator's text while retaining independent documentation fields.</en></lang>
+    const root = await temporary();
+    const denied = await prepareProjectSourcePresentation(input(), { source: { publicAssetPolicy: "none" } }, root);
+    expect(denied.entries[0]?.diagnostics?.map(item => item.code)).toContain("HIA_CLI_SOURCE_NOT_AUTHORIZED");
+    const missing = await prepareProjectSourcePresentation(input(), { source: { publicAssetPolicy: "explicit-public" } }, root);
+    expect(missing.entries[0]?.diagnostics?.map(item => item.code)).toContain("HIA_CLI_SOURCE_NOT_FOUND");
+    expect(JSON.stringify(missing)).not.toContain(root);
+    await writeFile(path.join(root, "source.cs"), "// first\npublic void Method() {}\n// third\n// fourth");
+    const restored = await prepareProjectSourcePresentation(input(), { source: { publicAssetPolicy: "explicit-public" } }, root);
+    expect(restored.entries[0]?.source?.preview?.content).toContain("public void Method()");
+    expect(restored.entries[0]?.diagnostics).toBeUndefined();
+    expect(restored.entries[0]?.name).toBe("Method0");
+    // <lang><zh-CN>直接重试同一准备结果时，旧瞬时拒绝消除且不重复追加，原生产者诊断保持。</zh-CN><en>Retrying the same prepared input clears its transient denial without duplication and retains original producer diagnostics.</en></lang>
+    const repeated = await prepareProjectSourcePresentation(denied, { source: { publicAssetPolicy: "none" } }, root);
+    expect(repeated.entries[0]?.diagnostics).toHaveLength(1);
+    const retried = await prepareProjectSourcePresentation(repeated, { source: { publicAssetPolicy: "explicit-public" } }, root);
+    expect(retried.entries[0]?.diagnostics).toEqual([]);
+    expect(retried.entries[0]?.source?.preview?.content).toContain("public void Method()");
+    // <lang><zh-CN>同批失败后成功读取的条目与缓存命中不得携带前一条目的拒绝诊断。</zh-CN><en>Successful reads and cache hits after a failed entry in the same batch must not carry that entry's refusal diagnostic.</en></lang>
+    const mixed = await prepareProjectSourcePresentation({ project: { name: "Mixed source outcomes" }, entries: [...input("../outside.cs").entries, ...input("source.cs", 2).entries] }, { source: { publicAssetPolicy: "explicit-public" } }, root);
+    expect(mixed.entries[0]?.diagnostics?.[0]?.code).toBe("HIA_CLI_SOURCE_NOT_AUTHORIZED");
+    expect(mixed.entries[1]?.source?.preview?.content).toContain("public void Method()");
+    expect(mixed.entries[1]?.diagnostics).toBeUndefined();
+    expect(mixed.entries[2]?.diagnostics).toBeUndefined();
+  });
+
   it("charges shared excerpts once and diagnoses the aggregate budget without allocating a GiB", () => {
     // <lang><zh-CN>建模临界预算状态测试算术/错误边界，不为单元测试分配1GiB真实正文。</zh-CN><en>Model a near-limit budget to test arithmetic/error boundaries without allocating a GiB of actual bodies.</en></lang>
     const state: Parameters<typeof reservePreparedPreview>[0] = { cache: new Map(), cacheBytes: 0, diagnostics: [], counted: new WeakSet(), preparedBytes: 1_073_741_822 };

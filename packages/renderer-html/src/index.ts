@@ -2521,6 +2521,8 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
  * @lang en Resolved IA, locale, labels, and theme context for one render call.
  */
 interface RenderProjectPortalContext {
+  /** @lang zh-CN 已解析呈现模式，仅控制反馈是否适用，不代表读取授权。 @lang en Resolved presentation mode controls feedback applicability only and grants no read authority. */
+  sourcePresentation?: RenderProjectSourcePresentation;
   /**
    * @lang zh-CN 与外部可变输入隔离的已验证导航快照。
    * @lang en Validated navigation snapshot isolated from mutable external input.
@@ -2659,6 +2661,7 @@ function resolveProjectPortalContext(
     ...(siteNavigation && !explicitInformationArchitecture ? { siteNavigationUiLocaleAdoption: createSiteNavigationUiLocaleAdoption({ contentLocale: localeModel.selectedLocale, contentLocales: localeModel.locales, defaultUiLocale: uiLocale, siteNavigation }) } : {}),
     uiLocale,
     labels: getDocumentationPortalLabels(uiLocale),
+    sourcePresentation: options.projectSite?.source?.presentation ?? "fetch",
     theme: { skinId: requestedSkin, scheme: requestedScheme },
     ...(uiLocaleAdoption ? { uiLocaleAdoption } : {}),
     ...(sourceCommentProjection
@@ -4021,8 +4024,9 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "      const response = await fetch(target, { cache: 'default', credentials: 'omit', mode: 'same-origin', redirect: 'error', signal: controller.signal });",
     "      if (!response.ok) {",
     "        const state = sourceFailureState(response);",
-    "        const detail = `${response.status} ${response.statusText}`;",
-    "        setSourceState(details, state, 'portal.source.status.failed', `Source load failed: ${detail}`, { detail });",
+    "        /* <lang><zh-CN>按已知HTTP结果给固定公开反馈，禁止回显服务端statusText或响应正文。</zh-CN><en>Use fixed public feedback for known HTTP outcomes without reflecting server statusText or response bodies.</en></lang> */",
+    "        const message = state === 'denied' ? ['portal.source.status.denied', 'Source request denied.'] : state === 'not-found' ? ['portal.source.status.notfound', 'Source asset was not found.'] : ['portal.source.status.network', 'Source is temporarily unavailable. Reset and retry.'];",
+    "        setSourceState(details, state, message[0], message[1]);",
     "        return;",
     "      }",
     "      /* <lang><zh-CN>先验证字节数与 SHA-384，再把公开 asset 解码为不可执行纯文本。</zh-CN><en>Verify byte length and SHA-384 before decoding the public asset as non-executable plain text.</en></lang> */",
@@ -4077,8 +4081,8 @@ function renderProjectSourceFetchClientLines(rootExpression: "contentHost" | "do
     "      setSourceState(details, 'ready', 'portal.source.status.ready', 'Source ready.');",
     "    } catch (error) {",
     "      const aborted = error?.name === 'AbortError';",
-    "      const detail = String(error?.message || error);",
-    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'portal.source.status.aborted' : 'portal.source.status.failed', aborted ? 'Source load aborted.' : `Source load failed: ${detail}`, aborted ? {} : { detail });",
+    "      /* <lang><zh-CN>网络异常仅映射为固定状态，原异常可能携带主机路径或端点细节。</zh-CN><en>Map network exceptions to fixed states only; original exceptions may carry host paths or endpoint details.</en></lang> */",
+    "      setSourceState(details, aborted ? 'aborted' : 'network-error', aborted ? 'portal.source.status.aborted' : 'portal.source.status.network', aborted ? 'Source load aborted.' : 'Source is temporarily unavailable. Reset and retry.');",
     "    } finally {",
     "      clearTimeout(timeout);",
     "      sourceControllers.delete(details);",
@@ -4992,6 +4996,7 @@ function renderProjectTopicSource(
   portalContext: RenderProjectPortalContext
 ): string {
   return [
+    renderProjectSourceAvailabilityFeedback(entry, portalContext),
     entry.source ? renderProjectEntrySource(entry.source, false, portalContext) : "",
     entry.sourceUsability ? renderProjectEntrySourceUsability(entry.sourceUsability, false, portalContext) : "",
     entry.docSourceMap ? renderProjectEntryDocSourceMap(entry.docSourceMap, false, portalContext) : "",
@@ -4999,6 +5004,27 @@ function renderProjectTopicSource(
       ? renderProjectSourceCommentProjection(entry.sourceCommentProjection, portalContext.sourceCommentProjection, portalContext)
       : ""
   ].join("");
+}
+
+/**
+ * @lang zh-CN 将既有CLI公开诊断投影为已确认来源状态，元数据或诊断均不授予读取权限。
+ * @lang en Projects existing CLI public diagnostics onto confirmed source states; metadata and diagnostics grant no read authority.
+ * @param entry <lang><zh-CN>保留文档正文及可选授权资产的条目。</zh-CN><en>Entry retaining prose and optional authorized assets.</en></lang>
+ * @param context <lang><zh-CN>已解析模式和双语界面上下文。</zh-CN><en>Resolved mode and bilingual UI context.</en></lang>
+ * @returns <lang><zh-CN>可读状态提示，存在资产或显式none时为空；未知原因只说明未提供。</zh-CN><en>Readable status notice, empty for existing assets or explicit none; unknown causes report only an absent excerpt.</en></lang>
+ */
+function renderProjectSourceAvailabilityFeedback(entry: RenderProjectEntry, context: RenderProjectPortalContext): string {
+  if (context.sourcePresentation === "none" || entry.source?.preview || entry.source?.fetchUrl || entry.source?.linkUrl) return "";
+  // <lang><zh-CN>仅消费固定公开代码，既有诊断正文与附加字段不会进入反馈文案。</zh-CN><en>Consume fixed public codes only; existing diagnostic text and extra fields never enter feedback copy.</en></lang>
+  const known = {
+    HIA_CLI_SOURCE_NOT_AUTHORIZED: ["denied", "portal.source.status.denied", "Source request denied."],
+    HIA_CLI_SOURCE_NOT_FOUND: ["not-found", "portal.source.status.notfound", "Source asset was not found."],
+    HIA_CLI_SOURCE_READ_FAILED: ["network-error", "portal.source.status.network", "Source is temporarily unavailable. Reset and retry."]
+  } as const;
+  // <lang><zh-CN>有公开原因才区分失败，缺少证据保持未提供；正文入口与普通阅读不受影响。</zh-CN><en>Distinguish failures only with a public reason; missing evidence remains an absent excerpt and ordinary prose stays readable.</en></lang>
+  const diagnostic = entry.diagnostics?.find(item => Object.hasOwn(known, item.code));
+  const [state, messageId, fallback] = diagnostic ? known[diagnostic.code as keyof typeof known] : ["unavailable", "portal.source.status.notprovided", "This entry has no public source excerpt."] as const;
+  return `<div data-hia-source-state="${state}"><p class="hia-project-loading" data-hia-source-fetch-status role="status">${renderOptionalProjectUiMessage(context, messageId, fallback)}</p></div>`;
 }
 
 /**

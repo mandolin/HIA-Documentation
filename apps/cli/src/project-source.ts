@@ -17,6 +17,8 @@ const MAX_PREPARED_BYTES = 1_073_741_824;
 
 /** @lang zh-CN 单次命令的有界状态，正文只活在授权构建中。 @lang en Bounded state for one command; bodies exist only within the authorized build. */
 interface SourceReadState {
+  /** @lang zh-CN 当前串行条目的公开失败类别，每个条目前清空，禁止携带原异常。 @lang en Public failure category for the current sequential entry, cleared per entry and never carrying original exceptions. */
+  readFailure?: "HIA_CLI_SOURCE_NOT_AUTHORIZED" | "HIA_CLI_SOURCE_NOT_FOUND" | "HIA_CLI_SOURCE_READ_FAILED";
   cache: Map<string, { preview: RenderProjectSourcePreviewRef; bytes: number }>;
   cacheBytes: number;
   diagnostics: HiaDiagnostic[];
@@ -43,6 +45,8 @@ export async function prepareProjectSourcePresentation(projectInput: RenderProje
   // <lang><zh-CN>逐个await提供读入背压；不会一次启动数千个相同或不同文件的读取。</zh-CN><en>Await each entry for read-side backpressure instead of launching thousands of same/different-file reads.</en></lang>
   for (const entry of projectInput.entries) {
     if (!entry.source) { entries.push(entry); continue; }
+    // <lang><zh-CN>读取结果仅属于当前条目，缓存命中和后续成功不能继承前一失败。</zh-CN><en>Read outcomes belong to this entry alone; cache hits and subsequent successes must not inherit prior failures.</en></lang>
+    delete state.readFailure;
     // <lang><zh-CN>保留定位事实但剥离外部端点；producer范围优先，后续裁剪同步更新实际公开范围。</zh-CN><en>Preserve locator facts while stripping external endpoints; producer ranges take precedence and later clipping updates the published range.</en></lang>
     const { preview: existing, fetchUrl: _fetch, linkUrl: _link, ...locator } = entry.source;
     const effectiveRange = existing?.range ?? locator.range;
@@ -55,7 +59,12 @@ export async function prepareProjectSourcePresentation(projectInput: RenderProje
         if (preview.range) source.range = preview.range;
       }
     }
-    entries.push({ ...entry, source });
+    // <lang><zh-CN>在既有开放诊断字段记录已知许可/读取事实；模式none继续隐藏来源呈现，producer已授权正文优先。</zh-CN><en>Record known permission/read facts in existing open diagnostics; none mode keeps source presentation hidden, and producer-authorized text retains priority.</en></lang>
+    const unavailable = presentation !== "none" && !source.preview;
+    const code = state.readFailure ?? (!authorized ? "HIA_CLI_SOURCE_NOT_AUTHORIZED" : "HIA_CLI_SOURCE_NOT_PROVIDED");
+    // <lang><zh-CN>重试只重算本准备器的四个瞬时反馈，保留其它生产者诊断，避免旧拒绝覆盖新成功或重复累积。</zh-CN><en>Retries recompute only this preparer's four transient feedback codes, preserving other producer diagnostics so old denials cannot override success or accumulate.</en></lang>
+    const diagnostics = entry.diagnostics?.filter(item => !["HIA_CLI_SOURCE_NOT_AUTHORIZED", "HIA_CLI_SOURCE_NOT_FOUND", "HIA_CLI_SOURCE_READ_FAILED", "HIA_CLI_SOURCE_NOT_PROVIDED"].includes(item.code));
+    entries.push({ ...entry, source, ...(unavailable ? { diagnostics: [...(diagnostics ?? []), createHiaDiagnostic(code, "An optional public source excerpt is unavailable; consult its source availability feedback.", "info")] } : diagnostics ? { diagnostics } : {}) });
   }
   return { ...projectInput, entries, ...(state.diagnostics.length ? { diagnostics: [...(projectInput.diagnostics ?? []), ...state.diagnostics] } : {}) };
 }
@@ -102,7 +111,10 @@ export function resolveProjectSourcePresentation(config: HiaDocsConfig): RenderP
 async function readProjectSourcePreview(root: string, relativePath: string, range: NonNullable<RenderProjectEntry["source"]>["range"], maxLines: number, state: SourceReadState): Promise<RenderProjectSourcePreviewRef | undefined> {
   // <lang><zh-CN>先验证locator，避免任何未授权的文件接触；Windows与POSIX分隔符统一。</zh-CN><en>Validate locators before any unauthorized file access, normalizing Windows/POSIX separators.</en></lang>
   const normalized = relativePath.replaceAll("\\", "/");
-  if (!normalized || normalized.startsWith("/") || /^[a-zA-Z]:/u.test(normalized) || normalized.split("/").includes("..")) return undefined;
+  if (!normalized || normalized.startsWith("/") || /^[a-zA-Z]:/u.test(normalized) || normalized.split("/").includes("..")) {
+    state.readFailure = "HIA_CLI_SOURCE_NOT_AUTHORIZED";
+    return undefined;
+  }
   // <lang><zh-CN>包含末行的窗口同时受定位器与公开行数上限限制；缓存键不能把不同片段混为一份。</zh-CN><en>The inclusive window is bounded by both locator and publication line cap; cache keys must distinguish different excerpts.</en></lang>
   const start = Math.max(1, range?.start.line ?? 1);
   const end = Math.min(range?.end?.line ?? start + maxLines - 1, start + maxLines - 1);
@@ -112,9 +124,9 @@ async function readProjectSourcePreview(root: string, relativePath: string, rang
   try {
     // <lang><zh-CN>词法和真实路径双重限制，不跟随越过授权根的符号链接。</zh-CN><en>Enforce both lexical and real-path containment, refusing symlinks escaping the authorized root.</en></lang>
     const absolute = path.resolve(root, normalized);
-    if (!inside(root, absolute)) return undefined;
+    if (!inside(root, absolute)) { state.readFailure = "HIA_CLI_SOURCE_NOT_AUTHORIZED"; return undefined; }
     const [realRoot, realSource] = await Promise.all([realpath(root), realpath(absolute)]);
-    if (!inside(realRoot, realSource)) return undefined;
+    if (!inside(realRoot, realSource)) { state.readFailure = "HIA_CLI_SOURCE_NOT_AUTHORIZED"; return undefined; }
     // <lang><zh-CN>只积累选中行；长的未选中行也按chunk跳过，不保存整个文件或其前缀。</zh-CN><en>Accumulate selected lines only; even long unselected lines are skipped by chunk without retaining the file or its prefix.</en></lang>
     const lines: string[] = [];
     // <lang><zh-CN>pieces只跨chunk拼接当前选中行；line为一基扫描位置，bytes计所选UTF-8正文，complete表示已到末行。</zh-CN><en>pieces joins only the current selected line across chunks; line is the one-based scan position, bytes counts selected UTF-8 bodies, and complete marks the final line.</en></lang>
@@ -161,7 +173,13 @@ async function readProjectSourcePreview(root: string, relativePath: string, rang
     state.cache.set(key, { preview, bytes: weight });
     state.cacheBytes += weight;
     return preview;
-  } catch { return undefined; }
+  } catch (error) {
+    // <lang><zh-CN>只公开稳定类别，ENOENT/ENOTDIR为缺失，权限拒绝单列，其余读取失败；绝对路径及系统异常正文留在进程内。</zh-CN><en>Expose stable categories only: ENOENT/ENOTDIR mean missing, permission denial is distinct, and remaining failures are read errors; absolute paths and system exception text remain process-local.</en></lang>
+    const code = (error as NodeJS.ErrnoException).code;
+    state.readFailure = code === "ENOENT" || code === "ENOTDIR" ? "HIA_CLI_SOURCE_NOT_FOUND"
+      : code === "EACCES" || code === "EPERM" ? "HIA_CLI_SOURCE_NOT_AUTHORIZED" : "HIA_CLI_SOURCE_READ_FAILED";
+    return undefined;
+  }
 }
 
 /** @lang zh-CN 按code限一条静态错误，不回显文件正文、私有绝对路径或原异常。 @lang en Keeps at most one static error per code, without reflecting file bodies, private absolute paths or original exceptions. */

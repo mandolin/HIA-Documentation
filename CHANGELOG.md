@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Source availability and recovery
+
+- 项目源码准备在既有条目诊断中区分本地公开读取未授权、来源缺失及读取失败。阅读布局补充未提供公开片段反馈，保留正文与无脚本阅读。
+- Project source preparation distinguishes denied local publication authority, missing sources and read failures through existing entry diagnostics. The reading layout adds absent-excerpt feedback while retaining prose and script-free reading.
+- HTTP拒绝、资产缺失及网络失败采用固定双语文案，避免回显服务端状态文本或原始异常。重置后重新展开会重走原摘要校验。
+- HTTP denial, missing assets and network failures use fixed bilingual feedback without reflecting server status text or original exceptions. Resetting and reopening repeats the original integrity checks.
+
 ## Unreleased — Public API inventory guidance
 
 - 延迟目录初始化完成后按当前查询恢复检索结果，避免较晚的根目录响应覆盖已输入的查询。
