@@ -4444,9 +4444,10 @@ function renderProjectSplitSiteScript(
     "      contentHost.append(article);",
     "    } catch (error) { showLoadError(error); }",
     "  });",
-    "  readJson(config.navigation).then((shard) => {",
+    // <lang><zh-CN>根目录响应可以晚于用户输入和检索结果，装配后按当前查询重算，保留已选过滤而不覆盖为原目录。</zh-CN><en>The root response may arrive after user input and search results. Reapply the current query after assembly, preserving selected filters instead of overwriting results with the root.</en></lang>
+    "  readJson(config.navigation).then(async (shard) => {",
     "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
-    "    renderRoot();",
+    "    await runSearch();",
     "    const hash = location.hash.startsWith('#entry=') ? decodeURIComponent(location.hash.slice(7)) : '';",
     ...(portalContext.siteNavigation ? ["    if (hash) return ensureSearchIndex().then((entries) => {"] : ["    if (hash) ensureSearchIndex().then((entries) => {"]),
     "      const entry = entries.find((candidate) => candidate.id === hash);",

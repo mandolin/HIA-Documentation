@@ -2,6 +2,9 @@
 
 ## Unreleased — Public API inventory guidance
 
+- 延迟目录初始化完成后按当前查询恢复检索结果，避免较晚的根目录响应覆盖已输入的查询。
+- Preserve the current search when delayed navigation initialization completes, preventing a late root response from overwriting entered queries.
+
 - 公开API清单说明校正为十三个主仓必要包，并通过回归检查与实际清单核对。
 - Correct the public API inventory guide to identify the thirteen required main-repository packages and verify its scope against the actual inventory.
 
