@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Standalone reading focus
+
+- 独立JSDoc公开示例采用可聚焦页内小节及源码加载/重置焦点交接，加载期间保持发起控件可见并尊重用户移走的焦点。
+- Adopt focusable native outline sections and source load/reset focus transfer in the standalone JSDoc example, retaining the initiating control during loading and respecting focus moved by the user.
+
 ## Unreleased — Portal directory focus
 
 - 手机目录打开条目后，焦点跟随正文阅读位置，迟到响应尊重用户已移走的焦点。
