@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Project search recovery
+
+- 通用Portal拒绝非法索引集合，采用固定公开错误并允许重试。连续查询共享索引在途请求，迟到的结果与失败不会覆盖新查询或清空后的目录。
+- The project Portal rejects invalid index collections with a fixed public error and allows retry. Consecutive queries share in-flight index reads, and late results or failures cannot overwrite a newer query or a cleared directory.
+- 成功重试或清空查询会清除本次检索错误，已读正文继续可用。
+- Successful retries or query resets clear the search-specific error while keeping the current prose readable.
+
 ## Unreleased — Language and fragment navigation
 
 - 静态当前版本使用所在页的空相对引用，减少完整参考站逐页重复的长路径。
