@@ -17,7 +17,10 @@ const MAX_PREPARED_BYTES = 1_073_741_824;
 
 /** @lang zh-CN 单次命令的有界状态，正文只活在授权构建中。 @lang en Bounded state for one command; bodies exist only within the authorized build. */
 interface SourceReadState {
-  /** @lang zh-CN 当前串行条目的公开失败类别，每个条目前清空，禁止携带原异常。 @lang en Public failure category for the current sequential entry, cleared per entry and never carrying original exceptions. */
+  /**
+   * @lang zh-CN 当前串行条目的公开失败类别，每个条目前清空，禁止携带原异常。
+   * @lang en Public failure category for the current sequential entry, cleared per entry and never carrying original exceptions.
+   */
   readFailure?: "HIA_CLI_SOURCE_NOT_AUTHORIZED" | "HIA_CLI_SOURCE_NOT_FOUND" | "HIA_CLI_SOURCE_READ_FAILED";
   cache: Map<string, { preview: RenderProjectSourcePreviewRef; bytes: number }>;
   cacheBytes: number;

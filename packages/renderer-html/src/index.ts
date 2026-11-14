@@ -2521,7 +2521,10 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
  * @lang en Resolved IA, locale, labels, and theme context for one render call.
  */
 interface RenderProjectPortalContext {
-  /** @lang zh-CN 已解析呈现模式，仅控制反馈是否适用，不代表读取授权。 @lang en Resolved presentation mode controls feedback applicability only and grants no read authority. */
+  /**
+   * @lang zh-CN 已解析呈现模式，仅控制反馈是否适用，不代表读取授权。
+   * @lang en Resolved presentation mode controls feedback applicability only and grants no read authority.
+   */
   sourcePresentation?: RenderProjectSourcePresentation;
   /**
    * @lang zh-CN 与外部可变输入隔离的已验证导航快照。
