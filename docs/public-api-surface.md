@@ -57,7 +57,7 @@ excluded from a required path's tests merely because it is experimental.
 
 The inventory does not certify a complete browser/IDE product or replace visual
 and interaction acceptance. Independent language-server/provider tools outside
-the twelve-package group retain their own version and release decisions.
+the thirteen-package group retain their own version and release decisions.
 
-中文摘要：清单固定十二必要包的公开结构，帮助发现遗漏与漂移；结构一致不是语义验收。软件包API、工件版本、
+中文摘要采用十三个主仓必要包的公开结构清单，帮助发现遗漏与漂移，并配合语义验收。软件包API、工件版本、
 试验扩展及实际发行分别管理，旧输入迁移、权限/隐私、错误与默认值仍需相应验证。清单不自动授权发布。

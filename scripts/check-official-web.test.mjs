@@ -197,7 +197,8 @@ test("public API guidance follows the required main-repository package inventory
   const guide = await readFile(new URL("../docs/public-api-surface.md", import.meta.url), "utf8");
   assert.equal(inventory.packages.length, 13);
   assert.match(guide, /thirteen\s+required main-repository packages/);
-  assert.doesNotMatch(guide, /twelve\s+required packages/);
+  assert.match(guide, /十三个主仓必要包/);
+  assert.doesNotMatch(guide, /twelve|十二/);
 });
 
 test("Public brand prose remains allowed", () => {
