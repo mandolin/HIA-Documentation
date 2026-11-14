@@ -4,7 +4,7 @@
  * @lang en Pure-function, explicit-route, refusal, and asset regressions for independent generators.
  */
 import { describe, expect, it } from "vitest";
-import { Script } from "node:vm";
+import { Script, runInNewContext } from "node:vm";
 import { createSiteChrome, type SiteChromePage } from "./site-chrome.js";
 import { createGeneratedSiteNavigation } from "../../../site/src/lib/generated-navigation.mjs";
 
@@ -23,11 +23,35 @@ function page(): SiteChromePage {
 }
 
 describe("public site-chrome shared entry", () => {
+  it("preserves only real native fragments on actual locale counterparts without accumulating stale anchors", () => {
+    // <lang><zh-CN>执行实际共享资产，核真实符号、片段变化、显式目标、非法编码及根恢复。</zh-CN><en>Execute the actual shared asset for real symbols, fragment changes, explicit targets, malformed encoding and root restoration.</en></lang>
+    const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });
+    const source = chrome.assets[1]!.contents.match(/function synchronizeNativeLocaleFragments\(\) \{[\s\S]*?\n    \}/u)?.[0];
+    expect(source).toBeDefined();
+    const link = { dataset: {} as Record<string, string>, href: "https://public.example/api/greet.en.html", getAttribute() { return "greet.en.html"; } };
+    const explicit = { dataset: {} as Record<string, string>, href: "https://public.example/api/greet.en.html#fixed", getAttribute() { return "greet.en.html#fixed"; } };
+    const location = { hash: "#greet" };
+    const context = { URL, decodeURIComponent, location, document: { baseURI: "https://public.example/api/greet.zh-CN.html", querySelectorAll() { return [link, explicit]; }, getElementById(id: string) { return ["greet", "parameters"].includes(id) ? {} : null; } } };
+    const synchronize = runInNewContext(`(${source})`, context);
+    synchronize();
+    expect(link.href).toBe("https://public.example/api/greet.en.html#greet");
+    expect(explicit.href).toBe("https://public.example/api/greet.en.html#fixed");
+    location.hash = "#parameters";
+    synchronize();
+    expect(link.href).toBe("https://public.example/api/greet.en.html#parameters");
+    for (const fragment of ["#missing", "#%ZZ", ""]) {
+      location.hash = fragment;
+      synchronize();
+      expect(link.href).toBe("https://public.example/api/greet.en.html");
+    }
+  });
+
   it("renders explicit nested routes, escaped labels, native landmarks and one shared asset set", () => {
     const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });
     const html = chrome.renderPage(page());
     expect(html).toContain('data-hia-site-navigation');
     expect(html).toContain('href="../api/greet.en.html"');
+    expect(html).toContain('href="../api/greet.zh-CN.html" data-hia-site-current aria-current="true"');
     expect(html).toContain('href="../assets/hia-site-navigation.css"');
     expect(html).toContain('<title>greet &lt;public&gt;</title>');
     expect(html).toContain('参数 &lt;required&gt;');

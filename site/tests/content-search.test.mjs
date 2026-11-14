@@ -187,3 +187,37 @@ test("both official directories expose the complete DotNetDoc tool reference at 
     }
   }
 });
+
+
+test("anchor feedback follows hash changes and clears on recovery, including malformed fragments", async () => {
+  // <lang><zh-CN>执行官网原函数，保留同主题提示并验证恢复不会叠加或遗留警告。</zh-CN><en>Execute the website function, retaining same-topic feedback and verifying recovery leaves no duplicate or stale warning.</en></lang>
+  const { runInNewContext } = await import("node:vm");
+  const client = await readFile(new URL("../src/scripts/client.js", import.meta.url), "utf8");
+  const source = client.match(/function updateAnchorNotice\(\) \{[\s\S]*?\n\}/u)?.[0];
+  assert(source, "The current fragment needs a reusable recovery handler.");
+  const notices = [];
+  const document = {
+    querySelector(selector) {
+      if (selector === "[data-anchor-notice]") return notices[0];
+      if (selector === ".breadcrumbs") return { after(element) { notices.push(element); } };
+      return null;
+    },
+    getElementById(id) { return id === "valid" ? {} : null; },
+    createElement() { return { setAttribute() {}, remove() { notices.splice(notices.indexOf(this), 1); } }; }
+  };
+  const location = { hash: "#missing" };
+  const update = runInNewContext(`(${source})`, { document, location, english: true, decodeURIComponent });
+  for (const fragment of ["#missing", "#other", "#%ZZ"]) {
+    location.hash = fragment;
+    update();
+    assert.equal(notices.length, 1);
+    assert.match(notices[0].textContent, /original section cannot be located/);
+  }
+  location.hash = "#valid";
+  update();
+  assert.equal(notices.length, 0);
+  location.hash = "";
+  update();
+  assert.equal(notices.length, 0);
+  assert.match(client, /addEventListener\("hashchange", updateAnchorNotice\)/);
+});

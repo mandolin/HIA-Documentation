@@ -262,6 +262,24 @@ export const SITE_READING_SCRIPT = String.raw`/**
     synchronizeDirectory();
     mobile.addEventListener('change', synchronizeDirectory);
     root.dataset.hiaReadingReady = 'true';
+    /**
+     * @lang zh-CN 在独立生成器已声明的同页语言目标上保留当前真实锚点；显式目标片段优先，未知片段不传播。
+     * @lang en Preserve the current real anchor on independent generators' declared same-page locale targets, honoring explicit target fragments and excluding unknown fragments.
+     */
+    function synchronizeNativeLocaleFragments() {
+        // <lang><zh-CN>片段只用于本页ID查找，不作为选择器、HTML或代码执行。</zh-CN><en>Use the fragment only for local ID lookup, never as a selector, HTML or executable code.</en></lang>
+        let anchor;
+        try { anchor = decodeURIComponent(location.hash.slice(1)); }
+        catch { anchor = undefined; }
+        for (const link of document.querySelectorAll('[data-hia-site-language]:not([data-hia-site-hrefs]),[data-hia-site-current]')) {
+            // <lang><zh-CN>缓存原始对应页，连续切换片段时清除旧片段；交互Portal另用条目身份同步。</zh-CN><en>Cache the original counterpart so fragment changes clear stale fragments; interactive Portals use their separate entry-identity synchronizer.</en></lang>
+            const target = new URL(link.dataset.hiaSiteNativeTarget || (link.dataset.hiaSiteNativeTarget = link.getAttribute('href')), document.baseURI);
+            if (!target.hash && anchor && document.getElementById(anchor)) target.hash = location.hash;
+            link.href = target.href;
+        }
+    }
+    synchronizeNativeLocaleFragments();
+    window.addEventListener('hashchange', synchronizeNativeLocaleFragments);
     // <lang><zh-CN>阅读设置从本页构建默认开始，不继承其它站点的持久化主题。</zh-CN><en>Start settings from this page's build default rather than another site's persisted theme.</en></lang>
     root.dataset.hiaScheme = script.dataset.hiaReadingInitialScheme;
     root.dataset.hiaSkin = script.dataset.hiaReadingInitialSkin;
@@ -384,6 +402,19 @@ export const SITE_READING_SCRIPT = String.raw`/**
             }
         }
     }
+    /**
+     * @lang zh-CN 当前版本链接保留已生成条目身份；其它版本仍由宿主显式路由决定。
+     * @lang en Retain the generated entry identity on current-version links while other versions keep explicit host routing.
+     */
+    function synchronizeCurrentVersionEntry(entry) {
+        for (const link of document.querySelectorAll('.hia-site-version-menu a[aria-current="true"][data-hia-site-hrefs],.hia-site-mobile a[aria-current="true"][data-hia-site-hrefs]')) {
+            // <lang><zh-CN>原始根不随界面语言切换累积片段，目录恢复时回到同语言根。</zh-CN><en>Original roots never accumulate fragments across UI-language changes, and returning to the index restores the same-locale root.</en></lang>
+            const roots = JSON.parse(link.dataset.hiaSiteVersionRoots || (link.dataset.hiaSiteVersionRoots = link.dataset.hiaSiteHrefs));
+            const targets = Object.fromEntries(Object.entries(roots).map(([locale, target]) => [locale, entry?.localePages?.[locale] ? target + '#entry=' + encodeURIComponent(entry.id) : target]));
+            link.dataset.hiaSiteHrefs = JSON.stringify(targets);
+            link.href = targets[ui?.value || root.lang];
+        }
+    }
     // <lang><zh-CN>每次实际条目切换后只建立真实锚点；目录位于正文外，避免改变正文语言块。</zh-CN><en>After actual entry changes, build real anchors outside prose, preserving content-language blocks.</en></lang>
     /**
      * @lang zh-CN 从当前真实小节建立页内目录，其普通链接保留可直接打开的静态对应页。
@@ -399,6 +430,7 @@ export const SITE_READING_SCRIPT = String.raw`/**
             }
         const entry = pages.get(article?.querySelector('article[id]')?.id);
         synchronizeLocaleLinks(entry);
+        synchronizeCurrentVersionEntry(entry);
         const staticPage = script.dataset.hiaReadingStatic ? '' : entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
         const sections = article?.querySelectorAll('[data-hia-topic-section][id], [data-hia-reading-section][id]') || [];
         for (const nav of document.querySelectorAll('[data-hia-reading-outline]')) {

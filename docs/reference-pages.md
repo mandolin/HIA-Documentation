@@ -1,24 +1,29 @@
 # HIA Reference Pages
 
-The HIA public reference is published as one GitHub Pages artifact at:
+The product website and documentation are published at:
 
 ```text
 https://mandolin.github.io/HIA-Documentation/
 ```
 
-The site combines first-party documentation generated from the explicit public source allowlist with the canonical JSON Schema namespace. It keeps compatibility routes at the site root and also exposes a first versioned layout through `current/` and `releases/`.
+The root serves the Simplified Chinese product website. English product pages and both documentation languages have explicit routes. Generated technical references, canonical JSON Schemas and retained deep links are included in the same Pages artifact. Larger API and resource partitions use separate project sites linked from the documentation directory.
 
-The artifact also includes generated public portal pages for ecosystem discovery, adoption guidance, operations status, IDE/DevTools host anchors and public documentation navigation. These pages are assembled from reviewed public metadata before the final Pages artifact is written.
+The complete compatibility snapshot and its original machine index are available on the [legacy project site](https://mandolin.github.io/HIA-Documentation-Legacy/). The root machine index uses `hia-site-version-index@2.0.0` and locates that snapshot. See the [site index and migration guide](site-version-index.md).
 
-## Offline product website candidate
-
-The offline product website assembler supports a split layout. The candidate keeps the existing non-root technical routes and uses its version index to locate the complete old snapshot on the [legacy project site](https://mandolin.github.io/HIA-Documentation-Legacy/). The live primary routes below apply until the coordinated website cutover. See [the site index and migration guide](site-version-index.md).
+中文说明。站点根已作为简体中文产品官网上线，文档主线为1.0.0预览，暂无历史大版本封版。旧参考索引在兼容站保持原身份，技术构建目录与系统文档封版分别管理。
 
 ## Public Routes
 
 | Route | Purpose |
 | --- | --- |
-| `/` | Default English unified reference entry. |
+| `/` | Simplified Chinese product website. |
+| `/site/en/` | English product website. |
+| `/site/<locale>/features/` | Product features and demonstration projects. |
+| `/docs/` | Complete Simplified Chinese documentation entry, available without scripts. |
+| `/docs/<locale>/` | Current documentation in `zh-CN` or `en`. |
+| `/docs/<locale>/learn/start/`, `/docs/<locale>/reference/`, `/docs/<locale>/development/`, `/docs/<locale>/code/` | Learning, reference, development and generated-code directories under the selected documentation locale. |
+| `/docs/versions/`, `/docs/versions/en/` | Chinese and English documentation version policy and actual archive inventory. |
+| `/jsdoc/` | Actual standalone JSDoc output with native localized page names. |
 | `/en/` | English reference route. |
 | `/zh-CN/` | Chinese reference route. |
 | `/source-linkage/` | Public source-linkage panel and structured open-request payload. |
@@ -26,9 +31,9 @@ The offline product website assembler supports a split layout. The candidate kee
 | `/current/en/` | Current English reference route. |
 | `/current/zh-CN/` | Current Chinese reference route. |
 | `/current/source-linkage/` | Current source-linkage panel. |
-| `/releases/0.1.0-draft/` | First release snapshot candidate. |
-| `/versions/` | Human-readable version index. |
-| `/versions.json` | Machine-readable version index with search partitions. |
+| `/releases/0.1.0-draft/` | Retained technical reference route, regenerated with the reference build. |
+| `/versions/` | Retained human-readable technical reference build index. |
+| `/versions.json` | Product documentation index, `hia-site-version-index@2.0.0`. |
 | `/schemas/` | Existing canonical schema catalog and schema URLs. |
 | `/en/packages/` | English ecosystem package matrix. |
 | `/en/doc-lines/` | English documentation line index. |
@@ -74,15 +79,20 @@ The `/schemas/` namespace is copied byte-for-byte from the generated schema dist
 
 ## Versioning Model
 
-The W-P15.2 layout is a candidate, not a full documentation history system.
+Main documentation follows the latest stable system version after the formal release. During release preparation it is explicitly labeled `1.0.0 preview`. There are currently no archived system major versions.
+
+Each older major retains its final documentation edition at `docs/archive/v<major>/<locale>/` when an actual archive is published. The brand-adjacent dropdown is the primary switcher and the history page is the secondary entry. Language links retain the topic. Script-enabled switching carries the existing fragment, and a missing section produces an explicit notice on the target topic. Missing locales in version-index resolution return `missing-locale`, and unknown versions return `missing-version`.
 
 | Path | Meaning |
 | --- | --- |
-| `/current/` | Alias for the latest published reference build. |
-| `/releases/0.1.0-draft/` | Immutable-looking snapshot path for the first public reference candidate. |
-| `/versions.json` | Version contract used by checks and future UI. |
+| `/docs/<locale>/` | Current system documentation. |
+| `/docs/archive/v<major>/<locale>/` | Reserved layout for actual final editions of older majors. No archive is currently published. |
+| `/versions.json` | Current product documentation version index. |
+| `/current/` | Latest generated technical reference build. |
+| `/releases/0.1.0-draft/` | Retained rebuildable technical reference route. |
+| `https://mandolin.github.io/HIA-Documentation-Legacy/versions.json` | Exact original `hia-reference-version-index@0.1.0-draft` with its original aliases and search partitions. |
 
-The root routes remain for compatibility during the transition. Future release cycles can add additional `releases/<id>/` paths without moving `/schemas/`.
+Package versions, artifact contract versions and technical reference build directories have their own identities. `/schemas/` retains the canonical schema namespace. Readers of the original reference index use the compatibility site's index URL.
 
 ## Local Verification
 

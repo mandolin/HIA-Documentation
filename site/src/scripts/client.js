@@ -98,17 +98,33 @@ function updateSearch(input, target) {
 for (const link of document.querySelectorAll('a[hreflang],.mobile-nav a[lang],[data-preserve-anchor]')) {
   link.addEventListener("click", () => { if (location.hash) link.hash = location.hash; });
 }
-if (location.hash) {
+/**
+ * @lang zh-CN 同主题原小节缺失时显示已确认提示；片段变化或恢复后移除旧提示，不回显片段文本。
+ * @lang en Show the confirmed same-topic missing-section notice, removing stale notices on fragment changes or recovery without reflecting fragment text.
+ * @returns {void} 仅更新本页定位反馈。 Updates only local anchor feedback.
+ */
+function updateAnchorNotice() {
+  document.querySelector("[data-anchor-notice]")?.remove();
+  if (!location.hash) return;
+  // <lang lang="zh-CN">片段解码失败与缺少小节采用同一安全提示，不把编码当成选择器。</lang><lang lang="en">Malformed encoding shares the safe missing-section notice without treating fragments as selectors.</lang>
   let anchor;
   try { anchor = decodeURIComponent(location.hash.slice(1)); } catch { anchor = undefined; }
-  if (anchor && !document.getElementById(anchor)) {
+  if (!anchor || !document.getElementById(anchor)) {
+    // <lang lang="zh-CN">固定消息不包含用户片段；正文页放在面包屑后，其它页面放在正文开头。</lang><lang lang="en">Fixed text excludes user fragments; articles place it after breadcrumbs and other pages at the start of main content.</lang>
     const warning = document.createElement("p");
     warning.className = "notice warning";
     warning.setAttribute("role", "status");
+    warning.setAttribute("data-anchor-notice", "");
     warning.textContent = english ? "This topic is available, but the original section cannot be located. Continue through the page outline." : "已找到主题，原小节暂不可定位。可从本页内容继续阅读。";
-    document.querySelector(".breadcrumbs")?.after(warning);
+    // <lang lang="zh-CN">同一提示在每次更新先移除，避免导航累积警告。</lang><lang lang="en">Remove the previous notice before each update to avoid accumulating navigation warnings.</lang>
+    const breadcrumbs = document.querySelector(".breadcrumbs");
+    if (breadcrumbs) breadcrumbs.after(warning);
+    else document.querySelector("main")?.prepend(warning);
   }
 }
+updateAnchorNotice();
+window.addEventListener("hashchange", updateAnchorNotice);
+
 for (const input of document.querySelectorAll("[data-search-input]")) {
   // <lang lang="zh-CN">每个查询框只更新其明确绑定的本页区域。</lang><lang lang="en">Each query updates only its explicitly bound local container.</lang>
   const target = document.getElementById(input.dataset.searchInput);

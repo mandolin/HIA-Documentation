@@ -226,3 +226,8 @@ The renderer manifest schema version is exported as `HIA_RENDER_HTML_MANIFEST_SC
 Native `<details>/<summary>` remains the disclosure authority. Expanded state comes from `details[open]` and the browser accessibility mapping; the renderer does not duplicate authored `aria-expanded`. Split-site 的 `<noscript>` 入口会转到独立多页输出；默认 `fetch` 源码在该输出中降级为构建生成的同源资源链接，而不是恢复外部 locator。Print/forced-colors fallback 由 theme asset 提供。
 
 Renderer output is separate from CLI filesystem output. See `docs/contract-index.md` for the current layering rule.
+
+
+独立生成器共享框架的已声明语言对应页，在脚本启用时保留本页实际存在的符号或小节锚点。显式目标片段优先，未知或畸形片段不传播，切换片段会重新计算目标。静态无脚本链接保留已生成对应页，具体符号可通过该页目录定位。
+
+English. With scripts enabled, declared same-page locale counterparts in independent-generator chrome retain symbol or section anchors that actually exist on the current page. Explicit target fragments take precedence, unknown or malformed fragments are excluded, and fragment changes recalculate targets. Script-free links retain the generated counterpart page, whose directory provides symbol navigation.

@@ -1,5 +1,15 @@
 # 变更日志 / Changelog
 
+## Unreleased — Language and fragment navigation
+
+- 当前文档版本链接保留已生成条目或独立页面，静态链接同样沿实际对应页；历史入口继续采用宿主显式地址。
+- Current-documentation-version links retain the generated entry or independent page, including static links through actual counterparts. Historical entries retain explicit host destinations.
+
+- 独立生成器的已声明语言对应页保留当前真实符号锚点，显式目标片段优先，片段变化会清除旧值。交互Portal继续按原条目身份同步。
+- Declared locale counterparts from independent generators retain the current real symbol anchor, honoring explicit target fragments and clearing stale values on fragment changes. Interactive Portals retain their existing entry-identity synchronization.
+- 官网缺失小节提示响应片段变化，定位恢复后移除，畸形编码采用固定安全文案。
+- Website missing-section feedback follows fragment changes, clears on recovery, and uses fixed safe text for malformed encoding.
+
 ## Unreleased — Source availability and recovery
 
 - 项目源码准备在既有条目诊断中区分本地公开读取未授权、来源缺失及读取失败。阅读布局补充未提供公开片段反馈，保留正文与无脚本阅读。

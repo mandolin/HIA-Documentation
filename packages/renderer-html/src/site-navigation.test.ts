@@ -68,6 +68,17 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(link.href).toBe("/product/en/");
     expect(attributes.has("aria-disabled")).toBe(false);
   });
+  it("retains the current interactive entry on current-version navigation and restores roots on index", () => {
+    // <lang><zh-CN>只同步当前版本，未知历史版本继续使用宿主显式目标。</zh-CN><en>Synchronize only the current version while other versions retain explicit host targets.</en></lang>
+    const link = { dataset: { hiaSiteHrefs: JSON.stringify({ "zh-CN": "/product/zh-CN/", en: "/product/en/" }) } as Record<string, string>, href: "" };
+    const source = SITE_READING_SCRIPT.match(/function synchronizeCurrentVersionEntry\(entry\) \{[\s\S]*?\n    \}/u)?.[0];
+    expect(source).toBeDefined();
+    const synchronize = runInNewContext(`(${source})`, { document: { querySelectorAll() { return [link]; } }, ui: { value: "en" }, root: { lang: "zh-CN" }, JSON, encodeURIComponent });
+    synchronize({ id: "entry:one", localePages: { en: "pages/en/one.html" } });
+    expect(link.href).toBe("/product/en/#entry=entry%3Aone");
+    synchronize(undefined);
+    expect(link.href).toBe("/product/en/");
+  });
   it.each([
     ["typescript", "TypeScript"],
     ["javascript", "JavaScript"],
