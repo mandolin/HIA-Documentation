@@ -4,6 +4,8 @@
 
 - 独立JSDoc示例采用可读的深色签名、标题与来源表面，以及浅色打印调色板和代码换行。
 - Adopt readable dark signatures, headings and source surfaces, with a light print palette and wrapping code for the standalone JSDoc example.
+- 纸面同步适配注释、关键字与行号的语法颜色。
+- Printed comments, keywords and line numbers use readable syntax colors.
 
 ## Unreleased — Standalone parameter table reading
 
