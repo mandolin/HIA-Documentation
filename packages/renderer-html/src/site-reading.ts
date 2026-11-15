@@ -439,7 +439,8 @@ export const SITE_READING_SCRIPT = String.raw`/**
                 button.disabled = true;
                 button.title = text('site.reading.host');
             }
-        const entry = pages.get(article?.querySelector('article[id]')?.id);
+        // <lang><zh-CN>同页成员保留本次真实选择身份，静态和独立宿主沿首个真实条目回退。</zh-CN><en>Retain the actual selected identity for same-page members, falling back to the first actual entry for static and standalone hosts.</en></lang>
+        const entry = pages.get(article?.dataset.hiaReadingEntry || article?.querySelector('article[id]')?.id);
         synchronizeLocaleLinks(entry);
         synchronizeCurrentVersionEntry(entry);
         const staticPage = script.dataset.hiaReadingStatic ? '' : entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
@@ -518,6 +519,8 @@ export const SITE_READING_STYLE = `
 [data-hia-site-navigation] .hia-site-field{border-top:1px solid var(--hia-border);padding:22px 0;margin:18px 0}
 [data-hia-site-navigation] .hia-site-field h3{font-size:1.14rem;margin:0 0 12px}
 [data-hia-site-navigation] .hia-site-field code{font:13px Consolas,monospace}
+/* <lang><zh-CN>源码折叠标题复用确认稿路径字体，避免基础主题字体回退引发长布局。</zh-CN><en>Source-disclosure headings reuse confirmed path typography to avoid costly base-theme font fallback.</en></lang> */
+[data-hia-site-navigation] :is(.hia-source-preview,.hia-source-fragment) summary{font-family:Consolas,monospace}
 .hia-site-field-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid var(--hia-border);border-radius:10px;overflow:hidden;background:var(--hia-surface);font-size:.9rem}.hia-site-field-table th,.hia-site-field-table td{padding:13px 16px;vertical-align:top;text-align:left;border-bottom:1px solid var(--hia-border);overflow-wrap:break-word}.hia-site-field-table th{background:var(--hia-site-soft);font-weight:600}.hia-site-field-table th:first-child{width:27%}.hia-site-field-table tr:last-child td{border-bottom:0}.hia-site-field-table p{margin:0}
 .hia-site-toc{position:sticky;top:calc(var(--hia-site-header) + var(--hia-site-tabs) + 30px);max-height:calc(100dvh - 180px);overflow:auto;border-left:1px solid var(--hia-border);padding-left:16px;font-size:.78rem;min-width:0}
 .hia-site-toc strong{font-size:.7rem;color:var(--hia-muted)}[data-hia-reading-outline] a{display:block;padding:7px 0;color:var(--hia-muted);overflow-wrap:break-word}

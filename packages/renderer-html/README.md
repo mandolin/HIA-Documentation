@@ -1,5 +1,15 @@
 # @hia-doc/renderer-html
 
+## Entry loading with site navigation
+
+显式采用站点导航的多页Portal通过同次生成的路径打开已知条目深链，正文可在目录及检索索引读取完成前呈现。目录恢复实际祖先，检索按实际查询读取索引，未知条目标识继续使用索引回退。语言、成员锚点及规范/呈现路径保留各自身份。
+
+Multi-page Portals with explicit site navigation open known entry deep links through paths emitted in the same generation. Prose can appear before directory and search reads complete. Directory restoration follows actual ancestors, searches load their index on demand, and unknown entry identities retain index fallback. Language, member anchors and canonical/presentation paths retain their own identities.
+
+较新的条目选择或筛选重置会使旧异步响应失效。目录或检索不可用时，已加载正文继续可读，无脚本页面保留普通链接。
+
+Newer entry selections and filter resets invalidate older asynchronous responses. Loaded prose remains readable when directory or search data is unavailable, and script-free pages retain ordinary links.
+
 ## Source availability and recovery
 
 显式阅读信息架构会区分未提供公开片段、未获本地公开读取许可、文件或资产缺失、摘要不符及读取失败。文档正文在这些状态下保持可读。固定双语反馈使用已有公开诊断代码与实际请求结果，远端响应正文、statusText和原始网络异常均不会成为状态文案。

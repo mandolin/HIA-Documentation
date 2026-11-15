@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Portal entry loading
+
+- 采用站点导航的通用Portal直接使用同次生成的条目路径打开已知深链，正文与目录、检索索引分别加载，未知身份保留原索引回退。
+- Portals adopting site navigation open known deep links through paths from the same generation, loading prose independently of navigation and search while retaining index fallback for unknown identities.
+- 共享祖先按父索引去重，异步选择及筛选重置使旧响应失效。源码折叠标题采用已有Consolas路径字体。
+- Parent indexes deduplicate shared ancestors, and asynchronous selections and filter resets invalidate older responses. Source-disclosure headings use the existing Consolas path typography.
+
 ## Unreleased — Standalone example code typography
 
 - 官网独立JSDoc示例显式采用现有mono代码字体预设，并在正常产物校验中检查首屏字体已生效。

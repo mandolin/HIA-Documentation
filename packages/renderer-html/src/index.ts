@@ -3174,7 +3174,7 @@ function* createProjectSplitSiteFiles(
   const files: RenderedHtmlFile[] = [
     {
       path: "index.html",
-      contents: renderProjectSplitSiteHtml(pageTitle, projectInput, options, portalContext),
+      contents: renderProjectSplitSiteHtml(pageTitle, projectInput, options, portalContext, navigationIndex.navigationTree),
       contentType: "text/html; charset=utf-8",
       role: "entry"
     },
@@ -3811,7 +3811,8 @@ function renderProjectSplitSiteHtml(
   pageTitle: string,
   projectInput: RenderProjectHtmlInput,
   options: RenderHtmlOptions,
-  portalContext: RenderProjectPortalContext
+  portalContext: RenderProjectPortalContext,
+  navigationTree: RenderProjectNavigationTreeNode[]
 ): string {
   const projectName = projectInput.project.title ?? projectInput.project.name;
   const localeModel = resolveProjectLocaleModel(projectInput, options.locale);
@@ -3849,7 +3850,7 @@ function renderProjectSplitSiteHtml(
     `<main class="hia-main hia-project-main" data-hia-project-content><p class="hia-project-empty">${renderProjectUiMessage(portalContext, "portal.navigation.select", {}, labels.select)}</p><noscript><p class="hia-noscript-notice"><a href="pages/index.html">${renderProjectUiMessage(portalContext, "portal.navigation.noscriptlink", {}, "No-script page index / 无脚本页面索引")}</a></p></noscript></main>`,
     "</div>",
     `<script src="${escapeHtml(DEFAULT_THEME_JS_PATH)}"></script>`,
-    renderProjectSplitSiteScript(portalContext, portalContext.informationArchitecture?.loadingStrategy ?? "lazy", portalContext.siteNavigation ? collectProjectNavigationTree(projectInput.entries, portalContext.informationArchitecture) : []),
+    renderProjectSplitSiteScript(portalContext, portalContext.informationArchitecture?.loadingStrategy ?? "lazy", portalContext.siteNavigation ? navigationTree : []),
     "</body>",
     "</html>"
   ].join("");
@@ -4128,19 +4129,33 @@ function renderProjectSplitSiteScript(
   loadingStrategy: "lazy" | "eager",
   readingTree: RenderProjectNavigationTreeNode[] = []
 ): string {
-  // <lang><zh-CN>只为采用页记录已存在树的祖先路径，恢复深链选中时不遍历/抓取全部分片。</zh-CN><en>Record existing ancestor paths only for adopted pages, restoring deep-link selection without fetching every shard.</en></lang>
-  const readingPaths: Array<[string, Array<{ id: string; path: string }>]> = [];
+  // <lang><zh-CN>共享祖先只存一次，条目持有父索引和已验证的真实呈现路径。数据仅随同次HTML运行时消费。</zh-CN><en>Store shared ancestors once, retaining parent indexes and validated presentation paths per entry for this HTML runtime only.</en></lang>
+  const readingParents: Array<{ id: string; path: string; parent: number }> = [];
+  const readingEntries: Array<[string, { parent: number; contentPath: string; presentationPath?: string; memberAnchor?: string; view?: RenderProjectView }]> = [];
   /**
-   * @lang zh-CN 遍历已有中性树，记录每个条目的已知祖先分片；纯内部运行时数据，不新增工件契约。
-   * @lang en Walks the existing neutral tree to record known ancestor shards as internal runtime data without adding an artifact contract.
+   * @lang zh-CN 遍历已验证的中性树，记录单一祖先和条目路由，复用原规范/呈现位置及成员锚点。
+   * @lang en Walks the validated neutral tree to record unique ancestors and routes, reusing canonical/presentation locations and member anchors.
+   * @param nodes <lang><zh-CN>当前层的已验证导航节点。</zh-CN><en>Validated navigation nodes at this level.</en></lang>
+   * @param parent <lang><zh-CN>共享祖先表中的父索引，根使用-1。</zh-CN><en>Parent index in the shared ancestor table, with -1 for the root.</en></lang>
    */
-  function collectReadingPaths(nodes: RenderProjectNavigationTreeNode[], ancestors: Array<{ id: string; path: string }>): void {
+  function collectReadingRoutes(nodes: RenderProjectNavigationTreeNode[], parent: number): void {
     for (const node of nodes) {
-      if (node.entryId) readingPaths.push([node.entryId, ancestors]);
-      if (node.children?.length) collectReadingPaths(node.children, [...ancestors, { id: node.id, path: createProjectNavigationChildrenPath(node.id) }]);
+      if (node.entryId && node.contentPath) readingEntries.push([node.entryId, {
+        parent,
+        contentPath: node.contentPath,
+        ...(node.presentationPath ? { presentationPath: node.presentationPath } : {}),
+        ...(node.memberAnchor ? { memberAnchor: node.memberAnchor } : {}),
+        ...(node.views[0] ? { view: node.views[0] } : {})
+      }]);
+      if (node.children?.length) {
+        // <lang><zh-CN>当前分支登记后才递归子层，每个条目的父链按索引可逆恢复。</zh-CN><en>Register this branch before descending so every entry's parent chain remains reversibly indexed.</en></lang>
+        const childParent = readingParents.length;
+        readingParents.push({ id: node.id, path: createProjectNavigationChildrenPath(node.id), parent });
+        collectReadingRoutes(node.children, childParent);
+      }
     }
   }
-  if (portalContext.siteNavigation) collectReadingPaths(readingTree, []);
+  if (portalContext.siteNavigation) collectReadingRoutes(readingTree, -1);
   // <lang><zh-CN>只有 adopted surface 嵌入 public plain-text bundle；metadata-only report 仍不含译文。</zh-CN><en>Only adopted surfaces embed the public plain-text bundle; the metadata-only report still contains no translations.</en></lang>
   const uiConfig = portalContext.uiLocaleAdoption
     ? {
@@ -4160,9 +4175,11 @@ function renderProjectSplitSiteScript(
     "(() => {",
     `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json', ui: ${JSON.stringify(uiConfig)} };`,
     ...(portalContext.siteNavigation ? [
-      `  const readingPaths = new Map(${JSON.stringify(readingPaths).replaceAll("<", "\\u003c")});`,
+      `  const readingParents = ${JSON.stringify(readingParents).replaceAll("<", "\\u003c")};`,
+      `  const readingEntries = new Map(${JSON.stringify(readingEntries).replaceAll("<", "\\u003c")});`,
       "  const readingBranches = new WeakMap();",
       "  let readingEntrySequence = 0;",
+      "  let readingNavigation = Promise.resolve();",
       "  /* <lang><zh-CN>同一分片的展开和深链恢复共享在途请求，失败允许下一次显式重试。</zh-CN><en>Disclosure and deep-link restoration share in-flight shard requests, allowing explicit retries after failure.</en></lang> */",
       "  function loadReadingBranch(details, path) {",
       "    if (details.dataset.loaded === 'true') return Promise.resolve();",
@@ -4173,8 +4190,12 @@ function renderProjectSplitSiteScript(
       "    readingBranches.set(details, request); return request;",
       "  }",
       "  /* <lang><zh-CN>仅打开选中项实际祖先，正文加载失败或目录故障不获取无关源码。</zh-CN><en>Open only actual selected-item ancestors without fetching unrelated sources when content or directory loading fails.</en></lang> */",
-      "  async function revealReadingEntry(entryId) {",
-      "    for (const ancestor of readingPaths.get(entryId) || []) {",
+      "  async function revealReadingEntry(entryId, requestSequence) {",
+      "    /* <lang><zh-CN>从本次HTML的父索引恢复根到叶路径，无需获取全量检索索引。</zh-CN><en>Restore root-to-leaf paths from this HTML's parent indexes without fetching the full search index.</en></lang> */",
+      "    const ancestors = [];",
+      "    for (let parent = readingEntries.get(entryId)?.parent ?? -1; parent >= 0; parent = readingParents[parent].parent) ancestors.unshift(readingParents[parent]);",
+      "    for (const ancestor of ancestors) {",
+      "      if (requestSequence !== readingEntrySequence) return;",
       "      const item = Array.from(treeHost?.querySelectorAll('[data-hia-project-node-id]') || []).find(item => item.dataset.hiaProjectNodeId === ancestor.id);",
       "      const details = item?.querySelector(':scope > details'); if (!details) continue;",
       "      details.open = true; try { await loadReadingBranch(details, ancestor.path); } catch { break; }",
@@ -4385,17 +4406,26 @@ function renderProjectSplitSiteScript(
     "      applyContentLocale();",
     "      applyUiLocale(contentHost);",
     "      bindSourceFetch();",
-    ...(portalContext.siteNavigation ? ["      document.dispatchEvent(new Event('hia:site-content'));"] : []),
+    ...(portalContext.siteNavigation ? [
+      "      contentHost.dataset.hiaReadingEntry = entry.entryId || entry.id;",
+      "      document.dispatchEvent(new Event('hia:site-content'));"
+    ] : []),
     "      const anchor = entry.memberAnchor || entry.entryId || entry.id;",
     "      const target = Array.from(contentHost.querySelectorAll('[id]')).find((item) => item.id === anchor);",
+    ...(portalContext.siteNavigation ? [
+      "      /* <lang><zh-CN>同页成员可在关闭的小节内，先展开真实正文祖先再定位，无需目录响应。</zh-CN><en>A same-page member can be inside a closed section. Open actual prose ancestors before positioning without waiting for directory data.</en></lang> */",
+      "      for (let section = target?.parentElement?.closest('details'); section && contentHost.contains(section); section = section.parentElement?.closest('details')) section.open = true;"
+    ] : []),
     "      target?.scrollIntoView({ block: 'start' });",
     ...(portalContext.siteNavigation ? [
       // <lang><zh-CN>在清空检索前记录目录重建条件，避免删除当前控件后才尝试转移焦点。</zh-CN><en>Record the directory-reset condition before clearing search, avoiding focus transfer after its control is removed.</en></lang>
       "      const readingResetsTree = Boolean(search?.value || (activeView !== 'all' && entry.view && entry.view !== activeView));",
       // <lang><zh-CN>手机或即将重建的目录先将仍属发起控件的焦点移到已装入的正文。</zh-CN><en>On mobile or before rebuilding the directory, transfer focus still owned by its trigger to the loaded prose.</en></lang>
       "      if ((matchMedia('(max-width:800px)').matches || readingResetsTree) && readingTrigger && document.activeElement === readingTrigger) contentHost.closest('main')?.focus({preventScroll:true});",
-      "      if (readingResetsTree) { activeView = 'all'; if (search) search.value = ''; for (const button of viewButtons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === 'all')); renderRoot(); }",
-      "      await revealReadingEntry(entry.entryId || entry.id); if (requestSequence !== readingEntrySequence) return;"
+      "      if (readingResetsTree) { searchSequence++; activeView = 'all'; if (search) search.value = ''; for (const button of viewButtons) button.setAttribute('aria-pressed', String(button.dataset.hiaProjectView === 'all')); renderRoot(); }",
+      "      /* <lang><zh-CN>正文已呈现后再等根目录，较新的选择可取消旧祖先恢复。</zh-CN><en>Await the root only after presenting prose, allowing newer selections to invalidate older ancestor restoration.</en></lang> */",
+      "      await readingNavigation; if (requestSequence !== readingEntrySequence) return;",
+      "      await revealReadingEntry(entry.entryId || entry.id, requestSequence); if (requestSequence !== readingEntrySequence) return;"
     ] : []),
     "      markActiveEntry(entry.entryId || entry.id);",
     ...(portalContext.siteNavigation ? [
@@ -4417,6 +4447,17 @@ function renderProjectSplitSiteScript(
     "    }).catch(() => { throw new Error('Search index unavailable.'); }).finally(() => { searchIndexPromise = null; });",
     "    return searchIndexPromise;",
     "  }",
+    ...(portalContext.siteNavigation ? [
+      "  /* <lang><zh-CN>已知路由直接加载，未知身份沿既有索引回退。查询期间即取得选择序号，旧成功/失败均不得覆盖新选择。</zh-CN><en>Load known routes directly and retain index fallback for unknown identities. Claim the selection sequence before lookup so stale successes and failures cannot replace newer selections.</en></lang> */",
+      "  async function openReadingEntry(entryId, updateHash) {",
+      "    const requestSequence = ++readingEntrySequence;",
+      "    try {",
+      "      const entry = readingEntries.get(entryId) || (await ensureSearchIndex()).find(candidate => candidate.id === entryId);",
+      "      if (requestSequence !== readingEntrySequence) return;",
+      "      if (entry) await loadEntry({ ...entry, id: entryId, entryId }, updateHash);",
+      "    } catch (error) { if (requestSequence === readingEntrySequence) showLoadError(error); }",
+      "  }"
+    ] : []),
     "  async function runSearch() {",
     // <lang><zh-CN>清空同样推进序号，迟到的成功/失败均不能覆盖当前目录。</zh-CN><en>Clearing also advances the sequence so late successes and failures cannot overwrite the current directory.</en></lang>
     "    const current = ++searchSequence;",
@@ -4450,7 +4491,7 @@ function renderProjectSplitSiteScript(
     "  }",
     "  search?.addEventListener('input', runSearch);",
     ...(portalContext.siteNavigation ? [
-      "  document.addEventListener('hia:site-entry', async (event) => { try { const entries = await ensureSearchIndex(); const entry = entries.find(candidate => candidate.id === event.detail); if (entry) await loadEntry({ ...entry, entryId: entry.id }, true); } catch (error) { showLoadError(error); } });"
+      "  document.addEventListener('hia:site-entry', event => { void openReadingEntry(event.detail, true); });"
     ] : []),
     "  contentLocale?.addEventListener('change', applyContentLocale);",
     "  uiLocale?.addEventListener('change', () => applyUiLocale());",
@@ -4475,24 +4516,31 @@ function renderProjectSplitSiteScript(
     "    } catch (error) { showLoadError(error); }",
     "  });",
     // <lang><zh-CN>根目录响应可以晚于用户输入和检索结果，装配后按当前查询重算，保留已选过滤而不覆盖为原目录。</zh-CN><en>The root response may arrive after user input and search results. Reapply the current query after assembly, preserving selected filters instead of overwriting results with the root.</en></lang>
+    ...(portalContext.siteNavigation ? [
+      "  readingNavigation = readJson(config.navigation).then(async shard => {",
+      "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
+      "    await runSearch();",
+      "  }).catch(showLoadError);",
+      "  /* <lang><zh-CN>初始正文独立于目录和检索启动，坏片段仍报告原有错误。</zh-CN><en>Start initial prose independently of directory and search, retaining existing malformed-fragment errors.</en></lang> */",
+      "  try { if (location.hash.startsWith('#entry=')) void openReadingEntry(decodeURIComponent(location.hash.slice(7)), false); } catch (error) { showLoadError(error); }"
+    ] : [
     "  readJson(config.navigation).then(async (shard) => {",
     "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
     "    await runSearch();",
     "    const hash = location.hash.startsWith('#entry=') ? decodeURIComponent(location.hash.slice(7)) : '';",
-    ...(portalContext.siteNavigation ? ["    if (hash) return ensureSearchIndex().then((entries) => {"] : ["    if (hash) ensureSearchIndex().then((entries) => {"]),
+    "    if (hash) ensureSearchIndex().then((entries) => {",
     "      const entry = entries.find((candidate) => candidate.id === hash);",
     "      if (entry) loadEntry({ ...entry, entryId: entry.id }, false);",
     "    });",
     "  }).catch(showLoadError);",
+    ]),
     ...(portalContext.siteNavigation ? [
-      // <lang><zh-CN>同文档深链和浏览器历史触发原有索引/加载链，保留请求序号保护与原生replaceState行为。</zh-CN><en>Same-document deep links and browser history reuse the index/loading chain, preserving request-sequence protection and native replaceState behavior.</en></lang>
+      // <lang><zh-CN>同文档深链和历史复用直接路由/兼容回退，并保留请求顺序与原生replaceState行为。</zh-CN><en>Same-document deep links and history reuse direct routes and compatibility fallback, preserving request ordering and native replaceState behavior.</en></lang>
       "  window.addEventListener('hashchange', async () => {",
       "    try {",
       "      if (!location.hash.startsWith('#entry=')) return;",
       "      const hash = decodeURIComponent(location.hash.slice(7));",
-      "      const entries = await ensureSearchIndex();",
-      "      const entry = entries.find(candidate => candidate.id === hash);",
-      "      if (entry) await loadEntry({ ...entry, entryId: entry.id }, false);",
+      "      await openReadingEntry(hash, false);",
       "    } catch (error) { showLoadError(error); }",
       "  });"
     ] : []),

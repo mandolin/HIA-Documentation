@@ -64,11 +64,11 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     const document = { activeElement: trigger, createElement: () => ({ setAttribute() {}, dataset: {} }), dispatchEvent() {} };
     const focus = { count: 0 };
     const main = { focus() { focus.count++; document.activeElement = main; } };
-    const contentHost = { querySelector: () => null, prepend() {}, innerHTML: "", querySelectorAll: () => [], closest: () => main };
+    const contentHost = { dataset: {}, querySelector: () => null, prepend() {}, innerHTML: "", querySelectorAll: () => [], closest: () => main };
     const load = runInNewContext(`(${source})`, {
-      document, contentHost, treeHost: { contains: () => fromTree, querySelector: () => null }, readingEntrySequence: 0,
+      document, contentHost, treeHost: { contains: () => fromTree, querySelector: () => null }, readingEntrySequence: 0, readingNavigation: Promise.resolve(),
       readFragment: () => fragment, applyContentLocale() {}, applyUiLocale() {}, bindSourceFetch() {},
-      uiMessage: () => "Loading", Event, activeView: "all", search: { value: filtered ? "one" : "" }, revealReadingEntry: async () => {},
+      uiMessage: () => "Loading", Event, activeView: "all", searchSequence: 0, search: { value: filtered ? "one" : "" }, revealReadingEntry: async () => {},
       // <lang><zh-CN>筛选恢复会移除旧控件并使浏览器失去该焦点，正文应在重建前接管。</zh-CN><en>Resetting a filter removes the old control and loses its browser focus, so prose must take focus before that rebuild.</en></lang>
       viewButtons: [], renderRoot() { if (document.activeElement === trigger) document.activeElement = {}; },
       markActiveEntry() {}, matchMedia: () => ({ matches: mobile }), history: { replaceState() {} }
@@ -164,26 +164,25 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(legacy.files.find(file => file.path.startsWith("entries/"))!.contents).toContain('<span class="hia-kind">JS</span>');
   });
 
-  it("resolves same-document hashes through the existing index without changing history", async () => {
+  it("forwards same-document hashes to ordered loading without changing history", async () => {
     const result = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", informationArchitecture: {}, siteNavigation: navigation() } });
     const shell = result.files.find(file => file.path === "index.html")!.contents;
     // <lang><zh-CN>执行实际生成的监听器，隔离DOM渲染，核入口匹配、原历史模式及坏编码的错误路径。</zh-CN><en>Execute the emitted listener independently of DOM rendering, checking entry matching, unchanged history mode and malformed-encoding errors.</en></lang>
     const listener = shell.match(/window\.addEventListener\('hashchange',[\s\S]*?  \}\);/u)![0];
-    const calls: Array<{ entry: { id: string; entryId: string }; updateHash: boolean }> = [];
+    const calls: Array<{ entryId: string; updateHash: boolean }> = [];
     const errors: unknown[] = [];
     const location = { hash: "#entry=entry%3Aone" };
     let handler!: () => Promise<void>;
     runInNewContext(listener, {
       window: { addEventListener(name: string, callback: () => Promise<void>) { expect(name).toBe("hashchange"); handler = callback; } },
       location,
-      ensureSearchIndex: async () => [{ id: "entry:one" }],
-      loadEntry: async (entry: { id: string; entryId: string }, updateHash: boolean) => { calls.push({ entry, updateHash }); },
+      openReadingEntry: async (entryId: string, updateHash: boolean) => { calls.push({ entryId, updateHash }); },
       showLoadError: (error: unknown) => { errors.push(error); }
     });
     await handler();
-    expect(calls).toEqual([{ entry: { id: "entry:one", entryId: "entry:one" }, updateHash: false }]);
+    expect(calls).toEqual([{ entryId: "entry:one", updateHash: false }]);
     for (const hash of ["#unrelated", "#entry=unknown"]) { location.hash = hash; await handler(); }
-    expect(calls).toHaveLength(1);
+    expect(calls).toEqual([{ entryId: "entry:one", updateHash: false }, { entryId: "unknown", updateHash: false }]);
     expect(errors).toHaveLength(0);
     location.hash = "#entry=%invalid";
     await handler();
@@ -199,7 +198,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(shell).toContain("requestSequence !== readingEntrySequence");
     expect(shell).toContain("while (current && treeHost.contains(current))");
     expect(shell).toContain("if (!matchMedia('(max-width:800px)').matches)");
-    expect(shell).toContain("if (hash) return ensureSearchIndex()");
+    expect(shell).toContain("void openReadingEntry(decodeURIComponent(location.hash.slice(7)), false)");
     expect(shell).toContain("window.addEventListener('hashchange'");
     expect(shell).toContain("contentHost?.querySelector(':scope > .hia-project-load-error')?.remove()");
     expect(client).toContain("document.querySelector('dialog[open]')");
