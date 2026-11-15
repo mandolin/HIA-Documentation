@@ -127,5 +127,8 @@ describe("public site-chrome shared entry", () => {
     expect(html).not.toContain("<script");
     expect(html).not.toContain('data-hia-reading-dialog=');
     expect(html).toContain('href="#parameters"');
+    // <lang><zh-CN>共享原生源码页从目标行号链接高亮整行，强制颜色状态也保留轮廓。</zh-CN><en>Shared native source pages highlight the row owning the target line link and retain an outline under forced colors.</en></lang>
+    expect(chrome.assets[0]!.contents).toContain('.hia-source-code-line:has(>.hia-source-line-number:target){background:var(--hia-accent-soft)}');
+    expect(chrome.assets[0]!.contents).toContain('.hia-source-code-line:has(>.hia-source-line-number:target){outline:2px solid Highlight}');
   });
 });

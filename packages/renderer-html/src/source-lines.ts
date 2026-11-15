@@ -5,7 +5,7 @@
  */
 
 /** @lang zh-CN 已确认最小范围的行/焦点/定位样式，不改导航。 @lang en Line/focus/target styles for the confirmed minimal scope without changing navigation. */
-const LINE_STYLE = ".hia-source-code-line{display:block;min-width:max-content}.hia-source-line-number{display:inline-block;min-width:3ch;margin-inline-end:1.25rem;color:inherit;text-align:right;user-select:none}.hia-source-code-line:target{background:color-mix(in srgb,var(--hia-accent,#0f4f82) 14%,transparent)}.hia-source-line-number:focus-visible{outline:3px solid currentColor;outline-offset:2px}";
+const LINE_STYLE = ".hia-source-code-line{display:block;min-width:max-content}.hia-source-line-number{display:inline-block;min-width:3ch;margin-inline-end:1.25rem;color:inherit;text-align:right;user-select:none}.hia-source-code-line:target,.hia-source-code-line:has(>.hia-source-line-number:target){background:color-mix(in srgb,var(--hia-accent,#0f4f82) 14%,transparent)}.hia-source-line-number:focus-visible{outline:3px solid currentColor;outline-offset:2px}";
 
 /**
  * @lang zh-CN 转义授权正文并逐行编号；独立页使用L锚点，内联避免重复DOM id。
@@ -25,10 +25,10 @@ export function renderSourceLines(content: string, startLine = 1, anchors = fals
   const numberStyle = styleMode === "stylesheet" ? "" : ' style="display:inline-block;min-width:3ch;margin-inline-end:1.25rem;text-align:right;user-select:none"';
   // <lang><zh-CN>数组只覆盖有界片段，不读取其它源码；编号只来自数值，正文永远转义。</zh-CN><en>The array covers the bounded excerpt only without other source reads; numbers derive from numeric positions and bodies are always escaped.</en></lang>
   return content.split(/\r?\n/u).map((text, index) => {
-    // <lang><zh-CN>行号来自片段原始位置；固定行号列不改变源码缩进，标签仅在独立页可点击。</zh-CN><en>Numbers follow original excerpt positions; the fixed gutter preserves code indentation and is clickable only on standalone pages.</en></lang>
+    // <lang><zh-CN>行号来自片段原始位置；原生链接同时承接L地址与键盘焦点，使下一Tab继续下一行，固定列保持源码缩进。</zh-CN><en>Numbers follow original positions; the native link owns both the L address and keyboard focus so the next Tab continues to the following line, preserving indentation through the fixed gutter.</en></lang>
     const number = firstLine + index;
-    const label = anchors ? `<a class="hia-source-line-number" href="#L${number}" aria-label="L${number}"${numberStyle}>${number}</a>` : `<span class="hia-source-line-number" aria-hidden="true"${numberStyle}>${number}</span>`;
-    return `<span class="hia-source-code-line" data-hia-source-line-number="${number}"${anchors ? ` id="L${number}" tabindex="-1"` : ""}${rowStyle}>${label}${escape(text)}</span>`;
+    const label = anchors ? `<a class="hia-source-line-number" id="L${number}" href="#L${number}" aria-label="L${number}"${numberStyle}>${number}</a>` : `<span class="hia-source-line-number" aria-hidden="true"${numberStyle}>${number}</span>`;
+    return `<span class="hia-source-code-line" data-hia-source-line-number="${number}"${rowStyle}>${label}${escape(text)}</span>`;
   }).join("");
 }
 

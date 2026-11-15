@@ -541,6 +541,8 @@ export const SITE_READING_STYLE = `
 [data-hia-reading-results]{max-height:45dvh;overflow:auto}[data-hia-reading-results] a{display:block;padding:12px;border-bottom:1px solid var(--hia-border);overflow-wrap:break-word}
 [data-hia-reading-close],[data-hia-reading-copy]{border:1px solid var(--hia-border);border-radius:5px;background:var(--hia-surface);color:var(--hia-text);padding:5px 8px;cursor:pointer}
 [data-hia-reading-copy]{float:right;font-size:.7rem}[data-hia-reading-wrap="wrap"] .hia-signature,[data-hia-reading-wrap="wrap"] .hia-source-code-line{white-space:pre-wrap!important;overflow-wrap:anywhere;min-width:0!important}
+/* <lang><zh-CN>行号链接承接原锚点，整行仍呈现当前目标，覆盖原生输出和静态阅读。</zh-CN><en>Line-number links own existing anchors while the full row retains target styling for native output and static reading.</en></lang> */
+.hia-source-code-line:target,.hia-source-code-line:has(>.hia-source-line-number:target){background:var(--hia-accent-soft)}
 [data-hia-site-navigation] [data-hia-topic-section="declaration"]{position:relative;border:0;padding:0}
 [data-hia-site-navigation] [data-hia-topic-section="declaration"]>h3{border:1px solid var(--hia-border);border-bottom:0;border-radius:10px 10px 0 0;background:var(--hia-surface);font-size:.7rem;font-weight:400;margin:0;padding:9px 16px}
 [data-hia-site-navigation] [data-hia-topic-section="declaration"]>.hia-signature{border-radius:0 0 10px 10px;margin:0}
@@ -552,5 +554,5 @@ export const SITE_READING_STYLE = `
 @media(max-width:370px){[data-hia-site-navigation] .hia-shell{width:calc(100% - 32px)}[data-hia-reading-ready] .hia-site-reading-trigger{padding:4px 6px}}
 @media(max-width:800px){.hia-site-source-shell>.hia-site-directory{display:none}.hia-site-source-mobile-directory{display:block;border:1px solid var(--hia-border);border-radius:8px;background:var(--hia-surface);margin-bottom:14px}.hia-site-source-mobile-directory>summary{padding:11px 13px;font-size:.83rem;font-weight:600}.hia-site-source-mobile-directory .hia-sidebar{max-height:none}}
 @media print{[data-hia-site-navigation] .hia-shell{display:block;width:100%;padding:0}.hia-site-directory,.hia-site-toc,.hia-site-mobile-outline,.hia-site-source-mobile-directory,[data-hia-site-navigation] dialog,[data-hia-reading-copy]{display:none!important}[data-hia-site-navigation] .hia-main{width:100%}}
-@media(forced-colors:active){.hia-site-directory,.hia-site-notice,[data-hia-site-navigation] dialog{border:1px solid CanvasText}[data-hia-site-navigation] a{color:LinkText}[data-hia-site-navigation] .hia-site-mark{background:Highlight;color:HighlightText}.hia-source-code-line:target{outline:2px solid Highlight}}
+@media(forced-colors:active){.hia-site-directory,.hia-site-notice,[data-hia-site-navigation] dialog{border:1px solid CanvasText}[data-hia-site-navigation] a{color:LinkText}[data-hia-site-navigation] .hia-site-mark{background:Highlight;color:HighlightText}.hia-source-code-line:target,.hia-source-code-line:has(>.hia-source-line-number:target){outline:2px solid Highlight}}
 `;

@@ -1,5 +1,14 @@
 # 变更日志 / Changelog
 
+## Unreleased — Source-reader recovery focus
+
+- 通用源码读取器在隐藏手动加载按钮时将焦点交给现有取消控件，重置后返回加载按钮或原生展开入口，并揭示恢复位置。
+- The shared source reader hands a hidden manual load button's focus to the existing cancel control and restores the load button or native disclosure after reset, revealing the restored position.
+- 异步状态更新尊重用户已移走的焦点，源码验证及读取边界继续沿用既有规则。
+- Asynchronous state updates respect user-moved focus and retain existing source-verification and reading boundaries.
+- 独立源码页的行号链接直接承接原有L锚点，Enter后继续Tab进入下一行，保留整行选中与无脚本阅读。
+- Standalone source line links own their existing L anchors, continuing to the next line after Enter and Tab while retaining full-line selection and script-free reading.
+
 ## Unreleased — Standalone reading focus
 
 - 独立JSDoc公开示例采用原生小节summary聚焦及源码加载/重置焦点交接，加载期间保持发起控件可见并尊重用户移走的焦点。

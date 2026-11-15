@@ -7,6 +7,58 @@ import {describe,expect,it} from "vitest";
 import {renderProjectHtmlDocument,type RenderProjectHtmlInput} from "./index.js";
 
 describe("source availability feedback",()=>{
+  it.each(["manual", "on-expand"])("keeps source-control focus available through all terminal resets in %s mode", mode => {
+    // <lang><zh-CN>执行真实reader状态函数，模拟浏览器隐藏当前控件时退回body的行为，覆盖七种终态和用户主动移焦点。</zh-CN><en>Execute the actual reader state functions, modeling the browser's fallback to body when a focused control is hidden, across seven terminal states and user-moved focus.</en></lang>
+    const rendered = renderProjectHtmlDocument({project:{name:"Source focus"},entries:[{id:"public:focus",name:"Focus",kind:"function",view:"js"}]});
+    const html = rendered.files.find(file => file.path === "index.html")!.contents;
+    const reader = html.slice(html.indexOf("  const sourceControllers ="), html.indexOf("  function bindSourceFetch("));
+    const body = {};
+    const document = {activeElement:body};
+    /**
+     * @lang zh-CN 可见性与实际焦点归属的限界DOM替身。
+     * @lang en A bounded DOM double for visibility and actual focus ownership.
+     */
+    function control(initialHidden: boolean) {
+      let hidden = initialHidden;
+      return {
+        get hidden() { return hidden; },
+        set hidden(value: boolean) { hidden = value; if (value && document.activeElement === this) document.activeElement = body; },
+        focus() { expect(hidden).toBe(false); document.activeElement = this; },
+        dataset:{} as Record<string,string>, textContent:""
+      };
+    }
+    const loadButton = mode === "manual" ? control(false) : null;
+    const resetButton = control(true);
+    const summary = control(false);
+    const outside = control(false);
+    const status = control(true);
+    const code = {textContent:""};
+    const details = {dataset:{hiaSourceState:"idle"},toggleAttribute() {},querySelector(selector: string) {
+      return ({"[data-hia-source-fetch-button]":loadButton,"[data-hia-source-reset]":resetButton,"[data-hia-source-fetch-status]":status,"code":code,":scope > summary":summary} as Record<string,unknown>)[selector];
+    }};
+    const runtime = new Function("document", reader + "return {setSourceState,resetSourceFetch};")(document);
+    for (const state of ["ready","empty","denied","not-found","integrity-error","network-error","aborted"]) {
+      // <lang><zh-CN>手动模式隐藏加载按钮时转给现有取消控件；展开模式继续由原生summary持有焦点。</zh-CN><en>Manual mode hands a hidden load button's focus to the existing cancel control; expansion mode keeps focus on its native summary.</en></lang>
+      document.activeElement = loadButton ?? summary;
+      runtime.setSourceState(details,"loading");
+      expect(document.activeElement).toBe(loadButton ? resetButton : summary);
+      runtime.setSourceState(details,state);
+      resetButton.focus();
+      code.textContent = "Public source";
+      runtime.resetSourceFetch(details);
+      expect(details.dataset.hiaSourceState).toBe("idle");
+      expect(code.textContent).toBe("");
+      expect(document.activeElement).toBe(loadButton ?? summary);
+      // <lang><zh-CN>用户已转到外部控件时，迟到的终态及重置均维持该选择。</zh-CN><en>When the user moved to another control, late terminal updates and resets retain that choice.</en></lang>
+      runtime.setSourceState(details,"loading");
+      outside.focus();
+      runtime.setSourceState(details,state);
+      expect(document.activeElement).toBe(outside);
+      runtime.resetSourceFetch(details);
+      expect(document.activeElement).toBe(outside);
+    }
+  });
+
   it("uses fixed public HTTP and network feedback from the actual generated reader",async()=>{
     // <lang><zh-CN>从真实入口HTML抽取未改写的reader，宿主替身只提供失败前必要的DOM与网络边界。</zh-CN><en>Extract the unchanged reader from actual entry HTML; host doubles supply only the DOM and network boundaries needed before failure.</en></lang>
     const rendered=renderProjectHtmlDocument({project:{name:"Source failures"},entries:[{id:"public:failure",name:"Failure probe",kind:"function",view:"js"}]});

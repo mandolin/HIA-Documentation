@@ -10,6 +10,14 @@ The explicit reading layout distinguishes an absent public excerpt, denied local
 
 After restoring the original asset bytes or read authority, select **Reset** and reopen the source panel to repeat the original integrity checks. During loading, the same control cancels the request. Static pages show build-time availability feedback and support ordinary reading with scripts disabled. Source mode `none` retains its visibility policy, and failures remain within the selected mode.
 
+键盘手动加载时，焦点跟随已显示的取消控件。重置后，焦点返回手动加载按钮或原生展开入口，并滚入可见位置。异步读取期间用户已移走的焦点继续保持。
+
+During keyboard-triggered manual loading, focus follows the visible cancel control. Reset restores focus to the manual load button or native disclosure and reveals it. Asynchronous reading respects focus that the user has moved elsewhere.
+
+独立源码页的行号链接可直接打开或复制。激活行号后，Tab继续下一行，Shift+Tab返回上一行，整行选中样式保留，禁用脚本时同样可用。
+
+Standalone source line links support direct navigation and copying. After activating a line, Tab continues to the next line and Shift+Tab returns to the preceding line, retaining full-line selection with scripts disabled as well.
+
 构建时的来源失败需要修正文件或配置后重新构建，浏览器读取器的重置只重新请求已发布的资产。Build-time source failures require correcting files or configuration and rebuilding. A browser reader reset only requests assets already published.
 
 CLI通过已有条目diagnostics传递以下固定信息类别，重复准备会重算这些瞬时结果，其它生产者诊断保持。These fixed informational codes use existing entry diagnostics. Repeated preparation recomputes these transient outcomes and preserves other producer diagnostics.

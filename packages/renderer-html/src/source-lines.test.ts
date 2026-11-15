@@ -13,6 +13,15 @@ function fixture(): RenderProjectHtmlInput {
   return { project: { id: "synthetic:lines", name: "Source lines" }, entries: [{ id: "api:a", name: "A", kind: "dotnet-method", view: "dotnet", source: { path: "src/public.cs", range: { start: { line: 21 }, end: { line: 22 } }, preview: { content: 'return "<script>synthetic</script>";\n// 中文 😀', range: { start: { line: 21 }, end: { line: 22 } } } } }] };
 }
 describe("source line views", () => {
+  it("uses each native line link as its own fragment target so activation continues with the following line", () => {
+    // <lang><zh-CN>普通链接同时拥有稳定L地址与自然焦点，外层行保留数据身份和全文高亮，避免Enter后再次Tab回同一行。</zh-CN><en>The ordinary link owns its stable L address and native focus while the row retains its data identity and full-line highlight, avoiding a repeated Tab stop after Enter.</en></lang>
+    const lines = renderSourceLines("first\nsecond\nthird", 10, true, "stylesheet");
+    expect(lines.match(/<a\b[^>]*id="L(?:10|11|12)"[^>]*href="#L(?:10|11|12)"/gu)).toHaveLength(3);
+    expect(lines).not.toMatch(/<span\b[^>]*(?:id="L|tabindex=)/u);
+    expect(renderPublicSourcePage("first\nsecond", "public.js", 10)).toContain(".hia-source-code-line:has(>.hia-source-line-number:target)");
+    expect(renderSourceLines("first",10,false)).not.toContain('id="L10"');
+  });
+
   it("shares existing page CSS without changing escaped lines, anchors or the default fragment", () => {
     // <lang><zh-CN>带特殊字符/空行的相同片段仅移除重复样式属性，语义DOM与旧默认输出逐字核同。</zh-CN><en>For identical special-character/blank-line excerpts, remove only repeated style attributes and compare semantic DOM against the legacy default byte for byte.</en></lang>
     const content = '<img src=x onerror="unsafe()"> & 中文 😀\n\nlast';
