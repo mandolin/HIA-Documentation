@@ -32,7 +32,7 @@ function fixture(t) {
   fs.writeFileSync(path.join(directory, 'i18n-index.json'), JSON.stringify({locales:['zh-CN','en']}));
   for (const name of ['hia-site-navigation.css','hia-site-reading.js','hia-site-search.json']) fs.writeFileSync(path.join(directory, 'assets', name), '');
   for (const stem of ['index','class','function']) for (const locale of ['', '.zh-CN', '.en']) {
-    fs.writeFileSync(path.join(directory, stem+locale+'.html'), '<html data-hia-site-navigation><main>ThemeRenderer themeDemo</main><a href="index.html">Home</a></html>');
+    fs.writeFileSync(path.join(directory, stem+locale+'.html'), '<html data-hia-site-navigation><body style="--code-font-family: monospace"><main>ThemeRenderer themeDemo</main><a href="index.html">Home</a></body></html>');
   }
   const source = 'function example() {}';
   const digest = createHash('sha256').update(source).digest('hex');
@@ -48,6 +48,17 @@ test('standalone versions use real native bilingual index files without mutating
   assert.deepEqual(navigation.documentationVersion.entries[0].hrefByLocale, {'zh-CN':'/HIA-Documentation/jsdoc/index.zh-CN.html',en:'/HIA-Documentation/jsdoc/index.en.html'});
   assert.deepEqual(original, before);
   assert.throws(() => createStandaloneSiteNavigation({}));
+});
+
+test('the official standalone example retains its configured initial code font', t => {
+  // <lang><zh-CN>实际官方样例选择现有mono预设，校验器拒绝只靠增强脚本才应用该字体的页面。</zh-CN><en>The official example selects the existing mono preset. Reject pages that depend on enhancement to apply that font.</en></lang>
+  const directory = fixture(t);
+  const file = path.join(directory, 'class.en.html');
+  const original = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, original.replace('--code-font-family: monospace', ''));
+  assert.throws(() => checkStandaloneJsdocReference(directory), /code typography/u);
+  fs.writeFileSync(file, original);
+  assert.ok(checkStandaloneJsdocReference(directory).files > 0);
 });
 
 test('native output checks reject missing navigation, tampered source bytes and broken relative links', t => {

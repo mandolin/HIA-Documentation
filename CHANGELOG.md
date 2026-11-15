@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Standalone example code typography
+
+- 官网独立JSDoc示例显式采用现有mono代码字体预设，并在正常产物校验中检查首屏字体已生效。
+- The official standalone JSDoc example explicitly selects the existing mono code-font preset and checks that initial output applies it.
+
 ## Unreleased — Reference fragment identity
 
 - 英文参考页的命令参考入口直接使用原有标题锚点，消除同名空节点造成的重复标识。

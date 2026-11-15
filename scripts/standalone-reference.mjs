@@ -73,6 +73,8 @@ export function checkStandaloneJsdocReference(directory) {
     if (name.endsWith('.html')) {
       assert(content.includes('data-hia-site-navigation'), 'Standalone page navigation is missing.');
       if (name.startsWith('sources/')) assert(!/<script\b/iu.test(content), 'Standalone source page contains script.');
+      // <lang><zh-CN>官方样例使用现有mono预设，首屏HTML须在脚本启动前给出同一字体。</zh-CN><en>The official example uses the existing mono preset, with the same font in its initial HTML before enhancement.</en></lang>
+      else assert(/<body\b[^>]*\bstyle="[^"]*--code-font-family:\s*monospace(?:;|")/u.test(content), 'Standalone initial code typography is missing.');
       for (const match of content.matchAll(/(?:href|src)="([^"#]+)(?:#[^"]*)?"/gu)) {
         const target = match[1].split('#')[0].split('?')[0];
         if (target.startsWith('/') || /^[a-z][a-z\d+.-]*:/iu.test(target)) continue;
@@ -124,6 +126,8 @@ export function buildStandaloneJsdocReference({mainRepoRoot, sourcesRoot, output
   const sourceUrl = `https://github.com/mandolin/jsdoc-theme-hia/blob/${themeHead}`;
   const config = {plugins:[plugin], source:{include:[source]}, opts:{template, destination:output, recurse:true, hia:{
     mode:'standalone', uiLocale:'zh-CN', siteNavigation:createStandaloneSiteNavigation(navigation),
+    // <lang><zh-CN>官网代码示例采用既有系统等宽预设，配合服务端初始样式避免字体切换造成的重排。</zh-CN><en>The official code example selects the existing system-monospace preset, paired with initial styles to avoid font-switch reflow.</en></lang>
+    theme:{code:{fontFamily:'mono'}},
     source:{basePath:themeSource, mode:'all', link:{enabled:true, rootUrl:sourceUrl, openMode:'same-tab'}, preview:{enabled:true, defaultExpanded:false}, references:{enabled:true, defaultExpanded:false}},
     i18n:{enabled:true, defaultLocale:'zh-CN', fallbackLocale:'en', locales:['zh-CN','en'], mode:'runtimeSwitch'},
     presentation:{pageMode:'multi-page', sourceMode:'fetch'},
