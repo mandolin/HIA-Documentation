@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Reference fragment identity
+
+- 英文参考页的命令参考入口直接使用原有标题锚点，消除同名空节点造成的重复标识。
+- The English reference page uses its existing command-reference heading anchor directly, removing the duplicate identifier on an empty node.
+- 双语手册编译回归检查所有片段标识唯一，并保留已有命令参考深链。
+- Compiled bilingual-manual regressions check unique fragment identifiers and retain existing command-reference deep links.
+
 ## Unreleased — Source-reader recovery focus
 
 - 通用源码读取器在隐藏手动加载按钮时将焦点交给现有取消控件，重置后返回加载按钮或原生展开入口，并揭示恢复位置。

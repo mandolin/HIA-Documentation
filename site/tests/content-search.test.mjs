@@ -184,6 +184,10 @@ test("every actual manual section is represented in its generated heading metada
     // <lang><zh-CN>只读取已登记公开手册，同一编译结果提供正文节点与对应目录身份。</zh-CN><en>Read only registered public manuals, using the same compilation for body nodes and their outline identities.</en></lang>
     const input = await readFile(new URL(`../src/content/${kind}.${locale}.md`, import.meta.url), "utf8");
     const result = await processor.render(input);
+    // <lang><zh-CN>显式兼容锚点与自动标题共用ID空间，重复会使目录或辅助技术定位到前置空节点。</zh-CN><en>Explicit compatibility anchors and generated headings share one ID namespace. Duplicates can direct outlines or assistive navigation to an earlier empty node.</en></lang>
+    const documentIds = [...result.code.matchAll(/\bid="([^"]+)"/gu)].map(match => match[1]);
+    assert.equal(new Set(documentIds).size, documentIds.length, `${locale}/${kind} needs unique fragment targets.`);
+    if (kind === "reference") assert.equal(documentIds.filter(id => id === "generated-command-reference").length, 1, `${locale} retains its existing command-reference link.`);
     const actualIds = [...result.code.matchAll(/<h2\b[^>]*\bid="([^"]+)"[^>]*>/gu)].map(match => match[1]);
     const headings = result.metadata.headings.filter(heading => heading.depth === 2);
     assert(actualIds.length > 0, `${locale}/${kind} needs its actual sections.`);
