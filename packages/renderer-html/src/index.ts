@@ -4143,8 +4143,9 @@ function renderProjectSplitSiteScript(
       if (node.entryId && node.contentPath) readingEntries.push([node.entryId, {
         parent,
         contentPath: node.contentPath,
-        ...(node.presentationPath ? { presentationPath: node.presentationPath } : {}),
-        ...(node.memberAnchor ? { memberAnchor: node.memberAnchor } : {}),
+        // <lang><zh-CN>只记录不同于规范路径/条目ID的覆写，运行时复用原有回退，避免重复传输相同字符串。</zh-CN><en>Record only overrides differing from the canonical path/entry ID, reusing runtime fallbacks instead of transmitting identical strings twice.</en></lang>
+        ...(node.presentationPath && node.presentationPath !== node.contentPath ? { presentationPath: node.presentationPath } : {}),
+        ...(node.memberAnchor && node.memberAnchor !== node.entryId ? { memberAnchor: node.memberAnchor } : {}),
         ...(node.views[0] ? { view: node.views[0] } : {})
       }]);
       if (node.children?.length) {

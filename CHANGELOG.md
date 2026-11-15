@@ -2,6 +2,10 @@
 
 ## Unreleased — Portal entry loading
 
+- 同页成员的语言与版本入口保留当前成员身份，页内目录的普通链接指向承载整组小节的静态页。
+- Language/version links retain the selected member identity, while ordinary outline links target the static page containing the complete section group.
+- 内部路由省去与规范路径、条目标识相同的覆写字符串，原回退规则继续生效。
+- Internal routes omit override strings identical to their canonical paths or entry identities and retain existing fallbacks.
 - 采用站点导航的通用Portal直接使用同次生成的条目路径打开已知深链，正文与目录、检索索引分别加载，未知身份保留原索引回退。
 - Portals adopting site navigation open known deep links through paths from the same generation, loading prose independently of navigation and search while retaining index fallback for unknown identities.
 - 共享祖先按父索引去重，异步选择及筛选重置使旧响应失效。源码折叠标题采用已有Consolas路径字体。

@@ -439,11 +439,12 @@ export const SITE_READING_SCRIPT = String.raw`/**
                 button.disabled = true;
                 button.title = text('site.reading.host');
             }
-        // <lang><zh-CN>同页成员保留本次真实选择身份，静态和独立宿主沿首个真实条目回退。</zh-CN><en>Retain the actual selected identity for same-page members, falling back to the first actual entry for static and standalone hosts.</en></lang>
-        const entry = pages.get(article?.dataset.hiaReadingEntry || article?.querySelector('article[id]')?.id);
+        // <lang><zh-CN>父级静态页承载整组小节，语言与版本单独跟随实际选择的成员身份。</zh-CN><en>The containing static page owns the complete section group, while language/version follow the actual selected member identity.</en></lang>
+        const containingEntry = pages.get(article?.querySelector('article[id]')?.id);
+        const entry = pages.get(article?.dataset.hiaReadingEntry) || containingEntry;
         synchronizeLocaleLinks(entry);
         synchronizeCurrentVersionEntry(entry);
-        const staticPage = script.dataset.hiaReadingStatic ? '' : entry?.localePages?.[ui?.value] || entry?.page || 'pages/index.html';
+        const staticPage = script.dataset.hiaReadingStatic ? '' : containingEntry?.localePages?.[ui?.value] || containingEntry?.page || 'pages/index.html';
         const sections = article?.querySelectorAll('[data-hia-topic-section][id], [data-hia-reading-section][id]') || [];
         for (const nav of document.querySelectorAll('[data-hia-reading-outline]')) {
             nav.replaceChildren();

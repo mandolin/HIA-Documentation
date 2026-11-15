@@ -7,6 +7,7 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 import { renderProjectHtmlDocument } from "./index.js";
+import { SITE_READING_SCRIPT } from "./site-reading.js";
 import { createGeneratedSiteNavigation } from "../../../site/src/lib/generated-navigation.mjs";
 
 /**
@@ -66,6 +67,34 @@ function readingHost() {
 }
 
 describe("generated reading entry loading", () => {
+  it.each([true, false])("keeps outline links on their containing page while language links follow the selected member (%s)", selected => {
+    const parsed = ts.createSourceFile("reading.js", SITE_READING_SCRIPT, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+    let source = "";
+    /** @lang zh-CN 提取真实目录构造函数，不执行模态与浏览器初始化。 @lang en Extract the actual outline function independently of modal/browser initialization. */
+    function visit(node: ts.Node): void {
+      if (ts.isFunctionDeclaration(node) && node.name?.text === "outline") source = node.getText(parsed);
+      ts.forEachChild(node, visit);
+    }
+    visit(parsed);
+    expect(source).not.toBe("");
+    // <lang><zh-CN>成员页只含成员小节，父级小节必须使用包含它的父页；语言/版本仍跟随实际成员。</zh-CN><en>A member page contains only member sections, so parent sections need their containing parent page while language/version retain the selected member.</en></lang>
+    const parent = { id: "parent", page: "pages/parent.html", localePages: { en: "pages/en/parent.html" } };
+    const child = { id: "child", page: "pages/child.html", localePages: { en: "pages/en/child.html" } };
+    const links: Array<{ href: string }> = [];
+    const selection: string[] = [];
+    const section = { id: "parent--members", querySelector: () => ({ textContent: "Members" }) };
+    const article = { dataset: { hiaReadingEntry: selected ? "child" : "" }, querySelector: () => ({ id: "parent" }),
+      querySelectorAll: (selector: string) => selector.startsWith("[data-hia-topic-section]") ? [section] : [] };
+    runInNewContext(`(${source})`, {
+      window: { parent: {} }, document: { querySelector: () => article, createElement: () => ({ href: "", addEventListener() {} }),
+        querySelectorAll: () => [{ replaceChildren() { links.length = 0; }, append(link: { href: string }) { links.push(link); } }] },
+      pages: new Map([["parent", parent], ["child", child]]), ui: { value: "en" }, script: { dataset: {} },
+      synchronizeLocaleLinks: (entry: { id: string }) => selection.push(entry.id), synchronizeCurrentVersionEntry: (entry: { id: string }) => selection.push(entry.id)
+    })();
+    expect(selection).toEqual([selected ? "child" : "parent", selected ? "child" : "parent"]);
+    expect(links.map(link => link.href)).toEqual(["pages/en/parent.html#parent--members"]);
+  });
+
   it("starts a known deep link before the root navigation resolves", async () => {
     const output = generatedNavigation();
     expect(output.startup).not.toBe("");
@@ -89,6 +118,7 @@ describe("generated reading entry loading", () => {
     await open("child", false);
     expect(context.ensureSearchIndex).not.toHaveBeenCalled();
     expect(calls).toEqual([{ entry: expect.objectContaining({ id: "child", entryId: "child", contentPath: expected.contentPath, presentationPath: expected.presentationPath }), updateHash: false }]);
+    expect(calls[0]!.entry).not.toHaveProperty("memberAnchor");
     expect(errors).toEqual([]);
   });
 
@@ -125,6 +155,7 @@ describe("generated reading entry loading", () => {
     const index = JSON.parse(output.result.files.find(file => file.path === "project-index.json")!.contents);
     for (const entry of index.entries) expect(entries.get(entry.id)?.contentPath).toBe(entry.contentPath);
     const child = entries.get("child")!;
+    expect(entries.get("parent")).not.toHaveProperty("presentationPath");
     const chain: string[] = [];
     for (let parent = child.parent; parent >= 0; parent = parents[parent]!.parent) {
       chain.unshift(parents[parent]!.id);
