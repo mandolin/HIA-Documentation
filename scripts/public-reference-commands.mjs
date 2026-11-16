@@ -22,7 +22,7 @@ const owners = [
     runner: "apps/cli",
     token: "hia-cli",
     bins: ["hia"],
-    symbols: 76,
+    symbols: 77,
     commands: 14,
   },
   {
