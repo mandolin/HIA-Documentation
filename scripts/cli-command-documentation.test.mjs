@@ -93,7 +93,7 @@ test("actual route and parser declarations produce fourteen verified commands", 
   const result = await collectCliCommandDocumentation(root);
   assert.equal(result.description.commands.length, 14);
   assert.equal(result.observations.length, 14);
-  assert.equal(result.document.symbols.length, 76);
+  assert.equal(result.document.symbols.length, 77);
   assert.equal(
     result.document.symbols.find((symbol) => symbol.name === "--locale").source
       .definedIn.relativePath,

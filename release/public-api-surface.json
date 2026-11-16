@@ -13548,6 +13548,18 @@
       "bin": {},
       "exports": [
         {
+          "name": "assertDocumentationProjectRouteHistory",
+          "kind": "FunctionDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [
+            "(value: unknown): asserts value is DocumentationProjectRouteHistory"
+          ],
+          "fields": [],
+          "declarationFingerprints": [
+            "e8cbfc0d0bd2a1052f6f5c6bb652d0c783a211fbec5e7de647c5ebb2f93028ac"
+          ]
+        },
+        {
           "name": "assertDocumentationSiteNavigation",
           "kind": "FunctionDeclaration",
           "owner": "packages/renderer-html/src/site-navigation.ts",
@@ -13721,6 +13733,26 @@
           "fields": [],
           "declarationFingerprints": [
             "4212fa4db679da5bd3ed1cfe03c691cd409acee953e82086d6d984b79361ac4b"
+          ]
+        },
+        {
+          "name": "DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT",
+          "kind": "VariableDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "27f05fa032507c09b254e47fce4e382f769f500730682a58caa9890f227a3da3"
+          ]
+        },
+        {
+          "name": "DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "24055b55306183bae9e730cab1f23296ad87cd89e968f25ffd8bc01e57ad10e8"
           ]
         },
         {
@@ -14107,6 +14139,192 @@
           ],
           "declarationFingerprints": [
             "9f4e9acc79efebf220d6a46cae3e6e5d9775b33a3eaa405f64e58472e5f6a06e"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistory",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "contract",
+              "optional": false,
+              "type": "typeof DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT"
+            },
+            {
+              "name": "contractVersion",
+              "optional": false,
+              "type": "typeof DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT_VERSION"
+            },
+            {
+              "name": "projectId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "sources",
+              "optional": false,
+              "type": "DocumentationProjectRouteHistorySource[]"
+            },
+            {
+              "name": "bindings",
+              "optional": false,
+              "type": "DocumentationProjectRouteHistoryBinding[]"
+            },
+            {
+              "name": "entryAliases",
+              "optional": false,
+              "type": "DocumentationProjectRouteHistoryAlias[]"
+            },
+            {
+              "name": "pathAliases",
+              "optional": false,
+              "type": "DocumentationProjectRouteHistoryPath[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "ca89d3d4fcb934230879a64dde770477bb2b78f60430fb1dc4f9d16855c22034"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistoryAlias",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "entryId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "canonicalEntryId",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "b808f7c021c31a7420182b9bf38e060c80b5a2b29a0b8f8a72d1552cbba8d18e"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistoryAnchor",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "id",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "targetId",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "7bd139078822c9dc4f0b766e101da99180d3b4343aafa4ec97aa47991b0b7b17"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistoryBinding",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "identityScope",
+              "optional": true,
+              "type": "string"
+            },
+            {
+              "name": "view",
+              "optional": false,
+              "type": "RenderProjectView"
+            },
+            {
+              "name": "symbolId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "entryId",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "72e02d64de5b4e11b9b744338ab0c05dbeddfffce78edea5d32facdd7b324213"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistoryPath",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "path",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "kind",
+              "optional": false,
+              "type": "\"fragment\" | \"page\""
+            },
+            {
+              "name": "entryId",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "uiLocale",
+              "optional": true,
+              "type": "\"zh-CN\" | \"en\""
+            },
+            {
+              "name": "anchors",
+              "optional": false,
+              "type": "DocumentationProjectRouteHistoryAnchor[]"
+            }
+          ],
+          "declarationFingerprints": [
+            "7797570e0a4e107acd04d9724f322ccaa7d8867272f1d739da1fdf79d9df5691"
+          ]
+        },
+        {
+          "name": "DocumentationProjectRouteHistorySource",
+          "kind": "InterfaceDeclaration",
+          "owner": "packages/renderer-html/src/route-history.ts",
+          "signatures": [],
+          "fields": [
+            {
+              "name": "repository",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "commit",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "locale",
+              "optional": false,
+              "type": "string"
+            },
+            {
+              "name": "indexSha256",
+              "optional": false,
+              "type": "string"
+            }
+          ],
+          "declarationFingerprints": [
+            "fdcbbac089e76b9e12082f7e24544ba1a2f7f93f01da4a863d28dc9abf174615"
           ]
         },
         {
@@ -16101,6 +16319,11 @@
               "type": "DocumentationSiteNavigation"
             },
             {
+              "name": "routeHistory",
+              "optional": true,
+              "type": "DocumentationProjectRouteHistory"
+            },
+            {
               "name": "layout",
               "optional": true,
               "type": "RenderProjectSiteLayout"
@@ -16137,7 +16360,7 @@
             }
           ],
           "declarationFingerprints": [
-            "3ea401783e56cd0d15816dd878a68d99056611e5e990fa1389be4dbee0e9ce74"
+            "badd16c6a97b3058c6b51749feef0ac0747d42b53a72312e96a2b9e7a4b91eda"
           ]
         },
         {

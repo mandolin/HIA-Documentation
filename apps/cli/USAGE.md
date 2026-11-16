@@ -51,6 +51,20 @@ English. Navigation files must be valid UTF-8 JSON within 512 KiB. The CLI valid
 
 English. With navigation enabled, `--manifest` cannot overwrite `assets/hia-site-navigation.css`, `assets/hia-site-reading.js`, or `documentation-ui-locale-completeness.json`. Conflicts are rejected before output creation. Interactive entries use the same generated root's index for local search and page-only reading settings. Static entries and source viewers retain script-free navigation.
 
+### Persistent publication identities and historical routes
+
+中文。多页项目构建可以显式传入 `--route-history history.json`，读取 `documentation-project-route-history@0.1.0-draft`。发布者登记当前原生符号到持久公开 ID 的绑定，并提供已发布旧 ID、HTML 路径及小节的精确对应。原生工件和源码地图继续描述当前声明，历史输入不授予源码或网络读取。
+
+English. Split-site project builds can explicitly read `documentation-project-route-history@0.1.0-draft` through `--route-history history.json`. Publishers register current native symbols against persistent public IDs and provide exact historical ID, HTML-path and section mappings. Native artifacts and source maps continue describing current declarations. History inputs grant no source or network permissions.
+
+```sh
+hia docs build --project-manifest hia.project.json --route-history history.json --out site/api
+```
+
+中文。输入须为普通本地 UTF-8 JSON 文件，最多 16 MiB，各集合最多 100,000 项。目标、作用域、别名和实际小节必须唯一有效。旧片段仍输出真实正文，旧静态页在启用脚本时精确跳转，禁脚本时提供原小节的普通链接。格式、重复、冲突和非法输出路径按 `HIA_CLI_ROUTE_HISTORY_INPUT_INVALID` 拒绝。渲染器 README 提供完整数据形状。
+
+English. Inputs must be regular local UTF-8 JSON files, at most 16 MiB, with at most 100,000 records per collection. Targets, scopes, aliases and actual sections must be uniquely valid. Historical fragments retain real prose. Historical static pages redirect precisely with scripts and provide ordinary section links without scripts. Invalid formats, duplicates, conflicts and unsafe output paths are rejected with `HIA_CLI_ROUTE_HISTORY_INPUT_INVALID`. See the renderer README for the complete shape.
+
 ### Unknown build options
 
 中文。当前 `hia docs build` 只读取已知参数，未知选项及其附带文本可能被忽略，构建仍可成功并写出文件。拼错 `--out` 时可能使用配置输出目录或默认 `dist/docs`。退出 0 只表示本次构建成功，不能证明每个传入选项均被识别。自动化脚本请逐项核对本指南的参数名称，并在独立暂存目录检查实际输出位置。

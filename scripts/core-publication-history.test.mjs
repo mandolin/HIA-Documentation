@@ -7,7 +7,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {collectCorePublicationDeclarations,bindCorePublicationHistory} from './core-publication-history.mjs';
 
-/** @lang zh-CN 独立构造原生结构槽位，不依赖生产输出。 @lang en Construct independent native slots without production outputs. */
+/**
+ * @lang zh-CN 独立构造原生结构槽位，不依赖生产输出。
+ * @lang en Construct independent native slots without production outputs.
+ */
 function fixture(prefix='old') {
   return [{input:'package-api/example/api.hia.json',document:{symbols:[0,1].map(index=>({id:prefix+index,name:'type',kind:'typedef',signature:'string',source:{definedIn:{relativePath:'src/index.ts',range:{start:{line:1,column:1}}}},metadata:{tsdoc:{modulePath:'src/index.ts',typeExpression:{operator:'opaque',argumentIndex:index}}}}))}}];
 }
