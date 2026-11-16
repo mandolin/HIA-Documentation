@@ -264,7 +264,7 @@ export function assertDocumentationProjectRouteHistory(value: unknown): asserts 
     const route = record(item, ["path", "kind", "entryId", "uiLocale", "anchors"], "path alias");
     text(route.path, "path");
     text(route.entryId, "path.entryId");
-    if (!["fragment", "page"].includes(route.kind as string) || !/^(entries|pages)\/(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9][A-Za-z0-9._-]*\.html$/u.test(route.path) || route.path.split("/").some(part => part === "." || part === "..") || route.path.endsWith("/index.html")) invalid("path spelling");
+    if (!["fragment", "page"].includes(route.kind as string) || !/^(entries|pages)\/(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9][A-Za-z0-9._-]*\.html$/u.test(route.path) || route.path.split("/").some(part => part === "." || part === "..") || route.path.toLowerCase().endsWith("/index.html")) invalid("path spelling");
     if (!route.path.startsWith(route.kind === "fragment" ? "entries/" : "pages/")) invalid("path role");
     const shape = route.kind === "fragment" ? /^entries\/[A-Za-z0-9][A-Za-z0-9._-]*\.html$/u : /^pages\/(?:(?:en|zh-CN)\/)?[A-Za-z0-9][A-Za-z0-9._-]*\.html$/u;
     if (!shape.test(route.path)) invalid("generated path shape");
