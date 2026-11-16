@@ -133,6 +133,7 @@ describe("documentation-project-route-history@0.1.0-draft", () => {
     expect(page).toContain("assets/hia-route-history.js");
     expect(output.files.find(file => file.path === "assets/hia-route-history.js")!.contents).toContain("location.replace");
     expect(page).toContain("data-hia-site-navigation");
+    expect(page).not.toContain('class="hia-site-mobile-outline"');
     expect(page).not.toContain('http-equiv="refresh"');
   });
 

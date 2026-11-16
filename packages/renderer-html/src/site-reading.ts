@@ -199,7 +199,10 @@ export function renderSiteReading(contents: string, file: string, locale: Docume
     ? `<a href="#hia-source-status">${text("site.reading.boundary")}</a><a href="#hia-source-snippet">${text("site.reading.snippet")}</a>`
     : sections.map(match => `<a href="#${match[1]}">${match[3]}</a>`).join("");
   const outline = `<nav data-hia-reading-outline>${outlineLinks}</nav>`;
-  const mobile = `<details class="hia-site-mobile-outline"><summary>${text("site.reading.outline")}</summary>${outline}</details>`;
+  // <lang><zh-CN>已确认的恢复页用普通小节链接继续阅读，空页内目录不增加无内容控件；其它页面及有内容目录保持。</zh-CN><en>The confirmed recovery page continues through ordinary section links, omitting an empty outline control while retaining other pages and populated outlines.</en></lang>
+  const mobile = compactStaticText && !outlineLinks && contents.includes('<p data-hia-route-status role="status">')
+    ? ""
+    : `<details class="hia-site-mobile-outline"><summary>${text("site.reading.outline")}</summary>${outline}</details>`;
   contents = contents.replace(/(<main\b[^>]*>)/u, `$1${sourceMobileDirectory}${mobile}`).replace("</main>", `</main><aside class="hia-site-toc"><strong>${text("site.reading.outline")}</strong>${outline}</aside>`);
   if (!interactive) contents = contents.replace(/<button\b([^>]*data-hia-open-request[^>]*)>/gu, `<button disabled title="${escape(SITE_READING_MESSAGES["site.reading.host"][locale === "en" ? 1 : 0])}"$1>`);
   if (interactive) {
