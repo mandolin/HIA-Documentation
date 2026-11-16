@@ -1,3 +1,4 @@
+import { prepareProjectRouteHistory, PROJECT_ROUTE_HISTORY_SCRIPT, type DocumentationProjectRouteHistory, type DocumentationProjectRouteHistoryPath } from "./route-history.js";
 import { renderSourceLines } from "./source-lines.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
@@ -84,6 +85,17 @@ export {
 } from "./portal-ui-locale.js";
 export * from "./presentation-profile.js";
 export * from "./site-navigation.js";
+export {
+  DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT,
+  DOCUMENTATION_PROJECT_ROUTE_HISTORY_CONTRACT_VERSION,
+  assertDocumentationProjectRouteHistory,
+  type DocumentationProjectRouteHistory,
+  type DocumentationProjectRouteHistorySource,
+  type DocumentationProjectRouteHistoryBinding,
+  type DocumentationProjectRouteHistoryAlias,
+  type DocumentationProjectRouteHistoryAnchor,
+  type DocumentationProjectRouteHistoryPath
+} from "./route-history.js";
 export { renderThemeAssets, type ThemeAssetRouting } from "./theme-assets.js";
 
 /**
@@ -235,6 +247,11 @@ export interface RenderProjectSiteOptions {
    * @lang en Optional independent 0.1.0-draft site navigation, requiring explicit uiLocale and validated/snapshotted before the first write, covering complete pages without additional source authority.
    */
   siteNavigation?: DocumentationSiteNavigation;
+  /**
+   * @lang zh-CN 可选显式发布历史，固定页面身份并恢复已公开旧地址，不授予源码读取。
+   * @lang en Optional explicit publication history pinning page identity and recovering published routes without source-read authority.
+   */
+  routeHistory?: DocumentationProjectRouteHistory;
   /**
    * @lang zh-CN 默认 split-site；single-page 仅适合兼容、小型文档或静态快照。
    * @lang en Defaults to split-site; single-page is for compatibility, small docs, or snapshots.
@@ -2419,6 +2436,10 @@ interface ProjectHtmlRenderPlan {
  * @lang en Builds/validates shared facts before output, preserving contracts, ordering and prose across ordinary and streaming APIs.
  */
 function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, options: RenderHtmlOptions): ProjectHtmlRenderPlan {
+  // <lang><zh-CN>发布身份先于关系、地图呈现和任何输出应用，历史副本隔离writer期间的调用方变更。</zh-CN><en>Apply publication identity before relation/map presentation or output, isolating history from caller mutation during writer waits.</en></lang>
+  const historyProjection = options.projectSite?.routeHistory === undefined ? undefined : prepareProjectRouteHistory(projectInput, options.projectSite.routeHistory);
+  if (historyProjection && options.projectSite?.layout === "single-page") throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: History requires split-site output.");
+  if (historyProjection) projectInput = historyProjection.input;
   // <lang><zh-CN>直接API调用也必须遵守新逻辑作用域的词法边界，在首写前拒绝无效值。</zh-CN><en>Direct API calls also enforce logical-scope syntax before the first output write.</en></lang>
   const scopedSymbols = new Set<string>();
   for (const entry of projectInput.entries) {
@@ -2451,6 +2472,7 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
   const pageTitle = options.title ?? normalizedProjectInput.project.title ?? normalizedProjectInput.project.name;
   const includeThemeAssets = options.includeThemeAssets ?? true;
   const portalContext = resolveProjectPortalContext(normalizedProjectInput, options, siteLayout);
+  if (historyProjection) portalContext.routeHistory = historyProjection.history;
   // <lang><zh-CN>颜色由主题owner单点校验，和普通文档使用同一个品牌资源工厂。</zh-CN><en>The theme owner validates colors centrally through the same branded-asset factory used by documents.</en></lang>
   const assets = getDefaultThemeAssets(options.theme ?? {});
   // <lang><zh-CN>bundle 是 profile、source asset 和 owner mapping 的唯一生成点；后续 HTML 只消费 body-free mapping。</zh-CN><en>The bundle is the sole generation point for profiles, source assets, and owner mappings; later HTML consumes only body-free mappings.</en></lang>
@@ -2483,6 +2505,9 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     diagnostics: [...(sourcePreparedProjectInput.diagnostics ?? []), ...presentationBundle.diagnostics]
   };
   const navigationIndex = createProjectNavigationIndex(renderedProjectInput, pageTitle, options, portalContext, presentationBundle);
+  // <lang><zh-CN>旧文件冲突与真实小节在首写前完整核验，逐项HTML仍按需生成。</zh-CN><en>Preflight legacy-file collisions and actual sections before the first write, while retaining demand-driven HTML generation.</en></lang>
+  const routeLocaleModel = resolveProjectLocaleModel(renderedProjectInput, options.locale);
+  const legacyGroups = prepareProjectRouteAliases(renderedProjectInput, navigationIndex, portalContext, routeLocaleModel);
   /**
    * @lang zh-CN 按既有顺序惰性发出单文件；只在消费者继续迭代时渲染下一页。
    * @lang en Lazily emits individual files in legacy order, rendering the next page only when the consumer resumes.
@@ -2492,6 +2517,7 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
       yield { path: "index.html", contents: renderProjectIndexHtml(pageTitle, renderedProjectInput, options, portalContext), contentType: "text/html; charset=utf-8", role: "entry" };
     } else {
       yield* createProjectSplitSiteFiles(pageTitle, renderedProjectInput, navigationIndex, options, portalContext);
+      yield* createProjectRouteCompatibilityFiles(pageTitle, renderedProjectInput, navigationIndex, portalContext, legacyGroups, routeLocaleModel);
     }
     const localeReport = portalContext.uiLocaleAdoption ?? portalContext.siteNavigationUiLocaleAdoption;
     if (localeReport) {
@@ -2499,6 +2525,7 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
     }
     // <lang><zh-CN>直接序列化既有模型时省略展示缩进，字符串数据保留；输入工件和源码快照走原复制边界。</zh-CN><en>Omit presentation indentation when serializing existing models while preserving string data; input artifacts and source snapshots retain their copy boundaries.</en></lang>
     yield { path: "project-index.json", contents: `${JSON.stringify(navigationIndex)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
+    if (portalContext.routeHistory) yield { path: "route-history.json", contents: `${JSON.stringify(portalContext.routeHistory)}\n`, contentType: "application/json; charset=utf-8", role: "index" };
     yield* presentationBundle.artifacts;
     if (includeThemeAssets) {
       for (const asset of assets) yield { path: asset.path, contents: asset.contents, contentType: asset.contentType, role: "asset" };
@@ -2531,6 +2558,11 @@ interface RenderProjectPortalContext {
    * @lang en Validated navigation snapshot isolated from mutable external input.
    */
   siteNavigation?: DocumentationSiteNavigation;
+  /**
+   * @lang zh-CN 可选显式发布历史，固定页面身份并恢复已公开旧地址，不授予源码读取。
+   * @lang en Optional explicit publication history pinning page identity and recovering published routes without source-read authority.
+   */
+  routeHistory?: DocumentationProjectRouteHistory;
   /**
    * @lang zh-CN 未启用显式IA时仅评估真实导航消息，不能提升为完整Portal评估。
    * @lang en Evaluates actual navigation messages alone outside explicit IA, without upgrading the claim to a full Portal evaluation.
@@ -3349,6 +3381,108 @@ function* createProjectSplitSiteFiles(
   yield* files;
 }
 
+/**
+ * @lang zh-CN 历史核验与规范地址复用同一个正文渲染器。
+ * @lang en History validation and canonical addresses reuse the same prose renderer.
+ */
+function renderProjectRouteTarget(entry: RenderProjectEntry, project: RenderProjectHtmlInput, context: RenderProjectPortalContext, locale: ReturnType<typeof resolveProjectLocaleModel>): string {
+  return context.informationArchitecture
+    ? renderProjectSemanticTopic(entry, project, locale.locales, locale.selectedLocale, context, context.informationArchitecture.memberPlacement === "with-parent")
+    : renderProjectEntry(entry, locale.locales, locale.selectedLocale);
+}
+
+/**
+ * @lang zh-CN 在首写前核全部历史路径和锚点，只保存条目级元数据。
+ * @lang en Preflight all historical paths and anchors before the first write, retaining entry-level metadata only.
+ */
+function prepareProjectRouteAliases(project: RenderProjectHtmlInput, index: ReturnType<typeof createProjectNavigationIndex>, context: RenderProjectPortalContext, locale: ReturnType<typeof resolveProjectLocaleModel>): Map<string, DocumentationProjectRouteHistoryPath[]> {
+  const groups = new Map<string, DocumentationProjectRouteHistoryPath[]>();
+  if (!context.routeHistory?.pathAliases.length) return groups;
+  // <lang><zh-CN>历史不能覆盖当前正文或实际静态入口。</zh-CN><en>History cannot replace current prose or actual static entries.</en></lang>
+  const currentPaths = new Set(index.entries.flatMap(entry => [entry.contentPath, entry.noScriptPagePath, ...(entry.noScriptLocalePages ?? []).map(page => page.path)]));
+  const indexed = new Map(index.entries.map(entry => [entry.id, entry]));
+  for (const route of context.routeHistory.pathAliases) {
+    if (currentPaths.has(route.path)) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Legacy path shadows a current file.");
+    if (route.uiLocale && !indexed.get(route.entryId)?.noScriptLocalePages?.some(page => page.uiLocale === route.uiLocale)) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Missing localized target.");
+    const routes = groups.get(route.entryId) ?? [];
+    routes.push(route);
+    groups.set(route.entryId, routes);
+  }
+  const entries = new Map(project.entries.map(entry => [entry.id, entry]));
+  for (const [entryId, routes] of groups) {
+    const contents = renderProjectRouteTarget(entries.get(entryId)!, project, context, locale);
+    const anchors = new Set([...contents.matchAll(/\sid="([^"]*)"/gu)].map(match => match[1]));
+    for (const route of routes) for (const anchor of route.anchors) {
+      if (!anchors.has(escapeHtml(anchor.targetId))) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Historical anchor has no current counterpart.");
+    }
+  }
+  return groups;
+}
+
+/**
+ * @lang zh-CN 精确改写生成片段的已核id及页内链接，原生符号/地图与源码元数据保持。
+ * @lang en Remap verified IDs and local links in generated fragments while retaining native symbols/maps and source metadata.
+ */
+function renderProjectLegacyFragment(contents: string, route: DocumentationProjectRouteHistoryPath): string {
+  const anchors = new Map(route.anchors.map(anchor => [escapeHtml(anchor.targetId), escapeHtml(anchor.id)]));
+  const links = new Map(route.anchors.flatMap(anchor => [
+    [escapeHtml(anchor.targetId), escapeHtml(anchor.id)],
+    [escapeHtml(encodeURIComponent(anchor.targetId)), escapeHtml(encodeURIComponent(anchor.id))]
+  ]));
+  return contents.replace(/(\s)(id|href)="([^"]*)"/gu, (original, spacing: string, attribute: string, value: string) => {
+    if (attribute === "id" && anchors.has(value)) return `${spacing}id="${anchors.get(value)!}"`;
+    if (attribute === "href" && value.startsWith("#") && links.has(value.slice(1))) return `${spacing}href="#${links.get(value.slice(1))!}"`;
+    return original;
+  });
+}
+
+/**
+ * @lang zh-CN 发出实际旧片段和已确认的无脚本恢复页，共用一份增强脚本。
+ * @lang en Emit actual historical fragments and confirmed script-free recovery pages, sharing one enhancement script.
+ */
+function* createProjectRouteCompatibilityFiles(pageTitle: string, project: RenderProjectHtmlInput, index: ReturnType<typeof createProjectNavigationIndex>, context: RenderProjectPortalContext, groups: Map<string, DocumentationProjectRouteHistoryPath[]>, locale: ReturnType<typeof resolveProjectLocaleModel>): Generator<RenderedHtmlFile> {
+  if (!groups.size) return;
+  const entries = new Map(project.entries.map(entry => [entry.id, entry]));
+  const indexed = new Map(index.entries.map(entry => [entry.id, entry]));
+  let needsScript = false;
+  for (const [entryId, routes] of groups) {
+    const entry = entries.get(entryId)!;
+    const canonical = indexed.get(entryId)!;
+    // <lang><zh-CN>仅在当前条目迭代期间保留一个正文片段。</zh-CN><en>Retain one prose fragment only for the current entry iteration.</en></lang>
+    const fragment = renderProjectRouteTarget(entry, project, context, locale);
+    for (const route of routes) {
+      if (route.kind === "fragment") {
+        yield { path: route.path, contents: renderProjectLegacyFragment(fragment, route), contentType: "text/html; charset=utf-8", role: "asset" };
+        continue;
+      }
+      needsScript = true;
+      const uiLocale = route.uiLocale ?? context.uiLocale;
+      const pageContext = { ...withProjectUiLocale(context, uiLocale), runtimeUiMessages: false as const };
+      const targetPage = route.uiLocale ? canonical.noScriptLocalePages!.find(page => page.uiLocale === route.uiLocale)!.path : canonical.noScriptPagePath!;
+      const prefix = "../".repeat(route.path.split("/").length - 1);
+      const target = prefix + targetPage;
+      const messages = uiLocale === "zh-CN"
+        ? { title: "旧链接已迁移", notice: "此条目的当前文档已就绪。无脚本模式可通过下列普通链接继续阅读原小节。", open: "打开当前条目", section: "阅读当前小节", missing: "旧链接中的小节暂无对应位置，请使用下方链接继续阅读。" }
+        : { title: "This link has moved", notice: "The current documentation is available. Use the ordinary links below to continue to the same section without scripts.", open: "Open the current entry", section: "Read the current section", missing: "This section has no current counterpart. Use a link below to continue reading." };
+      // <lang><zh-CN>小节顺序来自实际正文，输入记录顺序不改变阅读层级。</zh-CN><en>Section order comes from actual prose, preventing input record order from changing reading hierarchy.</en></lang>
+      const sections = route.anchors.filter(anchor => anchor.targetId !== entry.id).sort((left, right) => fragment.indexOf(` id="${escapeHtml(left.targetId)}"`) - fragment.indexOf(` id="${escapeHtml(right.targetId)}"`)).map(anchor => {
+        const position = fragment.indexOf(` id="${escapeHtml(anchor.targetId)}"`);
+        const heading = fragment.slice(position, position + 2048).match(/<(h[1-6]|summary)\b[^>]*>([\s\S]*?)<\/\1>/u)?.[2] ?? escapeHtml(entry.name);
+        const messageId = heading.match(/data-hia-ui-message="([^"]+)"/u)?.[1];
+        const label = messageId ? escapeHtml(resolveProjectUiPlainText(pageContext, messageId, {}, entry.name)) : heading;
+        return `<section class="hia-project-topic-section" id="${escapeHtml(anchor.id)}"><h2>${label}</h2><a href="${escapeHtml(target + "#" + encodeURIComponent(anchor.targetId))}">${escapeHtml(messages.section)}</a></section>`;
+      }).join("");
+      const article = `<article class="hia-project-entry" id="${escapeHtml(entry.id)}"><h1>${escapeHtml(messages.title)}</h1><p data-hia-route-status role="status">${escapeHtml(messages.notice)}</p><p><a href="${escapeHtml(target)}">${escapeHtml(messages.open)}</a></p>${sections}</article>`;
+      const configuration = JSON.stringify({ target, anchors: route.anchors.map(anchor => [anchor.id, anchor.targetId]), missing: messages.missing }).replaceAll("<", "\\u003c");
+      const enhancement = `<script type="application/json" data-hia-route-history-page>${configuration}</script><script defer src="${prefix}assets/hia-route-history.js"></script>`;
+      const template = renderProjectNoScriptEntryHtml(pageTitle, entry, project, locale, pageContext, route.path.split("/").length > 2);
+      const contents = template.replace(/<title>[\s\S]*?<\/title>/u, `<title>${escapeHtml(messages.title)} - ${escapeHtml(pageTitle)}</title>`).replace(/(<main\b[^>]*>)[\s\S]*?<\/main>/u, (_, opening: string) => `${opening}${article}</main>`).replace("</body>", `${enhancement}</body>`);
+      yield { path: route.path, contents, contentType: "text/html; charset=utf-8", role: "entry" };
+    }
+  }
+  if (needsScript) yield { path: "assets/hia-route-history.js", contents: PROJECT_ROUTE_HISTORY_SCRIPT, contentType: "text/javascript; charset=utf-8", role: "asset" };
+}
+
 function createProjectNavigationShardFiles(
   nodes: RenderProjectNavigationTreeNode[],
   loadingStrategy: "lazy" | "eager"
@@ -4156,7 +4290,8 @@ function renderProjectSplitSiteScript(
       }
     }
   }
-  if (portalContext.siteNavigation) collectReadingRoutes(readingTree, -1);
+  const directReading = Boolean(portalContext.siteNavigation || portalContext.routeHistory);
+  if (directReading) collectReadingRoutes(readingTree, -1);
   // <lang><zh-CN>只有 adopted surface 嵌入 public plain-text bundle；metadata-only report 仍不含译文。</zh-CN><en>Only adopted surfaces embed the public plain-text bundle; the metadata-only report still contains no translations.</en></lang>
   const uiConfig = portalContext.uiLocaleAdoption
     ? {
@@ -4175,12 +4310,15 @@ function renderProjectSplitSiteScript(
     "<script>",
     "(() => {",
     `  const config = { navigation: 'navigation/root.json', search: 'search/index.json', relations: 'relations/project.json', loadingStrategy: ${JSON.stringify(loadingStrategy)}, eagerContent: 'content/eager.json', ui: ${JSON.stringify(uiConfig)} };`,
-    ...(portalContext.siteNavigation ? [
+    ...(directReading ? [
       `  const readingParents = ${JSON.stringify(readingParents).replaceAll("<", "\\u003c")};`,
       `  const readingEntries = new Map(${JSON.stringify(readingEntries).replaceAll("<", "\\u003c")});`,
-      "  const readingBranches = new WeakMap();",
+      ...(portalContext.routeHistory ? [`  const readingAliases = new Map(${JSON.stringify(portalContext.routeHistory.entryAliases.map(alias => [alias.entryId, alias.canonicalEntryId])).replaceAll("<", "\\u003c")});`] : []),
+      ...(portalContext.siteNavigation ? ["  const readingBranches = new WeakMap();"] : []),
       "  let readingEntrySequence = 0;",
-      "  let readingNavigation = Promise.resolve();",
+      "  let readingNavigation = Promise.resolve();"
+    ] : []),
+    ...(portalContext.siteNavigation ? [
       "  /* <lang><zh-CN>同一分片的展开和深链恢复共享在途请求，失败允许下一次显式重试。</zh-CN><en>Disclosure and deep-link restoration share in-flight shard requests, allowing explicit retries after failure.</en></lang> */",
       "  function loadReadingBranch(details, path) {",
       "    if (details.dataset.loaded === 'true') return Promise.resolve();",
@@ -4392,6 +4530,7 @@ function renderProjectSplitSiteScript(
     "  }",
     "  async function loadEntry(entry, updateHash) {",
     "    if (!contentHost) return;",
+    ...(!portalContext.siteNavigation && portalContext.routeHistory ? ["    const requestSequence = ++readingEntrySequence;"] : []),
     ...(portalContext.siteNavigation ? [
       // <lang><zh-CN>记录发起树控件；迟到响应只能转移仍由它持有的手机焦点。</zh-CN><en>Remember the initiating tree control so a late response only transfers mobile focus it still owns.</en></lang>
       "    const readingTrigger = treeHost.contains(document.activeElement) ? document.activeElement : null;",
@@ -4401,7 +4540,7 @@ function renderProjectSplitSiteScript(
     ] : [`    contentHost.innerHTML = \`<p class="hia-project-loading" role="status" data-hia-ui-message="portal.navigation.loading">\${uiMessage('portal.navigation.loading', {}, ${JSON.stringify(portalContext.labels.loading)})}</p>\`;`]),
     "    try {",
     "      const contentPath = entry.presentationPath || entry.contentPath;",
-    ...(portalContext.siteNavigation ? [
+    ...(directReading ? [
       "      const readingContents = await readFragment(contentPath); if (requestSequence !== readingEntrySequence) return; contentHost.innerHTML = readingContents;"
     ] : ["      contentHost.innerHTML = await readFragment(contentPath);"]),
     "      applyContentLocale();",
@@ -4436,7 +4575,7 @@ function renderProjectSplitSiteScript(
     "    } catch (error) {",
     ...(portalContext.siteNavigation ? [
       "      if (requestSequence !== readingEntrySequence) return; const loading = contentHost.querySelector(':scope > .hia-project-loading'); if (loading) { loading.setAttribute('role', 'alert'); loading.textContent = uiMessage('portal.navigation.loaderror', { detail: String(error?.message || error) }, 'Entry unavailable.'); }"
-    ] : ["      showLoadError(error);"]),
+    ] : [portalContext.routeHistory ? "      if (requestSequence === readingEntrySequence) showLoadError(error);" : "      showLoadError(error);"]),
     "    }",
     "  }",
     "  async function ensureSearchIndex() {",
@@ -4448,14 +4587,19 @@ function renderProjectSplitSiteScript(
     "    }).catch(() => { throw new Error('Search index unavailable.'); }).finally(() => { searchIndexPromise = null; });",
     "    return searchIndexPromise;",
     "  }",
-    ...(portalContext.siteNavigation ? [
+    ...(directReading ? [
       "  /* <lang><zh-CN>已知路由直接加载，未知身份沿既有索引回退。查询期间即取得选择序号，旧成功/失败均不得覆盖新选择。</zh-CN><en>Load known routes directly and retain index fallback for unknown identities. Claim the selection sequence before lookup so stale successes and failures cannot replace newer selections.</en></lang> */",
       "  async function openReadingEntry(entryId, updateHash) {",
       "    const requestSequence = ++readingEntrySequence;",
       "    try {",
-      "      const entry = readingEntries.get(entryId) || (await ensureSearchIndex()).find(candidate => candidate.id === entryId);",
+      ...(portalContext.routeHistory ? [
+        "      const canonicalEntryId = readingAliases.get(entryId) || entryId;",
+        "      const entry = readingEntries.get(canonicalEntryId) || (await ensureSearchIndex()).find(candidate => candidate.id === canonicalEntryId);"
+      ] : ["      const entry = readingEntries.get(entryId) || (await ensureSearchIndex()).find(candidate => candidate.id === entryId);"]),
       "      if (requestSequence !== readingEntrySequence) return;",
-      "      if (entry) await loadEntry({ ...entry, id: entryId, entryId }, updateHash);",
+      portalContext.routeHistory
+        ? "      if (entry) await loadEntry({ ...entry, id: canonicalEntryId, entryId: canonicalEntryId }, updateHash || canonicalEntryId !== entryId);"
+        : "      if (entry) await loadEntry({ ...entry, id: entryId, entryId }, updateHash);",
       "    } catch (error) { if (requestSequence === readingEntrySequence) showLoadError(error); }",
       "  }"
     ] : []),
@@ -4517,7 +4661,7 @@ function renderProjectSplitSiteScript(
     "    } catch (error) { showLoadError(error); }",
     "  });",
     // <lang><zh-CN>根目录响应可以晚于用户输入和检索结果，装配后按当前查询重算，保留已选过滤而不覆盖为原目录。</zh-CN><en>The root response may arrive after user input and search results. Reapply the current query after assembly, preserving selected filters instead of overwriting results with the root.</en></lang>
-    ...(portalContext.siteNavigation ? [
+    ...(directReading ? [
       "  readingNavigation = readJson(config.navigation).then(async shard => {",
       "    rootNodes = Array.isArray(shard.children) ? shard.children : [];",
       "    await runSearch();",
@@ -4535,7 +4679,7 @@ function renderProjectSplitSiteScript(
     "    });",
     "  }).catch(showLoadError);",
     ]),
-    ...(portalContext.siteNavigation ? [
+    ...(directReading ? [
       // <lang><zh-CN>同文档深链和历史复用直接路由/兼容回退，并保留请求顺序与原生replaceState行为。</zh-CN><en>Same-document deep links and history reuse direct routes and compatibility fallback, preserving request ordering and native replaceState behavior.</en></lang>
       "  window.addEventListener('hashchange', async () => {",
       "    try {",

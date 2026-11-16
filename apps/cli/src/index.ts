@@ -5,6 +5,7 @@
  * @lang en Main HIA command dispatch, documentation builds and explicit metadata operations, with help using shared bilingual command facts.
  */
 import { renderCliHelp } from "./command-help.js";
+import { loadProjectRouteHistory } from "./route-history-input.js";
 import { prepareProjectSourcePresentation, resolveProjectSourcePresentation } from "./project-source.js";
 
 import { createHash } from "node:crypto";
@@ -67,6 +68,7 @@ import {
   renderThemeAssets,
   type RenderHtmlOptions,
   type DocumentationSiteNavigation,
+  type DocumentationProjectRouteHistory,
   type RenderProjectDocSourceMapRef,
   type RenderProjectEntry,
   type RenderProjectHtmlInput,
@@ -435,7 +437,7 @@ async function runThemeAssets(argv: string[], io: CliIo): Promise<number> {
 }
 
 async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
-  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--site-navigation", "--adoption-kit", "--business-flow-handoff", "--out", "--locale", "--manifest"]);
+  const optionDiagnostics = validateOptionValues(argv, ["--config", "--input", "--jsdoc-integration", "--project-manifest", "--site-navigation", "--route-history", "--adoption-kit", "--business-flow-handoff", "--out", "--locale", "--manifest"]);
   reportDiagnostics(optionDiagnostics, io);
 
   if (optionDiagnostics.some((diagnostic) => diagnostic.severity === "error")) {
@@ -485,6 +487,10 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   const buildOptionDiagnostics = validateBuildOptions(manifestPath, inputPath, jsdocIntegrationPath, projectManifestPath);
   // <lang><zh-CN>独立导航只用于项目生成，必须在读取聚合来源和创建输出前完整校验。</zh-CN><en>Independent navigation applies only to project generation and is fully validated before aggregate-source reads or output creation.</en></lang>
   const navigationPath = readOption(argv, "--site-navigation");
+  const historyPath = readOption(argv, "--route-history");
+  if (historyPath && (!projectManifestPath || docsConfig.renderer?.projectLayout === "single-page")) {
+    buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_ROUTE_HISTORY_INPUT_INVALID", "Publication history requires a split-site project build.", "error", "routeHistory"));
+  }
   if (navigationPath && (!projectManifestPath || !docsConfig.renderer?.uiLocale)) {
     buildOptionDiagnostics.push(createCliDiagnostic("HIA_CLI_SITE_NAVIGATION_INPUT_INVALID", "Site navigation requires a project manifest and an explicit docs.renderer.uiLocale.", "error", "siteNavigation"));
   }
@@ -516,7 +522,14 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
   if (projectManifestPath) {
     const siteNavigation = navigationPath ? await loadSiteNavigation(path.resolve(io.cwd, navigationPath), io) : undefined;
     if (navigationPath && !siteNavigation) return 1;
-    return runProjectDocsBuild(
+    const routeHistory = historyPath ? await loadProjectRouteHistory(path.resolve(io.cwd, historyPath), outputDir, io) : undefined;
+    if (historyPath && !routeHistory) return 1;
+    if (routeHistory && ["route-history.json", ...(routeHistory.pathAliases.some(route => route.kind === "page") ? ["assets/hia-route-history.js"] : []), ...routeHistory.pathAliases.map(route => route.path)].includes(manifestPath ?? "")) {
+      reportDiagnostics([createCliDiagnostic("HIA_CLI_ROUTE_HISTORY_INPUT_INVALID", "The output manifest cannot replace publication history or compatibility files.", "error", "routeHistory")], io);
+      return 1;
+    }
+    try {
+      return await runProjectDocsBuild(
       projectManifestPath,
       outputDir,
       manifestPath,
@@ -526,8 +539,14 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
       adoptionKitRelativePath,
       businessFlowHandoffRelativePath,
       siteNavigation,
+      routeHistory,
       io
-    );
+      );
+    } catch (error) {
+      if (!routeHistory || !(error instanceof TypeError) || !error.message.startsWith("HIA_PROJECT_ROUTE_HISTORY_INVALID")) throw error;
+      reportDiagnostics([createCliDiagnostic("HIA_CLI_ROUTE_HISTORY_INPUT_INVALID", "Publication history does not match current project entries, paths, or sections.", "error", "routeHistory")], io);
+      return 1;
+    }
   }
 
   const documentResult = await loadDocument(inputPath ?? "", jsdocIntegrationPath ?? "", io);
@@ -735,6 +754,7 @@ async function runProjectDocsBuild(
   adoptionKitRelativePath: string | undefined,
   businessFlowHandoffRelativePath: string | undefined,
   siteNavigation: DocumentationSiteNavigation | undefined,
+  routeHistory: DocumentationProjectRouteHistory | undefined,
   io: CliIo
 ): Promise<number> {
   const manifestResult = await loadProjectManifest(projectManifestPath, io);
@@ -778,6 +798,7 @@ async function runProjectDocsBuild(
   // <lang><zh-CN>新导航独立于旧配置身份，复用同一正常渲染选项工厂后显式追加。</zh-CN><en>New navigation is independent of existing configuration identities and is explicitly added after the normal render-option factory.</en></lang>
   const renderOptions = createRenderOptions(locale, docsConfig);
   if (siteNavigation) renderOptions.projectSite = { ...renderOptions.projectSite, siteNavigation };
+  if (routeHistory) renderOptions.projectSite = { ...renderOptions.projectSite, routeHistory };
   const rendered = await renderProjectHtmlDocumentToWriter({
     ...preparedProjectInput,
     ...(ownerAdoption ? { ownerAdoption } : {}),

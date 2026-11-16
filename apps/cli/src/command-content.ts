@@ -329,6 +329,13 @@ export function createCliCommandContent(): CommandDocumentationCommand[] {
           "Website navigation for project builds, requiring explicit UI locale.",
         ),
         option(
+          "route-history",
+          "file",
+          "integration",
+          "项目构建的持久发布身份与旧地址登记。",
+          "Persistent publication identities and historical routes for project builds.",
+        ),
+        option(
           "adoption-kit",
           "file",
           "integration",

@@ -181,3 +181,17 @@ not a target-host integration or execution protocol.
 See `docs/business-flow-documentation-handoff-contract.md`, `docs/documentation-source-comment-projection-contract.md`, `docs/html-authoring-source-comment-integration-verification-contract.md`, `docs/target-documentation-continuity-contract.md`, `docs/target-owner-adoption-kit-contract.md`, `docs/enterprise-baseline-current-owner-workflow-contract.md`, and `docs/contract-index.md` for the wire contracts and current CLI/config/renderer layering rule.
 
 Legacy .NET member artifacts pointing to XML documentation are not imported as code sources. Rebuild them with DotNetDoc runner0.1.11 or later and configured project/source inputs. Actual declaration end lines are preserved. 中文：旧.NET XML文档出处不再生成代码预览；真实声明范围优先，不影响其他领域XML源码或显式公开授权。
+
+## Persistent project routes
+
+Use an explicit publication-history file with a split-site project build.
+
+```sh
+hia docs build --project-manifest project.hia-project.json --config hia.config.json --route-history route-history.json --out docs/site
+```
+
+`--route-history` reads one regular UTF-8 JSON file within 16 MiB using `documentation-project-route-history@0.1.0-draft`. The renderer validates current native bindings, persistent public IDs, historical paths and actual section anchors before rendering. Historical source metadata grants no additional source-file or network-read authority. Existing redirected output paths and manifest collisions are rejected with `HIA_CLI_ROUTE_HISTORY_INPUT_INVALID`.
+
+The output includes the validated history and compatibility files in the normal inventory. Their bytes participate in the publication capacity gate. The CLI uses the same input contract as `@hia-doc/renderer-html` and includes this option in `hia docs build --help` and generated command documentation.
+
+中文说明。项目多页构建可显式指定发布历史，保持公开条目身份并恢复旧地址。输入有界、严格UTF-8，绑定与旧小节须对应本次实际项目。兼容文件进入正常清单与容量检查，历史记录不扩大源码读取权限。

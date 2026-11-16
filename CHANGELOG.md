@@ -1,5 +1,10 @@
 # 变更日志 / Changelog
 
+## Unreleased — Persistent publication routes
+
+- Add optional `documentation-project-route-history@0.1.0-draft` input to project rendering and `hia docs build --route-history`. Publishers can pin public entry identities while retaining current native symbols and source-map references.
+- Recover recorded entry hashes, real HTML fragments and static section URLs through validated aliases, shared progressive recovery and script-free links. Validate project/binding/path/anchor conflicts before the first render write and include compatibility files in normal inventories.
+
 ## Unreleased — Portal entry loading
 
 - 同页成员的语言与版本入口保留当前成员身份，页内目录的普通链接指向承载整组小节的静态页。

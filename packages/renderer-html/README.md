@@ -254,3 +254,40 @@ English. With scripts enabled, declared same-page locale counterparts in indepen
 项目Portal的侧栏检索共享在途索引读取，查询与领域过滤以最新操作为准。缺失或非法索引给出明确失败反馈，清空查询恢复静态层级，修复索引后再次输入可重试。索引读取错误采用固定公开文案。启用站点导航时，读取失败期间已读正文仍可继续阅读。
 
 English. Project-Portal sidebar searches share in-flight index reads and apply the latest query and domain filter. Missing or invalid indexes produce explicit failure feedback. Clearing restores the hierarchy, and another input retries after the index is repaired. Index-read failures use fixed public text. With site navigation enabled, the current prose remains readable during these failures.
+
+## Persistent publication identities and historical routes
+
+`projectSite.routeHistory` adopts `documentation-project-route-history@0.1.0-draft` for split-site project rendering. The host records persistent public entry IDs, explicit current native-symbol bindings, and previously published entry/path aliases. Native symbols, scoped parentage and source-map references retain their actual current values.
+
+```ts
+import { renderProjectHtmlDocument } from "@hia-doc/renderer-html";
+
+const result = renderProjectHtmlDocument(project, {
+  projectSite: {
+    uiLocale: "en",
+    routeHistory
+  }
+});
+```
+
+The history object has these fields.
+
+| Field | Meaning |
+| --- | --- |
+| `contract` | `documentation-project-route-history` |
+| `contractVersion` | `0.1.0-draft` |
+| `projectId` | Exact rendered project identity |
+| `sources` | Published index provenance, with `repository`, `commit`, `locale` and `indexSha256` |
+| `bindings` | Current `identityScope` (optional), `view`, `symbolId` and persistent `entryId` |
+| `entryAliases` | Historical `entryId` pointing directly to an actual `canonicalEntryId` |
+| `pathAliases` | Published relative HTML `path`, `kind` (`page` or `fragment`), canonical `entryId`, optional static `uiLocale`, and `anchors` containing historical `id`/current `targetId` pairs |
+
+`assertDocumentationProjectRouteHistory(value)` validates the independent draft. Inputs are bounded to 16 MiB and 100,000 records per collection. The renderer validates project ownership, unique bindings, canonical targets, path collisions and actual rendered anchors before its first writer callback. It snapshots the history for lazy output. Unknown versions, ambiguous bindings, alias chains/cycles and unsafe or conflicting paths raise `HIA_PROJECT_ROUTE_HISTORY_INVALID`.
+
+Aliases resolve through the direct entry catalog before a search request. Ordinary canonical entries retain their public IDs across source-coordinate changes through the host's updated explicit bindings. The host supplies verified historical provenance and declaration correspondences as part of its publication process.
+
+Historical fragment URLs return actual HTML prose with their recorded anchors. Historical pages share one `assets/hia-route-history.js` asset, which restores known sections through same-origin navigation with history replacement. With scripts disabled, ordinary links lead to the current entry and corresponding sections. Unknown or malformed incoming fragments retain the recovery page and its readable links. Explicit localized aliases require a generated counterpart in that UI locale.
+
+The normal inventory includes `route-history.json` and every generated compatibility file. Publication capacity checks include those files. Existing rendering calls can continue omitting the history option.
+
+中文说明。发布者通过独立登记维护持久公开条目身份，显式记录当前原生声明和历史地址。原生符号与源码地图仍反映实际源码。旧hash直接恢复当前正文，旧片段返回真实HTML，旧静态页在启用脚本时精确进入当前小节，禁脚本时保留对应普通链接。项目、绑定、路径与小节在首写前验证，兼容产物计入正常清单和容量。
