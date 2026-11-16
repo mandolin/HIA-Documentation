@@ -23,6 +23,20 @@ function page(): SiteChromePage {
 }
 
 describe("public site-chrome shared entry", () => {
+  it("initializes directory geometry before rendering native prose while source pages remain script-free", () => {
+    // <lang><zh-CN>同一同步入口必须在正文前发出断点初始化，禁脚本仍保留展开的原生目录。</zh-CN><en>The synchronous entry must emit breakpoint initialization before prose, retaining an open native directory without scripting.</en></lang>
+    const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });
+    const html = chrome.renderPage(page());
+    expect(html.indexOf('data-hia-directory-init')).toBeGreaterThan(html.indexOf('id="hia-site-directory"'));
+    expect(html.indexOf('data-hia-directory-init')).toBeLessThan(html.indexOf('<main'));
+    const initializer = html.match(/<script data-hia-directory-init>(.*?)<\/script>/u)![1];
+    for (const mobile of [true, false]) {
+      const directory = { open: true };
+      runInNewContext(initializer, { document: { getElementById: () => directory }, matchMedia: () => ({ matches: mobile }) });
+      expect(directory.open).toBe(!mobile);
+    }
+    expect(chrome.renderPage({ ...page(), role: "source" })).not.toContain('data-hia-directory-init');
+  });
   it("opens native outline details and focuses their summary while ordinary sections retain their focus target", () => {
     // <lang><zh-CN>执行实际发出的点击处理器，同时核原生details与通用section，避免只检查HTML而遗漏顺序焦点范围。</zh-CN><en>Execute the emitted click handler for native details and ordinary sections, avoiding HTML-only checks that miss sequential focus scopes.</en></lang>
     const chrome = createSiteChrome({ navigation: createGeneratedSiteNavigation(), entries: [] });

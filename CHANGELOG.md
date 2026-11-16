@@ -1,5 +1,12 @@
 # 变更日志 / Changelog
 
+## Unreleased — Initial reading layout
+
+- 采用站点导航的交互页在正文解析前按断点初始化目录，并为阅读控件预留首绘尺寸，减少深链初始化的布局偏移。
+- Interactive pages with site navigation initialize responsive directories before prose parsing and reserve first-paint reading-control dimensions, reducing deep-link initialization shifts.
+- 禁用脚本时保留原生展开目录，独立源码页保持无脚本。
+- Script-disabled pages retain native open directories, and standalone source viewers remain script-free.
+
 ## Unreleased — Persistent publication routes
 
 - Add optional `documentation-project-route-history@0.1.0-draft` input to project rendering and `hia docs build --route-history`. Publishers can pin public entry identities while retaining current native symbols and source-map references.

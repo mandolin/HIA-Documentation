@@ -10,7 +10,7 @@ import ts from "typescript";
 import { createDocumentationPortalUiLocaleAdoption, renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter } from "./index.js";
 import { assertDocumentationSiteNavigation, type DocumentationSiteNavigation } from "./site-navigation.js";
 import { withSiteNavigation } from "./site-navigation-chrome.js";
-import { SITE_READING_SCRIPT } from "./site-reading.js";
+import { SITE_READING_SCRIPT, SITE_READING_STYLE } from "./site-reading.js";
 
 /**
  * @lang zh-CN 两语言、一个真实预览版的公开导航夹具。
@@ -37,6 +37,17 @@ function project() {
 }
 
 describe("documentation-site-navigation@0.1.0-draft", () => {
+  it("settles the responsive directory before parsing main and reserves reading controls before enhancement", () => {
+    // <lang><zh-CN>目录初始状态必须在正文参与片段定位前确定；源码静态页继续无脚本。</zh-CN><en>Settle the directory before prose participates in fragment positioning; static source pages remain script-free.</en></lang>
+    const output = renderProjectHtmlDocument(project(), { projectSite: { uiLocale: "en", siteNavigation: navigation() } });
+    const html = output.files.find(file => file.path === "index.html")!.contents;
+    expect(html.indexOf('data-hia-directory-init')).toBeGreaterThan(0);
+    expect(html.indexOf('data-hia-directory-init')).toBeLessThan(html.indexOf('<main'));
+    expect(html).toContain('open=!matchMedia("(max-width:800px)").matches');
+    expect(SITE_READING_STYLE).toContain('.hia-site-reading-trigger{visibility:hidden;display:inline-flex');
+    expect(SITE_READING_STYLE).toContain('[data-hia-reading-ready] .hia-site-reading-trigger{visibility:visible}');
+    expect(output.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents).not.toContain('data-hia-directory-init');
+  });
   it.each([
     [true, true, false, true, false],
     [false, true, false, false, false],

@@ -259,6 +259,7 @@ function renderPage(navigation: DocumentationSiteNavigation, page: SiteChromePag
       <summary>${text("site.reading.directory")}</summary>
       <aside class="hia-sidebar">${page.directoryHtml}</aside>
     </details>
+    ${interactive ? '<script data-hia-directory-init>document.getElementById("hia-site-directory").open=!matchMedia("(max-width:800px)").matches;</script>' : ""}
     <main id="hia-site-main" class="hia-main" tabindex="-1">
       <details class="hia-site-mobile-outline"><summary>${text("site.reading.outline")}</summary>${outlineNav}</details>
       <div data-hia-project-content>${page.bodyHtml}</div>

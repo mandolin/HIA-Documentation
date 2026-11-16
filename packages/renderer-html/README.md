@@ -1,5 +1,9 @@
 # @hia-doc/renderer-html
 
+采用站点导航时，交互页会在正文首次布局前确定移动目录的折叠状态。阅读控件绑定前保留空间并隐藏，绑定后才进入键盘访问顺序。禁用脚本时可使用展开的原生目录及静态链接。
+
+With site navigation, interactive pages determine mobile-directory disclosure before the first prose layout. Reading controls reserve space while hidden and enter keyboard navigation after binding. Script-disabled pages provide native open directories and static links.
+
 ## Entry loading with site navigation
 
 显式采用站点导航的多页Portal通过同次生成的路径打开已知条目深链，正文可在目录及检索索引读取完成前呈现。目录恢复实际祖先，检索按实际查询读取索引，未知条目标识继续使用索引回退。语言、成员锚点及规范/呈现路径保留各自身份。
