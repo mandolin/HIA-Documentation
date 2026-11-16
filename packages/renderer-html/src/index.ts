@@ -2538,7 +2538,7 @@ function createProjectHtmlRenderPlan(projectInput: RenderProjectHtmlInput, optio
       page: portalContext.uiLocaleAdoption ? createProjectLocalizedNoScriptPagePath(entry.id, portalContext.uiLocale) : createProjectNoScriptPagePath(entry.id),
       ...(portalContext.uiLocaleAdoption ? { localePages: { "zh-CN": createProjectLocalizedNoScriptPagePath(entry.id, "zh-CN"), en: createProjectLocalizedNoScriptPagePath(entry.id, "en") } } : {}),
       ...(entry.source?.publicAsset?.linkUrl ? { sourceUrl: entry.source.publicAsset.linkUrl } : {})
-    })), Object.keys(options.theme?.colors ?? {})) : produceFiles(),
+    })), Object.keys(options.theme?.colors ?? {}), Boolean(portalContext.routeHistory)) : produceFiles(),
     diagnostics: renderedProjectInput.diagnostics ?? [],
     manifest: (files) => createProjectManifest(renderedProjectInput, files, pageTitle, options, navigationIndex, presentationBundle, portalContext)
   };
@@ -3833,6 +3833,8 @@ function renderProjectUiMessage(
     return escapeHtml(fallback);
   }
   const { attributes, text } = renderProjectUiMarkedText(portalContext, messageId, values);
+  // <lang><zh-CN>持久历史站的固定语言页直接输出已转义消息，省去无属性且无运行时用途的包装。</zh-CN><en>Fixed-language history pages emit escaped messages directly, omitting attribute-free wrappers with no runtime role.</en></lang>
+  if (portalContext.routeHistory && !attributes) return text;
   return `<span${attributes}>${text}</span>`;
 }
 

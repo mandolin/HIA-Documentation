@@ -147,12 +147,15 @@ export const SITE_READING_MESSAGES = {
  * @param interactive - 生成器已确认此页承载运行时交互。 The generator identified this page as the interactive runtime host.
  * @param entries - 同次渲染公开条目，默认空上下文。 Public entries from the same render, defaulting to no context.
  * @param customTokens - 主题owner已验证的显式颜色键，默认无覆写。 Explicit color keys validated by the theme owner, with no overrides by default.
+ * @param compactStaticText <lang><zh-CN>省略生成器自有静态消息包装，默认关闭。</zh-CN><en>Omit generator-owned static message wrappers, disabled by default.</en></lang>
  * @returns 带阅读框架的HTML，不执行脚本或文件访问。 Reading-framed HTML, without script execution or file access.
  */
-export function renderSiteReading(contents: string, file: string, locale: DocumentationPortalUiLocale, interactive: boolean, entries: SiteReadingEntry[] = [], customTokens: readonly string[] = []): string {
+export function renderSiteReading(contents: string, file: string, locale: DocumentationPortalUiLocale, interactive: boolean, entries: SiteReadingEntry[] = [], customTokens: readonly string[] = [], compactStaticText = false): string {
   // <lang><zh-CN>路径深度只来自生成器文件名，消息进入HTML前统一转义。</zh-CN><en>Depth comes only from generated file names; all messages are escaped before entering HTML.</en></lang>
   const prefix = "../".repeat(file.split("/").length - 1);
-  const text = (id: keyof typeof SITE_READING_MESSAGES) => `<span${interactive ? ` data-hia-ui-message="${id}"` : ""}>${escape(SITE_READING_MESSAGES[id][locale === "en" ? 1 : 0])}</span>`;
+  const text = (id: keyof typeof SITE_READING_MESSAGES) => !interactive && compactStaticText
+    ? escape(SITE_READING_MESSAGES[id][locale === "en" ? 1 : 0])
+    : `<span${interactive ? ` data-hia-ui-message="${id}"` : ""}>${escape(SITE_READING_MESSAGES[id][locale === "en" ? 1 : 0])}</span>`;
   const source = file.startsWith("sources/");
   // <lang><zh-CN>交互替换区域只包正文，移动目录和main地标留在外层，切换条目时不被innerHTML移除。</zh-CN><en>Keep only prose inside the replaceable region, leaving the mobile outline and main landmark outside entry innerHTML replacements.</en></lang>
   if (interactive) contents = contents.replace(/<main\b([^>]*?)\sdata-hia-project-content([^>]*>)([\s\S]*?)<\/main>/u, '<main$1$2<div data-hia-project-content>$3</div></main>');

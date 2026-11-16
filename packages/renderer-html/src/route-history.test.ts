@@ -8,6 +8,7 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { renderProjectHtmlDocument, renderProjectHtmlDocumentToWriter, type RenderHtmlOptions, type RenderProjectHtmlInput } from "./index.js";
 import { createGeneratedSiteNavigation } from "../../../site/src/lib/generated-navigation.mjs";
+import { withSiteNavigation } from "./site-navigation-chrome.js";
 
 /** @lang zh-CN 将当前原生声明绑定到持久页面，并显式保留已发布地址。
  * @lang en Bind the current native declaration to a persistent page and retain explicit published routes.
@@ -79,6 +80,20 @@ describe("documentation-project-route-history@0.1.0-draft", () => {
     const index = JSON.parse(result.files.find(file => file.path === "project-index.json")!.contents);
     expect(index.entries[0].id).toBe("generated:current");
     expect(result.files.some(file => file.path.includes("route-history"))).toBe(false);
+  });
+
+  it("compacts only generator-owned static messages while retaining prose, layout and runtime markers", () => {
+    const source = [{ path: "pages/example.html", contents: '<!doctype html><html lang="en"><head></head><body><main><article><h1>Example</h1><p><span>Author content</span></p></article></main></body></html>', contentType: "text/html", role: "entry" as const }];
+    const navigation = createGeneratedSiteNavigation("/HIA-Documentation/", "/HIA-Documentation-API/");
+    const normal = [...withSiteNavigation(source, navigation, "en")][0]!.contents;
+    const compact = [...withSiteNavigation(source, navigation, "en", [], [], true)][0]!.contents;
+    const text = (html: string) => html.replace(/<[^>]+>/gu, "");
+    expect(text(compact)).toBe(text(normal));
+    expect(compact.length).toBeLessThan(normal.length - 200);
+    expect(compact).toContain("<span>Author content</span>");
+    expect(compact).toContain('class="hia-site-title"');
+    const output = renderProjectHtmlDocument(input(), options());
+    expect(output.files.find(file => file.path === "index.html")!.contents).toContain("data-hia-ui-message");
   });
 
   it("pins publication identity while retaining native symbols and caller input", () => {
