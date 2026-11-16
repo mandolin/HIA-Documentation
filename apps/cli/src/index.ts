@@ -524,7 +524,8 @@ async function runDocsBuild(argv: string[], io: CliIo): Promise<number> {
     if (navigationPath && !siteNavigation) return 1;
     const routeHistory = historyPath ? await loadProjectRouteHistory(path.resolve(io.cwd, historyPath), outputDir, io) : undefined;
     if (historyPath && !routeHistory) return 1;
-    if (routeHistory && ["route-history.json", ...(routeHistory.pathAliases.some(route => route.kind === "page") ? ["assets/hia-route-history.js"] : []), ...routeHistory.pathAliases.map(route => route.path)].includes(manifestPath ?? "")) {
+    // <lang><zh-CN>保留文件名按大小写不敏感比较，避免Windows把显式清单写到历史原件上。</zh-CN><en>Compare reserved names case-insensitively so Windows cannot write an explicit manifest over history originals.</en></lang>
+    if (routeHistory && ["route-history.json", ...(routeHistory.pathAliases.some(route => route.kind === "page") ? ["assets/hia-route-history.js"] : []), ...routeHistory.pathAliases.map(route => route.path)].some(file => file.toLowerCase() === (manifestPath ?? "").toLowerCase())) {
       reportDiagnostics([createCliDiagnostic("HIA_CLI_ROUTE_HISTORY_INPUT_INVALID", "The output manifest cannot replace publication history or compatibility files.", "error", "routeHistory")], io);
       return 1;
     }

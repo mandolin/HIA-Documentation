@@ -44,7 +44,7 @@ describe("docs build --route-history", () => {
     } finally { await rm(value.root, { recursive: true, force: true }); }
   });
 
-  it.each(["malformed", "unknown-version", "invalid-utf8", "oversized", "missing-file", "single-document", "missing-native", "manifest-history", "manifest-fragment", "manifest-script"])("rejects %s before rendering a page", async scenario => {
+  it.each(["malformed", "unknown-version", "invalid-utf8", "oversized", "missing-file", "single-document", "missing-native", "manifest-history", "manifest-history-case", "manifest-fragment", "manifest-script"])("rejects %s before rendering a page", async scenario => {
     const value = await fixture();
     try {
       const file = path.join(value.root, "history.json");
@@ -56,6 +56,7 @@ describe("docs build --route-history", () => {
       if (scenario === "single-document") value.args.splice(2, 2, "--input", "doc.json");
       if (scenario === "missing-native") { value.history.bindings[0].symbolId = "absent"; await writeFile(file, JSON.stringify(value.history)); }
       if (scenario === "manifest-history") value.args.push("--manifest", "route-history.json");
+      if (scenario === "manifest-history-case") value.args.push("--manifest", "Route-History.json");
       if (scenario === "manifest-fragment") value.args.push("--manifest", "entries/legacy.html");
       if (scenario === "manifest-script") {
         value.history.pathAliases.push({ path: "pages/legacy.html", kind: "page", entryId: "published:stable", anchors: [] });

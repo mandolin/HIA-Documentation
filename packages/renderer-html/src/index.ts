@@ -3399,10 +3399,10 @@ function prepareProjectRouteAliases(project: RenderProjectHtmlInput, index: Retu
   const groups = new Map<string, DocumentationProjectRouteHistoryPath[]>();
   if (!context.routeHistory?.pathAliases.length) return groups;
   // <lang><zh-CN>历史不能覆盖当前正文或实际静态入口。</zh-CN><en>History cannot replace current prose or actual static entries.</en></lang>
-  const currentPaths = new Set(index.entries.flatMap(entry => [entry.contentPath, entry.noScriptPagePath, ...(entry.noScriptLocalePages ?? []).map(page => page.path)]));
+  const currentPaths = new Set(index.entries.flatMap(entry => [entry.contentPath, entry.noScriptPagePath, ...(entry.noScriptLocalePages ?? []).map(page => page.path)]).filter((file): file is string => Boolean(file)).map(file => file.toLowerCase()));
   const indexed = new Map(index.entries.map(entry => [entry.id, entry]));
   for (const route of context.routeHistory.pathAliases) {
-    if (currentPaths.has(route.path)) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Legacy path shadows a current file.");
+    if (currentPaths.has(route.path.toLowerCase())) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Legacy path shadows a current file.");
     if (route.uiLocale && !indexed.get(route.entryId)?.noScriptLocalePages?.some(page => page.uiLocale === route.uiLocale)) throw new TypeError("HIA_PROJECT_ROUTE_HISTORY_INVALID: Missing localized target.");
     const routes = groups.get(route.entryId) ?? [];
     routes.push(route);

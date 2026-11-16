@@ -82,6 +82,20 @@ describe("documentation-project-route-history@0.1.0-draft", () => {
     expect(result.files.some(file => file.path.includes("route-history"))).toBe(false);
   });
 
+  it("rejects case-colliding historical paths and current files before writing", async () => {
+    const duplicate = history();
+    duplicate.pathAliases.push({ ...duplicate.pathAliases[0]!, path: "entries/LEGACY.html" });
+    expect(() => renderProjectHtmlDocument(input(), options(duplicate))).toThrow("HIA_PROJECT_ROUTE_HISTORY_INVALID");
+    const normal = renderProjectHtmlDocument(input(), options());
+    const index = JSON.parse(normal.files.find(file => file.path === "project-index.json")!.contents);
+    const actual = index.entries[0].contentPath as string;
+    const collision = history();
+    collision.pathAliases[0]!.path = actual.slice(0, actual.lastIndexOf("/") + 1) + actual.slice(actual.lastIndexOf("/") + 1, -5).toUpperCase() + ".html";
+    const write = vi.fn();
+    await expect(renderProjectHtmlDocumentToWriter(input(), { writeFile: write }, options(collision))).rejects.toThrow("HIA_PROJECT_ROUTE_HISTORY_INVALID");
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it("compacts only generator-owned static messages while retaining prose, layout and runtime markers", () => {
     const source = [{ path: "pages/example.html", contents: '<!doctype html><html lang="en"><head></head><body><main><article><h1>Example</h1><p><span>Author content</span></p></article></main></body></html>', contentType: "text/html", role: "entry" as const }];
     const navigation = createGeneratedSiteNavigation("/HIA-Documentation/", "/HIA-Documentation-API/");

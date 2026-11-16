@@ -271,8 +271,9 @@ export function assertDocumentationProjectRouteHistory(value: unknown): asserts 
     if (route.uiLocale !== undefined && (route.kind !== "page" || !["en", "zh-CN"].includes(route.uiLocale as string))) invalid("path.uiLocale");
     const localized = route.path.match(/^pages\/(en|zh-CN)\//u)?.[1];
     if (localized && route.uiLocale !== localized) invalid("path locale mismatch");
-    if (paths.has(route.path)) invalid("duplicate path");
-    paths.add(route.path);
+    // <lang><zh-CN>发布文件须可安全落盘到大小写不敏感的文件系统，原路径拼写仍原样保存。</zh-CN><en>Publication files must remain safe on case-insensitive filesystems while retaining their original path spelling.</en></lang>
+    if (paths.has(route.path.toLowerCase())) invalid("duplicate path");
+    paths.add(route.path.toLowerCase());
     const anchors = new Set<string>();
     const targets = new Set<string>();
     for (const item of records(route.anchors, "anchors")) {
