@@ -20,6 +20,7 @@ import { assertDocumentationSiteNavigation, PORTAL_PUBLIC_SOURCE_GITATTRIBUTES }
 import { createGeneratedSiteNavigation } from "../site/src/lib/generated-navigation.mjs";
 import {preparePublicReferenceCommands, checkPublicReferenceCommands} from './public-reference-commands.mjs';
 import { apiReferenceBase } from "../site/src/lib/routes.mjs";
+import {prepareCorePublicationHistory} from './core-publication-history.mjs';
 
 // <lang zh-CN>输出归主仓 dist 所有，来源只允许当前主仓所属容器。</lang><lang en>Outputs belong to this repository's dist directory, and sources must belong to its workspace container.</lang>
 const owner = fs.realpathSync(fileURLToPath(new URL("../", import.meta.url)));
@@ -344,6 +345,8 @@ export async function buildCoreReference(options = {}) {
   try {
     staging = fs.mkdtempSync(output + ".staging-");
     const inputs = await preparePublicReferencePackageApis({ packageNames: packages, workspaceRoot: workspace, mainRoot: owner, toolRoot: tool, outputRoot: staging, locales });
+    // <lang><zh-CN>正常构建核全部已登记声明，固定公开ID；新声明和不确定变更须先显式登记。</zh-CN><en>Normal builds verify all registered declarations and pin public IDs; new declarations and uncertain changes require explicit registration first.</en></lang>
+    const routeHistoryPath = prepareCorePublicationHistory(owner,staging,inputs);
     // <lang zh-CN>资源复用正常JSONdoc准备链，实际原文、地图与逐值声明沿同一项目聚合。</lang><lang en>Resources reuse normal JSONdoc preparation, aggregating original bytes, maps and per-value declarations into the same project.</lang>
     const resourceResult = await preparePublicReferenceResources({ packageNames: CORE_REFERENCE_RESOURCE_PACKAGES, workspaceRoot: workspace, mainRoot: owner, outputRoot: staging, locales });
     const sourceConfigPath = preparePublicReferenceSourceConfig(owner, path.join(staging, ".runtime"), resourceResult.sourcePaths, false);
@@ -363,7 +366,7 @@ export async function buildCoreReference(options = {}) {
     fs.writeFileSync(navigationPath, JSON.stringify(navigation, null, 2) + "\n");
     for (const locale of locales) {
       const configPath = preparePublicReferenceLocaleConfig(sourceConfigPath, locale);
-      execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--out", path.join(staging, locale), "--locale", locale], { cwd: workspace, stdio: "inherit" });
+      execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--route-history", routeHistoryPath, "--out", path.join(staging, locale), "--locale", locale], { cwd: workspace, stdio: "inherit" });
       checkPublicReferencePackageApis({ packageApis: packages }, staging, locale);
       checkPublicReferenceResources({ packageResources: CORE_REFERENCE_RESOURCE_PACKAGES }, staging, locale);
       checkPublicReferenceCommands(staging, locale);
