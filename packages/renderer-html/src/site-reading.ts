@@ -546,6 +546,8 @@ export const SITE_READING_STYLE = `
 /* <lang><zh-CN>增强控件在首绘保留最终尺寸，绑定完成前不可见且不可聚焦，避免顶部工具挤动正文。</zh-CN><en>Reserve final control dimensions at first paint, keeping controls invisible and unfocusable until bound so header tools do not move prose.</en></lang> */
 .hia-site-reading-trigger{visibility:hidden;display:inline-flex;align-items:center;gap:10px;border:1px solid var(--hia-border);background:var(--hia-surface);color:var(--hia-text);border-radius:8px;padding:6px 11px;font:inherit;font-size:.79rem;min-height:36px;cursor:pointer}.hia-site-static-search{display:inline-flex}
 [data-hia-reading-ready] .hia-site-reading-trigger{visibility:visible}
+/* <lang><zh-CN>真正禁脚本时无增强待绑定，沿原生导航布局移除空控件位置。</zh-CN><en>With scripting disabled there is no pending enhancement, so retain native navigation geometry without empty control slots.</en></lang> */
+@media(scripting:none){.hia-site-reading-trigger{display:none}}
 [data-hia-site-navigation] dialog{width:min(650px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--hia-border);border-radius:16px;background:var(--hia-surface);color:var(--hia-text);box-shadow:0 25px 90px #00132d44}
 [data-hia-site-navigation] dialog::backdrop{background:#0c1c3680}[data-hia-site-navigation] dialog header{display:flex;justify-content:space-between;align-items:center;padding:20px 22px;border-bottom:1px solid var(--hia-border);gap:12px}
 [data-hia-site-navigation] dialog h2{margin:0;font-size:1rem}.hia-site-dialog-body{padding:22px}.hia-site-dialog-body label{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 0;border-bottom:1px solid var(--hia-border)}

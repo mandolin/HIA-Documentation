@@ -46,6 +46,7 @@ describe("documentation-site-navigation@0.1.0-draft", () => {
     expect(html).toContain('open=!matchMedia("(max-width:800px)").matches');
     expect(SITE_READING_STYLE).toContain('.hia-site-reading-trigger{visibility:hidden;display:inline-flex');
     expect(SITE_READING_STYLE).toContain('[data-hia-reading-ready] .hia-site-reading-trigger{visibility:visible}');
+    expect(SITE_READING_STYLE).toContain('@media(scripting:none){.hia-site-reading-trigger{display:none}}');
     expect(output.files.find(file => file.path.startsWith("sources/") && file.path.endsWith(".html"))!.contents).not.toContain('data-hia-directory-init');
   });
   it.each([
