@@ -272,8 +272,10 @@ export function inspectCoreReferenceSite(root, localeRoots = locales) {
       const sourceAttributes = localeRoots.some(localeRoot => relative === localeRoot + "/.gitattributes");
       assert(!state.isSymbolicLink() && !/[\\:%?#]/u.test(relative) && (!entry.name.startsWith(".") || relative === ".nojekyll" || sourceAttributes), "Unexpected core reference path.");
       if (sourceAttributes) assert(state.isFile(), "Invalid core reference source attributes.");
-      if (!prefix) assert(topDirectories.has(entry.name) || ["index.html", ".nojekyll"].includes(entry.name), "Build files cannot enter the core reference site.");
-      assert(["index.html",".nojekyll"].includes(relative)||localeRoots.some(localeRoot=>relative===localeRoot||relative.startsWith(localeRoot+"/")||state.isDirectory()&&localeRoot.startsWith(relative+"/")),"Unexpected core reference path.");
+      // <lang><zh-CN>共享根只接受既有主题二件，目录名不会放开其它工程文件。</zh-CN><en>The shared root admits only the existing theme pair, without admitting other build files by directory name.</en></lang>
+      const sharedTheme = relative === "assets" && state.isDirectory() || ["assets/hia-default.css","assets/hia-default.js"].includes(relative) && state.isFile();
+      if (!prefix) assert(topDirectories.has(entry.name) || ["index.html", ".nojekyll", "assets"].includes(entry.name), "Build files cannot enter the core reference site.");
+      assert(sharedTheme||["index.html",".nojekyll"].includes(relative)||localeRoots.some(localeRoot=>relative===localeRoot||relative.startsWith(localeRoot+"/")||state.isDirectory()&&localeRoot.startsWith(relative+"/")),"Unexpected core reference path.");
       if (state.isDirectory()) { visit(file, relative); continue; }
       assert(state.isFile() && state.nlink === 1 && state.size <= 32 * 1024 ** 2, "Invalid core reference file size or type.");
       assert(inventory.length < 100000 && bytes + state.size <= 1_000_000_000, "Core reference site exceeds its publication budget.");

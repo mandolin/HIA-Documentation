@@ -260,3 +260,18 @@ test('core shared theme adoption keeps source permissions and legacy callers exa
   assert.equal(shared.docs.theme.colors.accent,'#0047AB');
   assert.deepEqual(JSON.parse(fs.readFileSync(file,'utf8')),original);
 });
+
+
+test('core publication admits only the shared theme pair at its root', t => {
+  // <lang><zh-CN>根资产只接受现有theme-assets两个固定成员，其它工程文件继续拒绝。</zh-CN><en>Root assets admit only the two existing theme-assets members, continuing to reject build files.</en></lang>
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'hia-theme-root-'));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  for(const locale of ['en','zh-CN']) {fs.mkdirSync(path.join(root,locale));fs.writeFileSync(path.join(root,locale,'project-index.json'),'{}');}
+  fs.writeFileSync(path.join(root,'index.html'),'API');
+  fs.mkdirSync(path.join(root,'assets'));
+  fs.writeFileSync(path.join(root,'assets/hia-default.css'),':root{}');
+  fs.writeFileSync(path.join(root,'assets/hia-default.js'),'/* theme */');
+  assert.equal(inspectCoreReferenceSite(root).files,5);
+  fs.writeFileSync(path.join(root,'assets/runtime.json'),'{}');
+  assert.throws(()=>inspectCoreReferenceSite(root),/Unexpected core reference path/u);
+});
