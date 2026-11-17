@@ -75,3 +75,7 @@ gh workflow run restore-pages.yml --repo mandolin/HIA-Documentation --ref main -
 Recovery verifies the selected repository, workflow, branch, source commit, platform ZIP digest, CRC, complete TAR paths and expansion budget. It uploads the original TAR unchanged and checks the restored site using its exact root-index identity and selected source commit. Targeted deployment checks retry within a bounded CDN propagation window. The `recovery-verification` artifact records the selected source and TAR digest. Normal and recovery deployments share a serialization group. To finish a rollback drill, restore the successful official-site run and verify its root, index, compatibility pairing and retained reference routes.
 
 中文。正常发布分别核当前参考产物和固定兼容快照。恢复时选择本仓 main 的成功正常发布运行，校验完整工件并原样重传 TAR，随后按实际新旧根身份复核。演练结束后需恢复指定官网版本并再次验证线上来源。
+
+### Code reading settings
+
+The reading dialog includes appearance, long-code-line and line-number choices. Numbering uses the existing syntax-highlighted rows in manual code blocks, beginning at one for each example. CSS numbers stay outside copied code. Choices affect the current page. Without JavaScript, manual code and its default row numbers remain readable.

@@ -145,7 +145,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: mandolin/jsdoc-theme-hia
-          ref: a0a64033be2adc2aac7cdbbac517a9cf7cf80659
+          ref: 9d6bd95868a8b968122b510f91e0a66150431f62
           path: reference/sources/jsdoc-theme-hia
           token: ${{ steps.reference_app_token.outputs.token }}
           persist-credentials: false

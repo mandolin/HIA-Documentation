@@ -364,8 +364,11 @@ export async function buildCoreReference(options = {}) {
     assertDocumentationSiteNavigation(navigation);
     const navigationPath = path.join(staging, ".runtime/site-navigation.json");
     fs.writeFileSync(navigationPath, JSON.stringify(navigation, null, 2) + "\n");
+    // <lang><zh-CN>主题写者独占暂存根，语言子构建只通过相对URL引用，来源授权配置原样派生。</zh-CN><en>The theme writer owns the staging root, with locale children using relative references and source permissions derived unchanged.</en></lang>
+    const localeConfigs = new Map(locales.map(locale => [locale, preparePublicReferenceLocaleConfig(sourceConfigPath, locale, {mode:'external',baseUrl:'../assets/'})]));
+    execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "theme-assets", "--config", localeConfigs.get("en"), "--out", staging], {cwd:workspace,stdio:"inherit"});
     for (const locale of locales) {
-      const configPath = preparePublicReferenceLocaleConfig(sourceConfigPath, locale);
+      const configPath = localeConfigs.get(locale);
       execFileSync(process.execPath, [path.join(owner, "apps/cli/dist/index.js"), "docs", "build", "--config", configPath, "--project-manifest", manifestPath, "--site-navigation", navigationPath, "--route-history", routeHistoryPath, "--out", path.join(staging, locale), "--locale", locale], { cwd: workspace, stdio: "inherit" });
       checkPublicReferencePackageApis({ packageApis: packages }, staging, locale);
       checkPublicReferenceResources({ packageResources: CORE_REFERENCE_RESOURCE_PACKAGES }, staging, locale);
@@ -373,11 +376,14 @@ export async function buildCoreReference(options = {}) {
     }
     const site = path.join(staging, "site");
     fs.mkdirSync(site);
+    // <lang><zh-CN>共享主题随同一原子发布树移动，子构建的../assets引用在最终站点继续有效。</zh-CN><en>Move the shared theme with the atomic publication tree so child ../assets references remain valid in the final site.</en></lang>
+    fs.renameSync(path.join(staging,"assets"),path.join(site,"assets"));
     for (const locale of locales) fs.renameSync(path.join(staging, locale), path.join(site, locale));
     // <lang zh-CN>默认入口明确使用中文，普通语言链接支持无脚本导航。</lang><lang en>The default entry selects Chinese explicitly, with ordinary language links for script-free navigation.</lang>
     fs.writeFileSync(path.join(site, "index.html"), '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=zh-CN/"><title>HIA Documentation System API</title><link rel="icon" href="data:,"></head><body><a href="zh-CN/" lang="zh-CN">HIA Documentation System · 中文 API 参考</a><a href="en/" lang="en">HIA Documentation System · English API reference</a></body></html>\n');
     fs.writeFileSync(path.join(site, ".nojekyll"), "");
     const checked = inspectCoreReferenceSite(site);
+    assert.deepEqual(checked.inventory.filter(file => /(?:^|\/)hia-default\.(?:css|js)$/u.test(file.path)).map(file => file.path).sort(), ["assets/hia-default.css","assets/hia-default.js"], "Core publication requires one shared theme pair.");
     const sourceCommit = execFileSync("git", ["-C", owner, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     const producerCommit = execFileSync("git", ["-C", tool, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     assert.deepEqual([sourceCommit, producerCommit], revisions, "Source revisions changed during the build.");

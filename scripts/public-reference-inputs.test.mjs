@@ -68,7 +68,7 @@ test('both publication workflows check out the theme revision required by the cu
     // <lang><zh-CN>换行归一后核同一Git来源，兼容Windows工作树的CRLF表示。</zh-CN><en>Normalize line endings before checking Git provenance, accommodating CRLF Windows worktrees.</en></lang>
     const workflow = fs.readFileSync(new URL('../.github/workflows/' + name, import.meta.url), 'utf8').replaceAll('\r\n', '\n');
     const block = workflow.split(/\n\s+- name:/u).find(step => step.includes('repository: mandolin/jsdoc-theme-hia\n'));
-    assert.match(block, /ref: a0a64033be2adc2aac7cdbbac517a9cf7cf80659/u);
+    assert.match(block, /ref: 9d6bd95868a8b968122b510f91e0a66150431f62/u);
   }
 });
 

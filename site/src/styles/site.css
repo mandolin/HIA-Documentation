@@ -228,3 +228,10 @@ html[data-js] .search-form{display:block!important}.results a,.doc-body li{overf
 
 /* 中文：Markdown代码块保持局部滚动，当前页设置可换行。 English: Markdown code blocks scroll locally and honor the page wrap setting. */
 .doc-body pre{padding:18px 20px;border:1px solid var(--line);border-radius:10px;overflow:auto;max-width:100%;background:var(--surface)!important;color:var(--ink)!important}.doc-body pre span{color:inherit!important}html[data-wrap="wrap"] pre{white-space:pre-wrap;overflow-wrap:break-word}.entry-section{margin-top:40px}html[data-js] .static-search{display:none}@media(max-width:800px){html[data-js] .search-trigger{display:none!important}}
+
+/* <lang><zh-CN>复用Shiki的原生逐行节点，用CSS行号保留高亮和精确原文，禁脚本默认显示。</zh-CN><en>Reuse native Shiki rows with CSS line numbers to preserve highlighting and exact text, showing numbers without scripts by default.</en></lang> */
+.doc-body pre.astro-code code { display:block; white-space:normal; counter-reset:documentation-line; }
+.doc-body pre.astro-code .line { display:block; min-height:1em; white-space:pre; counter-increment:documentation-line; }
+.doc-body pre.astro-code .line::before { content:counter(documentation-line); display:inline-block; min-width:3ch; margin-inline-end:1rem; text-align:right; color:var(--muted); user-select:none; }
+html[data-lines="hide"] .doc-body pre.astro-code .line::before { content:none; display:none; }
+html[data-wrap="wrap"] .doc-body pre.astro-code .line { white-space:pre-wrap; overflow-wrap:anywhere; }

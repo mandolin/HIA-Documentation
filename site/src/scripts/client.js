@@ -54,6 +54,11 @@ document.querySelector("[data-wrap-select]")?.addEventListener("change", (event)
   document.documentElement.dataset.wrap = event.target.value === "wrap" ? "wrap" : "scroll";
 });
 
+// <lang><zh-CN>行号仅改变既有逐行代码节点的伪元素，原文、高亮和复制内容保持。</zh-CN><en>Line numbers only affect pseudo-elements on existing code rows, preserving prose, highlighting and copied text.</en></lang>
+document.querySelector("[data-lines-select]")?.addEventListener("change", (event) => {
+  document.documentElement.dataset.lines = event.target.value === "hide" ? "hide" : "show";
+});
+
 // <lang lang="zh-CN">构建时目录只含同语言实际页面；查询不会作为HTML或链接插入。</lang><lang lang="en">The build-time directory contains real same-language pages; queries never become HTML or links.</lang>
 const english = document.documentElement.lang === "en";
 const version = document.documentElement.dataset.documentationVersion;

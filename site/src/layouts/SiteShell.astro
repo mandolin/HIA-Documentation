@@ -54,6 +54,7 @@ const nav = ["home", "features", "docs"];
     <dialog id="settings-dialog" aria-labelledby="settings-title"><div class="dialog-head"><h2 id="settings-title">{text("阅读设置", "Reading settings")}</h2><button class="tool" data-close>{text("关闭", "Close")}</button></div><div class="dialog-body">
       <label class="setting-row">{text("外观", "Appearance")}<select data-theme-select><option value="light">{text("浅色", "Light")}</option><option value="dark">{text("深色", "Dark")}</option><option value="system">{text("跟随系统", "System")}</option></select></label>
       <label class="setting-row">{text("代码长行", "Long code lines")}<select data-wrap-select><option value="scroll">{text("块内滚动", "Scroll in block")}</option><option value="wrap">{text("自动换行", "Wrap")}</option></select></label>
+      <label class="setting-row">{text("源码行号", "Source line numbers")}<select data-lines-select><option value="show">{text("显示", "Show")}</option><option value="hide">{text("隐藏", "Hide")}</option></select></label>
       <p class="sample-tag">{text("设置只影响当前页面，不写入Cookie或本地存储。", "Settings affect this page only, without cookies or local storage.")}</p>
     </div></dialog>
     <script type="application/json" id="page-directory" set:html={JSON.stringify(manualSearchEntries(locale)).replace(/</g, "\\u003c")} />

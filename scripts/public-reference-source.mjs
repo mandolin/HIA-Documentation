@@ -110,10 +110,11 @@ export function preparePublicReferenceSourceConfig(mainRepoRoot, runtimeRoot, re
  * @lang en Derives this site's per-locale config inside the same exclusive directory using existing IA, UI-language and theme capabilities, preserving source authorization exactly.
  * @param {string} sourceConfigPath <lang><zh-CN>本次构建刚生成的明确文件来源配置绝对路径。</zh-CN><en>Absolute explicit-file source-config path just produced by this build.</en></lang>
  * @param {'zh-CN'|'en'} locale <lang><zh-CN>显式界面语言，与本次参考正文目录对应。</zh-CN><en>Explicit UI language matching this reference content directory.</en></lang>
+ * @param {{mode:'external',baseUrl:string}} [assets] <lang><zh-CN>显式共享资产引用，仅由采用单写者的发布者传入。省略保留local默认。</zh-CN><en>Explicit shared-asset references supplied by a single-writer publisher. Omitting this retains the local default.</en></lang>
  * @returns {string} <lang><zh-CN>新配置绝对路径，与来源镜像一同由调用方清理。</zh-CN><en>Absolute derived-config path, cleaned with the source mirror by the caller.</en></lang>
  * @throws {Error} <lang><zh-CN>不支持的语言、已有文件、来源JSON或文件操作失败时拒绝；不会覆盖原文件。</zh-CN><en>Rejects unsupported locales, existing files, invalid source JSON or filesystem failures without overwriting originals.</en></lang>
  */
-export function preparePublicReferenceLocaleConfig(sourceConfigPath, locale) {
+export function preparePublicReferenceLocaleConfig(sourceConfigPath, locale, assets) {
   assert(locale === 'zh-CN' || locale === 'en', 'Unsupported public reference UI locale.');
   // <lang><zh-CN>相同目录保持原相对localRoot的解释，源配置来自本次受控构建。</zh-CN><en>The shared directory preserves relative localRoot resolution; the input comes from this controlled build.</en></lang>
   const sourceConfig = JSON.parse(readFileSync(sourceConfigPath, 'utf8'));
@@ -128,7 +129,7 @@ export function preparePublicReferenceLocaleConfig(sourceConfigPath, locale) {
         informationArchitecture: {contentGrouping: 'entry', loadingStrategy: 'lazy', memberPlacement: 'separate'},
         uiLocale: locale
       },
-      theme: {name: 'default', colors: {accent: '#0047AB'}}
+      theme: {name: 'default', colors: {accent: '#0047AB'}, ...(assets ? {assets:{...assets}} : {})}
     }
   };
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', {encoding: 'utf8', flag: 'wx'});

@@ -242,3 +242,21 @@ test("presentation digests that resemble UNC paths require verified local asset 
   fs.writeFileSync(source, "changed source");
   assert.throws(() => inspectCoreReferenceSite(root), /asset|digest/u);
 });
+
+
+test('core shared theme adoption keeps source permissions and legacy callers exact', async t => {
+  // <lang><zh-CN>临时配置仅在用例根内创建，旧调用与新external调用各有明确语言文件。</zh-CN><en>Create configurations only inside the test root, with separate locale files for legacy and external calls.</en></lang>
+  const {preparePublicReferenceLocaleConfig}=await import('./public-reference-source.mjs');
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'hia-shared-reference-'));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const original={schemaVersion:'0.1.0',docs:{source:{mode:'explicit',localRoot:'.',allow:['public.ts']}}};
+  const file=path.join(root,'source.json');
+  fs.writeFileSync(file,JSON.stringify(original));
+  const legacy=JSON.parse(fs.readFileSync(preparePublicReferenceLocaleConfig(file,'en'),'utf8'));
+  const shared=JSON.parse(fs.readFileSync(preparePublicReferenceLocaleConfig(file,'zh-CN',{mode:'external',baseUrl:'../assets/'}),'utf8'));
+  assert.equal(legacy.docs.theme.assets,undefined);
+  assert.deepEqual(shared.docs.theme.assets,{mode:'external',baseUrl:'../assets/'});
+  assert.deepEqual(shared.docs.source,original.docs.source);
+  assert.equal(shared.docs.theme.colors.accent,'#0047AB');
+  assert.deepEqual(JSON.parse(fs.readFileSync(file,'utf8')),original);
+});
