@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 逐槽位坐标证据草案的 owner 快照、精确身份与封闭摘要形状回归。
- * @lang en Owner-snapshot, exact-identity and closed digest-shape regressions for the per-slot coordinate evidence draft.
+ * @lang zh-CN 逐槽位坐标证据的 owner 快照、精确身份与封闭摘要形状回归。
+ * @lang en Owner-snapshot, exact-identity and closed digest-shape regressions for the per-slot coordinate evidence.
  */
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -10,24 +10,25 @@ import {
   ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA,
   ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID
 } from "../../source-linkage/src/coordinate-profile-schema.js";
+import historicalCoordinateProfile from "./history/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json" with { type: "json" };
 import { getHiaSchema, HIA_SCHEMA_CATALOG, listHiaSchemas } from "./index.js";
 
 describe("ordinary source-map coordinate profile distribution", () => {
-  it("distributes the exact owner draft without promoting unrelated contracts", () => {
+  it("distributes the current owner definition and preserves the exact archived draft", () => {
     // <lang><zh-CN>当前 key 与精确 ID 必须解析为 owner 快照；未知版本无隐式兼容。</zh-CN><en>The current key and exact ID must resolve to the owner snapshot; unknown versions have no implicit compatibility.</en></lang>
     const entry = HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "ordinary-source-map-coordinate-profile");
     expect(entry).toMatchObject({
       contractVersion: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
       ownerPackage: "@hia-doc/source-linkage",
       schemaId: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID,
-      stability: "draft"
+      stability: "stable-candidate"
     });
     expect(getHiaSchema("ordinary-source-map-coordinate-profile")).toEqual(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA);
     expect(getHiaSchema(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID)).toEqual(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA);
-    expect(getHiaSchema(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID.replace("0.1.0-draft", "1.0.0"))).toBeUndefined();
+    expect(getHiaSchema(historicalCoordinateProfile.$id)).toEqual(historicalCoordinateProfile);
+    expect(getHiaSchema(ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID.replace("1.0.0", "1.0.1"))).toBeUndefined();
     expect(listHiaSchemas()).toHaveLength(22);
-    // <lang><zh-CN>文档地图已独立取得候选标记，坐标侧载仍保持自己的草案身份。</zh-CN><en>The documentation map has independently become a candidate; this coordinate sidecar retains its own draft identity.</en></lang>
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(9);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(10);
   });
 
   it("pins the source-slot coordinate and privacy wire boundary", () => {

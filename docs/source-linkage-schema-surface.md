@@ -1,8 +1,8 @@
 # 源码映射常量与 schema / Source-linkage constants and schemas
 
-本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。`doc-source-map@1.1.0`为`stable-candidate`；`generated-documentation-binding@0.3.0-draft`与独立的`ordinary-source-map-coordinate-profile@0.1.0-draft`仍为draft。包及系统发行须分别验收。
+本参考聚焦`@hia-doc/source-linkage`的版本常量、范围词汇和schema导出。以下说明当前源码定义；npm包版本、契约版本、schema版本、catalog成熟度和系统发行状态分别管理。`doc-source-map@1.1.0`为`stable-candidate`；`ordinary-source-map-coordinate-profile@1.0.0` 也为 `stable-candidate`，保留精确草案读取。`generated-documentation-binding@0.3.0-draft` 仍为 draft。包及系统发行须分别验收。
 
-This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. The source definition `doc-source-map@1.1.0` is a `stable-candidate`; `generated-documentation-binding@0.3.0-draft` and independent `ordinary-source-map-coordinate-profile@0.1.0-draft` remain drafts. Package and system publication have separate acceptance gates.
+This guide focuses on version constants, range vocabulary and schema exports in `@hia-doc/source-linkage`. Package versions, contract/schema versions, catalog maturity and system releases are separate. The `doc-source-map@1.1.0` and `ordinary-source-map-coordinate-profile@1.0.0` definitions are stable candidates. The sidecar reader still accepts the exact historical draft. `generated-documentation-binding@0.3.0-draft` remains a draft. Package and system publication have separate acceptance gates.
 
 ## 身份、版本和类别 / Identities, versions and categories
 
@@ -19,7 +19,8 @@ This guide focuses on version constants, range vocabulary and schema exports in 
 | `DOC_SOURCE_MAP_COLUMN_UNITS` | 冻结的 `utf16-code-unit, unicode-code-point, byte, unknown` 元组 / Frozen tuple | 每条新范围的列单位 / Column unit on each new ranged reference. |
 | `DocSourceMapEndBoundary`, `DocSourceMapColumnUnit`, `DocSourceMapRangeConvention` | 仅类型闭集 / Type-only closed sets | 未知维度不授予精确定位 / Unknown dimensions do not certify exact locations. |
 | `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT` | `"ordinary-source-map-coordinate-profile"` | 独立逐原始槽位证据侧载身份 / Separate per-original-slot evidence sidecar identity. |
-| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION` | `"0.1.0-draft"` | 精确草案身份；不替换旧数值导航 / Exact draft identity; legacy numeric navigation remains separate. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION` | `"1.0.0"` | 当前稳定身份 / Current stable identity. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION` | `"0.1.0-draft"` | 精确历史身份 / Exact historical identity. |
 | `GENERATED_DOCUMENTATION_BINDING_CONTRACT` | `"generated-documentation-binding"` | 独立中性sidecar身份 / Independent neutral sidecar identity. |
 | `GENERATED_DOCUMENTATION_BINDING_CONTRACT_VERSION` | `"0.3.0-draft"` | 当前绑定，只配文档映射1.1.0 / Current binding, paired only with map1.1.0. |
 | `GENERATED_DOCUMENTATION_BINDING_0_2_0_CONTRACT_VERSION` | `"0.2.0-draft"` | 已公开前一绑定，只配映射1.0.0 / Previous published binding, paired only with map1.0.0. |
@@ -41,7 +42,7 @@ All schemas use JSON Schema Draft 2020-12. Canonical identities share the prefix
 | `DOC_SOURCE_MAP_SCHEMA_ID` | 前缀 + `doc-source-map-1.1.0.schema.json` / Prefix + filename. |
 | `DOC_SOURCE_MAP_SCHEMA_VERSION` | `"1.1.0"`，等于当前映射contract根版本 / Matches the current map root version. |
 | `DOC_SOURCE_MAP_JSON_SCHEMA` | 当前映射的共享结构定义 / Shared current map structure. |
-| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID` | 前缀 + `ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json` / Prefix + filename. |
+| `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID` | 前缀 + `ordinary-source-map-coordinate-profile-1.0.0.schema.json` / Prefix + filename. |
 | `ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA` | 独立逐槽位、原始字节摘要与无正文隐私结构；实际同点由严格reader判断 / Separate per-slot, raw-byte-digest and body-free privacy structure; the strict reader decides actual same-point anchors. |
 | `GENERATED_DOCUMENTATION_BINDING_SCHEMA_ID` | 前缀 + `generated-documentation-binding-0.3.0-draft.schema.json` / Prefix + filename. |
 | `GENERATED_DOCUMENTATION_BINDING_0_2_0_SCHEMA_ID` | 前缀 + `generated-documentation-binding-0.2.0-draft.schema.json` / Prefix + filename. |

@@ -34,6 +34,7 @@ import historicalProducer from "./history/documentation-producer-0.1.0-draft.sch
 import historicalProducerResult from "./history/documentation-producer-result-0.1.0-draft.schema.json" with { type: "json" };
 import historicalSourceMap from "./history/doc-source-map-0.1.0-draft.schema.json" with { type: "json" };
 import historicalSourceMapV1 from "./history/doc-source-map-1.0.0.schema.json" with { type: "json" };
+import historicalCoordinateProfile from "./history/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json" with { type: "json" };
 import historicalPresentation from "./history/documentation-presentation-profile-0.1.0-draft.schema.json" with { type: "json" };
 import historicalUiLocale from "./history/documentation-ui-locale-completeness-0.1.0-draft.schema.json" with { type: "json" };
 import historicalGeneratedBinding from "./history/generated-documentation-binding-0.1.0-draft.schema.json" with { type: "json" };
@@ -192,7 +193,7 @@ const schemasByKey: Readonly<Record<HiaSchemaKey, HiaJsonSchema>> = {
 // <lang><zh-CN>历史定义按 canonical 身份独立保存，不能从会被 owner sync 覆盖的当前快照派生。</zh-CN><en>Keep historical definitions independently by canonical identity rather than deriving them from current snapshots overwritten by owner sync.</en></lang>
 const historicalSchemas: readonly HiaJsonSchema[] = [
   historicalDocument, historicalProjectManifest, historicalProfile, historicalProducer,
-  historicalProducerResult, historicalSourceMap, historicalSourceMapV1, historicalPresentation,
+  historicalProducerResult, historicalSourceMap, historicalSourceMapV1, historicalCoordinateProfile, historicalPresentation,
   historicalUiLocale, historicalGeneratedBinding, historicalGeneratedBindingV02
 ];
 

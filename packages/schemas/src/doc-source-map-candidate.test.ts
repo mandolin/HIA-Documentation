@@ -38,12 +38,11 @@ describe("documentation source-map 1.1.0 candidate distribution", () => {
     }
   });
 
-  it("leaves binding and coordinate evidence drafts independent", () => {
-    // <lang><zh-CN>只晋升这一个契约；绑定/侧载的独立门禁不能被顺带跳过。</zh-CN><en>Promote this contract alone; independent binding and sidecar gates must not be bypassed.</en></lang>
-    for (const key of ["generated-documentation-binding", "ordinary-source-map-coordinate-profile"]) {
-      expect(HIA_SCHEMA_CATALOG.schemas.find((entry) => entry.key === key)?.stability).toBe("draft");
-    }
+  it("tracks binding and coordinate evidence maturity independently", () => {
+    // <lang><zh-CN>侧载已有独立候选身份，生成式绑定仍保留工程草案。</zh-CN><en>The sidecar now has its own candidate identity; generated binding remains a development draft.</en></lang>
+    expect(HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "generated-documentation-binding")?.stability).toBe("draft");
+    expect(HIA_SCHEMA_CATALOG.schemas.find(({ key }) => key === "ordinary-source-map-coordinate-profile")?.stability).toBe("stable-candidate");
     expect(listHiaSchemas()).toHaveLength(22);
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(9);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(10);
   });
 });

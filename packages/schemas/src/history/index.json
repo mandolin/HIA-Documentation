@@ -2,6 +2,13 @@
   "formatVersion": "1.0.0",
   "schemas": [
     {
+      "key": "ordinary-source-map-coordinate-profile",
+      "contractVersion": "0.1.0-draft",
+      "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+      "fileName": "ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+      "sha256": "fc1d3ed4846d83c7264389e59b0993d3d3c097ac59bff966eb9b4a0aa633a924"
+    },
+    {
       "key": "documentation-profile",
       "contractVersion": "0.1.0-draft",
       "schemaId": "https://mandolin.github.io/HIA-Documentation/schemas/documentation-profile-0.1.0-draft.schema.json",

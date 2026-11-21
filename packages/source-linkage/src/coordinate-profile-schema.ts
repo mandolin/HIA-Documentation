@@ -11,16 +11,22 @@
 export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT = "ordinary-source-map-coordinate-profile";
 
 /**
- * @lang zh-CN 开发期精确版本；草案不得被解释为正式 1.0.0 兼容承诺。
- * @lang en Exact development version; this draft must not be interpreted as a stable 1.0.0 compatibility promise.
+ * @lang zh-CN 当前稳定侧载格式的精确版本；包版本与分发状态独立。
+ * @lang en Exact current stable sidecar format version; package versions and distribution status are independent.
  */
-export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION = "0.1.0-draft";
+export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION = "1.0.0";
+
+/**
+ * @lang zh-CN 仍可精确读取的历史开发格式；旧数据保持其原始身份。
+ * @lang en Historical development format still accepted exactly; old data retains its original identity.
+ */
+export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION = "0.1.0-draft";
 
 /**
  * @lang zh-CN 当前 schema 的 canonical 资源身份；只供精确查找，不触发网络读取或发行。
  * @lang en Canonical identity of the current schema for exact lookup only, without network access or publication.
  */
-export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json";
+export const ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID = "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-1.0.0.schema.json";
 
 /**
  * @lang zh-CN 坐标侧载的封闭 JSON 形状。摘要是实际字节的 SHA-256 后再以 canonical base64 表示；文本摘要的哈希输入是严格 UTF-8 解码后 UTF-16 代码单元的小端字节序列，不添加 BOM，也不折叠换行。schema 仅约束结构；实际字节、跨工件身份、槽位唯一性及 2 MiB 侧载边界由 owner reader 校验。

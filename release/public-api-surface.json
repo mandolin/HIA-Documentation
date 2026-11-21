@@ -17181,7 +17181,7 @@
           ],
           "fields": [],
           "declarationFingerprints": [
-            "30559b277f93ff3e8c66ed79a40b8857c03192a3f609fd142c53167364991eaa"
+            "fa387c46db268b21dbc65f688d9eaeb3e6a310b66a31cb06a7b672e946bc32d3"
           ]
         },
         {
@@ -19122,7 +19122,7 @@
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "5f2cf5d6b88dc3ad9d7631b77d3ac600e407928ca0c1190c0547b5ba814dcd7d"
+            "211e2fef5316dc67fcbbf8a2b2c8229d81ab9535e081641654177e42b53e6b04"
           ]
         },
         {
@@ -19136,13 +19136,23 @@
           ]
         },
         {
+          "name": "ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION",
+          "kind": "VariableDeclaration",
+          "owner": "packages/source-linkage/src/coordinate-profile-schema.ts",
+          "signatures": [],
+          "fields": [],
+          "declarationFingerprints": [
+            "bb56559089d2530d87da533f6ee3188d93184cd1e8caf56d1b403f32446fceea"
+          ]
+        },
+        {
           "name": "ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_SCHEMA_ID",
           "kind": "VariableDeclaration",
           "owner": "packages/source-linkage/src/coordinate-profile-schema.ts",
           "signatures": [],
           "fields": [],
           "declarationFingerprints": [
-            "d1d956b54372ba393ca444830bee15736cedc22b5049fa97a35d5bf41ddac36a"
+            "8547992b90e372207db06ef93e0a97fbedcae7eb276b4828eae371bfa29374ee"
           ]
         },
         {

@@ -33,6 +33,6 @@ describe("project manifest candidate distribution", () => {
     expect(entry.stability).toBe("stable-candidate");
     expect(HIA_SCHEMA_CATALOG.schemas).toHaveLength(22);
     // <lang><zh-CN>新作用域清单单列为候选，原1.0.0清单的版本与形状保持。</zh-CN><en>The scoped manifest is a separate candidate, retaining the original 1.0.0 manifest version and shape.</en></lang>
-    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(9);
+    expect(HIA_SCHEMA_CATALOG.schemas.filter(({ stability }) => stability === "stable-candidate")).toHaveLength(10);
   });
 });

@@ -13,6 +13,7 @@ import { getHiaSchema, HIA_SCHEMA_CATALOG, HIA_SCHEMA_PUBLIC_BASE_URL } from "./
 
 // <lang><zh-CN>期望摘要独立于可编辑索引，固定首次迁移前已分发的原始文件。</zh-CN><en>Expected digests are independent of the editable index and pin the distributed files before the first migration.</en></lang>
 const pinnedDigests: Record<string, string> = {
+  "ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json": "fc1d3ed4846d83c7264389e59b0993d3d3c097ac59bff966eb9b4a0aa633a924",
   "generated-documentation-binding-0.1.0-draft.schema.json": "6ea1aca4fcc69f6fab6bf034be6efc4433d8d5d69e3694d101ea7a59a03998d7",
   "generated-documentation-binding-0.2.0-draft.schema.json": "474c20333ceb5b7e5aaa43ce5dc53e3016d9a0cce4a30eb3e8c0c41d945ba21b",
   "documentation-profile-0.1.0-draft.schema.json": "ddcc684a742da21c898965885a28989b33f2ccaa9f610943b48f77c7be0476a8",
@@ -66,10 +67,10 @@ describe("historical schema distribution", () => {
       entry.schemaId = oldId;
     }
   });
-  it("preserves eleven canonical identities, original bytes and defensive lookup copies", async () => {
+  it("preserves twelve canonical identities, original bytes and defensive lookup copies", async () => {
     // <lang><zh-CN>读取实际源码快照，并与独立固定摘要和查询结果逐条比较。</zh-CN><en>Read actual source snapshots and compare each against independent pinned digests and lookup results.</en></lang>
     const snapshots = await readHistoricalSchemas(path.join(__dirname, "history"), HIA_SCHEMA_PUBLIC_BASE_URL);
-    expect(snapshots).toHaveLength(11);
+    expect(snapshots).toHaveLength(12);
     expect(Object.keys(pinnedDigests).sort()).toEqual(snapshots.map(({ entry }) => entry.fileName).sort());
     for (const { entry, bytes } of snapshots) {
       expect(entry.sha256).toBe(pinnedDigests[entry.fileName]);

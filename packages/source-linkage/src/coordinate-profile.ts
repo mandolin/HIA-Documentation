@@ -7,7 +7,7 @@ import { decodedMappings, type TraceMap } from "@jridgewell/trace-mapping";
 import { isDocSourceMapJsonDataGraph } from "./manifest-json-data.js";
 import { createBodyFreeOrdinaryTraceMap } from "./ordinary-input.js";
 import { createDocSourceMapIndex, type DocSourceMapIndex } from "./index.js";
-import { ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION } from "./coordinate-profile-schema.js";
+import { ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION, ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION } from "./coordinate-profile-schema.js";
 
 /**
  * @lang zh-CN 本版单个 profile 的最大 UTF-8 JSON 字节数。
@@ -235,7 +235,7 @@ interface SlotWire {
 }
 interface ProfileWire {
   contract: typeof ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT;
-  contractVersion: typeof ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION;
+  contractVersion: typeof ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION | typeof ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION;
   id: string;
   ordinaryMap: { sourceMapId: string; artifactId: string; digest: DigestWire };
   documentationMap: { id: string; contractVersion: "1.1.0"; digest: DigestWire };
@@ -328,13 +328,23 @@ function validDigest(value: unknown): value is DigestWire {
     && btoa(atob(value.value)) === value.value;
 }
 /**
+ * @lang zh-CN 精确识别两种已定义的侧载身份。两版共用同一封闭形状与核验语义。
+ * @lang en Recognizes the two defined sidecar versions exactly. Both share the same closed shape and verification semantics.
+ * @param value <lang><zh-CN>来自侧载根对象的原始版本值。</zh-CN><en>Raw version value from the sidecar root.</en></lang>
+ * @returns <lang><zh-CN>是否为当前稳定或旧开发版本。</zh-CN><en>Whether the value is the stable or historical development version.</en></lang>
+ */
+function supportedProfileVersion(value: unknown): value is ProfileWire["contractVersion"] {
+  return value === ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION || value === ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION;
+}
+
+/**
  * @lang zh-CN 对新侧载施加独立严格形状检查，不让旧宽读取器决定证据语义。
  * @lang en Applies an independent strict shape check rather than borrowing permissive legacy admission.
  */
 function validProfile(value: unknown): value is ProfileWire {
   if (!record(value) || !exactKeys(value, ["contract", "contractVersion", "id", "ordinaryMap", "documentationMap", "sourceSlots", "privacy"])
     || value.contract !== ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT
-    || value.contractVersion !== ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION || !identity(value.id)) return false;
+    || !supportedProfileVersion(value.contractVersion) || !identity(value.id)) return false;
   // <lang><zh-CN>三个子记录分别声明普通地图、文档地图与无正文策略，不允许其中一个身份替代另一个。</zh-CN><en>The three child records independently declare ordinary map, documentation map and body-free policy; none substitutes for another identity.</en></lang>
   const ordinary = value.ordinaryMap;
   const documentation = value.documentationMap;
@@ -666,7 +676,7 @@ export async function createOrdinaryCoordinateProfileIndex(input: OrdinaryCoordi
     const profileValue: unknown = typeof rawProfile === "string" ? parseUniqueJson(rawProfile, PROFILE_LIMIT) : rawProfile;
     if (!isDocSourceMapJsonDataGraph(profileValue) || new TextEncoder().encode(JSON.stringify(profileValue)).byteLength > PROFILE_LIMIT) return failed("invalid", "COORDINATE_PROFILE_INVALID", "Coordinate profile is invalid.");
     const profile = structuredClone(profileValue);
-    if (record(profile) && profile.contract === ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT && profile.contractVersion !== ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION) {
+    if (record(profile) && profile.contract === ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT && !supportedProfileVersion(profile.contractVersion)) {
       return failed("unsupported-version", "COORDINATE_PROFILE_VERSION_UNSUPPORTED", "Coordinate profile version is unsupported.");
     }
     if (!validProfile(profile)) return failed("invalid", "COORDINATE_PROFILE_INVALID", "Coordinate profile is invalid.");

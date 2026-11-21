@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+  "title": "Ordinary Source Map Coordinate Profile",
+  "description": "普通源码映射逐槽位坐标证据侧载 / Per-slot coordinate evidence for an ordinary source map.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contractVersion",
+    "id",
+    "ordinaryMap",
+    "documentationMap",
+    "sourceSlots",
+    "privacy"
+  ],
+  "properties": {
+    "contract": {
+      "const": "ordinary-source-map-coordinate-profile"
+    },
+    "contractVersion": {
+      "const": "0.1.0-draft"
+    },
+    "id": {
+      "$ref": "#/$defs/identity"
+    },
+    "ordinaryMap": {
+      "$ref": "#/$defs/ordinaryMap"
+    },
+    "documentationMap": {
+      "$ref": "#/$defs/documentationMap"
+    },
+    "sourceSlots": {
+      "description": "只列出有独立证据的原始槽位，顺序不改变 section/sourceIndex 身份 / Original slots with independent evidence; array order never replaces section/sourceIndex identity.",
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/sourceSlot"
+      }
+    },
+    "privacy": {
+      "$ref": "#/$defs/privacy"
+    }
+  },
+  "$defs": {
+    "identity": {
+      "description": "公开安全的不透明身份；reader 另与实际工件身份核对 / Public-safe opaque identity, cross-checked against actual artifacts by the reader.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*(?![\\s\\S])"
+    },
+    "sourceRevision": {
+      "description": "公开安全的不透明来源版本；单独不证明内容相同 / Public-safe opaque source revision; alone it does not prove content equality.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*(?![\\s\\S])"
+    },
+    "digest": {
+      "description": "实际原始字节的 SHA-256；value 为 32 字节摘要的 canonical RFC 4648 base64 / SHA-256 of actual raw bytes, with canonical RFC 4648 base64 of the 32-byte digest.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 44,
+          "maxLength": 44,
+          "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$"
+        }
+      }
+    },
+    "textDigest": {
+      "description": "逻辑字符串 UTF-16 代码单元的小端字节 SHA-256，不带额外 BOM / SHA-256 of little-endian UTF-16 code-unit bytes of the logical string, with no added BOM.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "representation",
+        "algorithm",
+        "value"
+      ],
+      "properties": {
+        "representation": {
+          "const": "decoded-utf16-code-units"
+        },
+        "algorithm": {
+          "const": "sha256"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 44,
+          "maxLength": 44,
+          "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$"
+        }
+      }
+    },
+    "ordinaryMap": {
+      "description": "同一文档 map sourceMaps 声明的普通 map 身份、mapsFrom生成工件身份与普通 map 实际字节摘要 / Ordinary map identity, generated mapsFrom artifact identity, and actual map-byte digest declared by the same documentation map.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceMapId",
+        "artifactId",
+        "digest"
+      ],
+      "properties": {
+        "sourceMapId": {
+          "$ref": "#/$defs/identity"
+        },
+        "artifactId": {
+          "$ref": "#/$defs/identity"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "documentationMap": {
+      "description": "实际消费的 doc-source-map@1.1.0 身份与原始字节摘要 / Identity and raw-byte digest of the consumed doc-source-map@1.1.0.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "contractVersion",
+        "digest"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identity"
+        },
+        "contractVersion": {
+          "const": "1.1.0"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "sourceSlot": {
+      "description": "原始 section/source 序号；不得用展平后的路径或公开来源列表索引替代 / Original section/source indexes; flattened paths or public source-list indexes are not substitutes.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sectionIndex",
+        "sourceIndex",
+        "sourceId",
+        "columnUnit",
+        "sourceRevision",
+        "sourceByteDigest",
+        "sourceTextEncoding",
+        "sourceTextTransform",
+        "sourceTextDigest"
+      ],
+      "properties": {
+        "sectionIndex": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4095
+            }
+          ]
+        },
+        "sourceIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4095
+        },
+        "sourceId": {
+          "$ref": "#/$defs/identity"
+        },
+        "columnUnit": {
+          "enum": [
+            "utf16-code-unit",
+            "unicode-code-point",
+            "byte",
+            "unknown"
+          ]
+        },
+        "sourceRevision": {
+          "$ref": "#/$defs/sourceRevision"
+        },
+        "sourceByteDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceTextEncoding": {
+          "const": "utf-8"
+        },
+        "sourceTextTransform": {
+          "const": "none"
+        },
+        "sourceTextDigest": {
+          "$ref": "#/$defs/textDigest"
+        }
+      }
+    },
+    "privacy": {
+      "description": "侧载不嵌入 sourcesContent 或任何源码正文 / The sidecar embeds no sourcesContent or source body.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourcesContentPolicy"
+      ],
+      "properties": {
+        "sourcesContentPolicy": {
+          "const": "none"
+        }
+      }
+    }
+  }
+}

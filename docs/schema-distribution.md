@@ -16,7 +16,7 @@ The package is a catalog, not a new contract owner and not a fully dereferenced 
 | `documentation-producer` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `documentation-producer-result` | `@hia-doc/plugin-sdk` | `1.0.0` stable-candidate; exact legacy reader support |
 | `doc-source-map` | `@hia-doc/source-linkage` | `1.1.0` stable-candidate with per-reference range conventions; exact `1.0.0` and `0.1.0-draft` history retained; package and host adoption remain separate |
-| `ordinary-source-map-coordinate-profile` | `@hia-doc/source-linkage` | `0.1.0-draft` separate per-original-slot coordinate evidence; exact byte and anchor verification remains an owner reader responsibility |
+| `ordinary-source-map-coordinate-profile` | `@hia-doc/source-linkage` | `1.0.0` stable definition candidate with exact `0.1.0-draft` history retained. The owning reader verifies actual bytes and exact anchors. |
 | `documentation-locale-resource` | `@hia-doc/core` | draft |
 | `documentation-locale-resource-declaration` | `@hia-doc/core` | draft |
 | `documentation-locale-resolution` | `@hia-doc/core` | draft |
@@ -108,7 +108,7 @@ The first nine digests are unchanged. Those historical map/binding snapshots
 added no catalog entry or stable definition. The separate coordinate profile
 adds one draft entry, so the catalog now contains 18 entries. The documentation
 map `1.1.0` is a reviewed stable definition candidate, with UI-locale completeness `1.0.0` bringing the candidate count to eight;
-the current binding and coordinate profile remain draft pending their own acceptance.
+at that checkpoint, the binding and coordinate profile remained drafts. The coordinate profile now has a separate `1.0.0` definition and retains the archived `0.1.0-draft` schema.
 See [source range conventions](doc-source-map-range-conventions.md)
 and the [coordinate evidence contract](ordinary-source-map-coordinate-profile.md).
 

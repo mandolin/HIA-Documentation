@@ -21,7 +21,7 @@ The package reads documentation source map manifests, checks the privacy/path ba
 ## Strict same-point anchors (source draft)
 
 `createOrdinaryCoordinateProfileIndex()` accepts an explicit
-`ordinary-source-map-coordinate-profile@0.1.0-draft`, actual ordinary and
+`ordinary-source-map-coordinate-profile@1.0.0` (or the exact historical `0.1.0-draft` identity), actual ordinary and
 documentation map bytes, and authorized original-source bytes addressed by raw
 section/source slot. `queryVerifiedSourceAnchor()` requires an explicit entry,
 source identity, slot, one-based position and column unit. Only

@@ -6,6 +6,7 @@
 import {
   ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT,
   ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
+  ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION,
   createOrdinaryCoordinateProfileIndex,
   queryVerifiedSourceAnchor,
   type CoordinateGeneratedPosition,
@@ -21,7 +22,8 @@ import {
 
 // <lang><zh-CN>包入口需保留侧载精确草案身份；类型检查不表示草案已稳定发布。</zh-CN><en>The package entry must retain the exact draft sidecar identity; type checking does not imply a stable release.</en></lang>
 const contract: "ordinary-source-map-coordinate-profile" = ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT;
-const version: "0.1.0-draft" = ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION;
+const version: "1.0.0" = ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION;
+const legacyVersion: "0.1.0-draft" = ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_LEGACY_CONTRACT_VERSION;
 
 // <lang><zh-CN>获授权来源由宿主按原始槽位显式给出；类型本身不能证明字节真实或已获授权。</zh-CN><en>The host explicitly supplies authorized source bytes by raw slot; static types cannot prove byte identity or authorization.</en></lang>
 const source: CoordinateSourceInput = { sectionIndex: null, sourceIndex: 0, bytes: new Uint8Array() };
@@ -48,7 +50,7 @@ const query: VerifiedSourceAnchorQuery = {
 const result: VerifiedSourceAnchorResult = queryVerifiedSourceAnchor(index, query);
 const kind: CoordinateVerificationKind = result.verification.kind;
 const optionalAnchor: CoordinateGeneratedPosition | undefined = result.verification.generatedPosition;
-void [contract, version, source, input, created, index, status, indexDiagnostics, query, result, kind, optionalAnchor];
+void [contract, version, legacyVersion, source, input, created, index, status, indexDiagnostics, query, result, kind, optionalAnchor];
 
 // @ts-expect-error <lang><zh-CN>状态闭集不接受“verified”。</zh-CN><en>The status union does not admit “verified”.</en></lang>
 const badStatus: CoordinateProfileStatus = "verified";

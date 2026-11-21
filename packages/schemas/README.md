@@ -80,7 +80,7 @@ limits and metadata-only privacy.
 `documentation-source-comment-projection` is also owned by `@hia-doc/core`. Its runtime validator enforces canonical BCP 47
 tags, stable comment keys, closed-world privacy, and body-policy consistency beyond the structural schema.
 
-`ordinary-source-map-coordinate-profile` is owned by `@hia-doc/source-linkage`. Its draft schema fixes the sidecar's version, slot coordinates, column-unit evidence and body-free digest shape; the owning strict reader must still verify actual ordinary map, documentation map and authorized source bytes, section/slot identity and the precise segment. Schema acceptance alone never means an exact cross-map anchor.
+`ordinary-source-map-coordinate-profile` is owned by `@hia-doc/source-linkage`. Its current schema fixes the sidecar's version, slot coordinates, column-unit evidence and body-free digest shape; the owning strict reader must still verify actual ordinary map, documentation map and authorized source bytes, section/slot identity and the precise segment. Schema acceptance alone never means an exact cross-map anchor.
 
 `documentation-presentation-profile` is owned by `@hia-doc/core`. Its runtime validator enforces stable topic/navigation/relation
 identity, deterministic page partitioning, same-origin relative source assets, exact integrity metadata, theme capabilities,
@@ -109,7 +109,7 @@ history bytes after TypeScript compilation. The current map `1.1.0` is a
 `stable-candidate`; the binding remains draft. See `docs/generated-documentation-binding-contract.md` in the repository
 for exact pairing and complete-bundle migration.
 
-The independent coordinate profile is `0.1.0-draft`. The separate artifact derivation evidence and plain-data initialization rule schemas are also `0.1.0-draft`, owned by `@hia-doc/plugin-sdk` and available through `artifact-derivation-evidence.schema.json` and `plain-data-initialization.schema.json`. The current catalog has 21 entries, including these drafts and nine reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
+The independent coordinate profile is `1.0.0` and retains its exact historic `0.1.0-draft` schema. The separate artifact derivation evidence and plain-data initialization rule schemas are `0.1.0-draft`, owned by `@hia-doc/plugin-sdk` and available through `artifact-derivation-evidence.schema.json` and `plain-data-initialization.schema.json`. The current catalog has 22 entries, including ten reviewed stable definition candidates. Catalog maturity is independent of npm publication and system release status.
 
 Package versions, contract versions and registry availability are separate.
 Read each catalog entry's contract version and stability; the presence of a

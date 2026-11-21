@@ -50,7 +50,7 @@ async function writeSyntheticInputs(root: string): Promise<void> {
   });
   const profile = {
     contract: "ordinary-source-map-coordinate-profile",
-    contractVersion: "0.1.0-draft",
+    contractVersion: "1.0.0",
     id: "profile:sample",
     ordinaryMap: { sourceMapId: "map:sample", artifactId: "artifact:app", digest: digest(ordinaryMapBytes) },
     documentationMap: { id: "docmap:sample", contractVersion: "1.1.0", digest: digest(documentationMapBytes) },

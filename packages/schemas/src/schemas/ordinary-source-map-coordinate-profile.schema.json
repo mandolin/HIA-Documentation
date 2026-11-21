@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json",
+  "$id": "https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-1.0.0.schema.json",
   "title": "Ordinary Source Map Coordinate Profile",
   "description": "普通源码映射逐槽位坐标证据侧载 / Per-slot coordinate evidence for an ordinary source map.",
   "type": "object",
@@ -19,7 +19,7 @@
       "const": "ordinary-source-map-coordinate-profile"
     },
     "contractVersion": {
-      "const": "0.1.0-draft"
+      "const": "1.0.0"
     },
     "id": {
       "$ref": "#/$defs/identity"

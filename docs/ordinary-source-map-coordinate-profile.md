@@ -1,20 +1,24 @@
 # 普通源码映射坐标证据契约
 
-`ordinary-source-map-coordinate-profile@0.1.0-draft` 是独立的、无正文的 JSON 侧载，用于说明一份普通 source map 的**原始 section/source 槽位**采用什么列单位，并把该槽位绑定到同一次构建的文档源码映射和来源版本。它不修改 ECMA-426 `.map`、`doc-source-map@1.1.0` 或旧查询接口。
+`ordinary-source-map-coordinate-profile@1.0.0` 是独立的、无正文的 JSON 侧载，用于说明一份普通 source map 的**原始 section/source 槽位**采用什么列单位，并把该槽位绑定到同一次构建的文档源码映射和来源版本。它不修改 ECMA-426 `.map`、`doc-source-map@1.1.0` 或旧查询接口。
 
-This separate draft sidecar records column-unit evidence for each original section/source slot. It does not change ECMA-426 maps, documentation maps, or legacy lookups.
+This separate sidecar records column-unit evidence for each original section/source slot. It does not change ECMA-426 maps, documentation maps, or legacy lookups.
 
 ## 身份与分发
 
 | 项目 | 当前值 |
 | --- | --- |
 | `contract` | `ordinary-source-map-coordinate-profile` |
-| `contractVersion` | `0.1.0-draft`，仅精确匹配 |
-| schema `$id` | `https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-0.1.0-draft.schema.json` |
+| `contractVersion` | `1.0.0`，历史 `0.1.0-draft` 仍可精确读取 |
+| schema `$id` | `https://mandolin.github.io/HIA-Documentation/schemas/ordinary-source-map-coordinate-profile-1.0.0.schema.json` |
 | owner | `@hia-doc/source-linkage` |
 | 快照分发 | `@hia-doc/schemas/ordinary-source-map-coordinate-profile.schema.json` |
 
-包版本、契约版本和网站部署状态独立管理。此草案尚不是正式 `1.0.0` 承诺；`@hia-doc/schemas` 只分发 owner 的结构快照，实际校验由 owner 的严格读取器负责。
+包版本、契约版本和网站部署状态独立管理。`@hia-doc/schemas` 分发结构快照，`@hia-doc/source-linkage` 的严格读取器验证真实输入。
+
+`1.0.0` 固定了草案的字段、字节上限和严格查询语义。旧侧载保留 `0.1.0-draft` 身份，按同一严格规则读取。旧 schema 可用完整旧 schema ID 查询，原字节归档在 schema 包中。生产者在同一构建中重新生成侧载时写出 `1.0.0`。迁移时保留旧档案，重新运行产生普通地图、文档地图和侧载的生产任务，再用实际获准的源码复验；只改版本字符串不能替代重验。
+
+The stable and historical identities share the same closed shape, limits, and strict verification semantics. Readers accept both exact versions, and the historical schema remains available by its full ID. To migrate an existing build, regenerate the maps and sidecar together and verify them against authorized source bytes.
 
 ## Wire 字段
 
@@ -36,7 +40,7 @@ This separate draft sidecar records column-unit evidence for each original secti
 | `sourceSlots[].columnUnit` | `utf16-code-unit`、`unicode-code-point`、`byte` 或 `unknown`；不可按文件扩展名推断。 |
 | `sourceSlots[].sourceRevision` | 公开安全的不透明版本标签，限英数字起首及英数字、点、下划线、冒号、连字符，最长 256 字符；单独不能证明内容一致。 |
 | `sourceSlots[].sourceByteDigest` | 获授权读取的来源原始文件字节 SHA-256。 |
-| `sourceSlots[].sourceTextEncoding` / `sourceTextTransform` | 本草案固定为 `utf-8` / `none`；严格 UTF-8 解码，保留原有 BOM 对应的 U+FEFF 和 CRLF，不做换行折叠。 |
+| `sourceSlots[].sourceTextEncoding` / `sourceTextTransform` | 这两个版本均固定为 `utf-8` / `none`；严格 UTF-8 解码，保留原有 BOM 对应的 U+FEFF 和 CRLF，不做换行折叠。 |
 | `sourceSlots[].sourceTextDigest` | `representation` 固定 `decoded-utf16-code-units`；校验逻辑字符串的 UTF-16 代码单元序列。 |
 | `privacy.sourcesContentPolicy` | 固定 `none`；禁止在侧载嵌入 `sourcesContent` 或源码正文。 |
 

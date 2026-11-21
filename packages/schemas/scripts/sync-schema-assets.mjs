@@ -150,14 +150,14 @@ const definitions = [
     // <lang><zh-CN>逐引用范围语义、精确历史读取、有限生产分支和隔离安装/宿主已审；此标记不晋升绑定、坐标侧载、npm包或系统发行。</zh-CN><en>Per-reference ranges, exact historical readers, bounded producer branches and isolated installation/host paths have been reviewed; this marker does not promote bindings, coordinate sidecars, packages or system releases.</en></lang>
     stability: "stable-candidate"
   },
-  // <lang><zh-CN>坐标证据是source-linkage拥有的独立草案侧载；分发快照必须严格同步owner定义，不改旧普通map或doc-source-map资产。</zh-CN><en>Coordinate evidence is an independent draft sidecar owned by source-linkage; its distributed snapshot must match the owner definition without changing older ordinary or documentation-map assets.</en></lang>
+  // <lang><zh-CN>坐标侧载的当前稳定定义与已归档的历史身份独立分发；普通地图及文档地图仍各自版本化。</zh-CN><en>Distribute the current stable sidecar definition separately from its archived historical identity; ordinary and documentation maps retain their own versions.</en></lang>
   {
     contractVersion: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_CONTRACT_VERSION,
     fileName: "ordinary-source-map-coordinate-profile.schema.json",
     key: "ordinary-source-map-coordinate-profile",
     ownerPackage: "@hia-doc/source-linkage",
     schema: ORDINARY_SOURCE_MAP_COORDINATE_PROFILE_JSON_SCHEMA,
-    stability: "draft"
+    stability: "stable-candidate"
   },
   {
     contractVersion: GENERATED_DOCUMENTATION_BINDING_SCHEMA_VERSION,

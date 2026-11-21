@@ -22,7 +22,7 @@ function fixture(source = "😀x\r\n") {
   const sourceBytes = Buffer.from(source, "utf8");
   const digest = (bytes: Uint8Array) => ({ algorithm: "sha256", value: createHash("sha256").update(bytes).digest("base64") });
   const profile = {
-    contract: "ordinary-source-map-coordinate-profile", contractVersion: "0.1.0-draft", id: "profile:test",
+    contract: "ordinary-source-map-coordinate-profile", contractVersion: "1.0.0", id: "profile:test",
     ordinaryMap: { sourceMapId: "map:css", artifactId: "artifact:css", digest: digest(ordinaryMapBytes) },
     documentationMap: { id: "docmap:test", contractVersion: "1.1.0", digest: digest(documentationMapBytes) },
     sourceSlots: [{ sectionIndex: null, sourceIndex: 0, sourceId: "source:scss", columnUnit: "utf16-code-unit", sourceRevision: "revision:test", sourceByteDigest: digest(sourceBytes), sourceTextEncoding: "utf-8", sourceTextTransform: "none", sourceTextDigest: { representation: "decoded-utf16-code-units", ...digest(Buffer.from(source, "utf16le")) } }],
@@ -112,6 +112,20 @@ describe("ordinary coordinate profile strict reader", () => {
     expect(index.status).toBe("available");
     expect(queryVerifiedSourceAnchor(index, query).verification).toMatchObject({ kind: "exact-anchor", generatedPosition: { line: 1, column: 1 } });
     expect(createOrdinarySourceMapIndex(JSON.parse(input.ordinaryMapBytes.toString("utf8"))).status).toBe("available");
+  });
+
+  it("reads the archived draft exactly and refuses undeclared versions", async () => {
+    // <lang><zh-CN>同一组地图与授权源码经过两版严格读取；未分配的身份必须明确拒绝。</zh-CN><en>Read the same maps and authorized source under both exact versions, and explicitly reject an unassigned identity.</en></lang>
+    const { input, query } = fixture();
+    const stable = await createOrdinaryCoordinateProfileIndex(input);
+    const draft = await createOrdinaryCoordinateProfileIndex({ ...input,
+      profile: JSON.stringify({ ...input.profile, contractVersion: "0.1.0-draft" }) });
+    expect(stable.status).toBe("available");
+    expect(draft.status).toBe("available");
+    expect(queryVerifiedSourceAnchor(draft, query)).toEqual(queryVerifiedSourceAnchor(stable, query));
+    const unsupported = await createOrdinaryCoordinateProfileIndex({ ...input,
+      profile: { ...input.profile, contractVersion: "1.0.1" } });
+    expect(unsupported.status).toBe("unsupported-version");
   });
 
   it("accepts a current documentation-map entry ID with a valid collision suffix", async () => {
