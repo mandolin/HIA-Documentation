@@ -7,7 +7,7 @@
   "owners": [
     {
       "repository": "mandolin/HIA-Documentation",
-      "sourceCommit": "7ba7fda8127f4e83b63b3dc60dd9088f8944c0f2",
+      "sourceCommit": "3b72ce3205fb07c534f5f9055398958a9661eef6",
       "packer": "pnpm-workspace",
       "packages": [
         {
