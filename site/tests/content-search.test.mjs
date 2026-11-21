@@ -10,6 +10,24 @@ import { readFile } from "node:fs/promises";
 import {markdownTableWrappers} from "../src/lib/markdown-tables.mjs";
 import {createSatteriMarkdownProcessor} from "@astrojs/markdown-satteri";
 
+test("support manuals and security policies point to the main repository private reporting form", async () => {
+  // <lang><zh-CN>安全入口采用 GitHub 实际表单，普通反馈继续使用公开 Issues。</zh-CN><en>Use GitHub's private reporting form and keep ordinary feedback on public Issues.</en></lang>
+  const form = "https://github.com/mandolin/HIA-Documentation/security/advisories/new";
+  const publicIssues = "https://github.com/mandolin/HIA-Documentation/issues";
+  for (const [locale, label, ordinaryLabel] of [
+    ["zh-CN", "私下报告漏洞", "主仓 Issues"],
+    ["en", "report the vulnerability privately", "main repository issues"],
+  ]) {
+    const manual = await readFile(new URL(`../src/content/reading-support.${locale}.md`, import.meta.url), "utf8");
+    assert(manual.includes(`[${label}](${form})`));
+    assert(manual.includes(`[${ordinaryLabel}](${publicIssues})`));
+  }
+  for (const file of ["../../SECURITY.md", "../../docs/security-policy.md"]) {
+    const policy = await readFile(new URL(file, import.meta.url), "utf8");
+    assert(policy.includes(`](${form})`));
+  }
+});
+
 test("both manual directories discover the confirmed JavaScript API and evidence sites in the current locale", async () => {
   // <lang><zh-CN>每个正文入口按已确认发布清单核完整名称与地址，语言与内容分区分别选择。</zh-CN><en>Check complete labels and URLs in both manual entries against the confirmed publication registry, selecting locale and content partition independently.</en></lang>
   const registry = JSON.parse(await readFile(new URL("../../reference/javascript-reference-inputs.json", import.meta.url), "utf8"));

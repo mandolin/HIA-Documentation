@@ -10,9 +10,13 @@ The system is in the 1.0.0 preview stage. Security fixes target the current `mai
 
 ## Reporting
 
-Until a public `SECURITY.md` and maintainer contact workflow is finalized for every repository, report sensitive issues through the private maintainer channel instead of public issues.
+Report vulnerabilities in HIA Documentation Sys and its official components via the main repository's [GitHub private vulnerability report](https://github.com/mandolin/HIA-Documentation/security/advisories/new). Sign in and include the affected component's full package or repository name, version, impact, and the minimum information needed to reproduce the issue. The main repository maintainers coordinate private triage with the component maintainers. For demonstration and third-party projects, follow their own reporting policies.
 
-Public bug reports are fine for non-sensitive correctness issues. Do not include private source code, credentials, registry tokens, internal paths or unreleased package tarballs in public reports.
+Send non-sensitive bugs to the owning repository's public Issues. Keep vulnerability details, private source code, credentials, internal paths, and unreleased package tarballs out of public reports. Remove secrets from any material shared with maintainers.
+
+HIA Documentation Sys 主项目与正式组件的漏洞统一通过主仓的 [GitHub 私下漏洞报告表单](https://github.com/mandolin/HIA-Documentation/security/advisories/new)接收。请登录 GitHub，提供受影响组件的完整包名或仓库名、版本、影响及复现所需的最少信息。主仓维护者会与对应组件维护者私下协调。演示项目和第三方项目遵循各自的报告政策。
+
+普通问题请提交到对应维护仓的公开 Issues。请勿公开漏洞细节、私有源码、凭据、内部路径或未发布的包归档，向维护者分享材料前请移除密钥等秘密信息。
 
 ## Dependency Policy
 

@@ -27,7 +27,7 @@ title: "阅读与获得支持"
 | HTML、CSS 与 .NET | [hia-htmdoc](https://github.com/mandolin/hia-htmdoc)、[hia-cssdoc](https://github.com/mandolin/hia-cssdoc)、[hia-dotnetdoc](https://github.com/mandolin/hia-dotnetdoc) |
 | JavaScript 演示 | [bp-docs-js-cookie](https://github.com/mandolin/bp-docs-js-cookie) |
 
-敏感安全问题请遵循[安全报告说明](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md)。公开反馈请使用可公开数据。
+HIA Documentation Sys 主项目及正式组件的漏洞请在登录 GitHub 后通过主仓[私下报告漏洞](https://github.com/mandolin/HIA-Documentation/security/advisories/new)，注明完整包名或仓库名及受影响版本。演示项目和第三方项目遵循各自的报告政策。请勿在公开 Issues 中披露漏洞细节或敏感数据。详见[安全报告说明](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md)。
 
 ## 权威参考
 

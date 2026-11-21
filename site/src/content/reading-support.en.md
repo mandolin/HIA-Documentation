@@ -27,7 +27,7 @@ Send component feedback to the owning repository. Its root contains the applicab
 | HTML, CSS and .NET | [hia-htmdoc](https://github.com/mandolin/hia-htmdoc), [hia-cssdoc](https://github.com/mandolin/hia-cssdoc), [hia-dotnetdoc](https://github.com/mandolin/hia-dotnetdoc) |
 | JavaScript demonstration | [bp-docs-js-cookie](https://github.com/mandolin/bp-docs-js-cookie) |
 
-For sensitive security issues, follow the [security reporting policy](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md). Share only public-safe information in public feedback.
+For vulnerabilities in HIA Documentation Sys or an official component, sign in to GitHub and [report the vulnerability privately](https://github.com/mandolin/HIA-Documentation/security/advisories/new) to the main repository. Include the full package or repository name and the affected version. Follow each demonstration or third-party project's own reporting policy. Keep vulnerability details and sensitive data out of public issues. See the [security reporting policy](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md).
 
 ## Authoritative references
 
