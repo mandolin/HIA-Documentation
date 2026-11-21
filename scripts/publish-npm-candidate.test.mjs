@@ -55,4 +55,26 @@ test("recognizes only the same published candidate without changing stable or ne
   assert.throws(() => classifyCandidate(item, plan, 200, published, "different"), /different bytes/u);
   published["dist-tags"].latest = plan.version;
   assert.throws(() => classifyCandidate(item, plan, 200, published, expectedSRI));
+  assert.throws(() => classifyCandidate(item, plan, 200, published, expectedSRI, true));
+});
+
+// <lang lang="zh-CN">首次公开的自动标签仅适用于审批名称、唯一版本与原候选归档。</lang><lang lang="en">The first-publish automatic tag is limited to approved names, a sole version and the pinned archive.</lang>
+test("accepts npm bootstrap latest only for an approved package's sole candidate", () => {
+  const firstOwner = plan.owners.find(entry => entry.repository === "mandolin/hia-cssdoc");
+  const first = firstOwner.packages.find(entry => entry.name === "@hia-doc/cssdoc-spec");
+  const expectedSRI = custody.owners.find(entry => entry.repository === firstOwner.repository).integrities[first.name];
+  const observed = { name: first.name, versions: { [plan.version]: { dist: { integrity: expectedSRI } } },
+    "dist-tags": { [plan.distTag]: plan.version, latest: plan.version } };
+  assert.equal(classifyCandidate(first, plan, 200, observed, expectedSRI, true), "already-published");
+  assert.throws(() => classifyCandidate(first, plan, 200, observed, expectedSRI));
+  assert.throws(() => classifyCandidate(first, plan, 200, observed, "unexpected", true), /different bytes/u);
+  const extra = structuredClone(observed);
+  extra.versions["0.1.0"] = {};
+  assert.throws(() => classifyCandidate(first, plan, 200, extra, expectedSRI, true), /only expose/u);
+  observed["dist-tags"].latest = "0.2.0";
+  assert.throws(() => classifyCandidate(first, plan, 200, observed, expectedSRI, true), /Unexpected/u);
+  delete observed["dist-tags"].latest;
+  assert.equal(classifyCandidate(first, plan, 200, observed, expectedSRI, true), "already-published");
+  delete observed["dist-tags"].next;
+  assert.throws(() => classifyCandidate(first, plan, 200, observed, expectedSRI, true));
 });

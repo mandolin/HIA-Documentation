@@ -89,9 +89,10 @@ export function selectCandidateRequest({ repository, ref, workflowRef, mode, pac
  * @param {number} status <lang lang="zh-CN">Registry 的 HTTP 状态。</lang><lang lang="en">Registry HTTP status.</lang>
  * @param {object} metadata <lang lang="zh-CN">Registry 的公开元数据。</lang><lang lang="en">Public registry packument.</lang>
  * @param {string} archiveDigest <lang lang="zh-CN">经过验证的候选 tarball 摘要。</lang><lang lang="en">Verified candidate tarball digest.</lang>
+ * @param {boolean} [bootstrapLatestApproved=false] <lang lang="zh-CN">是否允许该冻结首发包由 npm 自动设置唯一候选的 latest。</lang><lang lang="en">Whether npm may automatically attach latest to the sole candidate of this pinned first publication.</lang>
  * @returns {string} <lang lang="zh-CN">待发行或同摘要已发行。</lang><lang lang="en">Pending or already published with matching bytes.</lang>
  */
-export function classifyCandidate(item, plan, status, metadata, archiveDigest) {
+export function classifyCandidate(item, plan, status, metadata, archiveDigest, bootstrapLatestApproved = false) {
   const published = status === 200 && metadata?.versions?.[plan.version];
   if (!published) {
     checkCandidateRegistry(item, plan, status, metadata);
@@ -99,7 +100,14 @@ export function classifyCandidate(item, plan, status, metadata, archiveDigest) {
   }
   assert.equal(metadata.name, item.name);
   assert(!Object.hasOwn(metadata.versions, plan.stableVersion), "Stable version already occupied");
-  assert.equal(metadata["dist-tags"].latest ?? null, item.registryBaseline.latest);
+  // <lang lang="zh-CN">仅批准的首发包可接受 npm 自动生成的 latest，且公开版本只有本轮候选。</lang><lang lang="en">Only approved first publications may accept npm's automatic latest, and the candidate must be their only public version.</lang>
+  const latest = metadata["dist-tags"].latest ?? null;
+  if (bootstrapLatestApproved && item.registryBaseline.visibility === "anonymous-404") {
+    assert.deepEqual(Object.keys(metadata.versions), [plan.version], "A first publication may only expose its pinned candidate");
+    assert(latest === null || latest === plan.version, "Unexpected first publication latest tag");
+  } else {
+    assert.equal(latest, item.registryBaseline.latest);
+  }
   assert.equal(metadata["dist-tags"].next, plan.version);
   assert.equal(published.dist?.integrity, archiveDigest, "Candidate version exists with different bytes");
   return "already-published";
@@ -191,11 +199,11 @@ async function probeBootstrap(token) {
 }
 
 // <lang lang="zh-CN">公开查询仅用于版本、标签和归档对账，不携带任何 token。</lang><lang lang="en">Public lookups reconcile versions, labels and archive digests without carrying a token.</lang>
-async function current(item, plan, receipt) {
+async function current(item, plan, receipt, bootstrapLatestApproved) {
   const response = await service(npmRegistry + "/" + encodeURIComponent(item.name), {
     headers: { Accept: "application/vnd.npm.install-v1+json", "Cache-Control": "no-cache" },
   });
-  return classifyCandidate(item, plan, response.status, response.ok ? await response.json() : undefined, receipt.integrity);
+  return classifyCandidate(item, plan, response.status, response.ok ? await response.json() : undefined, receipt.integrity, bootstrapLatestApproved);
 }
 
 // <lang lang="zh-CN">私有的 GitHub 下载回复与 npm 候选收据一致后，才交给发行逻辑。</lang><lang lang="en">Only expose the archive data to release logic after the GitHub response and npm candidate receipt agree.</lang>
@@ -216,12 +224,12 @@ function getReceipts(zip, entry, plan, planDigest) {
 }
 
 // <lang lang="zh-CN">前序波次完成才能发行；包括跨仓每个版本、摘要和标签，而非只验包名存在。</lang><lang lang="en">Complete every earlier wave before publishing, checking each cross-repository version, digest and tag rather than package existence alone.</lang>
-async function assertEarlierWaves(item, plan, receipts) {
+async function assertEarlierWaves(item, plan, receipts, bootstrapApproved) {
   const packages = new Map(plan.owners.flatMap(owner => owner.packages.map(pkg => [pkg.name, pkg])));
   const wave = plan.waves.findIndex(names => names.includes(item.name));
   for (const names of plan.waves.slice(0, wave)) {
     await Promise.all(names.map(async name => {
-      assert.equal(await current(packages.get(name), plan, receipts.get(name)), "already-published", "Earlier wave has not been published: " + name);
+      assert.equal(await current(packages.get(name), plan, receipts.get(name), bootstrapApproved.has(name)), "already-published", "Earlier wave has not been published: " + name);
     }));
   }
 }
@@ -233,6 +241,8 @@ async function runCommand(env) {
   const plan = validateCandidatePlan(JSON.parse(bytes));
   const planDigest = sha256(bytes);
   validateCandidateCustody(custody, plan, planDigest);
+  // <lang lang="zh-CN">审批关闭时只认原标签基线；开启时仍仅认清单中的精确首发名称。</lang><lang lang="en">Use the original tag baseline outside approved publication, and limit exceptions to the exact first-publish allowlist.</lang>
+  const bootstrapApproved = new Set(custody.publicationApproved ? custody.bootstrapApproved : []);
   const mode = env.CANDIDATE_MODE;
   const request = selectCandidateRequest({
     repository: env.GITHUB_REPOSITORY, ref: env.GITHUB_REF, workflowRef: env.GITHUB_WORKFLOW_REF,
@@ -251,16 +261,18 @@ async function runCommand(env) {
       const bytes = zipMember(zip, record.file);
       assert.equal(sha256(bytes), record.sha256);
       assert.equal("sha512-" + createHash("sha512").update(bytes).digest("base64"), record.integrity);
-      const state = await current(item, plan, record);
+      // <lang lang="zh-CN">同包的首发资格同时约束标签例外及写入路径。</lang><lang lang="en">The package's explicit bootstrap approval governs both the tag exception and the write path.</lang>
+      const bootstrapLatestApproved = bootstrapApproved.has(item.name);
+      const state = await current(item, plan, record, bootstrapLatestApproved);
       const first = item.registryBaseline.visibility === "anonymous-404";
       const authorization = first ? await probeBootstrap(env.HIA_NPM_BOOTSTRAP_TOKEN) : await probeOidc(item.name, env);
       console.log(JSON.stringify({ package: item.name, state, sha256: record.sha256, ...authorization }));
       if (mode === "audit" || state === "already-published") continue;
       // <lang lang="zh-CN">固定首发清单必须由 W-P156 补齐范围证明；存在令牌也不会自动授权首次创建。</lang><lang lang="en">W-P156 must pin proof of scoped bootstrap authority; token presence never automatically authorizes a first publication.</lang>
-      assert(!first || (authorization.status === 200 && custody.bootstrapApproved.includes(item.name)), "Bootstrap scope authorization is unverified");
+      assert(!first || (authorization.status === 200 && bootstrapLatestApproved), "Bootstrap scope authorization is unverified");
       assert(first || authorization.verified, "The registered npm trusted publisher rejected this workflow");
       const allReceipts = new Map(custody.owners.flatMap(owner => Object.entries(owner.integrities).map(([name, integrity]) => [name, { integrity }])));
-      await assertEarlierWaves(item, plan, allReceipts);
+      await assertEarlierWaves(item, plan, allReceipts, bootstrapApproved);
       const tarball = path.join(privateDirectory, record.file);
       await writeFile(tarball, bytes, { flag: "wx", mode: 0o600 });
       const npmEnv = { ...env };
@@ -274,12 +286,16 @@ async function runCommand(env) {
       }
       const result = spawnSync("npm", ["publish", tarball, "--tag", plan.distTag, "--access", "public",
         "--provenance", "--ignore-scripts", "--registry=" + npmRegistry + "/"], { env: npmEnv, timeout: 180_000 });
+      // <lang lang="zh-CN">只记录 npm 退出状态和安全错误码，原输出可能含敏感运行上下文。</lang><lang lang="en">Log only npm's exit status and safe error code because raw output can contain sensitive runtime context.</lang>
+      const errorCode = result.stderr?.toString("utf8").match(/npm (?:error|ERR!) code (E[A-Z0-9_]+)\b/u)?.[1] ?? result.error?.code;
+      console.log(JSON.stringify({ package: item.name, action: "npm-publish", status: result.status, errorCode }));
       assert.equal(result.status, 0, "npm publication failed; reconcile registry before retrying");
-      for (let attempt = 0; attempt < 6; attempt++) {
-        if (await current(item, plan, record) === "already-published") return;
-        await new Promise(resolve => setTimeout(resolve, 2_000));
+      // <lang lang="zh-CN">正式写入先于公开分发元数据可见，给传播留出时间，并始终保留版本和标签复核。</lang><lang lang="en">A successful write precedes public metadata propagation. Allow time for propagation while continuing to require exact versions and tags.</lang>
+      for (let attempt = 0; attempt < 24; attempt++) {
+        if (await current(item, plan, record, bootstrapLatestApproved) === "already-published") return;
+        if (attempt < 23) await new Promise(resolve => setTimeout(resolve, 10_000));
       }
-      throw new Error("npm publication was submitted; registry did not yet confirm bytes and tags");
+      throw new Error("npm publication was submitted; registry did not confirm bytes and tags within the propagation window");
     }
   } finally {
     await rm(privateDirectory, { recursive: true, force: true });
