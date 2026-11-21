@@ -15,6 +15,7 @@ import { checkCandidateRegistry, validateCandidatePlan } from "./npm-prerelease-
 const npmRegistry = "https://registry.npmjs.org";
 const candidateWorkflow = ".github/workflows/npm-candidate-build.yml";
 const trustedWorkflow = ".github/workflows/npm-trusted-publish.yml";
+const npmBootstrapPlaceholder = "0.0.0-stage";
 const digestPattern = /^[a-f0-9]{64}$/u;
 const commitPattern = /^[a-f0-9]{40}$/u;
 const integrityPattern = /^sha512-[A-Za-z0-9+/]{86}==$/u;
@@ -89,7 +90,7 @@ export function selectCandidateRequest({ repository, ref, workflowRef, mode, pac
  * @param {number} status <lang lang="zh-CN">Registry 的 HTTP 状态。</lang><lang lang="en">Registry HTTP status.</lang>
  * @param {object} metadata <lang lang="zh-CN">Registry 的公开元数据。</lang><lang lang="en">Public registry packument.</lang>
  * @param {string} archiveDigest <lang lang="zh-CN">经过验证的候选 tarball 摘要。</lang><lang lang="en">Verified candidate tarball digest.</lang>
- * @param {boolean} [bootstrapLatestApproved=false] <lang lang="zh-CN">是否允许该冻结首发包由 npm 自动设置唯一候选的 latest。</lang><lang lang="en">Whether npm may automatically attach latest to the sole candidate of this pinned first publication.</lang>
+ * @param {boolean} [bootstrapLatestApproved=false] <lang lang="zh-CN">是否允许该冻结首发包接受 npm 自动 latest 及经核验的无标签占位。</lang><lang lang="en">Whether this pinned first publication may accept npm automatic latest and a verified untagged placeholder.</lang>
  * @returns {string} <lang lang="zh-CN">待发行或同摘要已发行。</lang><lang lang="en">Pending or already published with matching bytes.</lang>
  */
 export function classifyCandidate(item, plan, status, metadata, archiveDigest, bootstrapLatestApproved = false) {
@@ -103,7 +104,14 @@ export function classifyCandidate(item, plan, status, metadata, archiveDigest, b
   // <lang lang="zh-CN">仅批准的首发包可接受 npm 自动生成的 latest，且公开版本只有本轮候选。</lang><lang lang="en">Only approved first publications may accept npm's automatic latest, and the candidate must be their only public version.</lang>
   const latest = metadata["dist-tags"].latest ?? null;
   if (bootstrapLatestApproved && item.registryBaseline.visibility === "anonymous-404") {
-    assert.deepEqual(Object.keys(metadata.versions), [plan.version], "A first publication may only expose its pinned candidate");
+    const extraVersions = Object.keys(metadata.versions).filter(version => version !== plan.version);
+    if (extraVersions.length) {
+      assert.deepEqual(extraVersions, [npmBootstrapPlaceholder], "A first publication may only expose its pinned candidate and npm placeholder");
+      assert.equal(metadata.versions[npmBootstrapPlaceholder].stub, true, "Missing npm placeholder marker");
+      assert.equal(metadata.versions[npmBootstrapPlaceholder].name, item.name, "Unexpected npm placeholder package");
+      assert.equal(metadata.versions[npmBootstrapPlaceholder].version, npmBootstrapPlaceholder, "Unexpected npm placeholder version");
+      assert(!Object.values(metadata["dist-tags"]).includes(npmBootstrapPlaceholder), "An npm placeholder must be untagged");
+    }
     assert(latest === null || latest === plan.version, "Unexpected first publication latest tag");
   } else {
     assert.equal(latest, item.registryBaseline.latest);
@@ -200,10 +208,53 @@ async function probeBootstrap(token) {
 
 // <lang lang="zh-CN">公开查询仅用于版本、标签和归档对账，不携带任何 token。</lang><lang lang="en">Public lookups reconcile versions, labels and archive digests without carrying a token.</lang>
 async function current(item, plan, receipt, bootstrapLatestApproved) {
+  // <lang lang="zh-CN">完整 npm 元数据保留 stub 标记，精简安装响应可能省略。</lang><lang lang="en">Full npm metadata retains the stub marker, which abbreviated install responses can omit.</lang>
+  const accept = bootstrapLatestApproved ? "application/json" : "application/vnd.npm.install-v1+json";
   const response = await service(npmRegistry + "/" + encodeURIComponent(item.name), {
-    headers: { Accept: "application/vnd.npm.install-v1+json", "Cache-Control": "no-cache" },
+    headers: { Accept: accept, "Cache-Control": "no-cache" },
   });
-  return classifyCandidate(item, plan, response.status, response.ok ? await response.json() : undefined, receipt.integrity, bootstrapLatestApproved);
+  const metadata = response.ok ? await response.json() : undefined;
+  const state = classifyCandidate(item, plan, response.status, metadata, receipt.integrity, bootstrapLatestApproved);
+  if (bootstrapLatestApproved && state === "already-published" && metadata.versions[npmBootstrapPlaceholder]) {
+    await verifyBootstrapPlaceholder(item.name, metadata.versions[npmBootstrapPlaceholder]);
+  }
+  return state;
+}
+
+/**
+ * @lang zh-CN 验证 npm 占位归档的成员类型和无运行能力的清单，在内存读取，不落盘解包。
+ * @lang en Verify npm placeholder member types and a non-executable manifest in memory, without extracting to disk.
+ * @param {Buffer} bytes <lang lang="zh-CN">已经按 npm SHA-512 校验且限长的归档。</lang><lang lang="en">Size-bounded archive that passed npm SHA-512 verification.</lang>
+ * @param {string} name <lang lang="zh-CN">冻结清单中批准的包名。</lang><lang lang="en">Approved name from the pinned plan.</lang>
+ */
+export function verifyBootstrapPlaceholderArchive(bytes, name) {
+  const options = { input: bytes, encoding: "utf8", maxBuffer: 65_536, timeout: 5_000 };
+  // <lang lang="zh-CN">核对条目类型，防止以符号链接、硬链接或重复成员伪装说明文件。</lang><lang lang="en">Check member types to prevent a symlink, hardlink or duplicate from masquerading as documentation.</lang>
+  const listing = execFileSync("tar", ["-tvzf", "-"], options).trim().split(/\r?\n/u);
+  const members = listing.map(row => row[0] + row.trim().split(/\s+/u).at(-1).replace(/\/$/u, "")).sort();
+  assert.deepEqual(members, ["-package/README.md", "-package/package.json", "dpackage"], "Unexpected npm placeholder archive members");
+  const manifest = JSON.parse(execFileSync("tar", ["-xOzf", "-", "package/package.json"], options));
+  assert.equal(manifest.name, name);
+  assert.equal(manifest.version, npmBootstrapPlaceholder);
+  assert.equal(manifest.stub, true);
+  assert.deepEqual(Object.keys(manifest).filter(key => !["name", "version", "description", "stub"].includes(key)), [],
+    "An npm placeholder must not expose runtime package fields");
+}
+
+// <lang lang="zh-CN">只下载 npm 主机上该包的精确占位归档，约束长度和字节。</lang><lang lang="en">Download only the exact package placeholder from npm, bounding length and requiring matching bytes.</lang>
+async function verifyBootstrapPlaceholder(name, placeholder) {
+  const archive = new URL(placeholder.dist?.tarball);
+  const baseName = name.split("/").at(-1);
+  assert.equal(archive.href, npmRegistry + "/" + name + "/-/" + baseName + "-" + npmBootstrapPlaceholder + ".tgz");
+  assert.match(placeholder.dist.integrity, integrityPattern);
+  const response = await service(archive);
+  assert.equal(response.status, 200);
+  const size = Number(response.headers.get("content-length"));
+  assert(size > 0 && size <= 65_536, "Unexpected npm placeholder archive size");
+  const bytes = Buffer.from(await response.arrayBuffer());
+  assert.equal(bytes.length, size);
+  assert.equal("sha512-" + createHash("sha512").update(bytes).digest("base64"), placeholder.dist.integrity);
+  verifyBootstrapPlaceholderArchive(bytes, name);
 }
 
 // <lang lang="zh-CN">私有的 GitHub 下载回复与 npm 候选收据一致后，才交给发行逻辑。</lang><lang lang="en">Only expose the archive data to release logic after the GitHub response and npm candidate receipt agree.</lang>
@@ -291,9 +342,9 @@ async function runCommand(env) {
       console.log(JSON.stringify({ package: item.name, action: "npm-publish", status: result.status, errorCode }));
       assert.equal(result.status, 0, "npm publication failed; reconcile registry before retrying");
       // <lang lang="zh-CN">正式写入先于公开分发元数据可见，给传播留出时间，并始终保留版本和标签复核。</lang><lang lang="en">A successful write precedes public metadata propagation. Allow time for propagation while continuing to require exact versions and tags.</lang>
-      for (let attempt = 0; attempt < 24; attempt++) {
+      for (let attempt = 0; attempt < 40; attempt++) {
         if (await current(item, plan, record, bootstrapLatestApproved) === "already-published") return;
-        if (attempt < 23) await new Promise(resolve => setTimeout(resolve, 10_000));
+        if (attempt < 39) await new Promise(resolve => setTimeout(resolve, 10_000));
       }
       throw new Error("npm publication was submitted; registry did not confirm bytes and tags within the propagation window");
     }
