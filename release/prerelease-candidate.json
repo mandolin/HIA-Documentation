@@ -1,0 +1,970 @@
+{
+  "format": "hia-npm-prerelease-plan@1",
+  "version": "1.0.0-rc.1",
+  "stableVersion": "1.0.0",
+  "distTag": "next",
+  "nodeVersion": "24.22.1",
+  "owners": [
+    {
+      "repository": "mandolin/HIA-Documentation",
+      "sourceCommit": "7ba7fda8127f4e83b63b3dc60dd9088f8944c0f2",
+      "packer": "pnpm-workspace",
+      "packages": [
+        {
+          "name": "@hia-doc/browser-panel",
+          "path": "packages/browser-panel",
+          "sourceManifestSha256": "38e0b172add602b216ece6520bca2f65096587fd824e23427aecaea3c0662908",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/source-linkage",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/cli",
+          "path": "apps/cli",
+          "sourceManifestSha256": "bb83305cc713b58a105dffc569884c29ae67f7122982ee7fafb48c2800c3d354",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/browser-panel",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/config",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/parser-jsdoc",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/plugin-sdk",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/profile",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/renderer-html",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/source-linkage",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.11",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/config",
+          "path": "packages/config",
+          "sourceManifestSha256": "1465a555d509e7b9c3a781b93903f93d9ca0c13c7bf379594d9862ea193a7c03",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.6",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/core",
+          "path": "packages/core",
+          "sourceManifestSha256": "e35ad144c3a4732f3ec7f752a27433d16375f88ceb4a4b6029c72ede8a60c89f",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.2",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsondoc",
+          "path": "packages/jsondoc",
+          "sourceManifestSha256": "98420f0f03df316e132721183db257d3b12644ba544898a74f8ae3c5ef228f6c",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/plugin-sdk",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/source-linkage",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/parser-jsdoc",
+          "path": "packages/parser-jsdoc",
+          "sourceManifestSha256": "5c247a7cc232432d319105b96f6cccdf3e2e31b1a2ffb242c56fd9ddc27d7b0c",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/plugin-sdk",
+          "path": "packages/plugin-sdk",
+          "sourceManifestSha256": "136495b54be693989bc69c07107745ed3d3cbe806a84aa1acd21f93bfeff59b6",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.2",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/profile",
+          "path": "packages/profile",
+          "sourceManifestSha256": "ade1322ca68bf15a94e98e4c9693ce695f15b6d0a7feffc8625c9c5cb94c8a50",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/profiles",
+          "path": "packages/profiles",
+          "sourceManifestSha256": "b2ee90cc836867162571792922ad1a25dc0f5a3c507814b06c7e2d47cb798cd8",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/profile",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/renderer-html",
+          "path": "packages/renderer-html",
+          "sourceManifestSha256": "586c85dd6b2b84837f47ae031371b7338ef67301bd25bee60be2089ce33d4d69",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/source-linkage",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            },
+            {
+              "dependency": "@hia-doc/theme-default",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.8",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/schemas",
+          "path": "packages/schemas",
+          "sourceManifestSha256": "9c1d71311301a58265490219d79a93a549bf72a42339535fdb4368f3dd1dc508",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.4",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/source-linkage",
+          "path": "packages/source-linkage",
+          "sourceManifestSha256": "d4100f2413ce02c0dfa039de294b4cbae831d3db04dc48f201c155147ca8627e",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/core",
+              "kind": "dependencies",
+              "range": "workspace:*"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.1",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/theme-default",
+          "path": "packages/theme-default",
+          "sourceManifestSha256": "6909af3274ccf1b542ed48d1da709cd80dcf3cd090513faa3ac8cb18270b4d36",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.4",
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-cssdoc",
+      "sourceCommit": "d039778b6a9169c18a580f61a50a3d931e90b23e",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@hia-doc/css-doc-adapter",
+          "path": "packages/css-doc-adapter",
+          "sourceManifestSha256": "fa84f8de88e83767129056c5352987e54721dd7253f283c81bbf1505881e57f2",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/cssdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/css-doc-extractor",
+          "path": "packages/css-doc-extractor",
+          "sourceManifestSha256": "f369e44c510f5b398d54deae895712f1953715e90c0a44cf2d31c433b5cb154f",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/css-doc-source-map",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/css-parser",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/cssdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/css-doc-source-map",
+          "path": "packages/css-doc-source-map",
+          "sourceManifestSha256": "b1f2ca9421a16f6a9f9d847df0cf7fa31b50e4e46999d0dc26814d9bf210f24b",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/cssdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/css-parser",
+          "path": "packages/css-parser",
+          "sourceManifestSha256": "58ff0910a2914906418fbf455649d306c03a4b4236c397785146ccb895a5ec72",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/cssdoc-producer",
+          "path": "packages/cssdoc-producer",
+          "sourceManifestSha256": "1e6fb48e5a4d2f99fc7783468ede77227bed33ded4115e9bf0a972103bd7c9e4",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/cssdoc-runner",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/cssdoc-runner",
+          "path": "packages/cssdoc-runner",
+          "sourceManifestSha256": "703eb7281b3d65c4a46e4ef8eeacccbd0b22e72afae46a382ab465390e64e9ef",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/css-doc-adapter",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/css-doc-extractor",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/css-doc-source-map",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/cssdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/design-token-bridge",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/cssdoc-spec",
+          "path": "packages/cssdoc-spec",
+          "sourceManifestSha256": "3fb2acb5942cd68cc929f936522b2a717b3cfc5cd33642f4f44a62832810d375",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/design-token-bridge",
+          "path": "packages/design-token-bridge",
+          "sourceManifestSha256": "80ea1f7c2e8f34b8bbcb2b1df552e78f3f771e12631eb79d6a32921067716f0b",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/cssdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-dotnetdoc",
+      "sourceCommit": "036187cd6bbe80f7ac3a3d001d69022378b58a90",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@hia-doc/dotnet-source-extractor",
+          "path": "packages/dotnet-source-extractor",
+          "sourceManifestSha256": "73b23b9ac71ebe03a34ac74611eb02ec79de98be629c0e51957f34b4cf89035a",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/dotnet-xml-doc-extractor",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/dotnetdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/dotnet-xml-doc-extractor",
+          "path": "packages/dotnet-xml-doc-extractor",
+          "sourceManifestSha256": "5dcceb424d7ac673199733d48d9e7ab0a9288c5d0dd0e90e02b5d5439c3c42c6",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/dotnetdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-adapter",
+          "path": "packages/dotnetdoc-adapter",
+          "sourceManifestSha256": "8db9f61b9f3cc4ff4df3f58fa46f54a59b645c383ee0a1280360813a4ee503fb",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/dotnetdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-producer",
+          "path": "packages/dotnetdoc-producer",
+          "sourceManifestSha256": "b22a521b21d4600c405b2977145ce77f745d8620650dd6269868fd3fe70beaee",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/dotnetdoc-runner",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-runner",
+          "path": "packages/dotnetdoc-runner",
+          "sourceManifestSha256": "243e9b2bcbe5aaeabf4a11c276e1b687bb31be4754872e04457d2bcd1e4c28b2",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/dotnet-source-extractor",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/dotnet-xml-doc-extractor",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/dotnetdoc-adapter",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/dotnetdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-spec",
+          "path": "packages/dotnetdoc-spec",
+          "sourceManifestSha256": "6861f11cd4879427b3cbca1de9dc0ce536dd5b9725d8b474dfe682aa91e7b81d",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.12",
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-htmdoc",
+      "sourceCommit": "5ec805167e6a95083967ec127b887bfb2f807749",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@hia-doc/cem-adapter",
+          "path": "packages/cem-adapter",
+          "sourceManifestSha256": "77ec5d179fd6ddb99a095982c945d1c4498adf94fc37fccc6b72847f0dd6ebf0",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/htmdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/htmdoc-producer",
+          "path": "packages/htmdoc-producer",
+          "sourceManifestSha256": "226ca047454ce8350b28a4a85862ab8634f382d819bb9a45f9e89c97797caa88",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/htmdoc-runner",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/htmdoc-runner",
+          "path": "packages/htmdoc-runner",
+          "sourceManifestSha256": "084550999cf132051e06cdcb24d6bcc33fe6f46ad86c7304a52aaf6f7d3c338e",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/cem-adapter",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/html-doc-adapter",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/html-doc-extractor",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/html-doc-source-map",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/htmdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/htmdoc-spec",
+          "path": "packages/htmdoc-spec",
+          "sourceManifestSha256": "3ef6c96d3cd4bbdf5df148385ebe686194a2c8f2a2efd3cfd0258e6eaf04feb5",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/html-doc-adapter",
+          "path": "packages/html-doc-adapter",
+          "sourceManifestSha256": "3493753476699c0d167adfef1f383df2b6cc82d23465ee13911c90b884351271",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/htmdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/html-doc-extractor",
+          "path": "packages/html-doc-extractor",
+          "sourceManifestSha256": "9cfbdc83ed297f6127c6f8e80d9c15e1a15832d5060e93ce4f81ec2a13d6da65",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/htmdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/html-doc-source-map",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/html-parser",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/html-doc-source-map",
+          "path": "packages/html-doc-source-map",
+          "sourceManifestSha256": "59b86ee7c83edf89a7858792fb3eb019ae3fd65174855e44683dd41272ae1555",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/html-parser",
+          "path": "packages/html-parser",
+          "sourceManifestSha256": "3eafce876922a8920b34f2eaeeba47f46638e100339cc55fc0e80830454ab1c7",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.0",
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-jsdoc",
+      "sourceCommit": "6574549bd4ef9c603423ea80cf6aacd6b26a2050",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@hia-doc/jsdoc-doc-source-map",
+          "path": "packages/jsdoc-doc-source-map",
+          "sourceManifestSha256": "4d7a4d55969215bfa38908734e0ebe4370a236a289e3ea20a6daf2d7f081b64f",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/jsdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-extra-plugin-registry",
+          "path": "packages/jsdoc-extra-plugin-registry",
+          "sourceManifestSha256": "1f251c59d06c6bb78e46ba52f62421b307580d3ee90bc51119442dee93936cbb",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/jsdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-plugin-hia-bridge",
+          "path": "packages/jsdoc-plugin-hia-bridge",
+          "sourceManifestSha256": "c22cf46e53a3ea94bec9c37e16cb3eb9afe1fac3e76b91610bd68f5f78196af3",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@mandolin/jsdoc-plugin-hia-sys",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-preset",
+          "path": "packages/jsdoc-preset",
+          "sourceManifestSha256": "353a088203561d9eb8c52c37956775c8f7a154fd201e83d8e38a94a544a5f620",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/jsdoc-extra-plugin-registry",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/jsdoc-plugin-hia-bridge",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/jsdoc-spec",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            },
+            {
+              "dependency": "@hia-doc/jsdoc-theme-bridge",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-producer",
+          "path": "packages/jsdoc-producer",
+          "sourceManifestSha256": "c5aafe26e37e80d833e5b889a8a851896ce6bf31d4f37789d5e9e7c45c2f6744",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/jsdoc-runner",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-runner",
+          "path": "packages/jsdoc-runner",
+          "sourceManifestSha256": "d77069301a0a206ba3a19854982bcd54df97b89094b8f24c1d06f26efb48c37c",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/jsdoc-preset",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-spec",
+          "path": "packages/jsdoc-spec",
+          "sourceManifestSha256": "6c7f73f466ec52a58db81961b14057747f973a2eadbda2876c4b967120901dd1",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        },
+        {
+          "name": "@hia-doc/jsdoc-theme-bridge",
+          "path": "packages/jsdoc-theme-bridge",
+          "sourceManifestSha256": "60a8ac2b4a8f185ea45a3acc33dfb1ebc236df21f9603d1ef5529706987bc1a6",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@mandolin/jsdoc-theme-hia",
+              "kind": "dependencies",
+              "range": "1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "anonymous-404",
+            "latest": null,
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/jsdoc-plugin-hia-sys",
+      "sourceCommit": "2448ac7a14c36829303017a64261f583be49bd8c",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@mandolin/jsdoc-plugin-hia-sys",
+          "path": ".",
+          "sourceManifestSha256": "e6f7698b2a5185c68ccad4e28652ad1784817c2c54e65efda261dccdc1852786",
+          "firstPartyDependencies": [],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.2",
+            "next": null
+          }
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/jsdoc-theme-hia",
+      "sourceCommit": "9d6bd95868a8b968122b510f91e0a66150431f62",
+      "packer": "npm",
+      "packages": [
+        {
+          "name": "@mandolin/jsdoc-theme-hia",
+          "path": ".",
+          "sourceManifestSha256": "96cc328db4e714097d71d1489efc3ac783cb3dd2116329d4363b1006f7007ca0",
+          "firstPartyDependencies": [
+            {
+              "dependency": "@hia-doc/renderer-html",
+              "kind": "peerDependencies",
+              "range": "^1.0.0"
+            }
+          ],
+          "registryBaseline": {
+            "visibility": "public",
+            "latest": "0.1.1",
+            "next": null
+          }
+        }
+      ]
+    }
+  ],
+  "waves": [
+    [
+      "@hia-doc/core",
+      "@hia-doc/css-parser",
+      "@hia-doc/cssdoc-spec",
+      "@hia-doc/dotnetdoc-spec",
+      "@hia-doc/htmdoc-spec",
+      "@hia-doc/html-doc-source-map",
+      "@hia-doc/html-parser",
+      "@hia-doc/jsdoc-spec",
+      "@hia-doc/schemas",
+      "@hia-doc/theme-default",
+      "@mandolin/jsdoc-plugin-hia-sys"
+    ],
+    [
+      "@hia-doc/cem-adapter",
+      "@hia-doc/config",
+      "@hia-doc/css-doc-adapter",
+      "@hia-doc/css-doc-source-map",
+      "@hia-doc/design-token-bridge",
+      "@hia-doc/dotnet-xml-doc-extractor",
+      "@hia-doc/dotnetdoc-adapter",
+      "@hia-doc/html-doc-adapter",
+      "@hia-doc/html-doc-extractor",
+      "@hia-doc/jsdoc-doc-source-map",
+      "@hia-doc/jsdoc-extra-plugin-registry",
+      "@hia-doc/jsdoc-plugin-hia-bridge",
+      "@hia-doc/parser-jsdoc",
+      "@hia-doc/plugin-sdk",
+      "@hia-doc/profile",
+      "@hia-doc/source-linkage"
+    ],
+    [
+      "@hia-doc/browser-panel",
+      "@hia-doc/css-doc-extractor",
+      "@hia-doc/dotnet-source-extractor",
+      "@hia-doc/htmdoc-runner",
+      "@hia-doc/jsondoc",
+      "@hia-doc/profiles",
+      "@hia-doc/renderer-html"
+    ],
+    [
+      "@hia-doc/cli",
+      "@hia-doc/cssdoc-runner",
+      "@hia-doc/dotnetdoc-runner",
+      "@hia-doc/htmdoc-producer",
+      "@mandolin/jsdoc-theme-hia"
+    ],
+    [
+      "@hia-doc/cssdoc-producer",
+      "@hia-doc/dotnetdoc-producer",
+      "@hia-doc/jsdoc-theme-bridge"
+    ],
+    [
+      "@hia-doc/jsdoc-preset"
+    ],
+    [
+      "@hia-doc/jsdoc-runner"
+    ],
+    [
+      "@hia-doc/jsdoc-producer"
+    ]
+  ]
+}

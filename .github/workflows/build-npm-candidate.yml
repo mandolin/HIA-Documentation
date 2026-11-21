@@ -1,0 +1,78 @@
+name: Build coordinated npm candidate
+
+on:
+  workflow_call:
+    inputs:
+      plan_revision:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+
+    steps:
+      # <lang lang="zh-CN">工作流版本和统一清单都由调用仓固定，不向候选构建传递发布凭据。</lang><lang lang="en">The caller pins both the workflow and the coordinated plan. Candidate builds receive no publication credentials.</lang>
+      - name: Verify immutable plan revision
+        env:
+          PLAN_REVISION: ${{ inputs.plan_revision }}
+        run: |
+          [[ "$PLAN_REVISION" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out coordinated plan
+        uses: actions/checkout@v6
+        with:
+          repository: mandolin/HIA-Documentation
+          ref: ${{ inputs.plan_revision }}
+          path: candidate-plan
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+
+      - name: Test the plan and candidate guard
+        run: node --test candidate-plan/scripts/npm-prerelease-candidate.test.mjs
+
+      - name: Resolve approved source revision
+        id: source
+        env:
+          OWNER_REPOSITORY: ${{ github.repository }}
+        run: |
+          source=$(node candidate-plan/scripts/npm-prerelease-candidate.mjs source candidate-plan/release/prerelease-candidate.json "$OWNER_REPOSITORY")
+          printf 'revision=%s\n' "$source" >> "$GITHUB_OUTPUT"
+
+      - name: Check out owner source
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.source.outputs.revision }}
+          path: candidate-source
+          persist-credentials: false
+
+      - name: Enable pnpm for the core workspace
+        if: github.repository == 'mandolin/HIA-Documentation'
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Verify registry, build and pack owner archives
+        env:
+          OWNER_REPOSITORY: ${{ github.repository }}
+        run: |
+          node candidate-plan/scripts/npm-prerelease-candidate.mjs build candidate-plan/release/prerelease-candidate.json "$OWNER_REPOSITORY" candidate-source candidate-files
+
+      - name: Upload candidate archives and receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-candidate
+          path: candidate-files/
+          if-no-files-found: error
+          retention-days: 14
