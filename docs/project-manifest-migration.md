@@ -59,9 +59,10 @@ The default project-manifest **source contract candidate** is `1.0.0`, with the 
 
 | Identity | Definition |
 | --- | --- |
-| Current canonical | `https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json` |
+| Default canonical | `https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.0.0.schema.json` |
+| Explicit scoped canonical | `https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-1.1.0.schema.json` |
 | Fixed legacy canonical | `https://mandolin.github.io/HIA-Documentation/schemas/hia-project-manifest-0.1.0-draft.schema.json` |
-| Runtime reader | Exact `1.0.0` and `0.1.0-draft` |
+| Runtime reader | Exact `1.1.0`, `1.0.0` and `0.1.0-draft` |
 
 The new schema requires the new root version. The historical schema retains its original bytes and draft constraints. The current alias resolves to the current definition; it does not replace the historical identity. Unknown patches, minor versions, prereleases, build metadata and version-range strings are not automatically negotiated.
 
@@ -115,4 +116,18 @@ Generated diagnostics omit rejected path/version values. Unsafe dynamic extensio
 
 JSON Schema and the runtime guard retain distinct scopes. The runtime guard checks locale membership, producer identity uniqueness and lexical/domain boundaries; it is not a general JSON Schema 2020-12 evaluator. The new canonical schema adds conditions and safer locator patterns without modifying the legacy definition.
 
-For runnable inputs and output behavior, see [Project Manifest Guide](project-manifest-guide.md).
+## Recovering from a failed build
+
+Keep the source manifest and artifacts and retain the diagnostic code. An unsupported version
+reports `HIA_PROJECT_MANIFEST_SCHEMA_UNSUPPORTED`. Use the reader or explicit migration
+for that contract. A static input with an undeclared kind reports
+`HIA_PROJECT_MANIFEST_FIELD_INVALID`. Verify the artifact's actual kind before correcting the
+copy. When `HIA_CLI_PROJECT_INPUT_READ_FAILED` reports an absent artifact, check the path
+relative to the manifest and restore or regenerate the matching artifact. Retry in a fresh
+output directory and compare the project index, entries, profiles, maps and relations.
+
+中文说明。保留原清单、工件和诊断代码。版本不受支持时选用对应读取器或显式迁移。
+输入类型无效时按真实工件契约修正副本。工件缺失时按清单所在目录核对相对路径，恢复或重新生成
+相应工件。使用新输出目录重试，并比较索引、条目、配置规范、地图及关系。
+
+For runnable inputs and output behavior, see [Project Manifest Guide](project-manifest-guide.md#reproduce-compatibility-and-four-domain-aggregation).

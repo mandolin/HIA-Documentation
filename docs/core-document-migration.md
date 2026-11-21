@@ -1,6 +1,6 @@
 # Core Document Compatibility and Migration
 
-The core document, text internationalization model, source provenance model and protocol envelope have **1.0.0 source contract candidates**. Package versions are separate: the current package manifest remains `@hia-doc/core@0.1.1`. A registry installation at that version does not acquire unreleased source changes. Use a reviewed source revision or its locally packed artifact for candidate evaluation.
+The core document, text internationalization model, source provenance model and protocol envelope have **1.0.0 source contract candidates**. The checked-in package manifest declares the separate `@hia-doc/core@1.0.0` source candidate. Use a reviewed source revision or its locally packed artifact to evaluate these capabilities. Check the registry and release record before installing a published version.
 
 中文摘要：本页的1.0.0是源码契约候选，不是已发布的软件包版本。核心文档及两个子模型精确兼容旧0.2.0；协议封装类型保留旧0.1.0。旧schema地址/原字节保留，校验不会原地改号。未知版本需要明确协商。其它核心领域契约仍按各自状态治理。
 
