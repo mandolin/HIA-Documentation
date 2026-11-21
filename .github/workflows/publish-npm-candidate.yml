@@ -1,0 +1,68 @@
+name: Coordinate npm candidate publication
+
+on:
+  workflow_call:
+    inputs:
+      release_revision:
+        required: true
+        type: string
+      mode:
+        required: true
+        type: string
+      package_name:
+        required: false
+        type: string
+      confirmation:
+        required: false
+        type: string
+    secrets:
+      bootstrap_token:
+        required: false
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+jobs:
+  candidate:
+    # <lang lang="zh-CN">只从实际调用仓的默认分支验证授权；归档内容不执行，候选写入另有固定审批。</lang><lang lang="en">Verify authorization only from the caller's default branch, never execute archived code, and require a separate pinned approval to publish.</lang>
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Validate immutable release control revision
+        env:
+          RELEASE_REVISION: ${{ inputs.release_revision }}
+        run: |
+          [[ "$RELEASE_REVISION" =~ ^[a-f0-9]{40}$ ]]
+
+      - name: Check out release controls
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: mandolin/HIA-Documentation
+          ref: ${{ inputs.release_revision }}
+          path: control
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+
+      - name: Verify release controls
+        run: node --test control/scripts/npm-prerelease-candidate.test.mjs control/scripts/publish-npm-candidate.test.mjs
+
+      - name: Pin npm for approved publication only
+        if: inputs.mode == 'publish'
+        run: npm install --global npm@11.19.1 --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/
+
+      - name: Validate artifact, registry state and runner authorization
+        env:
+          CANDIDATE_MODE: ${{ inputs.mode }}
+          CANDIDATE_PACKAGE: ${{ inputs.package_name }}
+          CANDIDATE_CONFIRMATION: ${{ inputs.confirmation }}
+          GH_TOKEN: ${{ github.token }}
+          HIA_NPM_BOOTSTRAP_TOKEN: ${{ secrets.bootstrap_token }}
+        run: node control/scripts/publish-npm-candidate.mjs
