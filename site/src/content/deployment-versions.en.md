@@ -19,6 +19,8 @@ Preserve language and topic where possible. Missing pages, translations or ancho
 
 Incremental file writing and bounded excerpts reduce peak output retention, but inputs and indexes still grow with project size. On budget failures, reduce excerpts, split builds or narrow publication scope without expanding source authority. Roll back to a retained, identified site artifact and recheck routes, locales, versions and machine projections.
 
+To try `1.0.0-rc.1`, install its exact version from npm. Existing packages keep their `latest` version. Bare-name installs for some first publications resolve to the candidate. [Candidate installation and signature verification](https://github.com/mandolin/HIA-Documentation/blob/main/docs/prerelease-candidates.md#try-the-100-release-candidate)
+
 ## Authoritative references
 
 The linked technical references retain their actual languages; this English guide does not imply that every linked reference is translated.
