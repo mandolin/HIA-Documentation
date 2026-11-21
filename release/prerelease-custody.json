@@ -1,7 +1,7 @@
 {
   "format": "hia-npm-prerelease-custody@1",
   "planSha256": "b07c0eb94e40c633717076035ab150efd403043a4ea441434007ed8480431cf2",
-  "publicationApproved": false,
+  "publicationApproved": true,
   "owners": [
     {
       "repository": "mandolin/HIA-Documentation",
@@ -178,5 +178,23 @@
       }
     }
   ],
-  "bootstrapApproved": []
+  "bootstrapApproved": [
+    "@hia-doc/css-doc-adapter",
+    "@hia-doc/css-doc-extractor",
+    "@hia-doc/css-doc-source-map",
+    "@hia-doc/css-parser",
+    "@hia-doc/cssdoc-producer",
+    "@hia-doc/cssdoc-runner",
+    "@hia-doc/cssdoc-spec",
+    "@hia-doc/design-token-bridge",
+    "@hia-doc/jsdoc-doc-source-map",
+    "@hia-doc/jsdoc-extra-plugin-registry",
+    "@hia-doc/jsdoc-plugin-hia-bridge",
+    "@hia-doc/jsdoc-preset",
+    "@hia-doc/jsdoc-producer",
+    "@hia-doc/jsdoc-runner",
+    "@hia-doc/jsdoc-spec",
+    "@hia-doc/jsdoc-theme-bridge",
+    "@hia-doc/jsondoc"
+  ]
 }
