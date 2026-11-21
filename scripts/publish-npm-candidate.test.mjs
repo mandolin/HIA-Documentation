@@ -36,7 +36,8 @@ test("admits only the enrolled workflow and leaves publication locked until appr
   assert.throws(() => selectCandidateRequest({ ...identity, workflowRef: identity.workflowRef.replace("trusted-publish", "candidate-build") }, plan, custody));
   assert.throws(() => selectCandidateRequest({ ...identity, packageName: "@hia-doc/cssdoc-runner" }, plan, custody));
   const intent = { ...identity, mode: "publish", confirmation: "publish " + plan.version + " via next" };
-  assert.throws(() => selectCandidateRequest(intent, plan, custody), /awaiting the separately pinned release approval/u);
+  const unapproved = { ...custody, publicationApproved: false };
+  assert.throws(() => selectCandidateRequest(intent, plan, unapproved), /awaiting the separately pinned release approval/u);
   const approved = { ...custody, publicationApproved: true };
   assert.throws(() => selectCandidateRequest({ ...intent, confirmation: "publish latest" }, plan, approved));
   assert.throws(() => selectCandidateRequest({ ...intent, packageName: "" }, plan, approved));
