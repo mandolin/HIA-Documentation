@@ -15,7 +15,19 @@ Reading settings control presentation such as theme, wrapping and line numbers. 
 
 Identify each example's full name, license, source and scope. The API Portal and preference guide of BP/bp-docs-js-cookie are separate entries, not the product website or all demonstration projects.
 
-For non-sensitive reports, provide versions, public inputs, reproduction steps and expected versus actual outcomes. Report sensitive issues through the private maintainer channel without disclosing source secrets, tokens, local paths or unpublished archives. Follow each owning repository's license and contribution requirements.
+## Contributing, licensing and feedback
+
+For core tools, the website and manuals, see the [contribution guide](https://github.com/mandolin/HIA-Documentation#contributing) and the [main repository license](https://github.com/mandolin/HIA-Documentation/blob/main/LICENSE). Use [main repository issues](https://github.com/mandolin/HIA-Documentation/issues) for ordinary feedback. Include the full package name, actual version, public inputs, reproduction steps, and expected and actual results.
+
+Send component feedback to the owning repository. Its root contains the applicable license and development guidance.
+
+| Scope | Owning repository |
+| --- | --- |
+| JavaScript / JSDoc | [hia-jsdoc](https://github.com/mandolin/hia-jsdoc), [jsdoc-plugin-hia-sys](https://github.com/mandolin/jsdoc-plugin-hia-sys), [jsdoc-theme-hia](https://github.com/mandolin/jsdoc-theme-hia) |
+| HTML, CSS and .NET | [hia-htmdoc](https://github.com/mandolin/hia-htmdoc), [hia-cssdoc](https://github.com/mandolin/hia-cssdoc), [hia-dotnetdoc](https://github.com/mandolin/hia-dotnetdoc) |
+| JavaScript demonstration | [bp-docs-js-cookie](https://github.com/mandolin/bp-docs-js-cookie) |
+
+For sensitive security issues, follow the [security reporting policy](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md). Share only public-safe information in public feedback.
 
 ## Authoritative references
 

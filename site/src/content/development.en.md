@@ -11,7 +11,7 @@ title: "Extending and maintaining HIA"
 
 The core model and protocol provide shared semantics. Domain parsers and adapters interpret their own inputs, producers own explicit extraction and artifacts, and renderers organize reading output. The core does not depend on a particular JSDoc theme. Language servers, VS Code and other hosts consume capabilities within their own boundaries; a successful build is not host-interaction acceptance.
 
-Develop in the repository that owns the component, using its lockfile and package-manager instructions. Do not introduce cross-repository dependency management at the workspace-container root. Keep source candidates, release materials and final archives distinct.
+Develop in the repository that owns the component, using its lockfile and package-manager instructions. See [contributing, licensing and feedback](../reading-support/) to find the owner. Verify source candidates, release material and final archives separately.
 
 ## Software development kit
 

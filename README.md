@@ -122,6 +122,12 @@ VS Code 插件手工验收步骤见 `docs/vscode-extension-manual-validation.md`
 
 `main-repo/.mise.toml` 固定 Node.js 和 pnpm 版本。外层工作区不设置 mise 配置，避免影响 `HIA/*` 卫星仓库。
 
+## Contributing
+
+核心工具、官网和文档可通过 [主仓 Issues](https://github.com/mandolin/HIA-Documentation/issues) 讨论普通问题。提交流程、工具和测试以[持续集成说明](docs/ci.md)为准。组件问题请到实际维护该组件的仓库。提交公开反馈前请阅读[安全报告说明](SECURITY.md)。
+
+Use [main repository issues](https://github.com/mandolin/HIA-Documentation/issues) for ordinary questions about the core tools, website, and manuals. See the [continuous integration guide](docs/ci.md) for tooling and validation. Report component issues to the repository that maintains the component. Read the [security reporting policy](SECURITY.md) before sharing a report publicly.
+
 ## License
 
 MIT. See `LICENSE`.

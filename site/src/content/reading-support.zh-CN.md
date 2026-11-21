@@ -15,7 +15,19 @@ title: "阅读与获得支持"
 
 使用示例时确认它的完整项目名、许可、来源与适用范围。BP/bp-docs-js-cookie的接口Portal与偏好指南是独立入口，不等于整个产品官网或所有演示项目。
 
-非敏感问题报告可说明选用版本、公开输入、步骤、预期和实际结果。安全问题使用维护者私下渠道；不要公开源码秘密、令牌、本机路径或未公开归档。许可证与贡献要求以对应维护仓库文件为准，网站布局不改变代码许可。
+## 贡献、许可与反馈
+
+核心工具、官网与手册请查看[主仓贡献说明](https://github.com/mandolin/HIA-Documentation#contributing)和[主仓许可证](https://github.com/mandolin/HIA-Documentation/blob/main/LICENSE)。普通问题可提交到[主仓 Issues](https://github.com/mandolin/HIA-Documentation/issues)。请注明完整包名、实际版本、公开输入、复现步骤、预期与实际结果。
+
+组件问题按实际维护仓库分流。各仓根目录提供对应的许可和开发说明。
+
+| 范围 | 维护仓 |
+| --- | --- |
+| JavaScript / JSDoc | [hia-jsdoc](https://github.com/mandolin/hia-jsdoc)、[jsdoc-plugin-hia-sys](https://github.com/mandolin/jsdoc-plugin-hia-sys)、[jsdoc-theme-hia](https://github.com/mandolin/jsdoc-theme-hia) |
+| HTML、CSS 与 .NET | [hia-htmdoc](https://github.com/mandolin/hia-htmdoc)、[hia-cssdoc](https://github.com/mandolin/hia-cssdoc)、[hia-dotnetdoc](https://github.com/mandolin/hia-dotnetdoc) |
+| JavaScript 演示 | [bp-docs-js-cookie](https://github.com/mandolin/bp-docs-js-cookie) |
+
+敏感安全问题请遵循[安全报告说明](https://github.com/mandolin/HIA-Documentation/blob/main/SECURITY.md)。公开反馈请使用可公开数据。
 
 ## 权威参考
 

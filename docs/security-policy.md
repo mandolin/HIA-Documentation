@@ -4,14 +4,9 @@ This document defines the security and dependency baseline for the HIA main repo
 
 ## Supported Surfaces
 
-The project is still pre-1.0. Security fixes target the current `main` branch and the latest public npm versions of official packages published under `@mandolin/*`.
+The system is in the 1.0.0 preview stage. Security fixes target the current `main` branch and the latest public npm versions of official packages. Verify the exact package and version in the npm registry and the owning repository. Official packages can use either the `@hia-doc/*` or `@mandolin/*` namespace. The [public package release plan](../release/public-packages.json) contains both candidates and published targets. Treat preview, candidate, and registry identities separately.
 
-Current public packages:
-
-- `@mandolin/jsdoc-plugin-hia-sys`
-- `@mandolin/jsdoc-theme-hia`
-
-Incubating packages under `HIA/hia-*` should follow the same rules before public release, even when they are not yet published.
+中文说明。系统处于 1.0.0 预览阶段。支持范围以当前主分支和正式组件在 npm 实际公开的最新版本为准。请使用完整包名、实际版本和维护仓库核验，两个包命名空间及源码候选均按实际发行事实判断。
 
 ## Reporting
 
