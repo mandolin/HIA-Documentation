@@ -1,6 +1,6 @@
 {
   "format": "hia-npm-prerelease-plan@1",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "stableVersion": "1.0.0",
   "distTag": "next",
   "nodeVersion": "24.22.1",
@@ -24,7 +24,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -76,7 +76,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.11",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -93,7 +93,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.6",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -104,7 +104,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.2",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -129,9 +129,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -148,7 +148,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -165,7 +165,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.2",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -182,7 +182,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -199,7 +199,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -226,7 +226,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.8",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -237,7 +237,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.4",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -254,7 +254,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.1",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -265,14 +265,14 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.4",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         }
       ]
     },
     {
       "repository": "mandolin/hia-cssdoc",
-      "sourceCommit": "d039778b6a9169c18a580f61a50a3d931e90b23e",
+      "sourceCommit": "bdbe61892622d3b92ffbcb5164ad04b3d8c56517",
       "packer": "npm",
       "packages": [
         {
@@ -287,9 +287,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -314,9 +314,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -331,20 +331,20 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/css-parser",
           "path": "packages/css-parser",
-          "sourceManifestSha256": "58ff0910a2914906418fbf455649d306c03a4b4236c397785146ccb895a5ec72",
+          "sourceManifestSha256": "7f614df1a3792f18eca9e13c835c8312a9e420d53ca218e357e2cf65ce119bf2",
           "firstPartyDependencies": [],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -359,15 +359,15 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/cssdoc-runner",
           "path": "packages/cssdoc-runner",
-          "sourceManifestSha256": "703eb7281b3d65c4a46e4ef8eeacccbd0b22e72afae46a382ab465390e64e9ef",
+          "sourceManifestSha256": "152921714e2541ffa5922ef7573c72170ff23585e47f1e86dfc5a19bee8d698e",
           "firstPartyDependencies": [
             {
               "dependency": "@hia-doc/css-doc-adapter",
@@ -396,20 +396,20 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/cssdoc-spec",
           "path": "packages/cssdoc-spec",
-          "sourceManifestSha256": "3fb2acb5942cd68cc929f936522b2a717b3cfc5cd33642f4f44a62832810d375",
+          "sourceManifestSha256": "98ce86b0d3048538b682fd31913ddf4f1f830b828437385f57f35e615d206fc0",
           "firstPartyDependencies": [],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -424,22 +424,22 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         }
       ]
     },
     {
       "repository": "mandolin/hia-dotnetdoc",
-      "sourceCommit": "036187cd6bbe80f7ac3a3d001d69022378b58a90",
+      "sourceCommit": "2aca17fba865f02056426cd275ed3414859b364c",
       "packer": "npm",
       "packages": [
         {
           "name": "@hia-doc/dotnet-source-extractor",
           "path": "packages/dotnet-source-extractor",
-          "sourceManifestSha256": "73b23b9ac71ebe03a34ac74611eb02ec79de98be629c0e51957f34b4cf89035a",
+          "sourceManifestSha256": "e84441d6212ce341a1b1300928cb82a4e1aa0882ad75a21d59ed65fa5d731c6e",
           "firstPartyDependencies": [
             {
               "dependency": "@hia-doc/dotnet-xml-doc-extractor",
@@ -455,13 +455,13 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/dotnet-xml-doc-extractor",
           "path": "packages/dotnet-xml-doc-extractor",
-          "sourceManifestSha256": "5dcceb424d7ac673199733d48d9e7ab0a9288c5d0dd0e90e02b5d5439c3c42c6",
+          "sourceManifestSha256": "0cce5ac4f4d32758f710401fb05d15da8c6740c6fe7575be08ad8720a8f85e1e",
           "firstPartyDependencies": [
             {
               "dependency": "@hia-doc/dotnetdoc-spec",
@@ -472,7 +472,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -489,7 +489,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -506,13 +506,13 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/dotnetdoc-runner",
           "path": "packages/dotnetdoc-runner",
-          "sourceManifestSha256": "243e9b2bcbe5aaeabf4a11c276e1b687bb31be4754872e04457d2bcd1e4c28b2",
+          "sourceManifestSha256": "e265ac90f58a3709fac99382575c701a85988ebc8add2f65a69a88ec4aa755bd",
           "firstPartyDependencies": [
             {
               "dependency": "@hia-doc/dotnet-source-extractor",
@@ -538,25 +538,25 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/dotnetdoc-spec",
           "path": "packages/dotnetdoc-spec",
-          "sourceManifestSha256": "6861f11cd4879427b3cbca1de9dc0ce536dd5b9725d8b474dfe682aa91e7b81d",
+          "sourceManifestSha256": "e12706ae8e0037e7ee4dafa2383b7470b269121ad2fe36895b14e8a8d16f24fa",
           "firstPartyDependencies": [],
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.12",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         }
       ]
     },
     {
       "repository": "mandolin/hia-htmdoc",
-      "sourceCommit": "5ec805167e6a95083967ec127b887bfb2f807749",
+      "sourceCommit": "1cf7a230131a517ed6ba5d031a1f6f645828e5af",
       "packer": "npm",
       "packages": [
         {
@@ -573,7 +573,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -590,13 +590,13 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/htmdoc-runner",
           "path": "packages/htmdoc-runner",
-          "sourceManifestSha256": "084550999cf132051e06cdcb24d6bcc33fe6f46ad86c7304a52aaf6f7d3c338e",
+          "sourceManifestSha256": "1be2a58b405a0cf262e1a8b2ce5b6d8fc9e0f9630e62a4049861d4a8037c85a2",
           "firstPartyDependencies": [
             {
               "dependency": "@hia-doc/cem-adapter",
@@ -627,18 +627,18 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
           "name": "@hia-doc/htmdoc-spec",
           "path": "packages/htmdoc-spec",
-          "sourceManifestSha256": "3ef6c96d3cd4bbdf5df148385ebe686194a2c8f2a2efd3cfd0258e6eaf04feb5",
+          "sourceManifestSha256": "9b246d235595d008e98d36d2d2da7983bbd61e3e3d854b5753a95401db4a6133",
           "firstPartyDependencies": [],
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -655,7 +655,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -682,7 +682,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -693,7 +693,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -704,7 +704,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.0",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         }
       ]
@@ -726,9 +726,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -743,9 +743,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -760,9 +760,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -792,9 +792,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -809,9 +809,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -826,9 +826,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -837,9 +837,9 @@
           "sourceManifestSha256": "6c7f73f466ec52a58db81961b14057747f973a2eadbda2876c4b967120901dd1",
           "firstPartyDependencies": [],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         },
         {
@@ -854,9 +854,9 @@
             }
           ],
           "registryBaseline": {
-            "visibility": "anonymous-404",
-            "latest": null,
-            "next": null
+            "visibility": "public",
+            "latest": "1.0.0-rc.1",
+            "next": "1.0.0-rc.1"
           }
         }
       ]
@@ -874,7 +874,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.2",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         }
       ]
@@ -898,7 +898,7 @@
           "registryBaseline": {
             "visibility": "public",
             "latest": "0.1.1",
-            "next": null
+            "next": "1.0.0-rc.1"
           }
         }
       ]

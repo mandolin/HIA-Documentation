@@ -46,7 +46,7 @@ test("admits only the enrolled workflow and leaves publication locked until appr
 
 test("recognizes only the same published candidate without changing stable or next", () => {
   const expectedSRI = custody.owners[0].integrities[item.name];
-  const pending = { name: item.name, versions: {}, "dist-tags": { latest: item.registryBaseline.latest } };
+  const pending = { name: item.name, versions: {}, "dist-tags": { latest: item.registryBaseline.latest, next: item.registryBaseline.next } };
   assert.equal(classifyCandidate(item, plan, 200, pending, expectedSRI), "pending");
   const published = structuredClone(pending);
   published.versions[plan.version] = { dist: { integrity: expectedSRI } };
@@ -61,7 +61,9 @@ test("recognizes only the same published candidate without changing stable or ne
 // <lang lang="zh-CN">首次公开的自动标签仅适用于审批名称、唯一版本与原候选归档。</lang><lang lang="en">The first-publish automatic tag is limited to approved names, a sole version and the pinned archive.</lang>
 test("accepts npm bootstrap latest only for an approved package's sole candidate", () => {
   const firstOwner = plan.owners.find(entry => entry.repository === "mandolin/hia-cssdoc");
-  const first = firstOwner.packages.find(entry => entry.name === "@hia-doc/cssdoc-spec");
+  // <lang lang="zh-CN">以独立的首发基线验证原例外，后续候选使用公开包的实际标签。</lang><lang lang="en">Use a first-publication baseline for the legacy exception; later candidates use the observed tags of existing packages.</lang>
+  const firstPackage = firstOwner.packages.find(entry => entry.name === "@hia-doc/cssdoc-spec");
+  const first = { ...firstPackage, registryBaseline: { visibility: "anonymous-404", latest: null, next: null } };
   const expectedSRI = custody.owners.find(entry => entry.repository === firstOwner.repository).integrities[first.name];
   const observed = { name: first.name, versions: { [plan.version]: { dist: { integrity: expectedSRI } } },
     "dist-tags": { [plan.distTag]: plan.version, latest: plan.version } };
