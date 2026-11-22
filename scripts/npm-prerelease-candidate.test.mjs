@@ -64,8 +64,9 @@ test("candidate manifests preserve workspace links and rewrite only first-party 
 
 test("registry inspection rejects version occupancy, tag drift and unknown visibility", () => {
   const existing = catalog.find(item => item.registryBaseline.visibility === "public");
-  const first = catalog.find(item => item.registryBaseline.visibility === "anonymous-404");
-  const packument = { name: existing.name, versions: {}, "dist-tags": { latest: existing.registryBaseline.latest } };
+  // <lang lang="zh-CN">保留首发探针，后续候选的生产清单可以全部公开。</lang><lang lang="en">Keep a first-publication fixture even when a later candidate has no unpublished packages.</lang>
+  const first = { ...existing, registryBaseline: { visibility: "anonymous-404", latest: null, next: null } };
+  const packument = { name: existing.name, versions: {}, "dist-tags": { latest: existing.registryBaseline.latest, next: existing.registryBaseline.next } };
   assert.equal(checkCandidateRegistry(existing, plan, 200, packument).status, 200);
   assert.equal(checkCandidateRegistry(first, plan, 404).status, 404);
   assert.throws(() => checkCandidateRegistry(existing, plan, 404), /unavailable/u);
