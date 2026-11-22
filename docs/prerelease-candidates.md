@@ -10,6 +10,10 @@ A subsequent publication decision uses the owner artifact and verifies its diges
 
 ## Try the 1.0.0 release candidate
 
+**Candidate status.** The archived `1.0.0-rc.1` cohort includes parsing dependencies covered by upstream advisories. Use trusted fixtures for isolated verification while the refreshed cohort is prepared. [XML parser advisory](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) · [PostCSS advisory](https://github.com/advisories/GHSA-r28c-9q8g-f849)
+
+**候选状态。** 已归档的 `1.0.0-rc.1` 使用了已有上游安全公告的解析依赖。依赖修订版准备期间，请使用受信任的样本在隔离环境复验。 [XML 解析器公告](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) · [PostCSS 公告](https://github.com/advisories/GHSA-r28c-9q8g-f849)
+
 `1.0.0-rc.1` is available from the public npm registry under `next` for the 45 packages in the [coordinated plan](../release/prerelease-candidate.json). With Node.js 22.23.4 or 24.22.1, install the exact version in an isolated project:
 
 ~~~sh
