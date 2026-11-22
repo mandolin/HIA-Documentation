@@ -10,21 +10,19 @@ A subsequent publication decision uses the owner artifact and verifies its diges
 
 ## Try the 1.0.0 release candidate
 
-**Candidate status.** The archived `1.0.0-rc.1` cohort includes parsing dependencies covered by upstream advisories. Use trusted fixtures for isolated verification while the refreshed cohort is prepared. [XML parser advisory](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) · [PostCSS advisory](https://github.com/advisories/GHSA-r28c-9q8g-f849)
-
-**候选状态。** 已归档的 `1.0.0-rc.1` 使用了已有上游安全公告的解析依赖。依赖修订版准备期间，请使用受信任的样本在隔离环境复验。 [XML 解析器公告](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2) · [PostCSS 公告](https://github.com/advisories/GHSA-r28c-9q8g-f849)
-
-`1.0.0-rc.1` is available from the public npm registry under `next` for the 45 packages in the [coordinated plan](../release/prerelease-candidate.json). With Node.js 22.23.4 or 24.22.1, install the exact version in an isolated project:
+`1.0.0-rc.2` is the current public prerelease for all 45 packages in the [coordinated plan](../release/prerelease-candidate.json). On Windows or Ubuntu with Node.js 22.23.4 or 24.22.1, install the exact version in an isolated project:
 
 ~~~sh
-npm install --save-exact @hia-doc/cli@1.0.0-rc.1
+npm install --save-exact @hia-doc/cli@1.0.0-rc.2
 npm exec -- hia --help
 npm audit signatures
 ~~~
 
-Existing packages retain their previous `latest`. When npm assigns `latest` on first publication, the bare name resolves to the candidate until a stable release updates that tag. Use the exact version in reproducible builds. A first-publish package may have an untagged npm placeholder `0.0.0-stage` containing package metadata and a README. Use `1.0.0-rc.1` for candidate testing.
+The `next` tag points to `1.0.0-rc.2`. The 17 packages whose first public release was `1.0.0-rc.1` still resolve to that version on an unqualified install. The other 28 packages retain their prior `latest`. Use the exact candidate version for reproducible builds.
 
-中文。冻结清单的 45 个候选包可从 npm 的 `next` 获取。用上面的命令精确安装 `1.0.0-rc.1`，核对命令帮助和签名。已有包的默认标签保持原值。首次公开的包若由 npm 自动添加 `latest`，正式版发布前裸包名会解析到候选。npm 可能保留无标签的 `0.0.0-stage` 说明占位，实际试用请选择 `1.0.0-rc.1`。
+The RC.2 package set updates Ajv, PostCSS and fast-xml-parser. Archived RC.1 packages still use dependencies covered by security advisories. [Ajv advisory](https://github.com/advisories/GHSA-2g4f-4pwh-qvx6) · [PostCSS advisory](https://github.com/advisories/GHSA-fxqj-rqcc-2cmp) · [XML parser advisory](https://github.com/advisories/GHSA-m7jm-9gc2-mpf2)
+
+当前公开候选为 `1.0.0-rc.2`，45 个包的 `next` 均指向此版本。Windows 与 Ubuntu 上均可用 Node.js 22.23.4 或 24.22.1，在隔离项目中通过上面的命令精确安装、检查帮助并核签名。首次公开时被 npm 自动设置 `latest` 的 17 个包仍默认解析到 RC.1，其余 28 项默认版本也保持原值。RC.2 更新了 Ajv、PostCSS 与 fast-xml-parser，旧 RC.1 仍包含上述公告涉及的依赖。
 
 ## Audit a candidate
 
