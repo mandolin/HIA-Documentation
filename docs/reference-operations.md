@@ -93,14 +93,20 @@ After artifact and configuration checks, use the manual `HIA Reference Pages` en
 
 ## Rollback
 
-If the deployed reference fails after a Pages deployment:
+For a failed deployment, capture the run, source commit, root type, artifact ID,
+digest and expiry. Identify a last known good successful `HIA Reference Pages`
+run on `main` and check that its complete `github-pages` artifact can still be
+downloaded.
 
-1. Inspect the failed workflow run and confirm whether the failure is route, schema, privacy, provenance, or age related.
-2. Re-run the last known good `HIA Reference Pages` workflow from the matching commit if the failure is a deployment artifact issue.
-3. Revert the offending source or build change and re-run `HIA Reference Pages` if the failure is produced by source, schema, renderer, or reference-build drift.
-4. Run `pnpm run reference:ops:check` after the replacement deployment is visible.
+1. With approval to restore the site, dispatch [Restore HIA Pages](https://github.com/mandolin/HIA-Documentation/actions/workflows/restore-pages.yml). Set `source-run-id` to that successful build's run ID. The workflow checks the original archive and source identity, then deploys the original TAR.
+2. If the artifact expired or cannot be downloaded, review the source revision and snapshot dependencies, then use the normal `HIA Reference Pages` workflow to build and deploy a fresh artifact. If the source caused the failure, revert the offending change before rebuilding.
+3. After deployment, compare the public root, version index, source metadata and representative deep links with the selected revision. Require the deployment's online verification and its subsequent `Reference operations` check to pass. Record the actual restoration run and the final public revision.
 
-Do not repair a public reference by manually editing the `gh-pages` artifact. The reference must remain reproducible from source workflows.
+A fixed compatibility snapshot belongs to its own site. Keep its identity
+separate when restoring the main site. Use workflow artifacts for deployment so
+the restored site remains reproducible and traceable.
+
+中文。先保留当前运行、源码提交、根身份和工件摘要，核对待恢复的正常成功工件仍可下载。经授权，在 `Restore HIA Pages` 传入该正常作业的 `source-run-id`，校验后恢复原 TAR。工件过期时改用正常构建路径生成新工件。上线后核根、版本、来源和关键深链，并确认对应的线上校验和后置运维均通过。
 
 ## Provenance
 
