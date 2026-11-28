@@ -21,6 +21,8 @@ title: "构建与版本保留"
 
 试用时从 npm 精确安装 `1.0.0-rc.2`，或使用 `next`。17 个首发包的 `latest` 仍为 RC.1，其余包沿用原默认版本。 [候选安装与签名验证](https://github.com/mandolin/HIA-Documentation/blob/main/docs/prerelease-candidates.md#try-the-100-release-candidate)
 
+正式归档验收应记录 45 份归档各自的来源提交和摘要、站点清单，以及独立 JSDoc 的插件、主题与渲染器身份。文档系统、npm 包和工件契约各有版本。升级旧项目时，先按 [1.0.0 包和契约迁移表](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/package-v1-migration.md) 确定受影响的包和精确契约，再用旧输入验证兼容读取及显式迁移。
+
 ## 权威参考
 
 下列技术参考保留其实际语言；本页译文不表示所有链接正文均已有对应译文。

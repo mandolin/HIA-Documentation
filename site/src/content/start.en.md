@@ -17,6 +17,8 @@ Learning material supports tasks, references define precise rules, development d
 
 The main checkout uses Node.js 22.23.4 or 24.22.1 and pnpm 10.34.4. Other packages retain their own engines. Follow the [repository instructions](https://github.com/mandolin/HIA-Documentation#readme) to install locked dependencies and build. Verify exact archive versions, dependencies, and runtimes before use.
 
+In the archive acceptance environment, verify the SHA-256 of each of the 45 archives and install from the lockfile supplied with the batch. Run `npm ls --depth=0 @hia-doc/cli` to verify the local command-line version, then use `npm exec --offline -- hia docs build` with the arguments below. For public evaluation, follow the [exact RC.2 installation steps](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/prerelease-candidates.md#try-the-100-release-candidate).
+
 <h2 id="build">2. Build documentation</h2>
 
 Run this command from a built main checkout. It uses a public repository fixture and writes to a dedicated preview directory:

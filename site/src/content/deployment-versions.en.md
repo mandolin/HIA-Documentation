@@ -21,6 +21,8 @@ Incremental file writing and bounded excerpts reduce peak output retention, but 
 
 To try the current candidate, install `1.0.0-rc.2` explicitly or use `next` from npm. The 17 first-published packages still use RC.1 as `latest`. The other packages retain their previous defaults. [Candidate installation and signature verification](https://github.com/mandolin/HIA-Documentation/blob/main/docs/prerelease-candidates.md#try-the-100-release-candidate)
 
+Archive acceptance should record the source commit and digest of each of the 45 archives, the site inventory, and the standalone JSDoc plugin, theme, and renderer identities. The documentation system, npm packages, and artifact contracts have separate versions. Before upgrading an existing project, use the [1.0.0 package and contract migration reference](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/package-v1-migration.md) to identify the affected packages and exact contracts. Check compatibility reads and explicit migration with existing inputs.
+
 ## Authoritative references
 
 The linked technical references retain their actual languages; this English guide does not imply that every linked reference is translated.

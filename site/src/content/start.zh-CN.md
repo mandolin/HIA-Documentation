@@ -17,6 +17,8 @@ title: 第一次使用
 
 主仓源码环境使用Node.js 22.23.4或24.22.1及pnpm 10.34.4，其它包以自身engines为准。按[仓库说明](https://github.com/mandolin/HIA-Documentation#readme)安装锁定依赖并构建。使用归档时核对精确版本、依赖和运行要求。
 
+在归档验收环境中，先核对 45 份归档的 SHA-256，再使用随批次提供的锁文件安装。用 `npm ls --depth=0 @hia-doc/cli` 检查本地命令行工具的版本，再用 `npm exec --offline -- hia docs build` 执行下方同样的参数。公开试用请使用 [RC.2 精确版本安装步骤](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/prerelease-candidates.md#try-the-100-release-candidate)。
+
 <h2 id="build">2. 构建文档</h2>
 
 以下命令在已完成构建的主仓根运行，使用仓库公开工件，写入独立预览目录：
