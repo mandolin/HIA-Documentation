@@ -1,0 +1,30 @@
+name: Formal Pages build only
+
+on:
+  push:
+    branches: [review/w-p157-formal-pages]
+
+# 中文：仅核归档可读性。 English: Check access to the pinned build artifacts.
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archive-access:
+    if: github.ref == 'refs/heads/review/w-p157-formal-pages'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Verify access to all seven frozen artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          jq -r '.owners[] | [.repository, .artifactId, .artifactSha256] | @tsv' release/stable-publication.json |
+          while IFS=$'\t' read -r repository artifact digest; do
+            destination="$RUNNER_TEMP/$artifact.zip"
+            gh api "repos/$repository/actions/artifacts/$artifact/zip" > "$destination"
+            echo "$digest  $destination" | sha256sum --check
+          done
