@@ -76,12 +76,18 @@ function runPublishedPlanCheck(args: string[]) {
   const root = mkdtempSync(join(tmpdir(), "hia-release-plan-"));
   const plan = JSON.parse(readFileSync(join(sourceRoot, "release/public-packages.json"), "utf8"));
   try {
-    const files = ["LICENSE", ".github/workflows/npm-trusted-publish.yml", ".github/workflows/npm-bootstrap-publish.yml", "scripts/check-public-release-plan.mjs", "scripts/bootstrap-public-release.mjs", "scripts/lib/public-release-intent.mjs", "scripts/lib/npm-registry.mjs", ...plan.packages.flatMap((entry: {path: string}) => ["package.json", "LICENSE", "README.md"].map((name) => `${entry.path}/${name}`))];
+    const files = [
+      "LICENSE", ".github/workflows/npm-trusted-publish.yml", ".github/workflows/npm-bootstrap-publish.yml",
+      ".github/workflows/publish-npm-stable.yml", "scripts/publish-npm-stable.mjs",
+      "release/stable-publication.json", "release/stable-authorization.json",
+      "scripts/check-public-release-plan.mjs", "scripts/bootstrap-public-release.mjs",
+      "scripts/lib/public-release-intent.mjs", "scripts/lib/npm-registry.mjs",
+      ...plan.packages.flatMap((entry: {path: string}) => ["package.json", "LICENSE", "README.md"].map((name) => `${entry.path}/${name}`)),
+    ];
     for (const file of files) {
       mkdirSync(dirname(join(root, file)), {recursive: true});
       copyFileSync(join(sourceRoot, file), join(root, file));
     }
-    mkdirSync(join(root, "release"));
     // <lang><zh-CN>只改副本状态，目标版本和依赖顺序保留真实值。</zh-CN><en>Change copied statuses only, retaining actual versions and dependency order.</en></lang>
     writeFileSync(join(root, "release/public-packages.json"), JSON.stringify({...plan, packages: plan.packages.map((entry: object) => ({...entry, releaseStatus: "published"}))}));
     return spawnSync(process.execPath, [join(root, "scripts/check-public-release-plan.mjs"), ...args], {encoding: "utf8", windowsHide: true});

@@ -4,6 +4,7 @@
  * @lang en Checks main-repository release manifests, identity, runtime range and publishing workflows; read-only checks do not establish release qualification.
  */
 import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolvePublicReleaseIntent } from "./lib/public-release-intent.mjs";
@@ -78,14 +79,20 @@ for (const entry of packageEntries) {
 }
 
 const workflow = await readFile(workflowPath, "utf8");
+const stableWorkflow = await readFile(path.join(rootDir, ".github/workflows/publish-npm-stable.yml"), "utf8");
+const stableScript = await readFile(path.join(rootDir, "scripts/publish-npm-stable.mjs"), "utf8");
+const custodyBytes = await readFile(path.join(rootDir, "release/stable-publication.json"));
+const stableAuthorization = JSON.parse(await readFile(path.join(rootDir, "release/stable-authorization.json"), "utf8"));
 const bootstrapWorkflow = await readFile(bootstrapWorkflowPath, "utf8");
 const bootstrapScript = await readFile(bootstrapScriptPath, "utf8");
 assert(workflow.includes("id-token: write"), "npm trusted publish workflow must request id-token: write.");
-assert(workflow.includes("node-version: 24.x"), "npm trusted publish workflow must use Node 24.x.");
-assert(workflow.includes("npm@^11.15.0"), "npm trusted publish workflow must install npm 11.15.0+.");
-assert(workflow.includes("--provenance"), "npm trusted publish workflow must publish with provenance.");
-assert(workflow.includes("pnpm --filter"), "npm trusted publish workflow must pack through pnpm to rewrite workspace dependencies.");
-assert(workflow.includes("release:gate:publish-ready"), "npm trusted publish workflow must validate the publish-ready manifest.");
+// <lang lang="zh-CN">可信入口和控制检出必须固定同一提交，包内容来自先前的托管构建。</lang><lang lang="en">The trusted entry and control checkout must pin the same commit. Package bytes come from the prior hosted build.</lang>
+const stablePin = workflow.match(/^    uses: mandolin\/HIA-Documentation\/\.github\/workflows\/publish-npm-stable\.yml@([a-f0-9]{40})\s*$/mu)?.[1];
+assert(stablePin && workflow.includes("release_revision: " + stablePin), "Stable publisher requires a matching immutable control pin.");
+assert(workflow.includes("default: stable-audit") && !workflow.includes("npm publish"), "The owner workflow must route publication through shared checks.");
+assert(stableWorkflow.includes("node-version: 24.22.1") && stableWorkflow.includes("id-token: write"), "Shared publisher runtime or OIDC permission drifted.");
+assert(stableScript.includes('"--provenance"') && stableScript.includes("verifyOwnerReceipt"), "Shared publisher must check immutable bytes and request provenance.");
+assert(stableAuthorization.custodySha256 === createHash("sha256").update(custodyBytes).digest("hex"), "Stable approval must bind the frozen archives.");
 assert(bootstrapWorkflow.includes("runs-on: ubuntu-latest"), "npm bootstrap workflow must use a GitHub-hosted runner for provenance.");
 assert(bootstrapWorkflow.includes("id-token: write"), "npm bootstrap workflow must request id-token: write for provenance.");
 assert(bootstrapWorkflow.includes("node-version: 24.x"), "npm bootstrap workflow must use Node 24.x.");

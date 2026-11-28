@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { validateStablePreflightPlan } from "./npm-stable-preflight.mjs";
-import { classifyStable, selectStableRequest, validateStableCustody } from "./publish-npm-stable.mjs";
+import { classifyStable, selectStableRequest, stablePublishArgs, validateStableCustody } from "./publish-npm-stable.mjs";
 
 const read = name => readFileSync(new URL("../release/" + name, import.meta.url));
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -96,4 +96,12 @@ test("occupied versions only reconcile matching source and tag state", () => {
   state.versions[preflight.version].dist.integrity = pkg.integrity;
   state["dist-tags"].next = preflight.version;
   assert.throws(() => classifyStable(pkg, preflight, 200, state));
+});
+
+test("the publish argv isolates both npm configs and disables package scripts", () => {
+  assert.throws(() => stablePublishArgs("frozen.tgz", "empty", "empty"), /distinct/u);
+  assert.deepEqual(stablePublishArgs("frozen.tgz", "user.npmrc", "global.npmrc"), [
+    "publish", "frozen.tgz", "--tag", "latest", "--access", "public", "--provenance", "--ignore-scripts",
+    "--registry=https://registry.npmjs.org/", "--userconfig", "user.npmrc", "--globalconfig", "global.npmrc",
+  ]);
 });

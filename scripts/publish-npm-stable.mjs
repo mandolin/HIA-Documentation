@@ -166,6 +166,19 @@ function verifyOwnerReceipt(zip, entry, preflight, planDigest, packages) {
   }
 }
 
+/**
+ * @lang zh-CN 构造正式发行的 npm 参数。两份独立空配置使认证只通过 GitHub OIDC。
+ * @lang en Build stable publication arguments. Two separate empty configs keep authentication on the GitHub OIDC path.
+ * @param {string} tarball <lang lang="zh-CN">已经核验的本地归档。</lang><lang lang="en">Verified local archive.</lang>
+ * @param {string} userConfig <lang lang="zh-CN">空用户配置路径。</lang><lang lang="en">Path to the empty user config.</lang>
+ * @param {string} globalConfig <lang lang="zh-CN">空全局配置路径。</lang><lang lang="en">Path to the empty global config.</lang>
+ * @returns {string[]} <lang lang="zh-CN">传给 npm 的精确参数。</lang><lang lang="en">Exact npm argument vector.</lang>
+ */
+export function stablePublishArgs(tarball, userConfig, globalConfig) {
+  assert.notEqual(userConfig, globalConfig, "npm requires distinct user and global configuration files");
+  return ["publish", tarball, "--tag", "latest", "--access", "public", "--provenance", "--ignore-scripts", "--registry=" + registry + "/", "--userconfig", userConfig, "--globalconfig", globalConfig];
+}
+
 /** @lang zh-CN 从实际工作流执行已冻结的归档、Registry 和 OIDC 检查；写入仅在完成波次批准后可达。 @lang en Run pinned archive, registry and OIDC checks from the actual workflow; reach publication only after authorized wave checks. */
 async function runCommand(env) {
   const [planBytes, sourceBytes, custodyBytes] = await Promise.all(["stable-preflight.json", "prerelease-candidate.json", "stable-publication.json"].map(file => readFile(new URL("../release/" + file, import.meta.url))));
@@ -207,11 +220,13 @@ async function runCommand(env) {
       }
       assert.equal((await current(pkg, preflight)).state, "pending", "Target changed before publish");
       const tarball = path.join(area, pkg.file);
-      const config = path.join(area, "empty.npmrc");
+      const userConfig = path.join(area, "empty-user.npmrc");
+      const globalConfig = path.join(area, "empty-global.npmrc");
       await writeFile(tarball, bytes, { flag: "wx", mode: 0o600 });
-      await writeFile(config, "", { flag: "wx", mode: 0o600 });
+      await writeFile(userConfig, "", { flag: "wx", mode: 0o600 });
+      await writeFile(globalConfig, "", { flag: "wx", mode: 0o600 });
       const npmEnv = Object.fromEntries(Object.entries(env).filter(([key]) => !/^(?:npm_config_|npm_token$|node_auth_token$|gh_token$|hia_npm_)/iu.test(key)));
-      const receipt = spawnSync("npm", ["publish", tarball, "--tag", "latest", "--access", "public", "--provenance", "--ignore-scripts", "--registry=" + registry + "/", "--userconfig", config, "--globalconfig", config], { env: npmEnv, cwd: area, timeout: 180_000 });
+      const receipt = spawnSync("npm", stablePublishArgs(tarball, userConfig, globalConfig), { env: npmEnv, cwd: area, timeout: 180_000 });
       assert.equal(receipt.status, 0, "npm did not confirm publication; reconcile before retrying");
       for (let attempt = 0; attempt < 24; attempt++) {
         const after = await current(pkg, preflight);

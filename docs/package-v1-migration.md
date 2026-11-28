@@ -4,6 +4,15 @@ The following twelve packages have coordinated `1.0.0` **source candidate**
 identities. This page does not announce npm availability. Check the registry and
 the release record before changing a deployed application's dependencies.
 
+This table covers the twelve packages with a prior version in this coordinated
+core migration. The system's [seven-repository archive set](../release/stable-publication.json)
+contains 45 packages, including thirteen core packages with `@hia-doc/jsondoc`.
+The recorded tarball digests and checked sources identify the artifacts for
+verification. Ordinary npm installation of the stable set requires an actual
+published version. The [public candidate guide](prerelease-candidates.md) gives
+the current exact trial command. 中文：此表涵盖本次核心迁移中有旧版本的十二包，
+系统归档清单还包括来源已经核验的 JSONdoc 及各领域工具。试用请按候选指南选择准确版本。
+
 | Package | Previous manifest version | Candidate |
 | --- | --- | --- |
 | `@hia-doc/core` | `0.1.2` | `1.0.0` |
