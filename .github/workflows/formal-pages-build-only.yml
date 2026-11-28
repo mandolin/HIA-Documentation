@@ -77,9 +77,9 @@ jobs:
           set -euo pipefail
           ln -s "$PWD/dist/formal-inputs/consumer/node_modules/@hia-doc/renderer-html/dist" packages/renderer-html/dist
           node scripts/assemble-formal-pages.mjs
-          node scripts/check-official-site-pairing.mjs dist/formal-site
+          node scripts/check-official-site-pairing.mjs dist/official-site-formal
           mkdir -p dist/formal-upload
-          tar --format=gnu --create --file dist/formal-upload/artifact.tar --directory dist/formal-site .
+          tar --format=gnu --create --file dist/formal-upload/artifact.tar --directory dist/official-site-formal .
           sha256sum dist/formal-upload/artifact.tar > dist/formal-upload/artifact.sha256
           cp dist/formal-pages-receipt.json dist/formal-upload/verification.json
       - name: Upload the review artifact

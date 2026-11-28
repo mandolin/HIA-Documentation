@@ -17,7 +17,7 @@ const base = path.join(inputs, "base");
 const website = path.join(root, "dist/official-web-preview");
 const keep = path.join(root, "dist/formal-reference");
 const legacy = path.join(root, "dist/formal-legacy");
-const output = path.join(root, "dist/formal-site");
+const output = path.join(root, "dist/official-site-formal");
 const consumer = path.join(inputs, "consumer");
 const receipts = JSON.parse(fs.readFileSync(path.join(inputs, "input-receipt.json"), "utf8"));
 const requireFrozen = createRequire(path.join(consumer, "package.json"));
@@ -107,7 +107,7 @@ const publication = {
 };
 fs.writeFileSync(path.join(native, "publication.json"), JSON.stringify(publication, null, 2) + "\n", { flag: "wx" });
 
-await composeWebsite({ reference: "dist/formal-reference", legacyReference: "dist/formal-legacy", legacyMode: "sibling", out: "dist/formal-site" });
+await composeWebsite({ reference: "dist/formal-reference", legacyReference: "dist/formal-legacy", legacyMode: "sibling", out: "dist/official-site-formal" });
 const status = await checkOfficialSite(output, legacy, keep);
 assert.equal(status.systemStatus, "stable");
 const inventory = fs.readFileSync(path.join(output, "official-site.json"));
@@ -133,6 +133,8 @@ for (const locale of ["zh-CN", "en"]) {
   assert.match(page, locale === "en" ? label : /1\.0\.0 稳定版/);
   assert.match(start, /npm install --save-exact @hia-doc\/cli@1\.0\.0/);
   assert.match(start, /npm exec --offline -- hia docs build --input basic\.hia\.json/);
+  assert.match(start, /deployment-versions\/#upgrade/);
+  assert.match(guide, /id="upgrade"/);
   assert.match(guide, /3307718d802e620b6af4259a9ef12fcfbb90efe6\/docs\/package-v1-migration\.md/);
 }
 const proof = { ...receipts, status, standalone: publication,

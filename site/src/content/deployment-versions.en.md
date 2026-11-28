@@ -23,6 +23,14 @@ Confirm package names, exact versions, and signatures before adopting the stable
 
 Archive acceptance should record the source commit and digest of each of the 45 archives, the site inventory, and the standalone JSDoc plugin, theme, and renderer identities. The documentation system, npm packages, and artifact contracts have separate versions. Before upgrading an existing project, use the [1.0.0 package and contract migration reference](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/package-v1-migration.md) to identify the affected packages and exact contracts. Check compatibility reads and explicit migration with existing inputs.
 
+<h2 id="upgrade">Upgrade to 1.0.0</h2>
+
+1. Retain your current lockfile, build command, and an existing documentation artifact. Use the migration table above to identify affected packages and exact input and output contract versions.
+2. Install the exact packages in a clean directory. Verify that the legacy artifact is readable before using the documented migration API. If validation rejects an unknown version, retain the original artifact and check the producer version.
+3. Build both language outputs and check descriptions, parameters, and source links. Verify the result in a separate directory before replacing existing documentation. Restore the original lockfile and artifact if you need to rebuild the previous documentation.
+
+Retained technical references keep their snapshot's version labels. The root version index identifies the current system documentation. [Core compatibility and migration example](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/core-document-migration.md)
+
 ## Authoritative references
 
 The linked technical references retain their actual languages; this English guide does not imply that every linked reference is translated.

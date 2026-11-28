@@ -25,7 +25,7 @@ Run this from the directory containing the installed CLI and example artifact:
 
 <div class="code-box"><div class="code-label"><span>Command · installed CLI</span><button class="copy js-only" data-copy>Copy</button></div><div class="code-scroll"><pre><code>npm exec --offline -- hia docs build --input basic.hia.json --out dist/docs-preview --locale en</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
 
-Run `npm ls --depth=0 @hia-doc/cli` if the command is unavailable. For incompatible input contracts, follow the [migration reference](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md) for incompatible contracts and retain diagnostics; changing a version string is not migration.
+Run `npm ls --depth=0 @hia-doc/cli` if the command is unavailable. For incompatible input contracts, follow the [migration reference](../deployment-versions/#upgrade) for incompatible contracts and retain diagnostics; changing a version string is not migration.
 
 <h2 id="read">3. Read and check</h2>
 

@@ -25,7 +25,7 @@ title: 第一次使用
 
 <div class="code-box"><div class="code-label"><span>命令示例 · 已安装的命令行工具</span><button class="copy js-only" data-copy>复制</button></div><div class="code-scroll"><pre><code>npm exec --offline -- hia docs build --input basic.hia.json --out dist/docs-preview --locale zh-CN</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
 
-命令不可用时用 `npm ls --depth=0 @hia-doc/cli` 核对组件。依输入的实际契约参考[迁移参考](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md)，保留诊断，不手改版本号冒充迁移。
+命令不可用时用 `npm ls --depth=0 @hia-doc/cli` 核对组件。依输入的实际契约参考[迁移参考](../deployment-versions/#upgrade)，保留诊断，不手改版本号冒充迁移。
 
 <h2 id="read">3. 阅读与检查</h2>
 
