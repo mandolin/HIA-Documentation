@@ -1,0 +1,369 @@
+{
+  "format": "hia-npm-stable-preflight@1",
+  "version": "1.0.0",
+  "tag": "latest",
+  "publicationApproved": false,
+  "candidatePlanSha256": "e14ffc4fdc7847ec39054d73b6cefb97a53f2e866712098671e882ce2f54fb51",
+  "packages": [
+    {
+      "name": "@hia-doc/core",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.2",
+      "latestIntegrity": "sha512-VKCL6BvSler2X4l/rsyf/Y8KQLZVytz1QO6/nKS+5PdqtoPYZYw/Ey2OSA/2CYt3pIrhvdE7dtzS1gTV4UdM4A==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-HPAf1C9P/jLIiqdEc7krXjNT0tgZbO6nTK+fVS6lV+yLcfg0jWlomJgd1m9L81ski1kNedOZKJETzVjkwsitkQ=="
+    },
+    {
+      "name": "@hia-doc/css-parser",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-4eFbkbPtJLcRnjuN4nO/Hskf4enTrgYhSa3nrV9oVMABltYvnR5BSmdUaK1X5A5fGdZuh4IRzrayDxDL4l0SrQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-VGodVwZ1UT8W55jPvReJ1S60FCXBNCi5ONIydsBVNFt0+uHMjQjZ0FLWUFhd9NKQW+vrPBOPrcCoEfa+4Ukp4w=="
+    },
+    {
+      "name": "@hia-doc/cssdoc-spec",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-AQy8KRG7yDOkJAtb9HTr1L76FRnJc/l0Rj1O+eLwzuNWNJV/WVZEG0zPB1lmYnei7V+IXzlS7B4rtB8jrZQr7w==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-wJ1WvBv2SKhiDfCM+q+YtNkt03NGnB8Pu7z26meyHMXZavBz50fTC7stQXWpwVZqqL4ZHdPICyPYbwodvSkOuw=="
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-spec",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-7fzunoDJoXfAnGOcslhDWr23AEJ8ng03EpStLKL55RnPwf3mKTB7IdByUSZu2rrQA6kZDYNhwFZlSe1BMhQC6A==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-kpKVQgaIs/Iu4BAr5K/7m/73SLaWq+NwXNSGxTFaZj7XshiJtsEBOmxzI9D92T+eAmMnTVgoir3GT8Bpbz/jSA=="
+    },
+    {
+      "name": "@hia-doc/htmdoc-spec",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-M8/mT5GTwZaRjVGPBJ2lQFTp6YX+vukLn4l1Cyk9ce0ZvA/mRhEhrW4T7ZjZPJESPKEMfx7oFfaGc+Ve1qPXcw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-dgXIAeGRpTdqodpB2dMcEjQiKlKBKZkGIXbma37pB/mLrXL9vCWuSebD5M1a1iDR0dM2TP6ZiIQrA9/lYEufgg=="
+    },
+    {
+      "name": "@hia-doc/html-doc-source-map",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-M/md+SQmFBJ2P10/bijWL/cdinxilr2wsg2aFcqbl9bS9PYPxVXpUHKn3+BgDKx8D+ENWdBzhHAWyyw9CKqcew==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-us3ScwTscsVCI3muN4GqBzYyCxH5Cipni1tpbGCeeIo7/WnfmBM0Vnkj5VouQ5v7xdfreBTPBmu3scNv9FCuAg=="
+    },
+    {
+      "name": "@hia-doc/html-parser",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-27xfxBzsD7W8RPqqnM1Jxma8Jho2aOowiwBZDEYLXYPy1RWT1xzTW6ELUMd4YF6vl0VJTAD0aXMFOjoi0CaRdA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-EeYWqHupmqd5BrHWmDjblXql62F+fUPMPQZcbXbA/tSfesPHh/Qnqm3MBE2mkBcUsbgmdagXmGPKbhUjHCUgWg=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-spec",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-C2Q/+DeVNXn61y2A6C156dVEzqclkapJ+jpBISgsy/z77jIFba7L/62q20XwfwPM+Ars+UZFHbd4F3xpYSt4Ow==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-dQMVidXwKIBCPVPyXd2+pwtU/vR8k7XindbV26/50BrP/m1+XUjw5wEVr/HU5fCRs5hjtOXyyASl4B71XzXTUg=="
+    },
+    {
+      "name": "@hia-doc/schemas",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.4",
+      "latestIntegrity": "sha512-0/Yb0esCwSKHTOXCaauKetFH+OKEt2AtQFQZHQFLe0P9n5FWmfOj08puqmxVYlAjJwO3tlfGGhXgLpA0DzLg/g==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-/D44pNy5kLDvgEFRg7sxW/ArdQ0eOF1WVXxFYVQensQJrM8OQyazlr0D/SUd7Fo4Hr6WvLM3TZpq+5kTCPUL9A=="
+    },
+    {
+      "name": "@hia-doc/theme-default",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.4",
+      "latestIntegrity": "sha512-nmBc1cemTQ797Rv0JIm0fdNUOB2sgMAnvqj9GVCuVwMRnqi90IKr5Rm879wMmqyuC6BU4daV3ymiDsvIo7MLEg==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-LppMwg7eJ7b8w+2K+/Zlh8a0Nq3x8XlN8zmbrgR2o5lyVXLNU7IrzYymrfu5XheKVKU+XBCAeQtQA8kCc9etxw=="
+    },
+    {
+      "name": "@mandolin/jsdoc-plugin-hia-sys",
+      "repository": "mandolin/jsdoc-plugin-hia-sys",
+      "latest": "0.1.2",
+      "latestIntegrity": "sha512-FO8Go6tNb3WCDEqnm78BiLdj07eSbTtH3EvzUWUj9PiMzXoLJTqV2VEOZ2BKm7f0Y2GGgqCNtFSdS6bfqw8J2w==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-2SDjJVEwves9/W5wuZaF8vuDOdLD1h2O7t9/t2w69UZzL6NMpYPjodUgc958KEiwPLJY5pLBkwqPOv+hOEOXJw=="
+    },
+    {
+      "name": "@hia-doc/cem-adapter",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-R2MMQjZWzCRC7kwBkvNe2Wr58nZZFIaAsR86FpwWQl6U9HoXuIMLtS4s6LmJPDgBPl2rESEoIGdoE05/AJRmfA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-OcTVlC/CGYSWZ67NhmlR2/O+2v64Wetgu75MRPaIZo0D1K5vz0ggUC2fIuCayLJMFsDAKfpwlYBvqHF8hZtZnA=="
+    },
+    {
+      "name": "@hia-doc/config",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.6",
+      "latestIntegrity": "sha512-ooBWW28ktghVhNvKZNjUaerHNT7HQPXYHP5sxgdyv1lpmxwX3T7pRWRXkDoDqsNf5Z0fKwl5cDc/reILVjc8wQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-7aFEFaggumWdRrkr+Fl8vjdwI+3ZUAMcTkc3RBUguYADUThjjqHq2URiZsaGayO5T6FtG6IXnauv8mMy4t97Gw=="
+    },
+    {
+      "name": "@hia-doc/css-doc-adapter",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-mzVuqxgZE9OUeFBryvNml2ZChZnzoO9yG1qf/5pVkPolWFSQ0oLiNOEC8jjh2Ipp3J2jxfylONOFzy8wGqM/LQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-S8aWR9hvpPNvHS8E4tneLrv0DSomhVEzuPvsC27eT95EvFn4qts+BZStNFQ1rDEovwig7XLkVdp/wacOzQBAWQ=="
+    },
+    {
+      "name": "@hia-doc/css-doc-source-map",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-akN9Kfehly0XVKsDetS7e2zqRi5lBwv1zMBP92GCSqEOqnAU/s8T5L9u4wyua5RBmJyir6oSoEy/4HoFfdXXWA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-hGJDf9h5hNGGAowI0N2i1AtBfUlaVn8aBpts+8C3EpBYLVFPY1RS+5jXzZYNDJw0p/gkWAmLKwMCdcBV4y4jbw=="
+    },
+    {
+      "name": "@hia-doc/design-token-bridge",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-EZrArwv2i+Y5DpN/sBvo2qh0mwK2NdC7zlsR7NmbK/nxBiFAOHZefwTtoAtYBGm+9Yqhzw8sL4WMFR2UjBpF3A==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-DGSGDZ8j4QhiQ5n51MtBiq8uWFk2s61q4nUelgJFV6JtYfQIzoloBdnQ0T8Y9vnioKMVAxaXbSwTwVLnbwkisA=="
+    },
+    {
+      "name": "@hia-doc/dotnet-xml-doc-extractor",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-IXHueM2XiYkP4XaBDhIzjHRlHFfFcprts9ghN5N6zOAqKiFbp4486DWjY4/N5493Va9wwB5oMTni6glzDfXDCw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-AHObFMgNADxJv/fUQZ4GVTcC/IXeyDUD6z3kUHN1c7TUjatPxNJx0zaaFLDSwVoFDzjOzExRAFI/ImNhIBnLDA=="
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-adapter",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-1fGSJ3oDnlQqtGKrgLOsHvs3yR+ScMGOorKoELlOmLEQXunpgy1FcD7A7AzQ0mt1Ez0+kUDl9EJvorjDoCot8Q==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-5vwH8WpAWSxwKwx3/DuKyWfdzNtS3Aa9i3J3JnwNylFRqHzkKj9mwNqHhYW3uybyZZ8injn7gslMwmCB3jv9Sw=="
+    },
+    {
+      "name": "@hia-doc/html-doc-adapter",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-ppyzbaj8+Eg77Wjkf1PB6A8VqfmCtGPYy1AC6ZVanjA4YIhP+Jc6GbSSw+IGc1yOlAStck1vzCM+EPVS2MbuVA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-dy8IS7YsoTV+SsdYKJWqFrMcHsrweeZ/Cl73CalLcNl89JJfDdAQJ4M3ycw+knKQTEJVSa10KfFTGMeIA1c7Ig=="
+    },
+    {
+      "name": "@hia-doc/html-doc-extractor",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-BbVByVtNwS8Nl8BVqTBM17Kz3xbdwUDk3skkOOySqqmGyh0AOyN5y6TdZgQ8z0imK/nAEwMapumPHJKhNNMeeA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-TIFUeW57JlJDMvXlUwdzhfiQMPXAs7Vxt+GKUavNBjghJTPQT0VjGmZhZBGyL0CItmCtFywZkxAmiH1GApfUCA=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-doc-source-map",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-zoUIM9ey3Vv2P3oJ80i65idcIs0io2Ku9cZIuQWB7/h0wtpsCOoLxFXFNy1NPrSbTVKluRJjyOyjH+79H+esUg==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-5IWixAz/WkDPccH+K5EKzo+AgV5jLeUSqaC+FeMnl4dJh2MvoqDQKucQgrb8FVexRZFbAuxOf1cvOnZGUYS0fA=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-extra-plugin-registry",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-ch3M9fkcZSR5RZFzsKlb5rKa3NhTiQ3pYq2bBlW6qEcnzBLTsIrDCNpprtM26XHY5UIBt0zomdzPgM8h9lu3vQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-dpT9bc8+O7cebGQ15hm2Zn/UaPY96D4kPrRmXas00tp12RQcXnhKXdSZQ5mu21kkvVR+db+CixsQoIlSuOBCgw=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-plugin-hia-bridge",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-Nkh2L0gOYwGdRGJl9GwcnyIpSaLXhHe3ZtQg7Kr2ISntgb/y6GYwn1o34v9Fv5dqo3kaZaedvkXrZLbeI9Wcrg==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-h3GYoql+K/aKNuAe3vbo56fzBQNkTtTc+FsTTTZkItt4k7/7Sn/9aoTr7KF8l56Y+WhPEGpO/xYwyENZrW0lcQ=="
+    },
+    {
+      "name": "@hia-doc/parser-jsdoc",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-ht8As+/oLEyLkLO8jdGhccYF5XRXLS53V3y9vPw8Qz/kpfcoR9pJlGAgaAafW2AkTgJhqcxOyIPVonmc8+L+DA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-VrGTzly6PY/FAjGiA6docoxUG1bRkVq7KMJ2lrszH73ymz3BKcQnqcUYIwmYLwSRxBkSacNHiiVd48MRtu+2aA=="
+    },
+    {
+      "name": "@hia-doc/plugin-sdk",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.2",
+      "latestIntegrity": "sha512-nq/0x0tkeX5s6CEeRjcEvf8U0YIlmy3m694o1l/FtGy2RO/HuLodC8nL7hgV0PqUZ2t54Yf+nmiCeyA2ACpO1w==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-9r7x+xHStMjkF4yH0O9pVmiE+pvuFCOfmhoR/7Z+0rjklawZrCctu9HCzcdNJCrFLczQEOJxKkirpgn2cBEsew=="
+    },
+    {
+      "name": "@hia-doc/profile",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-1r57Gm3p20CQAr62edVe+kOmzQtL+8qJep0mggjnp+JE/jM7INcO3RYRcnaFhPrBnTOmcr0l8YtYGdXiuyP4Tw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-/gqNOOeQQXzWiKipRFuaI4RvS48vmIrwK2vLQ9tzEbZ0zVwpxPCmHZrK8wXdNoZlMt+Gz023kzbRe08g7x8xxA=="
+    },
+    {
+      "name": "@hia-doc/source-linkage",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.1",
+      "latestIntegrity": "sha512-gPt7+LpNBUxJ6c0rlkrOKxWrUzUOf+RnSEV6v5N5rNaA6Dznk5MpxX2hY6q4IOdEMf8HKdVnpSc4+4bAyQNuMg==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-uNXChSnp4kQMBt4OInESktj4+7CjKsVbFG4Q+Ri4q/zA9vbV+yQDPsNHtoLGsvpW/EMel6hSiJ/IaX9dy4R6pQ=="
+    },
+    {
+      "name": "@hia-doc/browser-panel",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-milyjUkbSjf79kk3Sf7l2krAevTZbgaGC8RgQaBu7g2LDbTp3BeQJ7cWJh8w3c1fxWnWKU0ZOFiYORDLTJIGcg==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-1aZn8U5KUOMLGrEwPbRFOw7jX3N9a62NHxTiisZIB/Q1Y8styCeCkOqs9g4pCQR7p6TD+Kn0tAFZ+t8iJ47MNQ=="
+    },
+    {
+      "name": "@hia-doc/css-doc-extractor",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-i95pwVvRbTVBFzUFz9SFSWEBib9GsAK1rXQnrlk/I5uKbo0PF566oUQac4lS+KTSSn7R2/TiYndajei69nVOVw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-NB9Mjs0A0L9x3zxi9ZVqlpS/KwFPdikMNMbNXWlkuRypuFau/jC1OsSveiNHSR0Pw7FWscbShjT+NntFbp/1+g=="
+    },
+    {
+      "name": "@hia-doc/dotnet-source-extractor",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-T8GF6D3dMrUpjii3XyhXGnXWmdU8nS0jzXBNq8fwWZJwrOg3tdLNUOFD0gXHXb+7ZtFKhr4OIuz8GFY+1h4aqA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-8uFblR9Cji2KGq2pP9l7NPQFvbKgdrXhoG43kVn7Hfxfl9usvXu+RTmhPRa7AjNT+5A7OaYovp98838Qr1tn9A=="
+    },
+    {
+      "name": "@hia-doc/htmdoc-runner",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-ADf2TZ29Nkm9Q2nfTxMPg0yIHx2yIuZOX48JwkSw95EefUGivpXupm1mhB2JDK0J5CEnayHwL9SFTAAfrI8g6w==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-1xDGbBJja/QaIsKc6dhxKGHceaILRKy+Dw8NIBblheuRpv/wFGqIym4+kYB9YMZT2qRwsjDUaMxMyGB1JnhyTQ=="
+    },
+    {
+      "name": "@hia-doc/jsondoc",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-2MI8M4GpaLfCR6sLPHQ0kCJkR+Svo5icTY8mtfsaUQifhyM+yj9EcPQ9H90oxc4n3nUWoHdBr7THk0phiQQA7g==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-5qDPuAQiRa8J95ict55L0pyYkpvtGiD39HrMK5M2Y9SoQ+lev4UNU0M7bOevQOQx4Bhqjv3A9y3FM0M/+mjGpQ=="
+    },
+    {
+      "name": "@hia-doc/profiles",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-S/vbVV1azLSxd6JBj8L47qQqVG+CZbaMA5ZsWSI4Tjns2fE3Tv0xh+J/aSjKOm3RxyVUUAH5rtooH8w25+tifw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-hg/1STG0Sn4Q/JfFmfe6VZiT6sF7GtfOeFhl4eReJbDpaAiJdXeqd6Ae9J2pPbMfSnFMnuGis6MSlpf/VReyPw=="
+    },
+    {
+      "name": "@hia-doc/renderer-html",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.8",
+      "latestIntegrity": "sha512-K9pE7tY3EytN+ty5j3CY9OCxNOBfa9iVkAFaCSHCHttVvbBKI5RBUHoWu7EdsQOEru1EbBuwkJMJg0UmfG0LmA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-4Mttd0JOIAJZkLUHE5Bhk8ECFtnjMlv1tl6AmP2weseIxyow5cGIxDtmKZUzvpX/vhVmr4lIT3ZBlTzzajpwsw=="
+    },
+    {
+      "name": "@hia-doc/cli",
+      "repository": "mandolin/HIA-Documentation",
+      "latest": "0.1.11",
+      "latestIntegrity": "sha512-ma3oPyjm/5/N1ExbE0inh3MLOx5qdC3z9BM8tAbSRBssmmnuJ+Imi8DQNPFTl5WcjnGodtnnTGvVdWGUg/GRuA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-ZzNB9lZSv9y4+cW11r/Vt7Gzr5cy6QhwH+GcCGaw7Y0g6WOyCJX9mHhaUGHUxUCj+zTRI3/z9ZcxKbBzdtKNEw=="
+    },
+    {
+      "name": "@hia-doc/cssdoc-runner",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-YlsgZO1fgZUiTQKkUnkVqFF89f7V/YQeQTI1XPVGpPtEHQGybouP/DgJQnHU43/lvsPEFm0XV1I3t3d06Kr69w==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-mAPS+AVqm4dPcRvvq6N8Io3ukntJ7B7tcmX+djFSyEXSP7nLXAiMBaT1fa/3dGobXh2eARIdAL70KCs0auH53Q=="
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-runner",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-Gs8Y5jXOV847b8WwzdnWTWuMGMQjwZpIohyIBplx90FjP7PPNAbSA0DDc9XLE8kaJ3dK1z7Y/WZSrItd4nvxQQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-WvEaJcQF7nNGtUt/hX5SbK5VeXJkGaEAKz2gyw7Bdp/02+8BYiDQOJ0WPt3dSj5Zr22R1SURJ9eVy85ofKMZew=="
+    },
+    {
+      "name": "@hia-doc/htmdoc-producer",
+      "repository": "mandolin/hia-htmdoc",
+      "latest": "0.1.0",
+      "latestIntegrity": "sha512-Og66uZjq9BYxAN8gR9GtlCAYp1oY60V7hsycymnboOcUA92n/SyevL87nt2qFtQamRcgXSxcEViiG44wgqpI9Q==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-ITt8GHUoOwFywPjgD00u6GYFDivIpg7uBmcdx5XRvDvBpSpfvvKSGZ81QayETA2FV/tL5BARzr5Tpg5KSYwuVQ=="
+    },
+    {
+      "name": "@mandolin/jsdoc-theme-hia",
+      "repository": "mandolin/jsdoc-theme-hia",
+      "latest": "0.1.1",
+      "latestIntegrity": "sha512-6wGuEH28N3ms91nI+b/sgn5gAdBqdpQjICMVxkPoJWmKWoAncEHVdmHcpwd0ot+62hvTKKaEjQ9uf6VutS0WGQ==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-f25Nq8dCtnDwIc4v/2Jh5XVSASIVbUJd5Ko87hMHNfOOg6/zOQPuxEHgkXIHizaCon/qlqDEdzyorp/2WAXQFg=="
+    },
+    {
+      "name": "@hia-doc/cssdoc-producer",
+      "repository": "mandolin/hia-cssdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-uCqGHN00VfYU9HrntN4IcB3XFpGdgdjTIYW64g/8ZLB7/fAkmuVuFMH/39Q+DHjJPx9aZRiXOfRAXuF2Zebeew==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-4AuL2ekAEvd6tP4RHmtARv2yJPySY9KGRa/78J2J3P4H5PwXOVFEcAyJ3PpU1C4xVgGCUcEIGSqvRSoUDi6g2w=="
+    },
+    {
+      "name": "@hia-doc/dotnetdoc-producer",
+      "repository": "mandolin/hia-dotnetdoc",
+      "latest": "0.1.12",
+      "latestIntegrity": "sha512-NCpdxjiF63t4IFYGuKSu5avaP0WUjgj+8EnKBSS0gZhrPW7NMeOYJnt9+hrjTpkYFVp3ogU9xtndo+cVk/iuaw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-RZIyrzm5tp9Rqc3cjS15PZwhv4A2tsg6mTZWIE+WkrrpynCJhpIUW4uTMOI4v0CQ1U/qfJJAye5PZM/lfIYxXQ=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-theme-bridge",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-s8rLx1h77ombcHRSdOpNVMhluypPFs7xXNnCrEutN0DQqKv4cxLnfg3xibW7PE5e3Qj/sJ9HcV/54jbHnku5lA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-1OB3sfuNPVXC1TNSZfjwZL0dobfx0Dyj1wyNFj2tbohGBaYBEByE/1DnuFd0u3IlOBcJqAcqLJ6LjewafUXQ2Q=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-preset",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-b4HDdaZFAU+zDn+Y6jVBWvS9gfkz4XVpYWl/Mkj+Vlthx/PbuYtCsxP1dCGvAOQeZodlGqYm9V/up8MFuaWrcA==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-jFyUPxevdHmqRvb98HVvC6o72s8vbAG1J7fCuwmyO7jswkWgvca+6KPKKgavl4To76IP4Yx9CoYLsp5Wo25mtA=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-runner",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-1AsDaD1gq28zTGX5wBRB9d8gr9PsOEPqyYlZl2ihafCQyffqkpKTD0uqUCnMKyHYLHHSTRrHQfxXPDyS1b9Ggw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-mnFqKcxU30WtbSNyO7YTaQ7X+VZdifFoOCaCSC/pQPcApYEY3FterV4rEi1eExWaFX9KGW2Joy7bJWQ8B0jfNg=="
+    },
+    {
+      "name": "@hia-doc/jsdoc-producer",
+      "repository": "mandolin/hia-jsdoc",
+      "latest": "1.0.0-rc.1",
+      "latestIntegrity": "sha512-HEGzQ9x+ZtbuMr5rESHp6uZ0tBtL29TxrH0xHzs/jC+7mAsm3iOZmqfc8JQrZdlkPgPwyuFVb/AtZ3wY789FGw==",
+      "next": "1.0.0-rc.2",
+      "nextIntegrity": "sha512-eqBBoVSNN1owdDxk2MVZJAEwLM9JxUO0U192fcKEaNF0nWmxh5vlQcCVvP9l+BNN2bSmBGPAU3sqTOuuLoigXQ=="
+    }
+  ]
+}

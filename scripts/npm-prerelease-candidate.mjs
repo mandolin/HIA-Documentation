@@ -1,7 +1,7 @@
 /**
  * @file
- * @lang zh-CN 从统一候选计划验证并构建单个维护仓的 npm 归档。仅在隔离副本写入发布清单。
- * @lang en Validate and build one owner's npm archives from the coordinated plan. Write manifests only in an isolated copy.
+ * @lang zh-CN 按固定计划验证并构建单仓 npm 归档。只有候选打包会改写隔离副本的清单。
+ * @lang en Validate and pack one owner's npm archives from a pinned plan. Only candidate packing rewrites manifests in the isolated checkout.
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -82,8 +82,8 @@ export function validateCandidatePlan(plan) {
 }
 
 /**
- * @lang zh-CN 核对原始清单的 SHA 和依赖边，再仅改写隔离副本的候选身份。
- * @lang en Verify the original manifest digest and dependency edges, then derive only the isolated candidate identity.
+ * @lang zh-CN 核对原始清单摘要与依赖边，按目标版本生成打包清单。正式预检保留源范围。
+ * @lang en Verify the source digest and dependency edges, then derive the packing manifest for the target version. Stable preflight preserves original ranges.
  * @param {Buffer} bytes <lang lang="zh-CN">源清单原字节。</lang><lang lang="en">Original manifest bytes.</lang>
  * @param {object} item <lang lang="zh-CN">候选计划中的包项。</lang><lang lang="en">Package entry in the candidate plan.</lang>
  * @param {object} plan <lang lang="zh-CN">已校验的候选计划。</lang><lang lang="en">Validated candidate plan.</lang>
@@ -109,7 +109,8 @@ export function deriveCandidateManifest(bytes, item, plan) {
       const key = section + ":" + name;
       assert.equal(range, expected.get(key), "First-party dependency differs from the plan");
       expected.delete(key);
-      if (range !== "workspace:*") result[section][name] = plan.version;
+      // <lang lang="zh-CN">只有候选需要把正式范围收紧到候选版本，正式可选 peer 保留源范围。</lang><lang lang="en">Pin first-party stable ranges only for RC packaging; preserve the original range of the stable optional peer.</lang>
+      if (plan.version !== plan.stableVersion && range !== "workspace:*") result[section][name] = plan.version;
     }
   }
   assert.equal(expected.size, 0, "Planned dependency missing from the source");
@@ -176,7 +177,8 @@ function checkArchive(archive, expected, plan, cwd) {
   assert.match(run("tar", ["-xOzf", archive, "package/LICENSE"], cwd), /^MIT License\r?\n/u);
   assert(files.includes("package/README.md"));
   for (const section of sections) {
-    const wanted = Object.fromEntries(Object.entries(expected[section] ?? {}).map(([name, range]) => [name, firstParty.test(name) ? plan.version : range]));
+    // <lang lang="zh-CN">pnpm 把无修饰 workspace 范围打包为精确版本，其余范围应与派生清单一致。</lang><lang lang="en">pnpm packs the bare workspace range as the exact version; every other range must match the derived manifest.</lang>
+    const wanted = Object.fromEntries(Object.entries(expected[section] ?? {}).map(([name, range]) => [name, range === "workspace:*" ? plan.version : range]));
     assert.deepEqual(packed[section] ?? {}, wanted);
   }
   const entries = [...archiveEntries(packed.exports ?? packed.main), ...archiveEntries(packed.bin), ...archiveEntries(packed.types)];
@@ -191,7 +193,17 @@ function checkArchive(archive, expected, plan, cwd) {
   return { file: path.basename(archive), bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), integrity: "sha512-" + createHash("sha512").update(bytes).digest("base64"), fileCount: files.length };
 }
 
-function buildOwner(plan, owner, source, out) {
+/**
+ * @lang zh-CN 从固定提交构建一个维护仓的已验证归档。仅候选身份会改写隔离源码清单。
+ * @lang en Build verified archives for one owner from a pinned commit. Only an RC build rewrites isolated source manifests.
+ * @param {object} plan <lang lang="zh-CN">已验证的打包计划及目标身份。</lang><lang lang="en">Validated packing plan and target identity.</lang>
+ * @param {object} owner <lang lang="zh-CN">计划中对应的维护仓。</lang><lang lang="en">The corresponding owner in the plan.</lang>
+ * @param {string} source <lang lang="zh-CN">规范化的隔离源码绝对路径。</lang><lang lang="en">Canonical absolute path to the isolated source.</lang>
+ * @param {string} out <lang lang="zh-CN">源码外尚不存在的输出绝对路径。</lang><lang lang="en">Unused absolute output path outside the source.</lang>
+ * @returns {object[]} <lang lang="zh-CN">已验证归档的摘要。</lang><lang lang="en">Digests of the verified archives.</lang>
+ * @throws {Error} <lang lang="zh-CN">来源、构建或归档检查失败时。</lang><lang lang="en">When source, build, or archive checks fail.</lang>
+ */
+export function buildOwner(plan, owner, source, out) {
   // <lang lang="zh-CN">要求批准提交的干净独立副本，拒绝已用输出；源清单全部核过后才开始构建。</lang><lang lang="en">Require a clean isolated checkout at the approved revision and an unused output; verify every source manifest before building.</lang>
   assert.equal(process.versions.node, plan.nodeVersion);
   assert.equal(run("git", ["rev-parse", "HEAD"], source).trim(), owner.sourceCommit);
@@ -206,7 +218,9 @@ function buildOwner(plan, owner, source, out) {
   if (owner.packer === "pnpm-workspace") {
     process.stdout.write(run("pnpm", ["install", "--frozen-lockfile", "--ignore-scripts"], source));
   }
-  for (const { file, candidate } of pending) writeFileSync(file, JSON.stringify(candidate, null, 2) + "\n");
+  if (plan.version !== plan.stableVersion) {
+    for (const { file, candidate } of pending) writeFileSync(file, JSON.stringify(candidate, null, 2) + "\n");
+  }
   if (owner.packer === "pnpm-workspace") process.stdout.write(run("pnpm", ["run", "build"], source));
 
   mkdirSync(out);

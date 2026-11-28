@@ -1,0 +1,80 @@
+name: Build coordinated npm stable preflight
+
+on:
+  workflow_call:
+    inputs:
+      plan_revision:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    if: github.ref == 'refs/heads/release/w-p157-stable-preflight'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+    steps:
+      # <lang lang="zh-CN">只读预检使用固定源码，不接收发布凭据或 OIDC 权限。</lang><lang lang="en">Read-only preflight pins source and receives neither publication credentials nor OIDC access.</lang>
+      - name: Verify immutable plan revision
+        env:
+          PLAN_REVISION: ${{ inputs.plan_revision }}
+        run: |
+          [[ "$PLAN_REVISION" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out coordinated plan
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: mandolin/HIA-Documentation
+          ref: ${{ inputs.plan_revision }}
+          path: stable-plan
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+
+      - name: Test candidate and stable packing controls
+        run: node --test stable-plan/scripts/npm-prerelease-candidate.test.mjs stable-plan/scripts/npm-stable-preflight.test.mjs stable-plan/scripts/publish-npm-candidate.test.mjs
+
+      - name: Resolve approved source revision
+        id: source
+        env:
+          OWNER_REPOSITORY: ${{ github.repository }}
+        run: |
+          source=$(node stable-plan/scripts/npm-stable-preflight.mjs source stable-plan/release/stable-preflight.json stable-plan/release/prerelease-candidate.json "$OWNER_REPOSITORY")
+          printf 'revision=%s\n' "$source" >> "$GITHUB_OUTPUT"
+
+      - name: Check out owner source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ steps.source.outputs.revision }}
+          path: stable-source
+          persist-credentials: false
+
+      - name: Enable pnpm for the core workspace
+        if: github.repository == 'mandolin/HIA-Documentation'
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+
+      - name: Verify registry, build and pack owner archives
+        env:
+          OWNER_REPOSITORY: ${{ github.repository }}
+        run: |
+          node stable-plan/scripts/npm-stable-preflight.mjs build stable-plan/release/stable-preflight.json stable-plan/release/prerelease-candidate.json "$OWNER_REPOSITORY" stable-source stable-files
+          git -C stable-source diff --exit-code HEAD
+
+      - name: Upload stable archives and receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-stable-preflight
+          path: stable-files/
+          if-no-files-found: error
+          retention-days: 14
