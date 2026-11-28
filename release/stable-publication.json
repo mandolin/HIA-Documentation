@@ -1,0 +1,439 @@
+{
+  "format": "hia-npm-stable-custody@1",
+  "version": "1.0.0",
+  "tag": "latest",
+  "preflightSha256": "97bba545758e151e2c7cda565929a9990c6b4833da25f3669924b44ececa80c4",
+  "consumerLockSha256": "6428c8f9513bf253e5c1f8596fc160f41d4ae25cd1600e745ac6768c014e1aec",
+  "owners": [
+    {
+      "repository": "mandolin/HIA-Documentation",
+      "sourceCommit": "3b72ce3205fb07c534f5f9055398958a9661eef6",
+      "buildCommit": "0a48e2dc69612eada30c5a9723c2b20957890cf3",
+      "runId": 46145676969,
+      "artifactId": 15263642047,
+      "artifactSha256": "1ef914d4188b4d89435d97c77e3fd7f62930cbfea86326ae53e10e587d401b58",
+      "archives": [
+        {
+          "name": "@hia-doc/browser-panel",
+          "sourceManifestSha256": "38e0b172add602b216ece6520bca2f65096587fd824e23427aecaea3c0662908",
+          "file": "hia-doc-browser-panel-1.0.0.tgz",
+          "bytes": 25159,
+          "sha256": "370cd3c7134c5dabdc1074ed26dad4a9a7e7a6a6dbebb432050606c2d87ac53d",
+          "integrity": "sha512-syO/6h33hdzPQVAxEV/K8lhtW+kpQJZkx+OepfO4DOKh2NVyXduaHYmydnSb/hzu24s4ZQqkcLh5qvT72FXSFQ=="
+        },
+        {
+          "name": "@hia-doc/cli",
+          "sourceManifestSha256": "bb83305cc713b58a105dffc569884c29ae67f7122982ee7fafb48c2800c3d354",
+          "file": "hia-doc-cli-1.0.0.tgz",
+          "bytes": 309356,
+          "sha256": "0c1ca052f139dd0564ec1526fd2993618a6c7cda25323610e22c936831570972",
+          "integrity": "sha512-7MNNLUQFCVbqByiJKt+CsVpAMQFjgycJ/sgnWcka0Ho3sHDnmRsDC2oZ4tm0N7JhG5/ujM2b2rwpl41Ar8axzA=="
+        },
+        {
+          "name": "@hia-doc/config",
+          "sourceManifestSha256": "1465a555d509e7b9c3a781b93903f93d9ca0c13c7bf379594d9862ea193a7c03",
+          "file": "hia-doc-config-1.0.0.tgz",
+          "bytes": 51802,
+          "sha256": "5936647cde0da2892906711ac53c64953e81d85b5b7f984ca7002677888dab24",
+          "integrity": "sha512-Pi13qgP+AMaUrKc00lyFo1zbjPiaQrGxVmYBTO0vPNNotwRTrM6gCqztdjHt62cfvVNVAjNVww6qlI9BJNSyfw=="
+        },
+        {
+          "name": "@hia-doc/core",
+          "sourceManifestSha256": "e35ad144c3a4732f3ec7f752a27433d16375f88ceb4a4b6029c72ede8a60c89f",
+          "file": "hia-doc-core-1.0.0.tgz",
+          "bytes": 318483,
+          "sha256": "3751e3dfbf9707fe169cca1b493003a92c327aee4b14d89fc072cb3e23889323",
+          "integrity": "sha512-Z57wDCtlwefTMiZnL6G4kDYddLzs7fc3BALLFCimDx5aEimp1/Dmk49uHoUGEJq6Rsqy0dNKdE7sevpHrHMX3Q=="
+        },
+        {
+          "name": "@hia-doc/jsondoc",
+          "sourceManifestSha256": "98420f0f03df316e132721183db257d3b12644ba544898a74f8ae3c5ef228f6c",
+          "file": "hia-doc-jsondoc-1.0.0.tgz",
+          "bytes": 19538,
+          "sha256": "80c3d6fe36571ab575f2a5bbd2ab15e2459fa6f93b1c3a3fa2a7f034072c49c5",
+          "integrity": "sha512-mZNctv2rHRTigwkkhBlfUSVC9GUL/mhKHeKI98V9k27hurUO2Jwx+rAw2SurnSySPVXQxaQ//Jfp3Rb+vEIUdA=="
+        },
+        {
+          "name": "@hia-doc/parser-jsdoc",
+          "sourceManifestSha256": "5c247a7cc232432d319105b96f6cccdf3e2e31b1a2ffb242c56fd9ddc27d7b0c",
+          "file": "hia-doc-parser-jsdoc-1.0.0.tgz",
+          "bytes": 24400,
+          "sha256": "afad1dfc01ed246ab68cda014a74114a9fa99c548b3b14f4ee9cde715d980e2d",
+          "integrity": "sha512-WrKX2VOJjA81CjCEdhtf7jgPK7bWEIKVjbQm1DrDGGokjNE9gDFU/4sUN389NM7/zTFqH9n4xQKUvzFawQ1KRA=="
+        },
+        {
+          "name": "@hia-doc/plugin-sdk",
+          "sourceManifestSha256": "136495b54be693989bc69c07107745ed3d3cbe806a84aa1acd21f93bfeff59b6",
+          "file": "hia-doc-plugin-sdk-1.0.0.tgz",
+          "bytes": 60745,
+          "sha256": "c2a8e3abbc767ee1da2b6c0bb055b49c70253e1b6c8950dba405c1d51b4759ea",
+          "integrity": "sha512-GHo5clhXlo3BPqocAupw5xRwodBMpC7EEjqCoE/l9okmjkLuF1FYxlHrvIiyJTC5nkrgxv/s6YaZkeABFYTD8g=="
+        },
+        {
+          "name": "@hia-doc/profile",
+          "sourceManifestSha256": "ade1322ca68bf15a94e98e4c9693ce695f15b6d0a7feffc8625c9c5cb94c8a50",
+          "file": "hia-doc-profile-1.0.0.tgz",
+          "bytes": 38067,
+          "sha256": "2ab1089e0cb0909c81676f02c782e0c8caef41bac17665b2d0e3debc8db2e172",
+          "integrity": "sha512-hkyWyinb4wmXOPKOtIT0IIckhFak7DrsLXH13uBtO/IpwbZycCAsXDt/anqeZCR4C+9XCPnBbjX2gJT/MdBkRg=="
+        },
+        {
+          "name": "@hia-doc/profiles",
+          "sourceManifestSha256": "b2ee90cc836867162571792922ad1a25dc0f5a3c507814b06c7e2d47cb798cd8",
+          "file": "hia-doc-profiles-1.0.0.tgz",
+          "bytes": 18371,
+          "sha256": "adc2998fffd8b7c307bcbace4c7c5ac68ac7ef00579a43485541fdabe4c15dc2",
+          "integrity": "sha512-ZqYMxn9x1+A7OhJSrxlFn+hrmGIwRdClEcmG9+HFs+YG2mNPInqLDOGjRCbKbYe3hP7GwQSwIlYe290IHacRsw=="
+        },
+        {
+          "name": "@hia-doc/renderer-html",
+          "sourceManifestSha256": "586c85dd6b2b84837f47ae031371b7338ef67301bd25bee60be2089ce33d4d69",
+          "file": "hia-doc-renderer-html-1.0.0.tgz",
+          "bytes": 241999,
+          "sha256": "b97d211d6936c24d49f5c1f4eb160a9f155b55f650078567de1e9d39e5f14a2c",
+          "integrity": "sha512-AIjbnmRLAMLuFq537oPwaknfDxpSJuEzmXVx0dnGWnOuMa/Pt9KegCb6Z+y6KEzC98M5u/KfnEzKc9ZaABZp6g=="
+        },
+        {
+          "name": "@hia-doc/schemas",
+          "sourceManifestSha256": "9c1d71311301a58265490219d79a93a549bf72a42339535fdb4368f3dd1dc508",
+          "file": "hia-doc-schemas-1.0.0.tgz",
+          "bytes": 51930,
+          "sha256": "408d1007f6567d90a66029ace5f32a78c09e34c31184f0b4ab40ed0e8fc6f5e8",
+          "integrity": "sha512-6WcT85QHzrzz4z8rgqy6EmLrVqid+Y8y2S1CLCdYGQw32Ulacaz+9v+AHbNh59QXhU0YCKGvhCK68pY3VqUVDw=="
+        },
+        {
+          "name": "@hia-doc/source-linkage",
+          "sourceManifestSha256": "d4100f2413ce02c0dfa039de294b4cbae831d3db04dc48f201c155147ca8627e",
+          "file": "hia-doc-source-linkage-1.0.0.tgz",
+          "bytes": 210148,
+          "sha256": "0adf978befa292abf8228ce331dcc6fda4552dbf7929e96939925199114ae082",
+          "integrity": "sha512-oBc9/u8B5cUVp/3TEkk7B4jcz8xU9trjhiBohnzEXDvs7zZTYv4E+O2VDWOjSGlTXj9lvuiiiGz5Y+aNOKRmFQ=="
+        },
+        {
+          "name": "@hia-doc/theme-default",
+          "sourceManifestSha256": "6909af3274ccf1b542ed48d1da709cd80dcf3cd090513faa3ac8cb18270b4d36",
+          "file": "hia-doc-theme-default-1.0.0.tgz",
+          "bytes": 23188,
+          "sha256": "6a3f54f972758bfb92eac99f479ccebf3dce7bdcb79234d9ab51195f70df6412",
+          "integrity": "sha512-2R2Oc9F/PLq2yglFfi1kpwPOUmpdtxxMDGpHKMrw6Bq0PWzenR0LdW8b70MLDEqLQygsVTju0I0U9HDK650qcA=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-cssdoc",
+      "sourceCommit": "bdbe61892622d3b92ffbcb5164ad04b3d8c56517",
+      "buildCommit": "0808e4cabf69c37df8825561f2cba200db885a1d",
+      "runId": 46145714484,
+      "artifactId": 15263318100,
+      "artifactSha256": "6ad5af0e142291a8985fccc5964098aa30160948f0f8cb4575d74317c01cb47c",
+      "archives": [
+        {
+          "name": "@hia-doc/css-doc-adapter",
+          "sourceManifestSha256": "fa84f8de88e83767129056c5352987e54721dd7253f283c81bbf1505881e57f2",
+          "file": "hia-doc-css-doc-adapter-1.0.0.tgz",
+          "bytes": 9811,
+          "sha256": "1d689b958cc974da1863e17fb7e3cd7c35f478e5f2be04c01ce6239102d813ff",
+          "integrity": "sha512-boR6S9G2YBpjF/xmbH0V6Sii7sRHWN/SQy4nq4Paxs0diIAoeaHOIVQohQXyEpOB6nfxbZLYEhla33lzYjkGDw=="
+        },
+        {
+          "name": "@hia-doc/css-doc-extractor",
+          "sourceManifestSha256": "f369e44c510f5b398d54deae895712f1953715e90c0a44cf2d31c433b5cb154f",
+          "file": "hia-doc-css-doc-extractor-1.0.0.tgz",
+          "bytes": 10090,
+          "sha256": "155940b0a274b977cec42a43d00b95f1299b34b93db7a9ec09ea6b0aed5ba5b0",
+          "integrity": "sha512-t+V0uD3fVfLsDGDlpa1T8T8P0awWsR0+MvoTWD4P+ertS9573i8PpP6SqwCaFCxOp31Uu8yBjgqce9idafh5XQ=="
+        },
+        {
+          "name": "@hia-doc/css-doc-source-map",
+          "sourceManifestSha256": "b1f2ca9421a16f6a9f9d847df0cf7fa31b50e4e46999d0dc26814d9bf210f24b",
+          "file": "hia-doc-css-doc-source-map-1.0.0.tgz",
+          "bytes": 7986,
+          "sha256": "eae94f4b2c3f5bff944d67aa060c389a0b05a539474ee153703cfda9f5d877ba",
+          "integrity": "sha512-RoklgTulqVZdBjczv+5Z+OSFQDiUjH2ngkxRTmbgwEuNa1CRdA4tTno/COHvnVlIcd2RPQYq9G9j1Yripwf55A=="
+        },
+        {
+          "name": "@hia-doc/css-parser",
+          "sourceManifestSha256": "7f614df1a3792f18eca9e13c835c8312a9e420d53ca218e357e2cf65ce119bf2",
+          "file": "hia-doc-css-parser-1.0.0.tgz",
+          "bytes": 5097,
+          "sha256": "153739bd5704de85d7013b9708652d4a23fbb3d8eaf1556f0c6168bcc3290533",
+          "integrity": "sha512-YXYFX4asIl7+3LmHFoHvXhcZVvheqGaLMFeuFcKNUaT9AmUpVP9tyyeTJ8knKD3e/EKFLHI7JSSWuseYt/7A2g=="
+        },
+        {
+          "name": "@hia-doc/cssdoc-producer",
+          "sourceManifestSha256": "1e6fb48e5a4d2f99fc7783468ede77227bed33ded4115e9bf0a972103bd7c9e4",
+          "file": "hia-doc-cssdoc-producer-1.0.0.tgz",
+          "bytes": 5148,
+          "sha256": "66cb2f6daa4100c775751faacffdc17d1c068f526b67acf911cc9e8c9fe55fe2",
+          "integrity": "sha512-e3rcG+5/9I56v2cv2edLvHx1ilnmLl3j81rElxBNq3qePCpZCKbUgsXJWGdTDIr4JGK0AMnK0MC3zCI6kNtNFg=="
+        },
+        {
+          "name": "@hia-doc/cssdoc-runner",
+          "sourceManifestSha256": "152921714e2541ffa5922ef7573c72170ff23585e47f1e86dfc5a19bee8d698e",
+          "file": "hia-doc-cssdoc-runner-1.0.0.tgz",
+          "bytes": 45284,
+          "sha256": "497c00739cb17ed31d0ffda4a63989ad35aca6c66078eaf24b0768e4edb8cee4",
+          "integrity": "sha512-b0P8Y34lRvvJOvK2Vr1VLRUWID+9a+U92yBZgzcze53/XdPExHbMlG4F7eCs8bvmoPB3jrrCKvi8NC1xfdIeSw=="
+        },
+        {
+          "name": "@hia-doc/cssdoc-spec",
+          "sourceManifestSha256": "98ce86b0d3048538b682fd31913ddf4f1f830b828437385f57f35e615d206fc0",
+          "file": "hia-doc-cssdoc-spec-1.0.0.tgz",
+          "bytes": 12162,
+          "sha256": "1e0b6575cb0e2135647340750343a92f7277f3ccc37d29c21ca03f2d191f40a9",
+          "integrity": "sha512-OBVL30GbKg5r52/Yc4HWszCHbd+MeLChkL8cLj20HWqQe48yzkEDYRh3P5yKrgcEOavPKd466tS3bM9Rm/B5/g=="
+        },
+        {
+          "name": "@hia-doc/design-token-bridge",
+          "sourceManifestSha256": "80ea1f7c2e8f34b8bbcb2b1df552e78f3f771e12631eb79d6a32921067716f0b",
+          "file": "hia-doc-design-token-bridge-1.0.0.tgz",
+          "bytes": 7001,
+          "sha256": "c7e70759fc4a129bdd6126fbf34ec01294899dabf911a555b50ec727b176d538",
+          "integrity": "sha512-g2dHgjNOm97UgVfKyuxpiSDj2PevvjC4G3kwdbHR0GmvGBkgkPc30+ZeBVaKGnM5pZzzW4bIqgiQ7/cB5uQwlA=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-dotnetdoc",
+      "sourceCommit": "2aca17fba865f02056426cd275ed3414859b364c",
+      "buildCommit": "36bc8658ff3bf38b85d037d9e2f6192427fc7a7f",
+      "runId": 46145714533,
+      "artifactId": 15263487610,
+      "artifactSha256": "7c565daccc57ba2fdafbac05cacdd8fe1419921db6234a3a62bda47c6beb77e3",
+      "archives": [
+        {
+          "name": "@hia-doc/dotnet-source-extractor",
+          "sourceManifestSha256": "e84441d6212ce341a1b1300928cb82a4e1aa0882ad75a21d59ed65fa5d731c6e",
+          "file": "hia-doc-dotnet-source-extractor-1.0.0.tgz",
+          "bytes": 41453,
+          "sha256": "924bc17541a9fa6fea5274e945bbc21a79d9f5e41e6be6975a2b4bfc494d79aa",
+          "integrity": "sha512-o2A5nKrYaR6UDhRH44VKaK28j6CIM4R1nMS4EXFU76qX7+OrBWwxeo+sVqicKgLDa7FzE45/zlvsKCicJimEGA=="
+        },
+        {
+          "name": "@hia-doc/dotnet-xml-doc-extractor",
+          "sourceManifestSha256": "0cce5ac4f4d32758f710401fb05d15da8c6740c6fe7575be08ad8720a8f85e1e",
+          "file": "hia-doc-dotnet-xml-doc-extractor-1.0.0.tgz",
+          "bytes": 9759,
+          "sha256": "8d132f14050d3e91771e9d42395e2221a7c91bcc15e338fe23fb6aad0000d6d8",
+          "integrity": "sha512-c4bci8qYGFIrQL6AlWPSq+2w6Cj97LNtcqRD5PFgVd1/i0jYbt7na/LDQJSrh0+fcSsWRda6xQjKIb2/ljvK1A=="
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-adapter",
+          "sourceManifestSha256": "8db9f61b9f3cc4ff4df3f58fa46f54a59b645c383ee0a1280360813a4ee503fb",
+          "file": "hia-doc-dotnetdoc-adapter-1.0.0.tgz",
+          "bytes": 16781,
+          "sha256": "5905a37ddf4914084d66f253eb67d92835eff98ee192df9eff2299294a539240",
+          "integrity": "sha512-lCf5g6VskpO6GxC60JBK3WJYKFOEx79vs47JlRUl9Ct03mgxIg25RWs8wiO9VWkzLL3ZogjgY0+IHovmQNNecw=="
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-producer",
+          "sourceManifestSha256": "b22a521b21d4600c405b2977145ce77f745d8620650dd6269868fd3fe70beaee",
+          "file": "hia-doc-dotnetdoc-producer-1.0.0.tgz",
+          "bytes": 6374,
+          "sha256": "c9f56fa95e3fa2a8e5df57bc9957b01d6d960ddf4ed0fbeb3b649e6e33e0e81d",
+          "integrity": "sha512-UMcR2YZCf/r6NGDPXBm5Ql8zTlReDPgQxppnddAiUN0oBaPNYhf+/VShwzUaLtSRw9/KJjpbyWxT72OBchAUHw=="
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-runner",
+          "sourceManifestSha256": "e265ac90f58a3709fac99382575c701a85988ebc8add2f65a69a88ec4aa755bd",
+          "file": "hia-doc-dotnetdoc-runner-1.0.0.tgz",
+          "bytes": 79514,
+          "sha256": "b076809d2c287bad7b6df7944a058a89b3a89c359d18d97be9028eb1d88021bb",
+          "integrity": "sha512-6DRgQfbiyqHUZO489brgniQQYbqZ5xpcoeAqd2ujJOR9yhnIEjnq7qBoqniXC269oXq3oT39+kIu9+w/IQh6zg=="
+        },
+        {
+          "name": "@hia-doc/dotnetdoc-spec",
+          "sourceManifestSha256": "e12706ae8e0037e7ee4dafa2383b7470b269121ad2fe36895b14e8a8d16f24fa",
+          "file": "hia-doc-dotnetdoc-spec-1.0.0.tgz",
+          "bytes": 25483,
+          "sha256": "1e547534f366b922ef592ae2957970ec95dec8fa51f9f6528e8ca94e0937c6cf",
+          "integrity": "sha512-l+IuYyJzLgl7zjGFVUF081z6UHisvWfcC1NOwOCxVOe3eIg+k3f5+qkoUdnmtEMyYB3hGdknoXpPsoJFVBFxOg=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-htmdoc",
+      "sourceCommit": "1cf7a230131a517ed6ba5d031a1f6f645828e5af",
+      "buildCommit": "f93f0213c11d16235084651e3d5ee12707717609",
+      "runId": 46145714282,
+      "artifactId": 15263870447,
+      "artifactSha256": "04f2ac55faf0e242361cc5425ef2beac314708b1d80f597b9dd3b9a7482d06c6",
+      "archives": [
+        {
+          "name": "@hia-doc/cem-adapter",
+          "sourceManifestSha256": "77ec5d179fd6ddb99a095982c945d1c4498adf94fc37fccc6b72847f0dd6ebf0",
+          "file": "hia-doc-cem-adapter-1.0.0.tgz",
+          "bytes": 6412,
+          "sha256": "0215d0748a8c53500010a0ffbcabde882d61ec818e79d67d7d9c6b58d345da34",
+          "integrity": "sha512-ihsVOXoYls612mXoqxkDtQ7K4pdZRnHDpiCne0kP7B3FZpbVJk/WcBBKpNzDpAyhVCLMwyr3tMNbO5Fh6Q5jkA=="
+        },
+        {
+          "name": "@hia-doc/htmdoc-producer",
+          "sourceManifestSha256": "226ca047454ce8350b28a4a85862ab8634f382d819bb9a45f9e89c97797caa88",
+          "file": "hia-doc-htmdoc-producer-1.0.0.tgz",
+          "bytes": 5484,
+          "sha256": "8101021be7b4c0bbc813d5688f14d54e90b40982902bf2e643d2f7561328af1a",
+          "integrity": "sha512-46TbXEyp2+5FL9wmbTCb+EHU5DbQjdPsZhGURyIVcG+q8J0NSuPR7us9nXb+M+f1OF6dnSmo1mDAkpIEi2wpPw=="
+        },
+        {
+          "name": "@hia-doc/htmdoc-runner",
+          "sourceManifestSha256": "1be2a58b405a0cf262e1a8b2ce5b6d8fc9e0f9630e62a4049861d4a8037c85a2",
+          "file": "hia-doc-htmdoc-runner-1.0.0.tgz",
+          "bytes": 70986,
+          "sha256": "2794cfda04cf1c3e619e4511a7e1390519333b5201d60385c7e8f8e69787edff",
+          "integrity": "sha512-ZpqVsByvaqwJyxv054quAXjjvWw4xLlkF5uhh9EW79TB2GmRvCSKhJDW0QAXDnx83W7UJN0itOdRbLNwbZjSLQ=="
+        },
+        {
+          "name": "@hia-doc/htmdoc-spec",
+          "sourceManifestSha256": "9b246d235595d008e98d36d2d2da7983bbd61e3e3d854b5753a95401db4a6133",
+          "file": "hia-doc-htmdoc-spec-1.0.0.tgz",
+          "bytes": 20237,
+          "sha256": "925902f4812724db773dd509c0972455aae95ddcfcba98aa4e8fa6e86669cf94",
+          "integrity": "sha512-vLbhKlWa5nTmykZ3K2Fc28RdxlH07UEZr6/rFzFzllicZPgD+dRCDOqDOCUWXzk78QmW14vmnFgdUj33aHdIQg=="
+        },
+        {
+          "name": "@hia-doc/html-doc-adapter",
+          "sourceManifestSha256": "3493753476699c0d167adfef1f383df2b6cc82d23465ee13911c90b884351271",
+          "file": "hia-doc-html-doc-adapter-1.0.0.tgz",
+          "bytes": 6278,
+          "sha256": "bee8f6f0f7aee1f998ef663575c658adc2bcb223fb7a9a5ccac8be3d602ddcc0",
+          "integrity": "sha512-8HvqW2j+NQfESYo65nXq/O5DIsBv4Umjek8tVxnqlQqfordUocGM5sw6nDObO5sadUenKPOSckAVLOGA+Qq6IQ=="
+        },
+        {
+          "name": "@hia-doc/html-doc-extractor",
+          "sourceManifestSha256": "9cfbdc83ed297f6127c6f8e80d9c15e1a15832d5060e93ce4f81ec2a13d6da65",
+          "file": "hia-doc-html-doc-extractor-1.0.0.tgz",
+          "bytes": 9226,
+          "sha256": "16dde82e44572895edc58147f7a649b41e16ccffcaa122781cb88b87761e69c4",
+          "integrity": "sha512-LEETaVAlluEVp4f4WcyW4n7Yr86vsshINff6UVqLUrnqYJ/1rKDnbVZscvdy58WFF5nMt4xYPOu6wSGDrBVeEg=="
+        },
+        {
+          "name": "@hia-doc/html-doc-source-map",
+          "sourceManifestSha256": "59b86ee7c83edf89a7858792fb3eb019ae3fd65174855e44683dd41272ae1555",
+          "file": "hia-doc-html-doc-source-map-1.0.0.tgz",
+          "bytes": 7817,
+          "sha256": "3c0931eb07b493da699eb5139fd584a2ab897ca1ece4cdb6a9f3675baf0a3bd5",
+          "integrity": "sha512-KxvCGOYqjicFhu2VPLFDQBBxyjip34DZiTvOZE2qIzZuAMK1l6BzpkBgqmyrSRsOCA7CjIZhOFsqY+3Y7ILpFA=="
+        },
+        {
+          "name": "@hia-doc/html-parser",
+          "sourceManifestSha256": "3eafce876922a8920b34f2eaeeba47f46638e100339cc55fc0e80830454ab1c7",
+          "file": "hia-doc-html-parser-1.0.0.tgz",
+          "bytes": 6576,
+          "sha256": "ee67a7480955a76c0d40020530053d2830c50228f616290f1ed56b083e67311c",
+          "integrity": "sha512-QhC/sD2LCPAHa9U42tzl4Gb3b3pUj+DF/XHHaOLY47Yv7is2CrqK8Mr0id28XCxnKQHY4/fM+HMolN6Zwnww8g=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/hia-jsdoc",
+      "sourceCommit": "6574549bd4ef9c603423ea80cf6aacd6b26a2050",
+      "buildCommit": "c15416d2adbf211e831aee0b7219e47451f93a7e",
+      "runId": 46145714736,
+      "artifactId": 15263198444,
+      "artifactSha256": "b198203d1b34987a6f953a8bf48749803544bec8ba5d30a344fd6ea8ab2019b0",
+      "archives": [
+        {
+          "name": "@hia-doc/jsdoc-doc-source-map",
+          "sourceManifestSha256": "4d7a4d55969215bfa38908734e0ebe4370a236a289e3ea20a6daf2d7f081b64f",
+          "file": "hia-doc-jsdoc-doc-source-map-1.0.0.tgz",
+          "bytes": 4559,
+          "sha256": "3edbf3011a12cd174f5bec9a31a6e64376bd915e989cbbab329c85169ff85eff",
+          "integrity": "sha512-LJ3JbDrdA8/MqewIf9BAfMchXn4X8i0t21D1m+STzJkHlFCxc8+nPog4UKLodSPO30lawr0DOf3YZL6FbGpX9Q=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-extra-plugin-registry",
+          "sourceManifestSha256": "1f251c59d06c6bb78e46ba52f62421b307580d3ee90bc51119442dee93936cbb",
+          "file": "hia-doc-jsdoc-extra-plugin-registry-1.0.0.tgz",
+          "bytes": 6189,
+          "sha256": "baacd0969dcefa6ef0f03c1410c57ba1a7df962191521857d77fb951ba2f61ae",
+          "integrity": "sha512-7ZVMPVmLMI7z9DTz6qe5YmWJnR29BMj2QxB3HsyI8/MOycvzz3ywKJyb+hqmzbyi+JCMg5IJ8dwoeP2MJg4eSQ=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-plugin-hia-bridge",
+          "sourceManifestSha256": "c22cf46e53a3ea94bec9c37e16cb3eb9afe1fac3e76b91610bd68f5f78196af3",
+          "file": "hia-doc-jsdoc-plugin-hia-bridge-1.0.0.tgz",
+          "bytes": 4546,
+          "sha256": "3b46019524a967d54b8780b79ef163a48cac5678d133b4be1bb774cc12943ff9",
+          "integrity": "sha512-yspJHMpCTiPzwi4PHAFVGNqlrtCQVB5bzpf5dA4awgqYaaTzxzhWJX6G/opvISbtpL8soL4XfOYUCsebcLcnRw=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-preset",
+          "sourceManifestSha256": "353a088203561d9eb8c52c37956775c8f7a154fd201e83d8e38a94a544a5f620",
+          "file": "hia-doc-jsdoc-preset-1.0.0.tgz",
+          "bytes": 8116,
+          "sha256": "a2976a98ea5aebc0fa1081dac3b17d3134d83da657ecbd0743a161f64962c655",
+          "integrity": "sha512-1tmRC3Xr6b/EzHRDNm6t2sOIUunTAlNaoAvx+PSyikxuHLaX23Q6volxx9caCZzInkq9sz2X9k7RoT93AEZeyA=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-producer",
+          "sourceManifestSha256": "c5aafe26e37e80d833e5b889a8a851896ce6bf31d4f37789d5e9e7c45c2f6744",
+          "file": "hia-doc-jsdoc-producer-1.0.0.tgz",
+          "bytes": 10280,
+          "sha256": "2cdebae893732a5ae734237b5455733172b339fef067c38140c820d6234489e0",
+          "integrity": "sha512-mQFpudguDepKRAkTvBbKqp85GQSd+ytgeSpGQzPk6UmgTzu9KFHWlZgl53v9SFZaKNcsQQNB/h6pB9DN8MqwCg=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-runner",
+          "sourceManifestSha256": "d77069301a0a206ba3a19854982bcd54df97b89094b8f24c1d06f26efb48c37c",
+          "file": "hia-doc-jsdoc-runner-1.0.0.tgz",
+          "bytes": 66659,
+          "sha256": "761e5d61f934cfdcada14a0d279654f26c2200df4241aa5e2bcffe4afd2c7810",
+          "integrity": "sha512-ZKW9Evv6NtU06ZXIaYC+zkOpgAGrvTnswmyzK9NwfGecTJ73R8uTKwXRtKuo4jNIrCXFUKGko3pB7R36FwHCKQ=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-spec",
+          "sourceManifestSha256": "6c7f73f466ec52a58db81961b14057747f973a2eadbda2876c4b967120901dd1",
+          "file": "hia-doc-jsdoc-spec-1.0.0.tgz",
+          "bytes": 7806,
+          "sha256": "8d4a87f8bb2e3f5146542b73dfa93acf6610b055acdb3ec377e840fe37f8bfa8",
+          "integrity": "sha512-3Cutp7n4eKqYySTIaiPtka+UVtFNKwinhjg8lLp31oayq7raVyzjaRv6EBM6JS1+rThg7ZF+3VapV2v4qjT78w=="
+        },
+        {
+          "name": "@hia-doc/jsdoc-theme-bridge",
+          "sourceManifestSha256": "60a8ac2b4a8f185ea45a3acc33dfb1ebc236df21f9603d1ef5529706987bc1a6",
+          "file": "hia-doc-jsdoc-theme-bridge-1.0.0.tgz",
+          "bytes": 5211,
+          "sha256": "e8c1b99daed30fd0aa601cfdd205a8ab082ff7f87465285fa696d40dfc55f480",
+          "integrity": "sha512-Q9MRtuj4bnkhA7VKE+BYOy3jG0G/TCs6DcxF1BhuyngPgVV8BFevGKXGew2HZ29donsHNxxwppMBLn6t37wKgQ=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/jsdoc-plugin-hia-sys",
+      "sourceCommit": "2448ac7a14c36829303017a64261f583be49bd8c",
+      "buildCommit": "a1bf268071c40f5a9690a00164a0ccd7f77b639c",
+      "runId": 46145714244,
+      "artifactId": 15263701665,
+      "artifactSha256": "63b3440358b809e01b8ae9c20b773bacabc0528339306add0a3aa546bdfd29b4",
+      "archives": [
+        {
+          "name": "@mandolin/jsdoc-plugin-hia-sys",
+          "sourceManifestSha256": "e6f7698b2a5185c68ccad4e28652ad1784817c2c54e65efda261dccdc1852786",
+          "file": "mandolin-jsdoc-plugin-hia-sys-1.0.0.tgz",
+          "bytes": 62440,
+          "sha256": "d95835715aafaf4e119f997796f2a9cbe4da96d02dca5726d8b25c539621feff",
+          "integrity": "sha512-DKgVOYzEU9nVve+rhQnRnnFe8DRHtz3Ujs2zVmHfZTOJ9iPA/q94ILu7ktvuDY9DleBvO0I6chgi841BquyTrQ=="
+        }
+      ]
+    },
+    {
+      "repository": "mandolin/jsdoc-theme-hia",
+      "sourceCommit": "9d6bd95868a8b968122b510f91e0a66150431f62",
+      "buildCommit": "d47149d53fbab7f1403767fd2298d46bae6d9d1b",
+      "runId": 46145713784,
+      "artifactId": 15263437840,
+      "artifactSha256": "ccb1d9bdd186bfa5d1e726fbb39e48f77795d5f69db9c7086363093760468897",
+      "archives": [
+        {
+          "name": "@mandolin/jsdoc-theme-hia",
+          "sourceManifestSha256": "96cc328db4e714097d71d1489efc3ac783cb3dd2116329d4363b1006f7007ca0",
+          "file": "mandolin-jsdoc-theme-hia-1.0.0.tgz",
+          "bytes": 73385,
+          "sha256": "a90300ed3ce82bb20ec0378294e76c546f7574a81daaa8bfd634f11c16881fdd",
+          "integrity": "sha512-MTPTgX5h800B58pxDZkS81gu2d5mbUt8nvxf0+uXFBLna/DYmJxVpZ96ebdP+Eti4SNvcMn/i8SDQ1jze3vwQA=="
+        }
+      ]
+    }
+  ]
+}

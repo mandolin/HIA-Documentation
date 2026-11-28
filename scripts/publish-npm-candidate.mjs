@@ -131,8 +131,18 @@ function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-// <lang lang="zh-CN">下载成功候选作业的准确工件，解包前复核 GitHub 标识和完整 ZIP 摘要。</lang><lang lang="en">Download the exact artifact from the successful candidate workflow, checking GitHub identity and the full ZIP digest before reading members.</lang>
-async function getArtifact(entry, destination, token) {
+/**
+ * @lang zh-CN 下载固定作业的原始 ZIP。先核工作流、分支、事件、运行和工件身份，写入前核完整摘要。
+ * @lang en Download the original ZIP from a pinned run. Verify workflow, ref, event, run and artifact identity, and hash all bytes before writing.
+ * @param {object} entry <lang lang="zh-CN">固定运行、维护仓及工件摘要。</lang><lang lang="en">Pinned run, repository and artifact digest.</lang>
+ * @param {string} destination <lang lang="zh-CN">尚未占用的本地输出。</lang><lang lang="en">Unused local destination.</lang>
+ * @param {string} token <lang lang="zh-CN">本仓 Actions 读取凭据。</lang><lang lang="en">Actions read credential for the current repository.</lang>
+ * @param {object} [expected] <lang lang="zh-CN">调用方约定的工作流与工件身份，默认使用候选约定。</lang><lang lang="en">Expected workflow and artifact identities; defaults to the candidate build.</lang>
+ * @returns {Promise<void>} <lang lang="zh-CN">校验后写入独占输出。</lang><lang lang="en">Writes the verified bytes to an exclusive destination.</lang>
+ */
+export async function getArtifact(entry, destination, token, expected = {
+  event: "workflow_dispatch", workflow: candidateWorkflow, branch: "main", name: "npm-candidate",
+}) {
   const api = "https://api.github.com/repos/" + entry.repository + "/actions";
   assert(token, "GitHub read token is required");
   const options = { headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" } };
@@ -140,16 +150,16 @@ async function getArtifact(entry, destination, token) {
   assert.equal(runResponse.status, 200, "Could not read pinned Actions run");
   const run = await runResponse.json();
   assert.equal(run.id, entry.runId);
-  assert.equal(run.event, "workflow_dispatch");
-  assert.equal(run.path, candidateWorkflow);
-  assert.equal(run.head_branch, "main");
+  assert.equal(run.event, expected.event);
+  assert([expected.workflow, expected.workflow + "@" + expected.branch].includes(run.path));
+  assert.equal(run.head_branch, expected.branch);
   assert.equal(run.head_sha, entry.buildCommit);
   assert.equal(run.status, "completed");
   assert.equal(run.conclusion, "success");
   const artifactResponse = await service(api + "/artifacts/" + entry.artifactId, options);
   assert.equal(artifactResponse.status, 200, "Could not read pinned Actions artifact");
   const artifact = await artifactResponse.json();
-  assert.equal(artifact.name, "npm-candidate");
+  assert.equal(artifact.name, expected.name);
   assert.equal(artifact.expired, false);
   assert.equal(artifact.digest, "sha256:" + entry.artifactSha256);
   assert.equal(artifact.workflow_run.id, entry.runId);
@@ -170,13 +180,13 @@ async function getArtifact(entry, destination, token) {
   await writeFile(destination, bytes, { flag: "wx", mode: 0o600 });
 }
 
-// <lang lang="zh-CN">仅从已认证 ZIP 提取明确条目；不执行归档中的任何程序。</lang><lang lang="en">Read only explicitly named members from the verified ZIP; never execute archived code.</lang>
-function zipMember(zip, member) {
+/** @lang zh-CN 只从已验 ZIP 读取固定名称的条目，返回有界字节。 @lang en Read bounded bytes for a fixed member in the verified ZIP. */
+export function zipMember(zip, member) {
   return execFileSync("unzip", ["-p", zip, member], { maxBuffer: 32 * 1024 * 1024, timeout: 15_000 });
 }
 
-// <lang lang="zh-CN">使用绑定工作流的真实 OIDC 身份，短期令牌只在内存验证且不输出。</lang><lang lang="en">Use the actual bound workflow OIDC identity. Validate the short-lived token in memory without emitting it.</lang>
-async function probeOidc(name, env) {
+/** @lang zh-CN 按固定包名验证真实 OIDC 身份，返回状态并丢弃短期令牌。 @lang en Verify the actual OIDC identity for a pinned package, return status and discard the short-lived token. */
+export async function probeOidc(name, env) {
   assert(env.ACTIONS_ID_TOKEN_REQUEST_TOKEN, "GitHub OIDC request token is unavailable");
   const url = new URL(env.ACTIONS_ID_TOKEN_REQUEST_URL);
   assert.equal(url.protocol, "https:");
