@@ -19,7 +19,7 @@ Preserve language and topic where possible. Missing pages, translations or ancho
 
 Incremental file writing and bounded excerpts reduce peak output retention, but inputs and indexes still grow with project size. On budget failures, reduce excerpts, split builds or narrow publication scope without expanding source authority. Roll back to a retained, identified site artifact and recheck routes, locales, versions and machine projections.
 
-To try the current candidate, install `1.0.0-rc.2` explicitly or use `next` from npm. The 17 first-published packages still use RC.1 as `latest`. The other packages retain their previous defaults. [Candidate installation and signature verification](https://github.com/mandolin/HIA-Documentation/blob/main/docs/prerelease-candidates.md#try-the-100-release-candidate)
+Confirm package names, exact versions, and signatures before adopting the stable release. Use the lockfile for dependency resolution and record documentation, package, and artifact-contract versions separately.
 
 Archive acceptance should record the source commit and digest of each of the 45 archives, the site inventory, and the standalone JSDoc plugin, theme, and renderer identities. The documentation system, npm packages, and artifact contracts have separate versions. Before upgrading an existing project, use the [1.0.0 package and contract migration reference](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/package-v1-migration.md) to identify the affected packages and exact contracts. Check compatibility reads and explicit migration with existing inputs.
 

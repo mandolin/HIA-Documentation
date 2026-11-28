@@ -4,27 +4,88 @@ on:
   push:
     branches: [review/w-p157-formal-pages]
 
-# 中文：仅核归档可读性。 English: Check access to the pinned build artifacts.
+# 中文：隔离正式版，只读取原件并上传验收工件。 English: Read pinned inputs and upload the isolated stable rehearsal.
 permissions:
   contents: read
   actions: read
 
 jobs:
-  archive-access:
+  formal-pages:
     if: github.ref == 'refs/heads/review/w-p157-formal-pages'
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Verify access to all seven frozen artifacts
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.22.1
+          package-manager-cache: false
+      - name: Verify frozen package archives and the reference base
         env:
           GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/prepare-formal-pages-inputs.py
+      - name: Verify and extract the independent compatibility snapshot
         run: |
           set -euo pipefail
-          jq -r '.owners[] | [.repository, .artifactId, .artifactSha256] | @tsv' release/stable-publication.json |
-          while IFS=$'\t' read -r repository artifact digest; do
-            destination="$RUNNER_TEMP/$artifact.zip"
-            gh api "repos/$repository/actions/artifacts/$artifact/zip" > "$destination"
-            echo "$digest  $destination" | sha256sum --check
-          done
+          curl --fail --silent --show-error --location --proto '=https' --output "$RUNNER_TEMP/prepare-legacy.py" \
+            https://raw.githubusercontent.com/mandolin/HIA-Documentation-Legacy/348a477737260d10395cebaea27e77d9dcc6447b/scripts/prepare.py
+          curl --fail --silent --show-error --location --proto '=https' --output "$RUNNER_TEMP/legacy.tar.gz" \
+            https://github.com/mandolin/HIA-Documentation-Legacy/releases/download/reference-6ed04c9/reference-pages-6ed04c9.tar.gz
+          python3 "$RUNNER_TEMP/prepare-legacy.py" reference/legacy-reference.snapshot.json "$RUNNER_TEMP/legacy.tar.gz" dist/formal-legacy
+      - name: Install the frozen packages and execute the published examples
+        run: |
+          set -euo pipefail
+          consumer="$PWD/dist/formal-inputs/consumer"
+          npm --prefix "$consumer" ci --ignore-scripts --engine-strict --strict-peer-deps --no-audit --no-fund
+          curl --fail --silent --show-error --location --proto '=https' --output "$consumer/basic.hia.json" \
+            https://raw.githubusercontent.com/mandolin/HIA-Documentation/3b72ce3205fb07c534f5f9055398958a9661eef6/fixtures/basic.hia.json
+          cmp fixtures/basic.hia.json "$consumer/basic.hia.json"
+          python3 - "$consumer/migration-example.mjs" <<'PY'
+          import re, sys
+          from pathlib import Path
+          guide = Path("docs/core-document-migration.md").read_text(encoding="utf-8")
+          match = re.search(r"^```js\n([\s\S]*?)^```$", guide, re.MULTILINE)
+          assert match, "Public migration example is missing."
+          Path(sys.argv[1]).write_text(match.group(1), encoding="utf-8")
+          PY
+          (
+            cd "$consumer"
+            npm ls --depth=0 @hia-doc/cli
+            for locale in zh-CN en; do
+              npm exec --offline -- hia docs build --input basic.hia.json --out "$RUNNER_TEMP/cli-$locale" --locale "$locale"
+              grep -Fq 'params.profile.description' "$RUNNER_TEMP/cli-$locale/index.html"
+              grep -Fq 'returns.0.description' "$RUNNER_TEMP/cli-$locale/index.html"
+            done
+            node migration-example.mjs
+          )
+      - name: Build the website and run the existing site checks
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.4 --activate
+          pnpm install --frozen-lockfile
+          pnpm site:build
+          pnpm site:check
+          pnpm site:test
+          pnpm site:licenses
+          python3 -m unittest discover -s scripts -p test_pages_recovery.py
+      - name: Compose and verify the formal Pages artifact
+        run: |
+          set -euo pipefail
+          ln -s "$PWD/dist/formal-inputs/consumer/node_modules/@hia-doc/renderer-html/dist" packages/renderer-html/dist
+          node scripts/assemble-formal-pages.mjs
+          node scripts/check-official-site-pairing.mjs dist/formal-site
+          mkdir -p dist/formal-upload
+          tar --format=gnu --create --file dist/formal-upload/artifact.tar --directory dist/formal-site .
+          sha256sum dist/formal-upload/artifact.tar > dist/formal-upload/artifact.sha256
+          cp dist/formal-pages-receipt.json dist/formal-upload/verification.json
+      - name: Upload the review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-pages-rehearsal
+          path: dist/formal-upload/
+          retention-days: 7
+          if-no-files-found: error

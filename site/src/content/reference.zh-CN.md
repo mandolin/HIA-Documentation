@@ -112,7 +112,7 @@ hia docs build --input <工件> --out <目录> --locale <语言>
 
 ## 版本与兼容
 
-系统文档当前为1.0.0预览。当前接入清单覆盖45个必要包，其中13个来自主仓、32个来自卫星仓库；每个软件包使用各自的版本和运行要求。独立语言服务器`@hia-doc/lsp`在主仓发布清单中单列，源码版本为`0.1.0`。
+当前系统文档对应正式版1.0.0。当前接入清单覆盖45个必要包，其中13个来自主仓、32个来自卫星仓库；每个软件包使用各自的版本和运行要求。独立语言服务器`@hia-doc/lsp`在主仓发布清单中单列，源码版本为`0.1.0`。
 
 从[包候选与归档](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-candidates.md)读取源码状态和版本表，用[主仓发布清单](https://github.com/mandolin/HIA-Documentation/blob/main/release/public-packages.json)及[完整必要包清单](https://github.com/mandolin/HIA-Documentation/blob/main/reference/required-package-api.inputs.json)核对范围，再查[运行时与兼容性](https://github.com/mandolin/HIA-Documentation/blob/main/docs/compatibility-matrix.md)。系统版本、软件包版本和工件契约版本分别核对。
 

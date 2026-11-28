@@ -9,7 +9,7 @@ title: First steps
 
 Build readable documentation from a public HIA document artifact.
 
-<div class="notice warning"><strong>The first formal release is in preparation</strong><p>Source candidate versions do not establish a formal system release. Do not assume that 1.0.0 is published when installing for this example.</p></div>
+<div class="notice"><strong>Applies to 1.0.0</strong><p>Confirm the stable version is available on npm before installing. Consult the migration reference when upgrading an existing project.</p></div>
 
 <h2 id="input">1. Prepare input</h2>
 
@@ -17,15 +17,15 @@ Learning material supports tasks, references define precise rules, development d
 
 The main checkout uses Node.js 22.23.4 or 24.22.1 and pnpm 10.34.4. Other packages retain their own engines. Follow the [repository instructions](https://github.com/mandolin/HIA-Documentation#readme) to install locked dependencies and build. Verify exact archive versions, dependencies, and runtimes before use.
 
-In the archive acceptance environment, verify the SHA-256 of each of the 45 archives and install from the lockfile supplied with the batch. Run `npm ls --depth=0 @hia-doc/cli` to verify the local command-line version, then use `npm exec --offline -- hia docs build` with the arguments below. For public evaluation, follow the [exact RC.2 installation steps](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/prerelease-candidates.md#try-the-100-release-candidate).
+In a new directory, install the stable command-line tool with `npm install --save-exact @hia-doc/cli@1.0.0`. Save the [public example artifact](https://github.com/mandolin/HIA-Documentation/blob/3b72ce3205fb07c534f5f9055398958a9661eef6/fixtures/basic.hia.json) as `basic.hia.json`. Use your own HIA artifact if you already have one.
 
 <h2 id="build">2. Build documentation</h2>
 
-Run this command from a built main checkout. It uses a public repository fixture and writes to a dedicated preview directory:
+Run this from the directory containing the installed CLI and example artifact:
 
-<div class="code-box"><div class="code-label"><span>Command · built main checkout</span><button class="copy js-only" data-copy>Copy</button></div><div class="code-scroll"><pre><code>node apps/cli/dist/index.js docs build --input fixtures/basic.hia.json --out dist/docs-preview --locale en</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
+<div class="code-box"><div class="code-label"><span>Command · installed CLI</span><button class="copy js-only" data-copy>Copy</button></div><div class="code-scroll"><pre><code>npm exec --offline -- hia docs build --input basic.hia.json --out dist/docs-preview --locale en</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
 
-If the compiled CLI is absent, build first. Resolve missing inputs against the working directory. Follow the [migration reference](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md) for incompatible contracts and retain diagnostics; changing a version string is not migration.
+Run `npm ls --depth=0 @hia-doc/cli` if the command is unavailable. For incompatible input contracts, follow the [migration reference](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md) for incompatible contracts and retain diagnostics; changing a version string is not migration.
 
 <h2 id="read">3. Read and check</h2>
 

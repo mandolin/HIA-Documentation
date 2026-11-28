@@ -15,8 +15,8 @@ function assert(condition, message = "Invalid site version index.") { if (!condi
 assert.equal = (actual, expected, message) => assert(Object.is(actual, expected), message);
 assert.deepEqual = (actual, expected, message) => assert(isDeepStrictEqual(actual, expected), message);
 
-/** @lang zh-CN 显式系统预览配置；包版本与旧参考技术快照不决定此值。 @lang en Explicit system-preview configuration, independent of package versions and technical snapshots. */
-export const currentDocumentation = Object.freeze({ version: "1.0.0", status: "preview" });
+/** @lang zh-CN 显式系统正式版配置；包版本与旧参考技术快照不决定此值。 @lang en Explicit stable system configuration, independent of package versions and technical snapshots. */
+export const currentDocumentation = Object.freeze({ version: "1.0.0", status: "stable" });
 /** @lang zh-CN 站点索引的公开schema身份，不重用旧参考schema。 @lang en Public schema identity for the site index, separate from legacy reference schemas. */
 export const siteIndexSchema = "https://mandolin.github.io/HIA-Documentation/site/contracts/site-version-index-1.0.0.schema.json";
 const supportedLocales = ["zh-CN", "en"];
@@ -126,8 +126,8 @@ export function assertSiteVersionIndex(value) {
 }
 
 /**
- * @lang zh-CN 创建当前真实预览索引；空历史是显式事实，不从目录自动枚举。
- * @lang en Create the actual preview index with explicit empty history instead of directory inference.
+ * @lang zh-CN 创建当前正式版索引；空历史是显式事实，不从目录自动枚举。
+ * @lang en Create the stable index with explicit empty history instead of directory inference.
  * @param {string} [version="1.0.0"] - 装配采用的索引版本。 Site index version used by the composition.
  * @returns {object} 独立可序列化对象。 Independent serializable object.
  * @throws {Error} 维护者配置与当前索引规则冲突。 Maintainer configuration conflicts with index rules.

@@ -17,7 +17,7 @@ const url = (topic: string) => href(topic, locale, import.meta.env.BASE_URL);
 const title = labels[locale][kind as keyof typeof labels.en];
 // <lang lang="zh-CN">文档子页共享顶部文档选中态，具体主题仍由正文目录表达。</lang><lang lang="en">Documentation children share the top-level documentation state while the article directory identifies the topic.</lang>
 const activeTopic = [...manualKinds, "versions", "search"].includes(kind) ? "docs" : kind;
-const versionLabel = currentDocumentation.version + text(" 预览", " preview");
+const versionLabel = currentDocumentation.version + text(" 正式版", " stable");
 const currentTopic = activeTopic === "docs" ? kind : "docs";
 const nav = ["home", "features", "docs"];
 ---

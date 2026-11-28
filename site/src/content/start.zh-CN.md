@@ -9,7 +9,7 @@ title: 第一次使用
 
 从一份公开HIA文档工件开始，构建可阅读的文档。
 
-<div class="notice warning"><strong>正式初版正在准备中</strong><p>源码候选版本不等于系统已正式发布。不要为此示例直接安装假定已发布的1.0.0。</p></div>
+<div class="notice"><strong>适用版本 1.0.0</strong><p>先确认 npm 中的正式版本可用，再按下方说明安装。旧项目升级请先阅读迁移参考。</p></div>
 
 <h2 id="input">1. 准备输入</h2>
 
@@ -17,15 +17,15 @@ title: 第一次使用
 
 主仓源码环境使用Node.js 22.23.4或24.22.1及pnpm 10.34.4，其它包以自身engines为准。按[仓库说明](https://github.com/mandolin/HIA-Documentation#readme)安装锁定依赖并构建。使用归档时核对精确版本、依赖和运行要求。
 
-在归档验收环境中，先核对 45 份归档的 SHA-256，再使用随批次提供的锁文件安装。用 `npm ls --depth=0 @hia-doc/cli` 检查本地命令行工具的版本，再用 `npm exec --offline -- hia docs build` 执行下方同样的参数。公开试用请使用 [RC.2 精确版本安装步骤](https://github.com/mandolin/HIA-Documentation/blob/3307718d802e620b6af4259a9ef12fcfbb90efe6/docs/prerelease-candidates.md#try-the-100-release-candidate)。
+在新目录用 `npm install --save-exact @hia-doc/cli@1.0.0` 安装正式命令行工具。下载[公开示例工件](https://github.com/mandolin/HIA-Documentation/blob/3b72ce3205fb07c534f5f9055398958a9661eef6/fixtures/basic.hia.json)为 `basic.hia.json`。有自己的 HIA 工件时，直接使用实际文件。
 
 <h2 id="build">2. 构建文档</h2>
 
-以下命令在已完成构建的主仓根运行，使用仓库公开工件，写入独立预览目录：
+从安装了命令行工具并保存示例工件的目录运行：
 
-<div class="code-box"><div class="code-label"><span>命令示例 · 已构建的主仓</span><button class="copy js-only" data-copy>复制</button></div><div class="code-scroll"><pre><code>node apps/cli/dist/index.js docs build --input fixtures/basic.hia.json --out dist/docs-preview --locale zh-CN</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
+<div class="code-box"><div class="code-label"><span>命令示例 · 已安装的命令行工具</span><button class="copy js-only" data-copy>复制</button></div><div class="code-scroll"><pre><code>npm exec --offline -- hia docs build --input basic.hia.json --out dist/docs-preview --locale zh-CN</code></pre></div><span class="copy-status" aria-live="polite"></span></div>
 
-缺少dist入口时先完成主仓构建；输入不存在时检查当前目录和相对路径；契约不兼容时查[迁移参考](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md)，保留诊断，不手改版本号冒充迁移。
+命令不可用时用 `npm ls --depth=0 @hia-doc/cli` 核对组件。依输入的实际契约参考[迁移参考](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-v1-migration.md)，保留诊断，不手改版本号冒充迁移。
 
 <h2 id="read">3. 阅读与检查</h2>
 

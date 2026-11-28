@@ -7,8 +7,8 @@ import { href, labels } from "./routes.mjs";
 import { currentDocumentation } from "./version-index.mjs";
 
 /**
- * @lang zh-CN 从官网同一事实源生成HIA导航草案；首版只有实际1.0.0预览及历史总入口。
- * @lang en Produces the HIA navigation draft from the website's shared facts, initially containing only the actual 1.0.0 preview and archive directory.
+ * @lang zh-CN 从官网同一事实源生成HIA导航草案；首版只有实际1.0.0正式版及历史总入口。
+ * @lang en Produces the HIA navigation draft from the website's shared facts, initially containing only the actual 1.0.0 stable release and archive directory.
  * @param {string} [base="/HIA-Documentation/"] <lang><zh-CN>已确认的站点部署根。</zh-CN><en>Confirmed deployment root.</en></lang>
  * @param {string} [codeBase=base] <lang><zh-CN>显式代码站路径，省略时保留原站内入口。</zh-CN><en>Explicit code-site path, retaining the original site-local entries when omitted.</en></lang>
  * @returns {import("../../../packages/renderer-html/src/site-navigation.js").DocumentationSiteNavigation} <lang><zh-CN>只含可公开标签与站内路径的数据，不携带来源授权。</zh-CN><en>Data containing only public labels and site-local paths, without source authority.</en></lang>

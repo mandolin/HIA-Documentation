@@ -109,7 +109,7 @@ Historical quickstarts remain applicable to their historical packages. They are 
 
 ## Versions and compatibility
 
-System documentation currently shows the 1.0.0 preview. The current integration inventory covers 45 required packages, with 13 from the core repository and 32 from satellite repositories. Each package has its own version and runtime requirements. The independently versioned language server, `@hia-doc/lsp`, is listed separately in the core release manifest with source version `0.1.0`.
+The current system documentation is for stable 1.0.0. The current integration inventory covers 45 required packages, with 13 from the core repository and 32 from satellite repositories. Each package has its own version and runtime requirements. The independently versioned language server, `@hia-doc/lsp`, is listed separately in the core release manifest with source version `0.1.0`.
 
 Read source status and identities in [Package candidates and archives](https://github.com/mandolin/HIA-Documentation/blob/main/docs/package-candidates.md). Reconcile scope against the [core release manifest](https://github.com/mandolin/HIA-Documentation/blob/main/release/public-packages.json) and [complete required-package inventory](https://github.com/mandolin/HIA-Documentation/blob/main/reference/required-package-api.inputs.json), then consult [Runtime and compatibility](https://github.com/mandolin/HIA-Documentation/blob/main/docs/compatibility-matrix.md). Check system, package and artifact-contract versions independently.
 

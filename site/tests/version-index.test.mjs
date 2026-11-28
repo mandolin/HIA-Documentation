@@ -35,14 +35,14 @@ test("generated navigation has a resolvable renderer-owned return type before pa
   assert.deepEqual(program.getSemanticDiagnostics(source).map(diagnostic => diagnostic.code), []);
 });
 
-test("preview index separates website, documentation, and legacy reference", () => {
+test("stable index separates website, documentation, and legacy reference", () => {
   const index = createSiteVersionIndex();
   assert.equal(index.contract, "hia-site-version-index");
   assert.equal(index.contractVersion, "1.0.0");
   assert.equal(index.defaultLocale, "zh-CN");
   assert.equal(index.website.locales["zh-CN"], "");
   assert.equal(index.website.locales.en, "site/en/");
-  assert.equal(index.documentation.current.status, "preview");
+  assert.equal(index.documentation.current.status, "stable");
   assert.deepEqual(index.documentation.archives, []);
   assert.equal(index.legacyReference.index, "legacy-reference/versions.json");
   assert.deepEqual(readSiteVersionIndex(JSON.stringify(index)), index);
