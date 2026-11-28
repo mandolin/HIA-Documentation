@@ -1,23 +1,27 @@
 name: npm Trusted Publish
 
 on:
+  push:
+    branches: [main, release/w-p157-stable-entry]
+    paths: [".github/workflows/npm-trusted-publish.yml"]
   workflow_dispatch:
     inputs:
       operation:
-        description: Select which release path to run
+        description: Select a coordinated audit or publication
         type: choice
         required: true
-        default: stable
+        default: stable-audit
         options:
-          - stable
+          - stable-audit
+          - stable-publish
           - candidate-audit
           - candidate-publish
       package_name:
-        description: "Candidate package name, for example @hia-doc/core"
+        description: Exact package name; leave empty only to audit all owned packages
         required: false
         type: string
       confirm_publish:
-        description: "Type: publish @hia-doc package"
+        description: Exact confirmation for a separately approved publication
         required: false
         type: string
 
@@ -31,54 +35,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Publish package with npm provenance
-    if: inputs.operation == 'stable' && inputs.package_name != '' && inputs.confirm_publish == 'publish @hia-doc package'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
-          registry-url: https://registry.npmjs.org/
-
-      - name: Enable pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.34.4 --activate
-
-      - name: Install npm trusted publishing baseline
-        run: npm install -g npm@^11.15.0
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run release gate
-        run: pnpm run release:gate:publish-ready
-
-      - name: Resolve package
-        id: resolve
-        env:
-          FORMAL_PACKAGE: ${{ inputs.package_name }}
-        run: node scripts/resolve-public-release-package.mjs "$FORMAL_PACKAGE" --publish-ready --github-output
-
-      - name: Pack package through pnpm
-        run: |
-          mkdir -p "$RUNNER_TEMP/hia-pack"
-          pnpm --filter "${{ steps.resolve.outputs.package_name }}" pack --pack-destination "$RUNNER_TEMP/hia-pack"
-          ls -la "$RUNNER_TEMP/hia-pack"
-
-      - name: Publish package tarball
-        # 中文：记录工具版本及OIDC交换结果，避免最终PUT错误掩盖认证原因；不输出环境变量或原始调试文件。
-        # English: Record tool versions and OIDC exchange outcomes so a final PUT error cannot hide authentication failures; never dump environment variables or raw debug files.
-        run: |
-          node --version
-          npm --version
-          npm publish "$RUNNER_TEMP"/hia-pack/*.tgz --access public --provenance --registry=https://registry.npmjs.org/ --loglevel=verbose
+  stable:
+    # <lang lang="zh-CN">推送只运行审计，正式写入另需默认分支的显式调度和波次授权。</lang><lang lang="en">Pushes only audit; publication requires explicit dispatch from main and wave authorization.</lang>
+    if: github.event_name == 'push' || inputs.operation == 'stable-audit' || inputs.operation == 'stable-publish'
+    uses: mandolin/HIA-Documentation/.github/workflows/publish-npm-stable.yml@98252149c0cbe95752de5829d9583c039d6b7e2c
+    with:
+      release_revision: 98252149c0cbe95752de5829d9583c039d6b7e2c
+      mode: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'stable-publish' && 'publish' || 'audit' }}
+      package_name: ${{ inputs.package_name }}
+      confirmation: ${{ inputs.confirm_publish }}
 
   candidate:
     # <lang lang="zh-CN">只使用全局已核对的归档和审批入口。</lang><lang lang="en">Use the coordinated verified archive and approval path.</lang>
